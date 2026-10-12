@@ -2,7 +2,10 @@
 import postgres from "postgres";
 
 const url = process.env.DATABASE_URL_UNPOOLED || process.env.DATABASE_URL;
-if (!url) throw new Error("Set DATABASE_URL first.");
+if (!url) {
+  console.warn("DATABASE_URL not set, skipping.");
+  process.exit(0);
+}
 const sql = postgres(url, { max: 1 });
 
 const P = (n: number) => `22222222-2222-4222-8222-${String(n).padStart(12, "0")}`;
