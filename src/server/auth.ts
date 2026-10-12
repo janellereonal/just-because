@@ -1,3 +1,4 @@
+import { createHash } from "node:crypto";
 import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { tanstackStartCookies } from "better-auth/tanstack-start";
@@ -8,6 +9,17 @@ function siteUrl() {
   if (process.env["VERCEL_PROJECT_PRODUCTION_URL"])
     return `https://${process.env["VERCEL_PROJECT_PRODUCTION_URL"]}`;
   return "http://localhost:8080";
+}
+
+/**
+ * BETTER_AUTH_SECRET signs session cookies. If it isn't set, derive a stable
+ * secret from the (already secret) database URL so deploys work out of the box.
+ */
+function authSecret() {
+  const explicit = process.env["BETTER_AUTH_SECRET"];
+  if (explicit) return explicit;
+  const db = process.env["DATABASE_URL"] ?? "";
+  return createHash("sha256").update(`just-because-auth:${db}`).digest("hex");
 }
 
 function createAuth() {
@@ -21,7 +33,7 @@ function createAuth() {
 
   return betterAuth({
     baseURL: siteUrl(),
-    secret: process.env["BETTER_AUTH_SECRET"],
+    secret: authSecret(),
     trustedOrigins: [siteUrl(), ...previewOrigin, ...extraOrigins],
     database: drizzleAdapter(getDb(), {
       provider: "pg",

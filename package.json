@@ -12,7 +12,8 @@
     "format": "prettier --write .",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "tsx scripts/migrate.ts",
-    "db:seed": "tsx scripts/seed.ts"
+    "db:seed": "tsx scripts/seed.ts",
+    "vercel-build": "bun run db:migrate && bun run db:seed && vite build"
   },
   "overrides": {
     "rolldown": "1.2.1"
