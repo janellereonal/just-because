@@ -1,0 +1,55 @@
+{
+  "version": "7",
+  "dialect": "postgresql",
+  "entries": [
+    {
+      "idx": 0,
+      "version": "7",
+      "when": 1790057317977,
+      "tag": "0000_just_because_core_schema",
+      "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1790057364071,
+      "tag": "0001_theme_previews_storage_policies",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1790057933744,
+      "tag": "0002_contribution_media_policies",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1790092138050,
+      "tag": "0003_gift_module_expansion",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1790142418463,
+      "tag": "0004_gift_intro_and_background",
+      "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1790148382171,
+      "tag": "0005_add_tree_gift_module",
+      "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1790149118892,
+      "tag": "0006_palette_library_and_contributor_sealed_view",
+      "breakpoints": true
+    }
+  ]
+}

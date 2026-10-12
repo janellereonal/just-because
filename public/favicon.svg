@@ -1,0 +1,33 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="34 36 142 164" role="img" aria-label="Bo, the Just Because mascot">
+  <style>
+    .bo{transform-box:fill-box;transform-origin:center;animation:bob 2.4s ease-in-out infinite}
+    .wave{transform-box:view-box;transform-origin:138px 118px;animation:wave 1.2s ease-in-out 1 both}
+    .eyes{transform-box:fill-box;transform-origin:center;animation:blink 5.2s infinite}
+    @keyframes bob{0%,100%{transform:translateY(0)}50%{transform:translateY(-4px)}}
+    @keyframes wave{0%,100%{transform:rotate(0)}20%{transform:rotate(-20deg)}40%{transform:rotate(15deg)}60%{transform:rotate(-20deg)}80%{transform:rotate(15deg)}}
+    @keyframes blink{0%,94%,100%{transform:scaleY(1)}96%{transform:scaleY(.1)}}
+    @media (prefers-reduced-motion:reduce){*{animation:none!important}}
+  </style>
+  <g class="bo">
+    <g fill="none" stroke="#2B2522" stroke-linecap="round" stroke-width="3.4">
+      <path d="M78 168L75 186M122 168L125 186"/>
+      <path d="M62 118Q44 130 46 149"/>
+    </g>
+    <ellipse cx="69" cy="189" rx="9" ry="4.5" fill="#2B2522"/>
+    <ellipse cx="131" cy="189" rx="9" ry="4.5" fill="#2B2522"/>
+    <circle cx="47" cy="154" r="5.5" fill="#F4EEE3" stroke="#2B2522" stroke-width="2.8"/>
+    <g class="wave" fill="none" stroke="#2B2522" stroke-linecap="round">
+      <path d="M138 118Q158 108 163 88" stroke-width="3.4"/>
+      <circle cx="165" cy="82" r="5.5" fill="#F4EEE3" stroke-width="2.8"/>
+      <path d="M176 72L181 67M179 84H186M156 70L153 64" stroke-width="2.2"/>
+    </g>
+    <path d="M60 95Q58 132 61 169H139Q142 132 140 95Z" fill="#F4EEE3" stroke="#2B2522" stroke-width="3.4" stroke-linejoin="round"/>
+    <path d="M100 96V168" stroke="#B5623E" stroke-width="7"/>
+    <g class="eyes" fill="#2B2522"><circle cx="82" cy="122" r="3.4"/><circle cx="118" cy="122" r="3.4"/></g>
+    <g fill="#B5623E" opacity=".85"><ellipse cx="71" cy="134" rx="7" ry="4.5"/><ellipse cx="129" cy="134" rx="7" ry="4.5"/></g>
+    <path d="M92 134Q100 141 108 134" fill="none" stroke="#2B2522" stroke-linecap="round" stroke-width="3"/>
+    <rect x="52" y="75" width="96" height="21" rx="3" fill="#B5623E" stroke="#2B2522" stroke-width="3.4"/>
+    <path d="M100 74Q80 50 86 45Q93 41 100 74Q107 41 114 45Q120 50 100 74Z" fill="#B5623E" stroke="#2B2522" stroke-width="2.8" stroke-linejoin="round"/>
+    <circle cx="100" cy="73" r="3" fill="#2B2522"/>
+  </g>
+</svg>
