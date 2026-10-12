@@ -2,9 +2,9 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import {useParams} from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { supabase } from "@/integrations/supabase/client";
+import { deleteOwnContribution, submitContribution, updateOwnContribution } from "@/lib/api";
+import { uploadFile } from "@/lib/upload";
 import {
-  CONTRIBUTION_BUCKET,
   FONT_PAIRINGS,
   GUEST_MODULES,
   fetchCalendarEntries,
@@ -219,17 +219,17 @@ function ContributePage() {
     setText(record.text_content ?? "");
     setLink(record.external_link ?? "");
     setVisibility(record.visibility);
+    setFile(null);
     if (record.ornament_key) setOrnament(record.ornament_key);
     setTreeStep(2);
     setDone(false);
   }
 
   async function removeMine(record: MineRecord) {
-    const { data, error } = await supabase.rpc("delete_own_contribution", {
-      p_id: record.id,
-      p_token: record.edit_token,
-    });
-    if (error || !data) {
+    const result = await deleteOwnContribution({
+      data: { id: record.id, token: record.edit_token },
+    }).catch(() => null);
+    if (!result?.ok) {
       toast.error("That can't be removed any more.");
       return;
     }
@@ -270,16 +270,13 @@ function ContributePage() {
     setBusy(true);
     let mediaPath: string | null = null;
     if (file) {
-      const path = `${site.id}/${Date.now()}-${file.name.replace(/[^a-zA-Z0-9.]+/g, "-")}`;
-      const { error: uploadError } = await supabase.storage
-        .from(CONTRIBUTION_BUCKET)
-        .upload(path, file);
-      if (uploadError) {
+      try {
+        mediaPath = await uploadFile(file, "contribution", site.id);
+      } catch {
         setBusy(false);
         toast.error("That file couldn't be uploaded.");
         return;
       }
-      mediaPath = path;
     }
 
     if (editingId) {
@@ -288,24 +285,18 @@ function ContributePage() {
         setBusy(false);
         return;
       }
-      const updateArgs = {
-        p_id: record.id,
-        p_token: record.edit_token,
-        p_text: text.trim() || null,
-        p_link: link.trim() || null,
-        p_media: mediaPath,
-        p_visibility: active === "tree" ? visibility : "public",
-      } as unknown as {
-        p_id: string;
-        p_token: string;
-        p_text: string;
-        p_link: string;
-        p_media: string;
-        p_visibility: string;
-      };
-      const { data, error } = await supabase.rpc("update_own_contribution", updateArgs);
+      const result = await updateOwnContribution({
+        data: {
+          id: record.id,
+          token: record.edit_token,
+          textContent: text.trim() || null,
+          externalLink: link.trim() || null,
+          mediaUrl: mediaPath,
+          visibility: active === "tree" ? visibility : "public",
+        },
+      }).catch(() => null);
       setBusy(false);
-      if (error || !data) {
+      if (!result?.ok) {
         toast.error("That can't be changed any more.");
         return;
       }
@@ -322,6 +313,7 @@ function ContributePage() {
       );
       setMine(next);
       writeMine(site.id, next);
+      setFile(null);
       setSubmitCount((c) => c + 1);
       setEditingId(null);
       setDone(true);
@@ -331,24 +323,32 @@ function ContributePage() {
 
     const editToken = crypto.randomUUID();
     const newId = crypto.randomUUID();
-    /* No select() back: pending rows aren't readable by guests, so we mint the id here. */
-    const { error } = await supabase
-      .from("contributions")
-      .insert({
-        id: newId,
-        site_id: site.id,
-        module_type: active,
-        author_name: name.trim() || "Anonymous",
-        text_content: text.trim() || null,
-        media_url: mediaPath,
-        external_link: link.trim() || null,
-        status: "pending",
-        ornament_key: active === "tree" ? ornament : null,
-        visibility: active === "tree" ? visibility : "public",
-        edit_token: editToken,
+    /* Pending rows aren't readable by guests, so the id is minted here. */
+    let failed = false;
+    if (active === "countdown" || active === "calendar") {
+      setBusy(false);
+      return;
+    }
+    try {
+      await submitContribution({
+        data: {
+          id: newId,
+          editToken,
+          siteId: site.id,
+          moduleType: active,
+          authorName: name.trim() || "Anonymous",
+          textContent: text.trim() || null,
+          mediaUrl: mediaPath,
+          externalLink: link.trim() || null,
+          ornamentKey: active === "tree" ? ornament : null,
+          visibility: active === "tree" ? visibility : "public",
+        },
       });
+    } catch {
+      failed = true;
+    }
     setBusy(false);
-    if (error) {
+    if (failed) {
       toast.error("Something went wrong. Please try again.");
       return;
     }
@@ -367,6 +367,7 @@ function ContributePage() {
     const next = [...mine, record];
     setMine(next);
     writeMine(site.id, next);
+    setFile(null);
     void queryClient.invalidateQueries({ queryKey: ["sealed", site.id] });
     setSubmitCount((count) => count + 1);
     setDone(true);

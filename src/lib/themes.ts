@@ -1,4 +1,4 @@
-import { supabase } from "@/integrations/supabase/client";
+import { getThemeById, listThemes } from "@/lib/api";
 
 export type Palette = {
   background: string;
@@ -49,24 +49,19 @@ export function normalizeTheme(row: Record<string, unknown>): Theme {
   };
 }
 
-/** Preview images live in a private bucket, so storage paths need a signed URL. */
+/** Preview images are stored as full public URLs. */
 export async function resolvePreviewUrl(value: string | null): Promise<string | null> {
   if (!value) return null;
-  if (value.startsWith("http://") || value.startsWith("https://")) return value;
-  const { data } = await supabase.storage.from(THEME_BUCKET).createSignedUrl(value, 60 * 60);
-  return data?.signedUrl ?? null;
+  if (value.startsWith("http://") || value.startsWith("https://") || value.startsWith("/")) return value;
+  return null;
 }
 
 export async function fetchThemes(includeDrafts = false): Promise<Theme[]> {
-  let query = supabase.from("themes").select("*").order("created_at", { ascending: true });
-  if (!includeDrafts) query = query.eq("status", "published");
-  const { data, error } = await query;
-  if (error) throw error;
-  return (data ?? []).map((row) => normalizeTheme(row as Record<string, unknown>));
+  const data = await listThemes({ data: { includeDrafts } });
+  return data.map((row) => normalizeTheme(row as Record<string, unknown>));
 }
 
 export async function fetchThemeById(id: string): Promise<Theme | null> {
-  const { data, error } = await supabase.from("themes").select("*").eq("id", id).maybeSingle();
-  if (error) throw error;
+  const data = await getThemeById({ data: { id } });
   return data ? normalizeTheme(data as Record<string, unknown>) : null;
 }

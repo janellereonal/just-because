@@ -1,4 +1,4 @@
-import { supabase } from "@/integrations/supabase/client";
+import { listPalettes } from "@/lib/api";
 import type { Palette } from "@/lib/themes";
 
 export type PaletteRecord = Palette & {
@@ -26,12 +26,8 @@ export function normalizePaletteRow(row: Record<string, unknown>): PaletteRecord
 }
 
 export async function fetchPalettes(): Promise<PaletteRecord[]> {
-  const { data, error } = await supabase
-    .from("palettes")
-    .select("*")
-    .order("sort_order", { ascending: true });
-  if (error) throw error;
-  return (data ?? []).map((row) => normalizePaletteRow(row as Record<string, unknown>));
+  const data = await listPalettes();
+  return data.map((row) => normalizePaletteRow(row as Record<string, unknown>));
 }
 
 function toRgb(hex: string): [number, number, number] {

@@ -4,8 +4,9 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { SiteHeader } from "@/components/SiteHeader";
 import { usePreviewUrl } from "@/components/ThemeCard";
-import { fetchThemes, THEME_BUCKET, type Theme } from "@/lib/themes";
-import { supabase } from "@/integrations/supabase/client";
+import { fetchThemes, type Theme } from "@/lib/themes";
+import { setThemePreview, setThemeStatus } from "@/lib/api";
+import { uploadFile } from "@/lib/upload";
 import { useAuth } from "@/hooks/useAuth";
 
 export const Route = createFileRoute("/admin")({
@@ -35,8 +36,7 @@ function AdminPage() {
   const toggleStatus = useMutation({
     mutationFn: async (theme: Theme) => {
       const next = theme.status === "published" ? "draft" : "published";
-      const { error } = await supabase.from("themes").update({ status: next }).eq("id", theme.id);
-      if (error) throw error;
+      await setThemeStatus({ data: { id: theme.id, status: next } });
       return next;
     },
     onSuccess: (next) => {
@@ -106,24 +106,22 @@ function AdminThemeRow({ theme, onToggle }: { theme: Theme; onToggle: () => void
 
   async function handleUpload(file: File) {
     setUploading(true);
-    const path = `${theme.id}/${Date.now()}-${file.name.replace(/[^\w.-]/g, "_")}`;
-    const { error: uploadError } = await supabase.storage
-      .from(THEME_BUCKET)
-      .upload(path, file, { upsert: true });
-    if (uploadError) {
+    let url: string;
+    try {
+      url = await uploadFile(file, "theme", theme.id);
+    } catch {
       setUploading(false);
       toast.error("Upload failed. Images must be under 10MB.");
       return;
     }
-    const { error } = await supabase
-      .from("themes")
-      .update({ preview_image_url: path })
-      .eq("id", theme.id);
-    setUploading(false);
-    if (error) {
+    try {
+      await setThemePreview({ data: { id: theme.id, url } });
+    } catch {
+      setUploading(false);
       toast.error("Saved the image but couldn't link it to the theme.");
       return;
     }
+    setUploading(false);
     queryClient.invalidateQueries({ queryKey: ["themes"] });
     toast.success("Preview image updated.");
   }

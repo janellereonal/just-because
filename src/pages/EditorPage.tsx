@@ -5,12 +5,18 @@ import { toast } from "sonner";
 import { SiteHeader } from "@/components/SiteHeader";
 import { GiftSiteView } from "@/components/GiftSiteView";
 import { ComicIssueView } from "@/components/ComicIssueView";
-import { supabase } from "@/integrations/supabase/client";
+import {
+  deleteCalendarEntry,
+  setContributionStatus,
+  setModuleEnabled,
+  updateSite,
+  upsertCalendarEntry,
+} from "@/lib/api";
+import { uploadFile } from "@/lib/upload";
 import { GiftIntro } from "@/components/GiftIntro";
 import { introStyleForTheme } from "@/lib/intro";
 import {
   BACKGROUND_STYLES,
-  CONTRIBUTION_BUCKET,
   FONT_PAIRINGS,
   MODULES,
   backgroundCss,
@@ -316,25 +322,32 @@ function SiteDashboard() {
 
   async function persist(next: GiftSite, quiet: boolean) {
     setSaving(true);
-    const { error } = await supabase
-      .from("gift_sites")
-      .update({
-        title: next.title,
-        custom_text: next.custom_text,
-        custom_colors: next.custom_colors,
-        font_choice: next.font_choice,
-        countdown_date: next.countdown_date,
-        calendar_locked: next.calendar_locked,
-        intro_text: next.intro_text,
-        background_style: next.background_style,
-        tree_reveal_date: next.tree_reveal_date,
-        palette_id: next.palette_id,
-        share_notes: next.share_notes,
-        status: next.status,
-        format: next.format,
-        format_settings: next.format_settings,
-      })
-      .eq("id", next.id);
+    let error: unknown = null;
+    try {
+      await updateSite({
+        data: {
+          id: next.id,
+          patch: {
+            title: next.title.trim() || "Untitled gift",
+            custom_text: next.custom_text as Record<string, string>,
+            custom_colors: next.custom_colors,
+            font_choice: next.font_choice,
+            countdown_date: next.countdown_date || null,
+            calendar_locked: next.calendar_locked,
+            intro_text: next.intro_text,
+            background_style: next.background_style,
+            tree_reveal_date: next.tree_reveal_date || null,
+            palette_id: next.palette_id,
+            share_notes: next.share_notes,
+            status: next.status,
+            format: next.format,
+            format_settings: next.format_settings as unknown as Record<string, never>,
+          },
+        },
+      });
+    } catch (e) {
+      error = e;
+    }
     setSaving(false);
     setDirty(false);
     if (error) {
@@ -433,11 +446,10 @@ function SiteDashboard() {
   }
 
   async function setStatus(contributionId: string, status: Contribution["status"]) {
-    const { error } = await supabase
-      .from("contributions")
-      .update({ status })
-      .eq("id", contributionId);
-    if (error) {
+    const ok = await setContributionStatus({ data: { ids: [contributionId], status } })
+      .then(() => true)
+      .catch(() => false);
+    if (!ok) {
       toast.error("Couldn't update that contribution.");
       return;
     }
@@ -445,14 +457,9 @@ function SiteDashboard() {
   }
 
   async function toggleModule(moduleType: string, enabled: boolean) {
-    const existing = modules.find((m) => m.module_type === moduleType);
-    if (existing) {
-      await supabase.from("site_modules").update({ enabled }).eq("id", existing.id);
-    } else {
-      await supabase
-        .from("site_modules")
-        .insert({ site_id: id, module_type: moduleType, enabled, price: 0 });
-    }
+    await setModuleEnabled({
+      data: { siteId: id, moduleType: moduleType as ModuleType, enabled },
+    }).catch(() => toast.error("Couldn't update that section."));
     queryClient.invalidateQueries({ queryKey: ["modules", id] });
   }
 
@@ -1439,30 +1446,28 @@ function CalendarEditor({
     setBusy(true);
     let mediaPath: string | null = null;
     if (type === "photo" && file) {
-      const path = `${siteId}/calendar-${Date.now()}-${file.name.replace(/[^a-zA-Z0-9.]+/g, "-")}`;
-      const { error: uploadError } = await supabase.storage
-        .from(CONTRIBUTION_BUCKET)
-        .upload(path, file);
-      if (uploadError) {
+      try {
+        mediaPath = await uploadFile(file, "calendar", siteId);
+      } catch {
         setBusy(false);
         toast.error("That photo couldn't be uploaded.");
         return;
       }
-      mediaPath = path;
     }
-    const { error } = await supabase.from("calendar_entries").upsert(
-      {
-        site_id: siteId,
-        entry_date: date,
+    const ok = await upsertCalendarEntry({
+      data: {
+        siteId,
+        entryDate: date,
         type,
-        text_content: text.trim() || null,
-        media_url: mediaPath,
-        external_link: link.trim() || null,
+        textContent: text.trim() || null,
+        mediaUrl: mediaPath,
+        externalLink: link.trim() || null,
       },
-      { onConflict: "site_id,entry_date" },
-    );
+    })
+      .then(() => true)
+      .catch(() => false);
     setBusy(false);
-    if (error) {
+    if (!ok) {
       toast.error("Couldn't save that surprise.");
       return;
     }
@@ -1475,8 +1480,10 @@ function CalendarEditor({
   }
 
   async function remove(entryId: string) {
-    const { error } = await supabase.from("calendar_entries").delete().eq("id", entryId);
-    if (error) {
+    const ok = await deleteCalendarEntry({ data: { id: entryId } })
+      .then(() => true)
+      .catch(() => false);
+    if (!ok) {
       toast.error("Couldn't remove that one.");
       return;
     }

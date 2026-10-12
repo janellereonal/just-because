@@ -1,4 +1,13 @@
-import { supabase } from "@/integrations/supabase/client";
+import {
+  getSiteById,
+  getSiteBySlug,
+  getThemeById,
+  listCalendarEntries,
+  listContributions,
+  listModules,
+  listPublicTreeOrnaments,
+  listSealedContributions,
+} from "@/lib/api";
 import type { Palette, Theme } from "@/lib/themes";
 import { normalizeTheme } from "@/lib/themes";
 import { normalizeComicSettings, type ComicSettings, type GiftFormat } from "@/lib/comic";
@@ -225,13 +234,8 @@ export type ViewContribution = Contribution & { sealed?: boolean; mine?: boolean
 
 /** Name, section and position only — never other people's words, photos or audio. */
 export async function fetchSealedContributions(siteId: string): Promise<ViewContribution[]> {
-  const { data, error } = await supabase
-    .from("sealed_contributions")
-    .select("*")
-    .eq("site_id", siteId)
-    .order("created_at", { ascending: true });
-  if (error) throw error;
-  return (data ?? []).map((row) => ({
+  const data = await listSealedContributions({ data: { siteId } });
+  return data.map((row) => ({
     ...normalizeContribution({ ...(row as Record<string, unknown>), text_content: null }),
     sealed: true,
   }));
@@ -287,13 +291,8 @@ export function normalizeCalendarEntry(row: Record<string, unknown>): CalendarEn
 }
 
 export async function fetchCalendarEntries(siteId: string) {
-  const { data, error } = await supabase
-    .from("calendar_entries")
-    .select("*")
-    .eq("site_id", siteId)
-    .order("entry_date", { ascending: true });
-  if (error) throw error;
-  return (data ?? []).map((row) => normalizeCalendarEntry(row as Record<string, unknown>));
+  const data = await listCalendarEntries({ data: { siteId } });
+  return data.map((row) => normalizeCalendarEntry(row as Record<string, unknown>));
 }
 
 export function normalizeModule(row: Record<string, unknown>): SiteModule {
@@ -334,53 +333,33 @@ export const ORNAMENTS = [
 export type OrnamentKey = (typeof ORNAMENTS)[number][0];
 
 export async function fetchPublicTreeOrnaments(siteId: string) {
-  const { data, error } = await supabase
-    .from("public_tree_ornaments")
-    .select("*")
-    .eq("site_id", siteId)
-    .order("created_at", { ascending: true });
-  if (error) throw error;
-  return (data ?? []).map((row) => normalizeContribution({ ...row, module_type: "tree" }));
+  const data = await listPublicTreeOrnaments({ data: { siteId } });
+  return data.map((row) => normalizeContribution({ ...row, module_type: "tree" }));
 }
 
 export async function fetchSiteBySlug(slug: string) {
-  const { data, error } = await supabase
-    .from("gift_sites")
-    .select("*")
-    .eq("slug", slug)
-    .maybeSingle();
-  if (error) throw error;
+  const data = await getSiteBySlug({ data: { slug } });
   return data ? normalizeSite(data as Record<string, unknown>) : null;
 }
 
 export async function fetchSiteById(id: string) {
-  const { data, error } = await supabase.from("gift_sites").select("*").eq("id", id).maybeSingle();
-  if (error) throw error;
+  const data = await getSiteById({ data: { id } });
   return data ? normalizeSite(data as Record<string, unknown>) : null;
 }
 
 export async function fetchModules(siteId: string) {
-  const { data, error } = await supabase.from("site_modules").select("*").eq("site_id", siteId);
-  if (error) throw error;
-  return (data ?? []).map((row) => normalizeModule(row as Record<string, unknown>));
+  const data = await listModules({ data: { siteId } });
+  return data.map((row) => normalizeModule(row as Record<string, unknown>));
 }
 
 export async function fetchContributions(siteId: string, onlyApproved: boolean) {
-  let query = supabase
-    .from("contributions")
-    .select("*")
-    .eq("site_id", siteId)
-    .order("created_at", { ascending: true });
-  if (onlyApproved) query = query.eq("status", "approved");
-  const { data, error } = await query;
-  if (error) throw error;
-  return (data ?? []).map((row) => normalizeContribution(row as Record<string, unknown>));
+  const data = await listContributions({ data: { siteId, onlyApproved } });
+  return data.map((row) => normalizeContribution(row as Record<string, unknown>));
 }
 
 export async function fetchTheme(id: string | null): Promise<Theme | null> {
   if (!id) return null;
-  const { data, error } = await supabase.from("themes").select("*").eq("id", id).maybeSingle();
-  if (error) throw error;
+  const data = await getThemeById({ data: { id } });
   return data ? normalizeTheme(data as Record<string, unknown>) : null;
 }
 
@@ -419,11 +398,9 @@ export function toEmbedUrl(link: string): string | null {
   }
 }
 
+/** Media is stored as a full public URL (Vercel Blob), or a local-dev path. */
 export async function signedMediaUrl(path: string | null): Promise<string | null> {
   if (!path) return null;
-  if (path.startsWith("http")) return path;
-  const { data } = await supabase.storage
-    .from(CONTRIBUTION_BUCKET)
-    .createSignedUrl(path, 60 * 60 * 4);
-  return data?.signedUrl ?? null;
+  if (path.startsWith("http") || path.startsWith("/")) return path;
+  return null;
 }

@@ -15,11 +15,14 @@ import { Route as AdminRouteImport } from './routes/admin'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AuthenticatedCreateRouteImport } from './routes/_authenticated/create'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
+import { Route as ApiUploadRouteImport } from './routes/api/upload'
 import { Route as ContributeSlugRouteImport } from './routes/contribute.$slug'
 import { Route as GSlugRouteImport } from './routes/g.$slug'
 import { Route as ThemesIndexRouteImport } from './routes/themes.index'
 import { Route as ThemesIdRouteImport } from './routes/themes.$id'
 import { Route as AuthenticatedSitesIdRouteImport } from './routes/_authenticated/sites.$id'
+import { Route as ApiAuthSplatRouteImport } from './routes/api/auth/$'
+import { Route as ApiDevUploadsNameRouteImport } from './routes/api/dev-uploads.$name'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -50,6 +53,11 @@ const AuthenticatedDashboardRoute = AuthenticatedDashboardRouteImport.update({
   path: '/dashboard',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const ApiUploadRoute = ApiUploadRouteImport.update({
+  id: '/api/upload',
+  path: '/api/upload',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ContributeSlugRoute = ContributeSlugRouteImport.update({
   id: '/contribute/$slug',
   path: '/contribute/$slug',
@@ -75,6 +83,16 @@ const AuthenticatedSitesIdRoute = AuthenticatedSitesIdRouteImport.update({
   path: '/sites/$id',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const ApiAuthSplatRoute = ApiAuthSplatRouteImport.update({
+  id: '/api/auth/$',
+  path: '/api/auth/$',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiDevUploadsNameRoute = ApiDevUploadsNameRouteImport.update({
+  id: '/api/dev-uploads/$name',
+  path: '/api/dev-uploads/$name',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -82,11 +100,14 @@ export interface FileRoutesByFullPath {
   '/auth': typeof AuthRoute
   '/create': typeof AuthenticatedCreateRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
+  '/api/upload': typeof ApiUploadRoute
   '/contribute/$slug': typeof ContributeSlugRoute
   '/g/$slug': typeof GSlugRoute
   '/themes/$id': typeof ThemesIdRoute
   '/themes/': typeof ThemesIndexRoute
   '/sites/$id': typeof AuthenticatedSitesIdRoute
+  '/api/auth/$': typeof ApiAuthSplatRoute
+  '/api/dev-uploads/$name': typeof ApiDevUploadsNameRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -94,11 +115,14 @@ export interface FileRoutesByTo {
   '/auth': typeof AuthRoute
   '/create': typeof AuthenticatedCreateRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
+  '/api/upload': typeof ApiUploadRoute
   '/contribute/$slug': typeof ContributeSlugRoute
   '/g/$slug': typeof GSlugRoute
   '/themes/$id': typeof ThemesIdRoute
   '/themes': typeof ThemesIndexRoute
   '/sites/$id': typeof AuthenticatedSitesIdRoute
+  '/api/auth/$': typeof ApiAuthSplatRoute
+  '/api/dev-uploads/$name': typeof ApiDevUploadsNameRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -108,11 +132,14 @@ export interface FileRoutesById {
   '/auth': typeof AuthRoute
   '/_authenticated/create': typeof AuthenticatedCreateRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
+  '/api/upload': typeof ApiUploadRoute
   '/contribute/$slug': typeof ContributeSlugRoute
   '/g/$slug': typeof GSlugRoute
   '/themes/$id': typeof ThemesIdRoute
   '/themes/': typeof ThemesIndexRoute
   '/_authenticated/sites/$id': typeof AuthenticatedSitesIdRoute
+  '/api/auth/$': typeof ApiAuthSplatRoute
+  '/api/dev-uploads/$name': typeof ApiDevUploadsNameRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -122,11 +149,14 @@ export interface FileRouteTypes {
     | '/auth'
     | '/create'
     | '/dashboard'
+    | '/api/upload'
     | '/contribute/$slug'
     | '/g/$slug'
     | '/themes/$id'
     | '/themes/'
     | '/sites/$id'
+    | '/api/auth/$'
+    | '/api/dev-uploads/$name'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -134,11 +164,14 @@ export interface FileRouteTypes {
     | '/auth'
     | '/create'
     | '/dashboard'
+    | '/api/upload'
     | '/contribute/$slug'
     | '/g/$slug'
     | '/themes/$id'
     | '/themes'
     | '/sites/$id'
+    | '/api/auth/$'
+    | '/api/dev-uploads/$name'
   id:
     | '__root__'
     | '/'
@@ -147,11 +180,14 @@ export interface FileRouteTypes {
     | '/auth'
     | '/_authenticated/create'
     | '/_authenticated/dashboard'
+    | '/api/upload'
     | '/contribute/$slug'
     | '/g/$slug'
     | '/themes/$id'
     | '/themes/'
     | '/_authenticated/sites/$id'
+    | '/api/auth/$'
+    | '/api/dev-uploads/$name'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -159,10 +195,13 @@ export interface RootRouteChildren {
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
   AdminRoute: typeof AdminRoute
   AuthRoute: typeof AuthRoute
+  ApiUploadRoute: typeof ApiUploadRoute
   ContributeSlugRoute: typeof ContributeSlugRoute
   GSlugRoute: typeof GSlugRoute
   ThemesIdRoute: typeof ThemesIdRoute
   ThemesIndexRoute: typeof ThemesIndexRoute
+  ApiAuthSplatRoute: typeof ApiAuthSplatRoute
+  ApiDevUploadsNameRoute: typeof ApiDevUploadsNameRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -209,6 +248,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedDashboardRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/api/upload': {
+      id: '/api/upload'
+      path: '/api/upload'
+      fullPath: '/api/upload'
+      preLoaderRoute: typeof ApiUploadRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/contribute/$slug': {
       id: '/contribute/$slug'
       path: '/contribute/$slug'
@@ -244,6 +290,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedSitesIdRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/api/auth/$': {
+      id: '/api/auth/$'
+      path: '/api/auth/$'
+      fullPath: '/api/auth/$'
+      preLoaderRoute: typeof ApiAuthSplatRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/dev-uploads/$name': {
+      id: '/api/dev-uploads/$name'
+      path: '/api/dev-uploads/$name'
+      fullPath: '/api/dev-uploads/$name'
+      preLoaderRoute: typeof ApiDevUploadsNameRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -267,10 +327,13 @@ const rootRouteChildren: RootRouteChildren = {
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
   AdminRoute: AdminRoute,
   AuthRoute: AuthRoute,
+  ApiUploadRoute: ApiUploadRoute,
   ContributeSlugRoute: ContributeSlugRoute,
   GSlugRoute: GSlugRoute,
   ThemesIdRoute: ThemesIdRoute,
   ThemesIndexRoute: ThemesIndexRoute,
+  ApiAuthSplatRoute: ApiAuthSplatRoute,
+  ApiDevUploadsNameRoute: ApiDevUploadsNameRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

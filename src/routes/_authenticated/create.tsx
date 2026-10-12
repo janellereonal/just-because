@@ -3,12 +3,11 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { SiteHeader } from "@/components/SiteHeader";
-import { supabase } from "@/integrations/supabase/client";
+import { createSite } from "@/lib/api";
 import { fetchThemes } from "@/lib/themes";
 import { usePalettes, suggestedPalettes } from "@/hooks/usePalettes";
-import { MODULES, slugify, type ModuleType } from "@/lib/gift";
+import { MODULES, type ModuleType } from "@/lib/gift";
 import { ModuleExample } from "@/components/ModuleExample";
-import { ensureProfile } from "@/lib/profile";
 import { FormatPicker } from "@/components/FormatPicker";
 import type { GiftFormat } from "@/lib/comic";
 
@@ -72,52 +71,33 @@ function CreatePage() {
       return;
     }
     setBusy(true);
-    const { data: userData } = await supabase.auth.getUser();
-    const creatorId = userData.user?.id;
-    if (!creatorId) {
-      setBusy(false);
-      toast.error("Your session expired. Please sign in again.");
-      return;
-    }
-    await ensureProfile(userData.user!);
-
-    const { data, error } = await supabase
-      .from("gift_sites")
-      .insert({
-        creator_id: creatorId,
-        title,
-        theme_id: themeId ?? themeFromUrl ?? null,
-        format,
-        slug: slugify(title),
-        custom_text: { heading: title },
-        palette_id: defaultPalette?.id ?? null,
-        custom_colors: defaultPalette
-          ? {
-              background: defaultPalette.background,
-              primary: defaultPalette.primary,
-              accent: defaultPalette.accent,
-            }
-          : {},
-        tree_reveal_date: activeTheme?.name.toLowerCase().includes("christmas")
-          ? `${new Date().getFullYear()}-12-25`
-          : null,
-      })
-      .select("id")
-      .single();
-
-    if (error || !data) {
+    let data: { id: string };
+    try {
+      data = await createSite({
+        data: {
+          title: title.trim(),
+          themeId: themeId ?? themeFromUrl ?? null,
+          format,
+          paletteId: defaultPalette?.id ?? null,
+          customColors: defaultPalette
+            ? {
+                background: defaultPalette.background,
+                primary: defaultPalette.primary,
+                accent: defaultPalette.accent,
+              }
+            : {},
+          treeRevealDate: activeTheme?.name.toLowerCase().includes("christmas")
+            ? `${new Date().getFullYear()}-12-25`
+            : null,
+          modules: selected,
+        },
+      });
+    } catch {
       setBusy(false);
       toast.error("Couldn't create that gift site. Please try again.");
       return;
     }
-
-    const { error: moduleError } = await supabase
-      .from("site_modules")
-      .insert(selected.map((type) => ({ site_id: data.id, module_type: type, price: 0 })));
     setBusy(false);
-    if (moduleError) {
-      toast.error("Created the site, but some sections didn't save.");
-    }
     navigate({ to: "/sites/$id", params: { id: data.id } });
   }
 

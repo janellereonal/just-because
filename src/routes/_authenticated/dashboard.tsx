@@ -1,7 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { SiteHeader } from "@/components/SiteHeader";
-import { supabase } from "@/integrations/supabase/client";
+import { listMySites } from "@/lib/api";
 import { normalizeSite } from "@/lib/gift";
 import Bo from "@/components/Bo";
 
@@ -24,12 +24,8 @@ function Dashboard() {
   const { data: sites = [], isLoading } = useQuery({
     queryKey: ["my-sites"],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("gift_sites")
-        .select("*")
-        .order("created_at", { ascending: false });
-      if (error) throw error;
-      return (data ?? []).map((row) => normalizeSite(row as Record<string, unknown>));
+      const data = await listMySites();
+      return data.map((row) => normalizeSite(row as Record<string, unknown>));
     },
   });
 

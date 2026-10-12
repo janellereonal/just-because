@@ -1,8 +1,9 @@
 import { useState } from "react";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { toast } from "sonner";
-import { lovable } from "@/integrations/lovable/index";
-import { supabase } from "@/integrations/supabase/client";
+import { useQuery } from "@tanstack/react-query";
+import { authClient } from "@/lib/auth-client";
+import { getAuthOptions } from "@/lib/api";
 import { SiteHeader } from "@/components/SiteHeader";
 
 export const Route = createFileRoute("/auth")({
@@ -28,44 +29,46 @@ function AuthPage() {
   const [mode, setMode] = useState<"signin" | "signup">("signin");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [name, setName] = useState("");
   const [busy, setBusy] = useState(false);
+  const { data: options } = useQuery({ queryKey: ["auth-options"], queryFn: () => getAuthOptions() });
 
   async function handleGoogle() {
     setBusy(true);
-    const result = await lovable.auth.signInWithOAuth("google", {
-      redirect_uri: window.location.origin,
+    const { error } = await authClient.signIn.social({
+      provider: "google",
+      callbackURL: "/themes",
+      errorCallbackURL: "/auth",
     });
-    if (result.error) {
+    if (error) {
       setBusy(false);
       toast.error("Google sign-in didn't work. Please try again.");
-      return;
     }
-    if (result.redirected) return;
-    navigate({ to: "/themes" });
   }
 
   async function handleEmail(e: React.FormEvent) {
     e.preventDefault();
     setBusy(true);
     if (mode === "signup") {
-      const { error } = await supabase.auth.signUp({
+      const { error } = await authClient.signUp.email({
         email,
         password,
-        options: { emailRedirectTo: window.location.origin },
+        name: name.trim() || email.split("@")[0]!,
       });
       setBusy(false);
       if (error) {
-        toast.error(error.message);
+        toast.error(error.message ?? "Couldn't create that account.");
         return;
       }
-      toast.success("Check your inbox to confirm your email, then sign in.");
-      setMode("signin");
+      navigate({ to: "/themes" });
       return;
     }
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
+    const { error } = await authClient.signIn.email({ email, password });
     setBusy(false);
     if (error) {
-      toast.error(error.message);
+      toast.error(
+        error.status === 401 ? "That email and password don't match." : (error.message ?? "Couldn't sign in."),
+      );
       return;
     }
     navigate({ to: "/themes" });
@@ -83,19 +86,35 @@ function AuthPage() {
             Sign in to create gift sites, collect contributions and publish.
           </p>
 
-          <button
-            onClick={handleGoogle}
-            disabled={busy}
-            className="mt-6 w-full rounded-full bg-ink px-5 py-3 text-sm font-medium text-cream transition-colors hover:bg-ink/90 disabled:opacity-60"
-          >
-            Continue with Google
-          </button>
+          {options?.google ? (
+            <>
+              <button
+                onClick={handleGoogle}
+                disabled={busy}
+                className="mt-6 w-full rounded-full bg-ink px-5 py-3 text-sm font-medium text-cream transition-colors hover:bg-ink/90 disabled:opacity-60"
+              >
+                Continue with Google
+              </button>
 
-          <div className="my-5 flex items-center gap-3 text-[11px] font-mono tracking-[0.14em] text-muted uppercase">
-            <span className="h-px flex-1 bg-line" /> or <span className="h-px flex-1 bg-line" />
-          </div>
+              <div className="my-5 flex items-center gap-3 text-[11px] font-mono tracking-[0.14em] text-muted uppercase">
+                <span className="h-px flex-1 bg-line" /> or <span className="h-px flex-1 bg-line" />
+              </div>
+            </>
+          ) : (
+            <div className="mt-6" />
+          )}
 
           <form onSubmit={handleEmail} className="space-y-3">
+            {mode === "signup" ? (
+              <input
+                type="text"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                placeholder="Your name"
+                autoComplete="name"
+                className="w-full rounded-xl border border-line bg-cream px-4 py-3 text-sm outline-none focus:border-accent"
+              />
+            ) : null}
             <input
               type="email"
               required
