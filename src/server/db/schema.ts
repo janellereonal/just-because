@@ -136,10 +136,58 @@ export const giftSites = pgTable(
     treeRevealDate: date("tree_reveal_date"),
     /** When the creator was last emailed about new notes (throttles alerts). */
     lastNotifiedAt: timestamp("last_notified_at", { withTimezone: true }),
+    /** Paid plan: sweet | celebration | keepsake, or legacy for gifts from before payments. Null until paid. */
+    tier: text("tier"),
+    /** First time the gift went live (after payment). */
+    publishedAt: timestamp("published_at", { withTimezone: true }),
+    /** When the gift stops being open. Null = never (legacy). */
+    expiresAt: timestamp("expires_at", { withTimezone: true }),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   },
   (t) => [index("gift_sites_creator_idx").on(t.creatorId)],
 );
+
+/* ------------------------------------------------------------------ */
+/* Payments                                                           */
+/* ------------------------------------------------------------------ */
+
+export const orders = pgTable(
+  "orders",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    siteId: uuid("site_id")
+      .notNull()
+      .references(() => giftSites.id, { onDelete: "cascade" }),
+    ownerId: text("owner_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    /** publish = first payment, upgrade = paying the difference to a higher tier. */
+    kind: text("kind").notNull().default("publish"),
+    tier: text("tier").notNull(),
+    /** For upgrades: the tier the gift was on. */
+    fromTier: text("from_tier"),
+    /** Charged amount in centavos, computed on the server. */
+    amount: integer("amount").notNull(),
+    currency: text("currency").notNull().default("PHP"),
+    promoApplied: boolean("promo_applied").notNull().default(false),
+    /** pending | paid | failed | expired */
+    status: text("status").notNull().default("pending"),
+    provider: text("provider").notNull().default("paymongo"),
+    providerCheckoutId: text("provider_checkout_id").unique(),
+    providerPaymentId: text("provider_payment_id"),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [index("orders_site_idx").on(t.siteId)],
+);
+
+/** Webhook event ids we've already handled, so retries are ignored. */
+export const webhookEvents = pgTable("webhook_events", {
+  id: text("id").primaryKey(),
+  provider: text("provider").notNull(),
+  type: text("type").notNull(),
+  receivedAt: timestamp("received_at", { withTimezone: true }).notNull().defaultNow(),
+});
 
 export const siteModules = pgTable(
   "site_modules",

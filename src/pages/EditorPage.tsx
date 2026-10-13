@@ -51,6 +51,14 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import {
+  LinkNameDialog,
+  PlanBanner,
+  PlanPickerDialog,
+  canRenameLink,
+  planSummary,
+  useBilling,
+} from "@/components/PlanControls";
+import {
   CalendarDays,
   CaseSensitive,
   Check,
@@ -156,6 +164,8 @@ function SiteDashboard() {
   const [savedAt, setSavedAt] = useState<number | null>(null);
   const [introPreview, setIntroPreview] = useState(false);
   const [publishSuccess, setPublishSuccess] = useState(false);
+  const [planPicker, setPlanPicker] = useState<"publish" | "upgrade" | null>(null);
+  const [linkNameOpen, setLinkNameOpen] = useState(false);
   // The rail remembers the section this gift was last edited in.
   const [section, setSection] = useState<SectionKey>("words");
   const [panelOpen, setPanelOpen] = useState(true);
@@ -198,6 +208,9 @@ function SiteDashboard() {
     queryKey: ["calendar", id],
     queryFn: () => fetchCalendarEntries(id),
   });
+  const { data: billing } = useBilling(id);
+  /** Paid (or legacy) and not ended: the gift can go live without paying again. */
+  const hasPlan = !!billing?.tier && !billing.ended;
 
   useEffect(() => {
     if (site && !draft) setDraft(site);
@@ -320,7 +333,8 @@ function SiteDashboard() {
     return () => window.removeEventListener("keydown", close);
   }, [fullPreview]);
 
-  async function persist(next: GiftSite, quiet: boolean) {
+  /** Saves the gift. `status` is only sent for an explicit publish/unpublish, so autosave never changes it. */
+  async function persist(next: GiftSite, quiet: boolean, withStatus = false) {
     setSaving(true);
     let error: unknown = null;
     try {
@@ -339,7 +353,7 @@ function SiteDashboard() {
             tree_reveal_date: next.tree_reveal_date || null,
             palette_id: next.palette_id,
             share_notes: next.share_notes,
-            status: next.status,
+            ...(withStatus ? { status: next.status } : {}),
             format: next.format,
             format_settings: next.format_settings as unknown as Record<string, never>,
           },
@@ -351,12 +365,14 @@ function SiteDashboard() {
     setSaving(false);
     setDirty(false);
     if (error) {
-      toast.error("Couldn't save your changes.");
-      return;
+      const msg = error instanceof Error && error.message.length < 160 ? error.message : "";
+      toast.error(msg || "Couldn't save your changes.");
+      return false;
     }
     setSavedAt(Date.now());
     queryClient.invalidateQueries({ queryKey: ["site", id] });
     if (!quiet && next.status === "published") setPublishSuccess(true);
+    return true;
   }
 
   if (siteError) {
@@ -416,20 +432,25 @@ function SiteDashboard() {
     patchComic({ panel_order: current });
   }
 
+  /** Already paid: open it again. Not paid yet: pick a plan first (it goes live after payment). */
   async function publish() {
     if (!draft) return;
+    if (!hasPlan) {
+      setPlanPicker("publish");
+      return;
+    }
     const next = { ...draft, status: "published" as const };
-    setDraft(next);
-    await persist(next, false);
-    setPublishSuccess(true);
+    const ok = await persist(next, false, true);
+    if (ok) setDraft(next);
   }
 
   async function unpublish() {
     if (!draft) return;
     const next = { ...draft, status: "draft" as const };
+    const ok = await persist(next, true, true);
+    if (!ok) return;
     setDraft(next);
-    await persist(next, true);
-    toast.success("Gift unpublished.");
+    toast.success("Gift unpublished. Your plan stays, so you can open it again any time.");
   }
 
   function copyContributeLink() {
@@ -1187,9 +1208,25 @@ function SiteDashboard() {
                   </a>
                 </DropdownMenuItem>
                 <DropdownMenuItem onSelect={copyLiveLink}>Copy gift link</DropdownMenuItem>
+                {canRenameLink(billing?.tier ?? null) ? (
+                  <DropdownMenuItem onSelect={() => setLinkNameOpen(true)}>Change link name</DropdownMenuItem>
+                ) : null}
+                {billing && billing.upgrades.length > 0 && !billing.ended ? (
+                  <DropdownMenuItem onSelect={() => setPlanPicker("upgrade")}>Upgrade plan</DropdownMenuItem>
+                ) : null}
                 <DropdownMenuItem onSelect={() => void unpublish()}>Unpublish</DropdownMenuItem>
+                {planSummary(billing) ? (
+                  <p className="px-2 pt-1.5 pb-1 font-mono text-[10px] tracking-[0.08em] text-muted uppercase">
+                    {planSummary(billing)}
+                  </p>
+                ) : null}
               </DropdownMenuContent>
             </DropdownMenu>
+          ) : !hasPlan ? (
+            <Button className="h-10 rounded-full" disabled={saving || !billing} onClick={() => void publish()}>
+              <Gift />
+              Wrap it up
+            </Button>
           ) : (
             <Popover>
               <PopoverTrigger asChild>
@@ -1203,7 +1240,8 @@ function SiteDashboard() {
                   Ready to send this to {draft.custom_text.recipient_name || "them"}?
                 </p>
                 <p className="text-xs text-muted">
-                  Friends can still add notes, and you can unpublish any time.
+                  It's already paid for ({planSummary(billing)}). Friends can still add notes, and you
+                  can unpublish any time.
                 </p>
                 <Button className="w-full" onClick={() => void publish()} disabled={saving}>
                   Yes, wrap it up
@@ -1214,6 +1252,22 @@ function SiteDashboard() {
         </div>
 
       </header>
+      <PlanBanner billing={billing} onUpgrade={() => setPlanPicker("upgrade")} />
+      <PlanPickerDialog
+        siteId={id}
+        recipient={draft.custom_text.recipient_name || "them"}
+        mode={planPicker ?? "publish"}
+        open={planPicker !== null}
+        onOpenChange={(open) => !open && setPlanPicker(null)}
+      />
+      <LinkNameDialog
+        key={site.slug}
+        siteId={id}
+        slug={site.slug}
+        open={linkNameOpen}
+        onOpenChange={setLinkNameOpen}
+        onSaved={(slug) => setDraft((prev) => (prev ? { ...prev, slug } : prev))}
+      />
 
       {/* Desktop: icon rail + flyout panel + canvas */}
       <div className="flex min-h-0 flex-1">

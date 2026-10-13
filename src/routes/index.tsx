@@ -6,6 +6,7 @@ import { fetchThemes } from "@/lib/themes";
 import heroScrapbook from "@/assets/hero-scrapbook.jpg";
 import heroPolaroid from "@/assets/hero-polaroid.jpg";
 import Bo from "@/components/Bo";
+import { PricingCards } from "@/components/PricingCards";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -132,6 +133,20 @@ function Index() {
             <ThemeCard key={theme.id} theme={theme} tiltRight={i % 2 === 1} />
           ))}
         </div>
+      </section>
+
+      <section id="pricing" className="mx-auto max-w-6xl scroll-mt-20 px-5 py-14">
+        <div className="mb-8 max-w-2xl">
+          <p className="font-mono text-[11px] tracking-[0.18em] text-accent uppercase">(b) Pricing</p>
+          <h2 className="mt-2 font-display text-3xl font-medium tracking-tight text-balance sm:text-4xl">
+            Free to make. Pay once when it's ready to open.
+          </h2>
+          <p className="mt-3 text-muted text-pretty">
+            Setting up the gift and collecting notes from friends costs nothing. You pick a plan when
+            you wrap it up and send the link.
+          </p>
+        </div>
+        <PricingCards />
       </section>
 
       <footer className="mt-6 border-t border-line/70">

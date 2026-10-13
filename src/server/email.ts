@@ -4,6 +4,7 @@
  */
 
 export function siteUrl() {
+  if (process.env["APP_BASE_URL"]) return process.env["APP_BASE_URL"].replace(/\/$/, "");
   if (process.env["BETTER_AUTH_URL"]) return process.env["BETTER_AUTH_URL"].replace(/\/$/, "");
   if (process.env["VERCEL_PROJECT_PRODUCTION_URL"])
     return `https://${process.env["VERCEL_PROJECT_PRODUCTION_URL"]}`;

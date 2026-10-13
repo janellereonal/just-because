@@ -19,7 +19,12 @@ import {
   fetchTheme,
   fetchPublicTreeOrnaments,
   resolvePalette,
+  isGiftEnded,
+  isGiftOpen,
 } from "@/lib/gift";
+import { getMe } from "@/lib/api";
+import Bo from "@/components/Bo";
+import { toast } from "sonner";
 import { clearIntroSkip, hasSkippedIntro, rememberIntroSkip } from "@/lib/introSkip";
 
 
@@ -32,6 +37,7 @@ function PublishedPage() {
     queryKey: ["site-slug", slug],
     queryFn: () => fetchSiteBySlug(slug),
   });
+  const { data: me, isFetched: meReady } = useQuery({ queryKey: ["me"], queryFn: () => getMe() });
   const { data: theme = null, isFetched: themeReady } = useQuery({
     queryKey: ["theme", site?.theme_id],
     queryFn: () => fetchTheme(site?.theme_id ?? null),
@@ -65,7 +71,7 @@ function PublishedPage() {
     setSkipChecked(true);
   }, [site?.id]);
 
-  if (isLoading || (!!site && (!themeReady || !skipChecked))) {
+  if (isLoading || !meReady || (!!site && (!themeReady || !skipChecked))) {
     return <PageLoading label="Opening your gift…" />;
   }
   if (error) {
@@ -85,15 +91,22 @@ function PublishedPage() {
       />
     );
   }
-  if (site.status !== "published") {
+  const isOwner = !!me && (me.id === site.creator_id || me.isAdmin);
+  if (isGiftEnded(site) && site.status === "published") {
+    return <GiftEndedPage isOwner={isOwner} siteId={site.id} />;
+  }
+  if (!isGiftOpen(site) && !isOwner) {
     return (
       <PageNotFound
-        title="This gift isn't live yet"
-        message="Check back once the organiser publishes it."
+        title="This gift isn't open yet"
+        message="The person putting it together hasn't sent it yet. Check back once they do."
+        actionLabel="What's Just Because?"
+        actionTo="/"
         showHeader={false}
       />
     );
   }
+  const previewing = !isGiftOpen(site);
 
   const palette = resolvePalette(theme, site.custom_colors);
   const fonts = FONT_PAIRINGS[site.font_choice] ?? FONT_PAIRINGS.romantic;
@@ -105,6 +118,14 @@ function PublishedPage() {
 
   return (
     <>
+      {previewing ? (
+        <div className="fixed inset-x-0 top-0 z-[60] flex items-center justify-center gap-3 bg-ink px-4 py-2 text-center text-xs text-cream">
+          <span>Preview. Only you can see this until the gift is sent.</span>
+          <a href={`/sites/${site.id}`} className="underline underline-offset-2">
+            Back to the editor
+          </a>
+        </div>
+      ) : null}
       {!opened && site.format !== "comic" ? (
         <Suspense fallback={<PageLoading label="Opening your gift…" />}>
         <GiftIntro
@@ -144,6 +165,41 @@ function PublishedPage() {
         />
       )}
     </>
+  );
+}
+
+/** A gift whose plan ran out. The link still lands somewhere kind. */
+function GiftEndedPage({ isOwner, siteId }: { isOwner: boolean; siteId: string }) {
+  return (
+    <div className="grid min-h-screen place-items-center bg-paper px-6 text-center text-ink">
+      <div className="max-w-md">
+        <Bo pose="idle" size={150} title="Bo" />
+        <h1 className="mt-4 font-display text-3xl font-medium tracking-tight">This gift has ended</h1>
+        <p className="mt-2 text-muted text-pretty">
+          {isOwner
+            ? "Your plan's time is up, so the link now shows this page. Everything friends added is still saved."
+            : "It was open for a while, and now it's wrapped up for good. Thanks for stopping by."}
+        </p>
+        {isOwner ? (
+          <div className="mt-6 flex flex-wrap justify-center gap-3">
+            <button
+              type="button"
+              onClick={() => toast("Extending a gift is coming soon.")}
+              className="rounded-full bg-accent px-6 py-3 text-sm font-medium text-cream"
+            >
+              Extend this gift
+            </button>
+            <a href={`/sites/${siteId}`} className="rounded-full border border-line px-6 py-3 text-sm font-medium">
+              Back to the editor
+            </a>
+          </div>
+        ) : (
+          <a href="/" className="mt-6 inline-block text-sm text-accent underline underline-offset-2">
+            Make a gift of your own
+          </a>
+        )}
+      </div>
+    </div>
   );
 }
 

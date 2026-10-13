@@ -201,8 +201,21 @@ export type GiftSite = {
   intro_text: string | null;
   background_style: BackgroundStyle;
   tree_reveal_date: string | null;
+  /** sweet | celebration | keepsake | legacy, or null until paid. */
+  tier: string | null;
+  published_at: string | null;
+  expires_at: string | null;
   created_at: string;
 };
+
+/** Paid (or legacy), published and not past its end date. */
+export function isGiftOpen(site: Pick<GiftSite, "status" | "tier" | "expires_at">): boolean {
+  return site.status === "published" && !!site.tier && !isGiftEnded(site);
+}
+
+export function isGiftEnded(site: Pick<GiftSite, "expires_at">): boolean {
+  return !!site.expires_at && new Date(site.expires_at).getTime() <= Date.now();
+}
 
 export type SiteModule = {
   id: string;
@@ -274,6 +287,9 @@ export function normalizeSite(row: Record<string, unknown>): GiftSite {
     intro_text: (row["intro_text"] as string | null) ?? null,
     background_style: ((row["background_style"] as BackgroundStyle) ?? "paper") as BackgroundStyle,
     tree_reveal_date: (row["tree_reveal_date"] as string | null) ?? null,
+    tier: (row["tier"] as string | null) ?? null,
+    published_at: (row["published_at"] as string | null) ?? null,
+    expires_at: (row["expires_at"] as string | null) ?? null,
     created_at: String(row["created_at"]),
   };
 }

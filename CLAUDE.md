@@ -52,6 +52,27 @@ NITRO_PRESET=node bun run build && node .output/server/index.mjs   # prod build 
 Locally, without `BLOB_READ_WRITE_TOKEN` uploads save to `.dev-uploads/`, and without
 `RESEND_API_KEY` emails print to the server log. See `.env.example` for all variables.
 
+## Payments (PayMongo, test mode)
+
+- Making, editing and collecting notes is free. Going live needs a paid plan.
+- **All prices, caps, formats, durations, payment methods, the USD display rate and the promo
+  live in `src/config/pricing.ts`.** Never hardcode a price anywhere else.
+- Flow: "Wrap it up" → tier picker → `startCheckout` (server computes the amount) → PayMongo
+  hosted checkout → back to `/checkout/$orderId`, which polls `getOrderStatus`.
+- Only the webhook (`src/routes/api/webhooks/paymongo.ts`) marks an order paid and publishes.
+  It verifies `Paymongo-Signature`, re-fetches the checkout session from PayMongo, and records
+  the event id in `webhook_events` so retries do nothing. Logic is in `src/server/billing.ts`.
+- Provider code sits behind `src/server/payments/types.ts`; PayMongo is
+  `src/server/payments/paymongo.ts`. A second provider (PayPal) would be a sibling file.
+- Recipient link `/g/{slug}` only opens when paid + published + not ended. The owner gets a
+  preview. Gifts published before payments have tier `legacy`: no caps, no expiry.
+- Caps: contributors are counted by distinct name (friends have no accounts), photos by
+  photobooth items. Hidden items don't count. Over the cap, friends see "this gift is full"
+  and the owner gets an upgrade banner.
+- Live keys (`sk_live_`) are refused unless `PAYMONGO_ALLOW_LIVE=true`.
+- Local testing without PayMongo: set `PAYMONGO_API_URL` to a fake server that mimics
+  `/v1/checkout_sessions` and signs webhooks with `PAYMONGO_WEBHOOK_SECRET`.
+
 ## Emails
 
 Confirm-email on sign-up, password reset, new-note alert to the creator (max one per
@@ -79,5 +100,6 @@ verification is only required once `RESEND_API_KEY` and `EMAIL_FROM` are both se
 
 ## Open product work
 
-Payments (Stripe test mode for the capstone demo, PayMongo for GCash/Maya later, keep the
-gateway swappable), bridal shower and anniversary templates, pricing by storage time.
+Password protection as a paid feature (add a flag in `TierFeatures`), extending an ended gift
+(the button is a placeholder), refunds (see the note in `applyPaidEvent`), PayPal for
+international buyers, bridal shower and anniversary templates.

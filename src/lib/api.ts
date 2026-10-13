@@ -11,12 +11,26 @@
  *  - only the creator can edit a gift, see pending items, approve, or plan
  *    the calendar
  *  - only admins can change the theme library
+ *  - the finished gift (approved notes, tree ornaments) is only readable once
+ *    it's paid, published and not ended; before that only the owner sees it
+ *    (or friends, when the owner turned on "let friends read each other's notes")
  */
 import { createServerFn } from "@tanstack/react-start";
 import { and, asc, desc, eq, inArray, ne, or } from "drizzle-orm";
 import { z } from "zod";
 import { getDb, schema } from "@/server/db";
-import { notifyGiftLive, notifyNewNote } from "@/server/notify";
+import { notifyNewNote } from "@/server/notify";
+import {
+  checkRoom,
+  expireStaleOrders,
+  isExpired,
+  isOpen,
+  quote,
+  siteUsage,
+  tierBlocker,
+  upgradeOptions,
+} from "@/server/billing";
+import { TIERS, LEGACY_TIER, getTier } from "@/config/pricing";
 import {
   HttpError,
   currentUser,
@@ -126,6 +140,16 @@ export const setThemePreview = createServerFn({ method: "POST" })
 /* Gift sites                                                         */
 /* ------------------------------------------------------------------ */
 
+/** Can the current visitor see the finished gift? Open gifts: anyone. Otherwise the owner (or an admin). */
+async function canViewGift(siteId: string, opts: { allowSharedNotes?: boolean } = {}) {
+  const [site] = await getDb().select().from(schema.giftSites).where(eq(schema.giftSites.id, siteId));
+  if (!site) return false;
+  if (isOpen(site)) return true;
+  if (opts.allowSharedNotes && site.shareNotes && site.status === "draft") return true;
+  const user = await currentUser();
+  return !!user && (user.id === site.creatorId || user.isAdmin);
+}
+
 export const getSiteBySlug = createServerFn({ method: "GET" })
   .inputValidator(z.object({ slug: z.string().min(1).max(120) }))
   .handler(async ({ data }) => {
@@ -224,15 +248,27 @@ export const updateSite = createServerFn({ method: "POST" })
         tree_reveal_date: date,
         palette_id: id.nullable(),
         share_notes: z.boolean(),
-        status: z.enum(["draft", "published"]),
+        status: z.enum(["draft", "published"]).optional(),
         format: z.enum(["scrapbook", "comic"]),
         format_settings: jsonObject,
       }),
     }),
   )
   .handler(async ({ data }) => {
-    const { site } = await requireSiteOwner(data.id);
+    await requireSiteOwner(data.id);
+    const [site] = await getDb().select().from(schema.giftSites).where(eq(schema.giftSites.id, data.id));
+    if (!site) throw new HttpError(404, "We couldn't find that gift.");
     const p = data.patch;
+    // Going live needs a paid plan. The first publish happens in the payment webhook;
+    // this only re-opens a paid gift that the owner had taken offline.
+    if (p.status === "published" && site.status !== "published") {
+      if (!site.tier) throw new HttpError(402, "Pick a plan to publish this gift.");
+      if (isExpired(site)) throw new HttpError(400, "This gift has ended.");
+    }
+    const tier = getTier(site.tier);
+    if (tier && !tier.formats.includes(p.format)) {
+      throw new HttpError(400, `${tier.name} is scrapbook only. Upgrade to use the comic format.`);
+    }
     await getDb()
       .update(schema.giftSites)
       .set({
@@ -247,14 +283,11 @@ export const updateSite = createServerFn({ method: "POST" })
         treeRevealDate: p.tree_reveal_date,
         paletteId: p.palette_id,
         shareNotes: p.share_notes,
-        status: p.status,
+        ...(p.status ? { status: p.status } : {}),
         format: p.format,
         formatSettings: p.format_settings,
       })
       .where(eq(schema.giftSites.id, data.id));
-    if (site.status !== "published" && p.status === "published") {
-      await notifyGiftLive(data.id).catch((e) => console.error("[notify]", e));
-    }
     return { ok: true };
   });
 
@@ -330,6 +363,7 @@ export const listContributions = createServerFn({ method: "GET" })
         .orderBy(asc(c.createdAt));
       return rows.map(toRow);
     }
+    if (!(await canViewGift(data.siteId, { allowSharedNotes: true }))) return [];
     const rows = await db
       .select(publicColumns)
       .from(c)
@@ -369,6 +403,7 @@ export const listSealedContributions = createServerFn({ method: "GET" })
 export const listPublicTreeOrnaments = createServerFn({ method: "GET" })
   .inputValidator(z.object({ siteId: id }))
   .handler(async ({ data }) => {
+    if (!(await canViewGift(data.siteId))) return [];
     const rows = await getDb()
       .select({
         id: c.id,
@@ -405,11 +440,11 @@ export const submitContribution = createServerFn({ method: "POST" })
   )
   .handler(async ({ data }) => {
     const db = getDb();
-    const [site] = await db
-      .select({ id: schema.giftSites.id })
-      .from(schema.giftSites)
-      .where(eq(schema.giftSites.id, data.siteId));
+    const [site] = await db.select().from(schema.giftSites).where(eq(schema.giftSites.id, data.siteId));
     if (!site) throw new HttpError(404, "We couldn't find that gift.");
+    // Paid plans have caps. Tell the friend kindly instead of failing.
+    const room = await checkRoom(site, data.authorName, data.moduleType);
+    if (!room.ok) return { ok: false as const, full: room.reason };
     const [module] = await db
       .select({ enabled: schema.siteModules.enabled })
       .from(schema.siteModules)
@@ -429,7 +464,197 @@ export const submitContribution = createServerFn({ method: "POST" })
       editToken: data.editToken,
     });
     await notifyNewNote(data.siteId, data.authorName).catch((e) => console.error("[notify]", e));
+    return { ok: true as const, full: null };
+  });
+
+/** For the contribute page: is there still room on this gift? (No counts, just yes/no.) */
+export const getGiftRoom = createServerFn({ method: "GET" })
+  .inputValidator(z.object({ siteId: id }))
+  .handler(async ({ data }) => {
+    const [site] = await getDb().select().from(schema.giftSites).where(eq(schema.giftSites.id, data.siteId));
+    if (!site) return { ended: false, contributorsFull: false, photosFull: false };
+    const tier = getTier(site.tier);
+    if (site.status !== "published" || !tier) {
+      return { ended: false, contributorsFull: false, photosFull: false };
+    }
+    if (isExpired(site)) return { ended: true, contributorsFull: true, photosFull: true };
+    const usage = await siteUsage(site.id);
+    return {
+      ended: false,
+      contributorsFull: usage.contributors >= tier.contributors.cap,
+      photosFull: usage.photos >= tier.photos.cap,
+    };
+  });
+
+/* ------------------------------------------------------------------ */
+/* Plans & payments                                                   */
+/* ------------------------------------------------------------------ */
+
+async function ownedSite(siteId: string) {
+  const { user } = await requireSiteOwner(siteId);
+  const [site] = await getDb().select().from(schema.giftSites).where(eq(schema.giftSites.id, siteId));
+  if (!site) throw new HttpError(404, "We couldn't find that gift.");
+  return { user, site };
+}
+
+/** Everything the editor needs to show plans, limits and the upgrade prompt. */
+export const getBilling = createServerFn({ method: "GET" })
+  .inputValidator(z.object({ siteId: id }))
+  .handler(async ({ data }) => {
+    const { site } = await ownedSite(data.siteId);
+    await expireStaleOrders(site.id);
+    const usage = await siteUsage(site.id);
+    const tier = getTier(site.tier);
+    const [latest] = await getDb()
+      .select({ id: schema.orders.id, status: schema.orders.status, tier: schema.orders.tier, kind: schema.orders.kind })
+      .from(schema.orders)
+      .where(eq(schema.orders.siteId, site.id))
+      .orderBy(desc(schema.orders.createdAt))
+      .limit(1);
+    return {
+      tier: site.tier,
+      legacy: site.tier === LEGACY_TIER,
+      publishedAt: site.publishedAt?.toISOString() ?? null,
+      expiresAt: site.expiresAt?.toISOString() ?? null,
+      ended: isExpired(site),
+      usage,
+      limits: tier ? { contributors: tier.contributors.cap, photos: tier.photos.cap } : null,
+      /** Each tier and why it doesn't fit (null = fits). */
+      fit: TIERS.map((t) => ({ id: t.id, blocker: tierBlocker(t, usage, site.format) })),
+      upgrades: upgradeOptions(site.tier).map((t) => ({
+        id: t.id,
+        amount: t.amount - (tier?.amount ?? 0),
+        blocker: tierBlocker(t, usage, site.format),
+      })),
+      latestOrder: latest ?? null,
+    };
+  });
+
+/** Creates an order and a PayMongo checkout. The amount is worked out here, never sent by the browser. */
+export const startCheckout = createServerFn({ method: "POST" })
+  .inputValidator(z.object({ siteId: id, tier: z.enum(["sweet", "celebration", "keepsake"]) }))
+  .handler(async ({ data }) => {
+    const { user, site } = await ownedSite(data.siteId);
+    const q = await quote(site, data.tier);
+    const db = getDb();
+    const [order] = await db
+      .insert(schema.orders)
+      .values({
+        siteId: site.id,
+        ownerId: user.id,
+        kind: q.kind,
+        tier: q.tier.id,
+        fromTier: q.fromTier,
+        amount: q.amount,
+        currency: "PHP",
+        promoApplied: q.promoApplied,
+        provider: "paymongo",
+      })
+      .returning({ id: schema.orders.id });
+    const { getProvider } = await import("@/server/payments");
+    const { siteUrl } = await import("@/server/email");
+    const base = siteUrl();
+    const recipient =
+      ((site.customText as { recipient_name?: string } | null)?.recipient_name ?? "").trim() || site.title;
+    try {
+      const provider = getProvider("paymongo");
+      const checkout = await provider.createCheckout({
+        orderId: order!.id,
+        siteId: site.id,
+        amount: q.amount,
+        currency: "PHP",
+        itemName:
+          q.kind === "upgrade"
+            ? `Upgrade to ${q.tier.name}`
+            : `Just Because ${q.tier.name}`,
+        itemDescription: `${recipient}'s gift, ${q.tier.name} plan (live for ${q.tier.liveFor.label})`,
+        successUrl: `${base}/checkout/${order!.id}`,
+        cancelUrl: `${base}/checkout/${order!.id}?cancelled=1`,
+        customerEmail: user.email,
+        customerName: user.name,
+      });
+      await db
+        .update(schema.orders)
+        .set({ providerCheckoutId: checkout.checkoutId, updatedAt: new Date() })
+        .where(eq(schema.orders.id, order!.id));
+      return { orderId: order!.id, checkoutUrl: checkout.checkoutUrl };
+    } catch (error) {
+      console.error("[payments] createCheckout failed", error);
+      await db
+        .update(schema.orders)
+        .set({ status: "failed", updatedAt: new Date() })
+        .where(eq(schema.orders.id, order!.id));
+      throw new HttpError(502, "We couldn't open the payment page just now. Please try again.");
+    }
+  });
+
+async function ownedOrder(orderId: string) {
+  const user = await requireUser();
+  const [order] = await getDb().select().from(schema.orders).where(eq(schema.orders.id, orderId));
+  if (!order || (order.ownerId !== user.id && !user.isAdmin)) throw new HttpError(404, "We couldn't find that payment.");
+  return order;
+}
+
+/** Polled by the "Confirming your payment" page. Only the webhook ever marks an order paid. */
+export const getOrderStatus = createServerFn({ method: "GET" })
+  .inputValidator(z.object({ orderId: id }))
+  .handler(async ({ data }) => {
+    const order = await ownedOrder(data.orderId);
+    const [site] = await getDb()
+      .select({ id: schema.giftSites.id, slug: schema.giftSites.slug, title: schema.giftSites.title })
+      .from(schema.giftSites)
+      .where(eq(schema.giftSites.id, order.siteId));
+    return {
+      id: order.id,
+      status: order.status,
+      kind: order.kind,
+      tier: order.tier,
+      amount: order.amount,
+      site: site ?? null,
+    };
+  });
+
+/** The person came back from PayMongo via "cancel". A late payment still counts if it arrives. */
+export const cancelOrder = createServerFn({ method: "POST" })
+  .inputValidator(z.object({ orderId: id }))
+  .handler(async ({ data }) => {
+    const order = await ownedOrder(data.orderId);
+    if (order.status === "pending") {
+      await getDb()
+        .update(schema.orders)
+        .set({ status: "failed", updatedAt: new Date() })
+        .where(and(eq(schema.orders.id, order.id), eq(schema.orders.status, "pending")));
+    }
     return { ok: true };
+  });
+
+/** Keepsake (and legacy) gifts can pick their own link name. */
+export const setCustomSlug = createServerFn({ method: "POST" })
+  .inputValidator(
+    z.object({
+      siteId: id,
+      slug: z
+        .string()
+        .trim()
+        .toLowerCase()
+        .min(3, "Use at least 3 characters.")
+        .max(60, "Keep it under 60 characters.")
+        .regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/, "Use letters, numbers and dashes only."),
+    }),
+  )
+  .handler(async ({ data }) => {
+    const { site } = await ownedSite(data.siteId);
+    const tier = getTier(site.tier);
+    if (!(site.tier === LEGACY_TIER || tier?.features.customLinkName))
+      throw new HttpError(403, "Custom link names come with Keepsake.");
+    if (data.slug === site.slug) return { ok: true, slug: site.slug };
+    const [taken] = await getDb()
+      .select({ id: schema.giftSites.id })
+      .from(schema.giftSites)
+      .where(eq(schema.giftSites.slug, data.slug));
+    if (taken) return { ok: false, slug: site.slug, error: "That link name is taken. Try another." };
+    await getDb().update(schema.giftSites).set({ slug: data.slug }).where(eq(schema.giftSites.id, site.id));
+    return { ok: true, slug: data.slug };
   });
 
 async function ownDraftContribution(contributionId: string, token: string) {

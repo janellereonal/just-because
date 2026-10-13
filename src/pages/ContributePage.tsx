@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import {useParams} from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { deleteOwnContribution, submitContribution, updateOwnContribution } from "@/lib/api";
+import { deleteOwnContribution, getGiftRoom, submitContribution, updateOwnContribution } from "@/lib/api";
 import { uploadFile } from "@/lib/upload";
 import {
   FONT_PAIRINGS,
@@ -116,6 +116,14 @@ function ContributePage() {
     enabled: !!siteId,
   });
 
+  /* Paid plans have caps. Knowing up front lets us say so kindly instead of failing. */
+  const { data: room, refetch: refetchRoom } = useQuery({
+    queryKey: ["room", siteId],
+    queryFn: () => getGiftRoom({ data: { siteId: siteId! } }),
+    enabled: !!siteId,
+  });
+  const [fullReason, setFullReason] = useState<"contributors" | "photos" | "ended" | null>(null);
+
   const [mine, setMine] = useState<MineRecord[]>([]);
   useEffect(() => {
     if (siteId) setMine(readMine(siteId));
@@ -189,6 +197,27 @@ function ContributePage() {
     border: `1px solid ${ink}22`,
   };
   const canEdit = site.status !== "published";
+  const giftEnded = room?.ended || fullReason === "ended";
+  /* Someone who already added something can still add more; new names can't. */
+  const noRoomForNewPeople = (room?.contributorsFull && mine.length === 0) || fullReason === "contributors";
+  const photosFull = room?.photosFull || fullReason === "photos";
+  if (giftEnded || noRoomForNewPeople) {
+    return (
+      <div className="grid min-h-screen place-items-center px-6 text-center" style={{ backgroundColor: palette.background, color: ink }}>
+        <div className="max-w-md">
+          <Bo pose="idle" size={140} title="Bo" />
+          <h1 className="mt-4 text-3xl font-medium tracking-tight" style={{ fontFamily: fonts.heading }}>
+            {giftEnded ? "This gift has ended" : "This gift is full"}
+          </h1>
+          <p className="mt-2 opacity-80 text-pretty">
+            {giftEnded
+              ? `${recipient}'s gift isn't taking new notes any more. Thank you for wanting to add something.`
+              : `So many people wanted to add to ${recipient}'s gift that it ran out of room. If the organiser makes more room, this link will work again.`}
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   const mineIds = new Set(mine.map((m) => m.id));
   const sharedById = new Map(shared.map((c) => [c.id, c]));
@@ -329,8 +358,9 @@ function ContributePage() {
       setBusy(false);
       return;
     }
+    let full: "contributors" | "photos" | "ended" | null = null;
     try {
-      await submitContribution({
+      const result = await submitContribution({
         data: {
           id: newId,
           editToken,
@@ -344,10 +374,16 @@ function ContributePage() {
           visibility: active === "tree" ? visibility : "public",
         },
       });
+      full = result.full;
     } catch {
       failed = true;
     }
     setBusy(false);
+    if (full) {
+      setFullReason(full);
+      void refetchRoom();
+      return;
+    }
     if (failed) {
       toast.error("Something went wrong. Please try again.");
       return;
@@ -562,7 +598,11 @@ function ContributePage() {
                 </>
               ) : null}
 
-              {active === "photobooth" ? (
+              {active === "photobooth" && photosFull && !editingId ? (
+                <p className="mt-5 rounded-2xl px-4 py-3 text-sm" style={{ border: `1px solid ${ink}22` }}>
+                  This gift has all the photos it can hold. You can still leave a note in another section.
+                </p>
+              ) : active === "photobooth" ? (
                 <>
                   <label className="mt-4 block text-sm font-medium">Photo</label>
                   {dropZone("photo")}

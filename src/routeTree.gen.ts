@@ -21,9 +21,11 @@ import { Route as ContributeSlugRouteImport } from './routes/contribute.$slug'
 import { Route as GSlugRouteImport } from './routes/g.$slug'
 import { Route as ThemesIndexRouteImport } from './routes/themes.index'
 import { Route as ThemesIdRouteImport } from './routes/themes.$id'
+import { Route as AuthenticatedCheckoutOrderIdRouteImport } from './routes/_authenticated/checkout.$orderId'
 import { Route as AuthenticatedSitesIdRouteImport } from './routes/_authenticated/sites.$id'
 import { Route as ApiAuthSplatRouteImport } from './routes/api/auth/$'
 import { Route as ApiDevUploadsNameRouteImport } from './routes/api/dev-uploads.$name'
+import { Route as ApiWebhooksPaymongoRouteImport } from './routes/api/webhooks/paymongo'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -84,6 +86,12 @@ const ThemesIdRoute = ThemesIdRouteImport.update({
   path: '/themes/$id',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AuthenticatedCheckoutOrderIdRoute =
+  AuthenticatedCheckoutOrderIdRouteImport.update({
+    id: '/checkout/$orderId',
+    path: '/checkout/$orderId',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedSitesIdRoute = AuthenticatedSitesIdRouteImport.update({
   id: '/sites/$id',
   path: '/sites/$id',
@@ -99,6 +107,11 @@ const ApiDevUploadsNameRoute = ApiDevUploadsNameRouteImport.update({
   path: '/api/dev-uploads/$name',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiWebhooksPaymongoRoute = ApiWebhooksPaymongoRouteImport.update({
+  id: '/api/webhooks/paymongo',
+  path: '/api/webhooks/paymongo',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -112,9 +125,11 @@ export interface FileRoutesByFullPath {
   '/g/$slug': typeof GSlugRoute
   '/themes/$id': typeof ThemesIdRoute
   '/themes/': typeof ThemesIndexRoute
+  '/checkout/$orderId': typeof AuthenticatedCheckoutOrderIdRoute
   '/sites/$id': typeof AuthenticatedSitesIdRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/api/dev-uploads/$name': typeof ApiDevUploadsNameRoute
+  '/api/webhooks/paymongo': typeof ApiWebhooksPaymongoRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -128,9 +143,11 @@ export interface FileRoutesByTo {
   '/g/$slug': typeof GSlugRoute
   '/themes/$id': typeof ThemesIdRoute
   '/themes': typeof ThemesIndexRoute
+  '/checkout/$orderId': typeof AuthenticatedCheckoutOrderIdRoute
   '/sites/$id': typeof AuthenticatedSitesIdRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/api/dev-uploads/$name': typeof ApiDevUploadsNameRoute
+  '/api/webhooks/paymongo': typeof ApiWebhooksPaymongoRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -146,9 +163,11 @@ export interface FileRoutesById {
   '/g/$slug': typeof GSlugRoute
   '/themes/$id': typeof ThemesIdRoute
   '/themes/': typeof ThemesIndexRoute
+  '/_authenticated/checkout/$orderId': typeof AuthenticatedCheckoutOrderIdRoute
   '/_authenticated/sites/$id': typeof AuthenticatedSitesIdRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/api/dev-uploads/$name': typeof ApiDevUploadsNameRoute
+  '/api/webhooks/paymongo': typeof ApiWebhooksPaymongoRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -164,9 +183,11 @@ export interface FileRouteTypes {
     | '/g/$slug'
     | '/themes/$id'
     | '/themes/'
+    | '/checkout/$orderId'
     | '/sites/$id'
     | '/api/auth/$'
     | '/api/dev-uploads/$name'
+    | '/api/webhooks/paymongo'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -180,9 +201,11 @@ export interface FileRouteTypes {
     | '/g/$slug'
     | '/themes/$id'
     | '/themes'
+    | '/checkout/$orderId'
     | '/sites/$id'
     | '/api/auth/$'
     | '/api/dev-uploads/$name'
+    | '/api/webhooks/paymongo'
   id:
     | '__root__'
     | '/'
@@ -197,9 +220,11 @@ export interface FileRouteTypes {
     | '/g/$slug'
     | '/themes/$id'
     | '/themes/'
+    | '/_authenticated/checkout/$orderId'
     | '/_authenticated/sites/$id'
     | '/api/auth/$'
     | '/api/dev-uploads/$name'
+    | '/api/webhooks/paymongo'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -215,6 +240,7 @@ export interface RootRouteChildren {
   ThemesIndexRoute: typeof ThemesIndexRoute
   ApiAuthSplatRoute: typeof ApiAuthSplatRoute
   ApiDevUploadsNameRoute: typeof ApiDevUploadsNameRoute
+  ApiWebhooksPaymongoRoute: typeof ApiWebhooksPaymongoRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -303,6 +329,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ThemesIdRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_authenticated/checkout/$orderId': {
+      id: '/_authenticated/checkout/$orderId'
+      path: '/checkout/$orderId'
+      fullPath: '/checkout/$orderId'
+      preLoaderRoute: typeof AuthenticatedCheckoutOrderIdRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/sites/$id': {
       id: '/_authenticated/sites/$id'
       path: '/sites/$id'
@@ -324,18 +357,27 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiDevUploadsNameRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/webhooks/paymongo': {
+      id: '/api/webhooks/paymongo'
+      path: '/api/webhooks/paymongo'
+      fullPath: '/api/webhooks/paymongo'
+      preLoaderRoute: typeof ApiWebhooksPaymongoRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedCreateRoute: typeof AuthenticatedCreateRoute
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
+  AuthenticatedCheckoutOrderIdRoute: typeof AuthenticatedCheckoutOrderIdRoute
   AuthenticatedSitesIdRoute: typeof AuthenticatedSitesIdRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedCreateRoute: AuthenticatedCreateRoute,
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
+  AuthenticatedCheckoutOrderIdRoute: AuthenticatedCheckoutOrderIdRoute,
   AuthenticatedSitesIdRoute: AuthenticatedSitesIdRoute,
 }
 
@@ -355,6 +397,7 @@ const rootRouteChildren: RootRouteChildren = {
   ThemesIndexRoute: ThemesIndexRoute,
   ApiAuthSplatRoute: ApiAuthSplatRoute,
   ApiDevUploadsNameRoute: ApiDevUploadsNameRoute,
+  ApiWebhooksPaymongoRoute: ApiWebhooksPaymongoRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
