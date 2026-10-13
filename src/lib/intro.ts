@@ -20,7 +20,7 @@ export function introStyleForTheme(themeName: string | null | undefined): IntroS
   if (key.includes("pet")) return "paw";
   if (key.includes("new year")) return "sparkler";
   if (key.includes("anniversary")) return "letter";
-  if (key.includes("wedding")) return "invitation";
+  if (key.includes("wedding") || key.includes("bridal") || key.includes("shower")) return "invitation";
   return "envelope";
 }
 

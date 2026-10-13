@@ -3,7 +3,7 @@ import type { Palette, Theme } from "@/lib/themes";
 
 export function themeFont(theme: Pick<Theme, "category" | "name">): FontChoice {
   const key = `${theme.category} ${theme.name}`.toLowerCase();
-  if (key.includes("wedding") || key.includes("anniversar") || key.includes("valentine"))
+  if (key.includes("wedding") || key.includes("anniversar") || key.includes("valentine") || key.includes("bridal"))
     return "romantic";
   if (key.includes("pet") || key.includes("birthday")) return "playful";
   if (key.includes("new year") || key.includes("christmas")) return "modern";

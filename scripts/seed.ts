@@ -1,4 +1,4 @@
-// Restores the 24 shared palettes and the 8 occasion themes. Idempotent.
+// Restores the 24 shared palettes and the 9 occasion themes. Idempotent.
 import postgres from "postgres";
 
 const url = process.env.DATABASE_URL_UNPOOLED || process.env.DATABASE_URL;
@@ -46,6 +46,7 @@ const themes: [string, string, string, string[], string[]][] = [
   ["New Year", "New year", "Midnight and gold for fresh beginnings.", ["countdown", "wordcloud", "photobooth"], ["Midnight Gold", "Sparkle", "Monochrome"]],
   ["Anniversary", "Milestone", "Champagne and clay for the years you have shared.", ["letters", "photobooth", "countdown"], ["Timeless", "Rose Gold", "Just Because"]],
   ["Weddings", "Wedding", "Ivory, sage and soft gold for the big day.", ["letters", "photobooth", "songs"], ["Ivory Sage", "Blush Bloom", "Matcha"]],
+  ["Bridal Shower", "Shower", "Blush, peach and sage for the bride-to-be and her people.", ["letters", "photobooth", "wordcloud", "countdown"], ["Blush Bloom", "Peach Fuzz", "Ivory Sage"]],
 ];
 
 await sql.begin(async (tx) => {
@@ -58,7 +59,13 @@ await sql.begin(async (tx) => {
         accent = excluded.accent, sort_order = excluded.sort_order`;
   }
   // Renamed themes: keep the same row (and every gift using it), just change the name.
-  const renames: [string, string][] = [["Despidida", "Bon Voyage"]];
+  // Add old names here instead of editing a theme's name above, so nothing duplicates.
+  const renames: [string, string][] = [
+    ["Despidida", "Bon Voyage"],
+    ["Bridal shower", "Bridal Shower"],
+    ["Bridal", "Bridal Shower"],
+    ["Anniversaries", "Anniversary"],
+  ];
   for (const [from, to] of renames) {
     await tx`update themes set name = ${to} where name = ${from}
              and not exists (select 1 from themes where name = ${to})`;

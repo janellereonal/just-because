@@ -70,6 +70,7 @@ function sampleFor(theme: Theme) {
   if (key.includes("pet")) return { heading: "For Milo", name: "Milo" };
   if (key.includes("new year")) return { heading: "Happy New Year, everyone", name: "the crew" };
   if (key.includes("anniversar")) return { heading: "Ten years, Liz", name: "Liz" };
+  if (key.includes("bridal") || key.includes("shower")) return { heading: "Showered with love, Bea", name: "Bea" };
   if (key.includes("wedding")) return { heading: "Congratulations, Aya & Jun", name: "Aya & Jun" };
   return { heading: "For someone lovely", name: "Maya" };
 }
@@ -78,7 +79,7 @@ function backgroundFor(theme: Theme): BackgroundStyle {
   const key = `${theme.category} ${theme.name}`.toLowerCase();
   if (key.includes("wedding") || key.includes("anniversar")) return "formal";
   if (key.includes("new year")) return "gradient";
-  if (key.includes("birthday") || key.includes("pet")) return "clean";
+  if (key.includes("birthday") || key.includes("pet") || key.includes("shower")) return "clean";
   return "paper";
 }
 
