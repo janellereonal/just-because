@@ -1,0 +1,1 @@
+ALTER TABLE "gift_sites" ADD COLUMN "last_notified_at" timestamp with time zone;

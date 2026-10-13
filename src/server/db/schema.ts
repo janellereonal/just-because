@@ -134,6 +134,8 @@ export const giftSites = pgTable(
     introText: text("intro_text"),
     backgroundStyle: text("background_style").notNull().default("paper"),
     treeRevealDate: date("tree_reveal_date"),
+    /** When the creator was last emailed about new notes (throttles alerts). */
+    lastNotifiedAt: timestamp("last_notified_at", { withTimezone: true }),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   },
   (t) => [index("gift_sites_creator_idx").on(t.creatorId)],

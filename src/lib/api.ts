@@ -16,6 +16,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { and, asc, desc, eq, inArray, ne, or } from "drizzle-orm";
 import { z } from "zod";
 import { getDb, schema } from "@/server/db";
+import { notifyGiftLive, notifyNewNote } from "@/server/notify";
 import {
   HttpError,
   currentUser,
@@ -68,7 +69,8 @@ export const getMe = createServerFn({ method: "GET" }).handler(async () => {
 /** Which sign-in buttons to show. */
 export const getAuthOptions = createServerFn({ method: "GET" }).handler(async () => {
   const { googleEnabled } = await import("@/server/auth");
-  return { google: googleEnabled() };
+  const { emailEnabled } = await import("@/server/email");
+  return { google: googleEnabled(), email: emailEnabled() };
 });
 
 /* ------------------------------------------------------------------ */
@@ -229,7 +231,7 @@ export const updateSite = createServerFn({ method: "POST" })
     }),
   )
   .handler(async ({ data }) => {
-    await requireSiteOwner(data.id);
+    const { site } = await requireSiteOwner(data.id);
     const p = data.patch;
     await getDb()
       .update(schema.giftSites)
@@ -250,6 +252,9 @@ export const updateSite = createServerFn({ method: "POST" })
         formatSettings: p.format_settings,
       })
       .where(eq(schema.giftSites.id, data.id));
+    if (site.status !== "published" && p.status === "published") {
+      await notifyGiftLive(data.id).catch((e) => console.error("[notify]", e));
+    }
     return { ok: true };
   });
 
@@ -423,6 +428,7 @@ export const submitContribution = createServerFn({ method: "POST" })
       visibility: data.moduleType === "tree" ? data.visibility : "public",
       editToken: data.editToken,
     });
+    await notifyNewNote(data.siteId, data.authorName).catch((e) => console.error("[notify]", e));
     return { ok: true };
   });
 

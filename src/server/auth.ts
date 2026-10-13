@@ -3,13 +3,7 @@ import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { tanstackStartCookies } from "better-auth/tanstack-start";
 import { getDb, schema } from "./db";
-
-function siteUrl() {
-  if (process.env["BETTER_AUTH_URL"]) return process.env["BETTER_AUTH_URL"];
-  if (process.env["VERCEL_PROJECT_PRODUCTION_URL"])
-    return `https://${process.env["VERCEL_PROJECT_PRODUCTION_URL"]}`;
-  return "http://localhost:8080";
-}
+import { emailEnabled, resetPasswordEmail, siteUrl, verifyEmail } from "./email";
 
 /**
  * BETTER_AUTH_SECRET signs session cookies. If it isn't set, derive a stable
@@ -47,7 +41,21 @@ function createAuth() {
     emailAndPassword: {
       enabled: true,
       minPasswordLength: 6,
-      autoSignIn: true,
+      // Once Resend is set up, new email accounts must confirm their address first.
+      requireEmailVerification: emailEnabled(),
+      autoSignIn: !emailEnabled(),
+      resetPasswordTokenExpiresIn: 60 * 60,
+      sendResetPassword: async ({ user, url }) => {
+        await resetPasswordEmail(user.email, user.name, url);
+      },
+    },
+    emailVerification: {
+      sendOnSignUp: true,
+      sendOnSignIn: true,
+      autoSignInAfterVerification: true,
+      sendVerificationEmail: async ({ user, url }) => {
+        await verifyEmail(user.email, user.name, url);
+      },
     },
     socialProviders:
       googleId && googleSecret
