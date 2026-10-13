@@ -35,6 +35,8 @@ export type Tier = {
   formats: GiftFormatId[];
   /** How long the gift stays open after it's published. */
   liveFor: { months: number; label: string };
+  /** Price in centavos to keep the gift open for another `liveFor` (same plan, same caps). */
+  extendAmount: number;
   features: TierFeatures;
 };
 
@@ -50,6 +52,7 @@ export const TIERS: Tier[] = [
     photos: { cap: 30, unlimited: false },
     formats: ["scrapbook"],
     liveFor: { months: 3, label: "3 months" },
+    extendAmount: 14900,
     features: { customLinkName: false },
   },
   {
@@ -62,6 +65,7 @@ export const TIERS: Tier[] = [
     photos: { cap: 150, unlimited: false },
     formats: ["scrapbook", "comic"],
     liveFor: { months: 12, label: "1 year" },
+    extendAmount: 29900,
     features: { customLinkName: false },
   },
   {
@@ -74,6 +78,7 @@ export const TIERS: Tier[] = [
     photos: { cap: 1000, unlimited: true },
     formats: ["scrapbook", "comic"],
     liveFor: { months: 36, label: "3 years" },
+    extendAmount: 49900,
     features: { customLinkName: true },
   },
 ];
@@ -164,9 +169,22 @@ export function featureList(tier: Tier): string[] {
   return lines;
 }
 
+export function addMonths(from: Date, months: number): Date {
+  const d = new Date(from);
+  d.setMonth(d.getMonth() + months);
+  return d;
+}
+
 /** When a gift on this tier stops being open, counted from when it was published. */
 export function expiryFrom(publishedAt: Date, tier: Tier): Date {
-  const d = new Date(publishedAt);
-  d.setMonth(d.getMonth() + tier.liveFor.months);
-  return d;
+  return addMonths(publishedAt, tier.liveFor.months);
+}
+
+/**
+ * New end date after paying to extend: another `liveFor` on top of the current
+ * end date, or on top of today if the gift has already ended.
+ */
+export function extendedExpiry(expiresAt: Date | null, tier: Tier, now = new Date()): Date {
+  const base = expiresAt && expiresAt.getTime() > now.getTime() ? expiresAt : now;
+  return addMonths(base, tier.liveFor.months);
 }

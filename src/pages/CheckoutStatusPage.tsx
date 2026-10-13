@@ -5,7 +5,7 @@ import { toast } from "sonner";
 import Bo from "@/components/Bo";
 import { SiteHeader } from "@/components/SiteHeader";
 import { PageError, PageLoading } from "@/components/PageStates";
-import { PlanPickerDialog } from "@/components/PlanControls";
+import { ExtendDialog, PlanPickerDialog } from "@/components/PlanControls";
 import { cancelOrder, getOrderStatus } from "@/lib/api";
 import { formatPeso, getTier } from "@/config/pricing";
 
@@ -66,11 +66,26 @@ function CheckoutStatusPage() {
       <>
         <Bo pose="published" size={190} />
         <h1 className="mt-3 font-display text-4xl font-medium tracking-tight">
-          {order.kind === "upgrade" ? `You're on ${tier?.name ?? "the new plan"}` : "Your gift is ready to open"}
+          {order.kind === "upgrade"
+            ? `You're on ${tier?.name ?? "the new plan"}`
+            : order.kind === "extend"
+              ? "Your gift is open for longer"
+              : "Your gift is ready to open"}
         </h1>
         <p className="mt-2 text-muted">
           Payment received, {formatPeso(order.amount)}. A receipt is on its way to your email.
         </p>
+        {order.kind === "extend" && order.site?.expiresAt ? (
+          <p className="mt-1 text-muted">
+            It now stays open until{" "}
+            {new Date(order.site.expiresAt).toLocaleDateString("en-PH", {
+              month: "long",
+              day: "numeric",
+              year: "numeric",
+            })}
+            .
+          </p>
+        ) : null}
         {order.kind === "publish" && liveUrl ? (
           <div className="mt-7 flex items-center gap-2 rounded-xl border border-line bg-cream p-2 pl-4">
             <span className="min-w-0 flex-1 truncate text-left font-mono text-xs text-muted">{liveUrl}</span>
@@ -106,7 +121,9 @@ function CheckoutStatusPage() {
           {order.status === "expired" ? "That payment timed out" : "No payment was made"}
         </h1>
         <p className="mx-auto mt-2 max-w-[42ch] text-muted">
-          Your gift is still saved as a draft, and nothing was charged. You can try again whenever you're ready.
+          {order.kind === "publish"
+            ? "Your gift is still saved as a draft, and nothing was charged. You can try again whenever you're ready."
+            : "Nothing was charged, and your gift is just as you left it. You can try again whenever you're ready."}
         </p>
         <div className="mt-6 flex flex-wrap justify-center gap-3">
           {order.site ? (
@@ -154,7 +171,9 @@ function CheckoutStatusPage() {
       <div className="grid min-h-[75vh] place-items-center px-5 text-center">
         <div className="w-full max-w-xl">{body}</div>
       </div>
-      {order.site ? (
+      {order.site && order.kind === "extend" ? (
+        <ExtendDialog siteId={order.site.id} open={retryOpen} onOpenChange={setRetryOpen} />
+      ) : order.site ? (
         <PlanPickerDialog
           siteId={order.site.id}
           recipient="them"

@@ -6,7 +6,9 @@ import { and, eq, inArray, sql } from "drizzle-orm";
 import {
   LEGACY_TIER,
   TIERS,
+  addMonths,
   expiryFrom,
+  extendedExpiry,
   getTier,
   promo,
   tierRank,
@@ -104,7 +106,7 @@ async function promoAvailable() {
 }
 
 export type Quote = {
-  kind: "publish" | "upgrade";
+  kind: "publish" | "upgrade" | "extend";
   tier: Tier;
   fromTier: TierId | null;
   amount: number;
@@ -131,10 +133,18 @@ export async function quote(site: Site, tierId: string): Promise<Quote> {
     }
     return { kind: "publish", tier, fromTier: null, amount, promoApplied };
   }
-  if (isExpired(site)) throw new HttpError(400, "This gift has ended. Extending isn't available yet.");
+  if (isExpired(site)) throw new HttpError(400, "This gift has ended. Extend it first, then you can upgrade.");
   if (tierRank(tier.id) <= tierRank(current.id))
     throw new HttpError(400, `This gift is already on ${current.name}.`);
   return { kind: "upgrade", tier, fromTier: current.id, amount: tier.amount - current.amount, promoApplied: false };
+}
+
+/** Keeps a paid gift open for another stretch of its current plan. */
+export function quoteExtend(site: Site): Quote {
+  if (site.tier === LEGACY_TIER) throw new HttpError(400, "This gift is already open for good. No payment needed.");
+  const tier = getTier(site.tier);
+  if (!tier) throw new HttpError(400, "Pick a plan to publish this gift first.");
+  return { kind: "extend", tier, fromTier: tier.id, amount: tier.extendAmount, promoApplied: false };
 }
 
 export function upgradeOptions(currentTier: string | null) {
@@ -182,19 +192,36 @@ export async function applyPaidEvent(event: PaidEvent, provider: string): Promis
     const [site] = await tx.select().from(schema.giftSites).where(eq(schema.giftSites.id, order.siteId)).for("update");
     if (!site) return { msg: `order ${order.id}: gift was deleted` };
 
-    // Paid twice (e.g. two tabs)? Keep the better plan and flag it. Refunds would be handled here later.
+    // Paid twice (e.g. two tabs)? Keep the better plan and flag it. Refunds would be handled here later
+    // (see "Refunds" in HANDOFF.md). Extends always stack, so paying twice just adds more time.
     const alreadyCovered =
-      order.kind === "upgrade" ? tierRank(site.tier) >= tierRank(tier.id) : !!site.tier;
+      order.kind === "upgrade"
+        ? tierRank(site.tier) >= tierRank(tier.id)
+        : order.kind === "extend"
+          ? !getTier(site.tier)
+          : !!site.tier;
     if (alreadyCovered) {
       console.warn(`[payments] order ${order.id} paid but gift ${site.id} already on ${site.tier}. Needs a refund.`);
       return { msg: `order ${order.id}: duplicate payment flagged for refund` };
     }
 
+    if (order.kind === "extend") {
+      const expiresAt = extendedExpiry(site.expiresAt, tier, now);
+      await tx.update(schema.giftSites).set({ expiresAt }).where(eq(schema.giftSites.id, site.id));
+      return { msg: `order ${order.id}: extended gift ${site.id} to ${expiresAt.toISOString()}` };
+    }
+
     if (order.kind === "upgrade") {
+      // Add the extra months on top of the current end date, so earlier extensions are kept.
+      const current = getTier(site.tier);
       const publishedAt = site.publishedAt ?? now;
+      const currentEnd = site.expiresAt ?? (current ? expiryFrom(publishedAt, current) : now);
+      const expiresAt = current
+        ? addMonths(currentEnd, tier.liveFor.months - current.liveFor.months)
+        : expiryFrom(publishedAt, tier);
       await tx
         .update(schema.giftSites)
-        .set({ tier: tier.id, expiresAt: expiryFrom(publishedAt, tier) })
+        .set({ tier: tier.id, expiresAt })
         .where(eq(schema.giftSites.id, site.id));
       return { msg: `order ${order.id}: upgraded gift ${site.id} to ${tier.id}` };
     }

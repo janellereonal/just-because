@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { getBilling, setCustomSlug, startCheckout } from "@/lib/api";
+import { getBilling, setCustomSlug, startCheckout, startExtendCheckout } from "@/lib/api";
 import { PricingCards } from "@/components/PricingCards";
 import { Button } from "@/components/ui/button";
 import {
@@ -11,7 +11,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { LEGACY_TIER, TIERS, getTier, type TierId } from "@/config/pricing";
+import { LEGACY_TIER, TIERS, formatPeso, getTier, paymentMethodsSentence, type TierId } from "@/config/pricing";
 
 export type Billing = Awaited<ReturnType<typeof getBilling>>;
 
@@ -101,8 +101,87 @@ export function PlanPickerDialog({
   );
 }
 
+function shortDate(iso: string) {
+  return new Date(iso).toLocaleDateString("en-PH", { month: "short", day: "numeric", year: "numeric" });
+}
+
+/** Pay to keep a gift open for another stretch of its plan. Works before or after it ends. */
+export function ExtendDialog({
+  siteId,
+  open,
+  onOpenChange,
+}: {
+  siteId: string;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+}) {
+  const { data: billing } = useBilling(siteId);
+  const [busy, setBusy] = useState(false);
+  const tier = getTier(billing?.tier);
+
+  async function extend() {
+    setBusy(true);
+    try {
+      const { checkoutUrl } = await startExtendCheckout({ data: { siteId } });
+      window.location.assign(checkoutUrl);
+    } catch (error) {
+      setBusy(false);
+      toast.error(errorMessage(error, "We couldn't open the payment page. Please try again."));
+    }
+  }
+
+  let body: React.ReactNode;
+  if (!billing) {
+    body = <p className="py-6 text-center text-sm text-muted">Loading…</p>;
+  } else if (!billing.extend || !tier) {
+    body = <p className="text-sm text-muted">This gift doesn't need extending.</p>;
+  } else {
+    const when = billing.ended
+      ? "It opens again as soon as the payment goes through."
+      : billing.expiresAt
+        ? `The extra time is added after ${shortDate(billing.expiresAt)}, so you don't lose any days.`
+        : null;
+    body = (
+      <div className="space-y-4">
+        <div className="rounded-2xl border border-line bg-cream p-4">
+          <p className="font-mono text-[10px] tracking-[0.08em] text-muted uppercase">{tier.name} plan</p>
+          <p className="mt-1 font-display text-3xl font-medium tracking-tight">{formatPeso(billing.extend.amount)}</p>
+          <p className="mt-1 text-sm text-muted">Another {billing.extend.label}, same plan and limits.</p>
+        </div>
+        {when ? <p className="text-sm text-muted">{when}</p> : null}
+        <Button className="w-full rounded-full" disabled={busy} onClick={() => void extend()}>
+          {busy ? "Opening payment…" : `Extend for ${formatPeso(billing.extend.amount)}`}
+        </Button>
+        <p className="text-center text-xs text-muted">Pay with {paymentMethodsSentence()}.</p>
+      </div>
+    );
+  }
+
+  return (
+    <Dialog open={open} onOpenChange={(next) => !busy && onOpenChange(next)}>
+      <DialogContent className="max-w-md bg-paper">
+        <DialogHeader>
+          <DialogTitle className="font-display text-2xl font-medium tracking-tight">
+            Keep this gift open longer
+          </DialogTitle>
+          <DialogDescription>Everything friends added stays right where it is.</DialogDescription>
+        </DialogHeader>
+        {body}
+      </DialogContent>
+    </Dialog>
+  );
+}
+
 /** Shown at the top of the editor when a published gift is full or has ended. */
-export function PlanBanner({ billing, onUpgrade }: { billing: Billing | undefined; onUpgrade: () => void }) {
+export function PlanBanner({
+  billing,
+  onUpgrade,
+  onExtend,
+}: {
+  billing: Billing | undefined;
+  onUpgrade: () => void;
+  onExtend: () => void;
+}) {
   if (!billing || !billing.tier || billing.legacy) return null;
   if (billing.ended) {
     return (
@@ -112,7 +191,7 @@ export function PlanBanner({ billing, onUpgrade }: { billing: Billing | undefine
           size="sm"
           variant="outline"
           className="rounded-full"
-          onClick={() => toast("Extending a gift is coming soon.")}
+          onClick={onExtend}
         >
           Extend this gift
         </Button>

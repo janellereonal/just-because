@@ -24,7 +24,7 @@ import {
 } from "@/lib/gift";
 import { getMe } from "@/lib/api";
 import Bo from "@/components/Bo";
-import { toast } from "sonner";
+import { ExtendDialog } from "@/components/PlanControls";
 import { clearIntroSkip, hasSkippedIntro, rememberIntroSkip } from "@/lib/introSkip";
 
 
@@ -170,6 +170,7 @@ function PublishedPage() {
 
 /** A gift whose plan ran out. The link still lands somewhere kind. */
 function GiftEndedPage({ isOwner, siteId }: { isOwner: boolean; siteId: string }) {
+  const [extendOpen, setExtendOpen] = useState(false);
   return (
     <div className="grid min-h-screen place-items-center bg-paper px-6 text-center text-ink">
       <div className="max-w-md">
@@ -184,7 +185,7 @@ function GiftEndedPage({ isOwner, siteId }: { isOwner: boolean; siteId: string }
           <div className="mt-6 flex flex-wrap justify-center gap-3">
             <button
               type="button"
-              onClick={() => toast("Extending a gift is coming soon.")}
+              onClick={() => setExtendOpen(true)}
               className="rounded-full bg-accent px-6 py-3 text-sm font-medium text-cream"
             >
               Extend this gift
@@ -198,6 +199,7 @@ function GiftEndedPage({ isOwner, siteId }: { isOwner: boolean; siteId: string }
             Make a gift of your own
           </a>
         )}
+        {isOwner ? <ExtendDialog siteId={siteId} open={extendOpen} onOpenChange={setExtendOpen} /> : null}
       </div>
     </div>
   );

@@ -26,6 +26,7 @@ import {
   isExpired,
   isOpen,
   quote,
+  quoteExtend,
   siteUsage,
   tierBlocker,
   upgradeOptions,
@@ -527,65 +528,92 @@ export const getBilling = createServerFn({ method: "GET" })
         blocker: tierBlocker(t, usage, site.format),
       })),
       latestOrder: latest ?? null,
+      /** Price and length of one more stretch on the current plan (null for legacy or unpaid). */
+      extend: tier ? { amount: tier.extendAmount, label: tier.liveFor.label } : null,
     };
   });
+
+type Quote = Awaited<ReturnType<typeof quote>>;
+
+/** Saves the order and opens a PayMongo checkout for it. The amount always comes from the quote. */
+async function openCheckout(
+  user: { id: string; email: string; name: string },
+  site: typeof schema.giftSites.$inferSelect,
+  q: Quote,
+) {
+  const db = getDb();
+  const [order] = await db
+    .insert(schema.orders)
+    .values({
+      siteId: site.id,
+      ownerId: user.id,
+      kind: q.kind,
+      tier: q.tier.id,
+      fromTier: q.fromTier,
+      amount: q.amount,
+      currency: "PHP",
+      promoApplied: q.promoApplied,
+      provider: "paymongo",
+    })
+    .returning({ id: schema.orders.id });
+  const { getProvider } = await import("@/server/payments");
+  const { siteUrl } = await import("@/server/email");
+  const base = siteUrl();
+  const recipient =
+    ((site.customText as { recipient_name?: string } | null)?.recipient_name ?? "").trim() || site.title;
+  const itemName =
+    q.kind === "upgrade"
+      ? `Upgrade to ${q.tier.name}`
+      : q.kind === "extend"
+        ? `Keep the gift open for ${q.tier.liveFor.label} more`
+        : `Just Because ${q.tier.name}`;
+  const itemDescription =
+    q.kind === "extend"
+      ? `${recipient}'s gift, ${q.tier.name} plan, open for another ${q.tier.liveFor.label}`
+      : `${recipient}'s gift, ${q.tier.name} plan (live for ${q.tier.liveFor.label})`;
+  try {
+    const provider = getProvider("paymongo");
+    const checkout = await provider.createCheckout({
+      orderId: order!.id,
+      siteId: site.id,
+      amount: q.amount,
+      currency: "PHP",
+      itemName,
+      itemDescription,
+      successUrl: `${base}/checkout/${order!.id}`,
+      cancelUrl: `${base}/checkout/${order!.id}?cancelled=1`,
+      customerEmail: user.email,
+      customerName: user.name,
+    });
+    await db
+      .update(schema.orders)
+      .set({ providerCheckoutId: checkout.checkoutId, updatedAt: new Date() })
+      .where(eq(schema.orders.id, order!.id));
+    return { orderId: order!.id, checkoutUrl: checkout.checkoutUrl };
+  } catch (error) {
+    console.error("[payments] createCheckout failed", error);
+    await db
+      .update(schema.orders)
+      .set({ status: "failed", updatedAt: new Date() })
+      .where(eq(schema.orders.id, order!.id));
+    throw new HttpError(502, "We couldn't open the payment page just now. Please try again.");
+  }
+}
 
 /** Creates an order and a PayMongo checkout. The amount is worked out here, never sent by the browser. */
 export const startCheckout = createServerFn({ method: "POST" })
   .inputValidator(z.object({ siteId: id, tier: z.enum(["sweet", "celebration", "keepsake"]) }))
   .handler(async ({ data }) => {
     const { user, site } = await ownedSite(data.siteId);
-    const q = await quote(site, data.tier);
-    const db = getDb();
-    const [order] = await db
-      .insert(schema.orders)
-      .values({
-        siteId: site.id,
-        ownerId: user.id,
-        kind: q.kind,
-        tier: q.tier.id,
-        fromTier: q.fromTier,
-        amount: q.amount,
-        currency: "PHP",
-        promoApplied: q.promoApplied,
-        provider: "paymongo",
-      })
-      .returning({ id: schema.orders.id });
-    const { getProvider } = await import("@/server/payments");
-    const { siteUrl } = await import("@/server/email");
-    const base = siteUrl();
-    const recipient =
-      ((site.customText as { recipient_name?: string } | null)?.recipient_name ?? "").trim() || site.title;
-    try {
-      const provider = getProvider("paymongo");
-      const checkout = await provider.createCheckout({
-        orderId: order!.id,
-        siteId: site.id,
-        amount: q.amount,
-        currency: "PHP",
-        itemName:
-          q.kind === "upgrade"
-            ? `Upgrade to ${q.tier.name}`
-            : `Just Because ${q.tier.name}`,
-        itemDescription: `${recipient}'s gift, ${q.tier.name} plan (live for ${q.tier.liveFor.label})`,
-        successUrl: `${base}/checkout/${order!.id}`,
-        cancelUrl: `${base}/checkout/${order!.id}?cancelled=1`,
-        customerEmail: user.email,
-        customerName: user.name,
-      });
-      await db
-        .update(schema.orders)
-        .set({ providerCheckoutId: checkout.checkoutId, updatedAt: new Date() })
-        .where(eq(schema.orders.id, order!.id));
-      return { orderId: order!.id, checkoutUrl: checkout.checkoutUrl };
-    } catch (error) {
-      console.error("[payments] createCheckout failed", error);
-      await db
-        .update(schema.orders)
-        .set({ status: "failed", updatedAt: new Date() })
-        .where(eq(schema.orders.id, order!.id));
-      throw new HttpError(502, "We couldn't open the payment page just now. Please try again.");
-    }
+    return openCheckout(user, site, await quote(site, data.tier));
+  });
+
+/** Pays to keep a gift open for another stretch of its plan (works before or after it ends). */
+export const startExtendCheckout = createServerFn({ method: "POST" })
+  .inputValidator(z.object({ siteId: id }))
+  .handler(async ({ data }) => {
+    const { user, site } = await ownedSite(data.siteId);
+    return openCheckout(user, site, quoteExtend(site));
   });
 
 async function ownedOrder(orderId: string) {
@@ -601,7 +629,12 @@ export const getOrderStatus = createServerFn({ method: "GET" })
   .handler(async ({ data }) => {
     const order = await ownedOrder(data.orderId);
     const [site] = await getDb()
-      .select({ id: schema.giftSites.id, slug: schema.giftSites.slug, title: schema.giftSites.title })
+      .select({
+        id: schema.giftSites.id,
+        slug: schema.giftSites.slug,
+        title: schema.giftSites.title,
+        expiresAt: schema.giftSites.expiresAt,
+      })
       .from(schema.giftSites)
       .where(eq(schema.giftSites.id, order.siteId));
     return {
@@ -610,7 +643,7 @@ export const getOrderStatus = createServerFn({ method: "GET" })
       kind: order.kind,
       tier: order.tier,
       amount: order.amount,
-      site: site ?? null,
+      site: site ? { ...site, expiresAt: site.expiresAt?.toISOString() ?? null } : null,
     };
   });
 

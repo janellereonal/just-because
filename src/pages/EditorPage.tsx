@@ -51,6 +51,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import {
+  ExtendDialog,
   LinkNameDialog,
   PlanBanner,
   PlanPickerDialog,
@@ -167,6 +168,7 @@ function SiteDashboard() {
   const [publishSuccess, setPublishSuccess] = useState(false);
   const [planPicker, setPlanPicker] = useState<"publish" | "upgrade" | null>(null);
   const [linkNameOpen, setLinkNameOpen] = useState(false);
+  const [extendOpen, setExtendOpen] = useState(false);
   // The rail remembers the section this gift was last edited in.
   const [section, setSection] = useState<SectionKey>("words");
   const [panelOpen, setPanelOpen] = useState(true);
@@ -1233,6 +1235,9 @@ function SiteDashboard() {
                 {billing && billing.upgrades.length > 0 && !billing.ended ? (
                   <DropdownMenuItem onSelect={() => setPlanPicker("upgrade")}>Upgrade plan</DropdownMenuItem>
                 ) : null}
+                {billing?.extend ? (
+                  <DropdownMenuItem onSelect={() => setExtendOpen(true)}>Extend this gift</DropdownMenuItem>
+                ) : null}
                 <DropdownMenuItem onSelect={() => void unpublish()}>Unpublish</DropdownMenuItem>
                 {planSummary(billing) ? (
                   <p className="px-2 pt-1.5 pb-1 font-mono text-[10px] tracking-[0.08em] text-muted uppercase">
@@ -1271,7 +1276,8 @@ function SiteDashboard() {
         </div>
 
       </header>
-      <PlanBanner billing={billing} onUpgrade={() => setPlanPicker("upgrade")} />
+      <PlanBanner billing={billing} onUpgrade={() => setPlanPicker("upgrade")} onExtend={() => setExtendOpen(true)} />
+      <ExtendDialog siteId={id} open={extendOpen} onOpenChange={setExtendOpen} />
       <PlanPickerDialog
         siteId={id}
         recipient={draft.custom_text.recipient_name || "them"}
