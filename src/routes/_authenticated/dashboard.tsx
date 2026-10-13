@@ -2,7 +2,8 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { SiteHeader } from "@/components/SiteHeader";
 import { listMySites } from "@/lib/api";
-import { normalizeSite } from "@/lib/gift";
+import { isGiftEnded, normalizeSite } from "@/lib/gift";
+import { getTier } from "@/config/pricing";
 import Bo from "@/components/Bo";
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
@@ -83,7 +84,13 @@ function Dashboard() {
                       : "border border-line bg-cream text-muted"
                   }`}
                 >
-                  {site.status === "published" ? "Published" : "Draft"}
+                  {isGiftEnded(site)
+                    ? "Ended"
+                    : site.status === "published"
+                      ? `Open${getTier(site.tier) ? ` · ${getTier(site.tier)!.name}` : ""}`
+                      : site.tier
+                        ? "Paid, offline"
+                        : "Draft"}
                 </span>
               </Link>
             ))}

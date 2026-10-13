@@ -16,7 +16,7 @@
  *    (or friends, when the owner turned on "let friends read each other's notes")
  */
 import { createServerFn } from "@tanstack/react-start";
-import { and, asc, desc, eq, inArray, ne, or } from "drizzle-orm";
+import { and, asc, desc, eq, inArray, ne, or, sql } from "drizzle-orm";
 import { z } from "zod";
 import { getDb, schema } from "@/server/db";
 import { notifyNewNote } from "@/server/notify";
@@ -627,6 +627,31 @@ export const cancelOrder = createServerFn({ method: "POST" })
     }
     return { ok: true };
   });
+
+/** Admin checklist for payments. Reports what's set, never the values. */
+export const getPaymentsSetup = createServerFn({ method: "GET" }).handler(async () => {
+  await requireAdmin();
+  const { siteUrl } = await import("@/server/email");
+  const { enabledPaymentMethods } = await import("@/config/pricing");
+  const key = process.env["PAYMONGO_SECRET_KEY"] ?? "";
+  const mode = key.startsWith("sk_test_") ? "test" : key.startsWith("sk_live_") ? "live" : key ? "unknown" : "missing";
+  const [counts] = await getDb()
+    .select({
+      paid: sql<number>`(count(*) filter (where ${schema.orders.status} = 'paid'))::int`,
+      pending: sql<number>`(count(*) filter (where ${schema.orders.status} = 'pending'))::int`,
+    })
+    .from(schema.orders);
+  return {
+    keyMode: mode,
+    liveAllowed: process.env["PAYMONGO_ALLOW_LIVE"] === "true",
+    webhookSecretSet: !!process.env["PAYMONGO_WEBHOOK_SECRET"],
+    appBaseUrlSet: !!process.env["APP_BASE_URL"],
+    webhookUrl: `${siteUrl()}/api/webhooks/paymongo`,
+    methods: enabledPaymentMethods,
+    paidOrders: counts?.paid ?? 0,
+    pendingOrders: counts?.pending ?? 0,
+  };
+});
 
 /** Keepsake (and legacy) gifts can pick their own link name. */
 export const setCustomSlug = createServerFn({ method: "POST" })

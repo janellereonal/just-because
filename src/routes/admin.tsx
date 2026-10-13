@@ -5,7 +5,7 @@ import { toast } from "sonner";
 import { SiteHeader } from "@/components/SiteHeader";
 import { usePreviewUrl } from "@/components/ThemeCard";
 import { fetchThemes, type Theme } from "@/lib/themes";
-import { setThemePreview, setThemeStatus } from "@/lib/api";
+import { getPaymentsSetup, setThemePreview, setThemeStatus } from "@/lib/api";
 import { uploadFile } from "@/lib/upload";
 import { useAuth } from "@/hooks/useAuth";
 
@@ -78,6 +78,7 @@ function AdminPage() {
   return (
     <div className="min-h-screen bg-paper text-ink">
       <SiteHeader />
+      <PaymentsSetup />
       <section className="mx-auto max-w-6xl px-5 py-14">
         <p className="font-mono text-[11px] tracking-[0.18em] text-accent uppercase">Admin</p>
         <h1 className="mt-2 font-display text-3xl font-medium tracking-tight">Theme library</h1>
@@ -185,5 +186,75 @@ function AdminThemeRow({ theme, onToggle }: { theme: Theme; onToggle: () => void
         {theme.status === "published" ? "Published" : "Draft"}
       </button>
     </div>
+  );
+}
+
+/** Read-only checklist: is PayMongo wired up? Shows whether things are set, never their values. */
+function PaymentsSetup() {
+  const { data } = useQuery({ queryKey: ["payments-setup"], queryFn: () => getPaymentsSetup() });
+  if (!data) return null;
+  const rows: { ok: boolean; label: string; help: string }[] = [
+    {
+      ok: data.keyMode === "test",
+      label:
+        data.keyMode === "test"
+          ? "PayMongo test key is set"
+          : data.keyMode === "live"
+            ? data.liveAllowed
+              ? "Live key is set and allowed"
+              : "A live key is set but blocked (test mode only for now)"
+            : "PayMongo secret key isn't set",
+      help: "Vercel → Settings → Environment Variables → PAYMONGO_SECRET_KEY (sk_test_…)",
+    },
+    {
+      ok: data.webhookSecretSet,
+      label: data.webhookSecretSet ? "Webhook secret is set" : "Webhook secret isn't set",
+      help: "Create the webhook in PayMongo (URL below, event checkout_session.payment.paid), then put its whsk_… secret in PAYMONGO_WEBHOOK_SECRET",
+    },
+    {
+      ok: data.appBaseUrlSet,
+      label: data.appBaseUrlSet ? "APP_BASE_URL is set" : "APP_BASE_URL isn't set (falling back to the auth URL)",
+      help: "Set APP_BASE_URL to https://justbecause.site",
+    },
+  ];
+  return (
+    <section className="mx-auto max-w-6xl px-5 pt-14">
+      <p className="font-mono text-[11px] tracking-[0.18em] text-accent uppercase">Admin</p>
+      <h2 className="mt-2 font-display text-3xl font-medium tracking-tight">Payments setup</h2>
+      <div className="mt-6 space-y-2">
+        {rows.map((row) => (
+          <div key={row.label} className="flex gap-3 rounded-2xl border border-line bg-glass/60 px-4 py-3">
+            <span
+              className={`mt-0.5 grid size-5 shrink-0 place-items-center rounded-full text-[11px] font-semibold ${
+                row.ok ? "bg-accent text-cream" : "border border-line text-muted"
+              }`}
+              aria-hidden
+            >
+              {row.ok ? "✓" : ""}
+            </span>
+            <div className="min-w-0">
+              <p className="text-sm font-medium">{row.label}</p>
+              {!row.ok ? <p className="mt-0.5 text-xs text-muted">{row.help}</p> : null}
+            </div>
+          </div>
+        ))}
+      </div>
+      <div className="mt-4 rounded-2xl border border-line bg-cream px-4 py-3 text-sm">
+        <p className="text-muted">Webhook URL to register in PayMongo</p>
+        <button
+          type="button"
+          onClick={() => {
+            void navigator.clipboard.writeText(data.webhookUrl);
+            toast.success("Webhook URL copied.");
+          }}
+          className="mt-1 break-all text-left font-mono text-xs underline-offset-2 hover:underline"
+        >
+          {data.webhookUrl}
+        </button>
+        <p className="mt-3 text-muted">
+          Payment methods offered: {data.methods.join(", ")} · Paid orders: {data.paidOrders} · Waiting: {data.pendingOrders}
+        </p>
+      </div>
+    </section>
   );
 }

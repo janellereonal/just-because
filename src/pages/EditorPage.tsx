@@ -58,6 +58,7 @@ import {
   planSummary,
   useBilling,
 } from "@/components/PlanControls";
+import { getTier } from "@/config/pricing";
 import {
   CalendarDays,
   CaseSensitive,
@@ -211,6 +212,7 @@ function SiteDashboard() {
   const { data: billing } = useBilling(id);
   /** Paid (or legacy) and not ended: the gift can go live without paying again. */
   const hasPlan = !!billing?.tier && !billing.ended;
+  const planTier = getTier(billing?.tier);
 
   useEffect(() => {
     if (site && !draft) setDraft(site);
@@ -802,11 +804,28 @@ function SiteDashboard() {
       <div className="space-y-5">
         <div className="grid grid-cols-2 gap-2 rounded-xl border border-line bg-cream p-1">
           {(["scrapbook", "comic"] as const).map((format) => (
-            <Button key={format} type="button" variant={draft.format === format ? "default" : "ghost"} onClick={() => patch({ format })} className="capitalize">
+            <Button
+              key={format}
+              type="button"
+              variant={draft.format === format ? "default" : "ghost"}
+              onClick={() => patch({ format })}
+              disabled={!!planTier && !planTier.formats.includes(format)}
+              className="capitalize"
+            >
               {format === "comic" ? "Comic Issue" : "Scrapbook"}
             </Button>
           ))}
         </div>
+        {planTier && !planTier.formats.includes("comic") ? (
+          <p className="text-xs text-muted">
+            {planTier.name} is scrapbook only.{" "}
+            {billing && billing.upgrades.length > 0 ? (
+              <button type="button" className="text-accent underline underline-offset-2" onClick={() => setPlanPicker("upgrade")}>
+                Upgrade to use the comic format.
+              </button>
+            ) : null}
+          </p>
+        ) : null}
         {draft.format === "comic" ? (
           <>
             <label className="block"><span className="text-xs text-muted">Cover title</span><input value={normalizeComicSettings(draft.format_settings).cover_title ?? ""} onChange={(event) => patchComic({ cover_title: event.target.value })} placeholder={`THE AMAZING ${(draft.custom_text.recipient_name || "YOU").toUpperCase()}`} className="mt-1 w-full rounded-xl border border-line bg-cream px-3 py-2.5 text-sm outline-none focus:border-accent" /></label>
