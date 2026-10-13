@@ -437,6 +437,8 @@ export const submitContribution = createServerFn({ method: "POST" })
       externalLink: link,
       ornamentKey: z.enum(ORNAMENT_KEYS).nullable(),
       visibility: z.enum(["public", "recipient"]),
+      /** Random id from the friend's browser, used only for counting contributors. Optional for old clients. */
+      deviceId: id.nullable().optional(),
     }),
   )
   .handler(async ({ data }) => {
@@ -444,7 +446,8 @@ export const submitContribution = createServerFn({ method: "POST" })
     const [site] = await db.select().from(schema.giftSites).where(eq(schema.giftSites.id, data.siteId));
     if (!site) throw new HttpError(404, "We couldn't find that gift.");
     // Paid plans have caps. Tell the friend kindly instead of failing.
-    const room = await checkRoom(site, data.authorName, data.moduleType);
+    const deviceId = data.deviceId ?? null;
+    const room = await checkRoom(site, data.authorName, data.moduleType, deviceId);
     if (!room.ok) return { ok: false as const, full: room.reason };
     const [module] = await db
       .select({ enabled: schema.siteModules.enabled })
@@ -463,6 +466,7 @@ export const submitContribution = createServerFn({ method: "POST" })
       ornamentKey: data.moduleType === "tree" ? (data.ornamentKey ?? "bauble") : null,
       visibility: data.moduleType === "tree" ? data.visibility : "public",
       editToken: data.editToken,
+      deviceId,
     });
     await notifyNewNote(data.siteId, data.authorName).catch((e) => console.error("[notify]", e));
     return { ok: true as const, full: null };

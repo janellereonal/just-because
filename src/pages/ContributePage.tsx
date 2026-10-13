@@ -4,6 +4,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { deleteOwnContribution, getGiftRoom, submitContribution, updateOwnContribution } from "@/lib/api";
 import { uploadFile } from "@/lib/upload";
+import { getDeviceId } from "@/lib/device";
 import {
   FONT_PAIRINGS,
   GUEST_MODULES,
@@ -372,6 +373,7 @@ function ContributePage() {
           externalLink: link.trim() || null,
           ornamentKey: active === "tree" ? ornament : null,
           visibility: active === "tree" ? visibility : "public",
+          deviceId: getDeviceId(),
         },
       });
       full = result.full;

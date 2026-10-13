@@ -36,19 +36,28 @@ export function isOpen(site: Pick<Site, "status" | "tier" | "expiresAt">) {
 /* ---------------- usage & limits ---------------- */
 
 /**
- * Contributors are counted as different names (friends don't have accounts).
- * Hidden items don't count, so an owner can make room by hiding something.
+ * Contributors are counted as different devices (friends don't have accounts,
+ * so each browser keeps a random id in localStorage). Older notes sent before
+ * device ids existed fall back to the name, and a name already seen with a
+ * device id isn't counted twice. Hidden items don't count, so an owner can make
+ * room by hiding something.
  */
 export async function siteUsage(siteId: string) {
-  const c = schema.contributions;
-  const [row] = await getDb()
-    .select({
-      contributors: sql<number>`count(distinct lower(trim(${c.authorName})))::int`,
-      photos: sql<number>`(count(*) filter (where ${c.moduleType} = 'photobooth'))::int`,
-    })
-    .from(c)
-    .where(and(eq(c.siteId, siteId), inArray(c.status, ["pending", "approved"])));
-  return { contributors: row?.contributors ?? 0, photos: row?.photos ?? 0 };
+  const rows = await getDb().execute<{ contributors: number; photos: number }>(sql`
+    with live as (
+      select device_id, lower(trim(author_name)) as name, module_type
+      from contributions
+      where site_id = ${siteId} and status in ('pending', 'approved')
+    )
+    select
+      ((select count(distinct device_id) from live where device_id is not null)
+        + (select count(distinct name) from live
+           where device_id is null
+             and name not in (select name from live where device_id is not null)))::int as contributors,
+      (select count(*) from live where module_type = 'photobooth')::int as photos
+  `);
+  const row = rows[0];
+  return { contributors: Number(row?.contributors ?? 0), photos: Number(row?.photos ?? 0) };
 }
 
 export type Usage = Awaited<ReturnType<typeof siteUsage>>;
@@ -65,17 +74,19 @@ export function tierBlocker(tier: Tier, usage: Usage, format: string): string | 
 }
 
 /**
- * Is there room for one more item from `authorName` on this gift?
- * Only paid tiers have caps. Drafts are free to collect in; the tier picker
- * checks fit at checkout.
+ * Is there room for one more item from this friend on this gift?
+ * A friend is "already in" if this device has added before, or (for notes
+ * from before device ids) the same name has. Only paid tiers have caps.
+ * Drafts are free to collect in; the tier picker checks fit at checkout.
  */
-export async function checkRoom(site: Site, authorName: string, moduleType: string) {
+export async function checkRoom(site: Site, authorName: string, moduleType: string, deviceId: string | null = null) {
   if (site.status !== "published") return { ok: true as const };
   if (isExpired(site)) return { ok: false as const, reason: "ended" as const };
   const tier = getTier(site.tier);
   if (!tier) return { ok: true as const }; // legacy: no caps
   const usage = await siteUsage(site.id);
   const c = schema.contributions;
+  const sameName = sql`lower(trim(${c.authorName})) = lower(trim(${authorName}))`;
   const [known] = await getDb()
     .select({ n: sql<number>`count(*)::int` })
     .from(c)
@@ -83,7 +94,7 @@ export async function checkRoom(site: Site, authorName: string, moduleType: stri
       and(
         eq(c.siteId, site.id),
         inArray(c.status, ["pending", "approved"]),
-        sql`lower(trim(${c.authorName})) = lower(trim(${authorName}))`,
+        deviceId ? sql`(${c.deviceId} = ${deviceId} or (${c.deviceId} is null and ${sameName}))` : sameName,
       ),
     );
   const isNewPerson = (known?.n ?? 0) === 0;

@@ -220,9 +220,14 @@ export const contributions = pgTable(
     visibility: text("visibility").notNull().default("public"),
     /** Secret kept on the contributor's device so they can edit until publish. */
     editToken: uuid("edit_token"),
+    /**
+     * Random id kept in the friend's browser (localStorage), used only to count
+     * contributors for plan caps. Never sent back to the browser. Null on old rows.
+     */
+    deviceId: uuid("device_id"),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   },
-  (t) => [index("contributions_site_idx").on(t.siteId)],
+  (t) => [index("contributions_site_idx").on(t.siteId), index("contributions_site_device_idx").on(t.siteId, t.deviceId)],
 );
 
 export const calendarEntries = pgTable(
