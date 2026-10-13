@@ -15,7 +15,7 @@ export function introStyleForTheme(themeName: string | null | undefined): IntroS
   const key = (themeName ?? "").toLowerCase();
   if (key.includes("valentine")) return "envelope";
   if (key.includes("birthday")) return "giftbox";
-  if (key.includes("despidida") || key.includes("farewell")) return "boardingpass";
+  if (key.includes("despidida") || key.includes("farewell") || key.includes("voyage")) return "boardingpass";
   if (key.includes("christmas")) return "present";
   if (key.includes("pet")) return "paw";
   if (key.includes("new year")) return "sparkler";

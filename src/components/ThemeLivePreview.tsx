@@ -64,7 +64,7 @@ function sampleFor(theme: Theme) {
   const key = `${theme.category} ${theme.name}`.toLowerCase();
   if (key.includes("birthday")) return { heading: "For Maya", name: "Maya" };
   if (key.includes("christmas")) return { heading: "Merry Christmas, Lolo", name: "Lolo" };
-  if (key.includes("despidida") || key.includes("farewell"))
+  if (key.includes("despidida") || key.includes("farewell") || key.includes("voyage"))
     return { heading: "Bon voyage, Sam", name: "Sam" };
   if (key.includes("valentine")) return { heading: "Happy Valentine's, Ana", name: "Ana" };
   if (key.includes("pet")) return { heading: "For Milo", name: "Milo" };

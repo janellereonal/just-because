@@ -40,7 +40,7 @@ const ids = new Map(palettes.map(([name], i) => [name, P(i + 1)]));
 const themes: [string, string, string, string[], string[]][] = [
   ["Valentine's", "Romance", "Soft blush and deep rose for the people you adore.", ["letters", "photobooth", "songs"], ["Blush", "Deep Romance", "Berry"]],
   ["Happy Birthday", "Celebration", "Confetti-bright layouts for another trip around the sun.", ["letters", "photobooth", "countdown"], ["Confetti", "Pastel Party", "Citrus"]],
-  ["Despidida", "Farewell", "A warm send-off for someone moving on.", ["letters", "voice", "photobooth"], ["Golden Hour", "Soft Goodbye", "Sky"]],
+  ["Bon Voyage", "Farewell", "A warm send-off for someone moving on.", ["letters", "voice", "photobooth"], ["Golden Hour", "Soft Goodbye", "Sky"]],
   ["Christmas", "Season", "Pine, ribbon and candlelight for the holidays.", ["countdown", "calendar", "photobooth", "tree"], ["Classic Christmas", "Cozy Cabin", "Midnight Gold"]],
   ["Pets", "Companions", "For the furry ones who make the house a home.", ["photobooth", "wordcloud", "letters"], ["Sunny", "Lavender Paws", "Peach Fuzz"]],
   ["New Year", "New year", "Midnight and gold for fresh beginnings.", ["countdown", "wordcloud", "photobooth"], ["Midnight Gold", "Sparkle", "Monochrome"]],
@@ -56,6 +56,12 @@ await sql.begin(async (tx) => {
       on conflict (id) do update set name = excluded.name, group_name = excluded.group_name,
         background = excluded.background, primary_color = excluded.primary_color,
         accent = excluded.accent, sort_order = excluded.sort_order`;
+  }
+  // Renamed themes: keep the same row (and every gift using it), just change the name.
+  const renames: [string, string][] = [["Despidida", "Bon Voyage"]];
+  for (const [from, to] of renames) {
+    await tx`update themes set name = ${to} where name = ${from}
+             and not exists (select 1 from themes where name = ${to})`;
   }
   for (const [i, [name, category, description, modules, paletteNames]] of themes.entries()) {
     const suggested = paletteNames.map((n) => ids.get(n)!);
