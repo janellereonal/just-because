@@ -52,6 +52,7 @@ import {
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import {
   ExtendDialog,
+  GiftPasswordSetting,
   LinkNameDialog,
   PlanBanner,
   PlanPickerDialog,
@@ -800,6 +801,13 @@ function SiteDashboard() {
         >
           Preview the reveal
         </button>
+        <GiftPasswordSetting
+          siteId={id}
+          tier={billing?.tier ?? null}
+          passwordSet={site?.password_set ?? false}
+          canUpgrade={draft.status === "published" && !!billing && billing.upgrades.length > 0 && !billing.ended}
+          onUpgrade={() => setPlanPicker("upgrade")}
+        />
       </div>
     ),
     comic: (

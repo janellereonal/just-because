@@ -18,6 +18,8 @@ export type GiftFormatId = "scrapbook" | "comic";
  */
 export type TierFeatures = {
   customLinkName: boolean;
+  /** The recipient's link asks for a password the owner sets. */
+  passwordProtection: boolean;
 };
 
 export type Tier = {
@@ -53,7 +55,7 @@ export const TIERS: Tier[] = [
     formats: ["scrapbook"],
     liveFor: { months: 3, label: "3 months" },
     extendAmount: 14900,
-    features: { customLinkName: false },
+    features: { customLinkName: false, passwordProtection: false },
   },
   {
     id: "celebration",
@@ -66,7 +68,7 @@ export const TIERS: Tier[] = [
     formats: ["scrapbook", "comic"],
     liveFor: { months: 12, label: "1 year" },
     extendAmount: 29900,
-    features: { customLinkName: false },
+    features: { customLinkName: false, passwordProtection: true },
   },
   {
     id: "keepsake",
@@ -79,7 +81,7 @@ export const TIERS: Tier[] = [
     formats: ["scrapbook", "comic"],
     liveFor: { months: 36, label: "3 years" },
     extendAmount: 49900,
-    features: { customLinkName: true },
+    features: { customLinkName: true, passwordProtection: true },
   },
 ];
 
@@ -132,6 +134,12 @@ export type SiteTier = TierId | typeof LEGACY_TIER;
 
 /* ---------------- helpers ---------------- */
 
+/** Does a gift on this tier get this feature? Legacy gifts get every feature. */
+export function hasFeature(tierId: string | null | undefined, feature: keyof TierFeatures): boolean {
+  if (tierId === LEGACY_TIER) return true;
+  return !!TIERS.find((t) => t.id === tierId)?.features[feature];
+}
+
 export function getTier(id: string | null | undefined): Tier | null {
   return TIERS.find((t) => t.id === id) ?? null;
 }
@@ -164,6 +172,7 @@ export function featureList(tier: Tier): string[] {
     tier.photos.unlimited ? "Unlimited photos" : `Up to ${tier.photos.cap} photos`,
     tier.formats.length > 1 ? "Scrapbook and comic formats" : "Scrapbook format",
   ];
+  if (tier.features.passwordProtection) lines.push("Password protection");
   if (tier.features.customLinkName) lines.push("Custom link name");
   lines.push(`Live for ${tier.liveFor.label}`);
   return lines;

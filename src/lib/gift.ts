@@ -206,6 +206,12 @@ export type GiftSite = {
   published_at: string | null;
   expires_at: string | null;
   created_at: string;
+  /** Owner view only: a recipient password is saved (it may not apply on every plan). */
+  password_set: boolean;
+  /** The recipient link asks for a password (set, and included in the plan). */
+  password_protected: boolean;
+  /** This visitor may see the gift's notes (owner, no password, or entered correctly). */
+  unlocked: boolean;
 };
 
 /** Paid (or legacy), published and not past its end date. */
@@ -291,6 +297,9 @@ export function normalizeSite(row: Record<string, unknown>): GiftSite {
     published_at: (row["published_at"] as string | null) ?? null,
     expires_at: (row["expires_at"] as string | null) ?? null,
     created_at: String(row["created_at"]),
+    password_set: Boolean(row["password_set"]),
+    password_protected: Boolean(row["password_protected"]),
+    unlocked: row["unlocked"] !== false,
   };
 }
 

@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { getBilling, setCustomSlug, startCheckout, startExtendCheckout } from "@/lib/api";
+import { getBilling, setCustomSlug, setGiftPassword, startCheckout, startExtendCheckout } from "@/lib/api";
 import { PricingCards } from "@/components/PricingCards";
 import { Button } from "@/components/ui/button";
 import {
@@ -11,7 +11,15 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { LEGACY_TIER, TIERS, formatPeso, getTier, paymentMethodsSentence, type TierId } from "@/config/pricing";
+import {
+  LEGACY_TIER,
+  TIERS,
+  formatPeso,
+  getTier,
+  hasFeature,
+  paymentMethodsSentence,
+  type TierId,
+} from "@/config/pricing";
 
 export type Billing = Awaited<ReturnType<typeof getBilling>>;
 
@@ -303,4 +311,114 @@ export function planSummary(billing: Billing | undefined): string | null {
     ? new Date(billing.expiresAt).toLocaleDateString("en-PH", { month: "short", day: "numeric", year: "numeric" })
     : null;
   return until ? `${tier.name} plan, open until ${until}` : `${tier.name} plan`;
+}
+
+/** Names of the plans that include a feature, e.g. "Celebration and Keepsake". */
+function plansWith(feature: "passwordProtection" | "customLinkName") {
+  const names = TIERS.filter((t) => t.features[feature]).map((t) => t.name);
+  return names.length <= 1 ? names.join("") : `${names.slice(0, -1).join(", ")} and ${names[names.length - 1]}`;
+}
+
+/** Editor setting: a password the recipient types before the gift opens (paid feature). */
+export function GiftPasswordSetting({
+  siteId,
+  tier,
+  passwordSet,
+  canUpgrade,
+  onUpgrade,
+}: {
+  siteId: string;
+  tier: string | null;
+  passwordSet: boolean;
+  canUpgrade: boolean;
+  onUpgrade: () => void;
+}) {
+  const queryClient = useQueryClient();
+  const [editing, setEditing] = useState(false);
+  const [value, setValue] = useState("");
+  const [busy, setBusy] = useState(false);
+  const included = !tier || hasFeature(tier, "passwordProtection");
+
+  async function save(password: string | null) {
+    setBusy(true);
+    try {
+      await setGiftPassword({ data: { siteId, password } });
+      await queryClient.invalidateQueries({ queryKey: ["site", siteId] });
+      setEditing(false);
+      setValue("");
+      toast.success(password === null ? "Password removed. The link opens without one." : "Password saved.");
+    } catch (error) {
+      toast.error(errorMessage(error, "Use at least 4 characters."));
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <div className="mt-5 rounded-xl border border-line bg-cream p-3">
+      <p className="text-sm font-medium">Password</p>
+      {!included ? (
+        <>
+          <p className="mt-1 text-xs text-muted">
+            Ask for a password before the gift opens. Comes with {plansWith("passwordProtection")}.
+            {passwordSet ? " Your saved password isn't asked for on this plan." : ""}
+          </p>
+          {canUpgrade ? (
+            <Button size="sm" variant="outline" className="mt-3 rounded-full" onClick={onUpgrade}>
+              Upgrade
+            </Button>
+          ) : null}
+        </>
+      ) : editing || !passwordSet ? (
+        <form
+          className="mt-2 space-y-2"
+          onSubmit={(e) => {
+            e.preventDefault();
+            void save(value);
+          }}
+        >
+          <p className="text-xs text-muted">
+            {passwordSet
+              ? "Pick a new one. Anyone who opened it before will need the new one."
+              : `Ask for a password before the gift opens. Share it along with the link.${
+                  tier ? "" : ` Works on ${plansWith("passwordProtection")}.`
+                }`}
+          </p>
+          <input
+            type="text"
+            value={value}
+            onChange={(e) => setValue(e.target.value)}
+            placeholder="e.g. the name of your group chat"
+            autoComplete="off"
+            maxLength={100}
+            className="w-full rounded-xl border border-line bg-paper px-3 py-2.5 text-sm outline-none focus:border-accent"
+          />
+          <div className="flex gap-2">
+            <Button type="submit" size="sm" className="rounded-full" disabled={busy || value.trim().length < 4}>
+              {busy ? "Saving…" : "Save password"}
+            </Button>
+            {passwordSet ? (
+              <Button type="button" size="sm" variant="ghost" className="rounded-full" onClick={() => setEditing(false)}>
+                Cancel
+              </Button>
+            ) : null}
+          </div>
+        </form>
+      ) : (
+        <>
+          <p className="mt-1 text-xs text-muted">
+            On. People opening the link type the password first. You don't need it as the owner.
+          </p>
+          <div className="mt-3 flex gap-2">
+            <Button size="sm" variant="outline" className="rounded-full" onClick={() => setEditing(true)}>
+              Change
+            </Button>
+            <Button size="sm" variant="ghost" className="rounded-full" disabled={busy} onClick={() => void save(null)}>
+              Remove
+            </Button>
+          </div>
+        </>
+      )}
+    </div>
+  );
 }

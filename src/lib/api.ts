@@ -14,6 +14,8 @@
  *  - the finished gift (approved notes, tree ornaments) is only readable once
  *    it's paid, published and not ended; before that only the owner sees it
  *    (or friends, when the owner turned on "let friends read each other's notes")
+ *  - a password-protected gift (paid feature) also needs the right password
+ *    first; the password hash itself never leaves the server
  */
 import { createServerFn } from "@tanstack/react-start";
 import { and, asc, desc, eq, inArray, ne, or, sql } from "drizzle-orm";
@@ -31,7 +33,16 @@ import {
   tierBlocker,
   upgradeOptions,
 } from "@/server/billing";
-import { TIERS, LEGACY_TIER, getTier } from "@/config/pricing";
+import { TIERS, LEGACY_TIER, getTier, hasFeature } from "@/config/pricing";
+import {
+  clearTries,
+  hashPassword,
+  isUnlocked,
+  needsPassword,
+  rememberUnlock,
+  tooManyTries,
+  verifyPassword,
+} from "@/server/giftPassword";
 import {
   HttpError,
   currentUser,
@@ -141,21 +152,93 @@ export const setThemePreview = createServerFn({ method: "POST" })
 /* Gift sites                                                         */
 /* ------------------------------------------------------------------ */
 
-/** Can the current visitor see the finished gift? Open gifts: anyone. Otherwise the owner (or an admin). */
+type SiteRecord = typeof schema.giftSites.$inferSelect;
+
+function isOwnerOf(user: Awaited<ReturnType<typeof currentUser>>, site: SiteRecord) {
+  return !!user && (user.id === site.creatorId || user.isAdmin);
+}
+
+/**
+ * A gift row for the browser. The password hash is always removed; instead:
+ * `password_set` (owner only), `password_protected` (the link asks for one) and
+ * `unlocked` (this visitor may see the gift's notes).
+ */
+function siteRow(site: SiteRecord, opts: { owner: boolean }) {
+  const { passwordHash, ...rest } = site;
+  const protectedNow = needsPassword(site);
+  return {
+    ...toRow(rest),
+    ...(opts.owner ? { password_set: !!passwordHash } : {}),
+    password_protected: protectedNow,
+    unlocked: opts.owner || !protectedNow || isUnlocked(site),
+  };
+}
+
+/**
+ * Can the current visitor see the finished gift? Open gifts: anyone, after the
+ * password if it has one. Otherwise only the owner (or an admin).
+ */
 async function canViewGift(siteId: string, opts: { allowSharedNotes?: boolean } = {}) {
   const [site] = await getDb().select().from(schema.giftSites).where(eq(schema.giftSites.id, siteId));
   if (!site) return false;
-  if (isOpen(site)) return true;
+  // Friends reading each other's notes while the gift is still being made (the contribute page).
   if (opts.allowSharedNotes && site.shareNotes && site.status === "draft") return true;
-  const user = await currentUser();
-  return !!user && (user.id === site.creatorId || user.isAdmin);
+  if (isOwnerOf(await currentUser(), site)) return true;
+  if (!isOpen(site)) return false;
+  return !needsPassword(site) || isUnlocked(site);
 }
 
 export const getSiteBySlug = createServerFn({ method: "GET" })
   .inputValidator(z.object({ slug: z.string().min(1).max(120) }))
   .handler(async ({ data }) => {
     const [row] = await getDb().select().from(schema.giftSites).where(eq(schema.giftSites.slug, data.slug));
-    return row ? toRow(row) : null;
+    if (!row) return null;
+    return siteRow(row, { owner: isOwnerOf(await currentUser(), row) });
+  });
+
+/** The recipient enters the gift's password. Right answer: remembered on this browser. */
+export const unlockGift = createServerFn({ method: "POST" })
+  .inputValidator(z.object({ slug: z.string().min(1).max(120), password: z.string().min(1).max(200) }))
+  .handler(async ({ data }) => {
+    const [site] = await getDb().select().from(schema.giftSites).where(eq(schema.giftSites.slug, data.slug));
+    if (!site || !site.passwordHash || !needsPassword(site)) return { ok: true as const, error: null };
+    const { getRequest } = await import("@tanstack/react-start/server");
+    const ip = getRequest()?.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? "local";
+    const key = `${site.id}:${ip}`;
+    if (tooManyTries(key)) {
+      return { ok: false as const, error: "Too many tries. Please wait a few minutes and try again." };
+    }
+    if (!(await verifyPassword(data.password, site.passwordHash))) {
+      return { ok: false as const, error: "That's not it. Check with whoever sent you the link." };
+    }
+    clearTries(key);
+    rememberUnlock({ id: site.id, passwordHash: site.passwordHash });
+    return { ok: true as const, error: null };
+  });
+
+/** Owner sets, changes or removes the recipient password. `null` removes it. */
+export const setGiftPassword = createServerFn({ method: "POST" })
+  .inputValidator(
+    z.object({
+      siteId: id,
+      password: z
+        .string()
+        .min(4, "Use at least 4 characters.")
+        .max(100, "Keep it under 100 characters.")
+        .nullable(),
+    }),
+  )
+  .handler(async ({ data }) => {
+    await requireSiteOwner(data.siteId);
+    const [site] = await getDb().select().from(schema.giftSites).where(eq(schema.giftSites.id, data.siteId));
+    if (!site) throw new HttpError(404, "We couldn't find that gift.");
+    // Unpaid drafts may set one ahead of time; it only takes effect on a plan that includes it.
+    if (data.password !== null && site.tier && !hasFeature(site.tier, "passwordProtection")) {
+      throw new HttpError(403, "Passwords come with Celebration and Keepsake. Upgrade to add one.");
+    }
+    const passwordHash = data.password === null ? null : await hashPassword(data.password);
+    await getDb().update(schema.giftSites).set({ passwordHash }).where(eq(schema.giftSites.id, site.id));
+    return { ok: true, passwordSet: passwordHash !== null };
   });
 
 export const getSiteById = createServerFn({ method: "GET" })
@@ -165,7 +248,7 @@ export const getSiteById = createServerFn({ method: "GET" })
     const [row] = await getDb().select().from(schema.giftSites).where(eq(schema.giftSites.id, data.id));
     if (!row) return null;
     if (row.creatorId !== user.id && !user.isAdmin) return null;
-    return toRow(row);
+    return siteRow(row, { owner: true });
   });
 
 export const listMySites = createServerFn({ method: "GET" }).handler(async () => {
@@ -802,6 +885,10 @@ export const deleteContributions = createServerFn({ method: "POST" })
 export const listCalendarEntries = createServerFn({ method: "GET" })
   .inputValidator(z.object({ siteId: id }))
   .handler(async ({ data }) => {
+    const [site] = await getDb().select().from(schema.giftSites).where(eq(schema.giftSites.id, data.siteId));
+    if (!site) return [];
+    // Behind a password, the calendar's surprises wait for the password too.
+    if (needsPassword(site) && !isUnlocked(site) && !isOwnerOf(await currentUser(), site)) return [];
     const rows = await getDb()
       .select()
       .from(schema.calendarEntries)

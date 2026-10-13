@@ -1,6 +1,6 @@
 import { Suspense, lazy, useEffect, useState } from "react";
 import {useParams} from "@tanstack/react-router";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { GiftSiteView } from "@/components/GiftSiteView";
 import { ComicIssueView } from "@/components/ComicIssueView";
 import { introStyleForTheme } from "@/lib/intro";
@@ -22,7 +22,7 @@ import {
   isGiftEnded,
   isGiftOpen,
 } from "@/lib/gift";
-import { getMe } from "@/lib/api";
+import { getMe, unlockGift } from "@/lib/api";
 import Bo from "@/components/Bo";
 import { ExtendDialog } from "@/components/PlanControls";
 import { clearIntroSkip, hasSkippedIntro, rememberIntroSkip } from "@/lib/introSkip";
@@ -38,6 +38,8 @@ function PublishedPage() {
     queryFn: () => fetchSiteBySlug(slug),
   });
   const { data: me, isFetched: meReady } = useQuery({ queryKey: ["me"], queryFn: () => getMe() });
+  // Behind a password, nothing else loads until the server says this browser is unlocked.
+  const locked = !!site && !site.unlocked;
   const { data: theme = null, isFetched: themeReady } = useQuery({
     queryKey: ["theme", site?.theme_id],
     queryFn: () => fetchTheme(site?.theme_id ?? null),
@@ -46,23 +48,23 @@ function PublishedPage() {
   const { data: modules = [] } = useQuery({
     queryKey: ["modules", site?.id],
     queryFn: () => fetchModules(site!.id),
-    enabled: !!site,
+    enabled: !!site && !locked,
   });
   const { data: contributions = [] } = useQuery({
     queryKey: ["contributions", site?.id, "approved"],
     queryFn: () => fetchContributions(site!.id, true),
-    enabled: !!site,
+    enabled: !!site && !locked,
   });
 
   const { data: calendarEntries = [] } = useQuery({
     queryKey: ["calendar", site?.id],
     queryFn: () => fetchCalendarEntries(site!.id),
-    enabled: !!site,
+    enabled: !!site && !locked,
   });
   const { data: treeOrnaments = [] } = useQuery({
     queryKey: ["tree-ornaments", site?.id],
     queryFn: () => fetchPublicTreeOrnaments(site!.id),
-    enabled: !!site,
+    enabled: !!site && !locked,
   });
 
   useEffect(() => {
@@ -94,6 +96,9 @@ function PublishedPage() {
   const isOwner = !!me && (me.id === site.creator_id || me.isAdmin);
   if (isGiftEnded(site) && site.status === "published") {
     return <GiftEndedPage isOwner={isOwner} siteId={site.id} />;
+  }
+  if (locked && isGiftOpen(site)) {
+    return <PasswordGate slug={slug} recipient={site.custom_text.recipient_name} />;
   }
   if (!isGiftOpen(site) && !isOwner) {
     return (
@@ -165,6 +170,70 @@ function PublishedPage() {
         />
       )}
     </>
+  );
+}
+
+/** Shown before a password-protected gift. The notes only load after the server accepts the password. */
+function PasswordGate({ slug, recipient }: { slug: string; recipient?: string | undefined }) {
+  const queryClient = useQueryClient();
+  const [password, setPassword] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  async function submit(e: React.FormEvent) {
+    e.preventDefault();
+    if (!password.trim()) return;
+    setBusy(true);
+    setError(null);
+    try {
+      const result = await unlockGift({ data: { slug, password } });
+      if (!result.ok) {
+        setError(result.error);
+        return;
+      }
+      await queryClient.invalidateQueries({ queryKey: ["site-slug", slug] });
+    } catch {
+      setError("We couldn't check that just now. Please try again.");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <div className="grid min-h-screen place-items-center bg-paper px-6 text-center text-ink">
+      <form onSubmit={submit} className="w-full max-w-sm">
+        <Bo pose="idle" size={140} title="Bo" />
+        <h1 className="mt-4 font-display text-3xl font-medium tracking-tight">
+          {recipient ? `A gift for ${recipient}` : "A gift for you"}
+        </h1>
+        <p className="mt-2 text-muted text-pretty">
+          This one has a password. Whoever sent you the link will know it.
+        </p>
+        <input
+          type="password"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          placeholder="Password"
+          autoComplete="off"
+          autoFocus
+          maxLength={200}
+          aria-label="Gift password"
+          className="mt-6 w-full rounded-full border border-line bg-cream px-5 py-3 text-center text-sm outline-none focus:border-accent"
+        />
+        {error ? (
+          <p role="alert" className="mt-2 text-sm text-accent">
+            {error}
+          </p>
+        ) : null}
+        <button
+          type="submit"
+          disabled={busy || !password.trim()}
+          className="mt-4 w-full rounded-full bg-accent px-6 py-3 text-sm font-medium text-cream disabled:opacity-60"
+        >
+          {busy ? "Checking…" : "Open the gift"}
+        </button>
+      </form>
+    </div>
   );
 }
 

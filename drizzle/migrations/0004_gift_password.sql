@@ -1,0 +1,1 @@
+ALTER TABLE "gift_sites" ADD COLUMN "password_hash" text;

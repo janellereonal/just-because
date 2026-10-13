@@ -248,7 +248,16 @@ export async function applyPaidEvent(event: PaidEvent, provider: string): Promis
   return result.msg;
 }
 
-/** Pending checkouts older than a day are treated as abandoned. */
+/**
+ * Pending checkouts older than a day are treated as abandoned.
+ *
+ * We deliberately don't listen to PayMongo's `payment.failed`: it's about a
+ * single payment attempt (linked to a payment intent, not our checkout
+ * session), and on hosted checkout the buyer can simply try again with
+ * another method on the same session. Failing the order on the first failed
+ * attempt would show "No payment was made" while they're still paying.
+ * Cancelling from checkout already marks the order failed (cancelOrder).
+ */
 export async function expireStaleOrders(siteId: string) {
   await getDb()
     .update(schema.orders)

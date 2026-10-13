@@ -142,6 +142,11 @@ export const giftSites = pgTable(
     publishedAt: timestamp("published_at", { withTimezone: true }),
     /** When the gift stops being open. Null = never (legacy). */
     expiresAt: timestamp("expires_at", { withTimezone: true }),
+    /**
+     * scrypt hash of the recipient password (paid feature). Never the password
+     * itself, and never sent to the browser. Null = no password.
+     */
+    passwordHash: text("password_hash"),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   },
   (t) => [index("gift_sites_creator_idx").on(t.creatorId)],

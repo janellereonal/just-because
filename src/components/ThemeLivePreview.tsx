@@ -189,6 +189,9 @@ export function ThemeLivePreview({ theme }: { theme: Theme }) {
       published_at: null,
       expires_at: null,
       created_at: new Date().toISOString(),
+      password_set: false,
+      password_protected: false,
+      unlocked: true,
     }),
     [theme.id, theme.name, sample.heading, sample.name, background],
   );
