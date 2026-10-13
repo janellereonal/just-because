@@ -15,6 +15,8 @@ Live: https://justbecause.site (fallback https://just-because-snowy.vercel.app)
 - **Resend** for email (`src/server/email.ts`)
 - Hosted on **Vercel** (team "Just Because", region `sin1`), auto-deploys from `main`
 
+**Status, accounts and the task queue are in `HANDOFF.md`. Read it first.**
+
 Moved off Lovable + Supabase in Oct 2026. Old Lovable SQL lives in
 `drizzle/lovable-legacy-migrations/` for reference only.
 
