@@ -1,4 +1,4 @@
-# Handoff: where Just Because is (13 Oct 2026, night)
+# Handoff: where Just Because is (14 Oct 2026, early morning)
 
 Read this together with `CLAUDE.md` (how the code works). This file is about **status, accounts,
 and what's next**, so a fresh Claude session on any account can pick up without the old chat.
@@ -10,14 +10,25 @@ and what's next**, so a fresh Claude session on any account can pick up without 
 - **Emails work.** The Resend domain `justbecause.site` is verified, and a sign-up confirm email was
   delivered to janelledelavegareonal@gmail.com.
 - **Janelle's account** (janelledelavegareonal@gmail.com) is confirmed and is an **admin**.
-- **Themes:** 8 seeded themes. "Despidida" was renamed to **Bon Voyage** (category Farewell).
-  None of them have preview images yet (Admin → Upload preview).
+- **Themes:** 9 seeded themes, including **Anniversary** and the new **Bridal Shower**. "Despidida"
+  was renamed to **Bon Voyage**. Renames go in the `renames` list in `scripts/seed.ts` so nothing
+  duplicates. None of them have preview images yet (Admin → Upload preview).
 - **Paid publishing with PayMongo is built and deployed (commit `dcaabc1`), in test mode only.**
   Tested end to end locally with a fake PayMongo server: pay, cancel/retry, idempotent webhook,
   forged webhook rejected, caps, full messages, upgrade, custom link, ended page.
-- Last commit `35e30fc` adds a **Payments setup checklist on /admin**, plan status on the
-  dashboard, and locks the comic format on Sweet gifts. It was pushed, but the deploy wasn't checked
-  yet (see task A below).
+- `35e30fc` (Payments setup checklist on /admin, plan status, comic locked on Sweet) deployed fine.
+- **Built overnight (13 to 14 Oct), all deployed:**
+  - `fbd7f79` Bridal Shower theme, rename map in the seed.
+  - `0ff505c` **Extend this gift**: order kind `extend`, price `extendAmount` per tier in pricing.ts
+    (Sweet ₱149, Celebration ₱299, Keepsake ₱499). Adds another plan stretch on top of the end date,
+    or from today if ended. Upgrades now keep extensions. Buttons on the ended page, editor banner,
+    and Sent → Extend this gift.
+  - `0b9c7a4` Contributors counted by **device id** (migration 0003), name fallback for old notes.
+  - `0cfe34e` **Password protection** on Celebration and Keepsake (migration 0004). Editor → intro
+    panel → Password. Checked on the server; only a hash is stored.
+  - Tested locally with a fake PayMongo server and real HTTP calls: extend (ended, stacking, then
+    upgrade), retries skipped, underpayment refused, cap counting by device, password gate (wrong
+    password, forged cookie, right password, Sweet ignores it, guess limit).
 - **Until the PayMongo keys are added, "Wrap it up" on the live site shows "We couldn't open
   the payment page."** That's expected.
 
@@ -71,24 +82,49 @@ The full list with notes is in `.env.example`.
 4. Click back to the merchant at checkout. You should see "No payment was made".
 5. Sent → **Upgrade plan** should charge the difference. On Keepsake, Sent → **Change link name**.
 6. In a private window, a draft gift's `/g/` link should say "This gift isn't open yet".
+7. **Extend:** on a paid gift, Sent → **Extend this gift**, pay by card. The confirm page should say
+   "Your gift is open for longer" with the new end date. (To test the ended page, ask Claude to set
+   one test gift's `expires_at` in the past, then open its `/g/` link signed in.)
+8. **Password:** on a Celebration or Keepsake gift, editor → intro panel → Password → save one.
+   Open the `/g/` link in a private window: it should ask for the password, say "That's not it"
+   for a wrong one, and open the gift for the right one. Signed in as the owner, it never asks.
+9. **Contributor count:** add notes from two different private windows using the same name.
+   Sent → the plan banner and dashboard should count 2 contributors, not 1.
 
 ## 5. Task queue for Claude (in order)
 
-A. **Check that commit `35e30fc` deployed.** /admin should show "Payments setup". If the
-   build failed, read the Vercel build log and fix it.
-B. Once Janelle has added the keys: help her through the test run in section 4. If the webhook doesn't
+Done: A (deploy check), extend, device-id counting, password protection, bridal shower theme.
+`payment.failed` was looked at and deliberately not handled (reason in `billing.ts` and CLAUDE.md).
+
+A. Once Janelle has added the keys: help her through the test run in section 4. If the webhook doesn't
    fire, check the Vercel runtime logs for lines starting with `[payments]`.
-C. Known gaps (each is small; do them without asking):
-   - The "Extend this gift" button is a placeholder. Build it as a checkout that pushes `expires_at`
-     forward by the tier's duration (a new order kind `extend`).
-   - Contributors are counted by name. Optionally add a device id kept in localStorage and sent
-     with each note, and count distinct device ids instead (keep the name fallback).
-   - Handle `payment.failed` if useful (today an unpaid checkout counts as abandoned after 24h).
-   - The early-bird promo is in the config but off.
-D. Open product work: password protection as a paid feature (add a flag in `TierFeatures` in
-   `src/config/pricing.ts`), refunds (note in `applyPaidEvent`), PayPal as a sibling of
-   `src/server/payments/paymongo.ts`, and bridal shower and anniversary themes.
-E. Upload theme preview images (needs images from Janelle).
+B. Upload theme preview images once Janelle sends them (Admin → Upload preview).
+C. Early-bird promo: built but off (`promo.enabled` in pricing.ts). Turn on only when Janelle says so.
+D. **Refunds (not built, notes only).** When it's needed:
+   - Today, a duplicate payment (two tabs) is logged as `[payments] ... Needs a refund.` in
+     `applyPaidEvent` and the order is marked paid without changing the gift. Refund those by hand
+     in the PayMongo dashboard (Payments → the payment → Refund).
+   - To automate: add `refundPayment(paymentId, amount, reason)` to `PaymentProvider` in
+     `src/server/payments/types.ts`; PayMongo's is `POST /v1/refunds` with
+     `{ payment_id, amount, reason }` (reasons: duplicate, fraudulent, requested_by_customer, others).
+   - Add order statuses `refund_pending` / `refunded`, call it from the duplicate branch of
+     `applyPaidEvent` (after the transaction commits), and listen for `payment.refunded` /
+     `payment.refund.updated` to mark the order refunded. Refunds of a used plan should stay
+     manual (an admin button on /admin with a reason), not automatic.
+E. **PayPal for buyers abroad (not built, notes only).**
+   - Add `src/server/payments/paypal.ts` implementing `PaymentProvider`, and register it in
+     `src/server/payments/index.ts`. Use PayPal Orders v2: `POST /v2/checkout/orders` with
+     `intent: CAPTURE`, `purchase_units[0].reference_id = orderId`, amount from the same quote,
+     and `return_url`/`cancel_url` = the existing `/checkout/{orderId}` URLs.
+   - PayPal needs a capture step: on return, or on the `CHECKOUT.ORDER.APPROVED` webhook, call
+     `POST /v2/checkout/orders/{id}/capture`, then feed a `PaidEvent` into `applyPaidEvent` from
+     `PAYMENT.CAPTURE.COMPLETED`. Verify webhooks with `POST /v1/notifications/verify-webhook-signature`.
+   - New route `src/routes/api/webhooks/paypal.ts` (copy the PayMongo one). Env vars
+     `PAYPAL_CLIENT_ID`, `PAYPAL_CLIENT_SECRET`, `PAYPAL_WEBHOOK_ID`, `PAYPAL_API_URL` (sandbox first).
+   - Charge in USD: add a `usdAmount` per tier (and per extend) in pricing.ts rather than converting
+     with `usdDisplayRate`, which is display only. Orders already store `currency` and `provider`.
+   - UI: a "Paying from abroad? Use PayPal" link under the plan cards that calls `startCheckout`
+     with `provider: "paypal"`.
 
 ## 6. Rules for whoever picks this up
 
@@ -100,8 +136,13 @@ E. Upload theme preview images (needs images from Janelle).
 - Janelle likes short, casual updates and few questions. Make sensible calls and say what you chose.
 - Before pushing: `npx tsc --noEmit`, and for bigger changes
   `NITRO_PRESET=node bun run build`. Pushing to `main` deploys to production.
-- Every deploy runs `db:migrate` and `db:seed` automatically. The live database currently has
-  1 user and no gifts.
+- Every deploy runs `db:migrate` and `db:seed` automatically. Migrations so far: 0000 to 0004
+  (0003 device_id, 0004 password_hash), all additive. The live database had 1 user and no gifts
+  on 13 Oct.
+- Local testing: a Postgres on port 5433, a fake PayMongo server (POST/GET `/v1/checkout_sessions`)
+  on `PAYMONGO_API_URL`, and webhooks signed with the local `PAYMONGO_WEBHOOK_SECRET`. Server
+  functions can be called over HTTP at `/_serverFn/{id}` with a seroval payload, `origin` and
+  `sec-fetch-site: same-origin` headers (the CSRF middleware rejects anything else).
 
 ## 7. Going live later (not now)
 

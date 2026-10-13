@@ -46,7 +46,7 @@ bun install
 bun run dev            # http://localhost:8080 (needs DATABASE_URL in .env)
 bun run db:generate    # after editing schema.ts, creates a migration in drizzle/migrations
 bun run db:migrate     # applies migrations (Vercel runs this on every build)
-bun run db:seed        # 24 palettes + 8 themes, idempotent (also runs on build)
+bun run db:seed        # 24 palettes + 9 themes, idempotent (also runs on build)
 npx tsc --noEmit       # typecheck
 NITRO_PRESET=node bun run build && node .output/server/index.mjs   # prod build locally
 ```
@@ -66,14 +66,32 @@ Locally, without `BLOB_READ_WRITE_TOKEN` uploads save to `.dev-uploads/`, and wi
   the event id in `webhook_events` so retries do nothing. Logic is in `src/server/billing.ts`.
 - Provider code sits behind `src/server/payments/types.ts`; PayMongo is
   `src/server/payments/paymongo.ts`. A second provider (PayPal) would be a sibling file.
+- Order kinds: `publish` (first payment), `upgrade` (pay the difference; adds the extra months
+  on top of the current end date, so extensions are kept) and `extend` (pay the tier's
+  `extendAmount` for another `liveFor`, stacked on the end date, or from today if ended).
 - Recipient link `/g/{slug}` only opens when paid + published + not ended. The owner gets a
-  preview. Gifts published before payments have tier `legacy`: no caps, no expiry.
-- Caps: contributors are counted by distinct name (friends have no accounts), photos by
+  preview. Gifts published before payments have tier `legacy`: no caps, no expiry, every feature.
+- Caps: contributors are counted by distinct **device id** (`contributions.device_id`, a random
+  id the contribute page keeps in localStorage, `src/lib/device.ts`). Old rows without one fall
+  back to the name, and a name already seen with a device isn't counted twice. Photos are
   photobooth items. Hidden items don't count. Over the cap, friends see "this gift is full"
-  and the owner gets an upgrade banner.
+  and the owner gets an upgrade banner. `device_id` is never returned to the browser.
+- Paid features live in `TierFeatures`; check them with `hasFeature(tier, "...")`.
+- We don't handle `payment.failed` on purpose: it's per attempt, and hosted checkout lets the
+  buyer retry on the same session. Unpaid orders count as abandoned after 24h.
 - Live keys (`sk_live_`) are refused unless `PAYMONGO_ALLOW_LIVE=true`.
 - Local testing without PayMongo: set `PAYMONGO_API_URL` to a fake server that mimics
   `/v1/checkout_sessions` and signs webhooks with `PAYMONGO_WEBHOOK_SECRET`.
+
+## Password protection (Celebration, Keepsake)
+
+`src/server/giftPassword.ts`. The owner sets a password in the editor (intro panel). Only a scrypt
+hash is stored in `gift_sites.password_hash`, and `siteRow()` in `api.ts` strips it from every
+site row. The gate is server side: `canViewGift` and `listCalendarEntries` return nothing until
+the visitor has the signed HttpOnly cookie that `unlockGift` sets after the right password. The
+cookie is an HMAC of the gift id and the current hash, so changing the password signs everyone
+out. A password only applies while the plan includes it (`needsPassword`); the owner never needs
+it. Wrong guesses are limited to 10 per 10 minutes per gift and IP (in memory, per instance).
 
 ## Emails
 
@@ -102,6 +120,5 @@ verification is only required once `RESEND_API_KEY` and `EMAIL_FROM` are both se
 
 ## Open product work
 
-Password protection as a paid feature (add a flag in `TierFeatures`), extending an ended gift
-(the button is a placeholder), refunds (see the note in `applyPaidEvent`), PayPal for
-international buyers, bridal shower and anniversary templates.
+Refunds and PayPal (notes in HANDOFF.md section 5), theme preview images (needs images),
+and turning on the early-bird promo when it's time (`promo.enabled` in pricing.ts).
