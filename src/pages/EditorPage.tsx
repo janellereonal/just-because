@@ -1075,7 +1075,7 @@ function SiteDashboard() {
   return (
     <div className="flex h-[100dvh] flex-col overflow-hidden bg-paper text-ink">
       <BoBuddy followFocus celebrate intro={false} />
-      <header className="flex h-16 shrink-0 items-center justify-between gap-3 border-b border-line bg-paper px-3 sm:px-4">
+      <header data-bo-avoid className="flex h-16 shrink-0 items-center justify-between gap-3 border-b border-line bg-paper px-3 sm:px-4">
         <div className="flex min-w-0 flex-col justify-center gap-0.5">
         <div className="group flex min-w-0 items-center gap-2">
           <Link to="/dashboard" className="shrink-0 text-xs text-muted hover:text-ink">

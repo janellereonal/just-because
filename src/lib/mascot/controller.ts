@@ -307,12 +307,17 @@ export class MascotController {
     const sy = window.scrollY;
     const vw = window.innerWidth;
     const vh = window.visualViewport?.height ?? window.innerHeight;
+    // Fixed headers count as off limits too, so bubbles never sit under/over the nav.
+    const header = document.querySelector<HTMLElement>("[data-bo-avoid]")?.getBoundingClientRect();
+    const topLimit = header ? Math.max(8, header.bottom + 6) : 8;
+    let best: { spot: (typeof spots)[number]; score: number } | null = null;
     for (const spot of spots) {
       const r = this.bubbleRect(spot);
       const vx = r.x - sx;
       const vy = r.y - sy;
-      if (vx < 8 || vx + r.w > vw - 8 || vy < 8 || vy + r.h > vh - 8) continue;
+      if (vx < 8 || vx + r.w > vw - 8 || vy < topLimit || vy + r.h > vh - 8) continue;
       let blocked = false;
+      let score = 0;
       for (const [px, py] of [
         [vx + 4, vy + 4],
         [vx + r.w - 4, vy + 4],
@@ -323,15 +328,16 @@ export class MascotController {
         const hit = document.elementsFromPoint(px, py).find((n) => !this.layer.contains(n));
         if (hit && (hit.closest(INTERACTIVE) || (this.focusEl && hit === this.focusEl))) {
           blocked = true;
-          break;
+          score += 1;
         }
       }
       if (!blocked) {
         this.bubbleSpot = spot;
         return;
       }
+      if (!best || score < best.score) best = { spot, score };
     }
-    this.bubbleSpot = "above-right";
+    this.bubbleSpot = best?.spot ?? "right";
   }
 
   private placeBubble() {
@@ -400,7 +406,8 @@ export class MascotController {
   private onFocusIn = (e: FocusEvent) => {
     if (!this.opts.followFocus) return;
     const t = e.target instanceof HTMLElement ? e.target : null;
-    if (t?.matches(FIELD) && t.closest("[data-bo-zone]")) {
+    const box = t?.getBoundingClientRect();
+    if (t?.matches(FIELD) && t.closest("[data-bo-zone]") && box && box.width > 8 && box.height > 8) {
       this.focusEl = t;
       this.dirty = true;
     }
@@ -577,11 +584,34 @@ export class MascotController {
   private pointFor(el: HTMLElement): Point {
     const r = el.getBoundingClientRect();
     if (el === this.focusEl) {
-      // On the field's top edge near its right end: never on top of the text being typed.
-      return { x: r.right + window.scrollX - Math.min(42, r.width * 0.15), y: r.top + window.scrollY + 1 };
+      // Beside the form, level with the field, so he never covers it or the field above.
+      const side = this.focusSide(el);
+      if (side) return side;
     }
     const fx = Number(el.dataset["boX"] ?? 0.5);
     return { x: r.left + window.scrollX + r.width * (Number.isFinite(fx) ? fx : 0.5), y: r.top + window.scrollY + 2 };
+  }
+
+  /**
+   * A spot just outside the form (right side, else left) level with a focused field,
+   * or null when there's no room (phones). Then he stays on his perch and just bobs.
+   */
+  private focusSide(el: HTMLElement): Point | null {
+    const r = el.getBoundingClientRect();
+    const zone = (el.closest("[data-bo-side]") as HTMLElement | null) ?? (el.closest("[data-bo-zone]") as HTMLElement | null);
+    const zr = zone?.getBoundingClientRect() ?? r;
+    const w = this.el.offsetWidth || 112;
+    const gap = 14;
+    const y = r.bottom + window.scrollY - 4;
+    const vw = document.documentElement.clientWidth;
+    if (zr.right + gap + w <= vw - 8) return { x: zr.right + gap + w / 2 + window.scrollX, y };
+    if (zr.left - gap - w >= 8) return { x: zr.left - gap - w / 2 + window.scrollX, y };
+    return null;
+  }
+
+  /** Can he follow this focused field to a spot of its own? */
+  private canFollow(el: HTMLElement | null): el is HTMLElement {
+    return !!el?.isConnected && this.focusSide(el) !== null;
   }
 
   /** The last perch whose top has crossed the perch line, or null above the first one. */
@@ -621,7 +651,7 @@ export class MascotController {
     this.dirty = false;
     this.lastCheck = now;
 
-    const target = this.focusEl?.isConnected ? this.focusEl : this.scrollPerch();
+    const target = this.canFollow(this.focusEl) ? this.focusEl : this.scrollPerch();
     if (target === this.perchEl) return;
 
     if (!target) {
@@ -670,6 +700,12 @@ export class MascotController {
   private setPerch(el: HTMLElement) {
     this.perchEl = el;
     this.clipEl = this.findClip(el);
+    // A new perch starts visible; updateClip fades him again if it's scrolled away.
+    if (this.clipped) {
+      this.clipped = false;
+      this.el.style.opacity = "1";
+      this.hitbox.style.pointerEvents = "auto";
+    }
   }
 
   private goHome(now: number) {
@@ -1062,11 +1098,14 @@ export class MascotController {
 
   /** Fade out while his perch is scrolled out of its scroll box. */
   private updateClip() {
-    if (!this.visible || !this.clipEl || this.hop || this.press || this.fling) return;
-    const r = this.clipEl.getBoundingClientRect();
-    const vy = this.pos.y - window.scrollY;
-    const vx = this.pos.x - window.scrollX;
-    const out = vy < r.top + 10 || vy > r.bottom + 4 || vx < r.left || vx > r.right;
+    if (!this.visible || this.hop || this.press || this.fling) return;
+    let out = false;
+    if (this.clipEl?.isConnected) {
+      // Vertical only: focused fields put him beside their scroll box on purpose.
+      const r = this.clipEl.getBoundingClientRect();
+      const vy = this.pos.y - window.scrollY;
+      out = vy < r.top + 10 || vy > r.bottom + 4;
+    }
     if (out === this.clipped) return;
     this.clipped = out;
     this.el.style.opacity = out ? "0" : "1";

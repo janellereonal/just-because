@@ -563,7 +563,7 @@ export function GiftSiteView({
                     ),
                   )
                 : [
-                    { t: `Merry Christmas, ${sampleName}! Love, Sam`, a: "Sam" },
+                    { t: `So lucky to know you, ${sampleName}. Love, Sam`, a: "Sam" },
                     { t: "You make every room warmer. Can't wait to celebrate.", a: "Alex" },
                   ].map((s) => (
                     <article

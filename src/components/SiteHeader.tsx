@@ -21,7 +21,7 @@ export function SiteHeader({ showMascot = true }: { showMascot?: boolean }) {
     "rounded-full px-3.5 py-2 text-sm font-medium text-ink/75 transition-colors hover:bg-pink/60 hover:text-ink";
 
   return (
-    <header className="sticky top-0 z-40 px-3 pt-3 sm:px-5">
+    <header data-bo-avoid className="sticky top-0 z-40 px-3 pt-3 sm:px-5">
       <div className="mx-auto flex h-16 max-w-6xl items-center justify-between gap-3 rounded-full bg-glass/85 pr-2 pl-4 shadow-[0_8px_30px_-12px_rgba(194,54,107,0.25)] ring-1 ring-ink/5 backdrop-blur-xl">
         <Link to="/" className="flex items-center gap-2" aria-label="Just Because, home">
           {showMascot ? <Bo pose="hello" size={38} title="Bo, the Just Because mascot" /> : null}

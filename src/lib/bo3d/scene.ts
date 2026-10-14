@@ -98,6 +98,13 @@ const ACCESSORY_URL = (name: BoAccessory) => `/models/accessories/${name}.glb`;
 const BO_HEIGHT = 2.45;
 const ACCESSORY_HEIGHT = 0.8;
 const MODEL_TIMEOUT_MS = 4000;
+/** Filled in at build time from public/models (see vite.config.ts). */
+declare const __BO_MODEL_FILES__: string[];
+const MODEL_FILES = new Set<string>(typeof __BO_MODEL_FILES__ === "undefined" ? [] : __BO_MODEL_FILES__);
+/** Skip the request entirely when the file isn't in the build. */
+function loadIfShipped(url: string) {
+  return MODEL_FILES.has(url) ? loadGltf(url) : Promise.resolve(null);
+}
 
 const PASTELS = [0xffe8b0, 0xd5f0e3, 0xd9e8fb, 0xe6dcf7, 0xffd9c8, 0xfbd3dc];
 
@@ -179,7 +186,7 @@ function loadGltf(url: string): Promise<THREE.Group | null> {
 }
 
 function loadBoModel() {
-  modelPromise ??= loadGltf(BO_MODEL_URL);
+  modelPromise ??= loadIfShipped(BO_MODEL_URL);
   return modelPromise;
 }
 
@@ -633,7 +640,7 @@ async function loadAccessory(name: BoAccessory, rig: Rig): Promise<THREE.Object3
   if (!source) {
     let p = accessoryFiles.get(name);
     if (!p) {
-      p = loadGltf(ACCESSORY_URL(name));
+      p = loadIfShipped(ACCESSORY_URL(name));
       accessoryFiles.set(name, p);
     }
     source = await p;
