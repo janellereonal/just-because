@@ -277,8 +277,15 @@ export class MascotController {
     delete this.bubble.dataset["z"];
   }
 
-  /** Bubble rect for a spot, in page coordinates. */
+  /** Bubble rect for a spot, in page coordinates, slid sideways to stay on screen. */
   private bubbleRect(spot: MascotController["bubbleSpot"]) {
+    const r = this.rawBubbleRect(spot);
+    const min = window.scrollX + 8;
+    const max = window.scrollX + document.documentElement.clientWidth - 8 - r.w;
+    return { ...r, x: Math.max(min, Math.min(max, r.x)) };
+  }
+
+  private rawBubbleRect(spot: MascotController["bubbleSpot"]) {
     const w = this.el.offsetWidth;
     const h = this.el.offsetHeight;
     const bw = this.bubble.offsetWidth;

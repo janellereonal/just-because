@@ -164,12 +164,12 @@ function CreatePage() {
       <SiteHeader />
       <BoBuddy followFocus intro={false} />
       <section className="mx-auto max-w-3xl px-4 pt-14 pb-28 sm:px-5">
-        <div className="relative">
+        <div className="relative pr-24 sm:pr-0">
           <p className="font-mono text-[11px] tracking-[0.18em] text-accent uppercase">New gift</p>
           {/* Bo's spot: beside the heading, clear of the header and the text. */}
           <span
             aria-hidden
-            className="absolute right-2 bottom-0 hidden h-px w-24 sm:block"
+            className="absolute right-0 bottom-0 h-px w-20 sm:right-2 sm:w-24"
             data-bo-perch
             data-bo-always
             data-bo-say="Hi, I'm Bo. Let's make something nice."
@@ -181,7 +181,10 @@ function CreatePage() {
         </div>
 
         <form onSubmit={handleCreate} className="mt-10 space-y-5" data-bo-zone>
-          <div className="card-paper p-5 sm:p-7">
+          <div className="card-paper relative p-5 sm:p-7">
+            <span aria-hidden className="pointer-events-none absolute inset-y-0 -right-36 hidden w-24 xl:block">
+              <span className="sticky top-[46vh] block h-px w-24" data-bo-perch data-bo-x="0.5" />
+            </span>
             {step(1, "Give it a name", "This is the big title they'll see first.")}
             <label htmlFor="gift-name" className="sr-only">
               Gift name
@@ -196,7 +199,10 @@ function CreatePage() {
             />
           </div>
 
-          <div className="card-paper p-5 sm:p-7">
+          <div className="card-paper relative p-5 sm:p-7">
+            <span aria-hidden className="pointer-events-none absolute inset-y-0 -right-36 hidden w-24 xl:block">
+              <span className="sticky top-[46vh] block h-px w-24" data-bo-perch data-bo-x="0.5" data-bo-say="Pick a mood. I'll dress up for it." />
+            </span>
             {step(2, "Pick a theme", "Sets the colors, the opening and Bo's outfit.")}
             <div className="mt-5 grid grid-cols-2 gap-2.5 sm:grid-cols-3" role="radiogroup" aria-label="Theme">
               {themes.map((t) => {
@@ -228,14 +234,20 @@ function CreatePage() {
             {activeTheme?.description ? <p className="mt-3 text-sm text-ink/60">{activeTheme.description}</p> : null}
           </div>
 
-          <div className="card-paper p-5 sm:p-7">
+          <div className="card-paper relative p-5 sm:p-7">
+            <span aria-hidden className="pointer-events-none absolute inset-y-0 -right-36 hidden w-24 xl:block">
+              <span className="sticky top-[46vh] block h-px w-24" data-bo-perch data-bo-x="0.5" data-bo-say="How should it open?" />
+            </span>
             {step(3, "Choose how it opens", "Same notes, different way to open them. Switch any time.")}
             <div className="mt-4">
               <FormatPicker value={format} onChange={pickFormat} bare />
             </div>
           </div>
 
-          <div className="card-paper p-5 sm:p-7">
+          <div className="card-paper relative p-5 sm:p-7">
+            <span aria-hidden className="pointer-events-none absolute inset-y-0 -right-36 hidden w-24 xl:block">
+              <span className="sticky top-[46vh] block h-px w-24" data-bo-perch data-bo-x="0.5" data-bo-say="The more, the merrier." />
+            </span>
             {step(4, "What can friends add?", activeTheme && suggested.length > 0 ? `We picked a few for ${activeTheme.name}. Turn on anything else.` : "Turn on as many as you like. Each one is free.")}
 
             <div className="mt-5 grid gap-5 md:grid-cols-[1fr_250px] md:items-start">

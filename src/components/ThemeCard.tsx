@@ -60,12 +60,19 @@ export function ThemeCard({ theme, onSelect, footer, variant = "phone" }: Props)
       onMouseLeave={() => releasePreview(theme.id)}
       onFocus={() => claimPreview(theme.id)}
     >
-      <button
-        type="button"
+      {/* A div, not a button: the live gift inside has buttons of its own. */}
+      <div
+        role={onSelect ? "button" : undefined}
+        tabIndex={onSelect ? 0 : undefined}
         onClick={onSelect}
-        disabled={!onSelect}
+        onKeyDown={(e) => {
+          if (onSelect && (e.key === "Enter" || e.key === " ")) {
+            e.preventDefault();
+            onSelect();
+          }
+        }}
         aria-label={`Preview the ${theme.name} theme`}
-        className="relative block w-full overflow-hidden rounded-[22px] text-left disabled:cursor-default"
+        className={`relative block w-full overflow-hidden rounded-[22px] text-left ${onSelect ? "cursor-pointer" : ""} focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-accent`}
         style={{ backgroundColor: stage }}
       >
         <span aria-hidden="true" className="pointer-events-none absolute -top-10 -right-8 size-32 rounded-full bg-white/45" />
@@ -77,11 +84,13 @@ export function ThemeCard({ theme, onSelect, footer, variant = "phone" }: Props)
             }`}
           >
             <div className="relative size-full overflow-hidden rounded-t-[21px]">
-              <ThemeLivePreview theme={theme} />
+              <div inert className="size-full">
+                <ThemeLivePreview theme={theme} />
+              </div>
             </div>
           </div>
         </div>
-      </button>
+      </div>
 
       <div className="flex flex-1 flex-col px-2 pt-3 pb-1">
         <div className="flex items-start justify-between gap-3">

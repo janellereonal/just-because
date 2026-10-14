@@ -15,19 +15,20 @@ import appCss from "../styles.css?url";
 
 function NotFoundComponent() {
   return (
-    <div className="flex min-h-screen items-center justify-center bg-background px-4">
+    <div className="grid min-h-screen place-items-center bg-paper px-4 text-ink">
       <div className="max-w-md text-center">
-        <h1 className="text-7xl font-bold text-foreground">404</h1>
-        <h2 className="mt-4 text-xl font-semibold text-foreground">Page not found</h2>
-        <p className="mt-2 text-sm text-muted-foreground">
-          The page you're looking for doesn't exist or has been moved.
+        <img src="/bo/surprise.webp" alt="" width={150} height={150} className="mx-auto" />
+        <p className="mt-2 font-mono text-[11px] tracking-[0.18em] text-accent uppercase">404</p>
+        <h1 className="mt-2 font-display text-4xl font-semibold tracking-tight">Nothing in this box</h1>
+        <p className="mt-3 text-ink/65">
+          This page doesn't exist. If someone sent you a gift link, check that it was copied in full.
         </p>
-        <div className="mt-6">
-          <Link
-            to="/"
-            className="inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
-          >
+        <div className="mt-7 flex flex-wrap justify-center gap-3">
+          <Link to="/" className="squish inline-flex min-h-12 items-center rounded-full bg-ink px-6 text-sm font-semibold text-cream">
             Go home
+          </Link>
+          <Link to="/themes" className="squish inline-flex min-h-12 items-center rounded-full bg-pink px-6 text-sm font-semibold">
+            See themes
           </Link>
         </div>
       </div>
