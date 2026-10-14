@@ -2,6 +2,7 @@
 @source "../src";
 @import "tw-animate-css";
 @import "./styles/formats.css";
+@import "./styles/landing.css";
 
 /*
  * Just Because, "Pastel toybox" design system (Oct 2026 redesign).

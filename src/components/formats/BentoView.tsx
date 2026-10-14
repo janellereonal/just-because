@@ -233,7 +233,7 @@ export function BentoView({ site, modules, contributions, calendarEntries, palet
               <p className="text-6xl leading-none font-semibold tabular-nums" style={{ color: palette.accent, fontFamily: fonts.heading }}>
                 {cd.done ? "Today" : cd.days}
               </p>
-              <p className="text-sm opacity-75">
+              <p className="text-sm opacity-75" suppressHydrationWarning>
                 {cd.done ? `Happy day, ${data.name}.` : `${cd.days === 1 ? "day" : "days"} to go · ${String(cd.hours).padStart(2, "0")}:${String(cd.mins).padStart(2, "0")}:${String(cd.secs).padStart(2, "0")}`}
               </p>
             </div>

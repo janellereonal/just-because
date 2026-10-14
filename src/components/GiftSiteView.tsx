@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
+import { manilaMidnight } from "@/lib/giftPieces";
 import {
   FONT_PAIRINGS,
   backgroundCss,
@@ -70,7 +71,7 @@ function Countdown({ date, accent, heading }: { date: string; accent: string; he
     const t = setInterval(() => setNow(Date.now()), 1000);
     return () => clearInterval(t);
   }, []);
-  const target = new Date(`${date}T00:00:00`).getTime();
+  const target = manilaMidnight(date);
   const diff = target - now;
   const past = diff <= 0;
   const s = Math.max(0, Math.floor(diff / 1000));
@@ -96,7 +97,7 @@ function Countdown({ date, accent, heading }: { date: string; accent: string; he
           <p className="mt-1 text-sm tracking-[0.18em] uppercase opacity-70">
             {days === 1 ? "day" : "days"} until {heading}
           </p>
-          <p className="mt-3 font-mono text-sm opacity-70">
+          <p className="mt-3 font-mono text-sm opacity-70" suppressHydrationWarning>
             {String(hours).padStart(2, "0")}:{String(mins).padStart(2, "0")}:
             {String(secs).padStart(2, "0")}
           </p>

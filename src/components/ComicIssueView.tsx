@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
+import { manilaMidnight } from "@/lib/giftPieces";
 import { ChevronLeft, ChevronRight, List, Repeat2, Share2, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { signedMediaUrl, toEmbedUrl, type CalendarEntry, type GiftSite, type ModuleType, type SiteModule, type ViewContribution } from "@/lib/gift";
@@ -43,7 +44,7 @@ function CountdownPage({ site, palette }: { site: GiftSite; palette: Palette }) 
     const timer = window.setInterval(() => setNow(Date.now()), 1000);
     return () => window.clearInterval(timer);
   }, []);
-  const target = site.countdown_date ? new Date(`${site.countdown_date}T00:00:00`).getTime() : now + 86400000;
+  const target = site.countdown_date ? manilaMidnight(site.countdown_date) : now + 86400000;
   const seconds = Math.max(0, Math.floor((target - now) / 1000));
   const done = seconds <= 0;
   useEffect(() => {
@@ -74,7 +75,7 @@ function CountdownPage({ site, palette }: { site: GiftSite; palette: Palette }) 
     <div className="comic-splash-page">
       <div className="comic-burst" style={{ backgroundColor: palette.accent, color: readableInk(palette.accent) }}>
         <p className="comic-title text-xl sm:text-3xl">{done ? `HAPPY BIRTHDAY, ${(site.custom_text.recipient_name || "HERO").toUpperCase()}!` : "NEXT ISSUE DROPS IN…"}</p>
-        {!done ? <p className="comic-title mt-4 text-4xl sm:text-6xl">{parts.map((part) => String(part).padStart(2, "0")).join(":")}</p> : <p className="comic-title mt-3 text-5xl">KAPOW!</p>}
+        {!done ? <p className="comic-title mt-4 text-4xl sm:text-6xl" suppressHydrationWarning>{parts.map((part) => String(part).padStart(2, "0")).join(":")}</p> : <p className="comic-title mt-3 text-5xl">KAPOW!</p>}
       </div>
       {done ? <div className="comic-confetti" aria-hidden>★ ✦ ◆ ● ★ ✦ ◆</div> : null}
     </div>

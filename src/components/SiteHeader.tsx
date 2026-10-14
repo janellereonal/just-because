@@ -3,6 +3,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { authClient } from "@/lib/auth-client";
 import { useAuth } from "@/hooks/useAuth";
 import Bo from "@/components/Bo";
+import { LogOut, Plus } from "lucide-react";
 
 /** A floating, rounded nav bar. Pastel redesign (Oct 2026). */
 export function SiteHeader({ showMascot = true }: { showMascot?: boolean }) {
@@ -47,21 +48,43 @@ export function SiteHeader({ showMascot = true }: { showMascot?: boolean }) {
             </Link>
           )}
         </nav>
-        {user ? (
-          <button
-            onClick={() => void handleSignOut()}
-            className="squish min-h-11 rounded-full bg-ink px-5 text-sm font-medium text-cream hover:bg-ink/90"
-          >
-            Sign out
-          </button>
-        ) : (
-          <Link
-            to="/auth"
-            className="squish inline-flex min-h-11 items-center rounded-full bg-accent px-5 text-sm font-medium text-cream hover:bg-accent/90"
-          >
-            Sign in
-          </Link>
-        )}
+        <div className="flex items-center gap-1.5">
+          {user ? (
+            <>
+              <Link to="/dashboard" className={`${link} sm:hidden`}>
+                Gifts
+              </Link>
+              <Link
+                to="/create"
+                search={{ theme: undefined }}
+                className="squish inline-flex min-h-11 items-center gap-1.5 rounded-full bg-accent px-4 text-sm font-medium text-cream hover:bg-accent/90 sm:px-5"
+              >
+                <Plus className="size-4" /> New gift
+              </Link>
+              <button
+                type="button"
+                onClick={() => void handleSignOut()}
+                aria-label="Sign out"
+                title="Sign out"
+                className="grid size-11 place-items-center rounded-full text-ink/60 transition-colors hover:bg-pink/60 hover:text-ink"
+              >
+                <LogOut className="size-[18px]" />
+              </button>
+            </>
+          ) : (
+            <>
+              <Link to="/themes" className={`${link} sm:hidden`}>
+                Themes
+              </Link>
+              <Link
+                to="/auth"
+                className="squish inline-flex min-h-11 items-center rounded-full bg-accent px-5 text-sm font-medium text-cream hover:bg-accent/90"
+              >
+                Sign in
+              </Link>
+            </>
+          )}
+        </div>
       </div>
     </header>
   );
