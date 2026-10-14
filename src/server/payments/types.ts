@@ -48,4 +48,10 @@ export interface PaymentProvider {
   createCheckout(order: CheckoutOrder): Promise<CheckoutResult>;
   /** Verifies the signature against the raw body and turns the payload into a PaidEvent. */
   handleWebhook(rawBody: string, headers: Headers): Promise<WebhookOutcome>;
+  /**
+   * Asks the provider directly whether a checkout has been paid. Used as a
+   * backup while the buyer waits on the confirm page, in case the webhook is
+   * slow or missing. Returns null when nothing has been paid yet.
+   */
+  checkPaid(checkoutId: string): Promise<PaidEvent | null>;
 }

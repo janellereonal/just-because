@@ -710,11 +710,38 @@ async function ownedOrder(orderId: string) {
   return order;
 }
 
-/** Polled by the "Confirming your payment" page. Only the webhook ever marks an order paid. */
+/** Last time we asked the provider about each order, so polling doesn't hammer it. */
+const lastProviderCheck = new Map<string, number>();
+
+/**
+ * Polled by the "Confirming your payment" page. The webhook is the main way an
+ * order gets marked paid; as a backup, while the order is pending we ask the
+ * provider directly (at most every 5s per order), using our secret key, and
+ * apply the same idempotent `applyPaidEvent`. Nothing from the browser is trusted.
+ */
 export const getOrderStatus = createServerFn({ method: "GET" })
   .inputValidator(z.object({ orderId: id }))
   .handler(async ({ data }) => {
-    const order = await ownedOrder(data.orderId);
+    let order = await ownedOrder(data.orderId);
+    if (order.status === "pending" && order.providerCheckoutId) {
+      const last = lastProviderCheck.get(order.id) ?? 0;
+      if (Date.now() - last > 5000) {
+        lastProviderCheck.set(order.id, Date.now());
+        try {
+          const { getProvider } = await import("@/server/payments");
+          const { applyPaidEvent } = await import("@/server/billing");
+          const provider = getProvider(order.provider);
+          const paid = await provider.checkPaid(order.providerCheckoutId);
+          if (paid) {
+            const msg = await applyPaidEvent(paid, provider.name);
+            console.info(`[payments] confirm-page check ${order.id}: ${msg}`);
+            order = await ownedOrder(data.orderId);
+          }
+        } catch (error) {
+          console.error("[payments] confirm-page check failed", error);
+        }
+      }
+    }
     const [site] = await getDb()
       .select({
         id: schema.giftSites.id,

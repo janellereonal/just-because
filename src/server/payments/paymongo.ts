@@ -11,7 +11,7 @@
  */
 import { createHmac, timingSafeEqual } from "node:crypto";
 import { enabledPaymentMethods } from "@/config/pricing";
-import type { CheckoutOrder, CheckoutResult, PaymentProvider, WebhookOutcome } from "./types";
+import type { CheckoutOrder, CheckoutResult, PaidEvent, PaymentProvider, WebhookOutcome } from "./types";
 
 const PAID_EVENT = "checkout_session.payment.paid";
 
@@ -151,21 +151,28 @@ async function handleWebhook(rawBody: string, headers: Headers): Promise<Webhook
   const checkoutId = payload.data?.attributes?.data?.id;
   if (!checkoutId) return { kind: "rejected", reason: "paid event has no checkout session id" };
 
-  // Ask PayMongo directly what was paid on this session.
+  const event = await checkPaid(checkoutId, { eventId, eventType });
+  // A paid event whose session shows nothing paid: let applyPaidEvent log it as underpaid.
+  return { kind: "paid", event: event ?? { eventId, eventType, checkoutId, orderId: null, paymentId: null, amountPaid: 0 } };
+}
+
+/** Asks PayMongo what was paid on this checkout session. Null if nothing yet. */
+async function checkPaid(
+  checkoutId: string,
+  source: { eventId: string; eventType: string } = { eventId: `check:${checkoutId}`, eventType: "checkout_session.check" },
+): Promise<PaidEvent | null> {
   const session = await call<CheckoutSession>(`/v1/checkout_sessions/${encodeURIComponent(checkoutId)}`);
   const paid = (session.data.attributes.payments ?? []).filter((p) => p.attributes.status === "paid");
+  if (paid.length === 0) return null;
   const attrs = session.data.attributes;
   return {
-    kind: "paid",
-    event: {
-      eventId,
-      eventType,
-      checkoutId,
-      orderId: attrs.metadata?.["order_id"] ?? attrs.reference_number ?? null,
-      paymentId: paid[0]?.id ?? null,
-      amountPaid: paid.reduce((sum, p) => sum + p.attributes.amount, 0),
-    },
+    eventId: source.eventId,
+    eventType: source.eventType,
+    checkoutId,
+    orderId: attrs.metadata?.["order_id"] ?? attrs.reference_number ?? null,
+    paymentId: paid[0]?.id ?? null,
+    amountPaid: paid.reduce((sum, p) => sum + p.attributes.amount, 0),
   };
 }
 
-export const paymongo: PaymentProvider = { name: "paymongo", createCheckout, handleWebhook };
+export const paymongo: PaymentProvider = { name: "paymongo", createCheckout, handleWebhook, checkPaid };
