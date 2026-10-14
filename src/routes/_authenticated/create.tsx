@@ -10,7 +10,7 @@ import { MODULES, type ModuleType } from "@/lib/gift";
 import { ModuleExample } from "@/components/ModuleExample";
 import { FormatPicker } from "@/components/FormatPicker";
 import { stageColorFor } from "@/components/ThemeCard";
-import { isGiftFormat, type GiftFormat } from "@/lib/formats";
+import { formatInfo, isGiftFormat, type GiftFormat } from "@/lib/formats";
 import { BoBuddy } from "@/components/BoBuddy";
 import { accessoryForTheme, type BoAccessory } from "@/lib/bo3d/accessories";
 import { boAccessory, boReact, boSay, markGiftCreated } from "@/lib/mascot/bus";
@@ -310,7 +310,7 @@ function CreatePage() {
               "What can friends add?",
               activeTheme && suggested.length > 0
                 ? `We picked a few for ${activeTheme.name}. Turn on anything else.`
-                : "Turn on as many as you like. Each one is free.",
+                : "Turn on as many as you like.",
             )}
 
             <div className="mt-5 grid gap-5 md:grid-cols-[1fr_250px] md:items-start">
@@ -386,7 +386,7 @@ function CreatePage() {
           <div className="sticky bottom-4 z-20">
             <div className="flex items-center justify-between gap-4 rounded-full bg-ink/95 py-2 pr-2 pl-6 text-cream shadow-[0_20px_50px_-20px_rgba(43,37,34,.6)] backdrop-blur">
               <span className="min-w-0 truncate text-sm">
-                {selected.length} {selected.length === 1 ? "section" : "sections"} · Free to make
+                {selected.length} {selected.length === 1 ? "section" : "sections"} · {formatInfo(format).title}
               </span>
               <button
                 type="submit"

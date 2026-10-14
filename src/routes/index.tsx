@@ -8,7 +8,6 @@ import {
   Heart,
   Image as ImageIcon,
   Link2,
-  Lock,
   Mail,
   Mic,
   Music2,
@@ -26,7 +25,7 @@ import { accessoryForTheme } from "@/lib/bo3d/accessories";
 import { LandingIntro } from "@/components/landing/LandingIntro";
 import { FormatDemo } from "@/components/landing/FormatDemo";
 import { FORMATS } from "@/lib/formats";
-import { TIERS, paymentMethodsSentence } from "@/config/pricing";
+import { TIERS } from "@/config/pricing";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -228,7 +227,7 @@ const FAQ = [
   },
   {
     q: "When do I pay?",
-    a: `Only when you wrap it up. Making the gift and collecting notes is free. You can pay with ${paymentMethodsSentence()}.`,
+    a: "When you wrap it up. Set up the gift and collect notes first, then pick a plan right before you send it.",
   },
   {
     q: "How long does the gift stay up?",
@@ -310,7 +309,7 @@ function Index() {
               className="jb-reveal mt-8 flex flex-wrap gap-x-5 gap-y-2 text-sm text-ink/70"
               style={{ "--d": "340ms" } as React.CSSProperties}
             >
-              {["Free to make", "Friends don't need an account", "Pay once with GCash or card"].map(
+              {["Friends don't need an account", "You read every note first"].map(
                 (t) => (
                   <li key={t} className="inline-flex items-center gap-1.5">
                     <Check className="size-4 text-accent" /> {t}
@@ -495,14 +494,10 @@ function Index() {
           </Link>
         </div>
         <div className="grid grid-cols-2 gap-3 sm:gap-5 lg:grid-cols-4">
-          {themes.slice(0, 4).map((theme, i) => (
-            <div
-              key={theme.id}
-              data-bo-perch
-              data-bo-x="0.72"
-              data-bo-delay={(i % 4) * 90}
-              data-bo-accessory={accessoryForTheme(theme) ?? undefined}
-            >
+          {themes.slice(0, 4).map((theme) => (
+            // Bo stays above the heading (standing on the cards hid the title); he still
+            // tries on each theme's accessory when you hover a card.
+            <div key={theme.id} data-bo-accessory={accessoryForTheme(theme) ?? undefined}>
               <ThemeCard
                 theme={theme}
                 variant="compact"
@@ -519,21 +514,18 @@ function Index() {
           className="mb-8 max-w-2xl"
           data-bo-perch
           data-bo-x="0.9"
-          data-bo-say="Making a gift is free."
+          data-bo-say="Plans come at the very end."
         >
           <p className="font-mono text-[11px] tracking-[0.18em] text-accent uppercase">Plans</p>
           <h2 className="mt-2 font-display text-[clamp(2rem,4.5vw,3.2rem)] leading-[1.02] font-semibold tracking-tight text-balance">
-            Free to make. Pay once when it's ready to open.
+            Pick a plan when it's ready to send.
           </h2>
           <p className="mt-3 text-ink/75 text-pretty">
-            Setting up the gift and collecting notes from friends costs nothing. You pick a plan
-            when you wrap it up and send the link.
+            Set up the gift and collect notes first. You choose a plan when you wrap it up, based
+            on how many friends joined and how long it should stay open.
           </p>
         </div>
         <PricingCards />
-        <p className="mt-5 flex items-center justify-center gap-2 text-sm text-ink/60">
-          <Lock className="size-3.5" /> Secure checkout with {paymentMethodsSentence()}.
-        </p>
       </section>
 
       {/* FAQ */}

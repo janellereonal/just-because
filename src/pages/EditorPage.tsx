@@ -738,7 +738,7 @@ function SiteDashboard() {
                     on ? "bg-ink text-cream" : "border border-line bg-paper text-muted"
                   }`}
                 >
-                  {on ? "On · Free" : "Add"}
+                  {on ? "On" : "Add"}
                 </button>
               </div>
               {on && titleField ? (

@@ -3,7 +3,6 @@ import {
   featureList,
   formatPeso,
   formatUsdApprox,
-  paymentMethodsSentence,
   type Tier,
   type TierId,
 } from "@/config/pricing";
@@ -87,8 +86,7 @@ export function PricingCards({ tiers = TIERS, priceFor, blockerFor, action, pric
         })}
       </div>
       <p className="mt-5 text-center text-sm text-muted">
-        Pay with {paymentMethodsSentence()}. International cards are accepted. Prices are in pesos; the
-        dollar amount is only a guide.
+        Prices are in pesos. The dollar amount is only a guide.
       </p>
       {tiers.some((t) => t.contributors.unlimited || t.photos.unlimited) && (
         <p className="mt-1 text-center text-xs text-muted">"Unlimited" is subject to fair use.</p>

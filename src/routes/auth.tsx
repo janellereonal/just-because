@@ -281,7 +281,7 @@ function AuthPage() {
                 <Bo pose="delivery" size={130} />
               </div>
             </div>
-            <p className="text-sm text-ink/65">Free to make. You only pay when you wrap it up.</p>
+            <p className="text-sm text-ink/65">Friends add their notes without signing up.</p>
           </div>
         </aside>
       </div>
