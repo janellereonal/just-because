@@ -74,8 +74,8 @@ function CountdownPage({ site, palette }: { site: GiftSite; palette: Palette }) 
   return (
     <div className="comic-splash-page">
       <div className="comic-burst" style={{ backgroundColor: palette.accent, color: readableInk(palette.accent) }}>
-        <p className="comic-title text-xl sm:text-3xl">{done ? `HAPPY BIRTHDAY, ${(site.custom_text.recipient_name || "HERO").toUpperCase()}!` : "NEXT ISSUE DROPS IN…"}</p>
-        {!done ? <p className="comic-title mt-4 text-4xl sm:text-6xl" suppressHydrationWarning>{parts.map((part) => String(part).padStart(2, "0")).join(":")}</p> : <p className="comic-title mt-3 text-5xl">KAPOW!</p>}
+        <p className="comic-title text-xl @2xl:text-3xl">{done ? `HAPPY BIRTHDAY, ${(site.custom_text.recipient_name || "HERO").toUpperCase()}!` : "NEXT ISSUE DROPS IN…"}</p>
+        {!done ? <p className="comic-title mt-4 text-4xl @2xl:text-6xl" suppressHydrationWarning>{parts.map((part) => String(part).padStart(2, "0")).join(":")}</p> : <p className="comic-title mt-3 text-5xl">KAPOW!</p>}
       </div>
       {done ? <div className="comic-confetti" aria-hidden>★ ✦ ◆ ● ★ ✦ ◆</div> : null}
     </div>
@@ -162,7 +162,7 @@ export function ComicIssueView({ site, modules, contributions, calendarEntries =
       }
     }
     const names = [...new Set(contributions.map((item) => item.author_name))];
-    out.push({ key: "back", chapter: "To be continued…", body: <div className="comic-back-cover"><p className="comic-title text-5xl sm:text-7xl">TO BE CONTINUED…</p><div className="comic-credits"><p className="comic-title text-2xl">THE CAST</p><p>{names.length ? names.join(" • ") : "The people who love you"}</p></div></div> });
+    out.push({ key: "back", chapter: "To be continued…", body: <div className="comic-back-cover"><p className="comic-title text-5xl @2xl:text-7xl">TO BE CONTINUED…</p><div className="comic-credits"><p className="comic-title text-2xl">THE CAST</p><p>{names.length ? names.join(" • ") : "The people who love you"}</p></div></div> });
     return out;
   }, [calendarEntries, contributions, enabled, palette, sample, site, visible]);
 
@@ -187,7 +187,7 @@ export function ComicIssueView({ site, modules, contributions, calendarEntries =
       {onClose ? <Button className="absolute top-20 right-4 z-10" variant="outline" size="icon" aria-label="Close cover preview" onClick={onClose}><X /></Button> : null}
       <div className="comic-price">₱0<br /><small>PRICELESS</small></div><div className="comic-badge">COLLECTOR'S<br />EDITION</div>
       <div className="comic-web-lines" aria-hidden /><div className="comic-city" aria-hidden />
-      <div className="comic-cover-copy"><div className="comic-kaboom">KA-BOOM!</div><p className="comic-title text-lg">{settings.cover_subtitle || defaults.cover_subtitle}</p><h1 className="comic-title comic-slam mt-3 text-[clamp(3.5rem,12vw,8rem)] leading-[0.8]">{settings.cover_title || defaults.cover_title}</h1><Button className="mt-8 border-4 border-ink bg-paper px-7 py-6 font-bold text-ink shadow-[6px_6px_0_var(--comic-accent)] hover:bg-paper" onClick={() => setCoverOpen(true)}>Open the issue →</Button></div>
+      <div className="comic-cover-copy"><div className="comic-kaboom">KA-BOOM!</div><p className="comic-title text-lg">{settings.cover_subtitle || defaults.cover_subtitle}</p><h1 className="comic-title comic-slam mt-3 text-[clamp(3.5rem,12cqi,8rem)] leading-[0.8]">{settings.cover_title || defaults.cover_title}</h1><Button className="mt-8 border-4 border-ink bg-paper px-7 py-6 font-bold text-ink shadow-[6px_6px_0_var(--comic-accent)] hover:bg-paper" onClick={() => setCoverOpen(true)}>Open the issue →</Button></div>
       <div className="comic-barcode" aria-label="Price: priceless"><i /><i /><i /><i /><i /><i /><i /></div>
     </div>
   );
