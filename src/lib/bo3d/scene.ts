@@ -381,7 +381,10 @@ function buildCodeRig(lidColor: THREE.Color): Rig {
   const body = new THREE.Group();
   root.add(body);
   addMesh(body, roundedBox(1.6, 1.4, 1.4, 0.24, 8), bodyMat, 0, 1.0, 0);
-  addMesh(body, roundedBox(0.3, 1.42, 1.44, 0.09, 4), ribbonMat, 0, 1.0, 0);
+  addMesh(body, roundedBox(0.3, 1.4, 1.44, 0.09, 4), ribbonMat, 0, 1.0, 0);
+  // The opening on top of the box, seen when the lid lifts.
+  addMesh(body, roundedBox(1.16, 0.02, 0.98, 0.01, 1), clay(0xc9939f, 0.9), 0, 1.716, 0, false);
+  addMesh(body, roundedBox(0.96, 0.02, 0.78, 0.01, 1), clay(0xa97582, 0.95), 0, 1.722, 0, false);
 
   const face = new THREE.Group();
   face.position.set(0, 0, 0.72);
@@ -414,8 +417,13 @@ function buildCodeRig(lidColor: THREE.Color): Rig {
   const lid = new THREE.Group();
   lid.position.set(0, 0.12, 0.78);
   lidPivot.add(lid);
-  addMesh(lid, roundedBox(1.8, 0.38, 1.6, 0.16, 6), lidMat, 0, 0, 0);
-  addMesh(lid, roundedBox(0.32, 0.4, 1.62, 0.1, 4), ribbonMat, 0, 0, 0);
+  // A real lid: a thin top with walls around it, hollow underneath, so it reads as a cap when it opens.
+  addMesh(lid, roundedBox(1.8, 0.12, 1.6, 0.06, 4), lidMat, 0, 0.13, 0);
+  for (const z of [-0.75, 0.75]) addMesh(lid, roundedBox(1.8, 0.38, 0.1, 0.05, 3), lidMat, 0, 0, z);
+  for (const x of [-0.85, 0.85]) addMesh(lid, roundedBox(0.1, 0.38, 1.6, 0.05, 3), lidMat, x, 0, 0);
+  addMesh(lid, roundedBox(1.62, 0.02, 1.42, 0.01, 1), clay(0xe58aa2, 0.8), 0, 0.064, 0, false);
+  addMesh(lid, roundedBox(0.32, 0.14, 1.62, 0.06, 3), ribbonMat, 0, 0.13, 0);
+  for (const z of [-0.76, 0.76]) addMesh(lid, roundedBox(0.32, 0.4, 0.12, 0.05, 3), ribbonMat, 0, 0, z);
   const bow = new THREE.Group();
   bow.position.set(0, 0.32, 0);
   lid.add(bow);
@@ -776,7 +784,8 @@ export function createBoScene(canvas: HTMLCanvasElement, options: BoSceneOptions
   const butter = new THREE.Color(0xffd27a);
   const tmp = new THREE.Color();
   const v3 = new THREE.Vector3();
-  const mouth = new THREE.Vector3(0, 1.75, 0.1);
+  // Where notes go in and come out: the opening on top of the box.
+  const mouth = new THREE.Vector3(0, 1.62, 0.05);
 
   const pose: BoPose = { squash: 1, tuck: 0, flail: 0, run: 0, flip: 0, lean: 0, turn: null, hold: 0, lid: 0, cheer: 0, point: 0, bowSpin: 0, look: null };
   let bowKick = -10;
@@ -892,7 +901,7 @@ export function createBoScene(canvas: HTMLCanvasElement, options: BoSceneOptions
     const openOut = ease((P - 3.05) / 0.35);
     const notesOut = ease((P - 3.15) / 0.6);
 
-    r.lid.rotation.x = -Math.max(openIn * 0.95, openOut * 1.95, pose.lid);
+    r.lid.rotation.x = -Math.max(openIn * 1.25, openOut * 1.95, pose.lid);
     r.lid.position.y = r.lidRestY + (openOut * 0.25 + Math.sin(t * 3) * 0.03 * openOut) * u;
 
     // The bow puffs during the spin and flops after a landing.
