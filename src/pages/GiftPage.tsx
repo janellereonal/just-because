@@ -1,4 +1,5 @@
 import { Suspense, lazy, useEffect, useState } from "react";
+import { themeKindOf } from "@/lib/themeKind";
 import {useParams} from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { FormatView } from "@/components/formats/FormatView";
@@ -135,6 +136,7 @@ function PublishedPage() {
         <Suspense fallback={<PageLoading label="Opening your gift…" />}>
         <GiftIntro
           style={introStyleForTheme(theme?.name)}
+          kind={themeKindOf(theme)}
           palette={palette}
           fonts={fonts}
           backgroundStyle={site.background_style ?? "paper"}

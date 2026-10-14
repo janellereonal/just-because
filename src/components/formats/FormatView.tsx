@@ -29,6 +29,8 @@ export type FormatViewProps = {
   palette: Palette;
   sample?: boolean | undefined;
   showShare?: boolean | undefined;
+  /** The occasion, for its 3D object (Bento and Gift Hunt). */
+  theme?: Theme | null | undefined;
 };
 
 /** Drop undefined keys (the comic and scrapbook views use exact optional props). */
@@ -80,13 +82,13 @@ export function FormatView(props: Props) {
     case "bento":
       return (
         <Suspense fallback={fallback}>
-          <BentoView {...common} />
+          <BentoView {...common} theme={theme} />
         </Suspense>
       );
     case "hunt":
       return (
         <Suspense fallback={fallback}>
-          <HuntView {...common} />
+          <HuntView {...common} theme={theme} />
         </Suspense>
       );
     case "zine":

@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
+import { Live3DContext } from "@/components/Theme3D";
 import { GiftSiteView } from "@/components/GiftSiteView";
 import { INTRO_COPY, introStyleForTheme } from "@/lib/intro";
 import { themeFont } from "@/components/ThemeMiniPreview";
@@ -310,7 +311,9 @@ export function ThemeLivePreview({ theme }: { theme: Theme }) {
       >
         <div ref={innerRef}>
           {mounted && visible ? (
-            <GiftSiteView site={site} theme={theme} modules={modules} contributions={[]} sample />
+            <Live3DContext.Provider value={false}>
+              <GiftSiteView site={site} theme={theme} modules={modules} contributions={[]} sample />
+            </Live3DContext.Provider>
           ) : null}
         </div>
       </div>

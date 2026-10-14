@@ -287,6 +287,7 @@ export const createSite = createServerFn({ method: "POST" })
       customColors: paletteShape,
       treeRevealDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).nullable(),
       modules: z.array(z.enum(MODULE_TYPES)).min(1),
+      fontChoice: z.enum(["romantic", "playful", "modern", "handwritten"]).optional(),
     }),
   )
   .handler(async ({ data }) => {
@@ -305,6 +306,7 @@ export const createSite = createServerFn({ method: "POST" })
           paletteId: data.paletteId,
           customColors: data.customColors,
           treeRevealDate: data.treeRevealDate,
+          ...(data.fontChoice ? { fontChoice: data.fontChoice } : {}),
         })
         .returning({ id: schema.giftSites.id });
       const unique = [...new Set(data.modules)];

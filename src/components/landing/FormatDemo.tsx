@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useRef, useState } from "react";
+import { Live3DContext } from "@/components/Theme3D";
 import { FormatView } from "@/components/formats/FormatView";
 import { FORMATS, type GiftFormat } from "@/lib/formats";
-import { DEMO_MODULES, DEMO_NOTES, DEMO_PALETTE, demoSite } from "@/lib/demoGift";
+import { DEMO_MODULES, DEMO_NOTES, DEMO_PALETTE, DEMO_THEME, demoSite } from "@/lib/demoGift";
 
 const CYCLE_MS = 5200;
 
@@ -124,13 +125,15 @@ export function FormatDemo({
           style={{ background: DEMO_PALETTE.background }}
           aria-label={`A sample gift for Maya, shown as ${FORMATS.find((f) => f.id === format)?.title}`}
         >
+          <Live3DContext.Provider value={false}>
           <FormatView
             site={site}
-            theme={null}
+            theme={DEMO_THEME}
             palette={DEMO_PALETTE}
             modules={DEMO_MODULES}
             contributions={DEMO_NOTES}
           />
+          </Live3DContext.Provider>
         </div>
       </div>
       <p className="mt-4 max-w-[30ch] text-center text-sm text-ink/60">

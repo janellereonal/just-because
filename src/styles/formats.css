@@ -488,8 +488,13 @@ button.bento-tile:hover .bento-wave i:nth-child(odd) { transform: scaleY(1.25); 
   .gift-scrap .sb-tile-label { letter-spacing: .08em; }
 }
 @keyframes sb-in { from { opacity: 0; transform: translateY(28px); } to { opacity: 1; transform: none; } }
-.gift-scrap [data-reveal="pending"] { opacity: 0; transform: translateY(28px); }
-.gift-scrap [data-reveal="in"] { animation: sb-in .8s var(--ease-paper) both; }
+/* Sections rise in as they scroll into view. Scroll-driven, so nothing can get stuck hidden;
+   browsers without support simply show everything. */
+@supports (animation-timeline: view()) {
+  @media (prefers-reduced-motion: no-preference) {
+    .gift-scrap .sb-section { animation: sb-in linear both; animation-timeline: view(); animation-range: entry 0% entry 40%; }
+  }
+}
 @media (prefers-reduced-motion: reduce) {
   .gift-scrap .sb-letter, .gift-scrap .sb-polaroid { transform: none !important; transition: none; }
 }

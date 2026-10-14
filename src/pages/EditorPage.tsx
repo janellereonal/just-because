@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
+import { themeKindOf } from "@/lib/themeKind";
 import {Link, useParams} from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
@@ -1398,6 +1399,7 @@ function SiteDashboard() {
       ) : introPreview ? (
         <GiftIntro
           style={introStyleForTheme(theme?.name)}
+          kind={themeKindOf(theme)}
           palette={paletteNow}
           fonts={FONT_PAIRINGS[draft.font_choice] ?? FONT_PAIRINGS.romantic}
           backgroundStyle={draft.background_style}
@@ -1426,6 +1428,7 @@ function SiteDashboard() {
                 <GiftIntro
                   contained
                   style={introStyleForTheme(theme?.name)}
+          kind={themeKindOf(theme)}
                   palette={paletteNow}
                   fonts={FONT_PAIRINGS[draft.font_choice] ?? FONT_PAIRINGS.romantic}
                   backgroundStyle={draft.background_style}

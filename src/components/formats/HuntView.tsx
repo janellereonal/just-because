@@ -1,4 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { Theme3D } from "@/components/Theme3D";
+import { themeKindOf } from "@/lib/themeKind";
 import { Lock, Mic, Music2, RotateCcw, Sparkles } from "lucide-react";
 import { FONT_PAIRINGS } from "@/lib/gift";
 import { readableInk, surfaceColor } from "@/lib/palettes";
@@ -163,6 +165,7 @@ function Box({
 }
 
 export function HuntView({
+  theme,
   site,
   modules,
   contributions,
@@ -245,6 +248,9 @@ export function HuntView({
     >
       <div className="mx-auto max-w-4xl px-4 py-10 @2xl:px-6 @2xl:py-14">
         <header className="text-center">
+          {theme ? (
+            <Theme3D kind={themeKindOf(theme)} palette={palette} className="mx-auto mb-2 h-[clamp(160px,34cqi,260px)] w-full max-w-lg" />
+          ) : null}
           <p className="text-[11px] font-semibold tracking-[0.2em] uppercase opacity-70">
             A gift hunt for {data.name}
           </p>

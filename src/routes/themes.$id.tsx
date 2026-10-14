@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { themeKindOf } from "@/lib/themeKind";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
@@ -131,6 +132,7 @@ function ThemeDetailPage() {
                       key={openingKey}
                       contained
                       style={introStyleForTheme(theme.name)}
+                      kind={themeKindOf(theme)}
                       palette={palette}
                       fonts={fonts}
                       backgroundStyle={backgroundFor(theme)}

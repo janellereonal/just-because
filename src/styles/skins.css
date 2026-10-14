@@ -1,0 +1,510 @@
+/*
+ * Occasion skins for the Scrapbook gift page (GiftSiteView). The root carries
+ * .skin-<kind> plus palette variables:
+ *   --sk-a  accent (decorative)   --sk-p  primary   --sk-bg  background
+ *   --sk-ink  readable text       --gift-surface  card color
+ * Patterns are masks filled with the palette, so every color mood still works.
+ * Motion is transform/opacity only and stops under prefers-reduced-motion.
+ */
+
+/* ---------- shared ---------- */
+.gift-scrap { position: relative; isolation: isolate; overflow: hidden; }
+.sk-decor { position: absolute; inset: 0; z-index: -1; overflow: hidden; pointer-events: none; }
+.sk-pattern { position: absolute; inset: 0; opacity: 0.09; background-color: var(--sk-a); }
+.sk-sky { position: absolute; left: 0; right: 0; top: 0; height: min(1100px, 100%); overflow: hidden; }
+.sk-p { position: absolute; display: block; width: calc(10px * var(--s)); height: calc(10px * var(--s)); will-change: transform, opacity; animation: sk-fall linear infinite; }
+
+@keyframes sk-fall {
+  0% { transform: translate3d(0, -140px, 0) rotate(0deg); opacity: 0; }
+  10% { opacity: 1; }
+  85% { opacity: 1; }
+  100% { transform: translate3d(var(--dx), 640px, 0) rotate(540deg); opacity: 0; }
+}
+@keyframes sk-rise {
+  0% { transform: translate3d(0, 60px, 0) scale(0.6); opacity: 0; }
+  15% { opacity: 0.9; }
+  100% { transform: translate3d(var(--dx), -420px, 0) scale(1.1); opacity: 0; }
+}
+@keyframes sk-twinkle {
+  0%, 100% { transform: scale(0.4); opacity: 0.15; }
+  50% { transform: scale(1); opacity: 1; }
+}
+@keyframes sk-drift {
+  0% { transform: translate3d(-160px, 0, 0); opacity: 0; }
+  15%, 85% { opacity: 0.9; }
+  100% { transform: translate3d(160px, 0, 0); opacity: 0; }
+}
+@keyframes sk-swing { 0%, 100% { transform: rotate(-4deg); } 50% { transform: rotate(4deg); } }
+@keyframes sk-glow { 0%, 100% { opacity: 0.45; transform: scale(0.85); } 50% { opacity: 1; transform: scale(1.1); } }
+@keyframes sk-burst {
+  0% { transform: scale(0.1); opacity: 0; }
+  12% { opacity: 1; }
+  60% { opacity: 0.9; }
+  100% { transform: scale(1); opacity: 0; }
+}
+@keyframes sk-shimmer { to { background-position: 200% 0; } }
+
+.sk-hero { position: relative; }
+.sk-stage { position: relative; width: 100%; height: clamp(190px, 44cqi, 340px); margin: 0 auto; }
+.sk-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 14px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  background: color-mix(in oklab, var(--sk-a) 14%, transparent);
+  color: var(--sk-ink);
+}
+.sk-ornament { display: inline-block; color: var(--sk-a); }
+
+/* Section titles get an occasion ornament before the text. */
+.gift-scrap .sb-title::before { content: none; }
+
+/* ---------- Valentine's: love letters, rising hearts ---------- */
+.skin-valentine .sk-pattern {
+  -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='46' height='46' viewBox='0 0 46 46'%3E%3Cpath d='M12 18s-5-3.1-5-6.2A2.8 2.8 0 0 1 12 10a2.8 2.8 0 0 1 5 1.8C17 14.9 12 18 12 18zM35 40s-4-2.5-4-5a2.2 2.2 0 0 1 4-1.4 2.2 2.2 0 0 1 4 1.4c0 2.5-4 5-4 5z'/%3E%3C/svg%3E") 0 0 / 46px 46px;
+  mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='46' height='46' viewBox='0 0 46 46'%3E%3Cpath d='M12 18s-5-3.1-5-6.2A2.8 2.8 0 0 1 12 10a2.8 2.8 0 0 1 5 1.8C17 14.9 12 18 12 18zM35 40s-4-2.5-4-5a2.2 2.2 0 0 1 4-1.4 2.2 2.2 0 0 1 4 1.4c0 2.5-4 5-4 5z'/%3E%3C/svg%3E") 0 0 / 46px 46px;
+  opacity: 0.1;
+}
+.skin-valentine .sk-p {
+  width: calc(18px * var(--s));
+  height: calc(18px * var(--s));
+  background: var(--sk-a);
+  -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M12 21s-8-5-8-11a4.5 4.5 0 0 1 8-2.8A4.5 4.5 0 0 1 20 10c0 6-8 11-8 11z'/%3E%3C/svg%3E") center / contain no-repeat;
+  mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M12 21s-8-5-8-11a4.5 4.5 0 0 1 8-2.8A4.5 4.5 0 0 1 20 10c0 6-8 11-8 11z'/%3E%3C/svg%3E") center / contain no-repeat;
+  animation-name: sk-rise;
+  top: auto !important;
+  bottom: 30%;
+}
+.skin-valentine .sk-p[data-h="1"], .skin-valentine .sk-p[data-h="3"] { background: color-mix(in oklab, var(--sk-a) 45%, white); }
+.skin-valentine .sk-stage::before {
+  content: "";
+  position: absolute;
+  inset: 8% 18%;
+  border-radius: 50%;
+  background: radial-gradient(closest-side, color-mix(in oklab, var(--sk-a) 26%, transparent), transparent);
+  z-index: -1;
+}
+.skin-valentine .sb-hero { font-style: italic; }
+.skin-valentine .sb-title::before { content: "♥"; content: "♥" / ""; font-size: 0.7em; color: var(--sk-a); margin-right: 0.4em; }
+.skin-valentine .sb-title, .skin-voyage .sb-title, .skin-christmas .sb-title, .skin-bridal .sb-title { display: block; }
+.skin-valentine .sb-title::after, .skin-voyage .sb-title::after, .skin-christmas .sb-title::after, .skin-bridal .sb-title::after { content: ""; display: block; margin-top: 10px; }
+.skin-valentine .sb-letter {
+  border-radius: 4px;
+  padding-top: 3.2rem !important;
+  background:
+    linear-gradient(to bottom right, transparent 49.5%, color-mix(in oklab, var(--sk-a) 9%, var(--gift-surface)) 50%) top left / 50.5% 2.6rem no-repeat,
+    linear-gradient(to bottom left, transparent 49.5%, color-mix(in oklab, var(--sk-a) 9%, var(--gift-surface)) 50%) top right / 50.5% 2.6rem no-repeat,
+    var(--gift-surface);
+}
+.skin-valentine .sb-letter::before {
+  top: 1.6rem;
+  width: 26px;
+  height: 26px;
+  margin-left: -13px;
+  border-radius: 50%;
+  transform: none;
+  background: radial-gradient(circle at 35% 35%, color-mix(in oklab, var(--sk-a) 55%, white), var(--sk-a));
+  box-shadow: 0 2px 6px rgba(0,0,0,.18);
+}
+.skin-valentine .sb-polaroid { border-radius: 4px; }
+.skin-valentine .sb-tile { border-radius: 50% 50% 18px 18px; }
+
+/* ---------- Birthday: bunting, confetti, sticker type ---------- */
+.skin-birthday .sk-pattern {
+  opacity: 0.55;
+  background:
+    radial-gradient(circle, #ffb3c7 1.6px, transparent 2px) 0 0 / 46px 46px,
+    radial-gradient(circle, #9ad7ff 1.6px, transparent 2px) 23px 11px / 46px 46px,
+    radial-gradient(circle, #ffd76a 1.6px, transparent 2px) 11px 30px / 46px 46px,
+    radial-gradient(circle, #a8e6cf 1.6px, transparent 2px) 34px 36px / 46px 46px;
+}
+.skin-birthday .sk-p { width: calc(7px * var(--s)); height: calc(13px * var(--s)); border-radius: 2px; background: #ff8fab; }
+.skin-birthday .sk-p[data-h="1"] { background: #ffd166; }
+.skin-birthday .sk-p[data-h="2"] { background: #7ed7c1; }
+.skin-birthday .sk-p[data-h="3"] { background: #8fa8ff; }
+.skin-birthday .sk-p[data-h="4"] { background: var(--sk-a); border-radius: 50%; height: calc(8px * var(--s)); }
+.sk-bunting {
+  position: absolute;
+  left: -2%;
+  right: -2%;
+  top: 0;
+  display: flex;
+  justify-content: space-between;
+  height: 54px;
+  padding-top: 6px;
+  background: radial-gradient(120% 60px at 50% -24px, transparent 59px, color-mix(in oklab, var(--sk-ink) 35%, transparent) 60px, transparent 61.5px);
+}
+.sk-bunting span {
+  width: 3.4%;
+  height: 34px;
+  clip-path: polygon(0 0, 100% 0, 50% 100%);
+  background: #ff8fab;
+  transform-origin: top center;
+  animation: sk-swing 3.2s ease-in-out infinite;
+}
+.sk-bunting span:nth-child(odd) { margin-top: 10px; }
+.sk-bunting span:nth-child(4n+2), .sk-bunting span:nth-child(4n+3) { margin-top: 16px; }
+.sk-bunting span[data-h="1"] { background: #ffd166; }
+.sk-bunting span[data-h="2"] { background: #7ed7c1; }
+.sk-bunting span[data-h="3"] { background: #8fa8ff; }
+.sk-bunting span[data-h="4"] { background: var(--sk-a); }
+.skin-birthday .sk-hero { padding-top: 34px; }
+.skin-birthday .sb-hero {
+  letter-spacing: -0.02em;
+  text-shadow: 2px 2px 0 color-mix(in oklab, var(--sk-a) 55%, transparent), 4px 4px 0 color-mix(in oklab, var(--sk-p) 40%, transparent);
+}
+.skin-birthday .sk-badge { background: #ffd166; color: #2b2522; transform: rotate(-3deg); box-shadow: 0 6px 14px -8px rgba(0,0,0,.4); }
+.skin-birthday .sb-title::after { width: 92px; height: 8px; opacity: 1; background: repeating-linear-gradient(90deg, #ff8fab 0 14px, #ffd166 14px 28px, #7ed7c1 28px 42px, #8fa8ff 42px 56px); }
+.skin-birthday .sb-letter { border-radius: 18px; border-top: 10px solid; border-image: repeating-linear-gradient(90deg, #ff8fab 0 18px, #ffd166 18px 36px, #7ed7c1 36px 54px, #8fa8ff 54px 72px) 10; }
+.skin-birthday .sb-letter::before { display: none; }
+.skin-birthday .sb-tile:nth-child(1) { background: #ffe3ea; }
+.skin-birthday .sb-tile:nth-child(2) { background: #fff1c7; }
+.skin-birthday .sb-tile:nth-child(3) { background: #d8f3ea; }
+.skin-birthday .sb-tile:nth-child(4) { background: #e2e8ff; }
+.skin-birthday .sb-tile-num { color: #2b2522 !important; }
+.skin-birthday .sb-polaroid { border-radius: 10px; }
+
+/* ---------- Bon Voyage: map paper, flight path, postcards ---------- */
+.skin-voyage .sk-pattern {
+  opacity: 0.08;
+  background-color: transparent;
+  background-image:
+    linear-gradient(var(--sk-ink) 1px, transparent 1px),
+    linear-gradient(90deg, var(--sk-ink) 1px, transparent 1px);
+  background-size: 64px 64px;
+}
+.skin-voyage .sk-p {
+  width: calc(90px * var(--s));
+  height: calc(28px * var(--s));
+  border-radius: 999px;
+  background: rgba(255,255,255,.85);
+  box-shadow: 18px -10px 0 4px rgba(255,255,255,.85), -14px -6px 0 2px rgba(255,255,255,.85);
+  animation-name: sk-drift;
+  top: calc(var(--s) * 30%) !important;
+}
+.sk-route { position: absolute; left: 0; right: 0; top: 60px; width: 100%; height: 300px; stroke: var(--sk-a); stroke-width: 3; opacity: 0.55; }
+.skin-voyage .sb-title::before { content: "✈"; content: "✈" / ""; display: inline-block; color: var(--sk-a); margin-right: 0.45em; font-size: 0.75em; transform: rotate(-20deg); }
+.skin-voyage .sb-title::after { height: 0; border-top: 3px dashed var(--sk-a); background: none; opacity: 0.6; width: 120px; transform: none; }
+.skin-voyage .sb-letter {
+  border-radius: 6px;
+  border: 5px solid transparent;
+  background:
+    linear-gradient(var(--gift-surface), var(--gift-surface)) padding-box,
+    repeating-linear-gradient(135deg, #e0564f 0 9px, var(--gift-surface) 9px 16px, #3d6fd1 16px 25px, var(--gift-surface) 25px 32px) border-box;
+  padding-right: 92px !important;
+  min-height: 150px;
+}
+.skin-voyage .sb-letter::before {
+  top: 14px;
+  left: auto;
+  right: 14px;
+  width: 58px;
+  height: 68px;
+  margin: 0;
+  transform: rotate(4deg);
+  background:
+    radial-gradient(circle at 50% 50%, color-mix(in oklab, var(--sk-a) 40%, white) 0 15px, transparent 16px),
+    color-mix(in oklab, var(--sk-a) 16%, white);
+  -webkit-mask: radial-gradient(circle 3.5px, transparent 98%, #000) -3.5px -3.5px / 9px 9px;
+  mask: radial-gradient(circle 3.5px, transparent 98%, #000) -3.5px -3.5px / 9px 9px;
+  box-shadow: none;
+  opacity: 1;
+}
+.skin-voyage .sb-letter::after {
+  content: "";
+  position: absolute;
+  top: 74px;
+  right: 22px;
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  border: 2px solid color-mix(in oklab, var(--sk-ink) 35%, transparent);
+  box-shadow: inset 0 0 0 5px transparent, inset 0 0 0 6px color-mix(in oklab, var(--sk-ink) 25%, transparent);
+  transform: rotate(-12deg);
+}
+.sk-pass {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  gap: 10px;
+  margin: 22px auto 0;
+  max-width: 420px;
+  padding: 14px 18px;
+  border-radius: 16px;
+  background: var(--gift-surface);
+  box-shadow: 0 16px 34px -22px rgba(43,37,34,.5);
+  text-align: left;
+  -webkit-mask: radial-gradient(circle 10px at 0 50%, transparent 98%, #000) left / 51% 100% no-repeat, radial-gradient(circle 10px at 100% 50%, transparent 98%, #000) right / 51% 100% no-repeat;
+  mask: radial-gradient(circle 10px at 0 50%, transparent 98%, #000) left / 51% 100% no-repeat, radial-gradient(circle 10px at 100% 50%, transparent 98%, #000) right / 51% 100% no-repeat;
+}
+.sk-pass small { display: block; font-size: 10px; letter-spacing: .18em; text-transform: uppercase; opacity: .55; }
+.sk-pass strong { display: block; font-size: 18px; line-height: 1.15; }
+.sk-pass .sk-pass-plane { font-size: 22px; color: var(--sk-a); }
+.skin-voyage .sb-tile { border-radius: 8px; border: 1px dashed color-mix(in oklab, var(--sk-ink) 25%, transparent); background: transparent; }
+.skin-voyage .sb-polaroid { border-radius: 2px; }
+
+/* ---------- Christmas: night panel, string lights, snow, gift tags ---------- */
+.skin-christmas .sk-pattern { opacity: 0.06; background-color: transparent; background-image: radial-gradient(var(--sk-ink) 1.2px, transparent 1.4px); background-size: 22px 22px; }
+.skin-christmas .sk-sky { height: min(700px, 100%); }
+.skin-christmas .sk-p { width: calc(7px * var(--s)); height: calc(7px * var(--s)); border-radius: 50%; background: #fff; box-shadow: 0 0 6px rgba(255,255,255,.8); }
+.skin-christmas .sk-stage {
+  border-radius: 34px;
+  background:
+    radial-gradient(80% 70% at 50% 110%, rgba(255,255,255,.18), transparent 70%),
+    radial-gradient(60% 60% at 50% 20%, #2f6b4f, #173b2b 80%);
+  box-shadow: inset 0 -30px 40px -20px rgba(255,255,255,.35), 0 24px 50px -28px rgba(0,0,0,.6);
+  overflow: hidden;
+}
+.skin-christmas .sk-stage::after {
+  content: "";
+  position: absolute;
+  left: -5%;
+  right: -5%;
+  bottom: -40px;
+  height: 90px;
+  border-radius: 50%;
+  background: #f6f4ef;
+}
+.skin-christmas .sk-hero .sk-snow-front { position: absolute; inset: 0; border-radius: 34px; overflow: hidden; pointer-events: none; }
+.sk-lights {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  display: flex;
+  justify-content: space-around;
+  height: 40px;
+  background: radial-gradient(130% 50px at 50% -20px, transparent 48px, rgba(40,60,45,.6) 49px, transparent 50.5px);
+}
+.sk-lights span {
+  width: 11px;
+  height: 16px;
+  margin-top: 14px;
+  border-radius: 50% 50% 45% 45%;
+  background: #ff6b6b;
+  box-shadow: 0 0 12px #ff6b6b;
+  animation: sk-glow 2.2s ease-in-out infinite;
+}
+.sk-lights span:nth-child(even) { margin-top: 22px; }
+.sk-lights span[data-h="1"] { background: #ffd166; box-shadow: 0 0 12px #ffd166; }
+.sk-lights span[data-h="2"] { background: #7fd4ff; box-shadow: 0 0 12px #7fd4ff; }
+.sk-lights span[data-h="3"] { background: #8ee39a; box-shadow: 0 0 12px #8ee39a; }
+.skin-christmas .sk-hero { padding-top: 40px; }
+.skin-christmas .sb-title::before { content: ""; width: 26px; height: 16px; margin-right: 10px; vertical-align: middle; background: radial-gradient(circle at 50% 70%, #c1442e 0 4px, transparent 4.5px), radial-gradient(ellipse 7px 4px at 30% 40%, #2f6b4f 98%, transparent), radial-gradient(ellipse 7px 4px at 70% 40%, #2f6b4f 98%, transparent); display: inline-block; }
+.skin-christmas .sb-title::after { width: 120px; background: repeating-linear-gradient(90deg, #c1442e 0 10px, #fff 10px 14px, #2f6b4f 14px 24px, #fff 24px 28px); height: 6px; opacity: .9; }
+.skin-christmas .sb-letter {
+  border-radius: 6px;
+  clip-path: polygon(22px 0, 100% 0, 100% 100%, 0 100%, 0 22px);
+  padding-top: 2.4rem !important;
+  border-left: 6px solid #c1442e;
+}
+.skin-christmas .sb-letters > :nth-child(even) .sb-letter, .skin-christmas .sb-letters > .sb-letter:nth-child(even) { border-left-color: #2f6b4f; }
+.skin-christmas .sb-letter::before {
+  top: 14px;
+  left: 26px;
+  width: 12px;
+  height: 12px;
+  margin: 0;
+  border-radius: 50%;
+  transform: none;
+  background: var(--sk-bg);
+  box-shadow: inset 0 0 0 2px color-mix(in oklab, var(--sk-ink) 30%, transparent);
+}
+.skin-christmas .sb-tile { background: #173b2b; color: #fff; }
+.skin-christmas .sb-tile-num { color: #fff !important; }
+
+/* ---------- Pets: paw prints, bone labels, bubbly cards ---------- */
+.skin-pets .sk-pattern {
+  opacity: 0.06;
+  -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='70' height='70' viewBox='0 0 70 70'%3E%3Cg transform='rotate(-20 20 20)'%3E%3Cellipse cx='20' cy='24' rx='7' ry='6'/%3E%3Ccircle cx='13' cy='15' r='3'/%3E%3Ccircle cx='19' cy='12' r='3'/%3E%3Ccircle cx='25' cy='12.5' r='3'/%3E%3Ccircle cx='30' cy='16' r='3'/%3E%3C/g%3E%3Cg transform='rotate(25 50 52)'%3E%3Cellipse cx='50' cy='56' rx='5' ry='4.3'/%3E%3Ccircle cx='45' cy='50' r='2.2'/%3E%3Ccircle cx='49' cy='47.5' r='2.2'/%3E%3Ccircle cx='53.5' cy='48' r='2.2'/%3E%3Ccircle cx='57' cy='51' r='2.2'/%3E%3C/g%3E%3C/svg%3E") 0 0 / 70px 70px;
+  mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='70' height='70' viewBox='0 0 70 70'%3E%3Cg transform='rotate(-20 20 20)'%3E%3Cellipse cx='20' cy='24' rx='7' ry='6'/%3E%3Ccircle cx='13' cy='15' r='3'/%3E%3Ccircle cx='19' cy='12' r='3'/%3E%3Ccircle cx='25' cy='12.5' r='3'/%3E%3Ccircle cx='30' cy='16' r='3'/%3E%3C/g%3E%3Cg transform='rotate(25 50 52)'%3E%3Cellipse cx='50' cy='56' rx='5' ry='4.3'/%3E%3Ccircle cx='45' cy='50' r='2.2'/%3E%3Ccircle cx='49' cy='47.5' r='2.2'/%3E%3Ccircle cx='53.5' cy='48' r='2.2'/%3E%3Ccircle cx='57' cy='51' r='2.2'/%3E%3C/g%3E%3C/svg%3E") 0 0 / 70px 70px;
+}
+.skin-pets .sk-p {
+  width: calc(26px * var(--s));
+  height: calc(26px * var(--s));
+  background: color-mix(in oklab, var(--sk-a) 70%, transparent);
+  -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cellipse cx='12' cy='15' rx='5' ry='4.2'/%3E%3Ccircle cx='6.5' cy='9' r='2.2'/%3E%3Ccircle cx='10' cy='6' r='2.2'/%3E%3Ccircle cx='14' cy='6' r='2.2'/%3E%3Ccircle cx='17.5' cy='9' r='2.2'/%3E%3C/svg%3E") center / contain no-repeat;
+  mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cellipse cx='12' cy='15' rx='5' ry='4.2'/%3E%3Ccircle cx='6.5' cy='9' r='2.2'/%3E%3Ccircle cx='10' cy='6' r='2.2'/%3E%3Ccircle cx='14' cy='6' r='2.2'/%3E%3Ccircle cx='17.5' cy='9' r='2.2'/%3E%3C/svg%3E") center / contain no-repeat;
+  animation-name: sk-twinkle;
+  animation-timing-function: ease-in-out;
+}
+.skin-pets .sb-hero { letter-spacing: -0.01em; }
+.skin-pets .sk-badge { background: var(--sk-a); color: var(--sk-bg); border-radius: 999px; padding: 8px 26px; position: relative; }
+.skin-pets .sk-badge::before, .skin-pets .sk-badge::after { content: ""; position: absolute; top: 50%; width: 18px; height: 18px; margin-top: -9px; border-radius: 50%; background: var(--sk-a); box-shadow: 0 -7px 0 -1px var(--sk-a), 0 7px 0 -1px var(--sk-a); }
+.skin-pets .sk-badge::before { left: -8px; }
+.skin-pets .sk-badge::after { right: -8px; }
+.skin-pets .sb-title::after { width: 70px; height: 12px; opacity: .35; border-radius: 99px; background: radial-gradient(circle at 6px 3px, currentColor 4px, transparent 4.5px), radial-gradient(circle at 6px 9px, currentColor 4px, transparent 4.5px), radial-gradient(circle at 64px 3px, currentColor 4px, transparent 4.5px), radial-gradient(circle at 64px 9px, currentColor 4px, transparent 4.5px), linear-gradient(currentColor, currentColor) 6px 3px / 58px 6px no-repeat; transform: none; }
+.skin-pets .sb-letter { border-radius: 28px; }
+.skin-pets .sb-letter::before { display: none; }
+.skin-pets .sb-letter::after {
+  content: "";
+  position: absolute;
+  right: 16px;
+  bottom: 14px;
+  width: 30px;
+  height: 30px;
+  opacity: 0.18;
+  background: var(--sk-a);
+  -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cellipse cx='12' cy='15' rx='5' ry='4.2'/%3E%3Ccircle cx='6.5' cy='9' r='2.2'/%3E%3Ccircle cx='10' cy='6' r='2.2'/%3E%3Ccircle cx='14' cy='6' r='2.2'/%3E%3Ccircle cx='17.5' cy='9' r='2.2'/%3E%3C/svg%3E") center / contain no-repeat;
+  mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cellipse cx='12' cy='15' rx='5' ry='4.2'/%3E%3Ccircle cx='6.5' cy='9' r='2.2'/%3E%3Ccircle cx='10' cy='6' r='2.2'/%3E%3Ccircle cx='14' cy='6' r='2.2'/%3E%3Ccircle cx='17.5' cy='9' r='2.2'/%3E%3C/svg%3E") center / contain no-repeat;
+}
+.skin-pets .sb-polaroid { border-radius: 22px; }
+.skin-pets .sb-polaroid > div { border-radius: 16px !important; }
+.skin-pets .sb-tile { border-radius: 999px; min-width: 70px; }
+
+/* ---------- New Year: night sky, fireworks, gold glass ---------- */
+.skin-newyear .sk-pattern { display: none; }
+.skin-newyear .sk-p {
+  width: calc(4px * var(--s));
+  height: calc(4px * var(--s));
+  border-radius: 50%;
+  background: #fff6d6;
+  box-shadow: 0 0 8px #ffe08a;
+  animation-name: sk-twinkle;
+  animation-timing-function: ease-in-out;
+}
+.skin-newyear .sk-p[data-h="0"] { width: 10px; height: 10px; background: none; box-shadow: none; }
+.skin-newyear .sk-p[data-h="0"]::before { content: "✦"; position: absolute; inset: -6px; color: #ffd76a; font-size: 14px; }
+.sk-fireworks span { position: absolute; width: 220px; height: 220px; margin: -110px 0 0 -110px; animation: sk-burst 3.6s ease-out infinite; }
+.sk-fireworks span[data-i="0"] { left: 16%; top: 120px; }
+.sk-fireworks span[data-i="1"] { left: 84%; top: 90px; animation-delay: 1.2s; width: 180px; height: 180px; margin: -90px 0 0 -90px; }
+.sk-fireworks span[data-i="2"] { left: 70%; top: 330px; animation-delay: 2.1s; width: 140px; height: 140px; margin: -70px 0 0 -70px; }
+.sk-fireworks span[data-i="3"] { left: 28%; top: 380px; animation-delay: 2.8s; width: 120px; height: 120px; margin: -60px 0 0 -60px; }
+.sk-fireworks b { position: absolute; left: 50%; top: 0; width: 2px; height: 50%; margin-left: -1px; transform-origin: 50% 100%; background: linear-gradient(to top, transparent 35%, #ffd76a 70%, #fff6d6); border-radius: 2px; }
+.sk-fireworks span[data-i="1"] b { background: linear-gradient(to top, transparent 35%, #ff8fab 70%, #fff); }
+.sk-fireworks span[data-i="2"] b { background: linear-gradient(to top, transparent 35%, #8fd3ff 70%, #fff); }
+.skin-newyear .sb-hero {
+  background: linear-gradient(100deg, #f7e3a3 0%, #e8c468 30%, #fff6d6 45%, #e8c468 60%, #c99a3a 100%) 0 0 / 200% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent !important;
+  animation: sk-shimmer 6s linear infinite;
+}
+.skin-newyear .sk-badge { background: rgba(232,196,104,.14); color: #f5e6b8; box-shadow: inset 0 0 0 1px rgba(232,196,104,.5); }
+.skin-newyear .sb-title::after { background: linear-gradient(90deg, #e8c468, transparent); width: 120px; height: 2px; opacity: 1; transform: none; }
+.skin-newyear .sb-letter, .skin-newyear .sb-polaroid {
+  background: rgba(255,255,255,.06) !important;
+  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
+  box-shadow: inset 0 0 0 1px rgba(232,196,104,.35), 0 20px 40px -24px rgba(0,0,0,.7);
+}
+.skin-newyear .sb-letter::before { display: none; }
+.skin-newyear .sb-tile { background: #0e1220; box-shadow: inset 0 0 0 1px rgba(232,196,104,.35); position: relative; overflow: hidden; }
+.skin-newyear .sb-tile::after { content: ""; position: absolute; left: 0; right: 0; top: 46%; height: 1px; background: rgba(0,0,0,.6); }
+.skin-newyear .sb-tile-num { color: #f5e6b8 !important; }
+
+/* ---------- Anniversary: gold foil, frames, diamond rules ---------- */
+.skin-anniversary .sk-pattern {
+  opacity: 0.07;
+  background-color: transparent;
+  background-image:
+    repeating-linear-gradient(45deg, var(--sk-ink) 0 1px, transparent 1px 14px),
+    repeating-linear-gradient(-45deg, var(--sk-ink) 0 1px, transparent 1px 14px);
+}
+.skin-anniversary .sk-p { width: calc(5px * var(--s)); height: calc(5px * var(--s)); border-radius: 50%; background: #e3c27a; box-shadow: 0 0 6px rgba(227,194,122,.9); animation-name: sk-rise; animation-duration: 18s !important; top: auto !important; bottom: 10%; }
+.skin-anniversary .sk-stage::before {
+  content: "";
+  position: absolute;
+  inset: 4% 22%;
+  border-radius: 999px 999px 40px 40px;
+  border: 2px solid #d4b06a;
+  box-shadow: inset 0 0 0 6px var(--sk-bg), inset 0 0 0 7px #d4b06a;
+  z-index: -1;
+}
+.skin-anniversary .sb-hero { font-style: italic; font-weight: 500; }
+.skin-anniversary .sk-badge { background: none; padding: 0; color: #a07c35; gap: 12px; }
+.skin-anniversary .sk-badge::before, .skin-anniversary .sk-badge::after { content: ""; width: 34px; height: 1px; background: #c9a26b; }
+.skin-anniversary .sb-title { align-items: flex-start; font-style: italic; }
+.skin-anniversary .sb-title::after { width: 140px; height: 9px; opacity: 1; transform: none; background: linear-gradient(#c9a26b, #c9a26b) left center / 60px 1px no-repeat, linear-gradient(#c9a26b, #c9a26b) right center / 60px 1px no-repeat, linear-gradient(45deg, transparent 30%, #c9a26b 30% 70%, transparent 70%) center / 9px 9px no-repeat; }
+.skin-anniversary .sb-letter { border-radius: 2px; box-shadow: inset 0 0 0 1px #d4b06a, inset 0 0 0 5px var(--gift-surface), inset 0 0 0 6px #e7d3a8, 0 18px 34px -24px rgba(43,37,34,.45); padding: 2rem !important; }
+.skin-anniversary .sb-letter::before { display: none; }
+.skin-anniversary .sb-polaroid { border-radius: 2px; padding: 14px 14px 18px !important; box-shadow: inset 0 0 0 1px #d4b06a, 0 20px 36px -24px rgba(43,37,34,.55); }
+.skin-anniversary .sb-tile { background: none; box-shadow: inset 0 0 0 1px #d4b06a; border-radius: 4px; }
+
+/* ---------- Wedding: arches, botanicals, editorial type ---------- */
+.skin-wedding .sk-pattern { display: none; }
+.skin-wedding .sk-p {
+  width: calc(12px * var(--s));
+  height: calc(8px * var(--s));
+  border-radius: 80% 0 80% 0;
+  background: color-mix(in oklab, var(--sk-a) 30%, white);
+  box-shadow: 0 1px 2px rgba(0,0,0,.08);
+  animation-duration: 20s !important;
+}
+.skin-wedding .sk-stage {
+  max-width: 420px;
+  height: clamp(240px, 56cqi, 380px);
+  border-radius: 999px 999px 18px 18px;
+  background:
+    radial-gradient(70% 60% at 50% 30%, color-mix(in oklab, var(--sk-a) 16%, white), transparent),
+    color-mix(in oklab, var(--sk-a) 8%, var(--sk-bg));
+  box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--sk-ink) 18%, transparent), inset 0 0 0 8px var(--sk-bg), inset 0 0 0 9px color-mix(in oklab, var(--sk-ink) 14%, transparent);
+}
+.skin-wedding .sk-stage::before, .skin-wedding .sk-stage::after {
+  content: "";
+  position: absolute;
+  bottom: -14px;
+  width: 120px;
+  height: 120px;
+  opacity: .5;
+  background: var(--sk-a);
+  -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100' fill='none' stroke='black' stroke-width='2.2' stroke-linecap='round'%3E%3Cpath d='M10 95 C 30 70, 50 55, 85 15'/%3E%3Cpath d='M30 72 c -12 -4 -16 -14 -14 -22 c 10 2 16 10 14 22z M45 57 c -11 -6 -13 -16 -10 -24 c 9 4 14 12 10 24z M60 40 c -10 -7 -11 -17 -7 -24 c 8 5 12 14 7 24z M35 66 c 10 -6 20 -6 28 -1 c -8 7 -19 7 -28 1z M52 48 c 10 -5 19 -4 26 2 c -9 6 -19 5 -26 -2z'/%3E%3C/svg%3E") center / contain no-repeat;
+  mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100' fill='none' stroke='black' stroke-width='2.2' stroke-linecap='round'%3E%3Cpath d='M10 95 C 30 70, 50 55, 85 15'/%3E%3Cpath d='M30 72 c -12 -4 -16 -14 -14 -22 c 10 2 16 10 14 22z M45 57 c -11 -6 -13 -16 -10 -24 c 9 4 14 12 10 24z M60 40 c -10 -7 -11 -17 -7 -24 c 8 5 12 14 7 24z M35 66 c 10 -6 20 -6 28 -1 c -8 7 -19 7 -28 1z M52 48 c 10 -5 19 -4 26 2 c -9 6 -19 5 -26 -2z'/%3E%3C/svg%3E") center / contain no-repeat;
+}
+.skin-wedding .sk-stage::before { left: -64px; }
+.skin-wedding .sk-stage::after { right: -64px; transform: scaleX(-1); }
+.skin-wedding .sb-hero { font-weight: 500; letter-spacing: 0.01em; }
+.skin-wedding .sk-badge { background: none; padding: 0; letter-spacing: 0.32em; }
+.skin-wedding .sb-title { align-items: center; text-align: center; font-weight: 500; letter-spacing: 0.04em; }
+.skin-wedding .sb-title::after { width: 1px; height: 26px; opacity: .35; transform: none; }
+.skin-wedding .sb-letter { border-radius: 0; box-shadow: 0 0 0 1px color-mix(in oklab, var(--sk-ink) 12%, transparent); padding: 2.2rem 1.8rem !important; text-align: center; }
+.skin-wedding .sb-letter::before { display: none; }
+.skin-wedding .sb-letter > p:first-child::first-letter { font-size: 2.6em; float: left; line-height: 0.9; margin: 4px 8px 0 0; color: var(--sk-a); font-family: var(--sk-head); }
+.skin-wedding .sb-letter > p:first-child { text-align: left; }
+.skin-wedding .sb-polaroid { border-radius: 999px 999px 6px 6px; padding: 10px 10px 16px !important; box-shadow: 0 0 0 1px color-mix(in oklab, var(--sk-ink) 12%, transparent); transform: none !important; }
+.skin-wedding .sb-polaroid > div { border-radius: 999px 999px 4px 4px !important; }
+.skin-wedding .sb-tile { background: none; border-radius: 0; box-shadow: inset 0 -1px 0 color-mix(in oklab, var(--sk-ink) 25%, transparent); }
+
+/* ---------- Bridal Shower: watercolor blooms, scallops, petals ---------- */
+.skin-bridal .sk-pattern {
+  opacity: 1;
+  background:
+    radial-gradient(40% 30% at 8% 6%, color-mix(in oklab, var(--sk-a) 22%, transparent), transparent 70%),
+    radial-gradient(35% 28% at 92% 14%, rgba(196, 220, 196, .35), transparent 70%),
+    radial-gradient(40% 25% at 85% 70%, color-mix(in oklab, var(--sk-a) 16%, transparent), transparent 70%),
+    radial-gradient(30% 25% at 10% 80%, rgba(255, 214, 186, .35), transparent 70%);
+}
+.skin-bridal .sk-p { width: calc(13px * var(--s)); height: calc(9px * var(--s)); border-radius: 60% 40% 60% 40%; background: color-mix(in oklab, var(--sk-a) 55%, white); animation-duration: 16s !important; }
+.skin-bridal .sk-p[data-h="2"], .skin-bridal .sk-p[data-h="4"] { border-radius: 50%; width: 7px; height: 7px; background: #fffaf3; box-shadow: 0 1px 3px rgba(0,0,0,.15); }
+.skin-bridal .sk-stage::before {
+  content: "";
+  position: absolute;
+  inset: 6% 16% 0;
+  z-index: -1;
+  border-radius: 46% 54% 50% 50% / 55% 50% 50% 45%;
+  background: radial-gradient(circle at 40% 40%, color-mix(in oklab, var(--sk-a) 26%, white), color-mix(in oklab, var(--sk-a) 8%, transparent) 70%);
+}
+.skin-bridal .sk-badge { background: none; color: var(--sk-a); letter-spacing: 0.16em; }
+.skin-bridal .sk-badge::before, .skin-bridal .sk-badge::after { content: "❀"; content: "❀" / ""; letter-spacing: 0; }
+.skin-bridal .sb-title::before { content: "❀"; content: "❀" / ""; color: var(--sk-a); margin-right: .4em; font-size: .8em; }
+.skin-bridal .sb-letter {
+  border-radius: 10px;
+  -webkit-mask: radial-gradient(circle 9px at 50% 0, transparent 98%, #000) 0 0 / 24px 51% repeat-x, radial-gradient(circle 9px at 50% 100%, transparent 98%, #000) 0 100% / 24px 51% repeat-x;
+  mask: radial-gradient(circle 9px at 50% 0, transparent 98%, #000) 0 0 / 24px 51% repeat-x, radial-gradient(circle 9px at 50% 100%, transparent 98%, #000) 0 100% / 24px 51% repeat-x;
+  padding: 2.2rem 1.6rem !important;
+}
+.skin-bridal .sb-letter::before { display: none; }
+.skin-bridal .sb-polaroid { border-radius: 24px; }
+.skin-bridal .sb-tile { border-radius: 40% 40% 18px 18px; }
+
+/* ---------- reduced motion ---------- */
+@media (prefers-reduced-motion: reduce) {
+  .sk-p, .sk-bunting span, .sk-lights span, .sk-fireworks span, .skin-newyear .sb-hero { animation: none !important; }
+  .sk-fireworks span { opacity: 0.5; transform: scale(0.9); }
+  .sk-p { opacity: 0.6; }
+}

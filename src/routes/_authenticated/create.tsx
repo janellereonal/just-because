@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { themeFont } from "@/components/ThemeMiniPreview";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
@@ -136,6 +137,7 @@ function CreatePage() {
             ? `${new Date().getFullYear()}-12-25`
             : null,
           modules: selected,
+          ...(activeTheme ? { fontChoice: themeFont(activeTheme) } : {}),
         },
       });
     } catch {

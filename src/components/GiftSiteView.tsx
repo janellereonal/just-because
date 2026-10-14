@@ -1,4 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
+import { SkinDecor } from "@/components/SkinDecor";
+import { Theme3D } from "@/components/Theme3D";
+import { KIND_WORDS, themeKindOf } from "@/lib/themeKind";
 import { manilaMidnight } from "@/lib/giftPieces";
 import {
   FONT_PAIRINGS,
@@ -74,7 +77,7 @@ function VoiceCard({ item, accent }: { item: Contribution; accent: string }) {
   );
 }
 
-function Countdown({ date, accent, heading }: { date: string; accent: string; heading: string }) {
+function Countdown({ date, accent, heading, label }: { date: string; accent: string; heading: string; label?: string | undefined }) {
   const [now, setNow] = useState(() => Date.now());
   useEffect(() => {
     const t = setInterval(() => setNow(Date.now()), 1000);
@@ -100,7 +103,7 @@ function Countdown({ date, accent, heading }: { date: string; accent: string; he
         </p>
       ) : (
         <>
-          <p className="text-sm tracking-[0.18em] uppercase opacity-70">Counting down to {heading}</p>
+          <p className="text-sm tracking-[0.18em] uppercase opacity-70">{label ?? `Counting down to ${heading}`}</p>
           <div className="mt-5 flex items-start justify-center gap-2 sm:gap-3" suppressHydrationWarning>
             {[
               [days, days === 1 ? "day" : "days"],
@@ -353,6 +356,8 @@ export function GiftSiteView({
   const accentDeco = readableOn(palette.background, palette.accent, 3);
 
   const fonts = FONT_PAIRINGS[site.font_choice] ?? FONT_PAIRINGS.romantic;
+  const kind = themeKindOf(theme);
+  const kindWords = KIND_WORDS[kind];
   const text: CustomText = site.custom_text ?? {};
   const titles = defaultTitles(text);
   const enabled = new Set(modules.filter((m) => m.enabled).map((m) => m.module_type));
@@ -403,31 +408,6 @@ export function GiftSiteView({
     }));
   }, [words]);
 
-  // Sections below the fold rise in as they scroll into view. Nothing is hidden without JS,
-  // and anything already on screen stays put.
-  useEffect(() => {
-    const root = rootRef.current;
-    if (!root || window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
-    const io = new IntersectionObserver(
-      (entries) => {
-        for (const e of entries) {
-          if (!e.isIntersecting) continue;
-          (e.target as HTMLElement).dataset["reveal"] = "in";
-          io.unobserve(e.target);
-        }
-      },
-      { rootMargin: "0px 0px -6% 0px" },
-    );
-    for (const el of root.querySelectorAll<HTMLElement>(".sb-section")) {
-      if (el.dataset["reveal"] === "in") continue;
-      // Already waiting (from a previous run) or below the fold: watch it.
-      if (el.dataset["reveal"] === "pending" || el.getBoundingClientRect().top > window.innerHeight) {
-        el.dataset["reveal"] = "pending";
-        io.observe(el);
-      }
-    }
-    return () => io.disconnect();
-  }, [contributions.length, modules.length]);
 
   const sectionTitle = "sb-title text-[1.75rem] leading-tight font-semibold";
   const recipient = text.recipient_name?.trim();
@@ -495,15 +475,20 @@ export function GiftSiteView({
           fontFamily: fonts.body,
           "--gift-surface": surfaceColor(palette.background),
           "--gift-border": surfaceBorder(palette.background),
+          "--sk-a": accentDeco,
+          "--sk-p": palette.primary,
+          "--sk-bg": palette.background,
+          "--sk-ink": readableInk(palette.background),
+          "--sk-head": fonts.heading,
         } as React.CSSProperties
       }
-      className="gift-scrap min-h-screen"
+      className={`gift-scrap skin-${kind} min-h-screen`}
     >
-      <div className="mx-auto max-w-3xl px-5 py-14 sm:py-20">
-        <header className="text-center">
-          <p className="text-xs tracking-[0.22em] uppercase" style={{ color: accentText }}>
-            {theme?.category ?? "A gift"}
-          </p>
+      <SkinDecor kind={kind} />
+      <div className="mx-auto max-w-3xl px-5 py-10 sm:py-14">
+        <header className="sk-hero text-center">
+          <Theme3D kind={kind} palette={palette} className="sk-stage" />
+          <p className="sk-badge mt-6">{kindWords.badge}</p>
           <h1
             {...fp("heading", "sb-hero mt-3 text-[clamp(2.4rem,7vw,4.2rem)] leading-[1.02] font-semibold text-balance")}
             style={{ fontFamily: fonts.heading }}
@@ -526,6 +511,21 @@ export function GiftSiteView({
               )}
             </p>
           ) : null}
+          {kind === "voyage" ? (
+            <div className="sk-pass" aria-label={`From everyone, to ${recipient || sampleName}`}>
+              <span>
+                <small>From</small>
+                <strong>Everyone</strong>
+              </span>
+              <span className="sk-pass-plane" aria-hidden="true">
+                ✈
+              </span>
+              <span className="text-right">
+                <small>To</small>
+                <strong>{recipient || sampleName}</strong>
+              </span>
+            </div>
+          ) : null}
           {sample && contributions.length === 0 ? (
             <SampleNote>Sample, replaced when friends add theirs</SampleNote>
           ) : null}
@@ -537,6 +537,7 @@ export function GiftSiteView({
               date={site.countdown_date ?? new Date(Date.now() + 12 * 86400000).toISOString().slice(0, 10)}
               accent={accentText}
               heading={text.countdown_title || titles.countdown_title}
+              label={kind === "default" || text.countdown_title ? undefined : kindWords.countdown}
             />
           </section>
         ) : null}

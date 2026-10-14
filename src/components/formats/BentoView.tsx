@@ -1,4 +1,6 @@
 import { useEffect, useRef, useState } from "react";
+import { Theme3D } from "@/components/Theme3D";
+import { themeKindOf } from "@/lib/themeKind";
 import { Lock, Mic, Music2, Play, Share2, Sparkles } from "lucide-react";
 import { FONT_PAIRINGS } from "@/lib/gift";
 import { readableInk, surfaceColor } from "@/lib/palettes";
@@ -226,6 +228,7 @@ function Face({ piece, palette, name }: { piece: Piece; palette: Palette; name: 
 }
 
 export function BentoView({
+  theme,
   site,
   modules,
   contributions,
@@ -270,6 +273,13 @@ export function BentoView({
             }}
           >
             <span className="bento-orb" aria-hidden />
+            {theme ? (
+              <Theme3D
+                kind={themeKindOf(theme)}
+                palette={palette}
+                className="!absolute top-2 right-2 h-[58%] w-[62%] @2xl:top-4 @2xl:right-4"
+              />
+            ) : null}
             <p className="text-[11px] font-semibold tracking-[0.2em] uppercase opacity-80">
               A gift for {data.name}
             </p>

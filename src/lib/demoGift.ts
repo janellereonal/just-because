@@ -3,7 +3,7 @@
  */
 import type { GiftSite, ModuleType, SiteModule, ViewContribution } from "@/lib/gift";
 import type { GiftFormat } from "@/lib/formats";
-import type { Palette } from "@/lib/themes";
+import type { Palette, Theme } from "@/lib/themes";
 
 export const DEMO_PALETTE: Palette = {
   background: "#FFF4EC",
@@ -105,3 +105,17 @@ export const DEMO_NOTES: ViewContribution[] = [
   note("d11", "wordcloud", "Mika", "brave"),
   note("d12", "wordcloud", "Paolo", "home"),
 ];
+
+/** The demo is a birthday, so it wears the birthday skin. */
+export const DEMO_THEME: Theme = {
+  id: "demo-theme",
+  name: "Happy Birthday",
+  category: "Celebration",
+  preview_image_url: null,
+  palettes: [DEMO_PALETTE],
+  suggested_palette_ids: [],
+  description: null,
+  status: "published",
+  default_modules: [],
+  created_at: "",
+};
