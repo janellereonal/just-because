@@ -33,6 +33,15 @@ function AuthPage() {
   const [password, setPassword] = useState("");
   const [name, setName] = useState("");
   const [busy, setBusy] = useState(false);
+  const [resent, setResent] = useState(false);
+
+  async function resend() {
+    if (!sentTo) return;
+    setBusy(true);
+    await authClient.sendVerificationEmail({ email: sentTo.email, callbackURL: "/themes" }).catch(() => null);
+    setBusy(false);
+    setResent(true);
+  }
   const { data: options } = useQuery({
     queryKey: ["auth-options"],
     queryFn: () => getAuthOptions(),
@@ -104,21 +113,41 @@ function AuthPage() {
         <div className="rise card-paper p-6 sm:p-9">
           {sentTo ? (
             <div className="text-center">
-              <h1 className="font-display text-3xl font-medium tracking-tight">Check your inbox</h1>
-              <p className="mt-3 text-sm text-muted">
+              <h1 className="font-display text-3xl font-semibold tracking-tight">Check your inbox</h1>
+              <p className="mx-auto mt-3 max-w-sm text-[15px] text-ink/70">
                 {sentTo.kind === "verify"
-                  ? `We sent a link to ${sentTo.email}. Tap it to confirm your email and you're in.`
+                  ? `We sent an email to ${sentTo.email}. Tap the link inside to confirm it's you.`
                   : `If ${sentTo.email} has an account, a reset link is on its way. It works for one hour.`}
               </p>
-              <button
-                onClick={() => {
-                  setSentTo(null);
-                  setMode("signin");
-                }}
-                className="mt-6 text-sm text-muted transition-colors hover:text-ink"
-              >
-                Back to sign in
-              </button>
+              {sentTo.kind === "verify" ? (
+                <p className="mx-auto mt-3 max-w-sm text-sm text-ink/60">
+                  Already have an account with this email? Then the email tells you that instead, and you can just sign in.
+                </p>
+              ) : null}
+              <p className="mx-auto mt-3 max-w-sm text-sm text-ink/60">Can't find it? Check Spam or Promotions. It can take a minute.</p>
+              <div className="mt-6 flex flex-col items-center gap-2">
+                {sentTo.kind === "verify" ? (
+                  <button
+                    type="button"
+                    disabled={busy || resent}
+                    onClick={() => void resend()}
+                    className="squish min-h-11 rounded-full bg-ink px-5 text-sm font-medium text-cream disabled:opacity-60"
+                  >
+                    {resent ? "Sent again" : busy ? "Sending…" : "Send it again"}
+                  </button>
+                ) : null}
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSentTo(null);
+                    setResent(false);
+                    setMode("signin");
+                  }}
+                  className="min-h-11 text-sm text-ink/70 transition-colors hover:text-ink"
+                >
+                  Back to sign in
+                </button>
+              </div>
             </div>
           ) : (
             <>

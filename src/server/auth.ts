@@ -3,7 +3,7 @@ import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { tanstackStartCookies } from "better-auth/tanstack-start";
 import { getDb, schema } from "./db";
-import { emailEnabled, resetPasswordEmail, siteUrl, verifyEmail } from "./email";
+import { emailEnabled, existingAccountEmail, resetPasswordEmail, siteUrl, verifyEmail } from "./email";
 
 /**
  * BETTER_AUTH_SECRET signs session cookies. If it isn't set, derive a stable
@@ -23,7 +23,9 @@ function createAuth() {
     .split(",")
     .map((s) => s.trim())
     .filter(Boolean);
-  const previewOrigin = process.env["VERCEL_URL"] ? [`https://${process.env["VERCEL_URL"]}`] : [];
+  const previewOrigin = [process.env["VERCEL_URL"], process.env["VERCEL_BRANCH_URL"]]
+    .filter((u): u is string => Boolean(u))
+    .map((u) => `https://${u}`);
 
   return betterAuth({
     baseURL: siteUrl(),
@@ -47,6 +49,11 @@ function createAuth() {
       resetPasswordTokenExpiresIn: 60 * 60,
       sendResetPassword: async ({ user, url }) => {
         await resetPasswordEmail(user.email, user.name, url);
+      },
+      // Signing up again with an email that has an account: Better Auth answers like a normal
+      // sign-up (so nobody can check which emails exist), so tell the owner by email instead.
+      onExistingUserSignUp: async ({ user }) => {
+        await existingAccountEmail(user.email, user.name);
       },
     },
     emailVerification: {

@@ -106,6 +106,22 @@ export function verifyEmail(to: string, name: string, url: string) {
   });
 }
 
+/** Someone tried to sign up with an email that already has an account. */
+export function existingAccountEmail(to: string, name: string) {
+  const base = siteUrl();
+  return sendMail({
+    to,
+    subject: "You already have a Just Because account",
+    heading: `Hi ${name || "there"}, you're already in`,
+    body: [
+      "Someone (hopefully you) tried to make a new account with this email, but you already have one.",
+      "Sign in with your password. If you forgot it, you can set a new one from the sign-in page.",
+    ],
+    button: { label: "Sign in", url: `${base}/auth` },
+    footnote: "If this wasn't you, you can ignore this email. Nothing changed on your account.",
+  });
+}
+
 export function resetPasswordEmail(to: string, name: string, url: string) {
   return sendMail({
     to,
