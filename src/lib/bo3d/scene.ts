@@ -1,15 +1,27 @@
 /**
- * Bo in 3D: a soft, clay-like gift box built from simple shapes with three.js.
- * Loaded only in the browser (dynamic import from components/Bo3D.tsx).
+ * Bo in 3D: a soft, clay-like gift box. Loaded only in the browser (dynamic import
+ * from components/Bo3D.tsx).
+ *
+ * Bo is modeled in Spline and exported to /models/bo.glb with named parts (body, lid,
+ * bow, arm_left, arm_right, leg_left, leg_right, eyes, cheeks, mouth). If that file is
+ * missing or fails to load, the same Bo is built here from simple shapes instead.
  *
  *   const bo = createBoScene(canvas, { lidColor: "#F6A5B9", notes: true });
+ *   await bo.ready;
  *   bo.setMood("wave");          // "idle" | "wave" | "celebrate"
  *   bo.setStory(1.6);            // optional scroll story, 0..4 (see storyFrame)
+ *   bo.setAccessory("party_hat");
+ *   bo.setPose({ squash: 0.8 }); // hops, flips and flails (see BoPose)
  *   bo.dispose();
  */
 import * as THREE from "three";
+import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
+import type { BoAccessory } from "./accessories";
 
 export type BoMood = "idle" | "wave" | "celebrate";
+
+/** "stage" shows Bo standing on a soft shadow; "buddy" is a tight, groundless frame for the hopping mascot. */
+export type BoFraming = "stage" | "buddy";
 
 export type BoSceneOptions = {
   lidColor?: string;
@@ -18,18 +30,53 @@ export type BoSceneOptions = {
   /** Follow the pointer with a gentle head turn. */
   followPointer?: boolean;
   mood?: BoMood;
+  framing?: BoFraming;
+};
+
+/** Live pose knobs, layered on top of the mood/story animation. All default to "standing still". */
+export type BoPose = {
+  /** 1 = normal. Below 1 squashes, above 1 stretches (volume kept). Pivots at the feet. */
+  squash: number;
+  /** 0..1 airborne: arms up, feet tucked. */
+  tuck: number;
+  /** 0..1 arms windmill (wobbling on an edge, scrambling). */
+  flail: number;
+  /** 0..1 little legs run. */
+  run: number;
+  /** Forward flip, radians, around Bo's middle. */
+  flip: number;
+  /** Side lean, radians, around Bo's middle. */
+  lean: number;
+  /** Yaw in radians to face where he's going; null follows the pointer. */
+  turn: number | null;
 };
 
 export type BoScene = {
+  /** Resolves once Bo is on screen (the Spline model, or the built-in fallback). */
+  ready: Promise<void>;
   setLidColor: (hex: string) => void;
   setMood: (mood: BoMood) => void;
   /** 0 hero, 1 pick a theme, 2 friends add notes, 3 wrap it up, 4 they open it. */
   setStory: (value: number | null) => void;
   /** Read the story value every frame (e.g. from scroll), without React re-renders. */
   setStorySource: (source: (() => number | null) | null) => void;
+  /** A small prop on the lid for the current theme, or null for none. */
+  setAccessory: (name: BoAccessory | null) => void;
+  setPose: (pose: Partial<BoPose>) => void;
+  /** The bow flops, like after a landing. */
+  wiggleBow: () => void;
+  /** Where Bo's feet are on the canvas, as 0..1 fractions of its width and height. */
+  feetPoint: () => { x: number; y: number };
   setPaused: (paused: boolean) => void;
   dispose: () => void;
 };
+
+const BO_MODEL_URL = "/models/bo.glb";
+const ACCESSORY_URL = (name: BoAccessory) => `/models/accessories/${name}.glb`;
+/** Bo's height in scene units (feet to bow), the size the Spline model is scaled to. */
+const BO_HEIGHT = 2.45;
+const ACCESSORY_HEIGHT = 0.62;
+const MODEL_TIMEOUT_MS = 4000;
 
 const PASTELS = [0xffe8b0, 0xd5f0e3, 0xd9e8fb, 0xe6dcf7, 0xffd9c8, 0xfbd3dc];
 
@@ -71,13 +118,363 @@ export function webglAvailable() {
   }
 }
 
+const clay = (hex: THREE.ColorRepresentation, roughness = 0.62) =>
+  new THREE.MeshStandardMaterial({ color: hex, roughness, metalness: 0 });
+
+function addMesh(
+  parent: THREE.Object3D,
+  geo: THREE.BufferGeometry,
+  mat: THREE.Material,
+  x: number,
+  y: number,
+  z: number,
+  shadow = true,
+) {
+  const m = new THREE.Mesh(geo, mat);
+  m.position.set(x, y, z);
+  m.castShadow = shadow;
+  m.receiveShadow = shadow;
+  parent.add(m);
+  return m;
+}
+
+/* ---------- Loading the Spline files (shared by every Bo on the page) ---------- */
+
+let modelPromise: Promise<THREE.Group | null> | null = null;
+const accessoryFiles = new Map<BoAccessory, Promise<THREE.Group | null>>();
+
+function loadGltf(url: string): Promise<THREE.Group | null> {
+  return new GLTFLoader()
+    .loadAsync(url)
+    .then((gltf) => {
+      // Shared between scenes: never dispose these geometries when one Bo goes away.
+      gltf.scene.traverse((o) => {
+        const m = o as THREE.Mesh;
+        if (m.isMesh) m.geometry.userData["shared"] = true;
+      });
+      return gltf.scene;
+    })
+    .catch(() => null);
+}
+
+function loadBoModel() {
+  modelPromise ??= loadGltf(BO_MODEL_URL);
+  return modelPromise;
+}
+
+/** Swap exported materials for our matte clay, keeping each part's color (and any glow). */
+function clayify(root: THREE.Object3D) {
+  root.traverse((o) => {
+    const mesh = o as THREE.Mesh;
+    if (!mesh.isMesh) return;
+    const src = (Array.isArray(mesh.material) ? mesh.material[0] : mesh.material) as THREE.MeshStandardMaterial | undefined;
+    const shiny = /shine/i.test(mesh.name);
+    const mat = clay(src?.color ?? 0xffffff, shiny ? 0.25 : /eye|mouth/i.test(mesh.name) ? 0.38 : 0.62);
+    if (src?.emissive && src.emissive.getHex() !== 0) {
+      mat.emissive.copy(src.emissive);
+      mat.emissiveIntensity = src.emissiveIntensity ?? 1;
+    }
+    mesh.material = mat;
+    mesh.castShadow = true;
+    mesh.receiveShadow = true;
+  });
+}
+
+/** Scale and seat a loaded accessory so it stands on y=0 at the given height. */
+function fitToHeight(obj: THREE.Object3D, height: number) {
+  const holder = new THREE.Group();
+  holder.add(obj);
+  obj.position.set(0, 0, 0);
+  obj.rotation.set(0, 0, 0);
+  obj.scale.setScalar(1);
+  obj.updateMatrixWorld(true);
+  const box = new THREE.Box3().setFromObject(obj);
+  const size = box.getSize(new THREE.Vector3());
+  const s = height / Math.max(1e-6, size.y);
+  obj.scale.setScalar(s);
+  obj.position.set(-((box.min.x + box.max.x) / 2) * s, -box.min.y * s, -((box.min.z + box.max.z) / 2) * s);
+  return holder;
+}
+
+/* ---------- The rig: the parts the animation drives ---------- */
+
+type Rig = {
+  root: THREE.Object3D;
+  body: THREE.Object3D;
+  lid: THREE.Object3D;
+  lidRestY: number;
+  bow: THREE.Object3D;
+  arms: { pivot: THREE.Object3D; side: number }[];
+  legs: { pivot: THREE.Object3D; side: number }[];
+  eyes: { obj: THREE.Object3D; restY: number }[];
+  lidMat: THREE.MeshStandardMaterial | null;
+  mount: THREE.Object3D;
+  /** Rig-local units per scene unit (the Spline model is ~100x bigger before scaling). */
+  unit: number;
+  /** The loaded file, to look for accessories baked into it. */
+  file: THREE.Group | null;
+};
+
+function buildCodeRig(lidColor: THREE.Color): Rig {
+  const root = new THREE.Group();
+  const ink = clay(0x2b2522, 0.4);
+  const white = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.3 });
+  const lidMat = clay(lidColor.clone());
+  const ribbonMat = clay(0xef7f99);
+  const bodyMat = clay(0xfffaf4);
+  const cheekMat = clay(0xf6a3b5);
+  const shoeMat = clay(0xd9607d);
+
+  const body = new THREE.Group();
+  root.add(body);
+  addMesh(body, roundedBox(1.6, 1.4, 1.4, 0.24, 8), bodyMat, 0, 1.0, 0);
+  addMesh(body, roundedBox(0.3, 1.42, 1.44, 0.09, 4), ribbonMat, 0, 1.0, 0);
+
+  const face = new THREE.Group();
+  face.position.set(0, 0, 0.72);
+  body.add(face);
+  const eyeGeo = new THREE.SphereGeometry(0.11, 24, 16);
+  const shineGeo = new THREE.SphereGeometry(0.035, 12, 8);
+  const cheekGeo = new THREE.SphereGeometry(0.12, 20, 12);
+  const eyes: Rig["eyes"] = [];
+  for (const x of [-0.36, 0.36]) {
+    const eye = addMesh(face, eyeGeo, ink, x, 1.12, 0, false);
+    eye.scale.set(1, 1.15, 0.55);
+    eyes.push({ obj: eye, restY: 1.15 });
+    addMesh(face, shineGeo, white, x + 0.035, 1.17, 0.06, false);
+    const cheek = addMesh(face, cheekGeo, cheekMat, x * 1.5, 0.9, -0.01, false);
+    cheek.scale.set(1, 0.62, 0.3);
+  }
+  const smile = addMesh(face, new THREE.TorusGeometry(0.11, 0.028, 10, 28, Math.PI), ink, 0, 0.98, 0.03, false);
+  smile.rotation.z = Math.PI;
+
+  /* The lid hinges at the back so it can open. */
+  const lidPivot = new THREE.Group();
+  lidPivot.position.set(0, 1.66, -0.78);
+  root.add(lidPivot);
+  const lid = new THREE.Group();
+  lid.position.set(0, 0.12, 0.78);
+  lidPivot.add(lid);
+  addMesh(lid, roundedBox(1.8, 0.38, 1.6, 0.16, 6), lidMat, 0, 0, 0);
+  addMesh(lid, roundedBox(0.32, 0.4, 1.62, 0.1, 4), ribbonMat, 0, 0, 0);
+  const bow = new THREE.Group();
+  bow.position.set(0, 0.32, 0);
+  lid.add(bow);
+  const loopGeo = new THREE.TorusGeometry(0.2, 0.085, 16, 36);
+  for (const s of [-1, 1]) {
+    const loop = addMesh(bow, loopGeo, ribbonMat, s * 0.23, 0.08, 0);
+    loop.scale.set(1.15, 0.8, 0.7);
+    loop.rotation.set(0, s * 0.45, s * 0.35);
+  }
+  addMesh(bow, new THREE.SphereGeometry(0.13, 20, 16), ribbonMat, 0, 0.02, 0);
+
+  /* Arms (pivot at the shoulder) and legs (pivot at the hip) */
+  const arms: Rig["arms"] = [];
+  const legs: Rig["legs"] = [];
+  for (const s of [-1, 1]) {
+    const shoulder = new THREE.Group();
+    shoulder.position.set(s * 0.82, 1.2, 0);
+    root.add(shoulder);
+    const arm = addMesh(shoulder, new THREE.CapsuleGeometry(0.075, 0.32, 8, 16), bodyMat, 0, -0.24, 0);
+    addMesh(arm, new THREE.SphereGeometry(0.11, 18, 12), bodyMat, 0, -0.24, 0);
+    arms.push({ pivot: shoulder, side: s });
+    const hip = new THREE.Group();
+    hip.position.set(s * 0.36, 0.32, 0);
+    root.add(hip);
+    addMesh(hip, new THREE.CapsuleGeometry(0.075, 0.2, 8, 16), ink, 0, -0.12, 0);
+    const shoe = addMesh(hip, new THREE.SphereGeometry(0.15, 20, 14), shoeMat, 0, -0.27, 0.07);
+    shoe.scale.set(1, 0.55, 1.45);
+    legs.push({ pivot: hip, side: s });
+  }
+
+  const mount = new THREE.Group();
+  mount.position.set(-0.52, 0.31, 0.93);
+  lidPivot.add(mount);
+
+  return { root, body, lid: lidPivot, lidRestY: lidPivot.position.y, bow, arms, legs, eyes, lidMat, mount, unit: 1, file: null };
+}
+
+/** Build the rig from the Spline export, or null if the parts we drive aren't there. */
+function rigFromModel(file: THREE.Group, lidColor: THREE.Color): Rig | null {
+  const copy = file.clone(true);
+  const bo = copy.getObjectByName("Bo") ?? copy;
+  const find = (name: string) => bo.getObjectByName(name) ?? null;
+  const body = find("body");
+  const lid = find("lid");
+  if (!body || !lid) return null;
+  const bow = find("bow") ?? lid;
+
+  clayify(bo);
+  bo.removeFromParent();
+  bo.position.set(0, 0, 0);
+  bo.updateMatrixWorld(true);
+  const box = new THREE.Box3().setFromObject(bo);
+  const height = box.max.y - box.min.y;
+  if (!(height > 0)) return null;
+  const s = BO_HEIGHT / height;
+  const root = new THREE.Group();
+  bo.scale.setScalar(s);
+  bo.position.set(-((box.min.x + box.max.x) / 2) * s, -box.min.y * s, -((box.min.z + box.max.z) / 2) * s);
+  root.add(bo);
+  const unit = 1 / s;
+
+  const arms: Rig["arms"] = [];
+  const legs: Rig["legs"] = [];
+  for (const [name, side] of [
+    ["left", -1],
+    ["right", 1],
+  ] as const) {
+    const arm = find(`arm_${name}`);
+    if (arm) arms.push({ pivot: arm, side });
+    const leg = find(`leg_${name}`);
+    if (leg) legs.push({ pivot: leg, side });
+  }
+  const eyesNode = find("eyes");
+  const eyes = eyesNode ? [{ obj: eyesNode, restY: eyesNode.scale.y }] : [];
+
+  let lidMat: THREE.MeshStandardMaterial | null = null;
+  const lidBox = (find("lid_box") as THREE.Mesh | null) ?? null;
+  if (lidBox?.isMesh) {
+    lidMat = lidBox.material as THREE.MeshStandardMaterial;
+    lidMat.color.copy(lidColor);
+  }
+
+  // The accessory seat: on top of the lid, beside the bow (same spot as the built-in Bo).
+  const mount = new THREE.Group();
+  mount.position.set(-0.52 * unit, 0.31 * unit, 0.93 * unit);
+  lid.add(mount);
+
+  return { root, body, lid, lidRestY: lid.position.y, bow, arms, legs, eyes, lidMat, mount, unit, file };
+}
+
+/* ---------- Built-in accessories (used until the Spline ones are exported) ---------- */
+
+function buildAccessory(name: BoAccessory): THREE.Group {
+  const g = new THREE.Group();
+  const m = (hex: number, rough = 0.62) => clay(hex, rough);
+  switch (name) {
+    case "party_hat": {
+      addMesh(g, new THREE.ConeGeometry(0.22, 0.56, 32), m(0xc9b6f2), 0, 0.3, 0);
+      addMesh(g, new THREE.TorusGeometry(0.21, 0.035, 10, 32), m(0xffd27a), 0, 0.04, 0).rotation.x = Math.PI / 2;
+      addMesh(g, new THREE.SphereGeometry(0.08, 16, 12), m(0xfbd3dc, 0.7), 0, 0.6, 0);
+      break;
+    }
+    case "heart": {
+      const red = m(0xf27a9b, 0.55);
+      for (const s of [-1, 1]) addMesh(g, new THREE.SphereGeometry(0.15, 24, 16), red, s * 0.1, 0.34, 0).scale.z = 0.66;
+      const tip = addMesh(g, roundedBox(0.3, 0.3, 0.19, 0.08, 4), red, 0, 0.22, 0);
+      tip.rotation.z = Math.PI / 4;
+      break;
+    }
+    case "suitcase": {
+      addMesh(g, roundedBox(0.54, 0.38, 0.22, 0.07, 4), m(0xf4a98a), 0, 0.19, 0);
+      addMesh(g, new THREE.TorusGeometry(0.1, 0.022, 8, 20, Math.PI), m(0x2b2522, 0.45), 0, 0.38, 0);
+      for (const s of [-1, 1]) addMesh(g, roundedBox(0.06, 0.39, 0.23, 0.02, 2), m(0xffe8b0), s * 0.13, 0.19, 0);
+      break;
+    }
+    case "santa_hat": {
+      const cone = addMesh(g, new THREE.ConeGeometry(0.24, 0.56, 32), m(0xe04e5e, 0.7), 0, 0.32, 0);
+      cone.rotation.z = -0.18;
+      addMesh(g, new THREE.TorusGeometry(0.24, 0.06, 12, 36), m(0xfffaf4, 0.85), 0, 0.05, 0).rotation.x = Math.PI / 2;
+      addMesh(g, new THREE.SphereGeometry(0.085, 16, 12), m(0xfffaf4, 0.85), 0.1, 0.6, 0);
+      break;
+    }
+    case "paw": {
+      const tan = m(0xc9a08b, 0.65);
+      addMesh(g, new THREE.SphereGeometry(0.17, 24, 16), tan, 0, 0.16, 0).scale.set(1, 0.82, 0.36);
+      for (const [x, y] of [
+        [-0.17, 0.34],
+        [-0.06, 0.42],
+        [0.06, 0.42],
+        [0.17, 0.34],
+      ] as const) {
+        addMesh(g, new THREE.SphereGeometry(0.065, 16, 12), tan, x, y, 0).scale.set(0.92, 1.08, 0.75);
+      }
+      break;
+    }
+    case "sparkler": {
+      addMesh(g, new THREE.CylinderGeometry(0.02, 0.02, 0.52, 10), m(0x9a8f88, 0.45), 0, 0.26, 0);
+      const glow = new THREE.MeshStandardMaterial({ color: 0xffd27a, emissive: 0xffc94d, emissiveIntensity: 0.6, roughness: 0.5 });
+      const star = new THREE.Shape();
+      for (let i = 0; i < 10; i++) {
+        const a = (i / 10) * Math.PI * 2 + Math.PI / 2;
+        const r = i % 2 === 0 ? 0.17 : 0.08;
+        if (i === 0) star.moveTo(Math.cos(a) * r, Math.sin(a) * r);
+        else star.lineTo(Math.cos(a) * r, Math.sin(a) * r);
+      }
+      const geo = new THREE.ExtrudeGeometry(star, { depth: 0.06, bevelEnabled: true, bevelSize: 0.02, bevelThickness: 0.02, bevelSegments: 2 });
+      geo.center();
+      addMesh(g, geo, glow, 0, 0.58, 0);
+      break;
+    }
+    case "rosette": {
+      const berry = m(0xc2366b);
+      const pleats = new THREE.Shape();
+      for (let i = 0; i < 28; i++) {
+        const a = (i / 28) * Math.PI * 2;
+        const r = i % 2 === 0 ? 0.26 : 0.21;
+        if (i === 0) pleats.moveTo(Math.cos(a) * r, Math.sin(a) * r);
+        else pleats.lineTo(Math.cos(a) * r, Math.sin(a) * r);
+      }
+      const geo = new THREE.ExtrudeGeometry(pleats, { depth: 0.05, bevelEnabled: true, bevelSize: 0.015, bevelThickness: 0.015, bevelSegments: 2 });
+      geo.center();
+      addMesh(g, geo, berry, 0, 0.4, 0);
+      addMesh(g, new THREE.CylinderGeometry(0.15, 0.15, 0.06, 32), m(0xfbd3dc), 0, 0.4, 0.04).rotation.x = Math.PI / 2;
+      for (const s of [-1, 1]) {
+        const tail = addMesh(g, roundedBox(0.11, 0.3, 0.03, 0.012, 2), berry, s * 0.07, 0.12, -0.02);
+        tail.rotation.z = s * 0.25;
+      }
+      break;
+    }
+    case "flower": {
+      addMesh(g, new THREE.CylinderGeometry(0.025, 0.025, 0.26, 10), m(0x9fd8c2), 0, 0.13, 0);
+      const petal = new THREE.SphereGeometry(0.09, 16, 12);
+      const petalMat = m(0xfffaf4, 0.65);
+      for (let i = 0; i < 5; i++) {
+        const a = (i / 5) * Math.PI * 2 + Math.PI / 2;
+        addMesh(g, petal, petalMat, Math.cos(a) * 0.12, 0.38 + Math.sin(a) * 0.12, 0).scale.z = 0.45;
+      }
+      addMesh(g, new THREE.SphereGeometry(0.065, 16, 12), m(0xffd27a), 0, 0.38, 0.03).scale.z = 0.7;
+      const leaf = addMesh(g, new THREE.SphereGeometry(0.07, 12, 8), m(0x9fd8c2), 0.08, 0.17, 0);
+      leaf.scale.set(1, 0.5, 0.3);
+      leaf.rotation.z = 0.5;
+      break;
+    }
+  }
+  return g;
+}
+
+/** The Spline accessory if there is one (baked into bo.glb, or its own file), else the built-in one. */
+async function loadAccessory(name: BoAccessory, rig: Rig): Promise<THREE.Object3D> {
+  let source = rig.file?.getObjectByName(`acc_${name}`) ?? null;
+  if (!source) {
+    let p = accessoryFiles.get(name);
+    if (!p) {
+      p = loadGltf(ACCESSORY_URL(name));
+      accessoryFiles.set(name, p);
+    }
+    source = await p;
+  }
+  if (source) {
+    const copy = source.clone(true);
+    clayify(copy);
+    return fitToHeight(copy, ACCESSORY_HEIGHT * rig.unit);
+  }
+  const built = buildAccessory(name);
+  built.scale.setScalar(rig.unit);
+  return built;
+}
+
+/* ---------- The scene ---------- */
+
 export function createBoScene(canvas: HTMLCanvasElement, options: BoSceneOptions = {}): BoScene {
+  const framing: BoFraming = options.framing ?? "stage";
   const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true, powerPreference: "low-power" });
   renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
   renderer.outputColorSpace = THREE.SRGBColorSpace;
   renderer.toneMapping = THREE.NeutralToneMapping;
   renderer.toneMappingExposure = 1.05;
-  renderer.shadowMap.enabled = true;
+  renderer.shadowMap.enabled = framing === "stage";
   renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 
   const scene = new THREE.Scene();
@@ -86,7 +483,7 @@ export function createBoScene(canvas: HTMLCanvasElement, options: BoSceneOptions
   scene.add(new THREE.HemisphereLight(0xffffff, 0xf6dbe4, 2.6));
   const key = new THREE.DirectionalLight(0xfff4ec, 2.2);
   key.position.set(3.5, 6, 4.5);
-  key.castShadow = true;
+  key.castShadow = framing === "stage";
   key.shadow.mapSize.set(1024, 1024);
   Object.assign(key.shadow.camera, { left: -4, right: 4, top: 4, bottom: -4 });
   key.shadow.radius = 6;
@@ -95,98 +492,24 @@ export function createBoScene(canvas: HTMLCanvasElement, options: BoSceneOptions
   rim.position.set(-4, 3, -3);
   scene.add(rim);
 
-  const ground = new THREE.Mesh(new THREE.PlaneGeometry(30, 30), new THREE.ShadowMaterial({ opacity: 0.13 }));
-  ground.rotation.x = -Math.PI / 2;
-  ground.receiveShadow = true;
-  scene.add(ground);
+  if (framing === "stage") {
+    const ground = new THREE.Mesh(new THREE.PlaneGeometry(30, 30), new THREE.ShadowMaterial({ opacity: 0.13 }));
+    ground.rotation.x = -Math.PI / 2;
+    ground.receiveShadow = true;
+    scene.add(ground);
+  }
 
-  const clay = (hex: THREE.ColorRepresentation) =>
-    new THREE.MeshStandardMaterial({ color: hex, roughness: 0.62, metalness: 0 });
-  const ink = clay(0x2b2522);
-  const white = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.3 });
   let baseLid = new THREE.Color(options.lidColor ?? "#F6A5B9");
-  const lidMat = clay(baseLid.clone());
-  const ribbonMat = clay(0xef7f99);
-  const bodyMat = clay(0xfffaf4);
-  const cheekMat = clay(0xf6a3b5);
 
-  const add = (
-    parent: THREE.Object3D,
-    geo: THREE.BufferGeometry,
-    mat: THREE.Material,
-    x: number,
-    y: number,
-    z: number,
-    shadow = true,
-  ) => {
-    const m = new THREE.Mesh(geo, mat);
-    m.position.set(x, y, z);
-    m.castShadow = shadow;
-    m.receiveShadow = shadow;
-    parent.add(m);
-    return m;
-  };
-
-  /* Bo */
+  /* Flipper spins around Bo's middle; bo sits inside it with its origin at the feet. */
+  const MIDDLE = 1.2;
+  const flipper = new THREE.Group();
+  flipper.position.y = MIDDLE;
+  scene.add(flipper);
   const bo = new THREE.Group();
-  scene.add(bo);
-  const body = new THREE.Group();
-  bo.add(body);
-  add(body, roundedBox(1.6, 1.4, 1.4, 0.24, 8), bodyMat, 0, 1.0, 0);
-  add(body, roundedBox(0.3, 1.42, 1.44, 0.09, 4), ribbonMat, 0, 1.0, 0);
-
-  const face = new THREE.Group();
-  face.position.set(0, 0, 0.72);
-  body.add(face);
-  const eyeGeo = new THREE.SphereGeometry(0.11, 24, 16);
-  const shineGeo = new THREE.SphereGeometry(0.035, 12, 8);
-  const cheekGeo = new THREE.SphereGeometry(0.12, 20, 12);
-  const eyes: THREE.Mesh[] = [];
-  for (const x of [-0.36, 0.36]) {
-    const eye = add(face, eyeGeo, ink, x, 1.12, 0, false);
-    eye.scale.set(1, 1.15, 0.55);
-    eyes.push(eye);
-    add(face, shineGeo, white, x + 0.035, 1.17, 0.06, false);
-    const cheek = add(face, cheekGeo, cheekMat, x * 1.5, 0.9, -0.01, false);
-    cheek.scale.set(1, 0.62, 0.3);
-  }
-  const smile = add(face, new THREE.TorusGeometry(0.11, 0.028, 10, 28, Math.PI), ink, 0, 0.98, 0.03, false);
-  smile.rotation.z = Math.PI;
-
-  /* The lid hinges at the back so it can open. */
-  const lidPivot = new THREE.Group();
-  lidPivot.position.set(0, 1.66, -0.78);
-  bo.add(lidPivot);
-  const lid = new THREE.Group();
-  lid.position.set(0, 0.12, 0.78);
-  lidPivot.add(lid);
-  add(lid, roundedBox(1.8, 0.38, 1.6, 0.16, 6), lidMat, 0, 0, 0);
-  add(lid, roundedBox(0.32, 0.4, 1.62, 0.1, 4), ribbonMat, 0, 0, 0);
-  const bow = new THREE.Group();
-  bow.position.set(0, 0.32, 0);
-  lid.add(bow);
-  const loopGeo = new THREE.TorusGeometry(0.2, 0.085, 16, 36);
-  for (const s of [-1, 1]) {
-    const loop = add(bow, loopGeo, ribbonMat, s * 0.23, 0.08, 0);
-    loop.scale.set(1.15, 0.8, 0.7);
-    loop.rotation.set(0, s * 0.45, s * 0.35);
-  }
-  add(bow, new THREE.SphereGeometry(0.13, 20, 16), ribbonMat, 0, 0.02, 0);
-
-  /* Arms and legs */
-  const arms: { pivot: THREE.Group; side: number }[] = [];
-  const shoeMat = clay(0xd9607d);
-  for (const s of [-1, 1]) {
-    const shoulder = new THREE.Group();
-    shoulder.position.set(s * 0.82, 1.2, 0);
-    bo.add(shoulder);
-    const arm = add(shoulder, new THREE.CapsuleGeometry(0.075, 0.32, 8, 16), bodyMat, 0, -0.24, 0);
-    add(arm, new THREE.SphereGeometry(0.11, 18, 12), bodyMat, 0, -0.24, 0);
-    arms.push({ pivot: shoulder, side: s });
-    add(bo, new THREE.CapsuleGeometry(0.075, 0.2, 8, 16), ink, s * 0.36, 0.2, 0);
-    const shoe = add(bo, new THREE.SphereGeometry(0.15, 20, 14), shoeMat, s * 0.36, 0.05, 0.07);
-    shoe.scale.set(1, 0.55, 1.45);
-  }
+  bo.position.y = -MIDDLE;
+  flipper.add(bo);
+  let rig: Rig | null = null;
 
   /* Notes and confetti */
   type Note = { g: THREE.Group; a: number; rest: THREE.Vector3; high: THREE.Vector3; spin: number };
@@ -197,9 +520,9 @@ export function createBoScene(canvas: HTMLCanvasElement, options: BoSceneOptions
     const lineMat = clay(0xb9a9a1);
     PASTELS.forEach((col, i) => {
       const g = new THREE.Group();
-      add(g, noteGeo, clay(col), 0, 0, 0);
-      add(g, lineGeo, lineMat, 0, 0.06, 0.03, false);
-      add(g, lineGeo, lineMat, -0.05, -0.04, 0.03, false).scale.x = 0.7;
+      addMesh(g, noteGeo, clay(col), 0, 0, 0);
+      addMesh(g, lineGeo, lineMat, 0, 0.06, 0.03, false);
+      addMesh(g, lineGeo, lineMat, -0.05, -0.04, 0.03, false).scale.x = 0.7;
       const a = (i / PASTELS.length) * Math.PI * 2 + 0.4;
       scene.add(g);
       notes.push({
@@ -212,38 +535,54 @@ export function createBoScene(canvas: HTMLCanvasElement, options: BoSceneOptions
     });
   }
   const confetti: { m: THREE.Mesh; x: number; z: number; off: number; sp: number; rot: number }[] = [];
-  const bitGeo = new THREE.BoxGeometry(0.07, 0.07, 0.015);
-  for (let i = 0; i < 46; i++) {
-    const m = new THREE.Mesh(bitGeo, clay(PASTELS[i % PASTELS.length]!));
-    m.visible = false;
-    scene.add(m);
-    confetti.push({
-      m,
-      x: (Math.random() - 0.5) * 4.6,
-      z: (Math.random() - 0.5) * 2.4,
-      off: Math.random() * 3,
-      sp: 0.5 + Math.random() * 0.6,
-      rot: Math.random() * 6,
-    });
+  if (framing === "stage") {
+    const bitGeo = new THREE.BoxGeometry(0.07, 0.07, 0.015);
+    for (let i = 0; i < 46; i++) {
+      const m = new THREE.Mesh(bitGeo, clay(PASTELS[i % PASTELS.length]!));
+      m.visible = false;
+      scene.add(m);
+      confetti.push({
+        m,
+        x: (Math.random() - 0.5) * 4.6,
+        z: (Math.random() - 0.5) * 2.4,
+        off: Math.random() * 3,
+        sp: 0.5 + Math.random() * 0.6,
+        rot: Math.random() * 6,
+      });
+    }
   }
 
   /* Sizing */
+  const placeCamera = (lift = 0) => {
+    if (framing === "buddy") {
+      camera.position.set(0, 1.5, 7.4);
+      camera.lookAt(0, 1.3, 0);
+    } else {
+      camera.position.set(0, 2.15 + lift * 0.7, (notes.length ? 7.6 : 6.4) + lift * 0.9);
+      camera.lookAt(0, 1.15 + lift * 0.75, 0);
+    }
+  };
   const resize = () => {
     const box = canvas.parentElement ?? canvas;
     const w = Math.max(1, box.clientWidth);
     const h = Math.max(1, box.clientHeight);
     renderer.setSize(w, h, false);
     camera.aspect = w / h;
-    camera.fov = w / h < 0.9 ? 40 : 32;
+    camera.fov = framing === "buddy" ? 30 : w / h < 0.9 ? 40 : 32;
     camera.updateProjectionMatrix();
   };
   resize();
+  placeCamera();
   const ro = new ResizeObserver(resize);
   ro.observe(canvas.parentElement ?? canvas);
 
   let mx = 0;
   let my = 0;
+  let lastMove = 0;
   const onMove = (e: PointerEvent) => {
+    // Throttled: one read per frame is plenty.
+    if (e.timeStamp - lastMove < 32) return;
+    lastMove = e.timeStamp;
     mx = (e.clientX / Math.max(1, window.innerWidth)) * 2 - 1;
     my = (e.clientY / Math.max(1, window.innerHeight)) * 2 - 1;
   };
@@ -262,19 +601,66 @@ export function createBoScene(canvas: HTMLCanvasElement, options: BoSceneOptions
   const v3 = new THREE.Vector3();
   const mouth = new THREE.Vector3(0, 1.75, 0.1);
 
+  const pose: BoPose = { squash: 1, tuck: 0, flail: 0, run: 0, flip: 0, lean: 0, turn: null };
+  let bowKick = -10;
+
+  /* Accessory: one at a time, pops on with a little overshoot. */
+  type Worn = { name: BoAccessory; obj: THREE.Object3D; born: number; leaving: number };
+  const worn: Worn[] = [];
+  let wantAccessory: BoAccessory | null = null;
+  let accessoryToken = 0;
+  const applyAccessory = async () => {
+    const token = ++accessoryToken;
+    const now = performance.now();
+    for (const w of worn) if (!w.leaving) w.leaving = now;
+    if (!rig || !wantAccessory) return;
+    const name = wantAccessory;
+    const obj = await loadAccessory(name, rig);
+    if (token !== accessoryToken || !rig || disposed) return;
+    obj.rotation.z = 0.16;
+    obj.scale.multiplyScalar(0.001);
+    obj.userData["fullScale"] = obj.scale.x * 1000;
+    rig.mount.add(obj);
+    worn.push({ name, obj, born: performance.now(), leaving: 0 });
+  };
+  const animateAccessories = (now: number) => {
+    for (let i = worn.length - 1; i >= 0; i--) {
+      const w = worn[i]!;
+      const full = w.obj.userData["fullScale"] as number;
+      if (w.leaving) {
+        const k = 1 - clamp((now - w.leaving) / 180);
+        w.obj.scale.setScalar(Math.max(0.001, full * k));
+        if (k <= 0) {
+          w.obj.removeFromParent();
+          disposeTree(w.obj);
+          worn.splice(i, 1);
+        }
+      } else {
+        const k = clamp((now - w.born) / 420);
+        // Back-out overshoot.
+        const c = 2.2;
+        const pop = reduce ? 1 : 1 + (c + 1) * Math.pow(k - 1, 3) + c * Math.pow(k - 1, 2);
+        w.obj.scale.setScalar(Math.max(0.001, full * pop));
+      }
+    }
+  };
+
   let mood: BoMood = options.mood ?? "wave";
   let story: number | null = null;
   let storySource: (() => number | null) | null = null;
   let P = 0;
   let turn = 0;
   let paused = false;
+  let disposed = false;
   let raf = 0;
   const t0 = performance.now();
   let moodSince = t0;
 
   const frame = (now: number) => {
     raf = requestAnimationFrame(frame);
-    if (paused) return;
+    if (paused || !rig) return;
+    const r = rig;
+    const u = r.unit;
     const t = (now - t0) / 1000;
     const idle = reduce ? 0 : 1;
     if (storySource) story = storySource();
@@ -287,7 +673,7 @@ export function createBoScene(canvas: HTMLCanvasElement, options: BoSceneOptions
     else if (dress < 0.33) tmp.copy(baseLid).lerp(lilac, ease(dress / 0.33));
     else if (dress < 0.66) tmp.copy(lilac).lerp(mint, ease((dress - 0.33) / 0.33));
     else tmp.copy(mint).lerp(butter, ease((dress - 0.66) / 0.17)).lerp(baseLid, ease((dress - 0.83) / 0.17));
-    lidMat.color.copy(tmp);
+    r.lidMat?.color.copy(tmp);
 
     /* 2: notes fly in. 3: lid closes and Bo spins. 4: lid pops and notes float out. */
     const openIn = ease((P - 0.95) / 0.25) * (1 - ease((P - 2.05) / 0.3));
@@ -296,27 +682,42 @@ export function createBoScene(canvas: HTMLCanvasElement, options: BoSceneOptions
     const openOut = ease((P - 3.05) / 0.35);
     const notesOut = ease((P - 3.15) / 0.6);
 
-    lidPivot.rotation.x = -Math.max(openIn * 0.95, openOut * 1.95);
-    lidPivot.position.y = 1.66 + openOut * 0.25 + Math.sin(t * 3) * 0.03 * openOut;
-    bow.scale.setScalar(1 + Math.sin(Math.PI * spin) * 0.35);
+    r.lid.rotation.x = -Math.max(openIn * 0.95, openOut * 1.95);
+    r.lid.position.y = r.lidRestY + (openOut * 0.25 + Math.sin(t * 3) * 0.03 * openOut) * u;
+
+    // The bow puffs during the spin and flops after a landing.
+    const kick = (now - bowKick) / 1000;
+    const flop = kick < 1.2 && !reduce ? Math.exp(-kick * 5) : 0;
+    r.bow.scale.setScalar(1 + Math.sin(Math.PI * spin) * 0.35 + flop * Math.sin(kick * 22) * 0.12);
+    r.bow.rotation.z = flop * Math.sin(kick * 26) * 0.4;
 
     const hop = Math.sin(Math.PI * spin) * 0.35;
-    bo.position.y = idle * Math.sin(t * 2.1) * 0.05 + hop;
+    bo.position.y = -MIDDLE + idle * Math.sin(t * 2.1) * 0.05 * (1 - pose.tuck) + hop;
     turn += (mx * 0.45 - turn) * 0.05;
-    bo.rotation.y = turn + spin * Math.PI * 2;
+    bo.rotation.y = pose.turn ?? turn + spin * Math.PI * 2;
     bo.rotation.x = my * 0.06;
-    body.scale.set(1 + hop * 0.12, 1 - hop * 0.1, 1 + hop * 0.12);
+    const sq = Math.max(0.3, pose.squash);
+    const side = 1 / Math.sqrt(sq);
+    bo.scale.set(side, sq, side);
+    flipper.rotation.x = pose.flip;
+    flipper.rotation.z = pose.lean;
+    r.body.scale.set(1 + hop * 0.12, 1 - hop * 0.1, 1 + hop * 0.12);
 
     // A blink every few seconds.
     const blink = idle && t % 4.2 > 4.05 ? 0.15 : 1;
-    for (const e of eyes) e.scale.y = 1.15 * blink;
+    for (const e of r.eyes) e.obj.scale.y = e.restY * blink;
 
     const waveFor = mood === "wave" ? Math.max(0, 1 - (now - moodSince) / 4000) * (story === null ? 1 : 1 - clamp(P * 2)) : 0;
-    for (const { pivot, side } of arms) {
-      const wave = side > 0 ? Math.max(waveFor, story === null && mood === "wave" ? 0.15 : 0) : 0;
-      const up = Math.max(wave, openOut);
-      const flap = reduce ? 0 : Math.sin(t * (openOut > 0.5 ? 8 : 6) + (side > 0 ? 0 : 1.5)) * 0.32;
-      pivot.rotation.z = side * (0.18 + up * 2.3 + (up > 0.1 ? flap * up : Math.sin(t * 2) * 0.05 * idle));
+    for (const { pivot, side: s } of r.arms) {
+      const wave = s > 0 ? Math.max(waveFor, story === null && mood === "wave" ? 0.15 : 0) : 0;
+      const up = Math.max(wave, openOut, pose.tuck * 0.8);
+      const flap = reduce ? 0 : Math.sin(t * (openOut > 0.5 ? 8 : 6) + (s > 0 ? 0 : 1.5)) * 0.32;
+      const windmill = pose.flail * Math.sin(t * 15 + (s > 0 ? 0 : Math.PI)) * 0.9;
+      pivot.rotation.z = s * (0.18 + up * 2.3 + pose.flail * 1.4 + windmill + (up > 0.1 ? flap * up : Math.sin(t * 2) * 0.05 * idle));
+    }
+    for (const { pivot, side: s } of r.legs) {
+      const stride = pose.run * Math.sin(t * 18 + (s > 0 ? 0 : Math.PI)) * 0.75;
+      pivot.rotation.x = -pose.tuck * 0.55 + stride;
     }
 
     notes.forEach((n, i) => {
@@ -349,14 +750,35 @@ export function createBoScene(canvas: HTMLCanvasElement, options: BoSceneOptions
       c.m.scale.setScalar(openOut);
     }
 
-    const lift = notesOut;
-    camera.position.set(0, 2.15 + lift * 0.7, (notes.length ? 7.6 : 6.4) + lift * 0.9);
-    camera.lookAt(0, 1.15 + lift * 0.75, 0);
+    animateAccessories(now);
+    placeCamera(notesOut);
     renderer.render(scene, camera);
   };
+
+  const timeout = new Promise<null>((resolve) => setTimeout(() => resolve(null), MODEL_TIMEOUT_MS));
+  const ready = Promise.race([loadBoModel(), timeout])
+    .then((file) => (file ? rigFromModel(file, baseLid) : null))
+    .catch(() => null)
+    .then((fromFile) => {
+      if (disposed) return;
+      rig = fromFile ?? buildCodeRig(baseLid);
+      bo.add(rig.root);
+      if (wantAccessory) void applyAccessory();
+    });
   raf = requestAnimationFrame(frame);
 
+  function disposeTree(root: THREE.Object3D) {
+    root.traverse((o) => {
+      const m = o as THREE.Mesh;
+      if (m.geometry && !m.geometry.userData["shared"]) m.geometry.dispose();
+      const mat = m.material as THREE.Material | THREE.Material[] | undefined;
+      if (Array.isArray(mat)) mat.forEach((x) => x.dispose());
+      else mat?.dispose();
+    });
+  }
+
   return {
+    ready,
     setLidColor(hex) {
       baseLid = new THREE.Color(hex);
     },
@@ -370,20 +792,31 @@ export function createBoScene(canvas: HTMLCanvasElement, options: BoSceneOptions
     setStorySource(source) {
       storySource = source;
     },
+    setAccessory(name) {
+      if (name === wantAccessory) return;
+      wantAccessory = name;
+      void applyAccessory();
+    },
+    setPose(next) {
+      Object.assign(pose, next);
+    },
+    wiggleBow() {
+      bowKick = performance.now();
+    },
+    feetPoint() {
+      camera.updateMatrixWorld();
+      v3.set(0, 0, 0).project(camera);
+      return { x: (v3.x + 1) / 2, y: (1 - v3.y) / 2 };
+    },
     setPaused(p) {
       paused = p;
     },
     dispose() {
+      disposed = true;
       cancelAnimationFrame(raf);
       ro.disconnect();
       window.removeEventListener("pointermove", onMove);
-      scene.traverse((o) => {
-        const m = o as THREE.Mesh;
-        if (m.geometry) m.geometry.dispose();
-        const mat = m.material as THREE.Material | THREE.Material[] | undefined;
-        if (Array.isArray(mat)) mat.forEach((x) => x.dispose());
-        else mat?.dispose();
-      });
+      disposeTree(scene);
       renderer.dispose();
     },
   };

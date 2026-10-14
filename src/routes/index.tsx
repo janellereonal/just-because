@@ -7,6 +7,7 @@ import { Bo3D } from "@/components/Bo3D";
 import { fetchThemes } from "@/lib/themes";
 import Bo from "@/components/Bo";
 import { PricingCards } from "@/components/PricingCards";
+import { BoBuddy } from "@/components/BoBuddy";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -81,6 +82,7 @@ function Index() {
   return (
     <div className="min-h-screen overflow-x-clip bg-paper text-ink selection:bg-pink">
       <SiteHeader showMascot={false} />
+      <BoBuddy />
 
       {/* Hero */}
       <section className="mx-auto max-w-6xl px-3 pt-6 sm:px-5">
@@ -161,7 +163,7 @@ function Index() {
       {/* Themes */}
       <section className="mx-auto max-w-6xl px-3 pt-16 sm:px-5">
         <div className="mb-6 flex flex-wrap items-end justify-between gap-4">
-          <div>
+          <div data-bo-perch data-bo-x="0.85">
             <p className="font-mono text-[11px] tracking-[0.18em] text-accent uppercase">Themes</p>
             <h2 className="mt-2 font-display text-[clamp(2rem,4.5vw,3.2rem)] leading-[1.02] font-semibold tracking-tight">
               A mood for every occasion
@@ -172,20 +174,17 @@ function Index() {
           </Link>
         </div>
         <div className="grid grid-cols-2 gap-3 sm:gap-5 lg:grid-cols-4">
-          {themes.slice(0, 4).map((theme) => (
-            <ThemeCard
-              key={theme.id}
-              theme={theme}
-              variant="compact"
-              onSelect={() => navigate({ to: "/themes/$id", params: { id: theme.id } })}
-            />
+          {themes.slice(0, 4).map((theme, i) => (
+            <div key={theme.id} data-bo-perch data-bo-x="0.72" data-bo-delay={(i % 4) * 90}>
+              <ThemeCard theme={theme} variant="compact" onSelect={() => navigate({ to: "/themes/$id", params: { id: theme.id } })} />
+            </div>
           ))}
         </div>
       </section>
 
       {/* Pricing */}
       <section id="pricing" className="mx-auto max-w-6xl scroll-mt-24 px-3 pt-20 sm:px-5">
-        <div className="mb-8 max-w-2xl">
+        <div className="mb-8 max-w-2xl" data-bo-perch data-bo-x="0.9">
           <p className="font-mono text-[11px] tracking-[0.18em] text-accent uppercase">Plans</p>
           <h2 className="mt-2 font-display text-[clamp(2rem,4.5vw,3.2rem)] leading-[1.02] font-semibold tracking-tight text-balance">
             Free to make. Pay once when it's ready to open.
@@ -199,7 +198,7 @@ function Index() {
 
       {/* Closing */}
       <section className="mx-auto max-w-6xl px-3 pt-20 pb-12 sm:px-5">
-        <div className="relative overflow-hidden rounded-[40px] bg-ink px-6 py-14 text-center text-cream sm:px-12">
+        <div className="relative overflow-hidden rounded-[40px] bg-ink px-6 py-14 text-center text-cream sm:px-12" data-bo-perch data-bo-x="0.82">
           <span aria-hidden="true" className="absolute -top-16 -left-10 size-56 rounded-full bg-accent/30" />
           <span aria-hidden="true" className="absolute -right-12 -bottom-20 size-64 rounded-full bg-lilac/20" />
           <div className="relative mx-auto flex max-w-xl flex-col items-center gap-4">
