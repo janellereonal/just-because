@@ -18,6 +18,8 @@ const SCROLL_MS = 8000;
 const HOLD_MS = 1500;
 const RETURN_MS = 1000;
 const INTRO_MS = 1400;
+/** The opening now has its own tab on the theme page, so cards show the gift itself. */
+const SHOW_MINI_INTRO = false;
 
 /* Only one mini preview plays at a time. */
 let currentId: string | null = null;
@@ -60,22 +62,22 @@ function usePrefersReducedMotion() {
 }
 
 /** A fixed, friendly recipient per occasion so every card reads like a real gift. */
-function sampleFor(theme: Theme) {
+export function sampleFor(theme: Theme) {
   const key = `${theme.category} ${theme.name}`.toLowerCase();
-  if (key.includes("birthday")) return { heading: "For Maya", name: "Maya" };
+  if (key.includes("birthday")) return { heading: "Happy birthday, Maya", name: "Maya" };
   if (key.includes("christmas")) return { heading: "Merry Christmas, Lolo", name: "Lolo" };
   if (key.includes("despidida") || key.includes("farewell") || key.includes("voyage"))
     return { heading: "Bon voyage, Sam", name: "Sam" };
   if (key.includes("valentine")) return { heading: "Happy Valentine's, Ana", name: "Ana" };
-  if (key.includes("pet")) return { heading: "For Milo", name: "Milo" };
+  if (key.includes("pet")) return { heading: "Best boy, Milo", name: "Milo" };
   if (key.includes("new year")) return { heading: "Happy New Year, everyone", name: "the crew" };
   if (key.includes("anniversar")) return { heading: "Ten years, Liz", name: "Liz" };
   if (key.includes("bridal") || key.includes("shower")) return { heading: "Showered with love, Bea", name: "Bea" };
   if (key.includes("wedding")) return { heading: "Congratulations, Aya & Jun", name: "Aya & Jun" };
-  return { heading: "For someone lovely", name: "Maya" };
+  return { heading: "Just because, Maya", name: "Maya" };
 }
 
-function backgroundFor(theme: Theme): BackgroundStyle {
+export function backgroundFor(theme: Theme): BackgroundStyle {
   const key = `${theme.category} ${theme.name}`.toLowerCase();
   if (key.includes("wedding") || key.includes("anniversar")) return "formal";
   if (key.includes("new year")) return "gradient";
@@ -140,6 +142,51 @@ function MiniIntro({
   );
 }
 
+/** A sample gift for previews: a friendly recipient, the theme's font and background, and the given palette. */
+export function buildPreviewSite(theme: Theme, palette: Palette | undefined): GiftSite {
+  const sample = sampleFor(theme);
+  return {
+    id: `preview-${theme.id}`,
+    creator_id: "preview",
+    title: theme.name,
+    theme_id: theme.id,
+    slug: "preview",
+    status: "published",
+    format: "scrapbook",
+    format_settings: {},
+    custom_text: {
+      heading: sample.heading,
+      recipient_name: sample.name,
+      intro_message: "Everyone who loves you put something in here. Take your time.",
+      footer_note: "With love, from all of us",
+    },
+    custom_colors: palette ?? {},
+    palette_id: null,
+    share_notes: false,
+    font_choice: themeFont(theme),
+    countdown_date: new Date(Date.now() + 12 * 86400000).toISOString().slice(0, 10),
+    calendar_locked: false,
+    intro_text: null,
+    background_style: backgroundFor(theme),
+    tree_reveal_date: null,
+    tier: null,
+    published_at: null,
+    expires_at: null,
+    created_at: new Date().toISOString(),
+    password_set: false,
+    password_protected: false,
+    unlocked: true,
+  };
+}
+
+/** The sections a theme turns on by default, as preview modules. */
+export function previewModules(theme: Theme, siteId: string): SiteModule[] {
+  const types = (
+    theme.default_modules.length > 0 ? theme.default_modules : ["letters", "photobooth", "songs"]
+  ) as ModuleType[];
+  return types.map((type, i) => ({ id: `${theme.id}-${i}`, site_id: siteId, module_type: type, price: 0, enabled: true }));
+}
+
 /** A live, non-interactive mini gift site that slowly plays through the theme. */
 export function ThemeLivePreview({ theme }: { theme: Theme }) {
   const id = theme.id;
@@ -158,58 +205,13 @@ export function ThemeLivePreview({ theme }: { theme: Theme }) {
   const palette = suggestedPalettes(theme, allPalettes)[0] ?? theme.palettes[0];
   const fonts = FONT_PAIRINGS[themeFont(theme)];
   const background = backgroundFor(theme);
-  const sample = sampleFor(theme);
 
   const site: GiftSite = useMemo(
-    () => ({
-      id: `preview-${theme.id}`,
-      creator_id: "preview",
-      title: theme.name,
-      theme_id: theme.id,
-      slug: "preview",
-      status: "published",
-      format: "scrapbook",
-      format_settings: {},
-      custom_text: {
-        heading: sample.heading,
-        recipient_name: sample.name,
-        intro_message: "Everyone who loves you put something in here. Take your time.",
-        footer_note: "With love, from all of us",
-      },
-      custom_colors: palette ?? {},
-      palette_id: null,
-      share_notes: false,
-      font_choice: themeFont(theme),
-      countdown_date: new Date(Date.now() + 12 * 86400000).toISOString().slice(0, 10),
-      calendar_locked: false,
-      intro_text: null,
-      background_style: background,
-      tree_reveal_date: null,
-      tier: null,
-      published_at: null,
-      expires_at: null,
-      created_at: new Date().toISOString(),
-      password_set: false,
-      password_protected: false,
-      unlocked: true,
-    }),
-    [theme.id, theme.name, sample.heading, sample.name, background],
+    () => buildPreviewSite(theme, palette),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [theme.id, theme.name, palette?.background, palette?.primary, palette?.accent],
   );
-
-  const modules: SiteModule[] = useMemo(() => {
-    const types = (
-      theme.default_modules.length > 0
-        ? theme.default_modules
-        : ["letters", "photobooth", "songs"]
-    ) as ModuleType[];
-    return types.map((type, i) => ({
-      id: `${theme.id}-${i}`,
-      site_id: site.id,
-      module_type: type,
-      price: 0,
-      enabled: true,
-    }));
-  }, [theme.default_modules, theme.id, site.id]);
+  const modules = useMemo(() => previewModules(theme, site.id), [theme, site.id]);
 
   // Scale the phone-width site down to the card, and mount only when on screen.
   useEffect(() => {
@@ -244,7 +246,8 @@ export function ThemeLivePreview({ theme }: { theme: Theme }) {
       io.disconnect();
       releasePreview(id);
     };
-  }, [id]);
+    // Re-run once the palette arrives: before that the box isn't rendered.
+  }, [id, !!palette]);
 
   // The slow top-to-bottom play, looping while the card stays active.
   useEffect(() => {
@@ -321,7 +324,7 @@ export function ThemeLivePreview({ theme }: { theme: Theme }) {
           palette={palette}
           fonts={fonts}
           background={background}
-          opacity={reduced ? 1 : introOpacity}
+          opacity={SHOW_MINI_INTRO ? (reduced ? 1 : introOpacity) : 0}
           height={boxH / (scale || 1)}
         />
       </div>

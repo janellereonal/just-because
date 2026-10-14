@@ -1015,7 +1015,7 @@ function SiteDashboard() {
             step={5}
             value={zoom ?? 100}
             onChange={(e) => setZoom(Number(e.target.value))}
-            className="hidden w-28 accent-[#B5623E] min-[900px]:block"
+            className="hidden w-28 accent-[#C2366B] min-[900px]:block"
           />
           <span className="hidden w-10 text-[11px] text-muted min-[900px]:block">
             {zoom ? `${zoom}%` : "Fit"}

@@ -32,6 +32,27 @@ and what's next**, so a fresh Claude session on any account can pick up without 
 - **Until the PayMongo keys are added, "Wrap it up" on the live site shows "We couldn't open
   the payment page."** That's expected.
 
+## 1b. Redesign in progress (branch `redesign`, not on the live site)
+
+Janelle wants the site colorful, playful, cute and 3D before launch, plus the mascot behaviors in
+her brief (Bo hops between sections as you scroll, reacts to fields, easter eggs). Work happens on
+the `redesign` branch; Vercel gives it its own preview link. `main` stays the live site.
+
+Done so far:
+- Pastel "toybox" tokens in `src/styles.css` (blush ground, candy pastels, berry accent #C2366B),
+  Fredoka display + DM Sans body, floating rounded header. The flat SVG Bo's lid is pink now.
+- **3D Bo** in code: `src/lib/bo3d/scene.ts` (three.js, built from rounded shapes) and
+  `src/components/Bo3D.tsx` (lazy-loaded, pauses off screen, falls back to the SVG Bo). Supports
+  moods (wave/idle/celebrate) and a 0..4 scroll story (dress up, notes fly in, wrap, open).
+- Landing page rebuilt: 3D hero, sticky scroll story, themes row, plans, closing CTA.
+- Theme gallery: occasion filter chips, big phone mockups showing the real gift (plays on hover /
+  in view on phones). Theme page: real `GiftSiteView` in a phone, color-mood picker, "The opening" tab.
+- Fixed: mini previews never mounted if palettes loaded after the first render.
+
+Next: Spline (via its MCP on Janelle's Mac) for a nicer modeled Bo and theme scenes, then the
+behaviors from her brief, then restyle /create, the editor, dashboard and contribute pages.
+Keep recipient-facing gift pages free of the mascot.
+
 ## 2. Accounts and where things live
 
 | What | Where | Notes |

@@ -25,7 +25,7 @@ type Props = {
 };
 
 const INK = "#2B2522";
-const TERRA = "#B5623E";
+const TERRA = "#EF7F99"; // pastel redesign: berry-pink lid and ribbon
 const CREAM = "#F4EEE3";
 
 const css = `
