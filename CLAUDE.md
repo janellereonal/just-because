@@ -61,9 +61,11 @@ Locally, without `BLOB_READ_WRITE_TOKEN` uploads save to `.dev-uploads/`, and wi
   live in `src/config/pricing.ts`.** Never hardcode a price anywhere else.
 - Flow: "Wrap it up" → tier picker → `startCheckout` (server computes the amount) → PayMongo
   hosted checkout → back to `/checkout/$orderId`, which polls `getOrderStatus`.
-- Only the webhook (`src/routes/api/webhooks/paymongo.ts`) marks an order paid and publishes.
-  It verifies `Paymongo-Signature`, re-fetches the checkout session from PayMongo, and records
-  the event id in `webhook_events` so retries do nothing. Logic is in `src/server/billing.ts`.
+- Orders are marked paid by `applyPaidEvent` in `src/server/billing.ts`, from two places:
+  the webhook (`src/routes/api/webhooks/paymongo.ts`: verifies `Paymongo-Signature`, re-fetches
+  the session) and, as a backup, `getOrderStatus` while the confirm page is open (asks PayMongo
+  directly via `provider.checkPaid`, max every 5s per order). Event ids go in `webhook_events`,
+  so either path running twice does nothing. Never trust anything the browser says about payment.
 - Provider code sits behind `src/server/payments/types.ts`; PayMongo is
   `src/server/payments/paymongo.ts`. A second provider (PayPal) would be a sibling file.
 - Order kinds: `publish` (first payment), `upgrade` (pay the difference; adds the extra months
