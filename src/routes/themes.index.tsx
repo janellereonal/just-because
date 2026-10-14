@@ -4,7 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { SiteHeader } from "@/components/SiteHeader";
 import { ThemeCard } from "@/components/ThemeCard";
-import { Bo3D } from "@/components/Bo3D";
+import { TalkingBo } from "@/components/TalkingBo";
 import { fetchThemes, type Theme } from "@/lib/themes";
 import { useAuth } from "@/hooks/useAuth";
 
@@ -79,7 +79,15 @@ function ThemesPage() {
               Hover a theme (or scroll to it on your phone) to watch it play. Tap it to try the colors and see the opening.
             </p>
           </div>
-          <Bo3D className="relative mx-auto h-[220px] w-full max-w-[300px] md:h-[280px]" mood="wave" label="Bo waving hello" />
+          <TalkingBo
+            className="mx-auto h-[220px] w-full max-w-[300px] md:h-[280px]"
+            label="Bo waving hello"
+            intro={[{ text: "Pick one you like.", face: "wink" }]}
+            onTap={[
+              { text: "I look good in all of them.", face: "happy" },
+              { text: "Boop.", face: "blep" },
+            ]}
+          />
         </div>
       </section>
 

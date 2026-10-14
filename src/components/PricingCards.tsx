@@ -33,7 +33,7 @@ export function PricingCards({ tiers = TIERS, priceFor, blockerFor, action, pric
           return (
             <div
               key={tier.id}
-              {...(tier.mostPopular ? { "data-bo-perch": "", "data-bo-x": "0.78" } : {})}
+              {...(tier.mostPopular ? { "data-bo-perch": "", "data-bo-x": "0.78", "data-bo-say": "Most friends pick this one." } : {})}
               className={`relative flex flex-col rounded-3xl border p-5 sm:p-6 ${
                 tier.mostPopular
                   ? "border-accent bg-cream shadow-[0_10px_30px_-18px_rgba(181,98,62,0.6)]"

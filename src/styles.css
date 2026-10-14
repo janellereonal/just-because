@@ -255,3 +255,53 @@
 @media (prefers-reduced-motion: reduce) {
   .comic-slam, .comic-page, .comic-atmosphere, .comic-world-1 .comic-atmosphere::after, .comic-wipe { animation: none !important; }
 }
+
+/* Bo's speech bubble (decorative; aria-hidden where used). */
+.bo-bubble {
+  position: absolute;
+  width: max-content;
+  max-width: 220px;
+  padding: 9px 14px;
+  border-radius: 18px;
+  background: #fff;
+  color: var(--ink);
+  font-family: var(--font-display-family);
+  font-weight: 500;
+  font-size: 15px;
+  line-height: 1.25;
+  box-shadow: 0 10px 26px -14px rgba(43, 37, 34, 0.45), 0 0 0 1px rgba(43, 37, 34, 0.07);
+  pointer-events: none;
+  opacity: 0;
+  transform: translateY(6px) scale(0.9);
+  transform-origin: 20px 100%;
+  transition: opacity 0.18s ease, transform 0.26s cubic-bezier(0.3, 1.5, 0.5, 1);
+}
+.bo-bubble[data-show] {
+  opacity: 1;
+  transform: none;
+}
+.bo-bubble::after {
+  content: "";
+  position: absolute;
+  bottom: -5px;
+  left: 18px;
+  width: 12px;
+  height: 12px;
+  background: #fff;
+  border-radius: 2px;
+  transform: rotate(45deg);
+  box-shadow: 1px 1px 0 rgba(43, 37, 34, 0.07);
+}
+.bo-bubble[data-side="left"] {
+  transform-origin: calc(100% - 20px) 100%;
+}
+.bo-bubble[data-side="left"]::after {
+  left: auto;
+  right: 18px;
+}
+@media (prefers-reduced-motion: reduce) {
+  .bo-bubble {
+    transform: none;
+    transition: opacity 0.18s ease;
+  }
+}

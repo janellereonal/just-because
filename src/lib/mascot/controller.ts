@@ -9,6 +9,7 @@
  * Perches are plain elements marked up in the page:
  *   <h2 data-bo-perch data-bo-x="0.1">Themes</h2>
  * data-bo-x is where along the top edge he stands (0 left, 1 right, default 0.5).
+ * data-bo-say is a line he says the first time he lands there.
  * data-bo-delay (px) makes a perch wait a little longer, so cards in one row are
  * visited one after another instead of all at once.
  */
@@ -31,7 +32,12 @@ export const TUNING = {
   /** A perch becomes active once its top passes this fraction of the screen height. */
   perchLine: 0.6,
   confettiBits: [3, 5] as const,
+  /** How long a speech bubble stays up, ms. */
+  bubbleMs: 2600,
 };
+
+/** What Bo says the first time he hops out. */
+const INTRO = ["Hi, I'm Bo.", "I'll hop along with you."];
 
 export type MascotState = "hidden" | "idle" | "hopping" | "scrambling" | "reacting" | "sleeping" | "dizzy" | "dragged" | "wrapping" | "celebrating";
 
@@ -79,6 +85,11 @@ export class MascotController {
   private visible = false;
   /** Set when scrolling or resizing, so perches are only measured when something moved. */
   private dirty = true;
+  private readonly bubble: HTMLDivElement;
+  private bubbleTimer = 0;
+  private sayQueue: string[] = [];
+  private said = new Set<HTMLElement>();
+  private introduced = false;
   private readonly reduce: boolean;
   private readonly mobile: boolean;
 
@@ -94,6 +105,11 @@ export class MascotController {
     window.addEventListener("resize", this.onResize, { passive: true });
     document.addEventListener("visibilitychange", this.onVisibility);
     this.el.style.opacity = "0";
+    this.bubble = document.createElement("div");
+    this.bubble.className = "bo-bubble";
+    this.bubble.style.left = "0";
+    this.bubble.style.top = "0";
+    this.layer.appendChild(this.bubble);
     this.refreshPerches(true);
     this.pickPerch(performance.now());
     this.raf = requestAnimationFrame(this.frame);
@@ -103,7 +119,32 @@ export class MascotController {
     this.scene = scene;
   }
 
+  /** Say something in a bubble. Lines queue up and play one at a time. */
+  say(text: string, face: "wink" | "happy" | "surprised" | "love" | "blep" = "happy") {
+    this.sayQueue.push(`${face}|${text}`);
+    if (!this.bubble.dataset["show"]) this.nextLine();
+  }
+
+  private nextLine() {
+    window.clearTimeout(this.bubbleTimer);
+    const next = this.sayQueue.shift();
+    if (!next) {
+      delete this.bubble.dataset["show"];
+      return;
+    }
+    const [face, text] = next.split("|") as [NonNullable<Parameters<MascotController["say"]>[1]>, string];
+    this.bubble.textContent = text;
+    this.bubble.dataset["show"] = "";
+    this.scene?.setFace(face, 1300);
+    this.bubbleTimer = window.setTimeout(() => {
+      delete this.bubble.dataset["show"];
+      this.bubbleTimer = window.setTimeout(() => this.nextLine(), 260);
+    }, TUNING.bubbleMs);
+  }
+
   destroy() {
+    window.clearTimeout(this.bubbleTimer);
+    this.bubble.remove();
     cancelAnimationFrame(this.raf);
     window.removeEventListener("scroll", this.onScroll);
     window.removeEventListener("resize", this.onResize);
@@ -296,6 +337,16 @@ export class MascotController {
     }
     if (hop.quirk) this.wobbleUntil = now + 950;
     this.puff(hop.to);
+    if (!this.introduced) {
+      this.introduced = true;
+      INTRO.forEach((line, i) => this.say(line, i === 0 ? "wink" : "happy"));
+    }
+    const perch = this.perches[this.perchIndex];
+    const line = perch?.dataset["boSay"];
+    if (perch && line && !this.said.has(perch)) {
+      this.said.add(perch);
+      this.say(line);
+    }
   }
 
   /* ---------- Show / hide ---------- */
@@ -308,6 +359,9 @@ export class MascotController {
 
   private hide(_now: number) {
     this.visible = false;
+    this.sayQueue = [];
+    window.clearTimeout(this.bubbleTimer);
+    delete this.bubble.dataset["show"];
     this.hop = null;
     this.state = "hidden";
     this.el.style.transition = "opacity 260ms ease";
@@ -360,6 +414,18 @@ export class MascotController {
     const x = this.pos.x - w * feet.x;
     const y = this.pos.y - lift - h * feet.y;
     this.el.style.transform = `translate3d(${x.toFixed(1)}px, ${y.toFixed(1)}px, 0)`;
+    if (this.bubble.dataset["show"] !== undefined) {
+      // Above his head, to the right; flips left near the right edge of the screen.
+      const bw = this.bubble.offsetWidth;
+      const bh = this.bubble.offsetHeight;
+      const left = this.pos.x + w * 0.18 + bw > window.scrollX + window.innerWidth - 12;
+      this.bubble.dataset["side"] = left ? "left" : "right";
+      const bx = left ? this.pos.x - w * 0.18 - bw : this.pos.x + w * 0.18;
+      const by = y + h * 0.05 - bh;
+      // left/top (not transform) so the bubble's own pop-in transition still plays.
+      this.bubble.style.left = `${Math.max(window.scrollX + 8, bx).toFixed(1)}px`;
+      this.bubble.style.top = `${by.toFixed(1)}px`;
+    }
   }
 
   private frame = (now: number) => {
