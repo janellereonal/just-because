@@ -22,6 +22,7 @@ function CheckoutStatusPage() {
   const [started] = useState(() => Date.now());
   const [slow, setSlow] = useState(false);
   const [retryOpen, setRetryOpen] = useState(false);
+  const [party, setParty] = useState(false);
   const cancelSent = useRef(false);
 
   useEffect(() => {
@@ -46,6 +47,11 @@ function CheckoutStatusPage() {
     const t = window.setTimeout(() => setSlow(true), Math.max(0, PATIENCE_MS - (Date.now() - started)));
     return () => window.clearTimeout(t);
   }, [order?.status, started]);
+
+  // Confetti once, when the payment is confirmed.
+  useEffect(() => {
+    if (order?.status === "paid" && !window.matchMedia("(prefers-reduced-motion: reduce)").matches) setParty(true);
+  }, [order?.status]);
 
   if (error) {
     return <PageError message="We couldn't check this payment just now." onRetry={() => void refetch()} />;
@@ -72,11 +78,11 @@ function CheckoutStatusPage() {
               ? "Your gift is open for longer"
               : "Your gift is ready to open"}
         </h1>
-        <p className="mt-2 text-muted">
+        <p className="mt-2 text-ink/70">
           Payment received, {formatPeso(order.amount)}. A receipt is on its way to your email.
         </p>
         {order.kind === "extend" && order.site?.expiresAt ? (
-          <p className="mt-1 text-muted">
+          <p className="mt-1 text-ink/70">
             It now stays open until{" "}
             {new Date(order.site.expiresAt).toLocaleDateString("en-PH", {
               month: "long",
@@ -87,7 +93,7 @@ function CheckoutStatusPage() {
           </p>
         ) : null}
         {order.kind === "publish" && liveUrl ? (
-          <div className="mt-7 flex items-center gap-2 rounded-xl border border-line bg-cream p-2 pl-4">
+          <div className="mt-7 flex items-center gap-2 rounded-full bg-white/85 p-1.5 pl-5">
             <span className="min-w-0 flex-1 truncate text-left font-mono text-xs text-muted">{liveUrl}</span>
             <button
               type="button"
@@ -103,11 +109,11 @@ function CheckoutStatusPage() {
         ) : null}
         <div className="mt-5 flex flex-wrap justify-center gap-3">
           {order.kind === "publish" && liveUrl ? (
-            <a href={liveUrl} className="rounded-full bg-accent px-6 py-3 text-sm font-medium text-cream">
+            <a href={liveUrl} className="squish rounded-full bg-accent px-6 py-3 text-sm font-semibold text-cream">
               Open the gift
             </a>
           ) : null}
-          <Link to={editorUrl} className="rounded-full border border-line px-6 py-3 text-sm font-medium">
+          <Link to={editorUrl} className="squish rounded-full bg-white/80 px-6 py-3 text-sm font-medium">
             Back to the editor
           </Link>
         </div>
@@ -120,7 +126,7 @@ function CheckoutStatusPage() {
         <h1 className="mt-3 font-display text-3xl font-medium tracking-tight">
           {order.status === "expired" ? "That payment timed out" : "No payment was made"}
         </h1>
-        <p className="mx-auto mt-2 max-w-[42ch] text-muted">
+        <p className="mx-auto mt-2 max-w-[42ch] text-ink/70">
           {order.kind === "publish"
             ? "Your gift is still saved as a draft, and nothing was charged. You can try again whenever you're ready."
             : "Nothing was charged, and your gift is just as you left it. You can try again whenever you're ready."}
@@ -130,12 +136,12 @@ function CheckoutStatusPage() {
             <button
               type="button"
               onClick={() => setRetryOpen(true)}
-              className="rounded-full bg-accent px-6 py-3 text-sm font-medium text-cream"
+              className="squish rounded-full bg-accent px-6 py-3 text-sm font-semibold text-cream"
             >
               Try again
             </button>
           ) : null}
-          <Link to={editorUrl} className="rounded-full border border-line px-6 py-3 text-sm font-medium">
+          <Link to={editorUrl} className="squish rounded-full bg-white/80 px-6 py-3 text-sm font-medium">
             Back to the editor
           </Link>
         </div>
@@ -148,7 +154,7 @@ function CheckoutStatusPage() {
           <Bo pose="idle" size={150} />
         </div>
         <h1 className="mt-3 font-display text-3xl font-medium tracking-tight">Confirming your payment…</h1>
-        <p className="mx-auto mt-2 max-w-[42ch] text-muted">
+        <p className="mx-auto mt-2 max-w-[42ch] text-ink/70">
           {slow
             ? "This is taking longer than usual. If you paid, you'll get an email once it's confirmed, and the gift opens on its own. You can close this page."
             : "This usually takes a few seconds. Please keep this page open."}
@@ -168,9 +174,27 @@ function CheckoutStatusPage() {
   return (
     <div className="min-h-screen bg-paper text-ink">
       <SiteHeader />
-      <div className="grid min-h-[75vh] place-items-center px-5 text-center">
-        <div className="w-full max-w-xl">{body}</div>
+      <div className="grid min-h-[75vh] place-items-center px-4 py-10 text-center">
+        <div className={`rise relative w-full max-w-xl overflow-hidden rounded-[36px] px-6 py-10 sm:px-12 ${paid ? "bg-mint" : stopped ? "bg-butter" : "bg-pink"}`}>
+          <span aria-hidden className="absolute -top-16 -right-12 size-56 rounded-full bg-white/45 blur-2xl" />
+          <div className="relative">{body}</div>
+        </div>
       </div>
+      {party ? (
+        <div className="hunt-confetti" aria-hidden>
+          {Array.from({ length: 36 }, (_, i) => (
+            <i
+              key={i}
+              style={{
+                left: `${(i * 37) % 100}%`,
+                background: ["#C2366B", "#FFE8B0", "#D5F0E3", "#D9E8FB", "#E6DCF7", "#FBD3DC"][i % 6],
+                animationDelay: `${(i % 12) * 70}ms`,
+                animationDuration: `${1500 + ((i * 53) % 900)}ms`,
+              }}
+            />
+          ))}
+        </div>
+      ) : null}
       {order.site && order.kind === "extend" ? (
         <ExtendDialog siteId={order.site.id} open={retryOpen} onOpenChange={setRetryOpen} />
       ) : order.site ? (

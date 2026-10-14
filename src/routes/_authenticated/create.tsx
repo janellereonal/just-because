@@ -10,7 +10,7 @@ import { MODULES, type ModuleType } from "@/lib/gift";
 import { ModuleExample } from "@/components/ModuleExample";
 import { FormatPicker } from "@/components/FormatPicker";
 import { stageColorFor } from "@/components/ThemeCard";
-import type { GiftFormat } from "@/lib/comic";
+import { isGiftFormat, type GiftFormat } from "@/lib/formats";
 import { BoBuddy } from "@/components/BoBuddy";
 import { accessoryForTheme, type BoAccessory } from "@/lib/bo3d/accessories";
 import { boAccessory, boReact, boSay, markGiftCreated } from "@/lib/mascot/bus";
@@ -30,6 +30,7 @@ const THEME_LINES: Record<BoAccessory, string> = {
 export const Route = createFileRoute("/_authenticated/create")({
   validateSearch: (search: Record<string, unknown>) => ({
     theme: typeof search["theme"] === "string" ? search["theme"] : undefined,
+    format: isGiftFormat(search["format"]) ? search["format"] : undefined,
   }),
   head: () => ({
     meta: [
@@ -47,7 +48,7 @@ export const Route = createFileRoute("/_authenticated/create")({
 
 function CreatePage() {
   const navigate = useNavigate();
-  const { theme: themeFromUrl } = Route.useSearch();
+  const { theme: themeFromUrl, format: formatFromUrl } = Route.useSearch();
   const { data: themes = [] } = useQuery({
     queryKey: ["themes", "published"],
     queryFn: () => fetchThemes(false),
@@ -55,7 +56,7 @@ function CreatePage() {
 
   const [title, setTitle] = useState("");
   const [themeId, setThemeId] = useState<string | undefined>(themeFromUrl);
-  const [format, setFormat] = useState<GiftFormat>("scrapbook");
+  const [format, setFormat] = useState<GiftFormat>(formatFromUrl ?? "scrapbook");
   const [selected, setSelected] = useState<ModuleType[]>(["letters", "photobooth"]);
   const [touched, setTouched] = useState(false);
   const [previewed, setPreviewed] = useState<ModuleType>("letters");

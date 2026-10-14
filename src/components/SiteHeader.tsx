@@ -56,7 +56,7 @@ export function SiteHeader({ showMascot = true }: { showMascot?: boolean }) {
               </Link>
               <Link
                 to="/create"
-                search={{ theme: undefined }}
+                search={{ theme: undefined, format: undefined }}
                 className="squish inline-flex min-h-11 items-center gap-1.5 rounded-full bg-accent px-4 text-sm font-medium text-cream hover:bg-accent/90 sm:px-5"
               >
                 <Plus className="size-4" /> New gift

@@ -72,7 +72,10 @@ then redesigned.
 - **Toybox restyle**: `/create` (numbered steps, theme cards, format picker, switches, sticky create bar,
   Bo walks down the steps on sticky side perches), dashboard (gift cards in each gift's colors, copy the
   friends link, empty state with Bo peeking), contribute (guest-facing copy, icon tabs), editor (Format tab,
-  dotted canvas), sign-in (split layout, labeled fields), header (New gift + quiet sign out, mobile links), 404.
+  dotted canvas), sign-in (split layout, labeled fields), header (New gift + quiet sign out, mobile links), 404,
+  checkout status (pastel card, confetti when paid).
+- Theme page: "See it as" previews the theme in any format; "Use this theme" carries theme and format
+  into `/create` (`?theme=…&format=…`).
 
 ## Still not verified
 

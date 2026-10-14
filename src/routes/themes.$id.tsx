@@ -5,7 +5,8 @@ import { toast } from "sonner";
 import { SiteHeader } from "@/components/SiteHeader";
 import { PageError, PageLoading, PageNotFound } from "@/components/PageStates";
 import { themeFont } from "@/components/ThemeMiniPreview";
-import { GiftSiteView } from "@/components/GiftSiteView";
+import { FormatView } from "@/components/formats/FormatView";
+import { FORMATS, type GiftFormat } from "@/lib/formats";
 import { GiftIntro } from "@/components/GiftIntro";
 import { backgroundFor, buildPreviewSite, previewModules, sampleFor } from "@/components/ThemeLivePreview";
 import { stageColorFor } from "@/components/ThemeCard";
@@ -38,6 +39,7 @@ function ThemeDetailPage() {
   const [paletteIndex, setPaletteIndex] = useState(0);
   const [view, setView] = useState<View>("gift");
   const [openingKey, setOpeningKey] = useState(0);
+  const [format, setFormat] = useState<GiftFormat>("scrapbook");
   const { data: allPalettes = [] } = usePalettes();
 
   const { data: theme, isLoading, error, refetch } = useQuery({
@@ -74,7 +76,7 @@ function ThemeDetailPage() {
       navigate({ to: "/auth" });
       return;
     }
-    navigate({ to: "/create", search: { theme: id } });
+    navigate({ to: "/create", search: { theme: id, format } });
   }
 
   function watchOpening() {
@@ -122,7 +124,7 @@ function ThemeDetailPage() {
                 <div className="relative h-[min(720px,72vh)] overflow-hidden rounded-t-[32px]">
                   {view === "gift" ? (
                     <div className="absolute inset-0 overflow-y-auto overscroll-contain" tabIndex={0} aria-label={`${theme.name} sample gift, scrollable`}>
-                      <GiftSiteView site={site} theme={theme} modules={modules} contributions={[]} sample />
+                      <FormatView key={format} site={{ ...site, format }} theme={theme} palette={palette} modules={modules} contributions={[]} sample />
                     </div>
                   ) : (
                     <GiftIntro
@@ -182,6 +184,30 @@ function ThemeDetailPage() {
                 <p className="mt-2 text-xs text-muted">You can change colors and fonts later too.</p>
               </div>
             ) : null}
+
+            <div className="card-paper p-5">
+              <h2 className="font-display text-lg font-semibold">See it as</h2>
+              <div className="mt-3 flex flex-wrap gap-2" role="radiogroup" aria-label="Format">
+                {FORMATS.map((f) => (
+                  <button
+                    key={f.id}
+                    type="button"
+                    role="radio"
+                    aria-checked={format === f.id}
+                    onClick={() => {
+                      setFormat(f.id);
+                      setView("gift");
+                    }}
+                    className={`squish rounded-full px-3.5 py-2 text-sm font-medium transition-colors ${
+                      format === f.id ? "bg-ink text-cream" : "bg-paper ring-1 ring-ink/10 hover:bg-pink/40"
+                    }`}
+                  >
+                    {f.title}
+                  </button>
+                ))}
+              </div>
+              <p className="mt-2 text-xs text-muted">{FORMATS.find((f) => f.id === format)?.about}</p>
+            </div>
 
             {included.length > 0 ? (
               <div className="card-paper p-5">
