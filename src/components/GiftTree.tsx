@@ -106,7 +106,7 @@ export function GiftTree({
               <>
                 <OrnamentIcon ornamentKey={open.ornament_key} className="text-5xl" />
                 <p className="mt-5 leading-relaxed whitespace-pre-line">{open.text_content}</p>
-                <p className="mt-4 text-sm" style={{ color: palette.accent }}>— {open.author_name}</p>
+                <p className="mt-4 text-sm" style={{ color: palette.accent }}>{open.author_name}</p>
               </>
             )}
             <button type="button" onClick={() => setOpen(null)} className="mt-6 w-full rounded-full px-5 py-2.5 text-sm font-medium" style={{ backgroundColor: palette.accent, color: readableInk(palette.accent) }}>Close</button>

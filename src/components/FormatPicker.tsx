@@ -56,17 +56,20 @@ export function FormatPicker({
   onChange,
   isAllowed,
   compact = false,
+  bare = false,
 }: {
   value: GiftFormat;
   onChange: (value: GiftFormat) => void;
   /** Formats the current plan can't use show a lock. */
   isAllowed?: (format: GiftFormat) => boolean;
   compact?: boolean;
+  /** No visible legend or hint (the page already titles this). */
+  bare?: boolean;
 }) {
   return (
     <fieldset>
-      <legend className={compact ? "sr-only" : "font-display text-base font-medium"}>Choose a format</legend>
-      {!compact ? <p className="mt-1 text-xs text-muted">Same notes, different way to open them. You can switch any time.</p> : null}
+      <legend className={compact || bare ? "sr-only" : "font-display text-base font-medium"}>Choose a format</legend>
+      {!compact && !bare ? <p className="mt-1 text-xs text-muted">Same notes, different way to open them. You can switch any time.</p> : null}
       <div className={`mt-3 grid gap-2.5 ${compact ? "grid-cols-2" : "grid-cols-2 sm:grid-cols-3"}`}>
         {FORMATS.map((f) => {
           const active = value === f.id;

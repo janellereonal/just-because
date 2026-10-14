@@ -99,7 +99,7 @@ function ComicPanel({ item, palette, type }: { item: ViewContribution; palette: 
   if (type === "photobooth") return (
     <article className="comic-panel overflow-hidden">
       <div className="aspect-[4/3] bg-ink/10">{media ? <img src={media} alt={item.text_content ?? "Origin story"} className="size-full object-cover" /> : <Avatar item={item} accent={palette.accent} />}</div>
-      <p className="comic-caption">{item.text_content || "A legendary moment"} — {item.author_name}</p>
+      <p className="comic-caption">{item.text_content || "A legendary moment"} · {item.author_name}</p>
       {item.mine ? <span className="comic-yours">YOU'RE IN THE ISSUE!</span> : null}
     </article>
   );

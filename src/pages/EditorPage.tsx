@@ -146,7 +146,7 @@ const SECTION_TITLES: Record<SectionKey, string> = {
   sections: "Sections",
   surprises: "Surprises",
   intro: "Intro",
-  comic: "Comic",
+  comic: "Format",
   review: "Review",
 };
 
@@ -949,7 +949,7 @@ function SiteDashboard() {
 
 
   const canvas = (
-    <div className="relative flex min-w-0 flex-1 flex-col bg-ink/10">
+    <div className="editor-canvas relative flex min-w-0 flex-1 flex-col">
       <div
         ref={canvasRef}
         className="relative min-h-0 flex-1 overflow-hidden px-4 pt-4 pb-4"

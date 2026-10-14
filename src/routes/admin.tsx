@@ -12,9 +12,9 @@ import { useAuth } from "@/hooks/useAuth";
 export const Route = createFileRoute("/admin")({
   head: () => ({
     meta: [
-      { title: "Theme admin — Just Because" },
+      { title: "Theme admin | Just Because" },
       { name: "description", content: "Manage the Just Because theme template library." },
-      { property: "og:title", content: "Theme admin — Just Because" },
+      { property: "og:title", content: "Theme admin | Just Because" },
       {
         property: "og:description",
         content: "Manage the Just Because theme template library.",

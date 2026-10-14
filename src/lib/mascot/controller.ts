@@ -791,6 +791,11 @@ export class MascotController {
     if (!this.sleeping) this.state = "idle";
     // The page may have moved on while he was in the air.
     this.dirty = true;
+    // A bubble that started mid-hop gets a fresh spot that clears the fields here.
+    if (this.bubble.dataset["show"] !== undefined) {
+      this.chooseBubbleSpot();
+      this.placeBubble();
+    }
     this.scene?.wiggleBow();
     if (hop?.chain && hop.chain.left > 0) {
       this.scrambleStep(now, hop.chain.el, hop.chain.left);

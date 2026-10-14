@@ -365,10 +365,10 @@ button.bento-tile:hover .bento-wave i:nth-child(odd) { transform: scaleY(1.25); 
 .zine-letter { display: inline-block; padding: 0 .08em; font-weight: 800; line-height: 1; transition: transform .25s var(--ease-bounce); }
 .zine-serif { font-family: "Playfair Display", Georgia, serif; font-style: italic; font-weight: 700; }
 .zine-ransom:hover .zine-letter:nth-child(odd) { transform: rotate(0) translateY(-4px) !important; }
-.zine-headline { font-size: clamp(1.6rem, 4vw, 2.6rem); line-height: 1; font-weight: 800; letter-spacing: -.02em; font-variation-settings: "wdth" 85; }
+.zine-headline { font-size: clamp(1.6rem, 4cqi, 2.6rem); line-height: 1; font-weight: 800; letter-spacing: -.02em; font-variation-settings: "wdth" 85; }
 .zine-scribble { display: block; width: min(320px, 70%); height: 16px; margin-top: 6px; }
 .zine-box { border: 3px solid var(--z-ink); padding: 14px 16px; background: #fff; box-shadow: 6px 6px 0 var(--z-ink); }
-.zine-huge { font-size: clamp(3.5rem, 9vw, 5.5rem); line-height: .9; font-weight: 800; }
+.zine-huge { font-size: clamp(3.5rem, 9cqi, 5.5rem); line-height: .9; font-weight: 800; }
 @keyframes zine-marquee { to { transform: translateX(-50%); } }
 .zine-ticker { overflow: hidden; border-block: 3px solid var(--z-ink); background: var(--z-accent); color: #fff; padding: 10px 0; }
 .zine-ticker > div { display: flex; width: max-content; animation: zine-marquee 28s linear infinite; font-weight: 800; font-size: 20px; letter-spacing: .02em; white-space: nowrap; }
@@ -420,7 +420,7 @@ button.bento-tile:hover .bento-wave i:nth-child(odd) { transform: scaleY(1.25); 
 .zine-mine { outline: 3px dashed var(--z-accent); outline-offset: 5px; }
 .zine-yours { background: var(--z-ink); }
 .zine-words { border-top: 3px solid var(--z-ink); padding-top: 12px; }
-.zine-word { display: inline; font-size: clamp(2rem, 6vw, 4.5rem); line-height: 1.02; font-weight: var(--w); letter-spacing: -.03em; transition: font-weight .5s ease, color .3s ease; }
+.zine-word { display: inline; font-size: clamp(2rem, 6cqi, 4.5rem); line-height: 1.02; font-weight: var(--w); letter-spacing: -.03em; transition: font-weight .5s ease, color .3s ease; }
 .zine-word:hover { font-weight: 800; color: var(--z-accent); }
 .zine-word-alt { font-family: "Playfair Display", Georgia, serif; font-style: italic; }
 .zine-back { border-top: 6px solid var(--z-ink); padding-top: 14px; }

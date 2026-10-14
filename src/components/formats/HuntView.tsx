@@ -177,10 +177,10 @@ export function HuntView({ site, modules, contributions, calendarEntries, palett
       className="hunt-root min-h-screen"
       style={{ background: meshGradient(palette.primary, palette.accent, palette.background), color: ink, fontFamily: fonts.body } as React.CSSProperties}
     >
-      <div className="mx-auto max-w-4xl px-4 py-10 sm:px-6 sm:py-14">
+      <div className="mx-auto max-w-4xl px-4 py-10 @2xl:px-6 @2xl:py-14">
         <header className="text-center">
           <p className="text-[11px] font-semibold tracking-[0.2em] uppercase opacity-70">A gift hunt for {data.name}</p>
-          <h1 className="mx-auto mt-3 max-w-2xl text-[clamp(2.1rem,6vw,3.75rem)] leading-[1] font-semibold tracking-tight" style={{ fontFamily: fonts.heading }}>
+          <h1 className="mx-auto mt-3 max-w-2xl text-[clamp(2.1rem,6cqi,3.75rem)] leading-[1] font-semibold tracking-tight" style={{ fontFamily: fonts.heading }}>
             {site.custom_text.heading?.trim() || site.title}
           </h1>
           <p className="mx-auto mt-4 max-w-md text-[15px] leading-relaxed opacity-80">

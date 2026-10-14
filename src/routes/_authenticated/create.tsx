@@ -9,6 +9,7 @@ import { usePalettes, suggestedPalettes } from "@/hooks/usePalettes";
 import { MODULES, type ModuleType } from "@/lib/gift";
 import { ModuleExample } from "@/components/ModuleExample";
 import { FormatPicker } from "@/components/FormatPicker";
+import { stageColorFor } from "@/components/ThemeCard";
 import type { GiftFormat } from "@/lib/comic";
 import { BoBuddy } from "@/components/BoBuddy";
 import { accessoryForTheme, type BoAccessory } from "@/lib/bo3d/accessories";
@@ -32,12 +33,12 @@ export const Route = createFileRoute("/_authenticated/create")({
   }),
   head: () => ({
     meta: [
-      { title: "Create a gift — Just Because" },
-      { name: "description", content: "Name your gift site and choose what people can add." },
-      { property: "og:title", content: "Create a gift — Just Because" },
+      { title: "Create a gift | Just Because" },
+      { name: "description", content: "Name your gift and choose what friends can add." },
+      { property: "og:title", content: "Create a gift | Just Because" },
       {
         property: "og:description",
-        content: "Name your gift site and choose what people can add.",
+        content: "Name your gift and choose what friends can add.",
       },
     ],
   }),
@@ -113,7 +114,7 @@ function CreatePage() {
   async function handleCreate(e: React.FormEvent) {
     e.preventDefault();
     if (selected.length === 0) {
-      toast.error("Pick at least one thing people can add.");
+      toast.error("Pick at least one thing friends can add.");
       return;
     }
     setBusy(true);
@@ -140,7 +141,7 @@ function CreatePage() {
       });
     } catch {
       setBusy(false);
-      toast.error("Couldn't create that gift site. Please try again.");
+      toast.error("Couldn't create that gift. Please try again.");
       return;
     }
     setBusy(false);
@@ -148,62 +149,96 @@ function CreatePage() {
     navigate({ to: "/sites/$id", params: { id: data.id } });
   }
 
+  const step = (n: number, title: string, hint?: string) => (
+    <div className="flex items-start gap-3">
+      <span className="grid size-9 shrink-0 place-items-center rounded-2xl bg-pink font-display text-base font-semibold">{n}</span>
+      <div>
+        <h2 className="font-display text-xl leading-tight font-semibold">{title}</h2>
+        {hint ? <p className="mt-0.5 text-sm text-ink/60">{hint}</p> : null}
+      </div>
+    </div>
+  );
+
   return (
     <div className="min-h-screen bg-paper text-ink">
       <SiteHeader />
       <BoBuddy followFocus intro={false} />
-      <section className="mx-auto max-w-2xl px-5 py-14">
-        <p
-          className="font-mono text-[11px] tracking-[0.18em] text-accent uppercase"
-          data-bo-perch
-          data-bo-always
-          data-bo-x="0.92"
-          data-bo-say="Hi, I'm Bo. Let's make something nice."
-        >
-          New gift site
-        </p>
-        <h1 className="mt-2 font-display text-3xl font-medium tracking-tight">
-          Name it and pick the sections
-        </h1>
+      <section className="mx-auto max-w-3xl px-4 pt-14 pb-28 sm:px-5">
+        <div className="relative">
+          <p className="font-mono text-[11px] tracking-[0.18em] text-accent uppercase">New gift</p>
+          {/* Bo's spot: beside the heading, clear of the header and the text. */}
+          <span
+            aria-hidden
+            className="absolute right-2 bottom-0 hidden h-px w-24 sm:block"
+            data-bo-perch
+            data-bo-always
+            data-bo-say="Hi, I'm Bo. Let's make something nice."
+          />
+          <h1 className="mt-2 max-w-xl font-display text-[clamp(2rem,5vw,3rem)] leading-[1.02] font-semibold tracking-tight text-balance">
+            Let's set up the gift
+          </h1>
+          <p className="mt-3 max-w-lg text-ink/65">Takes a minute. You can change everything later, even after friends start adding notes.</p>
+        </div>
 
-        <form onSubmit={handleCreate} className="mt-8 space-y-6" data-bo-zone>
-          <div className="card-paper p-5">
-            <label className="block text-sm font-medium">Gift site name</label>
+        <form onSubmit={handleCreate} className="mt-10 space-y-5" data-bo-zone>
+          <div className="card-paper p-5 sm:p-7">
+            {step(1, "Give it a name", "This is the big title they'll see first.")}
+            <label htmlFor="gift-name" className="sr-only">
+              Gift name
+            </label>
             <input
+              id="gift-name"
               required
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               placeholder="Happy 30th, Maya!"
-              className="mt-2 w-full rounded-xl border border-line bg-cream px-4 py-3 text-sm outline-none focus:border-accent"
+              className="mt-5 w-full rounded-2xl border border-line bg-paper px-5 py-4 font-display text-lg outline-none transition-colors focus:border-accent focus:bg-white"
             />
-            <label className="mt-5 block text-sm font-medium">Theme</label>
-            <select
-              value={themeId ?? themeFromUrl ?? ""}
-              onChange={(e) => pickTheme(e.target.value || undefined)}
-              className="mt-2 w-full rounded-xl border border-line bg-cream px-4 py-3 text-sm outline-none focus:border-accent"
-            >
-              <option value="">Choose a theme…</option>
-              {themes.map((t) => (
-                <option key={t.id} value={t.id}>
-                  {t.name}
-                </option>
-              ))}
-            </select>
-            {activeTheme?.description ? (
-              <p className="mt-2 text-xs text-muted">{activeTheme.description}</p>
-            ) : null}
-            <div className="mt-6 border-t border-line pt-5">
-              <FormatPicker value={format} onChange={pickFormat} />
+          </div>
+
+          <div className="card-paper p-5 sm:p-7">
+            {step(2, "Pick a theme", "Sets the colors, the opening and Bo's outfit.")}
+            <div className="mt-5 grid grid-cols-2 gap-2.5 sm:grid-cols-3" role="radiogroup" aria-label="Theme">
+              {themes.map((t) => {
+                const on = (themeId ?? themeFromUrl) === t.id;
+                const pals = suggestedPalettes(t, allPalettes);
+                return (
+                  <button
+                    key={t.id}
+                    type="button"
+                    role="radio"
+                    aria-checked={on}
+                    onClick={() => pickTheme(on ? undefined : t.id)}
+                    className={`squish relative overflow-hidden rounded-2xl p-3.5 text-left transition-shadow ${on ? "shadow-[0_0_0_2px_var(--accent)]" : "shadow-[0_0_0_1px_var(--line)] hover:shadow-[0_0_0_1px_var(--accent)]"}`}
+                    style={{ backgroundColor: stageColorFor(t) }}
+                  >
+                    <span aria-hidden className="absolute -top-6 -right-6 size-16 rounded-full bg-white/45" />
+                    <span className="relative block font-mono text-[10px] tracking-[0.14em] text-ink/60 uppercase">{t.category}</span>
+                    <span className="relative mt-0.5 block font-display text-base leading-tight font-semibold">{t.name}</span>
+                    <span className="relative mt-3 flex -space-x-1.5" aria-hidden>
+                      {pals.slice(0, 3).map((p, i) => (
+                        <span key={i} className="size-5 rounded-full ring-2 ring-white" style={{ background: `conic-gradient(${p.background} 0 50%, ${p.accent} 50% 75%, ${p.primary} 75%)` }} />
+                      ))}
+                    </span>
+                    {on ? <span className="absolute top-2.5 right-2.5 grid size-6 place-items-center rounded-full bg-ink text-[12px] text-cream">✓</span> : null}
+                  </button>
+                );
+              })}
+            </div>
+            {activeTheme?.description ? <p className="mt-3 text-sm text-ink/60">{activeTheme.description}</p> : null}
+          </div>
+
+          <div className="card-paper p-5 sm:p-7">
+            {step(3, "Choose how it opens", "Same notes, different way to open them. Switch any time.")}
+            <div className="mt-4">
+              <FormatPicker value={format} onChange={pickFormat} bare />
             </div>
           </div>
 
-          <div className="card-paper p-5">
-            <p className="text-sm font-medium">What can people add?</p>
-            {activeTheme && suggested.length > 0 ? (
-              <p className="mt-1 text-xs text-muted">Suggested for {activeTheme.name}</p>
-            ) : null}
+          <div className="card-paper p-5 sm:p-7">
+            {step(4, "What can friends add?", activeTheme && suggested.length > 0 ? `We picked a few for ${activeTheme.name}. Turn on anything else.` : "Turn on as many as you like. Each one is free.")}
 
-            <div className="mt-4 grid gap-4 md:grid-cols-[1fr_260px] md:items-start">
+            <div className="mt-5 grid gap-5 md:grid-cols-[1fr_250px] md:items-start">
               <div className="space-y-2">
                 {MODULES.map((mod) => {
                   const on = selected.includes(mod.type);
@@ -211,44 +246,32 @@ function CreatePage() {
                   return (
                     <div key={mod.type}>
                       <div
-                        role="button"
-                        tabIndex={0}
-                        onClick={() => setPreviewed(mod.type)}
-                        onKeyDown={(e) => {
-                          if (e.key === "Enter" || e.key === " ") setPreviewed(mod.type);
-                        }}
-                        className={`cursor-pointer rounded-xl border px-4 py-3 transition-colors ${
-                          on ? "border-accent bg-accent/8" : "border-line bg-cream"
-                        } ${active ? "ring-2 ring-accent/40" : ""}`}
+                        onMouseEnter={() => setPreviewed(mod.type)}
+                        onFocus={() => setPreviewed(mod.type)}
+                        className={`flex items-center gap-4 rounded-2xl px-4 py-3 transition-colors ${on ? "bg-pink/45" : "bg-paper"} ${active ? "ring-1 ring-accent/40" : ""}`}
                       >
-                        <div className="flex items-center justify-between gap-4">
-                          <span>
-                            <span className="block text-sm font-medium">
-                              {mod.label}
-                              {suggested.includes(mod.type) ? (
-                                <span className="ml-2 font-mono text-[10px] tracking-[0.12em] text-accent uppercase">
-                                  suggested
-                                </span>
-                              ) : null}
-                            </span>
-                            <span className="block text-xs text-muted">{mod.blurb}</span>
-                            {mod.source === "creator" ? (
-                              <span className="block text-xs text-muted">
-                                You set this one up yourself.
-                              </span>
+                        <button type="button" className="min-w-0 flex-1 text-left" onClick={() => setPreviewed(mod.type)}>
+                          <span className="flex items-center gap-2 text-[15px] font-medium">
+                            {mod.label}
+                            {suggested.includes(mod.type) ? (
+                              <span className="rounded-full bg-white/80 px-2 py-0.5 font-mono text-[9px] tracking-[0.12em] text-accent uppercase">Suggested</span>
                             ) : null}
                           </span>
-                          <button
-                            type="button"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              toggle(mod.type);
-                            }}
-                            className="font-mono text-[11px] tracking-[0.14em] text-muted uppercase hover:text-ink"
-                          >
-                            {on ? "Added · Free" : "Add"}
-                          </button>
-                        </div>
+                          <span className="block text-xs text-ink/60">
+                            {mod.blurb}
+                            {mod.source === "creator" ? " You set this one up yourself." : ""}
+                          </span>
+                        </button>
+                        <button
+                          type="button"
+                          role="switch"
+                          aria-checked={on}
+                          aria-label={`${mod.label}: ${on ? "on" : "off"}`}
+                          onClick={() => toggle(mod.type)}
+                          className={`relative h-7 w-12 shrink-0 rounded-full transition-colors ${on ? "bg-accent" : "bg-ink/15"}`}
+                        >
+                          <span className={`absolute top-1 left-1 size-5 rounded-full bg-white shadow transition-transform duration-300 ${on ? "translate-x-5" : ""}`} />
+                        </button>
                       </div>
                       {active ? (
                         <div className="mt-2 md:hidden">
@@ -260,35 +283,31 @@ function CreatePage() {
                 })}
               </div>
 
-              <div className="hidden md:sticky md:top-6 md:block">
-                <p className="font-mono text-[10px] tracking-[0.16em] text-muted uppercase">
-                  Preview
-                </p>
-                <p className="mt-2 text-sm font-medium">
-                  {MODULES.find((m) => m.type === previewed)?.label}
-                </p>
+              <div className="hidden md:sticky md:top-24 md:block">
+                <p className="font-mono text-[10px] tracking-[0.16em] text-muted uppercase">Preview</p>
+                <p className="mt-2 font-display text-base font-semibold">{MODULES.find((m) => m.type === previewed)?.label}</p>
                 <div className="mt-3">
                   <ModuleExample type={previewed} />
                 </div>
-                <p className="mt-3 text-xs text-muted">
-                  This is how the section will look on the finished page.
-                </p>
+                <p className="mt-3 text-xs text-ink/55">This is how the section looks on the finished gift.</p>
               </div>
-            </div>
-
-            <div className="mt-4 flex items-center justify-between border-t border-line pt-4 text-sm">
-              <span className="text-muted">Total</span>
-              <span className="font-medium">Free</span>
             </div>
           </div>
 
-          <button
-            type="submit"
-            disabled={busy}
-            className="w-full rounded-full bg-accent px-5 py-3.5 font-medium text-cream transition-colors hover:bg-accent/90 disabled:opacity-60"
-          >
-            {busy ? "Creating…" : "Create gift site"}
-          </button>
+          <div className="sticky bottom-4 z-20">
+            <div className="flex items-center justify-between gap-4 rounded-full bg-ink/95 py-2 pr-2 pl-6 text-cream shadow-[0_20px_50px_-20px_rgba(43,37,34,.6)] backdrop-blur">
+              <span className="min-w-0 truncate text-sm">
+                {selected.length} {selected.length === 1 ? "section" : "sections"} · Free to make
+              </span>
+              <button
+                type="submit"
+                disabled={busy}
+                className="squish shrink-0 rounded-full bg-pink px-6 py-3 text-sm font-semibold text-ink transition-colors hover:bg-white disabled:opacity-60"
+              >
+                {busy ? "Creating…" : "Create the gift"}
+              </button>
+            </div>
+          </div>
         </form>
       </section>
     </div>

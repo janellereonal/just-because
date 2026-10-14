@@ -207,12 +207,12 @@ export function BentoView({ site, modules, contributions, calendarEntries, palet
       className="bento-root min-h-screen"
       style={{ background: meshGradient(palette.primary, palette.accent, palette.background), color: ink, fontFamily: fonts.body, "--tile": surfaceColor(palette.background), "--accent": palette.accent } as React.CSSProperties}
     >
-      <div className="mx-auto max-w-6xl px-4 py-10 sm:px-6 sm:py-14">
+      <div className="mx-auto max-w-6xl px-4 py-10 @2xl:px-6 @2xl:py-14">
         <div className="bento-grid">
           <div className="bento-tile bento-hero" style={{ background: `linear-gradient(145deg, ${palette.accent}, ${palette.primary})`, color: readableInk(palette.accent) }}>
             <span className="bento-orb" aria-hidden />
             <p className="text-[11px] font-semibold tracking-[0.2em] uppercase opacity-80">A gift for {data.name}</p>
-            <h1 className="mt-3 text-[clamp(2.2rem,5.5vw,4.25rem)] leading-[0.95] font-semibold tracking-tight" style={{ fontFamily: fonts.heading }}>
+            <h1 className="mt-3 text-[clamp(2.2rem,5.5cqi,4.25rem)] leading-[0.95] font-semibold tracking-tight" style={{ fontFamily: fonts.heading }}>
               {heading}
             </h1>
             <p className="mt-4 max-w-md text-[15px] leading-relaxed opacity-90">{intro}</p>

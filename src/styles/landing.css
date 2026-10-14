@@ -177,3 +177,10 @@ html[data-intro="skip"] .jb-reveal { animation: rise .8s var(--ease-paper) both;
     #fbd3dc;
 }
 .faq summary::-webkit-details-marker { display: none; }
+
+/* Editor preview backdrop: soft dots, so the gift reads as the star. */
+.editor-canvas {
+  background-color: #f3ecf5;
+  background-image: radial-gradient(rgba(194, 54, 107, .13) 1.2px, transparent 1.4px);
+  background-size: 18px 18px;
+}

@@ -28,7 +28,7 @@ export function ModuleExample({
       <Frame tone={tone}>
         <p className="italic">“Happy birthday, twin!”</p>
         <p className="mt-2" style={{ color: tone.accent }}>
-          — Sam
+          Sam
         </p>
       </Frame>
     );
@@ -104,7 +104,7 @@ export function ModuleExample({
           </div>
         </div>
         <p className="mt-2" style={{ color: tone.accent }}>
-          — Alex
+          Alex
         </p>
       </Frame>
     );

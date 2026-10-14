@@ -122,16 +122,16 @@ export function ZineView({ site, modules, contributions, calendarEntries, palett
 
   return (
     <div className="zine-root min-h-screen" style={{ "--z-accent": accent } as React.CSSProperties}>
-      <div className="mx-auto max-w-5xl px-4 py-8 sm:px-8 sm:py-12">
+      <div className="mx-auto max-w-5xl px-4 py-8 @2xl:px-8 @2xl:py-12">
         <header className="zine-masthead">
           <div className="flex items-center justify-between gap-3">
             <span className="zine-mono">ISSUE 01 · {issueDate}</span>
             <span className="zine-mono">₱ PRICELESS</span>
           </div>
-          <h1 className="mt-6 text-[clamp(2.6rem,10vw,6.5rem)] leading-[0.92]">
+          <h1 className="mt-6 text-[clamp(2.6rem,10cqi,6.5rem)] leading-[0.92]">
             <Ransom text={data.name.toUpperCase()} accent={accent} />
           </h1>
-          <div className="mt-6 grid gap-6 sm:grid-cols-[1.4fr_1fr] sm:items-end">
+          <div className="mt-6 grid gap-6 @2xl:grid-cols-[1.4fr_1fr] @2xl:items-end">
             <div>
               <p className="zine-headline">{heading}</p>
               <Scribble color={accent} />
@@ -166,7 +166,7 @@ export function ZineView({ site, modules, contributions, calendarEntries, palett
         </div>
       ) : null}
 
-      <div className="mx-auto max-w-5xl px-4 py-10 sm:px-8">
+      <div className="mx-auto max-w-5xl px-4 py-10 @2xl:px-8">
         <div className="zine-wall">
           {data.notes.map((p) => (
             <Cutout key={p.id} piece={p} accent={accent} name={data.name} onOpen={() => setSheet(p)} />

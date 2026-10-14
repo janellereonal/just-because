@@ -59,7 +59,7 @@ function VoiceCard({ item, accent }: { item: Contribution; accent: string }) {
       {item.text_content ? <p className="mb-2 text-sm leading-snug">{item.text_content}</p> : null}
       {url ? <audio controls src={url} className="w-full" /> : <p className="text-sm opacity-60">Loading audio…</p>}
       <p className="mt-2 text-sm" style={{ color: accent }}>
-        — {item.author_name}
+        {item.author_name}
       </p>
     </div>
   );
@@ -557,7 +557,7 @@ export function GiftSiteView({
                         <article className="rounded-2xl bg-[var(--gift-surface)] p-5 shadow-sm ring-1 ring-black/5">
                           <p className="leading-relaxed whitespace-pre-line">{item.text_content}</p>
                           <p className="mt-3 text-sm" style={{ color: accentText }}>
-                            — {item.author_name}
+                            {item.author_name}
                           </p>
                         </article>
                       </Mine>
@@ -573,7 +573,7 @@ export function GiftSiteView({
                     >
                       <p className="leading-relaxed">{s.t}</p>
                       <p className="mt-3 text-sm" style={{ color: accentText }}>
-                        — {s.a}
+                        {s.a}
                       </p>
                     </article>
                   ))}
@@ -710,7 +710,7 @@ export function GiftSiteView({
                       />
                     ))}
                   </span>
-                  <span className="text-xs opacity-70">— Sam</span>
+                  <span className="text-xs opacity-70">Sam</span>
                 </div>
               )}
             </div>
@@ -764,7 +764,7 @@ export function GiftSiteView({
                         </a>
                       )}
                       <p className="mt-3 text-sm" style={{ color: accentText }}>
-                        — {item.author_name}
+                        {item.author_name}
                       </p>
                     </div>
                   );

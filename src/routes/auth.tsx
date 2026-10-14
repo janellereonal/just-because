@@ -9,12 +9,12 @@ import { SiteHeader } from "@/components/SiteHeader";
 export const Route = createFileRoute("/auth")({
   head: () => ({
     meta: [
-      { title: "Sign in — Just Because" },
+      { title: "Sign in | Just Because" },
       {
         name: "description",
         content: "Sign in to create and manage your Just Because gift sites.",
       },
-      { property: "og:title", content: "Sign in — Just Because" },
+      { property: "og:title", content: "Sign in | Just Because" },
       {
         property: "og:description",
         content: "Sign in to create and manage your Just Because gift sites.",
