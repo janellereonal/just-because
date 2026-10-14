@@ -2,6 +2,7 @@
  * Plans, limits and payments for gifts. Prices come only from
  * src/config/pricing.ts; nothing about an amount is taken from the browser.
  */
+import { formatInfo } from "@/lib/formats";
 import { and, eq, inArray, sql } from "drizzle-orm";
 import {
   LEGACY_TIER,
@@ -69,7 +70,7 @@ export function tierBlocker(tier: Tier, usage: Usage, format: string): string | 
   if (usage.photos > tier.photos.cap)
     return `This gift has ${usage.photos} photos. ${tier.name} fits ${tier.photos.cap}.`;
   if (!tier.formats.includes(format as Tier["formats"][number]))
-    return `${tier.name} is scrapbook only. Switch the format to scrapbook to use it.`;
+    return `${tier.name} doesn't include this format. Switch to ${tier.formats.map((f) => formatInfo(f).title).join(" or ")} to use it.`;
   return null;
 }
 

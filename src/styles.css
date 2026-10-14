@@ -1,11 +1,15 @@
 @import "tailwindcss" source(none);
 @source "../src";
 @import "tw-animate-css";
+@import "./styles/formats.css";
+@import "./styles/landing.css";
+@import "./styles/skins.css";
 
 /*
- * Just Because — "Scrapbook studio" design system.
- * Warm paper neutrals, one clay accent, editorial serif display.
- * Never hardcode colors in components; use these semantic tokens.
+ * Just Because, "Pastel toybox" design system (Oct 2026 redesign).
+ * Soft blush ground, candy pastels for color blocks, one berry accent for
+ * actions, rounded playful display type. Never hardcode colors in components;
+ * use these semantic tokens.
  */
 
 @theme inline {
@@ -32,6 +36,12 @@
   --color-accent-soft: var(--accent-soft);
   --color-line: var(--line);
   --color-glass: var(--glass);
+  --color-pink: var(--pink);
+  --color-lilac: var(--lilac);
+  --color-mint: var(--mint);
+  --color-butter: var(--butter);
+  --color-sky: var(--sky);
+  --color-peach: var(--peach);
 
   --color-card: var(--cream);
   --color-card-foreground: var(--ink);
@@ -49,21 +59,31 @@
 }
 
 :root {
-  --radius: 0.875rem;
+  --radius: 1.125rem;
 
-  --font-display-family: "Fraunces", serif;
-  --font-body-family: "Inter", sans-serif;
+  --font-display-family: "Fredoka", "DM Sans", system-ui, sans-serif;
+  --font-body-family: "DM Sans", system-ui, sans-serif;
   --font-mono-family: "JetBrains Mono", monospace;
 
-  --paper: oklch(0.944 0.018 79.2);
-  --cream: oklch(0.977 0.01 85.4);
-  --ink: oklch(0.256 0.012 63.5);
-  --muted: oklch(0.606 0.024 71.9);
-  --accent: oklch(0.585 0.128 42.1);
-  --accent-soft: oklch(0.86 0.045 61.4);
-  --line: oklch(0.891 0.021 82.1);
-  --glass: oklch(1 0 0);
-  --destructive: oklch(0.55 0.19 27.3);
+  /* ground and text */
+  --paper: #fff7f2;
+  --cream: #fffbf8;
+  --ink: #2b2522;
+  --muted: #74656c;
+  --line: #f0dfe6;
+  --glass: #ffffff;
+  /* actions: berry. White text on it passes 4.5:1. */
+  --accent: #c2366b;
+  --accent-soft: #fbd3dc;
+  --destructive: #c0392b;
+  /* candy pastels for blocks, chips and stages (never for text) */
+  --pink: #fbd3dc;
+  --lilac: #e6dcf7;
+  --mint: #d5f0e3;
+  --butter: #ffe8b0;
+  --sky: #d9e8fb;
+  --peach: #ffdccb;
+
   --comic-black: oklch(0.18 0.01 45);
   --comic-white: oklch(0.98 0.01 92);
   --comic-red: oklch(0.55 0.2 27);
@@ -75,6 +95,7 @@
   --foreground: var(--ink);
 
   --ease-paper: cubic-bezier(0.32, 0.72, 0, 1);
+  --ease-bounce: cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
 @keyframes rise {
@@ -119,10 +140,21 @@
 }
 
 @utility card-paper {
-  background-color: color-mix(in oklab, var(--glass) 60%, transparent);
-  backdrop-filter: blur(12px);
+  background-color: var(--glass);
   border-radius: var(--radius-2xl);
-  box-shadow: 0 0 0 1px color-mix(in oklab, var(--ink) 6%, transparent);
+  box-shadow:
+    0 0 0 1px color-mix(in oklab, var(--ink) 5%, transparent),
+    0 10px 30px -12px color-mix(in oklab, var(--accent) 22%, transparent);
+}
+
+/* A soft, squishy press for playful buttons and cards. */
+@utility squish {
+  transition: transform 0.25s var(--ease-bounce);
+  &:hover { transform: translateY(-2px) scale(1.015); }
+  &:active { transform: scale(0.97); }
+  @media (prefers-reduced-motion: reduce) {
+    &:hover, &:active { transform: none; }
+  }
 }
 
 @layer base {
@@ -147,10 +179,10 @@
   transition: outline-color 0.15s ease;
 }
 .editable-field:hover {
-  outline-color: rgba(181, 98, 62, 0.45);
+  outline-color: rgba(194, 54, 107, 0.45);
 }
 .editable-field[data-active="true"] {
-  outline-color: #b5623e;
+  outline-color: #c2366b;
 }
 
 @keyframes comic-slam {
@@ -164,12 +196,13 @@
 @keyframes comic-drift { 50% { transform: translate(14px, -8px); } }
 @keyframes comic-wave { 50% { transform: translateX(-35px); } }
 
+.comic-reader, .comic-page-stage { container: gift / inline-size; }
 .comic-title { font-family: "Bangers", Impact, sans-serif; letter-spacing: 0; }
 .comic-cover, .comic-reader { --comic-ink: var(--comic-black); min-height: 100dvh; color: var(--comic-ink); font-family: "Comic Neue", sans-serif; }
 .comic-cover { position: fixed; inset: 0; z-index: 70; overflow: hidden; display: grid; place-items: center; padding: 2rem; background: var(--comic-navy); border: 12px solid var(--comic-ink); }
 .comic-cover::before { content: ""; position: absolute; inset: 0; opacity: .24; background-image: radial-gradient(var(--comic-white) 1px, transparent 1.5px); background-size: 8px 8px; }
 .comic-cover::after { content: ""; position: absolute; inset: 0; background: repeating-linear-gradient(105deg, transparent 0 38px, color-mix(in oklab, var(--comic-accent) 38%, transparent) 40px 42px); }
-.comic-cover-copy { position: relative; z-index: 4; width: min(900px, 92vw); text-align: center; color: var(--comic-white); text-shadow: 4px 4px 0 var(--comic-ink); }
+.comic-cover-copy { position: relative; z-index: 4; width: min(900px, 92cqi); text-align: center; color: var(--comic-white); text-shadow: 4px 4px 0 var(--comic-ink); }
 .comic-slam { animation: comic-slam .75s cubic-bezier(.2,.9,.3,1.2) both; }
 .comic-kaboom { position: absolute; right: 2%; top: -5rem; transform: rotate(8deg); padding: 1.4rem 1rem; clip-path: polygon(50% 0,61% 28%,86% 8%,78% 37%,100% 45%,76% 57%,92% 85%,62% 70%,50% 100%,38% 70%,8% 85%,24% 57%,0 45%,22% 37%,14% 8%,39% 28%); background: var(--comic-accent); color: var(--comic-ink); font: 2.4rem "Bangers", sans-serif; text-shadow: none; }
 .comic-price, .comic-badge { position: absolute; z-index: 5; top: 1rem; border: 4px solid var(--comic-ink); background: var(--comic-white); color: var(--comic-ink); padding: .55rem .75rem; font: 1.1rem "Bangers", sans-serif; text-align: center; }
@@ -188,10 +221,10 @@
 .comic-world-1 .comic-atmosphere::after { content: "✿   ≋   ✿   ≋   ✿   ≋   ✿"; position: absolute; inset: auto -30px 0; height: 20%; color: var(--comic-white); font-size: 3rem; word-spacing: 3rem; animation: comic-wave 6s ease-in-out infinite; }
 .comic-reader-bar, .comic-controls { position: relative; z-index: 5; display: flex; align-items: center; justify-content: space-between; gap: .75rem; padding: .65rem 1rem; background: var(--comic-white); border-color: var(--comic-ink); }
 .comic-reader-bar { border-bottom: 4px solid; } .comic-controls { border-top: 4px solid; justify-content: center; }
-.comic-page-stage { position: relative; z-index: 2; min-height: 0; padding: clamp(.75rem, 3vw, 2rem); overflow: auto; }
-.comic-page { width: min(920px, 100%); min-height: calc(100dvh - 150px); margin: auto; padding: clamp(1rem, 4vw, 2.5rem); background-color: var(--comic-paper); background-image: radial-gradient(color-mix(in oklab, var(--comic-ink) 13%, transparent) .7px, transparent .8px); background-size: 5px 5px; border: 5px solid var(--comic-ink); box-shadow: 10px 10px 0 color-mix(in oklab, var(--comic-ink) 70%, transparent); animation: comic-turn .4s ease both; }
+.comic-page-stage { position: relative; z-index: 2; min-height: 0; padding: clamp(.75rem, 3cqi, 2rem); overflow: auto; }
+.comic-page { width: min(920px, 100%); min-height: calc(100dvh - 150px); margin: auto; padding: clamp(1rem, 4cqi, 2.5rem); background-color: var(--comic-paper); background-image: radial-gradient(color-mix(in oklab, var(--comic-ink) 13%, transparent) .7px, transparent .8px); background-size: 5px 5px; border: 5px solid var(--comic-ink); box-shadow: 10px 10px 0 color-mix(in oklab, var(--comic-ink) 70%, transparent); animation: comic-turn .4s ease both; }
 .comic-page-heading { display: flex; align-items: end; justify-content: space-between; gap: 1rem; border-bottom: 5px solid var(--comic-ink); padding-bottom: .5rem; }
-.comic-page-heading span { font-weight: 700; } .comic-page-heading h2 { font-size: clamp(2rem, 7vw, 4.5rem); line-height: .85; text-align: right; }
+.comic-page-heading span { font-weight: 700; } .comic-page-heading h2 { font-size: clamp(2rem, 7cqi, 4.5rem); line-height: .85; text-align: right; }
 .comic-page-content { margin-top: 1rem; }
 .comic-panel { position: relative; background: var(--comic-white); border: 5px solid var(--comic-ink); box-shadow: 5px 5px 0 var(--comic-accent); }
 .comic-caption { background: var(--comic-accent); color: var(--comic-ink); border-top: 4px solid var(--comic-ink); padding: .55rem .7rem; font-weight: 700; }
@@ -203,11 +236,11 @@
 .comic-yours { display: inline-block; margin-top: .75rem; transform: rotate(-3deg); background: var(--comic-accent); border: 3px solid var(--comic-ink); padding: .25rem .5rem; font: 1rem "Bangers", sans-serif; }
 .comic-cassette { display: flex; align-items: center; justify-content: space-around; min-height: 100px; border: 5px solid var(--comic-ink); border-radius: 10px; background: var(--comic-accent); font-size: 2rem; }
 .comic-splash-page, .comic-back-cover { min-height: 60vh; display: grid; place-items: center; text-align: center; }
-.comic-burst { max-width: 680px; padding: clamp(4rem, 12vw, 8rem) clamp(2rem, 8vw, 6rem); clip-path: polygon(50% 0,59% 25%,78% 6%,75% 31%,100% 29%,81% 50%,100% 68%,73% 67%,77% 96%,57% 75%,46% 100%,39% 75%,14% 94%,23% 66%,0 64%,19% 48%,1% 27%,27% 30%,22% 3%,42% 25%); }
-.comic-confetti { position: absolute; font-size: clamp(2rem, 7vw, 5rem); color: var(--comic-accent); word-spacing: 3rem; }
+.comic-burst { max-width: 680px; padding: clamp(4rem, 12cqi, 8rem) clamp(2rem, 8cqi, 6rem); clip-path: polygon(50% 0,59% 25%,78% 6%,75% 31%,100% 29%,81% 50%,100% 68%,73% 67%,77% 96%,57% 75%,46% 100%,39% 75%,14% 94%,23% 66%,0 64%,19% 48%,1% 27%,27% 30%,22% 3%,42% 25%); }
+.comic-confetti { position: absolute; font-size: clamp(2rem, 7cqi, 5rem); color: var(--comic-accent); word-spacing: 3rem; }
 .comic-credits { margin-top: 2rem; max-width: 38rem; border: 5px solid var(--comic-ink); background: var(--comic-white); padding: 1.5rem; }
 .comic-menu-backdrop { position: fixed; z-index: 90; inset: 0; background: color-mix(in oklab, var(--comic-ink) 65%, transparent); }
-.comic-menu { width: min(380px, 88vw); height: 100%; overflow-y: auto; background: var(--comic-paper); border-right: 5px solid var(--comic-ink); padding: 1rem; }
+.comic-menu { width: min(380px, 88cqi); height: 100%; overflow-y: auto; background: var(--comic-paper); border-right: 5px solid var(--comic-ink); padding: 1rem; }
 .comic-menu button:not([aria-label]) { display: grid; width: 100%; grid-template-columns: 2.5rem 1fr; gap: .5rem; padding: .85rem; border-bottom: 3px solid var(--comic-ink); text-align: left; font-weight: 700; }
 .comic-menu button.is-active { background: var(--comic-accent); }
 .comic-wipe { position: fixed; z-index: 100; inset: 0; display: grid; place-items: center; background: var(--comic-accent); color: var(--comic-ink); clip-path: polygon(0 0,100% 0,88% 100%,0 100%); animation: comic-turn .3s ease both; }
@@ -225,4 +258,91 @@
 
 @media (prefers-reduced-motion: reduce) {
   .comic-slam, .comic-page, .comic-atmosphere, .comic-world-1 .comic-atmosphere::after, .comic-wipe { animation: none !important; }
+}
+
+/* Bo's speech bubble (decorative; aria-hidden where used). */
+.bo-bubble {
+  position: absolute;
+  width: max-content;
+  max-width: 220px;
+  padding: 9px 14px;
+  border-radius: 18px;
+  background: #fff;
+  color: var(--ink);
+  font-family: var(--font-display-family);
+  font-weight: 500;
+  font-size: 15px;
+  line-height: 1.25;
+  box-shadow: 0 10px 26px -14px rgba(43, 37, 34, 0.45), 0 0 0 1px rgba(43, 37, 34, 0.07);
+  pointer-events: none;
+  opacity: 0;
+  transform: translateY(6px) scale(0.9);
+  transform-origin: 20px 100%;
+  transition: opacity 0.18s ease, transform 0.26s cubic-bezier(0.3, 1.5, 0.5, 1);
+}
+.bo-bubble[data-show] {
+  opacity: 1;
+  transform: none;
+}
+.bo-bubble::after {
+  content: "";
+  position: absolute;
+  bottom: -5px;
+  left: 18px;
+  width: 12px;
+  height: 12px;
+  background: #fff;
+  border-radius: 2px;
+  transform: rotate(45deg);
+  box-shadow: 1px 1px 0 rgba(43, 37, 34, 0.07);
+}
+.bo-bubble[data-side="left"] {
+  transform-origin: calc(100% - 20px) 100%;
+}
+.bo-bubble[data-tail="none"]::after {
+  display: none;
+}
+.bo-bubble[data-z] {
+  font-style: italic;
+  letter-spacing: 0.18em;
+  color: color-mix(in srgb, var(--ink) 60%, transparent);
+  animation: bo-z 2.4s ease-in-out infinite;
+}
+@keyframes bo-z {
+  50% {
+    translate: 0 -4px;
+  }
+}
+/* Bo peeking out from behind a button (dashboard empty state). */
+@keyframes bo-peek {
+  0%, 18%, 100% {
+    transform: translateX(-70%) rotate(-8deg);
+  }
+  30%, 70% {
+    transform: translateX(0) rotate(6deg);
+  }
+  78% {
+    transform: translateX(-10%) rotate(-4deg);
+  }
+}
+.bo-peek {
+  animation: bo-peek 5s ease-in-out infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  .bo-peek {
+    animation: none;
+  }
+  .bo-bubble[data-z] {
+    animation: none;
+  }
+}
+.bo-bubble[data-side="left"]::after {
+  left: auto;
+  right: 18px;
+}
+@media (prefers-reduced-motion: reduce) {
+  .bo-bubble {
+    transform: none;
+    transition: opacity 0.18s ease;
+  }
 }

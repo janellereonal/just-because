@@ -1,12 +1,25 @@
 import { useEffect, useMemo, useState } from "react";
+import { SkinDecor } from "@/components/SkinDecor";
+import { Theme3D } from "@/components/Theme3D";
+import type { ThemeKind } from "@/lib/themeKind";
 import { backgroundCss, type BackgroundStyle } from "@/lib/gift";
 import { readableInk, readableOn } from "@/lib/palettes";
 import type { Palette } from "@/lib/themes";
-import Bo from "@/components/Bo";
 import { INTRO_COPY, type IntroStyle } from "@/lib/intro";
 
 export { INTRO_COPY, introStyleForTheme, type IntroStyle } from "@/lib/intro";
 import { Gift } from "lucide-react";
+
+const STYLE_KIND: Record<IntroStyle, ThemeKind> = {
+  envelope: "valentine",
+  giftbox: "birthday",
+  boardingpass: "voyage",
+  present: "christmas",
+  paw: "pets",
+  sparkler: "newyear",
+  letter: "anniversary",
+  invitation: "wedding",
+};
 
 /** The little shape that mixes into the confetti and drifts in the background. */
 const THEME_SHAPE: Record<IntroStyle, string> = {
@@ -114,37 +127,6 @@ function Confetti({ palette, shape }: { palette: Palette; shape: string }) {
   );
 }
 
-function Doodles({ shape, color }: { shape: string; color: string }) {
-  const spots = [
-    { left: "8%", top: "16%", size: 26, delay: "0s" },
-    { left: "84%", top: "22%", size: 20, delay: "1.1s" },
-    { left: "18%", top: "72%", size: 18, delay: "2s" },
-    { left: "76%", top: "68%", size: 24, delay: "0.6s" },
-    { left: "50%", top: "10%", size: 16, delay: "1.6s" },
-    { left: "34%", top: "86%", size: 20, delay: "2.4s" },
-  ];
-  return (
-    <div className="pointer-events-none absolute inset-0 overflow-hidden" aria-hidden>
-      {spots.map((s, i) => (
-        <span
-          key={i}
-          className="absolute"
-          style={{
-            left: s.left,
-            top: s.top,
-            fontSize: s.size,
-            color,
-            opacity: 0.12,
-            animation: `jb-drift 9s ease-in-out ${s.delay} infinite`,
-          }}
-        >
-          {shape}
-        </span>
-      ))}
-    </div>
-  );
-}
-
 export function GiftIntro({
   style,
   palette,
@@ -155,6 +137,7 @@ export function GiftIntro({
   onOpen,
   onSkip,
   contained = false,
+  kind: kindProp,
 }: {
   style: IntroStyle;
   palette: Palette;
@@ -165,6 +148,8 @@ export function GiftIntro({
   onOpen: () => void;
   onSkip?: () => void;
   contained?: boolean;
+  /** The occasion, for the 3D object and backdrop. Defaults from the intro style. */
+  kind?: ThemeKind | undefined;
 }) {
   useIntroStyles();
   const reduced = prefersReducedMotion();
@@ -174,10 +159,12 @@ export function GiftIntro({
   const copy = INTRO_COPY[style];
   const ink = readableInk(palette.background);
   const muted = `${ink}99`;
-  const buttonText = readableOn(palette.primary, palette.background, 4.5) === palette.background
-    ? palette.background
-    : readableInk(palette.primary);
+  const buttonText =
+    readableOn(palette.primary, palette.background, 4.5) === palette.background
+      ? palette.background
+      : readableInk(palette.primary);
   const greeting = introText?.trim() || `For ${recipientName || "you"}`;
+  const kind = kindProp ?? STYLE_KIND[style];
 
   useEffect(() => {
     if (reduced) return;
@@ -196,13 +183,18 @@ export function GiftIntro({
     window.setTimeout(onOpen, reduced ? 350 : 1200);
   }
 
-  const pose = opening ? "surprise" : stage === 0 ? "carry" : stage === 1 ? "hello" : "idle";
-
   return (
     <div
-      className={`jb-intro ${contained ? "absolute" : "fixed"} inset-0 z-[60] grid cursor-pointer place-items-center overflow-hidden px-6`}
+      className={`jb-intro skin-${kind} isolate ${contained ? "absolute" : "fixed"} inset-0 z-[60] grid cursor-pointer place-items-center overflow-hidden px-6`}
       style={{
         ...backgroundCss(backgroundStyle, palette),
+        ...({
+          "--sk-a": readableOn(palette.background, palette.accent, 3),
+          "--sk-p": palette.primary,
+          "--sk-bg": palette.background,
+          "--sk-ink": ink,
+          "--gift-surface": palette.background,
+        } as React.CSSProperties),
         color: ink,
         fontFamily: fonts.body,
         transition: "opacity 600ms ease, transform 600ms ease",
@@ -216,7 +208,7 @@ export function GiftIntro({
         if (e.key === "Enter" || e.key === " ") open();
       }}
     >
-      <Doodles shape={THEME_SHAPE[style]} color={palette.primary} />
+      <SkinDecor kind={kind} />
 
       <div className="relative flex flex-col items-center text-center">
         <p
@@ -257,23 +249,16 @@ export function GiftIntro({
         </div>
 
         <div
-          className="mt-4"
+          className="sk-hero mt-2 w-[min(560px,88vw)]"
           style={{
-            animation: stage === 0 && !reduced ? "jb-walk-in 1.6s ease-out .2s both" : undefined,
+            animation: reduced ? undefined : "jb-pop .9s cubic-bezier(.3,1.4,.5,1) .15s both",
+            transition: "transform 900ms cubic-bezier(.3,1.3,.5,1), opacity 700ms ease",
+            transform: opening && !reduced ? "scale(1.35) translateY(-20px)" : undefined,
+            opacity: opening ? 0 : 1,
           }}
         >
-          <Bo pose={pose} size={opening ? 200 : 160} />
+          <Theme3D kind={kind} palette={palette} className="sk-stage" />
         </div>
-
-        {stage >= 1 && !opening ? (
-          <span
-            className="-mt-3 text-2xl"
-            style={{ color: palette.primary, animation: "jb-fade-up .4s ease-out both" }}
-            aria-hidden
-          >
-            ✉
-          </span>
-        ) : null}
 
         {stage >= 3 ? (
           <button

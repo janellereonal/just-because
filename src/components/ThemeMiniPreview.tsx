@@ -102,7 +102,7 @@ export function ThemeMiniPreview({
               style={{ backgroundColor: `${p.primary}26` }}
             />
             <span className="mt-1 block text-[5px]" style={{ color: p.accent }}>
-              — Sam
+              Sam
             </span>
           </div>
         ))}

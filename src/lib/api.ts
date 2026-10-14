@@ -17,6 +17,7 @@
  *  - a password-protected gift (paid feature) also needs the right password
  *    first; the password hash itself never leaves the server
  */
+import { FORMAT_IDS } from "@/lib/formats";
 import { createServerFn } from "@tanstack/react-start";
 import { and, asc, desc, eq, inArray, ne, or, sql } from "drizzle-orm";
 import { z } from "zod";
@@ -281,11 +282,12 @@ export const createSite = createServerFn({ method: "POST" })
     z.object({
       title: z.string().trim().min(1).max(200),
       themeId: id.nullable(),
-      format: z.enum(["scrapbook", "comic"]),
+      format: z.enum(FORMAT_IDS),
       paletteId: id.nullable(),
       customColors: paletteShape,
       treeRevealDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).nullable(),
       modules: z.array(z.enum(MODULE_TYPES)).min(1),
+      fontChoice: z.enum(["romantic", "playful", "modern", "handwritten"]).optional(),
     }),
   )
   .handler(async ({ data }) => {
@@ -304,6 +306,7 @@ export const createSite = createServerFn({ method: "POST" })
           paletteId: data.paletteId,
           customColors: data.customColors,
           treeRevealDate: data.treeRevealDate,
+          ...(data.fontChoice ? { fontChoice: data.fontChoice } : {}),
         })
         .returning({ id: schema.giftSites.id });
       const unique = [...new Set(data.modules)];
@@ -333,7 +336,7 @@ export const updateSite = createServerFn({ method: "POST" })
         palette_id: id.nullable(),
         share_notes: z.boolean(),
         status: z.enum(["draft", "published"]).optional(),
-        format: z.enum(["scrapbook", "comic"]),
+        format: z.enum(FORMAT_IDS),
         format_settings: jsonObject,
       }),
     }),
@@ -351,7 +354,7 @@ export const updateSite = createServerFn({ method: "POST" })
     }
     const tier = getTier(site.tier);
     if (tier && !tier.formats.includes(p.format)) {
-      throw new HttpError(400, `${tier.name} is scrapbook only. Upgrade to use the comic format.`);
+      throw new HttpError(400, `${tier.name} doesn't include that format. Upgrade to use it.`);
     }
     await getDb()
       .update(schema.giftSites)

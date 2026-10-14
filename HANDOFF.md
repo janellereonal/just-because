@@ -32,6 +32,64 @@ and what's next**, so a fresh Claude session on any account can pick up without 
 - **Until the PayMongo keys are added, "Wrap it up" on the live site shows "We couldn't open
   the payment page."** That's expected.
 
+## 1b. Redesign (live on justbecause.site since 15 Oct 2026)
+
+On 15 Oct Janelle asked to put the redesign live, so `redesign` was fast-forwarded into `main`.
+Keep designing on `redesign` (preview link) and fast-forward `main` when she's happy with a batch.
+
+Janelle wants the site colorful, playful, cute and 3D before launch, plus the mascot behaviors in
+her brief (Bo hops between sections as you scroll, reacts to fields, easter eggs). Work happens on
+the `redesign` branch; Vercel gives it its own preview link. `main` stays the live site.
+
+Done so far:
+- Pastel "toybox" tokens in `src/styles.css` (blush ground, candy pastels, berry accent #C2366B),
+  Fredoka display + DM Sans body, floating rounded header. The flat SVG Bo's lid is pink now.
+- **3D Bo** in code: `src/lib/bo3d/scene.ts` (three.js, built from rounded shapes) and
+  `src/components/Bo3D.tsx` (lazy-loaded, pauses off screen, falls back to the SVG Bo). Supports
+  moods (wave/idle/celebrate) and a 0..4 scroll story (dress up, notes fly in, wrap, open).
+- Landing page rebuilt: 3D hero, sticky scroll story, themes row, plans, closing CTA.
+- Theme gallery: occasion filter chips, big phone mockups showing the real gift (plays on hover /
+  in view on phones). Theme page: real `GiftSiteView` in a phone, color-mood picker, "The opening" tab.
+- Fixed: mini previews never mounted if palettes loaded after the first render.
+
+Mascot behaviors (Oct 2026, all on `redesign`):
+- **3D Bo** is the code-built model in `src/lib/bo3d/scene.ts`. A Spline version (same parts) exists in
+  Janelle's Spline file; drop an export at `public/models/bo.glb` and the site uses it automatically.
+  Janelle prefers the code-built look, so no export is needed.
+- Faces (`setFace`): wink, happy, blep, love, surprised, dizzy, sleepy, yawn. He pulls a cute one every
+  few seconds. Eyes follow the pointer; random blinks.
+- Theme accessories on the lid (`setAccessory`, map in `src/lib/bo3d/accessories.ts`), built in code
+  (or from `public/models/accessories/*.glb` if exported).
+- Flat stills everywhere else are 3D renders: `public/bo/*.webp` via `src/components/Bo.tsx`.
+- **Hopping Bo** (`src/components/BoBuddy.tsx` + `src/lib/mascot/controller.ts`): one state machine.
+  Perches are marked with `data-bo-*` attributes (documented at the top of controller.ts). Pages nudge
+  him through `src/lib/mascot/bus.ts` (`boSay`, `boAccessory`, `boReact`, `boWrap`).
+  - Landing: floats down on a note, hops Themes → theme cards (wears each theme's accessory) → Plans →
+    Most popular (points at it) → closing card. Keepsake hover = heart eyes.
+  - /create: hops to the focused field, bobs on keystrokes, reacts to name, theme, comic/scrapbook.
+  - Editor: sits at the canvas corner, hops to focused fields, "{name} is so lucky.", waves on Invite,
+    wraps himself up before checkout (`boWrap`, max ~950ms, runs alongside the checkout request).
+  - Quirks: tap = lid pop + confetti, 5 taps = dizzy, drag and flick with bounces, dozes after 20s,
+    tab title "Your gift misses you 🎁", first gift = flip + confetti in the editor.
+- **TalkingBo** (`src/components/TalkingBo.tsx`): hero and theme gallery Bo introduce themselves and
+  react to taps. Hero has draggable paper scraps (`src/components/HeroScraps.tsx`).
+- Reduced motion: no hops, flips, flings or parallax; he fades between spots; bubbles still show.
+- Tuning knobs: `TUNING` at the top of `src/lib/mascot/controller.ts`.
+- No talking/hopping Bo on recipient pages (`/g/...`). The still Bo in the gift opening animation, the
+  gift footer and locked/ended screens predates this and is still there (open question for Janelle).
+
+Session 2 (14 Oct, overnight), details in `docs/NEXT-SESSION.md`:
+- Tested in a real Chromium (local Postgres, Playwright). Fixed Bo covering fields, Bo stuck invisible,
+  bubbles over buttons, Manila-time countdowns, hydration warnings, glb 404s, nested buttons.
+- Landing: a short Bo intro once per session (`LandingIntro`), then a product-first page whose hero is a
+  real sample gift in a phone with a format switcher (`FormatDemo`).
+- Formats: Bento Board, Gift Hunt and Zine join Scrapbook and Comic (`src/lib/formats.ts`,
+  `src/components/formats/`). Scrapbook got taped letters, polaroids and digit-tile countdowns.
+- Toybox restyle of /create, dashboard, contribute, editor, sign-in, header and 404.
+
+Next: check the preview on a real phone, test checkout with a PayMongo test key on the preview,
+answer the open questions in `docs/NEXT-SESSION.md`, then merge `redesign` into `main` when happy.
+
 ## 2. Accounts and where things live
 
 | What | Where | Notes |
@@ -151,3 +209,19 @@ E. **PayPal for buyers abroad (not built, notes only).**
 3. Create a **live** webhook (same URL and event) and swap `PAYMONGO_WEBHOOK_SECRET`.
 4. Set `sk_live_...` and `PAYMONGO_ALLOW_LIVE=true`, then redeploy.
 5. Make one small real payment, check it, and refund it in the PayMongo dashboard.
+
+
+## 1c. Session 3 (15 Oct 2026, morning)
+
+- **Sign-up email:** signing up again with an email that already has an account looked like it
+  worked but sent nothing (Better Auth hides which emails exist). Now `onExistingUserSignUp` sends a
+  "you already have an account" email. The check-inbox screen has "Send it again" and mentions Spam.
+- **Copy:** removed "free to make" and payment-method lines from marketing pages. Payment methods
+  only show in the plan picker right before paying.
+- **Themes look different now.** `src/lib/themeKind.ts` maps a theme to its occasion.
+  `src/lib/theme3d/scene.ts` builds a 3D object per occasion; stills in `public/themes3d/*.webp`
+  (re-render with the Playwright snippet in `docs/NEXT-SESSION.md` after changing the scene, and bump
+  `STILL_VERSION` in `Theme3D.tsx`). `src/styles/skins.css` + `SkinDecor.tsx` give each occasion its
+  own background, particles, letters, photos, countdown and titles. The opening animation uses the
+  occasion's 3D object instead of Bo.
+- New gifts start in their theme's font (`themeFont`).

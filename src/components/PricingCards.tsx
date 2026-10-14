@@ -3,7 +3,6 @@ import {
   featureList,
   formatPeso,
   formatUsdApprox,
-  paymentMethodsSentence,
   type Tier,
   type TierId,
 } from "@/config/pricing";
@@ -33,6 +32,8 @@ export function PricingCards({ tiers = TIERS, priceFor, blockerFor, action, pric
           return (
             <div
               key={tier.id}
+              {...(tier.mostPopular ? { "data-bo-perch": "", "data-bo-x": "0.9", "data-bo-point": "-1", "data-bo-say": "Most friends pick this one." } : {})}
+              {...(tier.id === "keepsake" ? { "data-bo-hover-face": "love" } : {})}
               className={`relative flex flex-col rounded-3xl border p-5 sm:p-6 ${
                 tier.mostPopular
                   ? "border-accent bg-cream shadow-[0_10px_30px_-18px_rgba(181,98,62,0.6)]"
@@ -85,8 +86,7 @@ export function PricingCards({ tiers = TIERS, priceFor, blockerFor, action, pric
         })}
       </div>
       <p className="mt-5 text-center text-sm text-muted">
-        Pay with {paymentMethodsSentence()}. International cards are accepted. Prices are in pesos; the
-        dollar amount is only a guide.
+        Prices are in pesos. The dollar amount is only a guide.
       </p>
       {tiers.some((t) => t.contributors.unlimited || t.photos.unlimited) && (
         <p className="mt-1 text-center text-xs text-muted">"Unlimited" is subject to fair use.</p>

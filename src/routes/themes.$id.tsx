@@ -1,28 +1,29 @@
-import { useState } from "react";
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { useMemo, useState } from "react";
+import { themeKindOf } from "@/lib/themeKind";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { SiteHeader } from "@/components/SiteHeader";
 import { PageError, PageLoading, PageNotFound } from "@/components/PageStates";
 import { themeFont } from "@/components/ThemeMiniPreview";
+import { FormatView } from "@/components/formats/FormatView";
+import { FORMATS, type GiftFormat } from "@/lib/formats";
+import { GiftIntro } from "@/components/GiftIntro";
+import { backgroundFor, buildPreviewSite, previewModules, sampleFor } from "@/components/ThemeLivePreview";
+import { stageColorFor } from "@/components/ThemeCard";
 import { useAuth } from "@/hooks/useAuth";
 import { fetchThemeById } from "@/lib/themes";
+import { introStyleForTheme } from "@/lib/intro";
 import { usePalettes, themePalettes } from "@/hooks/usePalettes";
 import { FONT_PAIRINGS, MODULES } from "@/lib/gift";
 
 export const Route = createFileRoute("/themes/$id")({
   head: () => ({
     meta: [
-      { title: "Theme preview — Just Because" },
-      {
-        name: "description",
-        content: "See how a gift site theme looks before you use it, palettes and all.",
-      },
-      { property: "og:title", content: "Theme preview — Just Because" },
-      {
-        property: "og:description",
-        content: "See how a gift site theme looks before you use it, palettes and all.",
-      },
+      { title: "Theme preview | Just Because" },
+      { name: "description", content: "See a gift theme play for real, try its colors, and watch the opening." },
+      { property: "og:title", content: "Theme preview | Just Because" },
+      { property: "og:description", content: "See a gift theme play for real, try its colors, and watch the opening." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
     ],
@@ -30,11 +31,16 @@ export const Route = createFileRoute("/themes/$id")({
   component: ThemeDetailPage,
 });
 
+type View = "gift" | "opening";
+
 function ThemeDetailPage() {
   const { id } = Route.useParams();
   const navigate = useNavigate();
   const { user } = useAuth();
   const [paletteIndex, setPaletteIndex] = useState(0);
+  const [view, setView] = useState<View>("gift");
+  const [openingKey, setOpeningKey] = useState(0);
+  const [format, setFormat] = useState<GiftFormat>("scrapbook");
   const { data: allPalettes = [] } = usePalettes();
 
   const { data: theme, isLoading, error, refetch } = useQuery({
@@ -42,186 +48,199 @@ function ThemeDetailPage() {
     queryFn: () => fetchThemeById(id),
   });
 
+  const palettes = useMemo(() => (theme ? themePalettes(theme, allPalettes) : []), [theme, allPalettes]);
+  const palette = palettes[paletteIndex] ?? palettes[0];
+  const site = useMemo(() => (theme ? buildPreviewSite(theme, palette) : null), [theme, palette]);
+  const modules = useMemo(() => (theme && site ? previewModules(theme, site.id) : []), [theme, site]);
+
   if (isLoading) return <PageLoading label="Loading this theme…" />;
-  if (error) {
-    return (
-      <PageError message="We couldn't load this theme just now." onRetry={() => void refetch()} />
-    );
-  }
+  if (error) return <PageError message="We couldn't load this theme just now." onRetry={() => void refetch()} />;
   if (!theme) {
+    return <PageNotFound message="That theme link is no longer available. Have a look at the ones we have now." />;
+  }
+  if (!palette || !site) {
     return (
-      <PageNotFound message="That theme link is no longer available. Have a look at the ones we have now." />
+      <PageNotFound
+        title="This theme isn't ready yet"
+        message="Its colors are still being set up. Try another theme for now."
+      />
     );
   }
 
-  const palettes = themePalettes(theme, allPalettes);
-  const palette = palettes[paletteIndex] ?? palettes[0];
   const fonts = FONT_PAIRINGS[themeFont(theme)];
-  const defaults = MODULES.filter((m) => theme.default_modules.includes(m.type));
+  const included = MODULES.filter((m) => theme.default_modules.includes(m.type));
+  const sample = sampleFor(theme);
 
   function use() {
     if (!user) {
-      toast.info("Sign in first, then you can start your gift site.");
+      toast.info("Sign in first, then you can start your gift.");
       navigate({ to: "/auth" });
       return;
     }
-    navigate({ to: "/create", search: { theme: id } });
+    navigate({ to: "/create", search: { theme: id, format } });
   }
 
-  if (!palette) {
-    return <PageNotFound title="This theme isn't ready yet" message="Its colours are still being set up. Try another theme for now." />;
+  function watchOpening() {
+    setView("opening");
+    setOpeningKey((k) => k + 1);
   }
+
+  const tab = (value: View, label: string, onClick: () => void) => (
+    <button
+      type="button"
+      onClick={onClick}
+      aria-pressed={view === value}
+      className={`min-h-11 flex-1 rounded-full px-4 text-sm font-medium transition-colors ${
+        view === value ? "bg-ink text-cream" : "text-ink/75 hover:bg-white/60"
+      }`}
+    >
+      {label}
+    </button>
+  );
 
   return (
     <div className="min-h-screen bg-paper text-ink">
       <SiteHeader />
-      <section className="mx-auto max-w-5xl px-5 py-12">
-        <p className="font-mono text-[11px] tracking-[0.18em] text-accent uppercase">
-          {theme.category}
-        </p>
-        <h1 className="mt-2 font-display text-3xl font-medium tracking-tight sm:text-4xl">
-          {theme.name}
-        </h1>
-        {theme.description ? (
-          <p className="mt-3 max-w-[54ch] text-muted">{theme.description}</p>
-        ) : null}
+      <section className="mx-auto max-w-6xl px-3 pt-6 pb-16 sm:px-5">
+        <Link to="/themes" className="inline-flex min-h-11 items-center gap-1.5 rounded-full px-2 text-sm font-medium text-muted hover:text-ink">
+          <svg viewBox="0 0 20 20" className="size-4" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+            <path d="M12 4l-6 6 6 6" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
+          All themes
+        </Link>
 
-        <div className="mt-8 grid gap-8 lg:grid-cols-[1fr_300px]">
-          {/* Large placeholder preview */}
-          <div
-            className="overflow-hidden rounded-3xl p-8 shadow-sm ring-1 ring-ink/5"
-            style={{
-              backgroundColor: palette.background,
-              color: palette.primary,
-              fontFamily: fonts.body,
-            }}
-          >
-            <div className="text-center">
-              <p className="text-[11px] tracking-[0.22em] uppercase" style={{ color: palette.accent }}>
-                {theme.category}
-              </p>
-              <p className="mt-3 text-4xl leading-tight" style={{ fontFamily: fonts.heading }}>
-                Happy birthday, Maya
-              </p>
-              <p className="mt-2 text-sm opacity-75">
-                Everyone who loves you added something here.
+        <div className="mt-3 grid gap-6 lg:grid-cols-[minmax(0,1fr)_340px]">
+          {/* The stage: a phone playing the real gift */}
+          <div className="relative overflow-hidden rounded-[36px] px-4 pt-5 pb-0 sm:px-8" style={{ backgroundColor: stageColorFor(theme) }}>
+            <span aria-hidden="true" className="absolute -top-20 -right-16 size-64 rounded-full bg-white/40" />
+            <span aria-hidden="true" className="absolute bottom-10 -left-20 size-56 rounded-full bg-white/30" />
+
+            <div className="relative mx-auto flex max-w-[420px] gap-1 rounded-full bg-white/45 p-1 backdrop-blur">
+              {tab("gift", "The gift", () => setView("gift"))}
+              {tab("opening", "The opening", watchOpening)}
+            </div>
+
+            <div className="relative mx-auto mt-5 w-full max-w-[390px]">
+              <div className="overflow-hidden rounded-t-[40px] border-[8px] border-b-0 border-ink bg-ink shadow-[0_30px_60px_-30px_rgba(43,37,34,0.6)]">
+                <div className="relative h-[min(720px,72vh)] overflow-hidden rounded-t-[32px]">
+                  {view === "gift" ? (
+                    <div className="absolute inset-0 overflow-y-auto overscroll-contain" tabIndex={0} aria-label={`${theme.name} sample gift, scrollable`}>
+                      <FormatView key={format} site={{ ...site, format }} theme={theme} palette={palette} modules={modules} contributions={[]} sample />
+                    </div>
+                  ) : (
+                    <GiftIntro
+                      key={openingKey}
+                      contained
+                      style={introStyleForTheme(theme.name)}
+                      kind={themeKindOf(theme)}
+                      palette={palette}
+                      fonts={fonts}
+                      backgroundStyle={backgroundFor(theme)}
+                      recipientName={sample.name}
+                      onOpen={() => setView("gift")}
+                      onSkip={() => setView("gift")}
+                    />
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Details and choices */}
+          <aside className="flex flex-col gap-4">
+            <div className="card-paper p-5">
+              <p className="font-mono text-[10px] tracking-[0.16em] text-muted uppercase">{theme.category}</p>
+              <h1 className="mt-1 font-display text-4xl leading-none font-semibold tracking-tight">{theme.name}</h1>
+              {theme.description ? <p className="mt-3 text-muted">{theme.description}</p> : null}
+              <p className="mt-3 text-sm text-muted">
+                This is a sample for {sample.name}. Scroll inside the phone to see it all.
               </p>
             </div>
 
-            {theme.default_modules.includes("countdown") ? (
-              <div
-                className="mx-auto mt-8 w-full max-w-xs rounded-2xl py-5 text-center"
-                style={{ backgroundColor: "rgba(255,255,255,0.6)" }}
-              >
-                <p className="text-3xl font-semibold" style={{ color: palette.accent }}>
-                  12
-                </p>
-                <p className="text-xs tracking-[0.18em] uppercase opacity-70">days to go</p>
+            {palettes.length > 1 ? (
+              <div className="card-paper p-5">
+                <h2 className="font-display text-lg font-semibold">Pick a color mood</h2>
+                <div className="mt-3 grid grid-cols-3 gap-2">
+                  {palettes.map((p, i) => {
+                    const active = i === paletteIndex;
+                    return (
+                      <button
+                        key={i}
+                        type="button"
+                        onClick={() => setPaletteIndex(i)}
+                        aria-pressed={active}
+                        aria-label={`Color mood ${i + 1}`}
+                        className={`squish flex min-h-16 flex-col overflow-hidden rounded-2xl ring-2 transition-shadow ${
+                          active ? "ring-ink" : "ring-transparent hover:ring-ink/20"
+                        }`}
+                      >
+                        <span className="h-9 w-full" style={{ backgroundColor: p.background }} />
+                        <span className="flex h-7 w-full">
+                          <span className="flex-1" style={{ backgroundColor: p.primary }} />
+                          <span className="flex-1" style={{ backgroundColor: p.accent }} />
+                        </span>
+                      </button>
+                    );
+                  })}
+                </div>
+                <p className="mt-2 text-xs text-muted">You can change colors and fonts later too.</p>
               </div>
             ) : null}
 
-            <div className="mt-8 grid grid-cols-3 gap-3">
-              {[0, 1, 2, 3, 4, 5].map((i) => (
-                <div
-                  key={i}
-                  className="aspect-square rounded-xl"
-                  style={{ backgroundColor: `${palette.primary}1a` }}
-                />
-              ))}
-            </div>
-
-            <div className="mt-8 grid gap-3 sm:grid-cols-2">
-              {["“You made every Tuesday feel like a holiday.”", "“Here's to twenty more years.”"].map(
-                (quote) => (
-                  <div
-                    key={quote}
-                    className="rounded-2xl p-4"
-                    style={{ backgroundColor: "rgba(255,255,255,0.65)" }}
-                  >
-                    <p className="text-sm leading-relaxed">{quote}</p>
-                    <p className="mt-2 text-xs" style={{ color: palette.accent }}>
-                      — Sam
-                    </p>
-                  </div>
-                ),
-              )}
-            </div>
-
-            <div
-              className="mt-4 flex items-center gap-3 rounded-2xl p-4"
-              style={{ backgroundColor: "rgba(255,255,255,0.65)" }}
-            >
-              <span
-                className="size-12 rounded-xl"
-                style={{ backgroundColor: `${palette.primary}1a` }}
-              />
-              <div className="flex-1">
-                <p className="text-sm font-medium">Our song</p>
-                <p className="text-xs opacity-60">added by Alex</p>
-              </div>
-              <span
-                className="grid size-9 place-items-center rounded-full text-xs"
-                style={{ backgroundColor: palette.accent, color: palette.background }}
-              >
-                ▶
-              </span>
-            </div>
-
-            <p className="mt-8 text-center text-xs opacity-70">
-              Made with Just Because 💛
-            </p>
-          </div>
-
-          {/* Side panel */}
-          <aside className="space-y-6">
             <div className="card-paper p-5">
-              <p className="text-sm font-medium">Palettes</p>
-              <div className="mt-3 space-y-2">
-                {palettes.map((p, i) => (
+              <h2 className="font-display text-lg font-semibold">See it as</h2>
+              <div className="mt-3 flex flex-wrap gap-2" role="radiogroup" aria-label="Format">
+                {FORMATS.map((f) => (
                   <button
-                    key={i}
+                    key={f.id}
                     type="button"
-                    onClick={() => setPaletteIndex(i)}
-                    className={`flex w-full items-center gap-2 rounded-xl border px-3 py-2 transition-colors ${
-                      i === paletteIndex ? "border-accent bg-accent/8" : "border-line hover:bg-glass/60"
+                    role="radio"
+                    aria-checked={format === f.id}
+                    onClick={() => {
+                      setFormat(f.id);
+                      setView("gift");
+                    }}
+                    className={`squish rounded-full px-3.5 py-2 text-sm font-medium transition-colors ${
+                      format === f.id ? "bg-ink text-cream" : "bg-paper ring-1 ring-ink/10 hover:bg-pink/40"
                     }`}
                   >
-                    {[p.background, p.primary, p.accent].map((c) => (
-                      <span
-                        key={c}
-                        className="size-5 rounded-full ring-1 ring-ink/10"
-                        style={{ backgroundColor: c }}
-                      />
-                    ))}
-                    <span className="ml-auto font-mono text-[10px] tracking-[0.14em] text-muted uppercase">
-                      {i === paletteIndex ? "In preview" : "Try"}
-                    </span>
+                    {f.title}
                   </button>
                 ))}
               </div>
+              <p className="mt-2 text-xs text-muted">{FORMATS.find((f) => f.id === format)?.about}</p>
             </div>
 
-            <div className="card-paper p-5">
-              <p className="text-sm font-medium">This theme includes</p>
-              <ul className="mt-3 space-y-2">
-                {defaults.map((m) => (
-                  <li key={m.type} className="text-sm">
-                    <span className="font-medium">{m.label}</span>
-                    <span className="block text-xs text-muted">{m.blurb}</span>
-                  </li>
-                ))}
-              </ul>
-              <p className="mt-3 text-xs text-muted">
-                All seven sections stay available — these are just the suggested ones.
-              </p>
-            </div>
+            {included.length > 0 ? (
+              <div className="card-paper p-5">
+                <h2 className="font-display text-lg font-semibold">What friends can add</h2>
+                <ul className="mt-3 flex flex-wrap gap-2">
+                  {included.map((m) => (
+                    <li key={m.type} className="rounded-full bg-mint px-3 py-1.5 text-sm font-medium" title={m.blurb}>
+                      {m.label}
+                    </li>
+                  ))}
+                </ul>
+                <p className="mt-3 text-xs text-muted">Every section can be turned on or off once you start.</p>
+              </div>
+            ) : null}
 
-            <button
-              onClick={use}
-              className="w-full rounded-full bg-accent px-5 py-3.5 font-medium text-cream transition-colors hover:bg-accent/90"
-            >
-              Use this theme
-            </button>
+            <div className="sticky bottom-3 mt-auto flex flex-col gap-2 lg:static">
+              <button
+                type="button"
+                onClick={use}
+                className="squish min-h-14 w-full rounded-full bg-accent px-6 text-base font-semibold text-cream shadow-[0_12px_30px_-12px_rgba(194,54,107,0.7)] hover:bg-accent/90"
+              >
+                Use this theme
+              </button>
+              <button
+                type="button"
+                onClick={watchOpening}
+                className="squish min-h-12 w-full rounded-full bg-glass px-6 text-sm font-medium ring-1 ring-ink/12 hover:bg-pink/40"
+              >
+                Watch the opening again
+              </button>
+            </div>
           </aside>
         </div>
       </section>

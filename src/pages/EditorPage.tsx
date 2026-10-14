@@ -1,10 +1,13 @@
 import { useEffect, useMemo, useRef, useState } from "react";
+import { themeKindOf } from "@/lib/themeKind";
 import {Link, useParams} from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { SiteHeader } from "@/components/SiteHeader";
-import { GiftSiteView } from "@/components/GiftSiteView";
 import { ComicIssueView } from "@/components/ComicIssueView";
+import { FormatPicker } from "@/components/FormatPicker";
+import { FormatView } from "@/components/formats/FormatView";
+import { FORMATS, formatInfo } from "@/lib/formats";
 import {
   deleteCalendarEntry,
   setContributionStatus,
@@ -14,6 +17,8 @@ import {
 } from "@/lib/api";
 import { uploadFile } from "@/lib/upload";
 import { GiftIntro } from "@/components/GiftIntro";
+import { BoBuddy } from "@/components/BoBuddy";
+import { boReact, boSay, boWrap } from "@/lib/mascot/bus";
 import { introStyleForTheme } from "@/lib/intro";
 import {
   BACKGROUND_STYLES,
@@ -142,7 +147,7 @@ const SECTION_TITLES: Record<SectionKey, string> = {
   sections: "Sections",
   surprises: "Surprises",
   intro: "Intro",
-  comic: "Comic",
+  comic: "Format",
   review: "Review",
 };
 
@@ -162,6 +167,22 @@ function SiteDashboard() {
   const { id } = useParams({ from: "/_authenticated/sites/$id" });
   const queryClient = useQueryClient();
   const [draft, setDraft] = useState<GiftSite | null>(null);
+  // Bo says something sweet once the recipient's name is filled in (not for the saved name on load).
+  const recipientName = draft?.custom_text.recipient_name?.trim() ?? "";
+  const lastNameSaid = useRef<string | null>(null);
+  useEffect(() => {
+    if (!draft) return;
+    if (lastNameSaid.current === null) {
+      lastNameSaid.current = recipientName;
+      return;
+    }
+    if (recipientName.length < 2 || recipientName === lastNameSaid.current) return;
+    const t = window.setTimeout(() => {
+      lastNameSaid.current = recipientName;
+      boSay(`${recipientName} is so lucky.`, "love");
+    }, 1100);
+    return () => window.clearTimeout(t);
+  }, [recipientName, draft]);
   const [dirty, setDirty] = useState(false);
   const [saving, setSaving] = useState(false);
   const [savedAt, setSavedAt] = useState<number | null>(null);
@@ -459,6 +480,7 @@ function SiteDashboard() {
   }
 
   function copyContributeLink() {
+    boReact("wave");
     void navigator.clipboard.writeText(contributeUrl);
     toast.success(
       `Link copied. Send it to ${draft?.custom_text.recipient_name || "their"}'s friends!`,
@@ -717,7 +739,7 @@ function SiteDashboard() {
                     on ? "bg-ink text-cream" : "border border-line bg-paper text-muted"
                   }`}
                 >
-                  {on ? "On · Free" : "Add"}
+                  {on ? "On" : "Add"}
                 </button>
               </div>
               {on && titleField ? (
@@ -812,26 +834,18 @@ function SiteDashboard() {
     ),
     comic: (
       <div className="space-y-5">
-        <div className="grid grid-cols-2 gap-2 rounded-xl border border-line bg-cream p-1">
-          {(["scrapbook", "comic"] as const).map((format) => (
-            <Button
-              key={format}
-              type="button"
-              variant={draft.format === format ? "default" : "ghost"}
-              onClick={() => patch({ format })}
-              disabled={!!planTier && !planTier.formats.includes(format)}
-              className="capitalize"
-            >
-              {format === "comic" ? "Comic Issue" : "Scrapbook"}
-            </Button>
-          ))}
-        </div>
-        {planTier && !planTier.formats.includes("comic") ? (
+        <FormatPicker
+          value={draft.format}
+          onChange={(format) => patch({ format })}
+          isAllowed={(format) => !planTier || planTier.formats.includes(format)}
+          compact
+        />
+        {planTier && planTier.formats.length < FORMATS.length ? (
           <p className="text-xs text-muted">
-            {planTier.name} is scrapbook only.{" "}
+            {planTier.name} includes {planTier.formats.map((f) => formatInfo(f).title).join(" and ")}.{" "}
             {billing && billing.upgrades.length > 0 ? (
               <button type="button" className="text-accent underline underline-offset-2" onClick={() => setPlanPicker("upgrade")}>
-                Upgrade to use the comic format.
+                Upgrade for every format.
               </button>
             ) : null}
           </p>
@@ -844,7 +858,7 @@ function SiteDashboard() {
             {normalizeComicSettings(draft.format_settings).two_worlds ? <div className="grid gap-3"><label><span className="text-xs text-muted">First world</span><input value={normalizeComicSettings(draft.format_settings).world_one ?? ""} onChange={(event) => patchComic({ world_one: event.target.value })} placeholder="HERO WORLD" className="mt-1 w-full rounded-xl border border-line bg-cream px-3 py-2.5 text-sm" /></label><label><span className="text-xs text-muted">Second world</span><input value={normalizeComicSettings(draft.format_settings).world_two ?? ""} onChange={(event) => patchComic({ world_two: event.target.value })} placeholder="OHANA WORLD" className="mt-1 w-full rounded-xl border border-line bg-cream px-3 py-2.5 text-sm" /></label></div> : null}
             <div><p className="text-sm font-medium">Panel organizer</p><p className="mt-1 text-xs text-muted">Reorder panels or move one into another chapter.</p><div className="mt-3 space-y-2">{orderedComicIds(contributions.map((item) => item.id), normalizeComicSettings(draft.format_settings).panel_order).map((itemId, index, orderedIds) => { const item = contributions.find((entry) => entry.id === itemId); if (!item) return null; const settings = normalizeComicSettings(draft.format_settings); const chapter = settings.chapter_overrides?.[item.id] ?? item.module_type; return <div key={item.id} className="rounded-xl border border-line bg-cream p-3"><div className="flex items-center gap-2"><span className="min-w-0 flex-1 truncate text-sm font-medium">{item.author_name}</span><Button type="button" size="icon" variant="ghost" disabled={index === 0} onClick={() => moveComicPanel(item.id, -1)} aria-label="Move panel up">↑</Button><Button type="button" size="icon" variant="ghost" disabled={index === orderedIds.length - 1} onClick={() => moveComicPanel(item.id, 1)} aria-label="Move panel down">↓</Button></div><select value={chapter} onChange={(event) => patchComic({ chapter_overrides: { ...settings.chapter_overrides, [item.id]: event.target.value } })} className="mt-2 w-full rounded-lg border border-line bg-paper px-2 py-2 text-xs">{MODULES.map((module) => <option key={module.type} value={module.type}>{module.label}</option>)}</select></div>; })}</div></div>
           </>
-        ) : <p className="text-xs text-muted">The original scrolling gift stays exactly as it is.</p>}
+        ) : <p className="text-xs text-muted">{formatInfo(draft.format).about}</p>}
       </div>
     ),
     review: (
@@ -936,7 +950,7 @@ function SiteDashboard() {
 
 
   const canvas = (
-    <div className="relative flex min-w-0 flex-1 flex-col bg-ink/10">
+    <div className="editor-canvas relative flex min-w-0 flex-1 flex-col">
       <div
         ref={canvasRef}
         className="relative min-h-0 flex-1 overflow-hidden px-4 pt-4 pb-4"
@@ -944,6 +958,14 @@ function SiteDashboard() {
           if (e.target === e.currentTarget) setSelected(null);
         }}
       >
+        {/* Bo's spot: the bottom corner of the preview canvas. */}
+        <div
+          aria-hidden="true"
+          data-bo-perch
+          data-bo-always
+          data-bo-say="I'll wait right here."
+          className="pointer-events-none absolute right-10 bottom-5 h-px w-10"
+        />
         <div className="flex h-full justify-center">
           <div
             className={
@@ -958,7 +980,7 @@ function SiteDashboard() {
             }
           >
             <div className="h-full overflow-y-auto overscroll-contain">
-               {draft.format === "comic" ? <ComicIssueView site={draft} modules={modules} contributions={approved} calendarEntries={calendarEntries} palette={paletteNow} sample /> : <GiftSiteView site={draft} theme={theme} modules={modules} contributions={approved} calendarEntries={calendarEntries} sample highlightField={focusField} onEditField={(field) => { openField(field); selectInPreview(field); }} />}
+               <FormatView site={draft} theme={theme} palette={paletteNow} modules={modules} contributions={approved} calendarEntries={calendarEntries} sample highlightField={focusField} onEditField={(field) => { openField(field); selectInPreview(field); }} />
             </div>
           </div>
         </div>
@@ -1015,7 +1037,7 @@ function SiteDashboard() {
             step={5}
             value={zoom ?? 100}
             onChange={(e) => setZoom(Number(e.target.value))}
-            className="hidden w-28 accent-[#B5623E] min-[900px]:block"
+            className="hidden w-28 accent-[#C2366B] min-[900px]:block"
           />
           <span className="hidden w-10 text-[11px] text-muted min-[900px]:block">
             {zoom ? `${zoom}%` : "Fit"}
@@ -1047,7 +1069,8 @@ function SiteDashboard() {
 
   return (
     <div className="flex h-[100dvh] flex-col overflow-hidden bg-paper text-ink">
-      <header className="flex h-16 shrink-0 items-center justify-between gap-3 border-b border-line bg-paper px-3 sm:px-4">
+      <BoBuddy followFocus celebrate intro={false} />
+      <header data-bo-avoid className="flex h-16 shrink-0 items-center justify-between gap-3 border-b border-line bg-paper px-3 sm:px-4">
         <div className="flex min-w-0 flex-col justify-center gap-0.5">
         <div className="group flex min-w-0 items-center gap-2">
           <Link to="/dashboard" className="shrink-0 text-xs text-muted hover:text-ink">
@@ -1127,7 +1150,7 @@ function SiteDashboard() {
 
           <Popover>
             <PopoverTrigger asChild>
-              <Button variant="outline" className="hidden h-10 rounded-full min-[900px]:inline-flex">
+              <Button variant="outline" className="hidden h-10 rounded-full min-[900px]:inline-flex" onClick={() => { boReact("wave"); boSay("The more friends, the better.", "happy"); }}>
                 <UserPlus />
                 Invite friends
               </Button>
@@ -1255,7 +1278,14 @@ function SiteDashboard() {
               </DropdownMenuContent>
             </DropdownMenu>
           ) : !hasPlan ? (
-            <Button className="h-10 rounded-full" disabled={saving || !billing} onClick={() => void publish()}>
+            <Button
+              className="h-10 rounded-full"
+              disabled={saving || !billing}
+              onClick={() => {
+                boReact("cheer");
+                void publish();
+              }}
+            >
               <Gift />
               Wrap it up
             </Button>
@@ -1275,7 +1305,14 @@ function SiteDashboard() {
                   It's already paid for ({planSummary(billing)}). Friends can still add notes, and you
                   can unpublish any time.
                 </p>
-                <Button className="w-full" onClick={() => void publish()} disabled={saving}>
+                <Button
+                  className="w-full"
+                  onClick={() => {
+                    void boWrap();
+                    void publish();
+                  }}
+                  disabled={saving}
+                >
                   Yes, wrap it up
                 </Button>
               </PopoverContent>
@@ -1307,6 +1344,7 @@ function SiteDashboard() {
         <div className="hidden min-[900px]:flex">{rail(true)}</div>
         {panelOpen ? (
           <aside
+            data-bo-zone
             className="relative hidden shrink-0 border-r border-line bg-paper min-[900px]:block"
             style={{ width: panelWidth }}
           >
@@ -1361,6 +1399,7 @@ function SiteDashboard() {
       ) : introPreview ? (
         <GiftIntro
           style={introStyleForTheme(theme?.name)}
+          kind={themeKindOf(theme)}
           palette={paletteNow}
           fonts={FONT_PAIRINGS[draft.font_choice] ?? FONT_PAIRINGS.romantic}
           backgroundStyle={draft.background_style}
@@ -1385,10 +1424,11 @@ function SiteDashboard() {
           </div>
           <div className="h-full overflow-auto pt-24 sm:pt-[62px]">
             <div className={device === "phone" ? "relative mx-auto h-[calc(100vh-78px)] w-full max-w-[390px] overflow-y-auto rounded-[28px] border border-line shadow-xl" : "relative min-h-[calc(100vh-62px)]"}>
-              {!previewOpened && draft.format !== "comic" ? (
+              {!previewOpened && formatInfo(draft.format).usesIntro ? (
                 <GiftIntro
                   contained
                   style={introStyleForTheme(theme?.name)}
+          kind={themeKindOf(theme)}
                   palette={paletteNow}
                   fonts={FONT_PAIRINGS[draft.font_choice] ?? FONT_PAIRINGS.romantic}
                   backgroundStyle={draft.background_style}
@@ -1396,10 +1436,8 @@ function SiteDashboard() {
                   introText={draft.intro_text ?? undefined}
                   onOpen={() => setPreviewOpened(true)}
                 />
-              ) : draft.format === "comic" ? (
-                <ComicIssueView key={previewOpened ? "comic-reader" : "comic-cover"} site={draft} modules={modules} contributions={approved} calendarEntries={calendarEntries} palette={paletteNow} showCover={!previewOpened} sample showShare />
               ) : (
-                <GiftSiteView site={draft} theme={theme} modules={modules} contributions={approved} calendarEntries={calendarEntries} sample showShare />
+                <FormatView key={draft.format === "comic" ? (previewOpened ? "comic-reader" : "comic-cover") : draft.format} site={draft} theme={theme} palette={paletteNow} modules={modules} contributions={approved} calendarEntries={calendarEntries} showCover={!previewOpened} sample showShare />
               )}
             </div>
           </div>

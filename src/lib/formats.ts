@@ -1,0 +1,68 @@
+/**
+ * Gift formats: different ways to show the same notes, photos and songs.
+ * The `format` column is plain text, so adding one here needs no migration.
+ * Which plans can use which format lives in src/config/pricing.ts.
+ */
+export const FORMAT_IDS = ["scrapbook", "comic", "bento", "hunt", "zine"] as const;
+export type GiftFormat = (typeof FORMAT_IDS)[number];
+
+export type FormatInfo = {
+  id: GiftFormat;
+  title: string;
+  /** One short line for pickers. */
+  copy: string;
+  /** Longer line for the editor. */
+  about: string;
+  /** Shows the gift opening animation first (comic has its own cover). */
+  usesIntro: boolean;
+  isNew?: boolean;
+};
+
+export const FORMATS: FormatInfo[] = [
+  {
+    id: "scrapbook",
+    title: "Scrapbook",
+    copy: "A warm, scrolling collection",
+    about: "Every section in one long, cozy page.",
+    usesIntro: true,
+  },
+  {
+    id: "comic",
+    title: "Comic Issue",
+    copy: "A cover and page-turn adventure",
+    about: "A comic cover, then chapters they flip through.",
+    usesIntro: false,
+  },
+  {
+    id: "bento",
+    title: "Bento Board",
+    copy: "Everything at a glance, in tiles",
+    about: "Notes, photos and songs as a tidy grid of tiles. Tap any tile to open it.",
+    usesIntro: true,
+    isNew: true,
+  },
+  {
+    id: "hunt",
+    title: "Gift Hunt",
+    copy: "Unwrap every note, one by one",
+    about: "Each note is a little wrapped box. They unwrap them all to finish the hunt.",
+    usesIntro: true,
+    isNew: true,
+  },
+  {
+    id: "zine",
+    title: "Zine",
+    copy: "Loud, handmade and a bit chaotic",
+    about: "A cut-and-paste zine with stickers, scribbles and big type.",
+    usesIntro: true,
+    isNew: true,
+  },
+];
+
+export function isGiftFormat(value: unknown): value is GiftFormat {
+  return typeof value === "string" && (FORMAT_IDS as readonly string[]).includes(value);
+}
+
+export function formatInfo(id: GiftFormat): FormatInfo {
+  return FORMATS.find((f) => f.id === id) ?? FORMATS[0]!;
+}

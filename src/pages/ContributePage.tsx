@@ -22,10 +22,13 @@ import {
   type ViewContribution,
 } from "@/lib/gift";
 import { readableInk, surfaceColor } from "@/lib/palettes";
-import { GiftSiteView } from "@/components/GiftSiteView";
-import { ComicIssueView } from "@/components/ComicIssueView";
+import { FormatView } from "@/components/formats/FormatView";
 import { ModuleExample } from "@/components/ModuleExample";
 import Bo from "@/components/Bo";
+import { CalendarDays, Image as ImageIcon, Lock, Mail, Mic, Music2, Sparkles, Type, Users } from "lucide-react";
+import { meshGradient } from "@/lib/giftPieces";
+
+const MODULE_ICON: Partial<Record<ModuleType, typeof Mail>> = { letters: Mail, photobooth: ImageIcon, songs: Music2, wordcloud: Type, voice: Mic, tree: Sparkles, calendar: CalendarDays };
 import { PageError, PageLoading, PageNotFound } from "@/components/PageStates";
 
 
@@ -445,8 +448,8 @@ function ContributePage() {
 
   return (
     <div
-      className="min-h-screen px-5 py-12"
-      style={{ backgroundColor: palette.background, color: ink, fontFamily: fonts.body }}
+      className="min-h-screen px-4 py-10 sm:px-6 sm:py-14"
+      style={{ background: meshGradient(palette.primary, palette.accent, palette.background), color: ink, fontFamily: fonts.body }}
     >
       <div className="mx-auto grid max-w-6xl gap-10 lg:grid-cols-[minmax(0,460px)_1fr]">
         <div>
@@ -474,18 +477,20 @@ function ContributePage() {
               >
                 Add something for {recipient}
               </h1>
-              {site.custom_text.intro_message ? (
-                <p className="mt-3 text-center text-sm opacity-80">
-                  {site.custom_text.intro_message}
-                </p>
-              ) : null}
+              <p className="mx-auto mt-3 max-w-sm text-center text-[15px] leading-relaxed opacity-80 text-pretty">
+                Friends are putting together a gift for {recipient}. Add a note, a photo or a song. It stays a surprise until they open it.
+              </p>
+              <p className="mt-4 flex items-center justify-center gap-1.5 text-xs opacity-70">
+                <Users className="size-3.5" />
+                {friendCount === 0 ? "Be the first one in" : `${friendCount} ${friendCount === 1 ? "friend has" : "friends have"} added something`}
+              </p>
             </>
           )}
 
           {done ? (
-            <div className="mt-8 rounded-3xl p-8 text-center" style={{ backgroundColor: surface }}>
-              <p className="text-sm opacity-80">
-                Your contribution is waiting for the organiser to add it in.
+            <div className="rise mt-8 rounded-[28px] p-8 text-center shadow-[0_24px_60px_-34px_rgba(43,37,34,.55)]" style={{ backgroundColor: surface }}>
+              <p className="text-[15px] opacity-85">
+                It's in. The organiser checks every note before the gift goes out, so {recipient} won't see it until then.
               </p>
               <button
                 onClick={() => {
@@ -500,35 +505,39 @@ function ContributePage() {
             </div>
           ) : openModules.length === 0 ? (
             <p className="mt-10 text-center text-sm opacity-80">
-              This gift isn't accepting contributions right now.
+              This gift isn't taking notes right now.
             </p>
           ) : (
-            <form onSubmit={submit} className="mt-8 rounded-3xl p-6" style={{ backgroundColor: surface }}>
-              <div className="flex flex-wrap gap-2">
-                {openModules.map((mod) => (
-                  <button
-                    key={mod.type}
-                    type="button"
-                    onClick={() => {
-                      setModuleType(mod.type);
-                      setEditingId(null);
-                      if (mod.type === "tree") setTreeStep(1);
-                    }}
-                    className="rounded-full px-4 py-2 text-sm font-medium"
-                    style={
-                      active === mod.type
-                        ? { backgroundColor: palette.accent, color: onAccent }
-                        : { border: `1px solid ${ink}33`, color: ink }
-                    }
-                  >
-                    {mod.contributorPrompt}
-                  </button>
-                ))}
+            <form onSubmit={submit} className="mt-8 rounded-[28px] p-5 shadow-[0_24px_60px_-34px_rgba(43,37,34,.55)] sm:p-7" style={{ backgroundColor: surface }}>
+              <p className="text-sm font-medium">What would you like to add?</p>
+              <div className={`mt-3 grid gap-2 ${openModules.length === 1 ? "grid-cols-1" : openModules.length === 2 ? "grid-cols-2" : "grid-cols-3"}`} role="tablist" aria-label="What to add">
+                {openModules.map((mod) => {
+                  const Icon = MODULE_ICON[mod.type] ?? Mail;
+                  const on = active === mod.type;
+                  return (
+                    <button
+                      key={mod.type}
+                      type="button"
+                      role="tab"
+                      aria-selected={on}
+                      onClick={() => {
+                        setModuleType(mod.type);
+                        setEditingId(null);
+                        if (mod.type === "tree") setTreeStep(1);
+                      }}
+                      className="flex flex-col items-center gap-1.5 rounded-2xl px-2 py-3 text-center text-[13px] leading-tight font-medium transition-transform hover:-translate-y-0.5"
+                      style={on ? { backgroundColor: palette.accent, color: onAccent } : { backgroundColor: palette.background, color: ink, boxShadow: `inset 0 0 0 1px ${ink}1a` }}
+                    >
+                      <Icon className="size-5" />
+                      {mod.label === "Voice messages" ? "Voice note" : mod.label === "Word cloud" ? "A word" : mod.label === "Photobooth" ? "Photo" : mod.label === "Letters" ? "Letter" : mod.label === "Songs" ? "Song" : mod.label}
+                    </button>
+                  );
+                })}
               </div>
 
               {active ? (
-                <div className="mt-4 max-w-[240px]">
-                  <p className="mb-2 text-xs opacity-70">Here's how it will look:</p>
+                <div className="mt-5 max-w-[260px]">
+                  <p className="mb-2 text-xs opacity-70">It'll look something like this</p>
                   <ModuleExample
                     type={active}
                     tone={{ bg: palette.background, ink, accent: palette.accent }}
@@ -712,7 +721,13 @@ function ContributePage() {
                           checked={visibility === option}
                           onChange={() => setVisibility(option)}
                         />
-                        {option === "public" ? "Anyone with the link" : `🔒 Only ${recipient}`}
+                        {option === "public" ? (
+                          "Everyone who sees the gift"
+                        ) : (
+                          <span className="inline-flex items-center gap-1.5">
+                            <Lock className="size-3.5" /> Only {recipient}
+                          </span>
+                        )}
                       </label>
                     ))}
                   </div>
@@ -730,13 +745,13 @@ function ContributePage() {
                 </button>
               ) : null}
               <p className="mt-3 text-center text-xs opacity-70">
-                No account needed. The organiser sees it before it goes up.
+                No account needed. The organiser reads it first.
               </p>
             </form>
           )}
 
           {mine.length > 0 ? (
-            <div className="mt-6 rounded-3xl p-5" style={{ backgroundColor: surface }}>
+            <div className="mt-5 rounded-[24px] p-5" style={{ backgroundColor: surface }}>
               <p className="text-sm font-medium">What you've added</p>
               <ul className="mt-3 space-y-2 text-sm">
                 {mine.map((record) => (
@@ -754,7 +769,7 @@ function ContributePage() {
                         </button>
                       </span>
                     ) : (
-                      <span className="shrink-0 text-xs opacity-70">Gift is published</span>
+                      <span className="shrink-0 text-xs opacity-70">Already sent</span>
                     )}
                   </li>
                 ))}
@@ -779,11 +794,7 @@ function ContributePage() {
             className="mt-3 max-h-[75vh] overflow-y-auto rounded-3xl ring-1 ring-black/5"
             style={{ backgroundColor: palette.background }}
           >
-            {site.format === "comic" ? (
-              <ComicIssueView site={site} modules={modules} contributions={giftContributions} calendarEntries={calendarEntries} palette={palette} sample />
-            ) : (
-              <GiftSiteView site={site} theme={theme} modules={modules} contributions={giftContributions} calendarEntries={calendarEntries} sample />
-            )}
+            <FormatView site={site} theme={theme} palette={palette} modules={modules} contributions={giftContributions} calendarEntries={calendarEntries} sample />
           </div>
         </div>
       </div>

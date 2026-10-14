@@ -1,8 +1,9 @@
 import { Suspense, lazy, useEffect, useState } from "react";
+import { themeKindOf } from "@/lib/themeKind";
 import {useParams} from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { GiftSiteView } from "@/components/GiftSiteView";
-import { ComicIssueView } from "@/components/ComicIssueView";
+import { FormatView } from "@/components/formats/FormatView";
+import { formatInfo } from "@/lib/formats";
 import { introStyleForTheme } from "@/lib/intro";
 import { PageError, PageLoading, PageNotFound } from "@/components/PageStates";
 
@@ -131,10 +132,11 @@ function PublishedPage() {
           </a>
         </div>
       ) : null}
-      {!opened && site.format !== "comic" ? (
+      {!opened && formatInfo(site.format).usesIntro ? (
         <Suspense fallback={<PageLoading label="Opening your gift…" />}>
         <GiftIntro
           style={introStyleForTheme(theme?.name)}
+          kind={themeKindOf(theme)}
           palette={palette}
           fonts={fonts}
           backgroundStyle={site.background_style ?? "paper"}
@@ -147,25 +149,17 @@ function PublishedPage() {
           }}
         />
         </Suspense>
-      ) : site.format === "comic" ? (
-        <ComicIssueView
-          site={site}
-          modules={modules}
-          contributions={[...contributions.filter((item) => item.module_type !== "tree"), ...treeOrnaments]}
-          calendarEntries={calendarEntries}
-          palette={palette}
-          showCover={!opened}
-          showShare
-          onReplayCover={() => setOpened(false)}
-        />
       ) : (
-        <GiftSiteView
+        <FormatView
           site={site}
           theme={theme}
+          palette={palette}
           modules={modules}
           contributions={[...contributions.filter((item) => item.module_type !== "tree"), ...treeOrnaments]}
           calendarEntries={calendarEntries}
           showShare
+          showCover={!opened}
+          onReplayCover={() => setOpened(false)}
           onReplayIntro={replayIntro}
         />
       )}

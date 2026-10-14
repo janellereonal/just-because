@@ -15,19 +15,20 @@ import appCss from "../styles.css?url";
 
 function NotFoundComponent() {
   return (
-    <div className="flex min-h-screen items-center justify-center bg-background px-4">
+    <div className="grid min-h-screen place-items-center bg-paper px-4 text-ink">
       <div className="max-w-md text-center">
-        <h1 className="text-7xl font-bold text-foreground">404</h1>
-        <h2 className="mt-4 text-xl font-semibold text-foreground">Page not found</h2>
-        <p className="mt-2 text-sm text-muted-foreground">
-          The page you're looking for doesn't exist or has been moved.
+        <img src="/bo/surprise.webp" alt="" width={150} height={150} className="mx-auto" />
+        <p className="mt-2 font-mono text-[11px] tracking-[0.18em] text-accent uppercase">404</p>
+        <h1 className="mt-2 font-display text-4xl font-semibold tracking-tight">Nothing in this box</h1>
+        <p className="mt-3 text-ink/65">
+          This page doesn't exist. If someone sent you a gift link, check that it was copied in full.
         </p>
-        <div className="mt-6">
-          <Link
-            to="/"
-            className="inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
-          >
+        <div className="mt-7 flex flex-wrap justify-center gap-3">
+          <Link to="/" className="squish inline-flex min-h-12 items-center rounded-full bg-ink px-6 text-sm font-semibold text-cream">
             Go home
+          </Link>
+          <Link to="/themes" className="squish inline-flex min-h-12 items-center rounded-full bg-pink px-6 text-sm font-semibold">
+            See themes
           </Link>
         </div>
       </div>
@@ -97,20 +98,19 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { rel: "preconnect", href: "https://fonts.gstatic.com", crossOrigin: "anonymous" },
       {
         rel: "stylesheet",
-        href: "https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;600;700&family=Lato:wght@400;700&family=Fredoka:wght@500;600&family=Nunito:wght@400;600&family=Poppins:wght@500;600&family=Caveat:wght@500;700&family=Karla:wght@400;600&display=swap",
+        href: "https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;600;700&family=Lato:wght@400;700&family=Fredoka:wght@400;500;600;700&family=Nunito:wght@400;600&family=Poppins:wght@500;600&family=Caveat:wght@500;700&family=Karla:wght@400;600&display=swap",
       },
       {
         rel: "stylesheet",
-        href: "https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;1,9..144,500;1,9..144,600&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap",
+        href: "https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;1,9..144,500;1,9..144,600&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&family=JetBrains+Mono:wght@400;500&display=swap",
       },
       {
         rel: "stylesheet",
-        href: "https://fonts.googleapis.com/css2?family=Bangers&family=Comic+Neue:wght@400;700&display=swap",
+        href: "https://fonts.googleapis.com/css2?family=Bangers&family=Comic+Neue:wght@400;700&family=Bricolage+Grotesque:opsz,wdth,wght@12..96,75..100,200..800&family=Permanent+Marker&family=Playfair+Display:ital,wght@1,700&display=swap",
       },
-      { rel: "icon", href: "/favicon.svg?v=bo-2", type: "image/svg+xml" },
-      { rel: "icon", href: "/favicon.png?v=bo-2", type: "image/png", sizes: "64x64" },
-      { rel: "shortcut icon", href: "/favicon.ico?v=bo-2", type: "image/x-icon" },
-      { rel: "apple-touch-icon", href: "/favicon.png?v=bo-2" },
+      { rel: "icon", href: "/favicon.png?v=bo-3d", type: "image/png", sizes: "64x64" },
+      { rel: "shortcut icon", href: "/favicon.ico?v=bo-3d", type: "image/x-icon" },
+      { rel: "apple-touch-icon", href: "/apple-touch-icon.png?v=bo-3d" },
     ],
   }),
   shellComponent: RootShell,
@@ -121,7 +121,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
 
 function RootShell({ children }: { children: ReactNode }) {
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
       <head>
         <HeadContent />
       </head>
