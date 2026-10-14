@@ -12,7 +12,8 @@ Updated the night of 14 Oct 2026 (second session), so a new session can carry on
 
 ## Rules (from Janelle)
 
-- Never push to `main` (it's the live site). Push to `redesign` only.
+- `main` is the live site (justbecause.site). Work on `redesign`, check the preview, then fast-forward
+  `main` only when Janelle says to put it live (she did on 15 Oct).
 - Run `npx tsc --noEmit` and `NITRO_PRESET=node bun run build` before every push.
 - Never touch PayMongo keys or set `PAYMONGO_ALLOW_LIVE`. Never paste secrets into chat or code.
 - Copy voice: plain and friendly, say gift/note/friends/open, no em dashes, max one exclamation mark per screen.
@@ -129,3 +130,11 @@ bun install
   were made (480x480 canvas, `{ cute: false, followPointer: false }`, then `setPose`/`setFace`/`setMood`).
 - Vercel preview status for a push: `gh api repos/janellereonal/just-because/deployments` then
   `gh api repos/janellereonal/just-because/commits/<sha>/status`.
+
+
+## Re-rendering the theme 3D stills
+
+With the dev server running, in Playwright (Chromium with WebGL): open any page, then for each kind
+`const m = await import('/src/lib/theme3d/scene.ts')`, make a 960x600 canvas, call
+`m.createThemeScene(canvas, kind, palette, { still: true }).snapshot()` and save the data URL to
+`public/themes3d/<kind>.webp`. Use each theme's first suggested palette. Bump `STILL_VERSION`.

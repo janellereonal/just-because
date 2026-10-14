@@ -32,7 +32,10 @@ and what's next**, so a fresh Claude session on any account can pick up without 
 - **Until the PayMongo keys are added, "Wrap it up" on the live site shows "We couldn't open
   the payment page."** That's expected.
 
-## 1b. Redesign in progress (branch `redesign`, not on the live site)
+## 1b. Redesign (live on justbecause.site since 15 Oct 2026)
+
+On 15 Oct Janelle asked to put the redesign live, so `redesign` was fast-forwarded into `main`.
+Keep designing on `redesign` (preview link) and fast-forward `main` when she's happy with a batch.
 
 Janelle wants the site colorful, playful, cute and 3D before launch, plus the mascot behaviors in
 her brief (Bo hops between sections as you scroll, reacts to fields, easter eggs). Work happens on
@@ -206,3 +209,19 @@ E. **PayPal for buyers abroad (not built, notes only).**
 3. Create a **live** webhook (same URL and event) and swap `PAYMONGO_WEBHOOK_SECRET`.
 4. Set `sk_live_...` and `PAYMONGO_ALLOW_LIVE=true`, then redeploy.
 5. Make one small real payment, check it, and refund it in the PayMongo dashboard.
+
+
+## 1c. Session 3 (15 Oct 2026, morning)
+
+- **Sign-up email:** signing up again with an email that already has an account looked like it
+  worked but sent nothing (Better Auth hides which emails exist). Now `onExistingUserSignUp` sends a
+  "you already have an account" email. The check-inbox screen has "Send it again" and mentions Spam.
+- **Copy:** removed "free to make" and payment-method lines from marketing pages. Payment methods
+  only show in the plan picker right before paying.
+- **Themes look different now.** `src/lib/themeKind.ts` maps a theme to its occasion.
+  `src/lib/theme3d/scene.ts` builds a 3D object per occasion; stills in `public/themes3d/*.webp`
+  (re-render with the Playwright snippet in `docs/NEXT-SESSION.md` after changing the scene, and bump
+  `STILL_VERSION` in `Theme3D.tsx`). `src/styles/skins.css` + `SkinDecor.tsx` give each occasion its
+  own background, particles, letters, photos, countdown and titles. The opening animation uses the
+  occasion's 3D object instead of Bo.
+- New gifts start in their theme's font (`themeFont`).
