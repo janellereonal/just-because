@@ -49,9 +49,33 @@ Done so far:
   in view on phones). Theme page: real `GiftSiteView` in a phone, color-mood picker, "The opening" tab.
 - Fixed: mini previews never mounted if palettes loaded after the first render.
 
-Next: Spline (via its MCP on Janelle's Mac) for a nicer modeled Bo and theme scenes, then the
-behaviors from her brief, then restyle /create, the editor, dashboard and contribute pages.
-Keep recipient-facing gift pages free of the mascot.
+Mascot behaviors (Oct 2026, all on `redesign`):
+- **3D Bo** is the code-built model in `src/lib/bo3d/scene.ts`. A Spline version (same parts) exists in
+  Janelle's Spline file; drop an export at `public/models/bo.glb` and the site uses it automatically.
+  Janelle prefers the code-built look, so no export is needed.
+- Faces (`setFace`): wink, happy, blep, love, surprised, dizzy, sleepy, yawn. He pulls a cute one every
+  few seconds. Eyes follow the pointer; random blinks.
+- Theme accessories on the lid (`setAccessory`, map in `src/lib/bo3d/accessories.ts`), built in code
+  (or from `public/models/accessories/*.glb` if exported).
+- Flat stills everywhere else are 3D renders: `public/bo/*.webp` via `src/components/Bo.tsx`.
+- **Hopping Bo** (`src/components/BoBuddy.tsx` + `src/lib/mascot/controller.ts`): one state machine.
+  Perches are marked with `data-bo-*` attributes (documented at the top of controller.ts). Pages nudge
+  him through `src/lib/mascot/bus.ts` (`boSay`, `boAccessory`, `boReact`, `boWrap`).
+  - Landing: floats down on a note, hops Themes → theme cards (wears each theme's accessory) → Plans →
+    Most popular (points at it) → closing card. Keepsake hover = heart eyes.
+  - /create: hops to the focused field, bobs on keystrokes, reacts to name, theme, comic/scrapbook.
+  - Editor: sits at the canvas corner, hops to focused fields, "{name} is so lucky.", waves on Invite,
+    wraps himself up before checkout (`boWrap`, max ~950ms, runs alongside the checkout request).
+  - Quirks: tap = lid pop + confetti, 5 taps = dizzy, drag and flick with bounces, dozes after 20s,
+    tab title "Your gift misses you 🎁", first gift = flip + confetti in the editor.
+- **TalkingBo** (`src/components/TalkingBo.tsx`): hero and theme gallery Bo introduce themselves and
+  react to taps. Hero has draggable paper scraps (`src/components/HeroScraps.tsx`).
+- Reduced motion: no hops, flips, flings or parallax; he fades between spots; bubbles still show.
+- Tuning knobs: `TUNING` at the top of `src/lib/mascot/controller.ts`.
+- No talking/hopping Bo on recipient pages (`/g/...`). The still Bo in the gift opening animation, the
+  gift footer and locked/ended screens predates this and is still there (open question for Janelle).
+
+Next: restyle /create, the editor, dashboard and contribute pages in the toybox look.
 
 ## 2. Accounts and where things live
 

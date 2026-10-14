@@ -1,3 +1,4 @@
+import { accessoryForTheme } from "@/lib/bo3d/accessories";
 import { useEffect, useState } from "react";
 import { resolvePreviewUrl, type Theme } from "@/lib/themes";
 import { ThemeLivePreview, claimPreview, releasePreview } from "@/components/ThemeLivePreview";
@@ -53,6 +54,7 @@ export function ThemeCard({ theme, onSelect, footer, variant = "phone" }: Props)
 
   return (
     <article
+      data-bo-accessory={accessoryForTheme(theme) ?? undefined}
       className="group card-paper flex flex-col overflow-hidden p-2.5"
       onMouseEnter={() => claimPreview(theme.id)}
       onMouseLeave={() => releasePreview(theme.id)}

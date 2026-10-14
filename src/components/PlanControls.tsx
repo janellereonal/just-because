@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
+import { boWrap } from "@/lib/mascot/bus";
 import { getBilling, setCustomSlug, setGiftPassword, startCheckout, startExtendCheckout } from "@/lib/api";
 import { PricingCards } from "@/components/PricingCards";
 import { Button } from "@/components/ui/button";
@@ -55,7 +56,8 @@ export function PlanPickerDialog({
   async function pick(tier: TierId) {
     setBusyTier(tier);
     try {
-      const { checkoutUrl } = await startCheckout({ data: { siteId, tier } });
+      // Bo wraps himself up while the checkout loads (never more than ~1s).
+      const [{ checkoutUrl }] = await Promise.all([startCheckout({ data: { siteId, tier } }), boWrap()]);
       window.location.assign(checkoutUrl);
     } catch (error) {
       setBusyTier(null);
@@ -130,7 +132,7 @@ export function ExtendDialog({
   async function extend() {
     setBusy(true);
     try {
-      const { checkoutUrl } = await startExtendCheckout({ data: { siteId } });
+      const [{ checkoutUrl }] = await Promise.all([startExtendCheckout({ data: { siteId } }), boWrap()]);
       window.location.assign(checkoutUrl);
     } catch (error) {
       setBusy(false);

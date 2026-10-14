@@ -82,6 +82,7 @@ function ThemesPage() {
           <TalkingBo
             className="mx-auto h-[220px] w-full max-w-[300px] md:h-[280px]"
             label="Bo waving hello"
+            hoverAccessories
             intro={[{ text: "Pick one you like.", face: "wink" }]}
             onTap={[
               { text: "I look good in all of them.", face: "happy" },

@@ -21,7 +21,7 @@ import type { BoAccessory } from "./accessories";
 export type BoMood = "idle" | "wave" | "celebrate";
 
 /** Cute faces. "smile" is the resting face; the others play for a moment. */
-export type BoFace = "smile" | "wink" | "happy" | "surprised" | "blep" | "love";
+export type BoFace = "smile" | "wink" | "happy" | "surprised" | "blep" | "love" | "dizzy" | "sleepy" | "yawn";
 
 /** "stage" shows Bo standing on a soft shadow; "buddy" is a tight, groundless frame for the hopping mascot. */
 export type BoFraming = "stage" | "buddy";
@@ -60,6 +60,12 @@ export type BoPose = {
   lid: number;
   /** 0..1 both arms up (cheering). */
   cheer: number;
+  /** -1..1 points one arm out to that side (0 = not pointing). */
+  point: number;
+  /** Bow spin speed, turns per second (dizzy). */
+  bowSpin: number;
+  /** Where the eyes look, -1..1 each way; null follows the pointer. */
+  look: [number, number] | null;
 };
 
 export type BoScene = {
@@ -90,7 +96,7 @@ const BO_MODEL_URL = "/models/bo.glb";
 const ACCESSORY_URL = (name: BoAccessory) => `/models/accessories/${name}.glb`;
 /** Bo's height in scene units (feet to bow), the size the Spline model is scaled to. */
 const BO_HEIGHT = 2.45;
-const ACCESSORY_HEIGHT = 0.62;
+const ACCESSORY_HEIGHT = 0.8;
 const MODEL_TIMEOUT_MS = 4000;
 
 const PASTELS = [0xffe8b0, 0xd5f0e3, 0xd9e8fb, 0xe6dcf7, 0xffd9c8, 0xfbd3dc];
@@ -235,7 +241,17 @@ type Rig = {
 
 type FaceRig = {
   /** Per eye: the open parts (eye + shine), the closed ^ arc, the heart, and its rest height. */
-  eyes: { open: THREE.Object3D[]; closed: THREE.Object3D; heart: THREE.Object3D; restY: number }[];
+  eyes: {
+    open: THREE.Object3D[];
+    openRest: THREE.Vector3[];
+    closed: THREE.Object3D;
+    closedRestY: number;
+    heart: THREE.Object3D;
+    spiral: THREE.Object3D;
+    restY: number;
+    /** How far the pupil may wander, in its parent's units. */
+    reach: number;
+  }[];
   smile: THREE.Object3D | null;
   smileRest: THREE.Vector3;
   o: THREE.Object3D;
@@ -286,9 +302,29 @@ function buildFace(eyes: (THREE.Mesh | null)[], shines: (THREE.Object3D | null)[
     heart.position.z += size.z * 0.3;
     heart.visible = false;
     eye.parent.add(heart);
+    const spiralPts: THREE.Vector3[] = [];
+    for (let k = 0; k <= 60; k++) {
+      const a = (k / 60) * Math.PI * 5;
+      const rr = (k / 60) * w * 0.5;
+      spiralPts.push(new THREE.Vector3(Math.cos(a) * rr, Math.sin(a) * rr, 0));
+    }
+    const spiral = new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(spiralPts), 60, w * 0.065, 6), eye.material);
+    spiral.position.copy(eye.position);
+    spiral.position.z += size.z * 0.3;
+    spiral.visible = false;
+    eye.parent.add(spiral);
     const open: THREE.Object3D[] = [eye];
     if (shines[i]) open.push(shines[i]!);
-    out.push({ open, closed: arc, heart, restY: eye.scale.y });
+    out.push({
+      open,
+      openRest: open.map((o) => o.position.clone()),
+      closed: arc,
+      closedRestY: arc.position.y,
+      heart,
+      spiral,
+      restY: eye.scale.y,
+      reach: w * 0.22,
+    });
   });
   if (out.length < 2) return null;
 
@@ -600,7 +636,7 @@ async function loadAccessory(name: BoAccessory, rig: Rig): Promise<THREE.Object3
     return fitToHeight(copy, ACCESSORY_HEIGHT * rig.unit);
   }
   const built = buildAccessory(name);
-  built.scale.setScalar(rig.unit);
+  built.scale.setScalar(rig.unit * (ACCESSORY_HEIGHT / 0.62));
   return built;
 }
 
@@ -657,17 +693,19 @@ export function createBoScene(canvas: HTMLCanvasElement, options: BoSceneOptions
     const noteGeo = roundedBox(0.56, 0.4, 0.05, 0.035, 2);
     const lineGeo = new THREE.BoxGeometry(0.34, 0.035, 0.01);
     const lineMat = clay(0xb9a9a1);
+    // Angles keep every note off to the sides or behind, never in front of Bo or through his lid.
+    const ANGLES = [0.12, 0.62, 2.52, 3.02, 3.75, 5.6];
     PASTELS.forEach((col, i) => {
       const g = new THREE.Group();
       addMesh(g, noteGeo, clay(col), 0, 0, 0);
       addMesh(g, lineGeo, lineMat, 0, 0.06, 0.03, false);
       addMesh(g, lineGeo, lineMat, -0.05, -0.04, 0.03, false).scale.x = 0.7;
-      const a = (i / PASTELS.length) * Math.PI * 2 + 0.4;
+      const a = ANGLES[i]!;
       scene.add(g);
       notes.push({
         g,
         a,
-        rest: new THREE.Vector3(Math.cos(a) * 2.05, 1.25 + (i % 3) * 0.5, Math.sin(a) * 1.25 - 0.2),
+        rest: new THREE.Vector3(Math.cos(a) * 2.35, 1.05 + (i % 3) * 0.55, Math.sin(a) * 1.35 - 0.25),
         high: new THREE.Vector3(Math.cos(a) * 1.9, 2.9 + (i % 2) * 0.55, Math.sin(a) * 1.0),
         spin: 0.4 + (i % 3) * 0.2,
       });
@@ -740,7 +778,7 @@ export function createBoScene(canvas: HTMLCanvasElement, options: BoSceneOptions
   const v3 = new THREE.Vector3();
   const mouth = new THREE.Vector3(0, 1.75, 0.1);
 
-  const pose: BoPose = { squash: 1, tuck: 0, flail: 0, run: 0, flip: 0, lean: 0, turn: null, hold: 0, lid: 0, cheer: 0 };
+  const pose: BoPose = { squash: 1, tuck: 0, flail: 0, run: 0, flip: 0, lean: 0, turn: null, hold: 0, lid: 0, cheer: 0, point: 0, bowSpin: 0, look: null };
   let bowKick = -10;
 
   /* Cute faces: one at a time, for a moment, then back to the smile. */
@@ -754,6 +792,9 @@ export function createBoScene(canvas: HTMLCanvasElement, options: BoSceneOptions
   let faceSince = 0;
   let faceUntil = 0;
   let nextCute = performance.now() + 1800 + Math.random() * 2500;
+  let nextBlink = performance.now() + 2500;
+  let lookX = 0;
+  let lookY = 0;
   const pullFace = (next: BoFace, ms: number, now = performance.now()) => {
     face = next;
     faceSince = now;
@@ -859,6 +900,7 @@ export function createBoScene(canvas: HTMLCanvasElement, options: BoSceneOptions
     const flop = kick < 1.2 && !reduce ? Math.exp(-kick * 5) : 0;
     r.bow.scale.setScalar(1 + Math.sin(Math.PI * spin) * 0.35 + flop * Math.sin(kick * 22) * 0.12);
     r.bow.rotation.z = flop * Math.sin(kick * 26) * 0.4;
+    r.bow.rotation.y = pose.bowSpin ? t * pose.bowSpin * Math.PI * 2 : 0;
 
     const hop = Math.sin(Math.PI * spin) * 0.35;
     bo.position.y = -MIDDLE + idle * Math.sin(t * 2.1) * 0.05 * (1 - pose.tuck) + hop;
@@ -878,26 +920,43 @@ export function createBoScene(canvas: HTMLCanvasElement, options: BoSceneOptions
       pullFace(pickCute(), 1100 + Math.random() * 600, now);
       nextCute = now + 3800 + Math.random() * 4200;
     }
-    const blink = idle && t % 4.2 > 4.05 ? 0.15 : 1;
+    if (now > nextBlink + 140) nextBlink = now + 3000 + Math.random() * 3000;
+    const blink = idle && now > nextBlink ? 0.15 : 1;
+    // Pupils drift toward the pointer (or wherever the page says to look).
+    const lx = pose.look ? pose.look[0] : mx;
+    const ly = pose.look ? pose.look[1] : my;
+    lookX += (Math.max(-1, Math.min(1, lx)) - lookX) * 0.15;
+    lookY += (Math.max(-1, Math.min(1, ly)) - lookY) * 0.15;
     const fr = r.face;
     if (fr) {
       const faceIn = clamp((now - faceSince) / 90);
       const surprised = face === "surprised";
+      const sleepy = face === "sleepy" || face === "yawn";
       fr.eyes.forEach((e, i) => {
-        const closed = face === "happy" || ((face === "wink" || face === "blep") && i === 1);
+        const closed = face === "happy" || sleepy || ((face === "wink" || face === "blep") && i === 1);
         const heart = face === "love";
-        for (const o of e.open) o.visible = !closed && !heart;
+        const dizzy = face === "dizzy";
+        e.open.forEach((o, k) => {
+          o.visible = !closed && !heart && !dizzy;
+          o.position.set(e.openRest[k]!.x + lookX * e.reach, e.openRest[k]!.y - lookY * e.reach * 0.7, e.openRest[k]!.z);
+        });
         e.closed.visible = closed;
+        // Sleepy eyes droop (a little cup) instead of the happy arch.
+        e.closed.rotation.z = sleepy ? Math.PI : 0;
+        e.closed.position.y = e.closedRestY + (sleepy ? -e.reach * 1.2 : 0);
         e.heart.visible = heart;
+        e.spiral.visible = dizzy;
+        if (dizzy) e.spiral.rotation.z = -t * 9 * (i === 0 ? 1 : -1);
         e.open[0]!.scale.y = e.restY * (surprised ? 1.18 : blink);
         if (heart) e.heart.scale.setScalar((0.6 + 0.4 * faceIn) * (1 + Math.sin(t * 9) * 0.07 * idle));
       });
       if (fr.smile) {
-        fr.smile.visible = !surprised;
+        fr.smile.visible = !surprised && face !== "yawn" && face !== "dizzy";
         const grin = face === "happy" ? 1.35 : face === "love" ? 1.15 : 1;
         fr.smile.scale.copy(fr.smileRest).multiplyScalar(grin);
       }
-      fr.o.visible = surprised;
+      fr.o.visible = surprised || face === "yawn" || face === "dizzy";
+      fr.o.scale.setScalar(face === "yawn" ? 1.5 + Math.sin(t * 3) * 0.15 : face === "dizzy" ? 0.7 : 1);
       fr.tongue.visible = face === "blep";
       const blush = face === "love" || face === "happy" ? 1.25 : 1;
       for (const c of fr.cheeks) c.obj.scale.copy(c.rest).multiplyScalar(blush);
@@ -915,9 +974,11 @@ export function createBoScene(canvas: HTMLCanvasElement, options: BoSceneOptions
       const up = Math.max(wave, openOut, pose.tuck * 0.8, pose.cheer);
       const flap = reduce ? 0 : Math.sin(t * (openOut > 0.5 ? 8 : 6) + (s > 0 ? 0 : 1.5)) * 0.32;
       const windmill = pose.flail * Math.sin(t * 15 + (s > 0 ? 0 : Math.PI)) * 0.9;
+      const pointing = Math.sign(pose.point) === s ? Math.abs(pose.point) : 0;
       const holdUp = pose.hold * (1 - up);
       pivot.rotation.z = s * (0.18 + up * 2.3 + pose.flail * 1.4 + windmill + (up > 0.1 ? flap * up : Math.sin(t * 2) * 0.05 * idle)) - s * holdUp * 0.1;
-      pivot.rotation.x = -holdUp * 1.15;
+      pivot.rotation.x = -holdUp * 1.15 - pointing * 0.5;
+      if (pointing) pivot.rotation.z += s * pointing * 1.3;
     }
     for (const { pivot, side: s } of r.legs) {
       const stride = pose.run * Math.sin(t * 18 + (s > 0 ? 0 : Math.PI)) * 0.75;

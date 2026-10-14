@@ -295,6 +295,43 @@
 .bo-bubble[data-side="left"] {
   transform-origin: calc(100% - 20px) 100%;
 }
+.bo-bubble[data-tail="none"]::after {
+  display: none;
+}
+.bo-bubble[data-z] {
+  font-style: italic;
+  letter-spacing: 0.18em;
+  color: color-mix(in srgb, var(--ink) 60%, transparent);
+  animation: bo-z 2.4s ease-in-out infinite;
+}
+@keyframes bo-z {
+  50% {
+    translate: 0 -4px;
+  }
+}
+/* Bo peeking out from behind a button (dashboard empty state). */
+@keyframes bo-peek {
+  0%, 18%, 100% {
+    transform: translateX(-70%) rotate(-8deg);
+  }
+  30%, 70% {
+    transform: translateX(0) rotate(6deg);
+  }
+  78% {
+    transform: translateX(-10%) rotate(-4deg);
+  }
+}
+.bo-peek {
+  animation: bo-peek 5s ease-in-out infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  .bo-peek {
+    animation: none;
+  }
+  .bo-bubble[data-z] {
+    animation: none;
+  }
+}
 .bo-bubble[data-side="left"]::after {
   left: auto;
   right: 18px;

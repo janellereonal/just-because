@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
@@ -10,6 +10,21 @@ import { MODULES, type ModuleType } from "@/lib/gift";
 import { ModuleExample } from "@/components/ModuleExample";
 import { FormatPicker } from "@/components/FormatPicker";
 import type { GiftFormat } from "@/lib/comic";
+import { BoBuddy } from "@/components/BoBuddy";
+import { accessoryForTheme, type BoAccessory } from "@/lib/bo3d/accessories";
+import { boAccessory, boReact, boSay, markGiftCreated } from "@/lib/mascot/bus";
+
+/** What Bo says when he tries on each theme's accessory. */
+const THEME_LINES: Record<BoAccessory, string> = {
+  party_hat: "Party hat on. Let's celebrate.",
+  heart: "Aww, a love note.",
+  suitcase: "Packed and ready to wave goodbye.",
+  santa_hat: "Ho ho ho. Cozy season.",
+  paw: "For the fluffy ones.",
+  sparkler: "A sparkly fresh start.",
+  rosette: "Another year together. Sweet.",
+  flower: "Flowers for the big day.",
+};
 
 export const Route = createFileRoute("/_authenticated/create")({
   validateSearch: (search: Record<string, unknown>) => ({
@@ -46,6 +61,37 @@ function CreatePage() {
   const [busy, setBusy] = useState(false);
 
   const activeTheme = themes.find((t) => t.id === (themeId ?? themeFromUrl));
+
+  // Bo reacts as the form fills in.
+  const accessory = accessoryForTheme(activeTheme);
+  useEffect(() => {
+    boAccessory(accessory);
+    return () => boAccessory(null);
+  }, [accessory]);
+  const nameSaid = useRef(false);
+  useEffect(() => {
+    if (nameSaid.current || title.trim().length < 3) return;
+    const t = window.setTimeout(() => {
+      nameSaid.current = true;
+      boSay("Ooh, cute name.", "love");
+    }, 900);
+    return () => window.clearTimeout(t);
+  }, [title]);
+  function pickTheme(id: string | undefined) {
+    setThemeId(id);
+    const acc = accessoryForTheme(themes.find((t) => t.id === id));
+    if (acc) boSay(THEME_LINES[acc], "wink");
+  }
+  function pickFormat(next: GiftFormat) {
+    setFormat(next);
+    if (next === "comic") {
+      boReact("bam");
+      boSay("BAM.", "surprised");
+    } else {
+      boReact("hug");
+      boSay("I love a good scrapbook.", "love");
+    }
+  }
   const { data: allPalettes = [] } = usePalettes();
   // A new gift starts on the theme's first suggested palette so it already looks good.
   const defaultPalette = suggestedPalettes(activeTheme ?? null, allPalettes)[0] ?? null;
@@ -98,21 +144,29 @@ function CreatePage() {
       return;
     }
     setBusy(false);
+    markGiftCreated();
     navigate({ to: "/sites/$id", params: { id: data.id } });
   }
 
   return (
     <div className="min-h-screen bg-paper text-ink">
       <SiteHeader />
+      <BoBuddy followFocus intro={false} />
       <section className="mx-auto max-w-2xl px-5 py-14">
-        <p className="font-mono text-[11px] tracking-[0.18em] text-accent uppercase">
+        <p
+          className="font-mono text-[11px] tracking-[0.18em] text-accent uppercase"
+          data-bo-perch
+          data-bo-always
+          data-bo-x="0.92"
+          data-bo-say="Hi, I'm Bo. Let's make something nice."
+        >
           New gift site
         </p>
         <h1 className="mt-2 font-display text-3xl font-medium tracking-tight">
           Name it and pick the sections
         </h1>
 
-        <form onSubmit={handleCreate} className="mt-8 space-y-6">
+        <form onSubmit={handleCreate} className="mt-8 space-y-6" data-bo-zone>
           <div className="card-paper p-5">
             <label className="block text-sm font-medium">Gift site name</label>
             <input
@@ -125,7 +179,7 @@ function CreatePage() {
             <label className="mt-5 block text-sm font-medium">Theme</label>
             <select
               value={themeId ?? themeFromUrl ?? ""}
-              onChange={(e) => setThemeId(e.target.value || undefined)}
+              onChange={(e) => pickTheme(e.target.value || undefined)}
               className="mt-2 w-full rounded-xl border border-line bg-cream px-4 py-3 text-sm outline-none focus:border-accent"
             >
               <option value="">Choose a theme…</option>
@@ -139,7 +193,7 @@ function CreatePage() {
               <p className="mt-2 text-xs text-muted">{activeTheme.description}</p>
             ) : null}
             <div className="mt-6 border-t border-line pt-5">
-              <FormatPicker value={format} onChange={setFormat} />
+              <FormatPicker value={format} onChange={pickFormat} />
             </div>
           </div>
 

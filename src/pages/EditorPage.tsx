@@ -14,6 +14,8 @@ import {
 } from "@/lib/api";
 import { uploadFile } from "@/lib/upload";
 import { GiftIntro } from "@/components/GiftIntro";
+import { BoBuddy } from "@/components/BoBuddy";
+import { boReact, boSay, boWrap } from "@/lib/mascot/bus";
 import { introStyleForTheme } from "@/lib/intro";
 import {
   BACKGROUND_STYLES,
@@ -162,6 +164,22 @@ function SiteDashboard() {
   const { id } = useParams({ from: "/_authenticated/sites/$id" });
   const queryClient = useQueryClient();
   const [draft, setDraft] = useState<GiftSite | null>(null);
+  // Bo says something sweet once the recipient's name is filled in (not for the saved name on load).
+  const recipientName = draft?.custom_text.recipient_name?.trim() ?? "";
+  const lastNameSaid = useRef<string | null>(null);
+  useEffect(() => {
+    if (!draft) return;
+    if (lastNameSaid.current === null) {
+      lastNameSaid.current = recipientName;
+      return;
+    }
+    if (recipientName.length < 2 || recipientName === lastNameSaid.current) return;
+    const t = window.setTimeout(() => {
+      lastNameSaid.current = recipientName;
+      boSay(`${recipientName} is so lucky.`, "love");
+    }, 1100);
+    return () => window.clearTimeout(t);
+  }, [recipientName, draft]);
   const [dirty, setDirty] = useState(false);
   const [saving, setSaving] = useState(false);
   const [savedAt, setSavedAt] = useState<number | null>(null);
@@ -459,6 +477,7 @@ function SiteDashboard() {
   }
 
   function copyContributeLink() {
+    boReact("wave");
     void navigator.clipboard.writeText(contributeUrl);
     toast.success(
       `Link copied. Send it to ${draft?.custom_text.recipient_name || "their"}'s friends!`,
@@ -944,6 +963,14 @@ function SiteDashboard() {
           if (e.target === e.currentTarget) setSelected(null);
         }}
       >
+        {/* Bo's spot: the bottom corner of the preview canvas. */}
+        <div
+          aria-hidden="true"
+          data-bo-perch
+          data-bo-always
+          data-bo-say="I'll wait right here."
+          className="pointer-events-none absolute right-10 bottom-5 h-px w-10"
+        />
         <div className="flex h-full justify-center">
           <div
             className={
@@ -1047,6 +1074,7 @@ function SiteDashboard() {
 
   return (
     <div className="flex h-[100dvh] flex-col overflow-hidden bg-paper text-ink">
+      <BoBuddy followFocus celebrate intro={false} />
       <header className="flex h-16 shrink-0 items-center justify-between gap-3 border-b border-line bg-paper px-3 sm:px-4">
         <div className="flex min-w-0 flex-col justify-center gap-0.5">
         <div className="group flex min-w-0 items-center gap-2">
@@ -1127,7 +1155,7 @@ function SiteDashboard() {
 
           <Popover>
             <PopoverTrigger asChild>
-              <Button variant="outline" className="hidden h-10 rounded-full min-[900px]:inline-flex">
+              <Button variant="outline" className="hidden h-10 rounded-full min-[900px]:inline-flex" onClick={() => { boReact("wave"); boSay("The more friends, the better.", "happy"); }}>
                 <UserPlus />
                 Invite friends
               </Button>
@@ -1255,7 +1283,14 @@ function SiteDashboard() {
               </DropdownMenuContent>
             </DropdownMenu>
           ) : !hasPlan ? (
-            <Button className="h-10 rounded-full" disabled={saving || !billing} onClick={() => void publish()}>
+            <Button
+              className="h-10 rounded-full"
+              disabled={saving || !billing}
+              onClick={() => {
+                boReact("cheer");
+                void publish();
+              }}
+            >
               <Gift />
               Wrap it up
             </Button>
@@ -1275,7 +1310,14 @@ function SiteDashboard() {
                   It's already paid for ({planSummary(billing)}). Friends can still add notes, and you
                   can unpublish any time.
                 </p>
-                <Button className="w-full" onClick={() => void publish()} disabled={saving}>
+                <Button
+                  className="w-full"
+                  onClick={() => {
+                    void boWrap();
+                    void publish();
+                  }}
+                  disabled={saving}
+                >
                   Yes, wrap it up
                 </Button>
               </PopoverContent>
@@ -1307,6 +1349,7 @@ function SiteDashboard() {
         <div className="hidden min-[900px]:flex">{rail(true)}</div>
         {panelOpen ? (
           <aside
+            data-bo-zone
             className="relative hidden shrink-0 border-r border-line bg-paper min-[900px]:block"
             style={{ width: panelWidth }}
           >

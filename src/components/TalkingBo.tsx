@@ -13,6 +13,8 @@ type Props = {
   mood?: BoMood;
   notes?: boolean;
   label?: string;
+  /** Try on the accessory of whatever [data-bo-accessory] element is hovered (theme cards). */
+  hoverAccessories?: boolean;
 };
 
 const LINE_MS = 2800;
@@ -21,7 +23,7 @@ const LINE_MS = 2800;
  * A 3D Bo that introduces himself in a speech bubble and reacts when tapped.
  * The bubble is decorative (aria-hidden); the label carries the meaning.
  */
-export function TalkingBo({ className, intro, onTap = [], mood = "wave", notes = false, label = "Bo, the Just Because gift box" }: Props) {
+export function TalkingBo({ className, intro, onTap = [], mood = "wave", notes = false, label = "Bo, the Just Because gift box", hoverAccessories = false }: Props) {
   const sceneRef = useRef<BoScene | null>(null);
   const [line, setLine] = useState<string | null>(null);
   const [show, setShow] = useState(false);
@@ -67,6 +69,21 @@ export function TalkingBo({ className, intro, onTap = [], mood = "wave", notes =
   );
 
   useEffect(() => () => window.clearTimeout(timer.current), []);
+
+  useEffect(() => {
+    if (!hoverAccessories) return;
+    let current: string | null = null;
+    const onOver = (e: PointerEvent) => {
+      const el = e.target instanceof Element ? e.target.closest<HTMLElement>("[data-bo-accessory]") : null;
+      const next = el?.dataset["boAccessory"] ?? null;
+      if (next === current) return;
+      current = next;
+      sceneRef.current?.setAccessory((next as Parameters<BoScene["setAccessory"]>[0]) ?? null);
+      if (next) sceneRef.current?.setFace("wink", 900);
+    };
+    window.addEventListener("pointerover", onOver, { passive: true });
+    return () => window.removeEventListener("pointerover", onOver);
+  }, [hoverAccessories]);
 
   const tap = () => {
     if (!onTap.length) return;

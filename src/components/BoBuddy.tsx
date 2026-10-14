@@ -2,14 +2,14 @@ import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { Bo3D } from "@/components/Bo3D";
 import type { BoScene } from "@/lib/bo3d/scene";
-import type { MascotController } from "@/lib/mascot/controller";
+import type { MascotController, MascotOptions } from "@/lib/mascot/controller";
 
 /**
  * The little hopping Bo. Mount once per page; he hops between elements marked
  * with data-bo-perch as you scroll. Decorative only: hidden from screen readers
  * and never in the way of clicks.
  */
-export function BoBuddy() {
+export function BoBuddy({ followFocus = false, celebrate = false, intro = true }: MascotOptions = {}) {
   const wrapRef = useRef<HTMLDivElement | null>(null);
   const layerRef = useRef<HTMLDivElement | null>(null);
   const ctrlRef = useRef<MascotController | null>(null);
@@ -26,7 +26,7 @@ export function BoBuddy() {
     let alive = true;
     void import("@/lib/mascot/controller").then(({ MascotController }) => {
       if (!alive) return;
-      ctrlRef.current = new MascotController(wrap, layer);
+      ctrlRef.current = new MascotController(wrap, layer, { followFocus, celebrate, intro });
       ctrlRef.current.setScene(sceneRef.current);
       if (import.meta.env.DEV) (window as unknown as { __bo?: MascotController }).__bo = ctrlRef.current;
     });
@@ -35,6 +35,8 @@ export function BoBuddy() {
       ctrlRef.current?.destroy();
       ctrlRef.current = null;
     };
+    // Options are read once when Bo arrives on the page.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [mounted]);
 
   if (!mounted) return null;

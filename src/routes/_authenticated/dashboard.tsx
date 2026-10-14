@@ -43,12 +43,22 @@ function Dashboard() {
               Everything you're making
             </h1>
           </div>
-          <Link
-            to="/themes"
-            className="rounded-full bg-accent px-5 py-2.5 text-sm font-medium text-cream transition-colors hover:bg-accent/90"
-          >
-            New gift
-          </Link>
+          <span className="relative isolate inline-flex">
+            {!isLoading && sites.length === 0 ? (
+              // Bo peeks out from behind the button.
+              <span aria-hidden="true" className="pointer-events-none absolute top-1/2 -right-9 -z-10 -translate-y-1/2">
+                <span className="bo-peek block origin-bottom-left">
+                  <Bo pose="hello" size={58} title="" />
+                </span>
+              </span>
+            ) : null}
+            <Link
+              to="/themes"
+              className="rounded-full bg-accent px-5 py-2.5 text-sm font-medium text-cream transition-colors hover:bg-accent/90"
+            >
+              New gift
+            </Link>
+          </span>
         </div>
 
         {isLoading ? (

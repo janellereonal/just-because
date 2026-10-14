@@ -9,6 +9,8 @@ import Bo from "@/components/Bo";
 import { PricingCards } from "@/components/PricingCards";
 import { BoBuddy } from "@/components/BoBuddy";
 import { TalkingBo } from "@/components/TalkingBo";
+import { HeroScraps } from "@/components/HeroScraps";
+import { accessoryForTheme } from "@/lib/bo3d/accessories";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -68,6 +70,7 @@ function Index() {
 
   // Scroll progress through the four steps, read by Bo every frame (no re-renders).
   const stepRefs = useRef<(HTMLElement | null)[]>([]);
+  const heroRef = useRef<HTMLDivElement | null>(null);
   const storySource = useCallback(() => {
     if (typeof window === "undefined") return 0;
     const vh = window.innerHeight || 800;
@@ -87,7 +90,8 @@ function Index() {
 
       {/* Hero */}
       <section className="mx-auto max-w-6xl px-3 pt-6 sm:px-5">
-        <div className="relative grid overflow-hidden rounded-[40px] bg-pink px-6 pt-10 pb-4 sm:px-12 sm:pt-14 lg:grid-cols-[1.05fr_1fr] lg:items-center lg:pb-10">
+        <div ref={heroRef} className="relative grid overflow-hidden rounded-[40px] bg-pink px-6 pt-10 pb-4 sm:px-12 sm:pt-14 lg:grid-cols-[1.05fr_1fr] lg:items-center lg:pb-10">
+          <HeroScraps heroRef={heroRef} />
           <span aria-hidden="true" className="absolute -top-24 right-10 size-72 rounded-full bg-white/40" />
           <span aria-hidden="true" className="absolute -bottom-28 -left-16 size-80 rounded-full bg-butter/80" />
           <span aria-hidden="true" className="absolute top-1/2 right-1/3 size-24 rounded-full bg-lilac/80" />
@@ -191,7 +195,7 @@ function Index() {
         </div>
         <div className="grid grid-cols-2 gap-3 sm:gap-5 lg:grid-cols-4">
           {themes.slice(0, 4).map((theme, i) => (
-            <div key={theme.id} data-bo-perch data-bo-x="0.72" data-bo-delay={(i % 4) * 90}>
+            <div key={theme.id} data-bo-perch data-bo-x="0.72" data-bo-delay={(i % 4) * 90} data-bo-accessory={accessoryForTheme(theme) ?? undefined}>
               <ThemeCard theme={theme} variant="compact" onSelect={() => navigate({ to: "/themes/$id", params: { id: theme.id } })} />
             </div>
           ))}
