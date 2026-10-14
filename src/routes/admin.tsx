@@ -5,7 +5,7 @@ import { toast } from "sonner";
 import { SiteHeader } from "@/components/SiteHeader";
 import { usePreviewUrl } from "@/components/ThemeCard";
 import { fetchThemes, type Theme } from "@/lib/themes";
-import { getPaymentsSetup, setThemePreview, setThemeStatus } from "@/lib/api";
+import { getPaymentsSetup, setThemePreview, setThemeStatus, setupPaymongoWebhook } from "@/lib/api";
 import { uploadFile } from "@/lib/upload";
 import { useAuth } from "@/hooks/useAuth";
 
@@ -191,7 +191,17 @@ function AdminThemeRow({ theme, onToggle }: { theme: Theme; onToggle: () => void
 
 /** Read-only checklist: is PayMongo wired up? Shows whether things are set, never their values. */
 function PaymentsSetup() {
+  const queryClient = useQueryClient();
   const { data } = useQuery({ queryKey: ["payments-setup"], queryFn: () => getPaymentsSetup() });
+  const setupWebhook = useMutation({
+    mutationFn: () => setupPaymongoWebhook(),
+    onSuccess: (result) => {
+      toast.success(`PayMongo webhook: ${result.action}.`);
+      void queryClient.invalidateQueries({ queryKey: ["payments-setup"] });
+    },
+    onError: (error) =>
+      toast.error(error instanceof Error && error.message.length < 200 ? error.message : "That didn't work. Try again."),
+  });
   if (!data) return null;
   const rows: { ok: boolean; label: string; help: string }[] = [
     {
@@ -207,9 +217,11 @@ function PaymentsSetup() {
       help: "Vercel → Settings → Environment Variables → PAYMONGO_SECRET_KEY (sk_test_…)",
     },
     {
-      ok: data.webhookSecretSet,
-      label: data.webhookSecretSet ? "Webhook secret is set" : "Webhook secret isn't set",
-      help: "Create the webhook in PayMongo (URL below, event checkout_session.payment.paid), then put its whsk_… secret in PAYMONGO_WEBHOOK_SECRET",
+      ok: data.webhookReady,
+      label: data.webhookReady
+        ? `PayMongo ${data.keyMode} webhook is on for this site`
+        : data.webhooksError ?? `PayMongo has no working ${data.keyMode === "live" ? "live" : "test"} webhook for this site`,
+      help: "Press “Set up the webhook” below. It uses the secret key that's already in Vercel.",
     },
     {
       ok: data.appBaseUrlSet,
@@ -251,6 +263,35 @@ function PaymentsSetup() {
         >
           {data.webhookUrl}
         </button>
+        {data.webhooks ? (
+          <div className="mt-3">
+            <p className="text-muted">
+              Webhooks PayMongo has ({data.keyMode} mode){data.webhooks.length === 0 ? ": none" : ""}
+            </p>
+            <ul className="mt-1 space-y-1 font-mono text-xs">
+              {data.webhooks.map((w) => (
+                <li key={`${w.url}-${w.events.join()}`} className="break-all">
+                  {w.url} · {w.events.join(", ")} · {w.status}
+                </li>
+              ))}
+            </ul>
+          </div>
+        ) : null}
+        {!data.webhookReady && (data.keyMode === "test" || (data.keyMode === "live" && data.liveAllowed)) ? (
+          <button
+            type="button"
+            disabled={setupWebhook.isPending}
+            onClick={() => setupWebhook.mutate()}
+            className="mt-3 rounded-full bg-accent px-5 py-2 text-sm font-medium text-cream disabled:opacity-60"
+          >
+            {setupWebhook.isPending ? "Setting up…" : "Set up the webhook"}
+          </button>
+        ) : null}
+        <p className="mt-3 text-muted">
+          {data.webhookSecretSet
+            ? "Webhook secret is set, so signed events are checked too."
+            : "No webhook secret set. That's fine: every payment is confirmed by asking PayMongo directly."}
+        </p>
         <p className="mt-3 text-muted">
           Payment methods offered: {data.methods.join(", ")} · Paid orders: {data.paidOrders} · Waiting: {data.pendingOrders}
         </p>

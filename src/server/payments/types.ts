@@ -41,6 +41,12 @@ export type WebhookOutcome =
   | { kind: "paid"; event: PaidEvent }
   /** Verified, but an event type we don't act on. */
   | { kind: "ignored"; eventId: string; eventType: string }
+  /**
+   * Unsigned (or signed with a secret we don't have): treat it only as a hint to
+   * ask the provider about this checkout. Safe, because the answer comes from
+   * the provider's API with our secret key, not from the request.
+   */
+  | { kind: "check"; checkoutId: string; reason: string }
   | { kind: "rejected"; reason: string };
 
 export interface PaymentProvider {

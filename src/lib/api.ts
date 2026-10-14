@@ -788,16 +788,49 @@ export const getPaymentsSetup = createServerFn({ method: "GET" }).handler(async 
       pending: sql<number>`(count(*) filter (where ${schema.orders.status} = 'pending'))::int`,
     })
     .from(schema.orders);
+  let webhooks: { url: string; events: string[]; status: string; livemode: boolean }[] | null = null;
+  let webhooksError: string | null = null;
+  if (mode === "test" || (mode === "live" && process.env["PAYMONGO_ALLOW_LIVE"] === "true")) {
+    try {
+      const { listWebhooks } = await import("@/server/payments/paymongo");
+      webhooks = (await listWebhooks()).map(({ url, events, status, livemode }) => ({ url, events, status, livemode }));
+    } catch (error) {
+      console.error("[payments] listing webhooks failed", error);
+      webhooksError = "We couldn't ask PayMongo for its webhooks.";
+    }
+  }
+  const webhookUrl = `${siteUrl()}/api/webhooks/paymongo`;
   return {
     keyMode: mode,
     liveAllowed: process.env["PAYMONGO_ALLOW_LIVE"] === "true",
+    webhooks,
+    webhooksError,
+    webhookReady:
+      !!webhooks?.some(
+        (w) => w.url === webhookUrl && w.status === "enabled" && w.events.includes("checkout_session.payment.paid"),
+      ),
     webhookSecretSet: !!process.env["PAYMONGO_WEBHOOK_SECRET"],
     appBaseUrlSet: !!process.env["APP_BASE_URL"],
-    webhookUrl: `${siteUrl()}/api/webhooks/paymongo`,
+    webhookUrl,
     methods: enabledPaymentMethods,
     paidOrders: counts?.paid ?? 0,
     pendingOrders: counts?.pending ?? 0,
   };
+});
+
+/** Admin: register (or fix) the PayMongo webhook for this site, using the key already in Vercel. */
+export const setupPaymongoWebhook = createServerFn({ method: "POST" }).handler(async () => {
+  await requireAdmin();
+  const { siteUrl } = await import("@/server/email");
+  const { ensureWebhook } = await import("@/server/payments/paymongo");
+  try {
+    const { action, webhook } = await ensureWebhook(`${siteUrl()}/api/webhooks/paymongo`);
+    console.info(`[payments] webhook setup: ${action} (${webhook.livemode ? "live" : "test"}, ${webhook.status})`);
+    return { ok: true, action };
+  } catch (error) {
+    console.error("[payments] webhook setup failed", error);
+    throw new HttpError(502, "PayMongo didn't accept that. Check the secret key in Vercel and try again.");
+  }
 });
 
 /** Keepsake (and legacy) gifts can pick their own link name. */

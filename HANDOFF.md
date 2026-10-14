@@ -98,7 +98,8 @@ Done: A (deploy check), extend, device-id counting, password protection, bridal 
 
 A. Keys are in (14 Oct) and the first card test payment worked, through the confirm-page backup check
    (`d501041`). **The PayMongo webhook didn't reach Vercel** (no `[payments]` log lines), likely because
-   it was created in live mode. Janelle is re-checking it in test mode. Once a webhook works you'll see
+   it was created in live mode. Fix: /admin → "Set up the webhook" registers a test-mode webhook
+   with the key already in Vercel, and the handler no longer needs the webhook secret. Once a webhook works you'll see
    `[payments] webhook evt_...` in the Vercel logs. Then finish the test run in section 4.
 B. Upload theme preview images once Janelle sends them (Admin → Upload preview).
 C. Early-bird promo: built but off (`promo.enabled` in pricing.ts). Turn on only when Janelle says so.

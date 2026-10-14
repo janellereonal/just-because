@@ -125,31 +125,36 @@ type EventPayload = {
 };
 
 async function handleWebhook(rawBody: string, headers: Headers): Promise<WebhookOutcome> {
-  const secret = process.env["PAYMONGO_WEBHOOK_SECRET"];
-  if (!secret) return { kind: "rejected", reason: "PAYMONGO_WEBHOOK_SECRET isn't set" };
-
-  const sig = parseSignature(headers.get("paymongo-signature"));
-  if (!sig) return { kind: "rejected", reason: "missing or malformed Paymongo-Signature header" };
-
   let payload: EventPayload;
   try {
     payload = JSON.parse(rawBody) as EventPayload;
   } catch {
     return { kind: "rejected", reason: "body isn't JSON" };
   }
-  const live = payload.data?.attributes?.livemode === true;
-  const expected = createHmac("sha256", secret).update(`${sig.t}.${rawBody}`).digest("hex");
-  if (!safeEqualHex(expected, live ? sig.li : sig.te)) {
-    return { kind: "rejected", reason: `signature mismatch (${live ? "live" : "test"} mode)` };
-  }
-
   const eventId = payload.data?.id ?? "";
   const eventType = payload.data?.attributes?.type ?? "";
-  if (!eventId) return { kind: "rejected", reason: "event has no id" };
   if (eventType !== PAID_EVENT) return { kind: "ignored", eventId, eventType };
-
   const checkoutId = payload.data?.attributes?.data?.id;
-  if (!checkoutId) return { kind: "rejected", reason: "paid event has no checkout session id" };
+  if (!checkoutId || !/^cs_[A-Za-z0-9]+$/.test(checkoutId)) {
+    return { kind: "rejected", reason: "paid event has no valid checkout session id" };
+  }
+
+  // A valid signature lets us use PayMongo's event id. Without one, we still
+  // never trust the body: we only ask PayMongo about this checkout.
+  const secret = process.env["PAYMONGO_WEBHOOK_SECRET"];
+  const sig = parseSignature(headers.get("paymongo-signature"));
+  const live = payload.data?.attributes?.livemode === true;
+  const signed =
+    !!secret &&
+    !!sig &&
+    safeEqualHex(createHmac("sha256", secret).update(`${sig.t}.${rawBody}`).digest("hex"), live ? sig.li : sig.te);
+  if (!signed || !eventId) {
+    return {
+      kind: "check",
+      checkoutId,
+      reason: !secret ? "no webhook secret set" : !sig ? "no signature" : "signature didn't match our secret",
+    };
+  }
 
   const event = await checkPaid(checkoutId, { eventId, eventType });
   // A paid event whose session shows nothing paid: let applyPaidEvent log it as underpaid.
@@ -173,6 +178,59 @@ async function checkPaid(
     paymentId: paid[0]?.id ?? null,
     amountPaid: paid.reduce((sum, p) => sum + p.attributes.amount, 0),
   };
+}
+
+/* ---------------- webhook setup (admin) ---------------- */
+
+export type WebhookInfo = { id: string; url: string; events: string[]; status: string; livemode: boolean };
+
+type WebhookResource = {
+  id: string;
+  attributes: { url: string; events: string[]; status: string; livemode: boolean; secret_key?: string };
+};
+
+/** Never return or log `secret_key`. */
+function toInfo(w: WebhookResource): WebhookInfo {
+  return { id: w.id, url: w.attributes.url, events: w.attributes.events, status: w.attributes.status, livemode: w.attributes.livemode };
+}
+
+/** Webhooks registered for whichever mode our secret key is in (test key → test webhooks). */
+export async function listWebhooks(): Promise<WebhookInfo[]> {
+  const res = await call<{ data: WebhookResource[] }>("/v1/webhooks");
+  return res.data.map(toInfo);
+}
+
+/**
+ * Makes sure PayMongo will call `url` for paid checkouts, in the same mode as our
+ * key. Creates, re-enables or updates the webhook as needed. The secret PayMongo
+ * returns on create is thrown away: unsigned or unmatched calls are handled as
+ * "check this checkout" hints (see handleWebhook), so no secret has to be copied.
+ */
+export async function ensureWebhook(url: string): Promise<{ action: string; webhook: WebhookInfo }> {
+  const existing = (await listWebhooks()).find((w) => w.url === url);
+  if (!existing) {
+    const created = await call<{ data: WebhookResource }>("/v1/webhooks", {
+      method: "POST",
+      body: JSON.stringify({ data: { attributes: { url, events: [PAID_EVENT] } } }),
+    });
+    return { action: "created", webhook: toInfo(created.data) };
+  }
+  let webhook = existing;
+  let action = "already set up";
+  if (!webhook.events.includes(PAID_EVENT)) {
+    const updated = await call<{ data: WebhookResource }>(`/v1/webhooks/${webhook.id}`, {
+      method: "PUT",
+      body: JSON.stringify({ data: { attributes: { url, events: [...webhook.events, PAID_EVENT] } } }),
+    });
+    webhook = toInfo(updated.data);
+    action = "added the paid event";
+  }
+  if (webhook.status !== "enabled") {
+    const enabled = await call<{ data: WebhookResource }>(`/v1/webhooks/${webhook.id}/enable`, { method: "POST" });
+    webhook = toInfo(enabled.data);
+    action = action === "already set up" ? "turned it on" : `${action} and turned it on`;
+  }
+  return { action, webhook };
 }
 
 export const paymongo: PaymentProvider = { name: "paymongo", createCheckout, handleWebhook, checkPaid };
