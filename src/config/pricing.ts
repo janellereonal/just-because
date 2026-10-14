@@ -9,7 +9,7 @@
  */
 
 export type TierId = "sweet" | "celebration" | "keepsake";
-export type GiftFormatId = "scrapbook" | "comic";
+export type GiftFormatId = import("@/lib/formats").GiftFormat;
 
 /**
  * Feature switches per tier. To add a new paid feature later (for example
@@ -52,7 +52,7 @@ export const TIERS: Tier[] = [
     audience: "Small group birthdays",
     contributors: { cap: 10, unlimited: false },
     photos: { cap: 30, unlimited: false },
-    formats: ["scrapbook"],
+    formats: ["scrapbook", "bento"],
     liveFor: { months: 3, label: "3 months" },
     extendAmount: 14900,
     features: { customLinkName: false, passwordProtection: false },
@@ -65,7 +65,7 @@ export const TIERS: Tier[] = [
     mostPopular: true,
     contributors: { cap: 30, unlimited: false },
     photos: { cap: 150, unlimited: false },
-    formats: ["scrapbook", "comic"],
+    formats: ["scrapbook", "comic", "bento", "hunt", "zine"],
     liveFor: { months: 12, label: "1 year" },
     extendAmount: 29900,
     features: { customLinkName: false, passwordProtection: true },
@@ -78,7 +78,7 @@ export const TIERS: Tier[] = [
     // "Unlimited" on the card, with a fair-use cap so one gift can't run away with storage.
     contributors: { cap: 500, unlimited: true },
     photos: { cap: 1000, unlimited: true },
-    formats: ["scrapbook", "comic"],
+    formats: ["scrapbook", "comic", "bento", "hunt", "zine"],
     liveFor: { months: 36, label: "3 years" },
     extendAmount: 49900,
     features: { customLinkName: true, passwordProtection: true },
@@ -170,7 +170,7 @@ export function featureList(tier: Tier): string[] {
   const lines = [
     tier.contributors.unlimited ? "Unlimited contributors" : `Up to ${tier.contributors.cap} contributors`,
     tier.photos.unlimited ? "Unlimited photos" : `Up to ${tier.photos.cap} photos`,
-    tier.formats.length > 1 ? "Scrapbook and comic formats" : "Scrapbook format",
+    tier.formats.length >= 5 ? `All ${tier.formats.length} formats, including Comic and Gift Hunt` : "Scrapbook and Bento formats",
   ];
   if (tier.features.passwordProtection) lines.push("Password protection");
   if (tier.features.customLinkName) lines.push("Custom link name");

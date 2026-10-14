@@ -3,8 +3,10 @@ import {Link, useParams} from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { SiteHeader } from "@/components/SiteHeader";
-import { GiftSiteView } from "@/components/GiftSiteView";
 import { ComicIssueView } from "@/components/ComicIssueView";
+import { FormatPicker } from "@/components/FormatPicker";
+import { FormatView } from "@/components/formats/FormatView";
+import { FORMATS, formatInfo } from "@/lib/formats";
 import {
   deleteCalendarEntry,
   setContributionStatus,
@@ -831,26 +833,18 @@ function SiteDashboard() {
     ),
     comic: (
       <div className="space-y-5">
-        <div className="grid grid-cols-2 gap-2 rounded-xl border border-line bg-cream p-1">
-          {(["scrapbook", "comic"] as const).map((format) => (
-            <Button
-              key={format}
-              type="button"
-              variant={draft.format === format ? "default" : "ghost"}
-              onClick={() => patch({ format })}
-              disabled={!!planTier && !planTier.formats.includes(format)}
-              className="capitalize"
-            >
-              {format === "comic" ? "Comic Issue" : "Scrapbook"}
-            </Button>
-          ))}
-        </div>
-        {planTier && !planTier.formats.includes("comic") ? (
+        <FormatPicker
+          value={draft.format}
+          onChange={(format) => patch({ format })}
+          isAllowed={(format) => !planTier || planTier.formats.includes(format)}
+          compact
+        />
+        {planTier && planTier.formats.length < FORMATS.length ? (
           <p className="text-xs text-muted">
-            {planTier.name} is scrapbook only.{" "}
+            {planTier.name} includes {planTier.formats.map((f) => formatInfo(f).title).join(" and ")}.{" "}
             {billing && billing.upgrades.length > 0 ? (
               <button type="button" className="text-accent underline underline-offset-2" onClick={() => setPlanPicker("upgrade")}>
-                Upgrade to use the comic format.
+                Upgrade for every format.
               </button>
             ) : null}
           </p>
@@ -863,7 +857,7 @@ function SiteDashboard() {
             {normalizeComicSettings(draft.format_settings).two_worlds ? <div className="grid gap-3"><label><span className="text-xs text-muted">First world</span><input value={normalizeComicSettings(draft.format_settings).world_one ?? ""} onChange={(event) => patchComic({ world_one: event.target.value })} placeholder="HERO WORLD" className="mt-1 w-full rounded-xl border border-line bg-cream px-3 py-2.5 text-sm" /></label><label><span className="text-xs text-muted">Second world</span><input value={normalizeComicSettings(draft.format_settings).world_two ?? ""} onChange={(event) => patchComic({ world_two: event.target.value })} placeholder="OHANA WORLD" className="mt-1 w-full rounded-xl border border-line bg-cream px-3 py-2.5 text-sm" /></label></div> : null}
             <div><p className="text-sm font-medium">Panel organizer</p><p className="mt-1 text-xs text-muted">Reorder panels or move one into another chapter.</p><div className="mt-3 space-y-2">{orderedComicIds(contributions.map((item) => item.id), normalizeComicSettings(draft.format_settings).panel_order).map((itemId, index, orderedIds) => { const item = contributions.find((entry) => entry.id === itemId); if (!item) return null; const settings = normalizeComicSettings(draft.format_settings); const chapter = settings.chapter_overrides?.[item.id] ?? item.module_type; return <div key={item.id} className="rounded-xl border border-line bg-cream p-3"><div className="flex items-center gap-2"><span className="min-w-0 flex-1 truncate text-sm font-medium">{item.author_name}</span><Button type="button" size="icon" variant="ghost" disabled={index === 0} onClick={() => moveComicPanel(item.id, -1)} aria-label="Move panel up">↑</Button><Button type="button" size="icon" variant="ghost" disabled={index === orderedIds.length - 1} onClick={() => moveComicPanel(item.id, 1)} aria-label="Move panel down">↓</Button></div><select value={chapter} onChange={(event) => patchComic({ chapter_overrides: { ...settings.chapter_overrides, [item.id]: event.target.value } })} className="mt-2 w-full rounded-lg border border-line bg-paper px-2 py-2 text-xs">{MODULES.map((module) => <option key={module.type} value={module.type}>{module.label}</option>)}</select></div>; })}</div></div>
           </>
-        ) : <p className="text-xs text-muted">The original scrolling gift stays exactly as it is.</p>}
+        ) : <p className="text-xs text-muted">{formatInfo(draft.format).about}</p>}
       </div>
     ),
     review: (
@@ -985,7 +979,7 @@ function SiteDashboard() {
             }
           >
             <div className="h-full overflow-y-auto overscroll-contain">
-               {draft.format === "comic" ? <ComicIssueView site={draft} modules={modules} contributions={approved} calendarEntries={calendarEntries} palette={paletteNow} sample /> : <GiftSiteView site={draft} theme={theme} modules={modules} contributions={approved} calendarEntries={calendarEntries} sample highlightField={focusField} onEditField={(field) => { openField(field); selectInPreview(field); }} />}
+               <FormatView site={draft} theme={theme} palette={paletteNow} modules={modules} contributions={approved} calendarEntries={calendarEntries} sample highlightField={focusField} onEditField={(field) => { openField(field); selectInPreview(field); }} />
             </div>
           </div>
         </div>
@@ -1428,7 +1422,7 @@ function SiteDashboard() {
           </div>
           <div className="h-full overflow-auto pt-24 sm:pt-[62px]">
             <div className={device === "phone" ? "relative mx-auto h-[calc(100vh-78px)] w-full max-w-[390px] overflow-y-auto rounded-[28px] border border-line shadow-xl" : "relative min-h-[calc(100vh-62px)]"}>
-              {!previewOpened && draft.format !== "comic" ? (
+              {!previewOpened && formatInfo(draft.format).usesIntro ? (
                 <GiftIntro
                   contained
                   style={introStyleForTheme(theme?.name)}
@@ -1439,10 +1433,8 @@ function SiteDashboard() {
                   introText={draft.intro_text ?? undefined}
                   onOpen={() => setPreviewOpened(true)}
                 />
-              ) : draft.format === "comic" ? (
-                <ComicIssueView key={previewOpened ? "comic-reader" : "comic-cover"} site={draft} modules={modules} contributions={approved} calendarEntries={calendarEntries} palette={paletteNow} showCover={!previewOpened} sample showShare />
               ) : (
-                <GiftSiteView site={draft} theme={theme} modules={modules} contributions={approved} calendarEntries={calendarEntries} sample showShare />
+                <FormatView key={draft.format === "comic" ? (previewOpened ? "comic-reader" : "comic-cover") : draft.format} site={draft} theme={theme} palette={paletteNow} modules={modules} contributions={approved} calendarEntries={calendarEntries} showCover={!previewOpened} sample showShare />
               )}
             </div>
           </div>

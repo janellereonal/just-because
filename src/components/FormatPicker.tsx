@@ -1,35 +1,101 @@
-import { BookOpen, PanelsTopLeft } from "lucide-react";
-import type { GiftFormat } from "@/lib/comic";
+import { Lock } from "lucide-react";
+import { FORMATS, type GiftFormat } from "@/lib/formats";
 
-export function FormatPicker({ value, onChange }: { value: GiftFormat; onChange: (value: GiftFormat) => void }) {
-  const options = [
-    { id: "scrapbook" as const, title: "Scrapbook", copy: "A warm, scrolling collection", Icon: BookOpen },
-    { id: "comic" as const, title: "Comic Issue", copy: "A cover and page-turn adventure", Icon: PanelsTopLeft },
-  ];
+/** A tiny live-ish preview of each format, drawn in CSS. */
+function Mini({ id }: { id: GiftFormat }) {
+  switch (id) {
+    case "comic":
+      return (
+        <span className="fmt-mini fmt-comic" aria-hidden>
+          <i />
+          <i>BAM!</i>
+          <i />
+        </span>
+      );
+    case "bento":
+      return (
+        <span className="fmt-mini fmt-bento" aria-hidden>
+          <i />
+          <i />
+          <i />
+          <i />
+          <i />
+        </span>
+      );
+    case "hunt":
+      return (
+        <span className="fmt-mini fmt-hunt" aria-hidden>
+          <i />
+          <i />
+          <i />
+        </span>
+      );
+    case "zine":
+      return (
+        <span className="fmt-mini fmt-zine" aria-hidden>
+          <b>Z</b>
+          <b>I</b>
+          <b>N</b>
+          <b>E</b>
+          <i />
+        </span>
+      );
+    default:
+      return (
+        <span className="fmt-mini fmt-scrap" aria-hidden>
+          <i />
+          <i />
+          <i />
+        </span>
+      );
+  }
+}
+
+export function FormatPicker({
+  value,
+  onChange,
+  isAllowed,
+  compact = false,
+}: {
+  value: GiftFormat;
+  onChange: (value: GiftFormat) => void;
+  /** Formats the current plan can't use show a lock. */
+  isAllowed?: (format: GiftFormat) => boolean;
+  compact?: boolean;
+}) {
   return (
     <fieldset>
-      <legend className="text-sm font-medium">Choose a format</legend>
-      <div className="mt-3 grid grid-cols-2 gap-3">
-        {options.map(({ id, title, copy, Icon }) => {
-          const active = value === id;
+      <legend className={compact ? "sr-only" : "font-display text-base font-medium"}>Choose a format</legend>
+      {!compact ? <p className="mt-1 text-xs text-muted">Same notes, different way to open them. You can switch any time.</p> : null}
+      <div className={`mt-3 grid gap-2.5 ${compact ? "grid-cols-2" : "grid-cols-2 sm:grid-cols-3"}`}>
+        {FORMATS.map((f) => {
+          const active = value === f.id;
+          const allowed = isAllowed ? isAllowed(f.id) : true;
           return (
-            <label key={id} className={`cursor-pointer overflow-hidden rounded-xl border ${active ? "border-accent ring-2 ring-accent/25" : "border-line"}`}>
-              <input className="sr-only" type="radio" name="format" checked={active} onChange={() => onChange(id)} />
-              <span className={`block h-28 p-3 ${id === "comic" ? "bg-ink" : "bg-paper"}`}>
-                {id === "comic" ? (
-                  <span className="grid h-full grid-cols-2 gap-1" aria-hidden>
-                    <span className="border-2 border-cream bg-accent/70" />
-                    <span className="grid border-2 border-cream bg-paper text-ink place-items-center font-black">BAM!</span>
+            <label
+              key={f.id}
+              className={`fmt-card group ${active ? "is-active" : ""} ${allowed ? "" : "is-locked"}`}
+            >
+              <input
+                className="sr-only"
+                type="radio"
+                name="format"
+                checked={active}
+                disabled={!allowed}
+                onChange={() => onChange(f.id)}
+              />
+              <span className="fmt-stage">
+                <Mini id={f.id} />
+                {f.isNew ? <span className="fmt-new">New</span> : null}
+                {!allowed ? (
+                  <span className="fmt-lock">
+                    <Lock className="size-3" /> Bigger plan
                   </span>
-                ) : (
-                  <span className="grid h-full rotate-[-2deg] place-items-center rounded-sm border border-line bg-cream shadow-sm" aria-hidden>
-                    <Icon className="size-8 text-accent" />
-                  </span>
-                )}
+                ) : null}
               </span>
-              <span className="block bg-cream p-3">
-                <span className="flex items-center gap-2 text-sm font-medium"><Icon className="size-4" />{title}</span>
-                <span className="mt-1 block text-xs text-muted">{copy}</span>
+              <span className="block px-3 pt-2.5 pb-3">
+                <span className="block text-sm font-semibold">{f.title}</span>
+                <span className="mt-0.5 block text-xs leading-snug text-muted">{f.copy}</span>
               </span>
             </label>
           );

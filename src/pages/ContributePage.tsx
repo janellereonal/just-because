@@ -22,8 +22,7 @@ import {
   type ViewContribution,
 } from "@/lib/gift";
 import { readableInk, surfaceColor } from "@/lib/palettes";
-import { GiftSiteView } from "@/components/GiftSiteView";
-import { ComicIssueView } from "@/components/ComicIssueView";
+import { FormatView } from "@/components/formats/FormatView";
 import { ModuleExample } from "@/components/ModuleExample";
 import Bo from "@/components/Bo";
 import { PageError, PageLoading, PageNotFound } from "@/components/PageStates";
@@ -779,11 +778,7 @@ function ContributePage() {
             className="mt-3 max-h-[75vh] overflow-y-auto rounded-3xl ring-1 ring-black/5"
             style={{ backgroundColor: palette.background }}
           >
-            {site.format === "comic" ? (
-              <ComicIssueView site={site} modules={modules} contributions={giftContributions} calendarEntries={calendarEntries} palette={palette} sample />
-            ) : (
-              <GiftSiteView site={site} theme={theme} modules={modules} contributions={giftContributions} calendarEntries={calendarEntries} sample />
-            )}
+            <FormatView site={site} theme={theme} palette={palette} modules={modules} contributions={giftContributions} calendarEntries={calendarEntries} sample />
           </div>
         </div>
       </div>

@@ -1,6 +1,6 @@
 import type { ModuleType } from "@/lib/gift";
 
-export type GiftFormat = "scrapbook" | "comic";
+export type { GiftFormat } from "@/lib/formats";
 
 export type ComicSettings = {
   cover_title?: string;

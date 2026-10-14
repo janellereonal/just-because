@@ -10,7 +10,8 @@ import {
 } from "@/lib/api";
 import type { Palette, Theme } from "@/lib/themes";
 import { normalizeTheme } from "@/lib/themes";
-import { normalizeComicSettings, type ComicSettings, type GiftFormat } from "@/lib/comic";
+import { normalizeComicSettings, type ComicSettings } from "@/lib/comic";
+import { isGiftFormat, type GiftFormat } from "@/lib/formats";
 
 export type ModuleType =
   | "letters"
@@ -281,7 +282,7 @@ export function normalizeSite(row: Record<string, unknown>): GiftSite {
     theme_id: (row["theme_id"] as string | null) ?? null,
     slug: String(row["slug"]),
     status: row["status"] === "published" ? "published" : "draft",
-    format: row["format"] === "comic" ? "comic" : "scrapbook",
+    format: isGiftFormat(row["format"]) ? row["format"] : "scrapbook",
     format_settings: normalizeComicSettings(row["format_settings"]),
     custom_text: (row["custom_text"] as CustomText) ?? {},
     custom_colors: (row["custom_colors"] as Partial<Palette>) ?? {},

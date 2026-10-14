@@ -1,6 +1,7 @@
 @import "tailwindcss" source(none);
 @source "../src";
 @import "tw-animate-css";
+@import "./styles/formats.css";
 
 /*
  * Just Because, "Pastel toybox" design system (Oct 2026 redesign).
