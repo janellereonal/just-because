@@ -33,7 +33,10 @@ function AuthPage() {
   const [password, setPassword] = useState("");
   const [name, setName] = useState("");
   const [busy, setBusy] = useState(false);
-  const { data: options } = useQuery({ queryKey: ["auth-options"], queryFn: () => getAuthOptions() });
+  const { data: options } = useQuery({
+    queryKey: ["auth-options"],
+    queryFn: () => getAuthOptions(),
+  });
 
   async function handleGoogle() {
     setBusy(true);
@@ -85,7 +88,9 @@ function AuthPage() {
         return;
       }
       toast.error(
-        error.status === 401 ? "That email and password don't match." : (error.message ?? "Couldn't sign in."),
+        error.status === 401
+          ? "That email and password don't match."
+          : (error.message ?? "Couldn't sign in."),
       );
       return;
     }
@@ -116,110 +121,130 @@ function AuthPage() {
               </button>
             </div>
           ) : (
-          <>
-          <h1 className="font-display text-[2.1rem] leading-tight font-semibold tracking-tight">
-            {mode === "signin" ? "Welcome back" : mode === "signup" ? "Start a gift" : "Forgot your password?"}
-          </h1>
-          <p className="mt-2 text-[15px] text-ink/65">
-            {mode === "signin"
-              ? "Sign in to keep working on your gifts."
-              : mode === "signup"
-                ? "Make an account to start a gift. Your friends won't need one."
-                : "We'll email you a link to set a new one."}
-          </p>
-
-          {options?.google && mode !== "forgot" ? (
             <>
+              <h1 className="font-display text-[2.1rem] leading-tight font-semibold tracking-tight">
+                {mode === "signin"
+                  ? "Welcome back"
+                  : mode === "signup"
+                    ? "Start a gift"
+                    : "Forgot your password?"}
+              </h1>
+              <p className="mt-2 text-[15px] text-ink/65">
+                {mode === "signin"
+                  ? "Sign in to keep working on your gifts."
+                  : mode === "signup"
+                    ? "Make an account to start a gift. Your friends won't need one."
+                    : "We'll email you a link to set a new one."}
+              </p>
+
+              {options?.google && mode !== "forgot" ? (
+                <>
+                  <button
+                    onClick={handleGoogle}
+                    disabled={busy}
+                    className="mt-6 w-full rounded-full bg-ink px-5 py-3 text-sm font-medium text-cream transition-colors hover:bg-ink/90 disabled:opacity-60"
+                  >
+                    Continue with Google
+                  </button>
+
+                  <div className="my-5 flex items-center gap-3 text-[11px] font-mono tracking-[0.14em] text-muted uppercase">
+                    <span className="h-px flex-1 bg-line" /> or{" "}
+                    <span className="h-px flex-1 bg-line" />
+                  </div>
+                </>
+              ) : (
+                <div className="mt-6" />
+              )}
+
+              <form onSubmit={handleEmail} className="space-y-3">
+                {mode === "signup" ? (
+                  <input
+                    type="text"
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                    placeholder="Your name"
+                    aria-label="Your name"
+                    autoComplete="name"
+                    className="w-full rounded-2xl border border-line bg-paper px-4 py-3.5 text-[15px] outline-none transition-colors focus:border-accent focus:bg-white"
+                  />
+                ) : null}
+                <input
+                  type="email"
+                  required
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="you@example.com"
+                  aria-label="Email"
+                  className="w-full rounded-2xl border border-line bg-paper px-4 py-3.5 text-[15px] outline-none transition-colors focus:border-accent focus:bg-white"
+                />
+                {mode !== "forgot" ? (
+                  <input
+                    type="password"
+                    required
+                    minLength={6}
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    placeholder="Password"
+                    aria-label="Password"
+                    autoComplete={mode === "signup" ? "new-password" : "current-password"}
+                    className="w-full rounded-2xl border border-line bg-paper px-4 py-3.5 text-[15px] outline-none transition-colors focus:border-accent focus:bg-white"
+                  />
+                ) : null}
+                <button
+                  type="submit"
+                  disabled={busy}
+                  className="squish w-full rounded-full bg-accent px-5 py-3.5 text-[15px] font-semibold text-cream transition-colors hover:bg-accent/90 disabled:opacity-60"
+                >
+                  {mode === "signin"
+                    ? "Sign in"
+                    : mode === "signup"
+                      ? "Create account"
+                      : "Send me a reset link"}
+                </button>
+              </form>
+
+              {mode === "signin" && options?.email ? (
+                <button
+                  onClick={() => setMode("forgot")}
+                  className="mt-3 w-full text-center text-xs text-muted transition-colors hover:text-ink"
+                >
+                  Forgot your password?
+                </button>
+              ) : null}
+
               <button
-                onClick={handleGoogle}
-                disabled={busy}
-                className="mt-6 w-full rounded-full bg-ink px-5 py-3 text-sm font-medium text-cream transition-colors hover:bg-ink/90 disabled:opacity-60"
+                onClick={() => setMode(mode === "signin" ? "signup" : "signin")}
+                className="mt-4 w-full text-center text-sm text-muted transition-colors hover:text-ink"
               >
-                Continue with Google
+                {mode === "signin"
+                  ? "New here? Create an account"
+                  : "Already have an account? Sign in"}
               </button>
-
-              <div className="my-5 flex items-center gap-3 text-[11px] font-mono tracking-[0.14em] text-muted uppercase">
-                <span className="h-px flex-1 bg-line" /> or <span className="h-px flex-1 bg-line" />
-              </div>
             </>
-          ) : (
-            <div className="mt-6" />
-          )}
-
-          <form onSubmit={handleEmail} className="space-y-3">
-            {mode === "signup" ? (
-              <input
-                type="text"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                placeholder="Your name"
-                aria-label="Your name"
-                autoComplete="name"
-                className="w-full rounded-2xl border border-line bg-paper px-4 py-3.5 text-[15px] outline-none transition-colors focus:border-accent focus:bg-white"
-              />
-            ) : null}
-            <input
-              type="email"
-              required
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="you@example.com"
-              aria-label="Email"
-              className="w-full rounded-2xl border border-line bg-paper px-4 py-3.5 text-[15px] outline-none transition-colors focus:border-accent focus:bg-white"
-            />
-            {mode !== "forgot" ? (
-              <input
-                type="password"
-                required
-                minLength={6}
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                placeholder="Password"
-                aria-label="Password"
-                autoComplete={mode === "signup" ? "new-password" : "current-password"}
-                className="w-full rounded-2xl border border-line bg-paper px-4 py-3.5 text-[15px] outline-none transition-colors focus:border-accent focus:bg-white"
-              />
-            ) : null}
-            <button
-              type="submit"
-              disabled={busy}
-              className="squish w-full rounded-full bg-accent px-5 py-3.5 text-[15px] font-semibold text-cream transition-colors hover:bg-accent/90 disabled:opacity-60"
-            >
-              {mode === "signin" ? "Sign in" : mode === "signup" ? "Create account" : "Send me a reset link"}
-            </button>
-          </form>
-
-          {mode === "signin" && options?.email ? (
-            <button
-              onClick={() => setMode("forgot")}
-              className="mt-3 w-full text-center text-xs text-muted transition-colors hover:text-ink"
-            >
-              Forgot your password?
-            </button>
-          ) : null}
-
-          <button
-            onClick={() => setMode(mode === "signin" ? "signup" : "signin")}
-            className="mt-4 w-full text-center text-sm text-muted transition-colors hover:text-ink"
-          >
-            {mode === "signin"
-              ? "New here? Create an account"
-              : "Already have an account? Sign in"}
-          </button>
-          </>
           )}
         </div>
-        <aside className="relative hidden overflow-hidden rounded-[36px] bg-pink p-10 lg:block" aria-hidden="true">
+        <aside
+          className="relative hidden overflow-hidden rounded-[36px] bg-pink p-10 lg:block"
+          aria-hidden="true"
+        >
           <span className="absolute -top-20 -right-16 size-72 rounded-full bg-white/45 blur-2xl" />
           <span className="absolute -bottom-24 -left-10 size-72 rounded-full bg-butter/80 blur-2xl" />
           <div className="relative flex h-full flex-col justify-between">
-            <p className="max-w-xs font-display text-3xl leading-tight font-semibold">One link. Every friend. One happy surprise.</p>
+            <p className="max-w-xs font-display text-3xl leading-tight font-semibold">
+              One link. Every friend. One happy surprise.
+            </p>
             <div className="relative mx-auto mt-6 h-64 w-full max-w-sm">
-              <div className="float-note top-2 left-0 rotate-[-5deg]" style={{ "--r": "-5deg" } as React.CSSProperties}>
+              <div
+                className="float-note top-2 left-0 rotate-[-5deg]"
+                style={{ "--r": "-5deg" } as React.CSSProperties}
+              >
                 <span className="block font-semibold">Mama added a letter</span>
                 <span className="text-ink/60">So proud of you, anak.</span>
               </div>
-              <div className="float-note top-24 right-0 rotate-[4deg]" style={{ "--r": "4deg", animationDelay: "1.2s" } as React.CSSProperties}>
+              <div
+                className="float-note top-24 right-0 rotate-[4deg]"
+                style={{ "--r": "4deg", animationDelay: "1.2s" } as React.CSSProperties}
+              >
                 <span className="block font-semibold">Jo added 3 photos</span>
                 <span className="text-ink/60">La Union, 2am, graduation</span>
               </div>

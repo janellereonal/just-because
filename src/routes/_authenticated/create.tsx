@@ -106,9 +106,7 @@ function CreatePage() {
 
   function toggle(type: ModuleType) {
     setTouched(true);
-    setSelected((prev) =>
-      prev.includes(type) ? prev.filter((t) => t !== type) : [...prev, type],
-    );
+    setSelected((prev) => (prev.includes(type) ? prev.filter((t) => t !== type) : [...prev, type]));
   }
 
   async function handleCreate(e: React.FormEvent) {
@@ -151,7 +149,9 @@ function CreatePage() {
 
   const step = (n: number, title: string, hint?: string) => (
     <div className="flex items-start gap-3">
-      <span className="grid size-9 shrink-0 place-items-center rounded-2xl bg-pink font-display text-base font-semibold">{n}</span>
+      <span className="grid size-9 shrink-0 place-items-center rounded-2xl bg-pink font-display text-base font-semibold">
+        {n}
+      </span>
       <div>
         <h2 className="font-display text-xl leading-tight font-semibold">{title}</h2>
         {hint ? <p className="mt-0.5 text-sm text-ink/60">{hint}</p> : null}
@@ -177,12 +177,17 @@ function CreatePage() {
           <h1 className="mt-2 max-w-xl font-display text-[clamp(2rem,5vw,3rem)] leading-[1.02] font-semibold tracking-tight text-balance">
             Let's set up the gift
           </h1>
-          <p className="mt-3 max-w-lg text-ink/65">Takes a minute. You can change everything later, even after friends start adding notes.</p>
+          <p className="mt-3 max-w-lg text-ink/65">
+            Takes a minute. You can change everything later, even after friends start adding notes.
+          </p>
         </div>
 
         <form onSubmit={handleCreate} className="mt-10 space-y-5" data-bo-zone>
           <div className="card-paper relative p-5 sm:p-7">
-            <span aria-hidden className="pointer-events-none absolute inset-y-0 -right-36 hidden w-24 xl:block">
+            <span
+              aria-hidden
+              className="pointer-events-none absolute inset-y-0 -right-36 hidden w-24 xl:block"
+            >
               <span className="sticky top-[46vh] block h-px w-24" data-bo-perch data-bo-x="0.5" />
             </span>
             {step(1, "Give it a name", "This is the big title they'll see first.")}
@@ -200,11 +205,23 @@ function CreatePage() {
           </div>
 
           <div className="card-paper relative p-5 sm:p-7">
-            <span aria-hidden className="pointer-events-none absolute inset-y-0 -right-36 hidden w-24 xl:block">
-              <span className="sticky top-[46vh] block h-px w-24" data-bo-perch data-bo-x="0.5" data-bo-say="Pick a mood. I'll dress up for it." />
+            <span
+              aria-hidden
+              className="pointer-events-none absolute inset-y-0 -right-36 hidden w-24 xl:block"
+            >
+              <span
+                className="sticky top-[46vh] block h-px w-24"
+                data-bo-perch
+                data-bo-x="0.5"
+                data-bo-say="Pick a mood. I'll dress up for it."
+              />
             </span>
             {step(2, "Pick a theme", "Sets the colors, the opening and Bo's outfit.")}
-            <div className="mt-5 grid grid-cols-2 gap-2.5 sm:grid-cols-3" role="radiogroup" aria-label="Theme">
+            <div
+              className="mt-5 grid grid-cols-2 gap-2.5 sm:grid-cols-3"
+              role="radiogroup"
+              aria-label="Theme"
+            >
               {themes.map((t) => {
                 const on = (themeId ?? themeFromUrl) === t.id;
                 const pals = suggestedPalettes(t, allPalettes);
@@ -218,37 +235,82 @@ function CreatePage() {
                     className={`squish relative overflow-hidden rounded-2xl p-3.5 text-left transition-shadow ${on ? "shadow-[0_0_0_2px_var(--accent)]" : "shadow-[0_0_0_1px_var(--line)] hover:shadow-[0_0_0_1px_var(--accent)]"}`}
                     style={{ backgroundColor: stageColorFor(t) }}
                   >
-                    <span aria-hidden className="absolute -top-6 -right-6 size-16 rounded-full bg-white/45" />
-                    <span className="relative block font-mono text-[10px] tracking-[0.14em] text-ink/60 uppercase">{t.category}</span>
-                    <span className="relative mt-0.5 block font-display text-base leading-tight font-semibold">{t.name}</span>
+                    <span
+                      aria-hidden
+                      className="absolute -top-6 -right-6 size-16 rounded-full bg-white/45"
+                    />
+                    <span className="relative block font-mono text-[10px] tracking-[0.14em] text-ink/60 uppercase">
+                      {t.category}
+                    </span>
+                    <span className="relative mt-0.5 block font-display text-base leading-tight font-semibold">
+                      {t.name}
+                    </span>
                     <span className="relative mt-3 flex -space-x-1.5" aria-hidden>
                       {pals.slice(0, 3).map((p, i) => (
-                        <span key={i} className="size-5 rounded-full ring-2 ring-white" style={{ background: `conic-gradient(${p.background} 0 50%, ${p.accent} 50% 75%, ${p.primary} 75%)` }} />
+                        <span
+                          key={i}
+                          className="size-5 rounded-full ring-2 ring-white"
+                          style={{
+                            background: `conic-gradient(${p.background} 0 50%, ${p.accent} 50% 75%, ${p.primary} 75%)`,
+                          }}
+                        />
                       ))}
                     </span>
-                    {on ? <span className="absolute top-2.5 right-2.5 grid size-6 place-items-center rounded-full bg-ink text-[12px] text-cream">✓</span> : null}
+                    {on ? (
+                      <span className="absolute top-2.5 right-2.5 grid size-6 place-items-center rounded-full bg-ink text-[12px] text-cream">
+                        ✓
+                      </span>
+                    ) : null}
                   </button>
                 );
               })}
             </div>
-            {activeTheme?.description ? <p className="mt-3 text-sm text-ink/60">{activeTheme.description}</p> : null}
+            {activeTheme?.description ? (
+              <p className="mt-3 text-sm text-ink/60">{activeTheme.description}</p>
+            ) : null}
           </div>
 
           <div className="card-paper relative p-5 sm:p-7">
-            <span aria-hidden className="pointer-events-none absolute inset-y-0 -right-36 hidden w-24 xl:block">
-              <span className="sticky top-[46vh] block h-px w-24" data-bo-perch data-bo-x="0.5" data-bo-say="How should it open?" />
+            <span
+              aria-hidden
+              className="pointer-events-none absolute inset-y-0 -right-36 hidden w-24 xl:block"
+            >
+              <span
+                className="sticky top-[46vh] block h-px w-24"
+                data-bo-perch
+                data-bo-x="0.5"
+                data-bo-say="How should it open?"
+              />
             </span>
-            {step(3, "Choose how it opens", "Same notes, different way to open them. Switch any time.")}
+            {step(
+              3,
+              "Choose how it opens",
+              "Same notes, different way to open them. Switch any time.",
+            )}
             <div className="mt-4">
               <FormatPicker value={format} onChange={pickFormat} bare />
             </div>
           </div>
 
           <div className="card-paper relative p-5 sm:p-7">
-            <span aria-hidden className="pointer-events-none absolute inset-y-0 -right-36 hidden w-24 xl:block">
-              <span className="sticky top-[46vh] block h-px w-24" data-bo-perch data-bo-x="0.5" data-bo-say="The more, the merrier." />
+            <span
+              aria-hidden
+              className="pointer-events-none absolute inset-y-0 -right-36 hidden w-24 xl:block"
+            >
+              <span
+                className="sticky top-[46vh] block h-px w-24"
+                data-bo-perch
+                data-bo-x="0.5"
+                data-bo-say="The more, the merrier."
+              />
             </span>
-            {step(4, "What can friends add?", activeTheme && suggested.length > 0 ? `We picked a few for ${activeTheme.name}. Turn on anything else.` : "Turn on as many as you like. Each one is free.")}
+            {step(
+              4,
+              "What can friends add?",
+              activeTheme && suggested.length > 0
+                ? `We picked a few for ${activeTheme.name}. Turn on anything else.`
+                : "Turn on as many as you like. Each one is free.",
+            )}
 
             <div className="mt-5 grid gap-5 md:grid-cols-[1fr_250px] md:items-start">
               <div className="space-y-2">
@@ -262,11 +324,17 @@ function CreatePage() {
                         onFocus={() => setPreviewed(mod.type)}
                         className={`flex items-center gap-4 rounded-2xl px-4 py-3 transition-colors ${on ? "bg-pink/45" : "bg-paper"} ${active ? "ring-1 ring-accent/40" : ""}`}
                       >
-                        <button type="button" className="min-w-0 flex-1 text-left" onClick={() => setPreviewed(mod.type)}>
+                        <button
+                          type="button"
+                          className="min-w-0 flex-1 text-left"
+                          onClick={() => setPreviewed(mod.type)}
+                        >
                           <span className="flex items-center gap-2 text-[15px] font-medium">
                             {mod.label}
                             {suggested.includes(mod.type) ? (
-                              <span className="rounded-full bg-white/80 px-2 py-0.5 font-mono text-[9px] tracking-[0.12em] text-accent uppercase">Suggested</span>
+                              <span className="rounded-full bg-white/80 px-2 py-0.5 font-mono text-[9px] tracking-[0.12em] text-accent uppercase">
+                                Suggested
+                              </span>
                             ) : null}
                           </span>
                           <span className="block text-xs text-ink/60">
@@ -282,7 +350,9 @@ function CreatePage() {
                           onClick={() => toggle(mod.type)}
                           className={`relative h-7 w-12 shrink-0 rounded-full transition-colors ${on ? "bg-accent" : "bg-ink/15"}`}
                         >
-                          <span className={`absolute top-1 left-1 size-5 rounded-full bg-white shadow transition-transform duration-300 ${on ? "translate-x-5" : ""}`} />
+                          <span
+                            className={`absolute top-1 left-1 size-5 rounded-full bg-white shadow transition-transform duration-300 ${on ? "translate-x-5" : ""}`}
+                          />
                         </button>
                       </div>
                       {active ? (
@@ -296,12 +366,18 @@ function CreatePage() {
               </div>
 
               <div className="hidden md:sticky md:top-24 md:block">
-                <p className="font-mono text-[10px] tracking-[0.16em] text-muted uppercase">Preview</p>
-                <p className="mt-2 font-display text-base font-semibold">{MODULES.find((m) => m.type === previewed)?.label}</p>
+                <p className="font-mono text-[10px] tracking-[0.16em] text-muted uppercase">
+                  Preview
+                </p>
+                <p className="mt-2 font-display text-base font-semibold">
+                  {MODULES.find((m) => m.type === previewed)?.label}
+                </p>
                 <div className="mt-3">
                   <ModuleExample type={previewed} />
                 </div>
-                <p className="mt-3 text-xs text-ink/55">This is how the section looks on the finished gift.</p>
+                <p className="mt-3 text-xs text-ink/55">
+                  This is how the section looks on the finished gift.
+                </p>
               </div>
             </div>
           </div>

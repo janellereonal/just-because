@@ -9,7 +9,13 @@ const CYCLE_MS = 5200;
  * A real gift, rendered by the same code recipients see, inside a phone.
  * Cycles through the formats until someone picks one.
  */
-export function FormatDemo({ className = "", compact = false }: { className?: string; compact?: boolean }) {
+export function FormatDemo({
+  className = "",
+  compact = false,
+}: {
+  className?: string;
+  compact?: boolean;
+}) {
   const [format, setFormat] = useState<GiftFormat>("bento");
   const [touched, setTouched] = useState(false);
   const [inView, setInView] = useState(false);
@@ -32,7 +38,9 @@ export function FormatDemo({ className = "", compact = false }: { className?: st
   useEffect(() => {
     const el = wrapRef.current;
     if (!el) return;
-    const io = new IntersectionObserver(([e]) => setInView(!!e?.isIntersecting), { threshold: 0.35 });
+    const io = new IntersectionObserver(([e]) => setInView(!!e?.isIntersecting), {
+      threshold: 0.35,
+    });
     io.observe(el);
     return () => io.disconnect();
   }, []);
@@ -58,7 +66,10 @@ export function FormatDemo({ className = "", compact = false }: { className?: st
     const tick = (now: number) => {
       const t = Math.max(0, now - start) / (CYCLE_MS - 1400);
       const max = Math.max(0, el.scrollHeight - el.clientHeight);
-      el.scrollTop = Math.min(max * 0.55, max * 0.55 * (1 - Math.cos(Math.min(1, t) * Math.PI)) * 0.5);
+      el.scrollTop = Math.min(
+        max * 0.55,
+        max * 0.55 * (1 - Math.cos(Math.min(1, t) * Math.PI)) * 0.5,
+      );
       if (t < 1) raf = requestAnimationFrame(tick);
     };
     raf = requestAnimationFrame(tick);
@@ -102,7 +113,9 @@ export function FormatDemo({ className = "", compact = false }: { className?: st
           </button>
         ))}
       </div>
-      <div className={`demo-phone relative mt-5 ${compact ? "h-[560px] w-[290px]" : "h-[600px] w-[300px] sm:h-[640px] sm:w-[320px]"}`}>
+      <div
+        className={`demo-phone relative mt-5 ${compact ? "h-[560px] w-[290px]" : "h-[600px] w-[300px] sm:h-[640px] sm:w-[320px]"}`}
+      >
         <span className="demo-phone-notch" aria-hidden />
         <div
           ref={screenRef}
@@ -111,7 +124,13 @@ export function FormatDemo({ className = "", compact = false }: { className?: st
           style={{ background: DEMO_PALETTE.background }}
           aria-label={`A sample gift for Maya, shown as ${FORMATS.find((f) => f.id === format)?.title}`}
         >
-          <FormatView site={site} theme={null} palette={DEMO_PALETTE} modules={DEMO_MODULES} contributions={DEMO_NOTES} />
+          <FormatView
+            site={site}
+            theme={null}
+            palette={DEMO_PALETTE}
+            modules={DEMO_MODULES}
+            contributions={DEMO_NOTES}
+          />
         </div>
       </div>
       <p className="mt-4 max-w-[30ch] text-center text-sm text-ink/60">

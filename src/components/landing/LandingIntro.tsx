@@ -78,7 +78,11 @@ export function LandingIntro() {
       at(open + 1400, finish);
     }
     const skip = (e: Event) => {
-      if (e instanceof KeyboardEvent && !["Escape", "Enter", " ", "ArrowDown", "PageDown"].includes(e.key)) return;
+      if (
+        e instanceof KeyboardEvent &&
+        !["Escape", "Enter", " ", "ArrowDown", "PageDown"].includes(e.key)
+      )
+        return;
       finish();
     };
     window.addEventListener("keydown", skip);
@@ -103,14 +107,23 @@ export function LandingIntro() {
     <>
       <script dangerouslySetInnerHTML={{ __html: PRE_PAINT }} />
       {active ? (
-        <div className="lp-intro" data-phase={phase} onClick={() => phase !== "out" && finish()} aria-hidden="true">
+        <div
+          className="lp-intro"
+          data-phase={phase}
+          onClick={() => phase !== "out" && finish()}
+          aria-hidden="true"
+        >
           <div className="lp-intro-half lp-intro-top" />
           <div className="lp-intro-half lp-intro-bottom" />
           <div className="lp-intro-stage">
             <div className="lp-intro-glow" />
             <div className="lp-intro-bo">
               {/* The still shows at once; the live 3D Bo takes over when it's ready. */}
-              <img src="/bo/hello.webp" alt="" className={`absolute inset-0 size-full object-contain transition-opacity duration-500 ${live ? "opacity-0" : "opacity-100"}`} />
+              <img
+                src="/bo/hello.webp"
+                alt=""
+                className={`absolute inset-0 size-full object-contain transition-opacity duration-500 ${live ? "opacity-0" : "opacity-100"}`}
+              />
               <Bo3D
                 className="absolute inset-0"
                 mood="wave"
@@ -123,13 +136,29 @@ export function LandingIntro() {
               />
             </div>
             <div className="lp-intro-notes">
-              {["#FFE8B0", "#D5F0E3", "#D9E8FB", "#E6DCF7", "#FFDCCB", "#FBD3DC", "#FFFFFF"].map((c, i) => (
-                <i key={c} style={{ background: c, "--a": `${-150 + i * 50}deg`, "--d": `${170 + (i % 3) * 50}px`, animationDelay: `${i * 40}ms` } as React.CSSProperties} />
-              ))}
+              {["#FFE8B0", "#D5F0E3", "#D9E8FB", "#E6DCF7", "#FFDCCB", "#FBD3DC", "#FFFFFF"].map(
+                (c, i) => (
+                  <i
+                    key={c}
+                    style={
+                      {
+                        background: c,
+                        "--a": `${-150 + i * 50}deg`,
+                        "--d": `${170 + (i % 3) * 50}px`,
+                        animationDelay: `${i * 40}ms`,
+                      } as React.CSSProperties
+                    }
+                  />
+                ),
+              )}
             </div>
             <p className="lp-intro-word">
               {[...WORD].map((ch, i) => (
-                <span key={i} style={{ animationDelay: `${380 + i * 45}ms` }} className={i >= 5 ? "text-accent" : undefined}>
+                <span
+                  key={i}
+                  style={{ animationDelay: `${380 + i * 45}ms` }}
+                  className={i >= 5 ? "text-accent" : undefined}
+                >
                   {ch === " " ? " " : ch}
                 </span>
               ))}

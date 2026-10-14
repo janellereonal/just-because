@@ -94,12 +94,19 @@ function PhotoFace({ piece, palette }: { piece: Piece; palette: Palette }) {
   return (
     <>
       {url ? (
-        <img src={url} alt={piece.text ?? `Photo from ${piece.author}`} loading="lazy" className="absolute inset-0 size-full object-cover transition-transform duration-500 group-hover:scale-[1.04]" />
+        <img
+          src={url}
+          alt={piece.text ?? `Photo from ${piece.author}`}
+          loading="lazy"
+          className="absolute inset-0 size-full object-cover transition-transform duration-500 group-hover:scale-[1.04]"
+        />
       ) : (
         <span
           className="absolute inset-0"
           aria-hidden
-          style={{ background: `linear-gradient(135deg, ${palette.accent}55, ${palette.primary}33), ${surfaceColor(palette.background)}` }}
+          style={{
+            background: `linear-gradient(135deg, ${palette.accent}55, ${palette.primary}33), ${surfaceColor(palette.background)}`,
+          }}
         />
       )}
       <span className="bento-photo-cap">
@@ -126,15 +133,26 @@ function Face({ piece, palette, name }: { piece: Piece; palette: Palette; name: 
     case "song":
       return (
         <span className="flex h-full items-center gap-4">
-          <span className="bento-vinyl" style={{ "--vinyl": palette.accent } as React.CSSProperties} aria-hidden>
+          <span
+            className="bento-vinyl"
+            style={{ "--vinyl": palette.accent } as React.CSSProperties}
+            aria-hidden
+          >
             <Music2 className="size-5" style={{ color: readableInk(palette.accent) }} />
           </span>
           <span className="min-w-0 text-left">
-            <span className="block text-[11px] font-semibold tracking-[0.16em] uppercase opacity-60">Song pick</span>
-            <span className="mt-1 line-clamp-2 block text-base font-medium">{piece.text || "Press play on this one."}</span>
+            <span className="block text-[11px] font-semibold tracking-[0.16em] uppercase opacity-60">
+              Song pick
+            </span>
+            <span className="mt-1 line-clamp-2 block text-base font-medium">
+              {piece.text || "Press play on this one."}
+            </span>
             <span className="mt-1 block text-sm opacity-70">{piece.author}</span>
           </span>
-          <span className="ml-auto grid size-11 shrink-0 place-items-center rounded-full" style={{ background: ink, color: palette.background }}>
+          <span
+            className="ml-auto grid size-11 shrink-0 place-items-center rounded-full"
+            style={{ background: ink, color: palette.background }}
+          >
             <Play className="size-4 translate-x-px" />
           </span>
         </span>
@@ -147,7 +165,13 @@ function Face({ piece, palette, name }: { piece: Piece; palette: Palette; name: 
           </span>
           <span className="bento-wave" aria-hidden>
             {Array.from({ length: 18 }, (_, i) => (
-              <i key={i} style={{ height: `${22 + Math.abs(Math.sin(i * 1.7 + seed(piece.id) * 9)) * 70}%`, background: palette.accent }} />
+              <i
+                key={i}
+                style={{
+                  height: `${22 + Math.abs(Math.sin(i * 1.7 + seed(piece.id) * 9)) * 70}%`,
+                  background: palette.accent,
+                }}
+              />
             ))}
           </span>
           <span className="text-sm">From {piece.author}</span>
@@ -167,13 +191,21 @@ function Face({ piece, palette, name }: { piece: Piece; palette: Palette; name: 
       return (
         <span className="flex h-full flex-col justify-between text-left">
           <span className="text-[11px] font-semibold tracking-[0.16em] uppercase opacity-60">
-            {d ? d.toLocaleDateString("en-PH", { month: "short", timeZone: "Asia/Manila" }) : "Surprise"}
+            {d
+              ? d.toLocaleDateString("en-PH", { month: "short", timeZone: "Asia/Manila" })
+              : "Surprise"}
           </span>
           <span className="text-5xl leading-none font-semibold" style={{ color: palette.accent }}>
             {d ? d.toLocaleDateString("en-PH", { day: "numeric", timeZone: "Asia/Manila" }) : "?"}
           </span>
           <span className="flex items-center gap-1.5 text-sm opacity-80">
-            {locked ? <><Lock className="size-3.5" /> Opens that day</> : "Open today's surprise"}
+            {locked ? (
+              <>
+                <Lock className="size-3.5" /> Opens that day
+              </>
+            ) : (
+              "Open today's surprise"
+            )}
           </span>
         </span>
       );
@@ -184,14 +216,24 @@ function Face({ piece, palette, name }: { piece: Piece; palette: Palette; name: 
           <span className="bento-quote" style={{ color: palette.accent }} aria-hidden>
             &ldquo;
           </span>
-          <span className="line-clamp-5 text-[15px] leading-relaxed whitespace-pre-line">{piece.text}</span>
+          <span className="line-clamp-5 text-[15px] leading-relaxed whitespace-pre-line">
+            {piece.text}
+          </span>
           <span className="mt-auto pt-3 text-sm font-medium opacity-75">{piece.author}</span>
         </span>
       );
   }
 }
 
-export function BentoView({ site, modules, contributions, calendarEntries, palette, sample, showShare }: FormatViewProps) {
+export function BentoView({
+  site,
+  modules,
+  contributions,
+  calendarEntries,
+  palette,
+  sample,
+  showShare,
+}: FormatViewProps) {
   const reduce = useReducedMotion();
   const data = usePieces({ site, modules, contributions, calendarEntries, sample });
   const fonts = FONT_PAIRINGS[site.font_choice] ?? FONT_PAIRINGS.playful;
@@ -199,27 +241,53 @@ export function BentoView({ site, modules, contributions, calendarEntries, palet
   const [open, setOpen] = useState<Piece | null>(null);
   const ink = readableInk(palette.background);
   const heading = site.custom_text.heading?.trim() || site.title || `For ${data.name}`;
-  const intro = site.custom_text.intro_message?.trim() || site.intro_text || `Everyone who loves you put something in here, ${data.name}. Take your time.`;
+  const intro =
+    site.custom_text.intro_message?.trim() ||
+    site.intro_text ||
+    `Everyone who loves you put something in here, ${data.name}. Take your time.`;
   let i = 0;
 
   return (
     <div
       className="bento-root min-h-screen"
-      style={{ background: meshGradient(palette.primary, palette.accent, palette.background), color: ink, fontFamily: fonts.body, "--tile": surfaceColor(palette.background), "--accent": palette.accent } as React.CSSProperties}
+      style={
+        {
+          background: meshGradient(palette.primary, palette.accent, palette.background),
+          color: ink,
+          fontFamily: fonts.body,
+          "--tile": surfaceColor(palette.background),
+          "--accent": palette.accent,
+        } as React.CSSProperties
+      }
     >
       <div className="mx-auto max-w-6xl px-4 py-10 @2xl:px-6 @2xl:py-14">
         <div className="bento-grid">
-          <div className="bento-tile bento-hero" style={{ background: `linear-gradient(145deg, ${palette.accent}, ${palette.primary})`, color: readableInk(palette.accent) }}>
+          <div
+            className="bento-tile bento-hero"
+            style={{
+              background: `linear-gradient(145deg, ${palette.accent}, ${palette.primary})`,
+              color: readableInk(palette.accent),
+            }}
+          >
             <span className="bento-orb" aria-hidden />
-            <p className="text-[11px] font-semibold tracking-[0.2em] uppercase opacity-80">A gift for {data.name}</p>
-            <h1 className="mt-3 text-[clamp(2.2rem,5.5cqi,4.25rem)] leading-[0.95] font-semibold tracking-tight" style={{ fontFamily: fonts.heading }}>
+            <p className="text-[11px] font-semibold tracking-[0.2em] uppercase opacity-80">
+              A gift for {data.name}
+            </p>
+            <h1
+              className="mt-3 text-[clamp(2.2rem,5.5cqi,4.25rem)] leading-[0.95] font-semibold tracking-tight"
+              style={{ fontFamily: fonts.heading }}
+            >
               {heading}
             </h1>
             <p className="mt-4 max-w-md text-[15px] leading-relaxed opacity-90">{intro}</p>
             {showShare ? (
               <button
                 type="button"
-                onClick={() => (navigator.share ? void navigator.share({ title: site.title, url: location.href }) : void navigator.clipboard.writeText(location.href))}
+                onClick={() =>
+                  navigator.share
+                    ? void navigator.share({ title: site.title, url: location.href })
+                    : void navigator.clipboard.writeText(location.href)
+                }
                 className="mt-6 inline-flex items-center gap-2 self-start rounded-full bg-white/20 px-4 py-2 text-sm backdrop-blur hover:bg-white/30"
               >
                 <Share2 className="size-4" /> Share
@@ -229,22 +297,37 @@ export function BentoView({ site, modules, contributions, calendarEntries, palet
 
           {cd ? (
             <div className="bento-tile flex flex-col justify-between text-left">
-              <p className="text-[11px] font-semibold tracking-[0.16em] uppercase opacity-60">{cd.done ? "It's the day" : "Countdown"}</p>
-              <p className="text-6xl leading-none font-semibold tabular-nums" style={{ color: palette.accent, fontFamily: fonts.heading }}>
+              <p className="text-[11px] font-semibold tracking-[0.16em] uppercase opacity-60">
+                {cd.done ? "It's the day" : "Countdown"}
+              </p>
+              <p
+                className="text-6xl leading-none font-semibold tabular-nums"
+                style={{ color: palette.accent, fontFamily: fonts.heading }}
+              >
                 {cd.done ? "Today" : cd.days}
               </p>
               <p className="text-sm opacity-75" suppressHydrationWarning>
-                {cd.done ? `Happy day, ${data.name}.` : `${cd.days === 1 ? "day" : "days"} to go · ${String(cd.hours).padStart(2, "0")}:${String(cd.mins).padStart(2, "0")}:${String(cd.secs).padStart(2, "0")}`}
+                {cd.done
+                  ? `Happy day, ${data.name}.`
+                  : `${cd.days === 1 ? "day" : "days"} to go · ${String(cd.hours).padStart(2, "0")}:${String(cd.mins).padStart(2, "0")}:${String(cd.secs).padStart(2, "0")}`}
               </p>
             </div>
           ) : null}
 
           <div className="bento-tile flex flex-col justify-between text-left">
-            <p className="text-[11px] font-semibold tracking-[0.16em] uppercase opacity-60">Made by</p>
-            <p className="text-5xl leading-none font-semibold" style={{ fontFamily: fonts.heading }}>
+            <p className="text-[11px] font-semibold tracking-[0.16em] uppercase opacity-60">
+              Made by
+            </p>
+            <p
+              className="text-5xl leading-none font-semibold"
+              style={{ fontFamily: fonts.heading }}
+            >
               {data.friends.length || (data.isSample ? 6 : 0)}
             </p>
-            <p className="text-sm opacity-75">{data.friends.length === 1 ? "friend" : "friends"} · {data.notes.length} {data.notes.length === 1 ? "piece" : "pieces"}</p>
+            <p className="text-sm opacity-75">
+              {data.friends.length === 1 ? "friend" : "friends"} · {data.notes.length}{" "}
+              {data.notes.length === 1 ? "piece" : "pieces"}
+            </p>
           </div>
 
           {data.notes.map((p) => (
@@ -264,7 +347,16 @@ export function BentoView({ site, modules, contributions, calendarEntries, palet
           {data.words.length ? (
             <div className="bento-tile bento-wide flex flex-wrap content-center items-center justify-center gap-x-4 gap-y-1">
               {data.words.map((w, n) => (
-                <span key={w.id} className="font-semibold" style={{ fontFamily: fonts.heading, fontSize: `${1 + seed(w.id) * 1.4}rem`, color: n % 3 === 0 ? palette.accent : undefined, opacity: 0.6 + seed(w.id + "o") * 0.4 }}>
+                <span
+                  key={w.id}
+                  className="font-semibold"
+                  style={{
+                    fontFamily: fonts.heading,
+                    fontSize: `${1 + seed(w.id) * 1.4}rem`,
+                    color: n % 3 === 0 ? palette.accent : undefined,
+                    opacity: 0.6 + seed(w.id + "o") * 0.4,
+                  }}
+                >
                   {w.text}
                 </span>
               ))}
@@ -273,15 +365,23 @@ export function BentoView({ site, modules, contributions, calendarEntries, palet
 
           {data.notes.length === 0 && !data.words.length ? (
             <div className="bento-tile bento-wide grid place-items-center text-center">
-              <p className="max-w-xs text-base opacity-80">Notes from friends will show up here as tiles.</p>
+              <p className="max-w-xs text-base opacity-80">
+                Notes from friends will show up here as tiles.
+              </p>
             </div>
           ) : null}
 
           {data.friends.length ? (
-            <div className={`bento-tile text-left ${data.words.length ? "bento-wide" : "bento-full"}`}>
-              <p className="text-[11px] font-semibold tracking-[0.16em] uppercase opacity-60">With love from</p>
+            <div
+              className={`bento-tile text-left ${data.words.length ? "bento-wide" : "bento-full"}`}
+            >
+              <p className="text-[11px] font-semibold tracking-[0.16em] uppercase opacity-60">
+                With love from
+              </p>
               <p className="mt-2 text-lg leading-relaxed">{data.friends.join(", ")}</p>
-              {site.custom_text.footer_note ? <p className="mt-3 text-sm opacity-70">{site.custom_text.footer_note}</p> : null}
+              {site.custom_text.footer_note ? (
+                <p className="mt-3 text-sm opacity-70">{site.custom_text.footer_note}</p>
+              ) : null}
             </div>
           ) : null}
         </div>

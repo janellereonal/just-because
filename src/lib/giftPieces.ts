@@ -99,21 +99,48 @@ function samples(name: string, enabled: Set<ModuleType>): Piece[] {
   const out: Piece[] = [];
   if (enabled.has("letters"))
     out.push(
-      { ...base, id: "s-l1", kind: "letter", author: "Sam", text: `So lucky to know you, ${name}. Here's to the best year yet.` },
-      { ...base, id: "s-l2", kind: "letter", author: "Alex", text: "You make every room warmer. Can't wait to celebrate with you." },
-      { ...base, id: "s-l3", kind: "letter", author: "Bea", text: "Thank you for always showing up. We love you lots." },
+      {
+        ...base,
+        id: "s-l1",
+        kind: "letter",
+        author: "Sam",
+        text: `So lucky to know you, ${name}. Here's to the best year yet.`,
+      },
+      {
+        ...base,
+        id: "s-l2",
+        kind: "letter",
+        author: "Alex",
+        text: "You make every room warmer. Can't wait to celebrate with you.",
+      },
+      {
+        ...base,
+        id: "s-l3",
+        kind: "letter",
+        author: "Bea",
+        text: "Thank you for always showing up. We love you lots.",
+      },
     );
   if (enabled.has("photobooth"))
     out.push(
       { ...base, id: "s-p1", kind: "photo", author: "Jo", text: "That beach day" },
       { ...base, id: "s-p2", kind: "photo", author: "Mika", text: "Us, being us" },
     );
-  if (enabled.has("songs")) out.push({ ...base, id: "s-s1", kind: "song", author: "Lia", text: "This one is so you." });
-  if (enabled.has("voice")) out.push({ ...base, id: "s-v1", kind: "voice", author: "Dad", text: "A little voice note" });
+  if (enabled.has("songs"))
+    out.push({ ...base, id: "s-s1", kind: "song", author: "Lia", text: "This one is so you." });
+  if (enabled.has("voice"))
+    out.push({ ...base, id: "s-v1", kind: "voice", author: "Dad", text: "A little voice note" });
   if (enabled.has("wordcloud"))
     for (const [i, w] of ["kind", "funny", "brave", "home"].entries())
       out.push({ ...base, id: `s-w${i}`, kind: "word", author: "Friends", text: w });
-  if (enabled.has("tree")) out.push({ ...base, id: "s-o1", kind: "ornament", author: "Nina", text: "A wish hung just for you." });
+  if (enabled.has("tree"))
+    out.push({
+      ...base,
+      id: "s-o1",
+      kind: "ornament",
+      author: "Nina",
+      text: "A wish hung just for you.",
+    });
   return out;
 }
 
@@ -137,7 +164,10 @@ export function usePieces({
     // A note this viewer wrote shows unsealed; drop its sealed twin.
     const mineIds = new Set(contributions.filter((c) => c.mine && !c.sealed).map((c) => c.id));
     let pieces: Piece[] = contributions
-      .filter((c) => enabled.has(c.module_type) && !(c.sealed && mineIds.has(c.id.replace(/^sealed-/, ""))))
+      .filter(
+        (c) =>
+          enabled.has(c.module_type) && !(c.sealed && mineIds.has(c.id.replace(/^sealed-/, ""))),
+      )
       .flatMap((c) => {
         const kind = KIND[c.module_type];
         if (!kind) return [];
@@ -173,7 +203,16 @@ export function usePieces({
     // Interleave: notes, then a photo, then a song… so tiles feel varied.
     const buckets = new Map<PieceKind, Piece[]>();
     for (const p of pieces) buckets.set(p.kind, [...(buckets.get(p.kind) ?? []), p]);
-    const order: PieceKind[] = ["letter", "photo", "song", "letter", "voice", "photo", "ornament", "calendar"];
+    const order: PieceKind[] = [
+      "letter",
+      "photo",
+      "song",
+      "letter",
+      "voice",
+      "photo",
+      "ornament",
+      "calendar",
+    ];
     const mixed: Piece[] = [];
     while (mixed.length < pieces.length) {
       for (const k of order) {

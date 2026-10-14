@@ -68,9 +68,17 @@ export function FormatPicker({
 }) {
   return (
     <fieldset>
-      <legend className={compact || bare ? "sr-only" : "font-display text-base font-medium"}>Choose a format</legend>
-      {!compact && !bare ? <p className="mt-1 text-xs text-muted">Same notes, different way to open them. You can switch any time.</p> : null}
-      <div className={`mt-3 grid gap-2.5 ${compact ? "grid-cols-2" : "grid-cols-2 sm:grid-cols-3"}`}>
+      <legend className={compact || bare ? "sr-only" : "font-display text-base font-medium"}>
+        Choose a format
+      </legend>
+      {!compact && !bare ? (
+        <p className="mt-1 text-xs text-muted">
+          Same notes, different way to open them. You can switch any time.
+        </p>
+      ) : null}
+      <div
+        className={`mt-3 grid gap-2.5 ${compact ? "grid-cols-2" : "grid-cols-2 sm:grid-cols-3"}`}
+      >
         {FORMATS.map((f) => {
           const active = value === f.id;
           const allowed = isAllowed ? isAllowed(f.id) : true;

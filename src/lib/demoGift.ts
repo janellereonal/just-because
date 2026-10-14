@@ -5,9 +5,20 @@ import type { GiftSite, ModuleType, SiteModule, ViewContribution } from "@/lib/g
 import type { GiftFormat } from "@/lib/formats";
 import type { Palette } from "@/lib/themes";
 
-export const DEMO_PALETTE: Palette = { background: "#FFF4EC", primary: "#5B4BDB", accent: "#E8577E" };
+export const DEMO_PALETTE: Palette = {
+  background: "#FFF4EC",
+  primary: "#5B4BDB",
+  accent: "#E8577E",
+};
 
-const MODULE_TYPES: ModuleType[] = ["letters", "photobooth", "songs", "voice", "wordcloud", "countdown"];
+const MODULE_TYPES: ModuleType[] = [
+  "letters",
+  "photobooth",
+  "songs",
+  "voice",
+  "wordcloud",
+  "countdown",
+];
 
 export function demoSite(format: GiftFormat): GiftSite {
   const inTen = new Date(Date.now() + 10 * 86400000).toISOString().slice(0, 10);
@@ -53,7 +64,13 @@ export const DEMO_MODULES: SiteModule[] = MODULE_TYPES.map((t, i) => ({
   enabled: true,
 }));
 
-function note(id: string, module_type: ModuleType, author_name: string, text_content: string | null, media_url: string | null = null): ViewContribution {
+function note(
+  id: string,
+  module_type: ModuleType,
+  author_name: string,
+  text_content: string | null,
+  media_url: string | null = null,
+): ViewContribution {
   return {
     id,
     site_id: "demo",
@@ -70,7 +87,12 @@ function note(id: string, module_type: ModuleType, author_name: string, text_con
 }
 
 export const DEMO_NOTES: ViewContribution[] = [
-  note("d1", "letters", "Mama", "Anak, I still remember the day you were born. I'm proud of you every single day. Happy 21st."),
+  note(
+    "d1",
+    "letters",
+    "Mama",
+    "Anak, I still remember the day you were born. I'm proud of you every single day. Happy 21st.",
+  ),
   note("d2", "photobooth", "Jo", "That beach day in La Union", "/demo/beach.webp"),
   note("d3", "letters", "Paolo", "You make every room warmer. Don't ever change."),
   note("d4", "songs", "Lia", "This one is so you."),
