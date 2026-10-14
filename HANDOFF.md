@@ -75,7 +75,17 @@ Mascot behaviors (Oct 2026, all on `redesign`):
 - No talking/hopping Bo on recipient pages (`/g/...`). The still Bo in the gift opening animation, the
   gift footer and locked/ended screens predates this and is still there (open question for Janelle).
 
-Next: restyle /create, the editor, dashboard and contribute pages in the toybox look.
+Session 2 (14 Oct, overnight), details in `docs/NEXT-SESSION.md`:
+- Tested in a real Chromium (local Postgres, Playwright). Fixed Bo covering fields, Bo stuck invisible,
+  bubbles over buttons, Manila-time countdowns, hydration warnings, glb 404s, nested buttons.
+- Landing: a short Bo intro once per session (`LandingIntro`), then a product-first page whose hero is a
+  real sample gift in a phone with a format switcher (`FormatDemo`).
+- Formats: Bento Board, Gift Hunt and Zine join Scrapbook and Comic (`src/lib/formats.ts`,
+  `src/components/formats/`). Scrapbook got taped letters, polaroids and digit-tile countdowns.
+- Toybox restyle of /create, dashboard, contribute, editor, sign-in, header and 404.
+
+Next: check the preview on a real phone, test checkout with a PayMongo test key on the preview,
+answer the open questions in `docs/NEXT-SESSION.md`, then merge `redesign` into `main` when happy.
 
 ## 2. Accounts and where things live
 
