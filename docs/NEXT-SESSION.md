@@ -2,6 +2,59 @@
 
 Updated the night of 14 Oct 2026 (second session), so a new session can carry on without missing anything.
 
+## START HERE (session 4, written 15 Oct 2026 morning)
+
+The redesign is **live on justbecause.site** (PR #1 merged `redesign` into `main`). Work on `redesign`,
+check the preview, then open a PR `redesign` -> `main` for Janelle to merge. Claude's own pushes to
+`main` get blocked as production deploys, so always go through a PR (use `gh api`, GraphQL is blocked).
+
+### Janelle's asks for this session, in order
+
+1. **Everything must fit on phones (bug).** Her screenshot: on the theme page, "The opening" tab inside
+   the phone mockup overflows ("SEALED WITH LOV", "For Ana" cut off, giant hearts). Cause:
+   `src/components/GiftIntro.tsx` sizes with viewport units (`w-[min(560px,88vw)]` on the 3D stage,
+   `text-[clamp(2rem,8vw,3.5rem)]` on the greeting), so inside a 390px phone preview on a laptop it uses
+   the laptop's width. Fix: make the intro root a size container (`container: gift / inline-size`) and
+   switch to `cqi` units, like `src/styles/formats.css` and `skins.css` already do. Then audit every
+   preview context: theme page phone, editor phone/desktop preview, full-screen preview, landing demo
+   phone (`FormatDemo`), contribute preview, theme cards (`ThemeLivePreview`). Test at 360, 390 and
+   430px wide, landscape, and a real iPhone if possible. No horizontal scroll anywhere.
+2. **Laptop preview option** on the theme page (and anywhere there's a phone preview): a Phone / Laptop
+   toggle like the editor's full-screen preview has. Laptop = a laptop frame at a real 1280px width,
+   scaled down to fit.
+3. **Preview videos start with the opening.** Theme cards and the theme page phone should play: the
+   opening animation, it opens by itself after ~2s, then auto-scroll through the gift, then loop.
+   `ThemeLivePreview.tsx` has the timeline (`INTRO_MS`, `SCROLL_MS`) and a disabled `MiniIntro`
+   (`SHOW_MINI_INTRO = false`). Replace that with the real `GiftIntro` in `contained` mode (stills only,
+   `Live3DContext` false so cards don't each open a WebGL context).
+4. **More formats, very advanced and cute.** Today: Scrapbook, Comic Issue, Bento Board, Gift Hunt,
+   Zine (`src/lib/formats.ts`, `src/components/formats/`, register plans in `src/config/pricing.ts`).
+   Ideas to pick from: Storybook (3D page-turn book), Photo Booth Strip (notes as booth strips that
+   print out), Arcade (claw machine: each prize is a note), Snow Globe / Shaker (shake the phone or drag
+   to reveal notes, DeviceMotion with a tap fallback), Constellation (each friend is a star, tap to
+   connect and read), Mixtape (cassette player, notes as tracks with the songs), Sticker Book (drag
+   sticker notes onto a page), Advent Doors (open one door per note), Scratch Cards (scratch to reveal),
+   Polaroid Wall with a clothesline you drag. Each needs a picker mini preview (`FormatPicker.tsx`),
+   container-query layout, reduced-motion fallback, and keyboard access.
+5. **Custom intros.** Let the creator customise the opening: pick or upload their own icon/sticker
+   (emoji, upload an image, or choose a 3D object), change its colors, background, and the button text.
+   Store in a new `intro_settings` jsonb on `gift_sites` (add to `schema.ts`, `bun run db:generate`,
+   commit the migration; Vercel runs it on deploy), expose it through `api.ts` with `requireSiteOwner`,
+   edit it in the editor's Intro panel with a live preview. Uploads go through the existing
+   `src/lib/upload.ts`.
+6. **Themes even more advanced, cute and interactive.** The goal: designs Canva can't do. Lots of
+   interaction, movement and playfulness. Current state: 3D object per occasion
+   (`src/lib/theme3d/scene.ts`), skins (`src/styles/skins.css`, `SkinDecor.tsx`). Ideas: tap the 3D
+   object to make it react (balloons pop into confetti, the heart beats, the globe spins, the tree
+   lights up, the disco ball scatters light), drag/flick particles, cursor or tilt parallax, letters
+   that open like envelopes, photos you can flip for the caption, a sound toggle with small chimes,
+   haptics on phones (`navigator.vibrate`), a "make a wish" candle blow-out (mic or tap) on birthdays,
+   catching snowflakes on Christmas. Keep every animation transform/opacity, pause off screen, and
+   respect prefers-reduced-motion.
+
+Finish by testing everything in a real browser (setup below), on phone sizes too, then send Janelle the
+preview link and a short summary. She wants it finished and polished when she opens it.
+
 ## Links
 
 - Repo: https://github.com/janellereonal/just-because (work on branch **`redesign`**)
