@@ -432,3 +432,70 @@ button.bento-tile:hover .bento-wave i:nth-child(odd) { transform: scaleY(1.25); 
   .bento-tile, .hunt-box, .zine-cut, .hunt-lid, .zine-letter { transition: none !important; }
   .hunt-box, .zine-cut { transform: none; }
 }
+
+/* ---------- Scrapbook (the classic format, every theme) ---------- */
+.gift-scrap .sb-hand { font-family: "Caveat", cursive; font-weight: 700; letter-spacing: 0; }
+.gift-scrap .sb-hero { letter-spacing: -0.015em; }
+.gift-scrap .sb-title { display: flex; flex-direction: column; gap: 10px; }
+.gift-scrap .sb-title::after {
+  content: "";
+  width: 54px;
+  height: 7px;
+  border-radius: 99px;
+  background: currentColor;
+  opacity: .28;
+  transform: rotate(-2deg);
+}
+.gift-scrap .sb-letter {
+  position: relative;
+  border-radius: 6px;
+  box-shadow: 0 1px 0 rgba(0,0,0,.04), 0 18px 34px -22px rgba(43,37,34,.45);
+  transition: transform .35s var(--ease-bounce);
+}
+.gift-scrap .sb-letter::before {
+  content: "";
+  position: absolute;
+  top: -10px;
+  left: 50%;
+  width: 72px;
+  height: 20px;
+  margin-left: -36px;
+  background: color-mix(in oklab, var(--gift-border, #ddd) 60%, rgba(255,255,255,.65));
+  opacity: .85;
+  transform: rotate(-3deg);
+  box-shadow: 0 1px 2px rgba(0,0,0,.06);
+}
+.gift-scrap .sb-letters > :nth-child(4n+1) .sb-letter, .gift-scrap .sb-letters > .sb-letter:nth-child(4n+1) { transform: rotate(-1deg); }
+.gift-scrap .sb-letters > :nth-child(4n+2) .sb-letter, .gift-scrap .sb-letters > .sb-letter:nth-child(4n+2) { transform: rotate(.9deg); }
+.gift-scrap .sb-letters > :nth-child(4n+3) .sb-letter, .gift-scrap .sb-letters > .sb-letter:nth-child(4n+3) { transform: rotate(.6deg); }
+.gift-scrap .sb-letters > :nth-child(4n) .sb-letter, .gift-scrap .sb-letters > .sb-letter:nth-child(4n) { transform: rotate(-.7deg); }
+.gift-scrap .sb-letter:hover { transform: rotate(0) translateY(-3px) !important; }
+.gift-scrap .sb-polaroid {
+  border-radius: 4px;
+  box-shadow: 0 1px 0 rgba(0,0,0,.04), 0 20px 36px -24px rgba(43,37,34,.55);
+  transition: transform .35s var(--ease-bounce);
+}
+.gift-scrap .sb-photos > :nth-child(3n+1) .sb-polaroid, .gift-scrap .sb-photos > .sb-polaroid:nth-child(3n+1) { transform: rotate(-2deg); }
+.gift-scrap .sb-photos > :nth-child(3n+2) .sb-polaroid, .gift-scrap .sb-photos > .sb-polaroid:nth-child(3n+2) { transform: rotate(1.5deg) translateY(6px); }
+.gift-scrap .sb-photos > :nth-child(3n) .sb-polaroid, .gift-scrap .sb-photos > .sb-polaroid:nth-child(3n) { transform: rotate(-.8deg); }
+.gift-scrap .sb-polaroid:hover { transform: rotate(0) scale(1.03) !important; z-index: 2; }
+.gift-scrap .sb-tile { display: flex; flex-direction: column; align-items: center; min-width: 64px; padding: 12px 10px 10px; border-radius: 16px; background: color-mix(in oklab, currentColor 5%, transparent); }
+.gift-scrap .sb-tile-num { font-size: clamp(1.9rem, 6cqi, 2.8rem); line-height: 1; font-weight: 700; font-variant-numeric: tabular-nums; }
+.gift-scrap .sb-tile-label { margin-top: 6px; font-size: 10px; letter-spacing: .16em; text-transform: uppercase; opacity: .6; }
+.gift-scrap { container: gift / inline-size; }
+@keyframes sb-in { from { opacity: 0; transform: translateY(28px); } to { opacity: 1; transform: none; } }
+.gift-scrap [data-reveal="pending"] { opacity: 0; transform: translateY(28px); }
+.gift-scrap [data-reveal="in"] { animation: sb-in .8s var(--ease-paper) both; }
+@media (prefers-reduced-motion: reduce) {
+  .gift-scrap .sb-letter, .gift-scrap .sb-polaroid { transform: none !important; transition: none; }
+}
+
+/* Gift Hunt: candy wrapping paper, a different pattern per box. */
+.hunt-box:nth-child(6n+1) { --paper: radial-gradient(rgba(255,255,255,.55) 2.5px, transparent 3px) 0 0 / 14px 14px; }
+.hunt-box:nth-child(6n+2) { --paper: repeating-linear-gradient(45deg, rgba(255,255,255,.45) 0 7px, transparent 7px 16px); }
+.hunt-box:nth-child(6n+3) { --paper: radial-gradient(circle at 50% 50%, rgba(255,255,255,.5) 0 4px, transparent 4.5px) 0 0 / 22px 22px; }
+.hunt-box:nth-child(6n+4) { --paper: repeating-linear-gradient(0deg, rgba(255,255,255,.4) 0 5px, transparent 5px 14px); }
+.hunt-box:nth-child(6n+5) { --paper: conic-gradient(rgba(255,255,255,.35) 25%, transparent 0 50%, rgba(255,255,255,.35) 0 75%, transparent 0) 0 0 / 18px 18px; }
+.hunt-box:nth-child(6n) { --paper: radial-gradient(rgba(255,255,255,.6) 1.6px, transparent 2px) 0 0 / 9px 9px; }
+.hunt-body, .hunt-lid { background: var(--paper, none), var(--tint); }
+.hunt-bow::before, .hunt-bow::after { border-width: 6px; }

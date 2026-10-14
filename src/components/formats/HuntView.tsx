@@ -147,7 +147,7 @@ export function HuntView({ site, modules, contributions, calendarEntries, palett
   const pct = total ? done / total : 0;
   const finished = total > 0 && done === total;
   const finaleRef = useRef<HTMLDivElement | null>(null);
-  const tints = [surfaceColor(palette.background), `${palette.accent}22`, `${palette.primary}18`];
+  const tints = ["#FBD3DC", "#FFE8B0", "#D5F0E3", "#D9E8FB", "#E6DCF7", "#FFDCCB"];
 
   function unwrap(p: Piece) {
     const before = opened.has(p.id);
@@ -217,7 +217,7 @@ export function HuntView({ site, modules, contributions, calendarEntries, palett
               open={opened.has(p.id)}
               locked={(p.kind === "calendar" && !!p.date && p.date > today) || p.sealed}
               tint={tints[n % tints.length]!}
-              ribbon={n % 2 ? palette.primary : palette.accent}
+              ribbon={[palette.accent, palette.primary, "#ffffff"][n % 3]!}
               onOpen={() => unwrap(p)}
             />
           ))}

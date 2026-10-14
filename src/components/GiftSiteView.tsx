@@ -36,14 +36,14 @@ function useMediaUrl(path: string | null) {
 function PhotoCard({ item, accent }: { item: Contribution; accent: string }) {
   const url = useMediaUrl(item.media_url);
   return (
-    <figure className="rounded-2xl bg-[var(--gift-surface)] p-3 shadow-sm ring-1 ring-black/5">
-      <div className="aspect-square w-full overflow-hidden rounded-xl bg-black/5">
+    <figure className="sb-polaroid bg-[var(--gift-surface)] p-3 pb-4">
+      <div className="aspect-square w-full overflow-hidden rounded-[3px] bg-black/5">
         {url ? (
           <img src={url} alt={item.text_content ?? "Contributed photo"} className="size-full object-cover" />
         ) : null}
       </div>
       <figcaption className="pt-3 text-sm">
-        {item.text_content ? <p className="leading-snug">{item.text_content}</p> : null}
+        {item.text_content ? <p className="sb-hand text-lg leading-tight">{item.text_content}</p> : null}
         <p className="mt-1 text-xs opacity-70" style={{ color: accent }}>
           {item.author_name}
         </p>
@@ -55,12 +55,21 @@ function PhotoCard({ item, accent }: { item: Contribution; accent: string }) {
 function VoiceCard({ item, accent }: { item: Contribution; accent: string }) {
   const url = useMediaUrl(item.media_url);
   return (
-    <div className="rounded-2xl bg-[var(--gift-surface)] p-4 shadow-sm ring-1 ring-black/5">
-      {item.text_content ? <p className="mb-2 text-sm leading-snug">{item.text_content}</p> : null}
-      {url ? <audio controls src={url} className="w-full" /> : <p className="text-sm opacity-60">Loading audio…</p>}
-      <p className="mt-2 text-sm" style={{ color: accent }}>
-        {item.author_name}
-      </p>
+    <div className="flex items-start gap-4 rounded-2xl bg-[var(--gift-surface)] p-4 shadow-sm ring-1 ring-black/5">
+      <span className="grid size-11 shrink-0 place-items-center rounded-full text-lg" style={{ backgroundColor: `${accent}22`, color: accent }} aria-hidden>
+        ♪
+      </span>
+      <div className="min-w-0 flex-1">
+        <p className="sb-hand text-xl leading-none" style={{ color: accent }}>
+          {item.author_name}
+        </p>
+        {item.text_content ? <p className="mt-1.5 text-sm leading-snug opacity-85">{item.text_content}</p> : null}
+        {url ? (
+          <audio controls src={url} className="mt-3 w-full" />
+        ) : item.media_url ? (
+          <p className="mt-2 text-sm opacity-60">Loading the voice note…</p>
+        ) : null}
+      </div>
     </div>
   );
 }
@@ -91,16 +100,22 @@ function Countdown({ date, accent, heading }: { date: string; accent: string; he
         </p>
       ) : (
         <>
-          <p className="text-4xl font-semibold" style={{ color: accent }}>
-            {days}
-          </p>
-          <p className="mt-1 text-sm tracking-[0.18em] uppercase opacity-70">
-            {days === 1 ? "day" : "days"} until {heading}
-          </p>
-          <p className="mt-3 font-mono text-sm opacity-70" suppressHydrationWarning>
-            {String(hours).padStart(2, "0")}:{String(mins).padStart(2, "0")}:
-            {String(secs).padStart(2, "0")}
-          </p>
+          <p className="text-sm tracking-[0.18em] uppercase opacity-70">Counting down to {heading}</p>
+          <div className="mt-5 flex items-start justify-center gap-2 sm:gap-3" suppressHydrationWarning>
+            {[
+              [days, days === 1 ? "day" : "days"],
+              [hours, "hrs"],
+              [mins, "min"],
+              [secs, "sec"],
+            ].map(([v, l]) => (
+              <span key={l as string} className="sb-tile">
+                <span className="sb-tile-num" style={{ color: accent }} suppressHydrationWarning>
+                  {String(v).padStart(2, "0")}
+                </span>
+                <span className="sb-tile-label">{l}</span>
+              </span>
+            ))}
+          </div>
         </>
       )}
     </div>
@@ -388,7 +403,33 @@ export function GiftSiteView({
     }));
   }, [words]);
 
-  const sectionTitle = "text-2xl font-semibold";
+  // Sections below the fold rise in as they scroll into view. Nothing is hidden without JS,
+  // and anything already on screen stays put.
+  useEffect(() => {
+    const root = rootRef.current;
+    if (!root || window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    const io = new IntersectionObserver(
+      (entries) => {
+        for (const e of entries) {
+          if (!e.isIntersecting) continue;
+          (e.target as HTMLElement).dataset["reveal"] = "in";
+          io.unobserve(e.target);
+        }
+      },
+      { rootMargin: "0px 0px -6% 0px" },
+    );
+    for (const el of root.querySelectorAll<HTMLElement>(".sb-section")) {
+      if (el.dataset["reveal"] === "in") continue;
+      // Already waiting (from a previous run) or below the fold: watch it.
+      if (el.dataset["reveal"] === "pending" || el.getBoundingClientRect().top > window.innerHeight) {
+        el.dataset["reveal"] = "pending";
+        io.observe(el);
+      }
+    }
+    return () => io.disconnect();
+  }, [contributions.length, modules.length]);
+
+  const sectionTitle = "sb-title text-[1.75rem] leading-tight font-semibold";
   const recipient = text.recipient_name?.trim();
   const sampleName = recipient || "Maya";
 
@@ -456,22 +497,22 @@ export function GiftSiteView({
           "--gift-border": surfaceBorder(palette.background),
         } as React.CSSProperties
       }
-      className="min-h-screen"
+      className="gift-scrap min-h-screen"
     >
-      <div className="mx-auto max-w-3xl px-5 py-14">
+      <div className="mx-auto max-w-3xl px-5 py-14 sm:py-20">
         <header className="text-center">
           <p className="text-xs tracking-[0.22em] uppercase" style={{ color: accentText }}>
             {theme?.category ?? "A gift"}
           </p>
           <h1
-            {...fp("heading", "mt-3 text-[clamp(2rem,6vw,3.4rem)] leading-tight font-semibold text-balance")}
+            {...fp("heading", "sb-hero mt-3 text-[clamp(2.4rem,7vw,4.2rem)] leading-[1.02] font-semibold text-balance")}
             style={{ fontFamily: fonts.heading }}
           >
             {text.heading || (sample ? <span className="opacity-40">{titles.heading}</span> : site.title)}
           </h1>
           <p {...fp("recipient_name", "mt-2 text-lg")} style={{ color: accentText }}>
             {recipient ? (
-              `for ${recipient}`
+              (text.heading ?? "").toLowerCase().includes(recipient.toLowerCase()) && !onEditField ? null : `for ${recipient}`
             ) : sample ? (
               <span className="opacity-40">for {sampleName}</span>
             ) : null}
@@ -491,7 +532,7 @@ export function GiftSiteView({
         </header>
 
         {enabled.has("countdown") && (site.countdown_date || sample) ? (
-          <section className="mt-12">
+          <section className="sb-section mt-12">
             <Countdown
               date={site.countdown_date ?? new Date(Date.now() + 12 * 86400000).toISOString().slice(0, 10)}
               accent={accentText}
@@ -501,7 +542,7 @@ export function GiftSiteView({
         ) : null}
 
         {enabled.has("calendar") && (calendarEntries.length > 0 || sample) && (
-          <section className="mt-14">
+          <section className="sb-section mt-16">
             <h2
               {...fp("calendar_title", sectionTitle)}
               style={{ fontFamily: fonts.heading, color: accentText }}
@@ -520,7 +561,7 @@ export function GiftSiteView({
         )}
 
         {enabled.has("tree") && (tree.length > 0 || sample) ? (
-          <section className="mt-14">
+          <section className="sb-section mt-16">
             <h2
               {...fp("tree_title", sectionTitle)}
               style={{ fontFamily: fonts.heading, color: accentText }}
@@ -540,23 +581,23 @@ export function GiftSiteView({
         ) : null}
 
         {enabled.has("letters") && (letters.length > 0 || sample) && (
-          <section className="mt-14">
+          <section className="sb-section mt-16">
             <h2
               {...fp("letters_title", sectionTitle)}
               style={{ fontFamily: fonts.heading, color: accentText }}
             >
               {text.letters_title || titles.letters_title}
             </h2>
-            <div className="mt-5 grid gap-4 sm:grid-cols-2">
+            <div className="sb-letters mt-6 grid gap-5 sm:grid-cols-2">
               {letters.length > 0
                 ? letters.map((item) =>
                     item.sealed ? (
                       <SealedLetter key={item.id} item={item} palette={palette} />
                     ) : (
                       <Mine key={item.id} item={item}>
-                        <article className="rounded-2xl bg-[var(--gift-surface)] p-5 shadow-sm ring-1 ring-black/5">
+                        <article className="sb-letter bg-[var(--gift-surface)] p-6">
                           <p className="leading-relaxed whitespace-pre-line">{item.text_content}</p>
-                          <p className="mt-3 text-sm" style={{ color: accentText }}>
+                          <p className="sb-hand mt-4 text-xl" style={{ color: accentText }}>
                             {item.author_name}
                           </p>
                         </article>
@@ -569,10 +610,10 @@ export function GiftSiteView({
                   ].map((s) => (
                     <article
                       key={s.a}
-                      className="rounded-2xl bg-[var(--gift-surface)] p-5 shadow-sm ring-1 ring-black/5 opacity-80"
+                      className="sb-letter bg-[var(--gift-surface)] p-6 opacity-80"
                     >
                       <p className="leading-relaxed">{s.t}</p>
-                      <p className="mt-3 text-sm" style={{ color: accentText }}>
+                      <p className="sb-hand mt-4 text-xl" style={{ color: accentText }}>
                         {s.a}
                       </p>
                     </article>
@@ -585,14 +626,14 @@ export function GiftSiteView({
         )}
 
         {enabled.has("photobooth") && (photos.length > 0 || sample) && (
-          <section className="mt-14">
+          <section className="sb-section mt-16">
             <h2
               {...fp("photobooth_title", sectionTitle)}
               style={{ fontFamily: fonts.heading, color: accentText }}
             >
               {text.photobooth_title || titles.photobooth_title}
             </h2>
-            <div className="mt-5 grid grid-cols-2 gap-4 sm:grid-cols-3">
+            <div className="sb-photos mt-6 grid grid-cols-2 gap-4 sm:grid-cols-3 sm:gap-5">
               {photos.length > 0
                 ? photos.map((item) =>
                     item.sealed ? (
@@ -606,7 +647,7 @@ export function GiftSiteView({
                 : [1, 2, 3].map((i) => (
                     <figure
                       key={i}
-                      className="rounded-2xl bg-[var(--gift-surface)] p-3 opacity-80 shadow-sm ring-1 ring-black/5"
+                      className="sb-polaroid bg-[var(--gift-surface)] p-3 pb-4 opacity-80"
                     >
                       <div className="grid aspect-square w-full place-items-center rounded-xl bg-black/5 text-2xl opacity-50">
                         ✦
@@ -622,7 +663,7 @@ export function GiftSiteView({
         )}
 
         {enabled.has("wordcloud") && (cloud.length > 0 || sample) && (
-          <section className="mt-14">
+          <section className="sb-section mt-16">
             <h2
               {...fp("wordcloud_title", sectionTitle)}
               style={{ fontFamily: fonts.heading, color: accentText }}
@@ -675,7 +716,7 @@ export function GiftSiteView({
         )}
 
         {enabled.has("voice") && (voices.length > 0 || sample) && (
-          <section className="mt-14">
+          <section className="sb-section mt-16">
             <h2
               {...fp("voice_title", sectionTitle)}
               style={{ fontFamily: fonts.heading, color: accentText }}
@@ -721,7 +762,7 @@ export function GiftSiteView({
         )}
 
         {enabled.has("songs") && (songs.length > 0 || sample) && (
-          <section className="mt-14">
+          <section className="sb-section mt-16">
             <h2
               {...fp("songs_title", sectionTitle)}
               style={{ fontFamily: fonts.heading, color: accentText }}
