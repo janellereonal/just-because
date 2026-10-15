@@ -1,5 +1,7 @@
 import { useMemo } from "react";
 import type { ThemeKind } from "@/lib/themeKind";
+import { pick, type IconSet } from "@/themes/_shared/iconSets";
+import { IconGlyph } from "@/themes/_shared/Sprinkles";
 
 /**
  * Background layers for an occasion skin: a palette-tinted pattern over the whole
@@ -43,11 +45,26 @@ function rng(seed: number) {
 }
 
 /** Just the floating particles, for openings with the creator's own background. */
-export function SkinParticles({ kind }: { kind: ThemeKind }) {
-  return <SkinDecor kind={kind} pattern={false} />;
+export function SkinParticles({ kind, icons }: { kind: ThemeKind; icons?: IconSet | undefined }) {
+  return <SkinDecor kind={kind} pattern={false} icons={icons} />;
 }
 
-export function SkinDecor({ kind, pattern = true }: { kind: ThemeKind; pattern?: boolean }) {
+/**
+ * `icons`: the gift's icon set. When given, every particle is drawn from it
+ * (hearts, paws, the creator's own emoji…) instead of the skin's CSS shapes.
+ */
+export function SkinDecor({
+  kind,
+  pattern = true,
+  icons,
+  colors = [],
+}: {
+  kind: ThemeKind;
+  pattern?: boolean;
+  icons?: IconSet | undefined;
+  colors?: string[];
+}) {
+  const tint = icons?.colors.length ? icons.colors : colors.length ? colors : ["#FFFFFF"];
   const particles = useMemo<Particle[]>(() => {
     const r = rng(kind.length * 97 + 13);
     return Array.from({ length: COUNTS[kind] }, () => ({
@@ -72,7 +89,7 @@ export function SkinDecor({ kind, pattern = true }: { kind: ThemeKind; pattern?:
         {particles.map((p, i) => (
           <i
             key={i}
-            className="sk-p"
+            className={icons ? "sk-p sk-ico" : "sk-p"}
             data-h={p.hue}
             style={
               {
@@ -84,7 +101,9 @@ export function SkinDecor({ kind, pattern = true }: { kind: ThemeKind; pattern?:
                 animationDuration: `${p.dur}s`,
               } as React.CSSProperties
             }
-          />
+          >
+            {icons ? <IconGlyph item={pick(icons.items, i)} color={pick(tint, p.hue)} size={Math.round(12 * p.size + 6)} /> : null}
+          </i>
         ))}
       </div>
     </div>

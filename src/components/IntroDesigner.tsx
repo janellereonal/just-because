@@ -139,6 +139,7 @@ export function IntroDesigner({
   const stickers = settings.stickers ?? [];
   const copy = INTRO_COPY[introStyle];
   type Patch = { [K in keyof IntroSettings]?: IntroSettings[K] | undefined };
+  const classic = settings.opening === "classic";
   const set = (patch: Patch | ((prev: IntroSettings) => Patch)) =>
     onChange((prev) => {
       const next = { ...prev, ...(typeof patch === "function" ? patch(prev) : patch) } as Record<
@@ -189,302 +190,337 @@ export function IntroDesigner({
       </p>
       {greeting}
 
-      <Group title="The star of the show" hint="Tap it in the preview, it reacts.">
-        <div className="grid grid-cols-4 gap-2">
+      <Group title="Style">
+        <div className="flex flex-wrap gap-2">
           <button
             type="button"
-            onClick={() => set({ hero: undefined })}
-            aria-pressed={hero.type === "theme"}
-            className={`squish grid aspect-square place-items-center overflow-hidden rounded-2xl ring-2 ${hero.type === "theme" ? "ring-ink" : "ring-transparent"}`}
-            style={{ background: palette.background }}
-            title="From the theme"
+            className={chip(!classic)}
+            aria-pressed={!classic}
+            onClick={() => set({ opening: undefined })}
           >
-            <img src={themeStillUrl(kind)} alt="" className="size-full object-contain" />
-            <span className="sr-only">From the theme</span>
+            Signature
           </button>
-          {THEME_KINDS.filter((k) => k !== kind && k !== "default").map((k) => (
-            <button
-              key={k}
-              type="button"
-              onClick={() => set({ hero: { type: "object", kind: k } })}
-              aria-pressed={hero.type === "object" && hero.kind === k}
-              title={`The ${HERO_WORD[k]}`}
-              className={`squish grid aspect-square place-items-center overflow-hidden rounded-2xl bg-cream ring-2 ${hero.type === "object" && hero.kind === k ? "ring-ink" : "ring-line/0 hover:ring-ink/15"}`}
-            >
-              <img
-                src={themeStillUrl(k)}
-                alt=""
-                className="size-full object-contain"
-                loading="lazy"
-              />
-              <span className="sr-only">The {HERO_WORD[k]}</span>
-            </button>
-          ))}
-        </div>
-        <div className="mt-3 flex flex-wrap gap-1.5">
-          {HERO_EMOJIS.map((e) => (
-            <button
-              key={e}
-              type="button"
-              onClick={() => set({ hero: { type: "emoji", emoji: e } })}
-              aria-pressed={hero.type === "emoji" && hero.emoji === e}
-              className={`squish grid size-10 place-items-center rounded-xl text-xl ring-2 ${hero.type === "emoji" && hero.emoji === e ? "bg-pink/50 ring-ink" : "bg-cream ring-transparent hover:ring-ink/15"}`}
-            >
-              {e}
-            </button>
-          ))}
-        </div>
-        <div className="mt-2 flex gap-2">
-          <input
-            className={`${field} mt-0 flex-1`}
-            placeholder="Or type any emoji"
-            maxLength={8}
-            value={hero.type === "emoji" ? hero.emoji : ""}
-            onChange={(e) => {
-              const v = e.target.value.trim();
-              set({ hero: v ? { type: "emoji", emoji: v } : undefined });
-            }}
-            aria-label="Your own emoji"
-          />
           <button
             type="button"
-            onClick={() => heroFile.current?.click()}
-            className="squish inline-flex shrink-0 items-center gap-1.5 rounded-xl bg-cream px-3 text-xs font-medium ring-1 ring-line hover:bg-pink/40"
+            className={chip(classic)}
+            aria-pressed={classic}
+            onClick={() => set({ opening: "classic" })}
           >
-            {busy === "hero" ? (
-              <Loader2 className="size-3.5 animate-spin" />
-            ) : (
-              <ImagePlus className="size-3.5" />
-            )}
-            Your picture
+            Classic
           </button>
-          <input
-            ref={heroFile}
-            type="file"
-            accept="image/png,image/jpeg,image/webp,image/gif"
-            className="hidden"
-            onChange={(e) =>
-              void upload(e.target.files?.[0], "hero", (url) =>
-                set({ hero: { type: "image", url } }),
-              )
-            }
-          />
         </div>
-        {hero.type === "image" ? (
-          <p className="mt-1.5 text-xs text-muted">
-            Tip: a PNG with a see-through background looks like a real sticker.
-          </p>
-        ) : null}
+        <p className="mt-2 text-xs text-muted">
+          {classic
+            ? "The earlier opening: a 3D scene, stickers and a button."
+            : "The theme's own object, opened with a gesture. Pick who appears in it under Cast."}
+        </p>
       </Group>
 
-      <Group
-        title="Stickers"
-        hint={`Up to ${MAX_INTRO_STICKERS}. They float, wobble and can be dragged around.`}
-      >
-        <div className="flex flex-wrap gap-1.5">
-          {STICKER_EMOJIS.map((e) => (
-            <button
-              key={e}
-              type="button"
-              onClick={() => addSticker({ emoji: e })}
-              className="squish grid size-9 place-items-center rounded-xl bg-cream text-lg ring-1 ring-line hover:bg-pink/40"
-              aria-label={`Add ${e} sticker`}
-            >
-              {e}
-            </button>
-          ))}
-          <button
-            type="button"
-            onClick={() => stickerFile.current?.click()}
-            className="squish inline-flex h-9 items-center gap-1.5 rounded-xl bg-cream px-3 text-xs font-medium ring-1 ring-line hover:bg-pink/40"
-          >
-            {busy === "sticker" ? (
-              <Loader2 className="size-3.5 animate-spin" />
-            ) : (
-              <ImagePlus className="size-3.5" />
-            )}
-            Upload
-          </button>
-          <input
-            ref={stickerFile}
-            type="file"
-            accept="image/png,image/jpeg,image/webp,image/gif"
-            className="hidden"
-            onChange={(e) =>
-              void upload(e.target.files?.[0], "sticker", (url) => addSticker({ url }))
-            }
-          />
-        </div>
-        {stickers.length ? (
-          <div className="mt-3">
-            <div className="flex flex-wrap gap-2">
-              {stickers.map((s) => (
-                <span
-                  key={s.id}
-                  className="group relative grid size-12 place-items-center rounded-xl bg-paper ring-1 ring-line"
+      {classic ? (
+        <>
+          <Group title="The star of the show" hint="Tap it in the preview, it reacts.">
+            <div className="grid grid-cols-4 gap-2">
+              <button
+                type="button"
+                onClick={() => set({ hero: undefined })}
+                aria-pressed={hero.type === "theme"}
+                className={`squish grid aspect-square place-items-center overflow-hidden rounded-2xl ring-2 ${hero.type === "theme" ? "ring-ink" : "ring-transparent"}`}
+                style={{ background: palette.background }}
+                title="From the theme"
+              >
+                <img src={themeStillUrl(kind)} alt="" className="size-full object-contain" />
+                <span className="sr-only">From the theme</span>
+              </button>
+              {THEME_KINDS.filter((k) => k !== kind && k !== "default").map((k) => (
+                <button
+                  key={k}
+                  type="button"
+                  onClick={() => set({ hero: { type: "object", kind: k } })}
+                  aria-pressed={hero.type === "object" && hero.kind === k}
+                  title={`The ${HERO_WORD[k]}`}
+                  className={`squish grid aspect-square place-items-center overflow-hidden rounded-2xl bg-cream ring-2 ${hero.type === "object" && hero.kind === k ? "ring-ink" : "ring-line/0 hover:ring-ink/15"}`}
                 >
-                  {s.url ? (
-                    <img src={s.url} alt="" className="size-9 object-contain" />
-                  ) : (
-                    <span className="text-2xl">{s.emoji}</span>
-                  )}
+                  <img
+                    src={themeStillUrl(k)}
+                    alt=""
+                    className="size-full object-contain"
+                    loading="lazy"
+                  />
+                  <span className="sr-only">The {HERO_WORD[k]}</span>
+                </button>
+              ))}
+            </div>
+            <div className="mt-3 flex flex-wrap gap-1.5">
+              {HERO_EMOJIS.map((e) => (
+                <button
+                  key={e}
+                  type="button"
+                  onClick={() => set({ hero: { type: "emoji", emoji: e } })}
+                  aria-pressed={hero.type === "emoji" && hero.emoji === e}
+                  className={`squish grid size-10 place-items-center rounded-xl text-xl ring-2 ${hero.type === "emoji" && hero.emoji === e ? "bg-pink/50 ring-ink" : "bg-cream ring-transparent hover:ring-ink/15"}`}
+                >
+                  {e}
+                </button>
+              ))}
+            </div>
+            <div className="mt-2 flex gap-2">
+              <input
+                className={`${field} mt-0 flex-1`}
+                placeholder="Or type any emoji"
+                maxLength={8}
+                value={hero.type === "emoji" ? hero.emoji : ""}
+                onChange={(e) => {
+                  const v = e.target.value.trim();
+                  set({ hero: v ? { type: "emoji", emoji: v } : undefined });
+                }}
+                aria-label="Your own emoji"
+              />
+              <button
+                type="button"
+                onClick={() => heroFile.current?.click()}
+                className="squish inline-flex shrink-0 items-center gap-1.5 rounded-xl bg-cream px-3 text-xs font-medium ring-1 ring-line hover:bg-pink/40"
+              >
+                {busy === "hero" ? (
+                  <Loader2 className="size-3.5 animate-spin" />
+                ) : (
+                  <ImagePlus className="size-3.5" />
+                )}
+                Your picture
+              </button>
+              <input
+                ref={heroFile}
+                type="file"
+                accept="image/png,image/jpeg,image/webp,image/gif"
+                className="hidden"
+                onChange={(e) =>
+                  void upload(e.target.files?.[0], "hero", (url) =>
+                    set({ hero: { type: "image", url } }),
+                  )
+                }
+              />
+            </div>
+            {hero.type === "image" ? (
+              <p className="mt-1.5 text-xs text-muted">
+                Tip: a PNG with a see-through background looks like a real sticker.
+              </p>
+            ) : null}
+          </Group>
+
+          <Group
+            title="Stickers"
+            hint={`Up to ${MAX_INTRO_STICKERS}. They float, wobble and can be dragged around.`}
+          >
+            <div className="flex flex-wrap gap-1.5">
+              {STICKER_EMOJIS.map((e) => (
+                <button
+                  key={e}
+                  type="button"
+                  onClick={() => addSticker({ emoji: e })}
+                  className="squish grid size-9 place-items-center rounded-xl bg-cream text-lg ring-1 ring-line hover:bg-pink/40"
+                  aria-label={`Add ${e} sticker`}
+                >
+                  {e}
+                </button>
+              ))}
+              <button
+                type="button"
+                onClick={() => stickerFile.current?.click()}
+                className="squish inline-flex h-9 items-center gap-1.5 rounded-xl bg-cream px-3 text-xs font-medium ring-1 ring-line hover:bg-pink/40"
+              >
+                {busy === "sticker" ? (
+                  <Loader2 className="size-3.5 animate-spin" />
+                ) : (
+                  <ImagePlus className="size-3.5" />
+                )}
+                Upload
+              </button>
+              <input
+                ref={stickerFile}
+                type="file"
+                accept="image/png,image/jpeg,image/webp,image/gif"
+                className="hidden"
+                onChange={(e) =>
+                  void upload(e.target.files?.[0], "sticker", (url) => addSticker({ url }))
+                }
+              />
+            </div>
+            {stickers.length ? (
+              <div className="mt-3">
+                <div className="flex flex-wrap gap-2">
+                  {stickers.map((s) => (
+                    <span
+                      key={s.id}
+                      className="group relative grid size-12 place-items-center rounded-xl bg-paper ring-1 ring-line"
+                    >
+                      {s.url ? (
+                        <img src={s.url} alt="" className="size-9 object-contain" />
+                      ) : (
+                        <span className="text-2xl">{s.emoji}</span>
+                      )}
+                      <button
+                        type="button"
+                        onClick={() =>
+                          set((prev) => ({
+                            stickers: (prev.stickers ?? []).filter((x) => x.id !== s.id),
+                          }))
+                        }
+                        className="absolute -top-1.5 -right-1.5 grid size-5 place-items-center rounded-full bg-ink text-cream"
+                        aria-label="Remove sticker"
+                      >
+                        <X className="size-3" />
+                      </button>
+                    </span>
+                  ))}
+                </div>
+                <div className="mt-2 flex flex-wrap items-center gap-3">
+                  <label className="flex flex-1 items-center gap-2 text-xs text-muted">
+                    Size
+                    <input
+                      type="range"
+                      min={0.6}
+                      max={1.8}
+                      step={0.1}
+                      value={stickers[0]?.s ?? 1}
+                      onChange={(e) =>
+                        set({
+                          stickers: stickers.map((s) => ({ ...s, s: Number(e.target.value) })),
+                        })
+                      }
+                      className="flex-1 accent-[#C2366B]"
+                    />
+                  </label>
                   <button
                     type="button"
                     onClick={() =>
-                      set((prev) => ({
-                        stickers: (prev.stickers ?? []).filter((x) => x.id !== s.id),
-                      }))
+                      set({
+                        stickers: stickers.map((s) => ({
+                          ...s,
+                          x:
+                            Math.random() < 0.5
+                              ? 0.08 + Math.random() * 0.22
+                              : 0.7 + Math.random() * 0.22,
+                          y: 0.08 + Math.random() * 0.84,
+                          r: Math.round((Math.random() - 0.5) * 40),
+                        })),
+                      })
                     }
-                    className="absolute -top-1.5 -right-1.5 grid size-5 place-items-center rounded-full bg-ink text-cream"
-                    aria-label="Remove sticker"
+                    className="inline-flex items-center gap-1 text-xs font-medium underline"
                   >
-                    <X className="size-3" />
+                    <Shuffle className="size-3" /> Shuffle
                   </button>
-                </span>
-              ))}
-            </div>
-            <div className="mt-2 flex flex-wrap items-center gap-3">
-              <label className="flex flex-1 items-center gap-2 text-xs text-muted">
-                Size
-                <input
-                  type="range"
-                  min={0.6}
-                  max={1.8}
-                  step={0.1}
-                  value={stickers[0]?.s ?? 1}
-                  onChange={(e) =>
-                    set({ stickers: stickers.map((s) => ({ ...s, s: Number(e.target.value) })) })
-                  }
-                  className="flex-1 accent-[#C2366B]"
-                />
-              </label>
+                </div>
+              </div>
+            ) : null}
+          </Group>
+
+          <Group title="Background">
+            <div className="flex flex-wrap gap-1.5">
               <button
                 type="button"
+                className={chip(bg.type === "theme")}
+                onClick={() => set({ background: undefined })}
+              >
+                From the theme
+              </button>
+              <button
+                type="button"
+                className={chip(bg.type === "solid")}
                 onClick={() =>
                   set({
-                    stickers: stickers.map((s) => ({
-                      ...s,
-                      x:
-                        Math.random() < 0.5
-                          ? 0.08 + Math.random() * 0.22
-                          : 0.7 + Math.random() * 0.22,
-                      y: 0.08 + Math.random() * 0.84,
-                      r: Math.round((Math.random() - 0.5) * 40),
-                    })),
+                    background: {
+                      type: "solid",
+                      color: bg.type === "solid" ? bg.color : "#FFE3EC",
+                    },
                   })
                 }
-                className="inline-flex items-center gap-1 text-xs font-medium underline"
               >
-                <Shuffle className="size-3" /> Shuffle
+                One color
               </button>
+              <button
+                type="button"
+                className={chip(bg.type === "gradient")}
+                onClick={() =>
+                  set({
+                    background:
+                      bg.type === "gradient"
+                        ? bg
+                        : { type: "gradient", from: "#FFD6E7", to: "#C9D7FF" },
+                  })
+                }
+              >
+                Gradient
+              </button>
+              <button
+                type="button"
+                className={chip(bg.type === "image")}
+                onClick={() => bgFile.current?.click()}
+              >
+                {busy === "bg" ? "Uploading…" : "Photo"}
+              </button>
+              <input
+                ref={bgFile}
+                type="file"
+                accept="image/png,image/jpeg,image/webp,image/gif"
+                className="hidden"
+                onChange={(e) =>
+                  void upload(e.target.files?.[0], "bg", (url) =>
+                    set({ background: { type: "image", url } }),
+                  )
+                }
+              />
             </div>
-          </div>
-        ) : null}
-      </Group>
+            {bg.type === "solid" ? (
+              <div className="mt-2.5">
+                <ColorField
+                  label="Background"
+                  value={bg.color}
+                  fallback="#FFE3EC"
+                  onChange={(v) => set({ background: v ? { type: "solid", color: v } : undefined })}
+                />
+              </div>
+            ) : null}
+            {bg.type === "gradient" ? (
+              <div className="mt-2.5 grid grid-cols-2 gap-2">
+                <ColorField
+                  label="Top"
+                  value={bg.from}
+                  fallback="#FFD6E7"
+                  onChange={(v) => set({ background: { ...bg, from: v ?? "#FFD6E7" } })}
+                />
+                <ColorField
+                  label="Bottom"
+                  value={bg.to}
+                  fallback="#C9D7FF"
+                  onChange={(v) => set({ background: { ...bg, to: v ?? "#C9D7FF" } })}
+                />
+              </div>
+            ) : null}
+          </Group>
 
-      <Group title="Background">
-        <div className="flex flex-wrap gap-1.5">
-          <button
-            type="button"
-            className={chip(bg.type === "theme")}
-            onClick={() => set({ background: undefined })}
-          >
-            From the theme
-          </button>
-          <button
-            type="button"
-            className={chip(bg.type === "solid")}
-            onClick={() =>
-              set({
-                background: { type: "solid", color: bg.type === "solid" ? bg.color : "#FFE3EC" },
-              })
-            }
-          >
-            One color
-          </button>
-          <button
-            type="button"
-            className={chip(bg.type === "gradient")}
-            onClick={() =>
-              set({
-                background:
-                  bg.type === "gradient"
-                    ? bg
-                    : { type: "gradient", from: "#FFD6E7", to: "#C9D7FF" },
-              })
-            }
-          >
-            Gradient
-          </button>
-          <button
-            type="button"
-            className={chip(bg.type === "image")}
-            onClick={() => bgFile.current?.click()}
-          >
-            {busy === "bg" ? "Uploading…" : "Photo"}
-          </button>
-          <input
-            ref={bgFile}
-            type="file"
-            accept="image/png,image/jpeg,image/webp,image/gif"
-            className="hidden"
-            onChange={(e) =>
-              void upload(e.target.files?.[0], "bg", (url) =>
-                set({ background: { type: "image", url } }),
-              )
-            }
-          />
-        </div>
-        {bg.type === "solid" ? (
-          <div className="mt-2.5">
-            <ColorField
-              label="Background"
-              value={bg.color}
-              fallback="#FFE3EC"
-              onChange={(v) => set({ background: v ? { type: "solid", color: v } : undefined })}
-            />
-          </div>
-        ) : null}
-        {bg.type === "gradient" ? (
-          <div className="mt-2.5 grid grid-cols-2 gap-2">
-            <ColorField
-              label="Top"
-              value={bg.from}
-              fallback="#FFD6E7"
-              onChange={(v) => set({ background: { ...bg, from: v ?? "#FFD6E7" } })}
-            />
-            <ColorField
-              label="Bottom"
-              value={bg.to}
-              fallback="#C9D7FF"
-              onChange={(v) => set({ background: { ...bg, to: v ?? "#C9D7FF" } })}
-            />
-          </div>
-        ) : null}
-      </Group>
-
-      <Group title="Colors">
-        <div className="grid gap-2">
-          <ColorField
-            label="Text"
-            value={settings.ink}
-            fallback="#2B2522"
-            onChange={(v) => set({ ink: v })}
-          />
-          <ColorField
-            label="Button"
-            value={settings.button}
-            fallback={palette.primary}
-            onChange={(v) => set({ button: v })}
-          />
-          <ColorField
-            label="Button text"
-            value={settings.button_ink}
-            fallback="#FFFFFF"
-            onChange={(v) => set({ button_ink: v })}
-          />
-        </div>
-      </Group>
+          <Group title="Colors">
+            <div className="grid gap-2">
+              <ColorField
+                label="Text"
+                value={settings.ink}
+                fallback="#2B2522"
+                onChange={(v) => set({ ink: v })}
+              />
+              <ColorField
+                label="Button"
+                value={settings.button}
+                fallback={palette.primary}
+                onChange={(v) => set({ button: v })}
+              />
+              <ColorField
+                label="Button text"
+                value={settings.button_ink}
+                fallback="#FFFFFF"
+                onChange={(v) => set({ button_ink: v })}
+              />
+            </div>
+          </Group>
+        </>
+      ) : null}
 
       <Group title="Words">
         <label className="block">
@@ -509,27 +545,31 @@ export function IntroDesigner({
         </label>
       </Group>
 
-      <Group title="When it opens" hint="What bursts out when they tap the button.">
-        <div className="flex flex-wrap gap-1.5">
-          <button
-            type="button"
-            className={chip(!settings.burst)}
-            onClick={() => set({ burst: undefined })}
-          >
-            From the theme
-          </button>
-          {BURSTS.map((b) => (
-            <button
-              key={b.id}
-              type="button"
-              className={chip(settings.burst === b.id)}
-              onClick={() => set({ burst: b.id })}
-            >
-              {b.glyph} {b.label}
-            </button>
-          ))}
-        </div>
-      </Group>
+      {classic ? (
+        <>
+          <Group title="When it opens" hint="What bursts out when they tap the button.">
+            <div className="flex flex-wrap gap-1.5">
+              <button
+                type="button"
+                className={chip(!settings.burst)}
+                onClick={() => set({ burst: undefined })}
+              >
+                From the theme
+              </button>
+              {BURSTS.map((b) => (
+                <button
+                  key={b.id}
+                  type="button"
+                  className={chip(settings.burst === b.id)}
+                  onClick={() => set({ burst: b.id })}
+                >
+                  {b.glyph} {b.label}
+                </button>
+              ))}
+            </div>
+          </Group>
+        </>
+      ) : null}
 
       {Object.keys(settings).length ? (
         <button

@@ -290,7 +290,7 @@ export const createSite = createServerFn({ method: "POST" })
       customColors: paletteShape,
       treeRevealDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).nullable(),
       modules: z.array(z.enum(MODULE_TYPES)).min(1),
-      fontChoice: z.enum(["romantic", "playful", "modern", "handwritten"]).optional(),
+      fontChoice: z.enum(["theme", "romantic", "playful", "modern", "handwritten"]).optional(),
       /** Just from the creator: no friends link, they add every note. */
       solo: z.boolean().optional(),
     }),
@@ -333,7 +333,7 @@ export const updateSite = createServerFn({ method: "POST" })
         title: z.string().trim().min(1).max(200),
         custom_text: jsonObject,
         custom_colors: paletteShape,
-        font_choice: z.enum(["romantic", "playful", "modern", "handwritten"]),
+        font_choice: z.enum(["theme", "romantic", "playful", "modern", "handwritten"]),
         countdown_date: date,
         calendar_locked: z.boolean(),
         intro_text: z.string().max(2000).nullable(),

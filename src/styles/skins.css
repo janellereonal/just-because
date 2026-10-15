@@ -12,7 +12,10 @@
 .sk-decor { position: absolute; inset: 0; z-index: -1; overflow: hidden; pointer-events: none; }
 .sk-pattern { position: absolute; inset: 0; opacity: 0.09; background-color: var(--sk-a); }
 .sk-sky { position: absolute; left: 0; right: 0; top: 0; height: min(1100px, 100%); overflow: hidden; }
-.sk-p { position: absolute; display: block; width: calc(10px * var(--s)); height: calc(10px * var(--s)); will-change: transform, opacity; animation: sk-fall linear infinite; }
+.sk-p { position: absolute; display: block; width: calc(10px * var(--s)); height: calc(10px * var(--s)); will-change: transform, opacity; animation: sk-fall cubic-bezier(.45,.05,.55,.95) infinite; }
+/* Particles drawn from the gift's icon set: the glyph is the shape. */
+.gift-scrap .sk-p.sk-ico { width: auto !important; height: auto !important; background: none !important; box-shadow: none !important; border-radius: 0 !important; clip-path: none !important; -webkit-mask: none !important; mask: none !important; opacity: .85; }
+.gift-scrap .sk-p.sk-ico::before, .gift-scrap .sk-p.sk-ico::after { content: none !important; }
 
 @keyframes sk-fall {
   0% { transform: translate3d(0, -140px, 0) rotate(0deg); opacity: 0; }

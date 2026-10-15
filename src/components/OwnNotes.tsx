@@ -380,7 +380,7 @@ export function OwnNotes({
             <span className="text-xs text-muted">Your letter</span>
             <textarea
               rows={6}
-              className={`${field} font-[Caveat,cursive] text-lg leading-snug`}
+              className={`${field} font-[family-name:var(--jb-display,Fraunces)] text-lg leading-snug`}
               value={text}
               onChange={(e) => setText(e.target.value)}
               placeholder={prompt}

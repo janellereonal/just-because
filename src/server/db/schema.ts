@@ -128,7 +128,7 @@ export const giftSites = pgTable(
     customColors: jsonb("custom_colors").notNull().default(sql`'{}'::jsonb`),
     paletteId: uuid("palette_id").references(() => palettes.id),
     shareNotes: boolean("share_notes").notNull().default(false),
-    fontChoice: text("font_choice").notNull().default("romantic"),
+    fontChoice: text("font_choice").notNull().default("theme"),
     countdownDate: date("countdown_date"),
     calendarLocked: boolean("calendar_locked").notNull().default(false),
     introText: text("intro_text"),

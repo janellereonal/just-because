@@ -359,7 +359,7 @@ button.bento-tile:hover .bento-wave i:nth-child(odd) { transform: scaleY(1.25); 
   background-position: 0 0, 3px 5px;
 }
 .zine-mono { font-family: "JetBrains Mono", ui-monospace, monospace; font-size: 11px; letter-spacing: .12em; text-transform: uppercase; }
-.zine-marker { font-family: "Permanent Marker", "Caveat", cursive; line-height: 1.1; }
+.zine-marker { font-family: var(--jb-display, "Fraunces", serif); line-height: 1.1; }
 .zine-masthead { border-top: 6px solid var(--z-ink); border-bottom: 2px solid var(--z-ink); padding: 14px 0 26px; }
 .zine-ransom { display: inline-flex; flex-wrap: wrap; gap: .06em .04em; }
 .zine-letter { display: inline-block; padding: 0 .08em; font-weight: 800; line-height: 1; transition: transform .25s var(--ease-bounce); }
@@ -434,7 +434,7 @@ button.bento-tile:hover .bento-wave i:nth-child(odd) { transform: scaleY(1.25); 
 }
 
 /* ---------- Scrapbook (the classic format, every theme) ---------- */
-.gift-scrap .sb-hand { font-family: "Caveat", cursive; font-weight: 700; letter-spacing: 0; }
+.gift-scrap .sb-hand { font-family: var(--jb-display, "Fraunces", serif); font-weight: 700; letter-spacing: 0; }
 .gift-scrap .sb-hero { letter-spacing: -0.015em; }
 .gift-scrap .sb-title { display: flex; flex-direction: column; gap: 10px; }
 .gift-scrap .sb-title::after {

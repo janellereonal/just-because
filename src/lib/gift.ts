@@ -95,6 +95,12 @@ export const MODULES: {
 export const GUEST_MODULES = MODULES.filter((m) => m.source === "guests");
 
 export const FONT_PAIRINGS = {
+  /** The theme's own pair (set as CSS variables on the gift). New gifts start here. */
+  theme: {
+    label: "Theme's own",
+    heading: "var(--jb-display, 'Fraunces', serif)",
+    body: "var(--jb-text, 'DM Sans', sans-serif)",
+  },
   romantic: {
     label: "Romantic",
     heading: "'Playfair Display', serif",
@@ -102,7 +108,8 @@ export const FONT_PAIRINGS = {
   },
   playful: { label: "Playful", heading: "'Fredoka', sans-serif", body: "'Nunito', sans-serif" },
   modern: { label: "Modern", heading: "'Poppins', sans-serif", body: "'Inter', sans-serif" },
-  handwritten: { label: "Handwritten", heading: "'Caveat', cursive", body: "'Karla', sans-serif" },
+  // Key kept for saved gifts; the old script face is gone.
+  handwritten: { label: "Storybook", heading: "'Fraunces', serif", body: "'Karla', sans-serif" },
 } as const;
 
 export type FontChoice = keyof typeof FONT_PAIRINGS;
@@ -301,7 +308,7 @@ export function normalizeSite(row: Record<string, unknown>): GiftSite {
     custom_colors: (row["custom_colors"] as Partial<Palette>) ?? {},
     palette_id: (row["palette_id"] as string | null) ?? null,
     share_notes: Boolean(row["share_notes"]),
-    font_choice: (row["font_choice"] as FontChoice) ?? "romantic",
+    font_choice: (row["font_choice"] as FontChoice) ?? "theme",
     countdown_date: (row["countdown_date"] as string | null) ?? null,
     calendar_locked: Boolean(row["calendar_locked"]),
     intro_text: (row["intro_text"] as string | null) ?? null,

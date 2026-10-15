@@ -586,7 +586,7 @@ function ClassicIntro({
               <h1
                 className="text-[clamp(1.9rem,11cqi,3.5rem)] leading-tight font-bold [overflow-wrap:anywhere]"
                 style={{
-                  fontFamily: '"Caveat", cursive',
+                  fontFamily: "var(--jb-display, 'Fraunces', serif)",
                   color: ink,
                   animation: still ? undefined : "jb-write 1.1s ease-out both",
                 }}

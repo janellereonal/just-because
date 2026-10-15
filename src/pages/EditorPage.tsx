@@ -13,10 +13,12 @@ import {
   setContributionStatus,
   setModuleEnabled,
   updateIntroSettings,
+  updateCast,
   updateSite,
   upsertCalendarEntry,
 } from "@/lib/api";
 import { IntroDesigner } from "@/components/IntroDesigner";
+import { CastPanel, type Cast } from "@/components/CastPanel";
 import { OwnNotes } from "@/components/OwnNotes";
 import { useAuth } from "@/hooks/useAuth";
 import { DevicePreview, DeviceToggle, type PreviewDevice } from "@/components/DevicePreview";
@@ -93,6 +95,7 @@ import {
   Pencil,
   PenLine,
   Send,
+  Smile,
   Type,
   UserPlus,
   X,
@@ -117,6 +120,7 @@ type SectionKey =
   | "background"
   | "sections"
   | "surprises"
+  | "cast"
   | "intro"
   | "comic"
   | "review";
@@ -155,6 +159,7 @@ const SECTION_TITLES: Record<SectionKey, string> = {
   background: "Background",
   sections: "Sections",
   surprises: "Surprises",
+  cast: "Cast",
   intro: "Intro",
   comic: "Format",
   review: "Review",
@@ -168,6 +173,7 @@ const SECTION_ICONS: Record<SectionKey, LucideIcon> = {
   background: LayoutTemplate,
   sections: LayoutGrid,
   surprises: CalendarDays,
+  cast: Smile,
   intro: Mail,
   comic: PanelsTopLeft,
   review: Inbox,
@@ -209,6 +215,8 @@ function SiteDashboard() {
   /** Bumped to replay the opening in the canvas while the Intro panel is open. */
   const [introCanvasKey, setIntroCanvasKey] = useState(0);
   const introSaveTimer = useRef<number | null>(null);
+  const castSaveTimer = useRef<number | null>(null);
+  const castLatest = useRef<Cast | null>(null);
   const introLatest = useRef<IntroSettings | null>(null);
   const [sheetOpen, setSheetOpen] = useState(false);
   const [renaming, setRenaming] = useState(false);
@@ -477,6 +485,25 @@ function SiteDashboard() {
     }, 600);
   }
 
+  /** Cast changes: shown at once in the preview, saved shortly after. */
+  function patchCast(next: Cast) {
+    castLatest.current = next;
+    setDraft((prev) => (prev ? { ...prev, character: next.character, icon_set: next.icon_set } : prev));
+    if (castSaveTimer.current) window.clearTimeout(castSaveTimer.current);
+    castSaveTimer.current = window.setTimeout(() => {
+      const c = castLatest.current;
+      if (!c) return;
+      setSaving(true);
+      updateCast({ data: { id, character: (c.character as Record<string, never> | null) ?? null, iconSet: (c.icon_set as Record<string, never> | null) ?? null } })
+        .then(() => {
+          setSavedAt(Date.now());
+          void queryClient.invalidateQueries({ queryKey: ["site", id] });
+        })
+        .catch(() => toast.error("Couldn't save the cast. Try again in a moment."))
+        .finally(() => setSaving(false));
+    }, 600);
+  }
+
   function moveIntroSticker(moved: IntroSticker) {
     patchIntro((current) => ({
       ...current,
@@ -676,6 +703,7 @@ function SiteDashboard() {
     "background",
     "sections",
     ...(enabledTypes.has("calendar") ? (["surprises"] as SectionKey[]) : []),
+    "cast",
     "intro",
     "comic",
     ...(solo ? [] : (["notes", "review"] as SectionKey[])),
@@ -853,6 +881,15 @@ function SiteDashboard() {
         locked={draft.calendar_locked}
         onToggleLock={(v) => patch({ calendar_locked: v })}
         onChanged={() => queryClient.invalidateQueries({ queryKey: ["calendar", id] })}
+      />
+    ),
+    cast: (
+      <CastPanel
+        siteId={id}
+        kind={themeKindOf(theme)}
+        recipient={draft.custom_text.recipient_name ?? ""}
+        value={{ character: draft.character ?? null, icon_set: draft.icon_set ?? null }}
+        onChange={patchCast}
       />
     ),
     intro: (
@@ -1053,7 +1090,7 @@ function SiteDashboard() {
     <FormatView key={draft.format === "comic" ? (previewOpened ? "comic-reader" : "comic-cover") : draft.format} site={draft} theme={theme} palette={paletteNow} modules={modules} contributions={approved} calendarEntries={calendarEntries} showCover={!previewOpened} sample showShare />
   );
 
-  const showIntroInCanvas = section === "intro" && formatInfo(draft.format).usesIntro;
+  const showIntroInCanvas = (section === "intro" || section === "cast") && formatInfo(draft.format).usesIntro;
   const canvasIntro = (
     <GiftIntro
       key={`canvas-intro-${introCanvasKey}`}

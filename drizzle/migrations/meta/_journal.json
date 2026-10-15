@@ -57,6 +57,13 @@
       "when": 1792066271483,
       "tag": "0007_cast",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1792070042341,
+      "tag": "0008_theme_fonts",
+      "breakpoints": true
     }
   ]
 }

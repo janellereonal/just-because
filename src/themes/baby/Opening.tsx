@@ -59,7 +59,8 @@ export function BabyOpening(p: OpeningProps) {
   // Idle: the mobile turns very slowly on its own.
   useEffect(() => {
     if (p.paused || p.reduced) return;
-    const a = animate(theta, theta.get() + Math.PI * 2, { duration: 26, repeat: Infinity, ease: "linear" });
+    // A slow sway back and forth, like a mobile turning in a draught.
+    const a = animate(theta, theta.get() + Math.PI * 0.9, { duration: 9, repeat: Infinity, repeatType: "mirror", ease: [0.45, 0, 0.55, 1] });
     return () => a.stop();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [p.paused, p.reduced]);

@@ -1,4 +1,4 @@
-import { lazy, Suspense } from "react";
+import { lazy, Suspense, useEffect } from "react";
 import { GiftSiteView } from "@/components/GiftSiteView";
 import { ComicIssueView } from "@/components/ComicIssueView";
 import {
@@ -11,6 +11,7 @@ import {
 } from "@/lib/gift";
 import type { Palette, Theme } from "@/lib/themes";
 import { themeKindOf } from "@/lib/themeKind";
+import { loadThemeFonts, themeFontVars } from "@/themes/_shared/design";
 
 const BentoView = lazy(() =>
   import("@/components/formats/BentoView").then((m) => ({ default: m.BentoView })),
@@ -66,8 +67,21 @@ type Props = Omit<FormatViewProps, "palette"> & {
   onEditField?: ((field: keyof CustomText) => void) | undefined;
 };
 
-/** One gift, shown in whichever format the creator picked. */
+/**
+ * One gift, shown in whichever format the creator picked. The theme's own
+ * fonts are set here as CSS variables, so "Theme's own" works in every format.
+ */
 export function FormatView(props: Props) {
+  const kind = themeKindOf(props.theme);
+  useEffect(() => loadThemeFonts(kind), [kind]);
+  return (
+    <div className="contents" style={themeFontVars(kind)}>
+      <FormatBody {...props} />
+    </div>
+  );
+}
+
+function FormatBody(props: Props) {
   const { site, theme } = props;
   const palette = props.palette ?? resolvePalette(theme, site.custom_colors);
   const common = defined({
