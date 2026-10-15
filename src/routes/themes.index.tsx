@@ -1,9 +1,12 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { AnimatePresence, LayoutGroup, motion } from "motion/react";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { SiteHeader } from "@/components/SiteHeader";
-import { ThemeCard } from "@/components/ThemeCard";
+import { OpeningCard, OpeningPreviewModal } from "@/components/OpeningCard";
+import { normalizeCharacter, type CharacterSetting } from "@/themes/_shared/cast/types";
+import { SPRING } from "@/themes/_shared/stage";
 import { TalkingBo } from "@/components/TalkingBo";
 import { fetchThemes, type Theme } from "@/lib/themes";
 import { useAuth } from "@/hooks/useAuth";
@@ -37,6 +40,17 @@ function ThemesPage() {
   const navigate = useNavigate();
   const { user } = useAuth();
   const [group, setGroup] = useState("all");
+  const [full, setFull] = useState<Theme | null>(null);
+  // If you're halfway through casting a gift, the previews star your character.
+  const [character, setCharacter] = useState<CharacterSetting | null>(null);
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem("jb-cast-draft");
+      if (raw) setCharacter(normalizeCharacter(JSON.parse(raw)));
+    } catch {
+      /* no saved cast */
+    }
+  }, []);
   const { data: themes = [], isLoading } = useQuery({
     queryKey: ["themes", "published"],
     queryFn: () => fetchThemes(false),
@@ -76,7 +90,7 @@ function ThemesPage() {
               Find the one that feels like them
             </h1>
             <p className="mt-3 max-w-[46ch] text-lg text-ink/75">
-              Hover a theme (or scroll to it on your phone) to watch it play. Tap it to try the colors and see the opening.
+              Every theme opens like something real: a letter, a record, a cake. Hover one to watch it, tap it to open it yourself.
             </p>
           </div>
           <TalkingBo
@@ -93,26 +107,31 @@ function ThemesPage() {
       </section>
 
       <section className="mx-auto max-w-6xl px-3 pt-8 pb-16 sm:px-5">
-        <div className="flex flex-wrap gap-2" role="group" aria-label="Filter by occasion">
-          {groups.map((g) => {
-            const active = g.id === group;
-            const count = themes.filter((t) => g.match(keyOf(t))).length;
-            return (
-              <button
-                key={g.id}
-                type="button"
-                onClick={() => setGroup(g.id)}
-                aria-pressed={active}
-                className={`squish min-h-11 rounded-full px-4 text-sm font-medium ring-1 transition-colors ${
-                  active ? "bg-ink text-cream ring-ink" : "bg-glass text-ink ring-ink/10 hover:bg-pink/50"
-                }`}
-              >
-                {g.label}
-                <span className={`ml-1.5 text-xs ${active ? "text-cream/70" : "text-muted"}`}>{count}</span>
-              </button>
-            );
-          })}
-        </div>
+        <LayoutGroup>
+          <div className="flex flex-wrap gap-2" role="group" aria-label="Filter by occasion">
+            {groups.map((g) => {
+              const active = g.id === group;
+              const count = themes.filter((t) => g.match(keyOf(t))).length;
+              return (
+                <button
+                  key={g.id}
+                  type="button"
+                  onClick={() => setGroup(g.id)}
+                  aria-pressed={active}
+                  className={`squish relative min-h-11 rounded-full px-4 text-sm font-medium ring-1 transition-colors ${
+                    active ? "text-cream ring-ink" : "bg-glass text-ink ring-ink/10 hover:bg-pink/50"
+                  }`}
+                >
+                  {active ? <motion.span layoutId="theme-filter" className="absolute inset-0 rounded-full bg-ink" transition={SPRING.snappy} /> : null}
+                  <span className="relative">
+                    {g.label}
+                    <span className={`ml-1.5 text-xs ${active ? "text-cream/70" : "text-muted"}`}>{count}</span>
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+        </LayoutGroup>
 
         {isLoading ? (
           <div className="mt-8 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
@@ -123,38 +142,30 @@ function ThemesPage() {
         ) : shown.length === 0 ? (
           <p className="mt-10 text-muted">No themes here yet. Try another occasion.</p>
         ) : (
-          <div className="mt-8 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-            {shown.map((theme) => (
-              <ThemeCard
-                key={theme.id}
-                theme={theme}
-                onSelect={() => openTheme(theme.id)}
-                footer={
-                  <>
-                    {theme.description ? <p className="mt-1.5 text-sm text-muted">{theme.description}</p> : null}
-                    <div className="mt-auto flex gap-2 pt-4">
-                      <button
-                        type="button"
-                        onClick={() => openTheme(theme.id)}
-                        className="squish min-h-11 flex-1 rounded-full bg-glass px-4 text-sm font-medium ring-1 ring-ink/12 hover:bg-pink/40"
-                      >
-                        Preview
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => useTheme(theme.id, theme.name)}
-                        className="squish min-h-11 flex-1 rounded-full bg-accent px-4 text-sm font-medium text-cream hover:bg-accent/90"
-                      >
-                        Use this theme
-                      </button>
-                    </div>
-                  </>
-                }
-              />
-            ))}
-          </div>
+          <motion.div layout className="mt-8 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+            <AnimatePresence mode="popLayout">
+              {shown.map((theme, i) => (
+                <OpeningCard
+                  key={theme.id}
+                  theme={theme}
+                  index={i}
+                  character={character}
+                  onOpen={() => setFull(theme)}
+                  onUse={() => useTheme(theme.id, theme.name)}
+                />
+              ))}
+            </AnimatePresence>
+          </motion.div>
         )}
       </section>
+
+      <OpeningPreviewModal
+        theme={full}
+        character={character}
+        onClose={() => setFull(null)}
+        onUse={(t) => useTheme(t.id, t.name)}
+        onSample={(t) => openTheme(t.id)}
+      />
     </div>
   );
 }

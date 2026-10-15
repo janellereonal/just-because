@@ -38,7 +38,7 @@ export function releasePreview(id: string) {
   currentId = null;
   notify();
 }
-function useIsPlaying(id: string) {
+export function useIsPlaying(id: string) {
   const [, bump] = useState(0);
   useEffect(() => {
     const l = () => bump((n) => n + 1);
