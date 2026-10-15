@@ -1,5 +1,5 @@
 import { createContext, useContext, useEffect, useRef, useState } from "react";
-import { AnimatePresence, motion } from "motion/react";
+import { AnimatePresence, animate, motion, useMotionValue, useTransform } from "motion/react";
 import { Volume2, VolumeX } from "lucide-react";
 import type { Palette } from "@/lib/themes";
 import type { ThemeKind } from "@/lib/themeKind";
@@ -97,18 +97,40 @@ export function OpeningShell({
   function open() {
     if (opening) return;
     setOpening(true);
-    window.setTimeout(onDone, reduced ? 300 : 900);
+    window.setTimeout(onDone, reduced ? 300 : 1050);
   }
+
+  // The reveal: a hole opens from the object outwards and the gift is
+  // already waiting underneath, so it feels like stepping through the box.
+  const portal = opening && !reduced;
+  const hole = useMotionValue(0);
+  const mask = useTransform(hole, (h) => (h <= 0 ? "none" : `radial-gradient(circle at 50% 50%, transparent ${h}%, #000 ${h + 14}%)`));
+  useEffect(() => {
+    if (!portal) return;
+    const a = animate(hole, 120, { duration: 0.95, ease: [0.65, 0, 0.35, 1], delay: 0.08 });
+    return () => a.stop();
+  }, [portal, hole]);
 
   return (
     <OpeningContext.Provider value={{ design }}>
       <motion.div
         ref={hostRef}
         className={`jb-opening ${contained ? "absolute" : "fixed"} inset-0 z-[60] overflow-hidden select-none [container:gift/inline-size] [-webkit-touch-callout:none]`}
-        style={{ ...(background as object), ...(themeFontVars(kind) as object), color: ink, fontFamily: "var(--jb-text)" }}
+        style={{
+          ...(background as object),
+          ...(themeFontVars(kind) as object),
+          color: ink,
+          fontFamily: "var(--jb-text)",
+          maskImage: mask,
+          WebkitMaskImage: mask,
+        } as never}
         initial={false}
-        animate={{ opacity: opening ? 0 : 1, scale: opening && !reduced ? 1.04 : 1 }}
-        transition={{ ...SPRING.soft, opacity: { duration: 0.6, delay: opening ? 0.25 : 0 } }}
+        animate={portal ? { scale: 1.14, opacity: [1, 1, 0] } : { opacity: opening ? 0 : 1, scale: 1 }}
+        transition={
+          portal
+            ? { scale: { duration: 1, ease: [0.4, 0, 0.2, 1] }, opacity: { duration: 1, times: [0, 0.75, 1] } }
+            : { ...SPRING.soft, opacity: { duration: 0.3 } }
+        }
         data-paused={paused ? "" : undefined}
       >
         {sprinkles ? <SprinkleField set={sprinkles} count={14} opacity={sprinkleOpacity} seed={kind.length} /> : null}

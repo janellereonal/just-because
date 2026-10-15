@@ -29,7 +29,9 @@ export type CharacterSetting =
       accessory?: boolean;
       name_tag?: string;
     }
-  | { type: "upload"; upload_url: string; accessory?: boolean; name_tag?: string };
+  | { type: "upload"; upload_url: string; accessory?: boolean; name_tag?: string }
+  /** No character: the object tells the story on its own. */
+  | { type: "none"; accessory?: boolean; name_tag?: string };
 
 /** What a theme can ask a character to do. Mirrors the Rive "Main" state machine inputs. */
 export type CharacterHandle = {
@@ -52,6 +54,7 @@ export function normalizeCharacter(value: unknown): CharacterSetting | null {
   const name =
     typeof v["name_tag"] === "string" && v["name_tag"].trim() ? v["name_tag"].trim().slice(0, 24) : undefined;
   const accessory = v["accessory"] === false ? false : true;
+  if (v["type"] === "none") return { type: "none" };
   if (v["type"] === "upload" && isSafeMediaUrl(v["upload_url"])) {
     return { type: "upload", upload_url: v["upload_url"], accessory, ...(name ? { name_tag: name } : {}) };
   }

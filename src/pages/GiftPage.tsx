@@ -134,6 +134,17 @@ function PublishedPage() {
       ) : null}
       {!opened && formatInfo(site.format).usesIntro ? (
         <Suspense fallback={<PageLoading label="Opening your gift…" />}>
+        {/* The gift waits underneath, so the opening can reveal it through the object. */}
+        <div aria-hidden="true" inert className="pointer-events-none fixed inset-0 overflow-hidden">
+          <FormatView
+            site={site}
+            theme={theme}
+            palette={palette}
+            modules={modules}
+            contributions={[...contributions.filter((item) => item.module_type !== "tree"), ...treeOrnaments]}
+            calendarEntries={calendarEntries}
+          />
+        </div>
         <GiftIntro
           style={introStyleForTheme(theme?.name)}
           kind={themeKindOf(theme)}

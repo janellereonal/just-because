@@ -1,6 +1,20 @@
 # Next session: picking up the Just Because redesign
 
-Updated 15 Oct 2026 (session 5), so a new session can carry on without missing anything.
+Updated 16 Oct 2026 (session 6), so a new session can carry on without missing anything.
+
+## Session 6 (16 Oct 2026): PR #7 `polish-examples`
+
+Branch off main after #3 to #6 merged. Redrawn characters plus a "No one" option (most themes default to
+none), path icons for pets/florals/snow, full example gifts with generated media in `public/demo/`,
+`ScrollStory` (per-theme motif that moves with scroll, `src/components/ScrollStory.tsx`), a portal reveal
+from opening to gift (`_shared/opening.tsx`; `GiftPage` keeps the gift mounted under the intro),
+`GiftPeek` behind gallery openings, a guided section tour in the hero phone (`FormatDemo`), and live
+bento tiles for the eight newer sections (`landing/MoreTiles.tsx`). Section grids now use container
+queries (`@xl:`) so phone-frame previews lay out like phones. Dev-only `/dev/cast` shows every character
+and icon set.
+
+Still open: theme preview images, per-theme lighting pass on the openings, Rive characters.
+
 
 ## Session 5 is done (15 Oct 2026): theme system, gallery, landing, new sections
 

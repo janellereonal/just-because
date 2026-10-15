@@ -14,6 +14,7 @@ import type { CharacterSetting } from "@/themes/_shared/cast/types";
 import { designFor, loadThemeFonts, themeFontVars } from "@/themes/_shared/design";
 import { SPRING } from "@/themes/_shared/stage";
 import { claimPreview, releasePreview, useIsPlaying } from "@/components/ThemeLivePreview";
+import { GiftPeek } from "@/components/GiftPeek";
 
 const FALLBACK: Palette = { background: "#FBF8F2", primary: "#2B2522", accent: "#B5623E" } as Palette;
 const STAGE_W = 390;
@@ -37,6 +38,7 @@ export function OpeningCard({
   const design = designFor(kind);
   const playing = useIsPlaying(theme.id);
   const [loop, setLoop] = useState(0);
+  const [peek, setPeek] = useState(false);
   const ref = useRef<HTMLDivElement | null>(null);
   const frame = useRef<HTMLDivElement | null>(null);
   const [scale, setScale] = useState(0.8);
@@ -106,6 +108,8 @@ export function OpeningCard({
           className="pointer-events-none absolute top-0 left-0 origin-top-left [container:gift/inline-size]"
           style={{ width: STAGE_W, height: STAGE_H, transform: `scale(${scale})` }}
         >
+          <GiftPeek kind={kind} palette={theme.palettes[0] ?? FALLBACK} live={peek} />
+          {/* Remounting restarts the opening; the peek stays a beat so the loop feels deliberate. */}
           <TactileOpening
             key={`${loop}-${playing ? "on" : "off"}`}
             kind={kind}
@@ -117,7 +121,13 @@ export function OpeningCard({
             interactive={false}
             paused={!playing}
             autoplay={playing}
-            onOpen={() => window.setTimeout(() => setLoop((n) => n + 1), 500)}
+            onOpen={() => {
+              setPeek(true);
+              window.setTimeout(() => {
+                setPeek(false);
+                setLoop((n) => n + 1);
+              }, 2600);
+            }}
           />
         </div>
         <span className="absolute bottom-3 left-3 z-10 rounded-full bg-white/80 px-2.5 py-1 font-mono text-[10px] tracking-[0.14em] text-ink uppercase backdrop-blur-sm transition-opacity group-hover:opacity-0">
@@ -189,6 +199,7 @@ export function OpeningPreviewModal({
           transition={SPRING.soft}
         >
           <div className="absolute inset-0 [container:gift/inline-size]">
+            <GiftPeek kind={themeKindOf(theme)} palette={theme.palettes[0] ?? FALLBACK} live={opened} />
             <TactileOpening
               key={round}
               kind={themeKindOf(theme)}

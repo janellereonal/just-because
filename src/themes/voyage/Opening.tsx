@@ -312,7 +312,7 @@ export function VoyageOpening(p: OpeningProps) {
 
         {/* The character, ready to go */}
         <div className="absolute -top-[72px] right-[2%] z-[7] flex items-end">
-          <Suitcase color={c.orange!} band={c.kraft!} />
+          {p.character.type !== "none" ? <Suitcase color={c.orange!} band={c.kraft!} /> : null}
           <Character
             ref={cast}
             setting={p.character}

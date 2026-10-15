@@ -235,7 +235,7 @@ function OpenWhen(p: Common) {
   const [open, setOpen] = useState<string | null>(null);
   const reduce = useReducedMotion();
   return (
-    <div className="mt-6 grid gap-5 sm:grid-cols-2">
+    <div className="mt-6 grid gap-5 @xl:grid-cols-2">
       {p.items.map((item) => {
         const when = String((item.data as { when?: string } | null)?.when ?? "");
         const isOpen = open === item.id;
@@ -338,7 +338,7 @@ function Capsule(p: Common) {
   const m = sectionMaterial(p.kind);
   const now = useNow(1000);
   return (
-    <div className="mt-6 grid gap-4 sm:grid-cols-2">
+    <div className="mt-6 grid gap-4 @xl:grid-cols-2">
       {p.items.map((item) => {
         const at = String((item.data as { unlock_at?: string } | null)?.unlock_at ?? "");
         const locked =
@@ -446,7 +446,7 @@ function Superlatives(p: Common) {
   const m = sectionMaterial(p.kind);
   const awards = useMemo(() => tallySuperlatives(p.items), [p.items]);
   return (
-    <ol className="mt-6 grid gap-4 sm:grid-cols-2">
+    <ol className="mt-6 grid gap-4 @xl:grid-cols-2">
       {awards.map((a, i) => (
         <motion.li
           key={a.award}
@@ -648,7 +648,12 @@ function MemoryMap(p: Common) {
   const current = p.items.find((x) => x.id === active) ?? null;
   const pins = p.items.map((it) => {
     const place = String((it.data as { place?: string } | null)?.place ?? "");
-    return { it, place, x: 10 + hash01(place, 1) * 80, y: 14 + hash01(place, 2) * 68 };
+    // Spread along the map left to right, with a little wander up and down.
+    const n = p.items.length;
+    const k = p.items.indexOf(it);
+    const x = n > 1 ? 16 + (k * 68) / (n - 1) + (hash01(place, 1) - 0.5) * 6 : 50;
+    const y = 34 + hash01(place, 2) * 44;
+    return { it, place, x, y };
   });
   return (
     <div className="mt-6">
@@ -656,30 +661,39 @@ function MemoryMap(p: Common) {
         className="relative aspect-[4/3] overflow-hidden rounded-[22px]"
         style={{ background: m.paper, boxShadow: "0 18px 32px -24px rgba(0,0,0,.5)" }}
       >
-        <svg
-          viewBox="0 0 400 300"
-          className="absolute inset-0 size-full"
-          aria-hidden="true"
-          preserveAspectRatio="none"
-        >
-          {Array.from({ length: 7 }, (_, k) => (
-            <path
-              key={k}
-              d={`M0 ${40 + k * 40} C 100 ${20 + k * 42}, 200 ${70 + k * 36}, 400 ${30 + k * 41}`}
-              fill="none"
-              stroke={m.ink}
-              strokeOpacity=".07"
-              strokeWidth="1.2"
-            />
+        <svg viewBox="0 0 400 300" className="absolute inset-0 size-full" aria-hidden="true" preserveAspectRatio="none">
+          <rect width="400" height="300" fill={m.dark ? "#ffffff08" : `${m.accent2}22`} />
+          {Array.from({ length: 9 }, (_, k) => (
+            <path key={k} d={`M0 ${20 + k * 34} q 50 -6 100 0 t 100 0 t 100 0 t 100 0`} fill="none" stroke={m.ink} strokeOpacity=".05" strokeWidth="1" />
           ))}
-          <path
-            d="M60 220 C 90 160, 150 190, 170 140 S 260 90, 330 120"
-            fill="none"
-            stroke={m.accent}
-            strokeOpacity=".35"
-            strokeWidth="2"
-            strokeDasharray="5 6"
-          />
+          {/* Land: soft, hand-cut shapes */}
+          <path d="M-10 70C30 40 90 46 120 70s40 70 10 96-80 20-110 50-30 40-30 40V70z" fill={m.paper} stroke={m.ink} strokeOpacity=".12" />
+          <path d="M150 30c40-20 110-14 140 10s20 60 60 70 70 40 50 80-80 30-110 60-90 50-120 20-10-60-40-90-30-120 20-150z" fill={m.paper} stroke={m.ink} strokeOpacity=".12" />
+          <path d="M40 230c20-14 60-10 70 10s-10 40-40 44-50-30-30-54z" fill={m.paper} stroke={m.ink} strokeOpacity=".12" />
+          {Array.from({ length: 26 }, (_, k) => (
+            <circle key={k} cx={20 + hash01("t" + k, 3) * 360} cy={20 + hash01("t" + k, 4) * 260} r="1.6" fill={m.ink} opacity=".1" />
+          ))}
+          {/* The route through every pin, drawn as you arrive */}
+          {pins.length > 1 ? (
+            <motion.path
+              d={pins.map(({ x, y }, k) => `${k ? "L" : "M"}${x * 4} ${y * 3}`).join(" ")}
+              fill="none"
+              stroke={m.accent}
+              strokeWidth="2.2"
+              strokeDasharray="1 7"
+              strokeLinecap="round"
+              initial={{ pathLength: 0 }}
+              whileInView={{ pathLength: 1 }}
+              viewport={{ once: true }}
+              transition={{ duration: 1.6, ease: [0.4, 0, 0.2, 1] }}
+            />
+          ) : null}
+          {/* Compass */}
+          <g transform="translate(360 262)" opacity=".55">
+            <circle r="16" fill="none" stroke={m.ink} strokeOpacity=".4" />
+            <path d="M0-14l4 14-4 14-4-14z" fill={m.accent} />
+            <text y="-19" textAnchor="middle" fontSize="8" fill={m.ink} fontFamily="var(--jb-text, sans-serif)">N</text>
+          </g>
         </svg>
         {pins.map(({ it, place, x, y }, k) => (
           <motion.button
@@ -691,22 +705,21 @@ function MemoryMap(p: Common) {
               burstAt(e, p, m, 6);
               buzz(8);
             }}
-            className="absolute -translate-x-1/2 -translate-y-full"
-            style={{ left: `${x}%`, top: `${y}%` }}
+            className="absolute flex -translate-x-1/2 -translate-y-full flex-col items-center"
+            style={{ left: `${x}%`, top: `${y}%`, zIndex: active === it.id ? 3 : 2 }}
             initial={{ y: -40, opacity: 0 }}
             whileInView={{ y: 0, opacity: 1 }}
             viewport={{ once: true }}
-            transition={{ ...SPRING.wobbly, delay: k * 0.08 }}
-            whileHover={{ scale: 1.15 }}
+            transition={{ ...SPRING.wobbly, delay: 0.3 + k * 0.18 }}
+            whileHover={{ scale: 1.1 }}
           >
-            <MapPin
-              className="size-8 drop-shadow"
-              style={{
-                color: active === it.id ? m.accent : m.ink,
-                fill: active === it.id ? m.accent2 : m.paper,
-              }}
-              aria-hidden="true"
-            />
+            <span
+              className="mb-0.5 max-w-[120px] truncate rounded-full px-2 py-0.5 text-[10px] font-semibold shadow-sm"
+              style={{ background: active === it.id ? m.accent : m.paper, color: active === it.id ? (m.dark ? m.paper : "#fff") : m.ink }}
+            >
+              {place}
+            </span>
+            <MapPin className="size-7 drop-shadow" style={{ color: active === it.id ? m.accent : m.ink, fill: active === it.id ? m.accent2 : m.paper }} aria-hidden="true" />
           </motion.button>
         ))}
       </div>
@@ -764,7 +777,7 @@ function Coupons(p: Common & { storeKey: string }) {
     }
   }
   return (
-    <div className="mt-6 grid gap-4 sm:grid-cols-2">
+    <div className="mt-6 grid gap-4 @xl:grid-cols-2">
       {p.items.map((it) => {
         const d = (it.data ?? {}) as { title?: string; fine_print?: string };
         const done = used.includes(it.id);
@@ -1006,14 +1019,14 @@ export function NewSections({
             {type === "map" ? <MemoryMap {...common} /> : null}
             {type === "coupons" ? <Coupons {...common} storeKey={`jb-coupons-${siteId}`} /> : null}
             {type === "video" ? (
-              <div className="mt-6 grid gap-4 sm:grid-cols-2">
+              <div className="mt-6 grid gap-4 @xl:grid-cols-2">
                 {items.map((it) => (
                   <VideoCard key={it.id} item={it} m={m} />
                 ))}
               </div>
             ) : null}
             {type === "doodle" ? (
-              <div className="mt-6 grid grid-cols-2 gap-4 sm:grid-cols-3">
+              <div className="mt-6 grid grid-cols-2 gap-4 @xl:grid-cols-3">
                 {items.map((it, k) => (
                   <DoodleCard key={it.id} item={it} m={m} k={k} />
                 ))}

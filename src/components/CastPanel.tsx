@@ -114,6 +114,18 @@ export function CastPanel({
         <motion.div key={tab} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -6 }} transition={SPRING.soft} className="mt-4">
           {tab === "characters" ? (
             <div>
+              <button
+                type="button"
+                onClick={() => setChar({ type: "none" })}
+                aria-pressed={char.type === "none"}
+                className={`mb-4 flex w-full items-center gap-3 rounded-2xl border px-3 py-2.5 text-left text-sm transition-colors ${char.type === "none" ? "border-accent bg-accent/8" : "border-line bg-cream hover:bg-glass/80"}`}
+              >
+                <span className="grid size-9 place-items-center rounded-full border border-dashed border-ink/25 text-ink/50">∅</span>
+                <span>
+                  <span className="block font-medium">No one</span>
+                  <span className="block text-xs text-muted">Let the {design.object.toLowerCase().replace(/^an? /, "")} do the talking</span>
+                </span>
+              </button>
               {(["Mascot", "Animals", "Little people", "Objects"] as const).map((cat) => {
                 const list = CHARACTERS.filter((c) => c.category === cat);
                 if (!list.length) return null;
