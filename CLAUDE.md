@@ -117,12 +117,21 @@ verification is only required once `RESEND_API_KEY` and `EMAIL_FROM` are both se
 
 ## Known gotchas
 
-- Countdowns use the gift's date in **Asia/Manila** time.
+- Countdowns are a UTC moment (`countdown_at`) shown in each viewer's own time zone; calendar days open
+  at the viewer's local midnight. Use `src/lib/time.ts`, never a hardcoded zone or locale.
 - Background layers on gift pages: `position:absolute` inside an `overflow:hidden` wrapper,
   or they leak over the editor.
 - Keep `@tanstack/react-start` at a patched version; Vercel blocks deploys of versions
   with known CVEs.
 - `bunfig.toml` refuses packages published less than 24h ago (supply-chain guard).
+
+## Themes, cast and sections
+
+- Each theme's opening lives in `src/themes/<theme>/Opening.tsx`, registered in `src/themes/TactileOpening.tsx`.
+  Springs only, sound off by default, a plain button for every gesture, particles from the gift's icon set.
+- Theme fonts: `src/themes/_shared/design.ts`. Never use Caveat, Pacifico, Dancing Script, Lobster or Great Vibes.
+- Newer sections keep their extra fields in `contributions.data`; shape and cleaning in `src/lib/sections.ts`.
+- New landing and section copy goes in `src/copy/strings.ts`.
 
 ## Open product work
 

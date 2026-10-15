@@ -12,12 +12,27 @@ import {
   Trash2,
   Type,
   Upload,
+  MailOpen,
+  Hourglass,
+  Ticket,
+  CircleHelp,
+  MapPin,
+  Video,
+  Brush,
+  Trophy,
 } from "lucide-react";
+import { SectionFields } from "@/components/sections/SectionFields";
+import {
+  SECTION_NEEDS,
+  isNewSection,
+  normalizeSectionData,
+  type NewSectionType,
+} from "@/lib/sections";
 import { deleteContributions, saveOwnerNote } from "@/lib/api";
 import { uploadFile } from "@/lib/upload";
 import { signedMediaUrl, type Contribution, type ModuleType } from "@/lib/gift";
 
-type NoteType = "letters" | "photobooth" | "songs" | "voice" | "wordcloud";
+type NoteType = "letters" | "photobooth" | "songs" | "voice" | "wordcloud" | NewSectionType;
 
 const TYPES: { type: NoteType; label: string; icon: typeof Mail }[] = [
   { type: "letters", label: "Letter", icon: Mail },
@@ -25,6 +40,14 @@ const TYPES: { type: NoteType; label: string; icon: typeof Mail }[] = [
   { type: "songs", label: "Song", icon: Music2 },
   { type: "voice", label: "Voice note", icon: Mic },
   { type: "wordcloud", label: "Words", icon: Type },
+  { type: "openwhen", label: "Open-when", icon: MailOpen },
+  { type: "capsule", label: "Time capsule", icon: Hourglass },
+  { type: "coupons", label: "Coupon", icon: Ticket },
+  { type: "map", label: "Memory pin", icon: MapPin },
+  { type: "quiz", label: "Quiz", icon: CircleHelp },
+  { type: "video", label: "Video", icon: Video },
+  { type: "doodle", label: "Doodle", icon: Brush },
+  { type: "superlatives", label: "Award", icon: Trophy },
 ];
 
 const PROMPTS: Record<NoteType, string[]> = {
@@ -38,6 +61,14 @@ const PROMPTS: Record<NoteType, string[]> = {
   songs: ["The song that's so us", "The one from our first road trip"],
   voice: ["Say the thing you'd say in person"],
   wordcloud: ["kind, funny, home"],
+  openwhen: ["you miss me"],
+  capsule: ["Something to read one year from now"],
+  coupons: ["One home-cooked dinner"],
+  map: ["Where we first met"],
+  quiz: ["Where did we first meet?"],
+  video: ["Say it on camera"],
+  doodle: ["Draw us"],
+  superlatives: ["Best at everything"],
 };
 
 const field =
@@ -162,6 +193,7 @@ export function OwnNotes({
   const [sign, setSign] = useState(defaultName);
   const [type, setType] = useState<NoteType>("letters");
   const [text, setText] = useState("");
+  const [data, setData] = useState<Record<string, unknown>>({});
   const [link, setLink] = useState("");
   const [file, setFile] = useState<File | null>(null);
   const [preview, setPreview] = useState<string | null>(null);
@@ -198,6 +230,7 @@ export function OwnNotes({
     setLink("");
     setFile(null);
     setEditing(null);
+    setData({});
   }
 
   function startEdit(c: Contribution) {
@@ -206,6 +239,7 @@ export function OwnNotes({
     setText(c.text_content ?? "");
     setLink(c.external_link ?? "");
     setFile(null);
+    setData((c.data as Record<string, unknown> | null) ?? {});
   }
 
   async function save() {
@@ -227,6 +261,25 @@ export function OwnNotes({
       toast.error(problem);
       return;
     }
+    let clean: Record<string, unknown> | null = null;
+    if (isNewSection(type)) {
+      const needs = SECTION_NEEDS[type];
+      const d = normalizeSectionData(type, data);
+      const issue = !d
+        ? "Fill in the first field, please."
+        : needs.text === "required" && !text.trim()
+          ? "Write a few words first."
+          : needs.media === "required" && !file && !editing?.media_url
+            ? type === "doodle"
+              ? "Draw a little something first."
+              : "Choose the file first."
+            : null;
+      if (issue) {
+        toast.error(issue);
+        return;
+      }
+      clean = d as Record<string, unknown>;
+    }
     setBusy(true);
     try {
       let media = editing?.media_url ?? null;
@@ -238,8 +291,14 @@ export function OwnNotes({
           moduleType: type,
           authorName: name,
           textContent: text.trim() || null,
-          mediaUrl: type === "photobooth" || type === "voice" ? media : null,
+          mediaUrl:
+            type === "photobooth" ||
+            type === "voice" ||
+            (isNewSection(type) && SECTION_NEEDS[type].media !== "none")
+              ? media
+              : null,
           externalLink: type === "songs" ? link.trim() || null : null,
+          ...(clean ? { data: clean as Record<string, never> } : {}),
         },
       });
       if (!result.ok) {
@@ -329,6 +388,7 @@ export function OwnNotes({
               onClick={() => {
                 setType(t);
                 setFile(null);
+                setData({});
               }}
               className={`squish inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium ring-1 disabled:opacity-40 ${type === t ? "bg-ink text-cream ring-ink" : "bg-cream ring-line hover:bg-pink/40"}`}
             >
@@ -373,6 +433,25 @@ export function OwnNotes({
               />
             </label>
           </div>
+        ) : null}
+
+        {isNewSection(type) ? (
+          <SectionFields
+            type={type}
+            data={data}
+            onData={setData}
+            text={text}
+            onText={setText}
+            file={file}
+            onFile={setFile}
+            fieldStyle={{
+              background: "#FBF8F2",
+              color: "#2B2522",
+              border: "1px solid rgba(43,37,34,.13)",
+            }}
+            accent="#B5623E"
+            onAccent="#FBF8F2"
+          />
         ) : null}
 
         {type === "letters" ? (

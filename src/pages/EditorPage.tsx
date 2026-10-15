@@ -761,7 +761,7 @@ function SiteDashboard() {
     words: (
       <div className="space-y-3">
         {fieldInput("heading", "Heading", { placeholder: titles.heading })}
-        {fieldInput("recipient_name", "Recipient name", { placeholder: "Maya" })}
+        {fieldInput("recipient_name", "Recipient name", { placeholder: "Ana" })}
         {fieldInput("intro_message", "Intro message", { long: true })}
         {fieldInput("footer_note", "Footer note", { long: true })}
       </div>
@@ -936,7 +936,7 @@ function SiteDashboard() {
               <textarea
                 rows={2}
                 value={draft.intro_text ?? ""}
-                placeholder={`For ${draft.custom_text.recipient_name || "Maya"}, from everyone who loves her`}
+                placeholder={`For ${draft.custom_text.recipient_name || "Ana"}, from everyone who loves her`}
                 onChange={(e) => patch({ intro_text: e.target.value })}
                 className="mt-1 w-full rounded-xl border border-line bg-cream px-3 py-2.5 text-sm outline-none focus:border-accent"
               />
@@ -1629,7 +1629,7 @@ function SiteDashboard() {
         <div className="fixed inset-0 z-[70] bg-paper text-ink">
           <div className="absolute inset-x-0 top-0 z-[80] border-b border-line bg-cream/95 px-3 py-2 shadow-sm backdrop-blur-xl">
             <div className="mx-auto flex max-w-5xl flex-wrap items-center justify-between gap-2">
-              <span className="min-w-0 truncate text-sm">Previewing as <strong>{draft.custom_text.recipient_name || "Maya"}</strong></span>
+              <span className="min-w-0 truncate text-sm">Previewing as <strong>{draft.custom_text.recipient_name || "Ana"}</strong></span>
               <div className="flex items-center gap-2">
                 <DeviceToggle value={device} onChange={setDevice} size="sm" />
                 <Button variant="outline" size="sm" onClick={() => setPreviewOpened(false)}>Replay intro</Button>

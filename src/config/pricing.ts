@@ -151,11 +151,13 @@ export function tierRank(id: string | null | undefined): number {
 
 export function formatPeso(centavos: number): string {
   const pesos = centavos / 100;
-  return `₱${pesos.toLocaleString("en-PH", { maximumFractionDigits: pesos % 1 === 0 ? 0 : 2 })}`;
+  // Charged in pesos; written the way the viewer's locale writes money.
+  return new Intl.NumberFormat(undefined, { style: "currency", currency: "PHP", currencyDisplay: "narrowSymbol", maximumFractionDigits: pesos % 1 === 0 ? 0 : 2 }).format(pesos);
 }
 
 export function formatUsdApprox(centavos: number): string {
-  return `≈ $${Math.round((centavos / 100) * usdDisplayRate)}`;
+  const usd = Math.round((centavos / 100) * usdDisplayRate);
+  return `≈ ${new Intl.NumberFormat(undefined, { style: "currency", currency: "USD", currencyDisplay: "narrowSymbol", maximumFractionDigits: 0 }).format(usd)}`;
 }
 
 /** "GCash, Maya, cards, or QR Ph" */

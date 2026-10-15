@@ -464,7 +464,7 @@ export function GiftSiteView({
 
   const sectionTitle = "sb-title text-[1.75rem] leading-tight font-semibold";
   const recipient = text.recipient_name?.trim();
-  const sampleName = recipient || "Maya";
+  const sampleName = recipient || "Ana";
   const voice = giftVoice(site.solo);
 
   /** Wraps the visitor's own contribution with a soft outline and a "Yours" tag. */

@@ -65,18 +65,18 @@ function usePrefersReducedMotion() {
 /** A fixed, friendly recipient per occasion so every card reads like a real gift. */
 export function sampleFor(theme: Theme) {
   const key = `${theme.category} ${theme.name}`.toLowerCase();
-  if (key.includes("birthday")) return { heading: "Happy birthday, Maya", name: "Maya" };
-  if (key.includes("christmas")) return { heading: "Merry Christmas, Lolo", name: "Lolo" };
+  if (key.includes("birthday")) return { heading: "Happy 30th, Ana", name: "Ana" };
+  if (key.includes("christmas")) return { heading: "Merry Christmas, Grandpa", name: "Grandpa" };
   if (key.includes("despidida") || key.includes("farewell") || key.includes("voyage"))
     return { heading: "Bon voyage, Sam", name: "Sam" };
-  if (key.includes("valentine")) return { heading: "Happy Valentine's, Ana", name: "Ana" };
+  if (key.includes("valentine")) return { heading: "Happy Valentine's, Leo", name: "Leo" };
   if (key.includes("pet")) return { heading: "Best boy, Milo", name: "Milo" };
   if (key.includes("new year")) return { heading: "Happy New Year, everyone", name: "the crew" };
   if (key.includes("anniversar")) return { heading: "Ten years, Liz", name: "Liz" };
   if (key.includes("bridal") || key.includes("shower"))
     return { heading: "Showered with love, Bea", name: "Bea" };
-  if (key.includes("wedding")) return { heading: "Congratulations, Aya & Jun", name: "Aya & Jun" };
-  return { heading: "Just because, Maya", name: "Maya" };
+  if (key.includes("wedding")) return { heading: "Congratulations, Nora & James", name: "Nora & James" };
+  return { heading: "Just because, Ana", name: "Ana" };
 }
 
 export function backgroundFor(theme: Theme): BackgroundStyle {

@@ -343,7 +343,7 @@ button.bento-tile:hover .bento-wave i:nth-child(odd) { transform: scaleY(1.25); 
   to { transform: translateY(105vh) rotate(540deg); opacity: .9; }
 }
 .hunt-confetti { pointer-events: none; position: fixed; inset: 0; z-index: 94; overflow: hidden; }
-.hunt-confetti i { position: absolute; top: -20px; width: 9px; height: 14px; border-radius: 2px; animation: hunt-fall linear both; }
+.hunt-confetti i { position: absolute; top: -20px; width: 9px; height: 14px; border-radius: 2px; animation: hunt-fall cubic-bezier(.4,0,1,1) both; }
 
 /* ---------- Zine ---------- */
 .zine-root {
@@ -492,7 +492,7 @@ button.bento-tile:hover .bento-wave i:nth-child(odd) { transform: scaleY(1.25); 
    browsers without support simply show everything. */
 @supports (animation-timeline: view()) {
   @media (prefers-reduced-motion: no-preference) {
-    .gift-scrap .sb-section { animation: sb-in linear both; animation-timeline: view(); animation-range: entry 0% entry 40%; }
+    .gift-scrap .sb-section { animation: sb-in cubic-bezier(.2,.7,.3,1) both; animation-timeline: view(); animation-range: entry 0% entry 40%; }
   }
 }
 @media (prefers-reduced-motion: reduce) {

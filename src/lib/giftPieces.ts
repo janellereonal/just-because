@@ -168,7 +168,7 @@ export function usePieces({
 }) {
   return useMemo(() => {
     const enabled = new Set(modules.filter((m) => m.enabled).map((m) => m.module_type));
-    const name = site.custom_text.recipient_name?.trim() || "Maya";
+    const name = site.custom_text.recipient_name?.trim() || "Ana";
     // A note this viewer wrote shows unsealed; drop its sealed twin.
     const mineIds = new Set(contributions.filter((c) => c.mine && !c.sealed).map((c) => c.id));
     let pieces: Piece[] = contributions

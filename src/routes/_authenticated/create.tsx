@@ -269,7 +269,7 @@ function CreatePage() {
               required
               value={title}
               onChange={(e) => setTitle(e.target.value)}
-              placeholder={solo ? "Happy anniversary, love" : "Happy 30th, Maya"}
+              placeholder={solo ? "Happy anniversary, love" : "Happy 30th, Ana"}
               className="mt-5 w-full rounded-2xl border border-line bg-paper px-5 py-4 font-display text-lg outline-none transition-colors focus:border-accent focus:bg-white"
             />
           </div>

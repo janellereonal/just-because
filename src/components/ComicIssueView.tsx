@@ -197,7 +197,7 @@ export function ComicIssueView({ kind, site, modules, contributions, calendarEnt
   if (!coverOpen) return (
     <div className="comic-cover" style={{ "--comic-accent": palette.accent, "--comic-main": palette.primary, "--comic-paper": palette.background } as React.CSSProperties}>
       {onClose ? <Button className="absolute top-20 right-4 z-10" variant="outline" size="icon" aria-label="Close cover preview" onClick={onClose}><X /></Button> : null}
-      <div className="comic-price">₱0<br /><small>PRICELESS</small></div><div className="comic-badge">COLLECTOR'S<br />EDITION</div>
+      <div className="comic-price">FREE<br /><small>PRICELESS</small></div><div className="comic-badge">COLLECTOR'S<br />EDITION</div>
       <div className="comic-web-lines" aria-hidden /><div className="comic-city" aria-hidden />
       <div className="comic-cover-copy"><div className="comic-kaboom">KA-BOOM!</div><p className="comic-title text-lg">{settings.cover_subtitle || defaults.cover_subtitle}</p><h1 className="comic-title comic-slam mt-3 text-[clamp(3.5rem,12cqi,8rem)] leading-[0.8]">{settings.cover_title || defaults.cover_title}</h1><Button className="mt-8 border-4 border-ink bg-paper px-7 py-6 font-bold text-ink shadow-[6px_6px_0_var(--comic-accent)] hover:bg-paper" onClick={() => setCoverOpen(true)}>Open the issue →</Button></div>
       <div className="comic-barcode" aria-label="Price: priceless"><i /><i /><i /><i /><i /><i /><i /></div>

@@ -267,15 +267,15 @@ function AuthPage() {
                 className="float-note top-2 left-0 rotate-[-5deg]"
                 style={{ "--r": "-5deg" } as React.CSSProperties}
               >
-                <span className="block font-semibold">Mama added a letter</span>
-                <span className="text-ink/60">So proud of you, anak.</span>
+                <span className="block font-semibold">Mom added a letter</span>
+                <span className="text-ink/60">So proud of you.</span>
               </div>
               <div
                 className="float-note top-24 right-0 rotate-[4deg]"
                 style={{ "--r": "4deg", animationDelay: "1.2s" } as React.CSSProperties}
               >
                 <span className="block font-semibold">Jo added 3 photos</span>
-                <span className="text-ink/60">La Union, 2am, graduation</span>
+                <span className="text-ink/60">Road trip, 2am, graduation</span>
               </div>
               <div className="absolute bottom-0 left-1/2 -translate-x-1/2">
                 <Bo pose="delivery" size={130} />

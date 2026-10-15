@@ -205,7 +205,7 @@ export function ZineView({
         <header className="zine-masthead">
           <div className="flex items-center justify-between gap-3">
             <span className="zine-mono">ISSUE 01 · {issueDate}</span>
-            <span className="zine-mono">₱ PRICELESS</span>
+            <span className="zine-mono">PRICELESS</span>
           </div>
           <h1 className="mt-6 text-[clamp(2.6rem,10cqi,6.5rem)] leading-[0.92]">
             <Ransom text={data.name.toUpperCase()} accent={accent} />
