@@ -1,4 +1,5 @@
 import { giftVoice } from "@/lib/giftVoice";
+import { localDate } from "@/lib/time";
 import { useEffect, useRef, useState } from "react";
 import { Theme3D } from "@/components/Theme3D";
 import { themeKindOf } from "@/lib/themeKind";
@@ -7,7 +8,7 @@ import { FONT_PAIRINGS } from "@/lib/gift";
 import { readableInk, surfaceColor } from "@/lib/palettes";
 import type { Palette } from "@/lib/themes";
 import {
-  manilaToday,
+  giftToday,
   meshGradient,
   useCountdown,
   useMediaUrl,
@@ -189,17 +190,17 @@ function Face({ piece, palette, name }: { piece: Piece; palette: Palette; name: 
         </span>
       );
     case "calendar": {
-      const locked = !!piece.date && piece.date > manilaToday();
-      const d = piece.date ? new Date(`${piece.date}T00:00:00+08:00`) : null;
+      const locked = !!piece.date && piece.date > giftToday();
+      const d = piece.date ? localDate(piece.date) : null;
       return (
         <span className="flex h-full flex-col justify-between text-left">
           <span className="text-[11px] font-semibold tracking-[0.16em] uppercase opacity-60">
             {d
-              ? d.toLocaleDateString("en-PH", { month: "short", timeZone: "Asia/Manila" })
+              ? d.toLocaleDateString(undefined, { month: "short" })
               : "Surprise"}
           </span>
           <span className="text-5xl leading-none font-semibold" style={{ color: palette.accent }}>
-            {d ? d.toLocaleDateString("en-PH", { day: "numeric", timeZone: "Asia/Manila" }) : "?"}
+            {d ? d.toLocaleDateString(undefined, { day: "numeric" }) : "?"}
           </span>
           <span className="flex items-center gap-1.5 text-sm opacity-80">
             {locked ? (

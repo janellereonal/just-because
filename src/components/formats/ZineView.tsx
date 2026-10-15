@@ -3,7 +3,7 @@ import { useState } from "react";
 import { Lock, Mic, Play } from "lucide-react";
 import { readableInk } from "@/lib/palettes";
 import {
-  manilaToday,
+  giftToday,
   useCountdown,
   useMediaUrl,
   usePieces,
@@ -87,7 +87,7 @@ function Cutout({
   const s = seed(piece.id);
   const rot = (s - 0.5) * 7;
   const sticker = s > 0.62 ? STICKERS[Math.floor(s * 100) % STICKERS.length] : null;
-  const locked = piece.kind === "calendar" && !!piece.date && piece.date > manilaToday();
+  const locked = piece.kind === "calendar" && !!piece.date && piece.date > giftToday();
   const variant =
     piece.kind === "letter"
       ? s > 0.5
@@ -191,7 +191,7 @@ export function ZineView({
   const accent = palette.accent;
   const heading = site.custom_text.heading?.trim() || site.title;
   const issueDate = new Date()
-    .toLocaleDateString("en-PH", { month: "short", year: "numeric", timeZone: "Asia/Manila" })
+    .toLocaleDateString(undefined, { month: "short", year: "numeric" })
     .toUpperCase();
   const ticker = data.friends.length
     ? data.friends
@@ -205,7 +205,7 @@ export function ZineView({
         <header className="zine-masthead">
           <div className="flex items-center justify-between gap-3">
             <span className="zine-mono">ISSUE 01 · {issueDate}</span>
-            <span className="zine-mono">₱ PRICELESS</span>
+            <span className="zine-mono">PRICELESS</span>
           </div>
           <h1 className="mt-6 text-[clamp(2.6rem,10cqi,6.5rem)] leading-[0.92]">
             <Ransom text={data.name.toUpperCase()} accent={accent} />

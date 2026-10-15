@@ -19,6 +19,8 @@ import {
 } from "@/lib/api";
 import { IntroDesigner } from "@/components/IntroDesigner";
 import { CastPanel, type Cast } from "@/components/CastPanel";
+import { ChipInSoon } from "@/components/sections/ChipInSoon";
+import { countdownTarget, momentOf, toLocalInput, viewerZone } from "@/lib/time";
 import { OwnNotes } from "@/components/OwnNotes";
 import { useAuth } from "@/hooks/useAuth";
 import { DevicePreview, DeviceToggle, type PreviewDevice } from "@/components/DevicePreview";
@@ -134,6 +136,14 @@ const MODULE_TITLE_FIELD: Record<ModuleType, keyof CustomText | null> = {
   countdown: "countdown_title",
   calendar: "calendar_title",
   tree: "tree_title",
+  openwhen: null,
+  capsule: null,
+  superlatives: null,
+  quiz: null,
+  map: null,
+  coupons: null,
+  video: null,
+  doodle: null,
 };
 
 const FIELD_GROUP: Record<string, SectionKey> = {
@@ -216,6 +226,7 @@ function SiteDashboard() {
   const [introCanvasKey, setIntroCanvasKey] = useState(0);
   const introSaveTimer = useRef<number | null>(null);
   const castSaveTimer = useRef<number | null>(null);
+  const [moreSections, setMoreSections] = useState(false);
   const castLatest = useRef<Cast | null>(null);
   const introLatest = useRef<IntroSettings | null>(null);
   const [sheetOpen, setSheetOpen] = useState(false);
@@ -399,6 +410,7 @@ function SiteDashboard() {
             custom_colors: next.custom_colors,
             font_choice: next.font_choice,
             countdown_date: next.countdown_date || null,
+            countdown_at: next.countdown_at || null,
             calendar_locked: next.calendar_locked,
             intro_text: next.intro_text,
             background_style: next.background_style,
@@ -588,9 +600,9 @@ function SiteDashboard() {
   }
 
   const daysToGo = (() => {
-    const date = draft.countdown_date;
+    const date = countdownTarget(draft);
     if (!date) return null;
-    const diff = Math.ceil((new Date(date).getTime() - Date.now()) / 86400000);
+    const diff = Math.ceil((momentOf(date) - Date.now()) / 86400000);
     if (diff < 0) return null;
     if (diff === 0) return "today";
     return `${diff} day${diff === 1 ? "" : "s"} to go`;
@@ -749,7 +761,7 @@ function SiteDashboard() {
     words: (
       <div className="space-y-3">
         {fieldInput("heading", "Heading", { placeholder: titles.heading })}
-        {fieldInput("recipient_name", "Recipient name", { placeholder: "Maya" })}
+        {fieldInput("recipient_name", "Recipient name", { placeholder: "Ana" })}
         {fieldInput("intro_message", "Intro message", { long: true })}
         {fieldInput("footer_note", "Footer note", { long: true })}
       </div>
@@ -800,7 +812,10 @@ function SiteDashboard() {
     ),
     sections: (
       <div className="space-y-3">
-        {MODULES.map((mod) => {
+        {[...MODULES]
+          .filter((mod) => moreSections || (modules.find((m) => m.module_type === mod.type)?.enabled ?? false))
+          .sort((a, b) => Number(modules.find((m) => m.module_type === b.type)?.enabled ?? false) - Number(modules.find((m) => m.module_type === a.type)?.enabled ?? false))
+          .map((mod) => {
           const on = modules.find((m) => m.module_type === mod.type)?.enabled ?? false;
           const titleField = MODULE_TITLE_FIELD[mod.type];
           return (
@@ -832,13 +847,19 @@ function SiteDashboard() {
                   )}
                   {mod.type === "countdown" ? (
                     <label className="block">
-                      <span className="text-xs text-muted">Date</span>
+                      <span className="text-xs text-muted">Date and time</span>
                       <input
-                        type="date"
-                        value={draft.countdown_date ?? ""}
-                        onChange={(e) => patch({ countdown_date: e.target.value || null })}
+                        type="datetime-local"
+                        value={toLocalInput(countdownTarget(draft))}
+                        onChange={(e) => {
+                          const v = e.target.value;
+                          patch(v ? { countdown_at: new Date(v).toISOString(), countdown_date: v.slice(0, 10) } : { countdown_at: null, countdown_date: null });
+                        }}
                         className="mt-1 w-full rounded-xl border border-line bg-cream px-3 py-2.5 text-sm outline-none focus:border-accent"
                       />
+                      <span className="mt-1 block text-[11px] text-muted">
+                        In your time ({viewerZone().replace(/_/g, " ")}). Everyone sees it in their own.
+                      </span>
                     </label>
                   ) : null}
                   {mod.type === "tree" ? (
@@ -857,6 +878,14 @@ function SiteDashboard() {
             </div>
           );
         })}
+        <button
+          type="button"
+          onClick={() => setMoreSections((v) => !v)}
+          className="w-full rounded-xl border border-dashed border-line px-3 py-2.5 text-left text-sm font-medium hover:bg-cream"
+        >
+          {moreSections ? "Show only the ones that are on" : `Add more (${MODULES.filter((mod) => !(modules.find((m) => m.module_type === mod.type)?.enabled ?? false)).length})`}
+        </button>
+        <ChipInSoon />
         <label className="flex items-start gap-3 rounded-xl border border-line bg-cream p-3">
           <input
             type="checkbox"
@@ -907,7 +936,7 @@ function SiteDashboard() {
               <textarea
                 rows={2}
                 value={draft.intro_text ?? ""}
-                placeholder={`For ${draft.custom_text.recipient_name || "Maya"}, from everyone who loves her`}
+                placeholder={`For ${draft.custom_text.recipient_name || "Ana"}, from everyone who loves her`}
                 onChange={(e) => patch({ intro_text: e.target.value })}
                 className="mt-1 w-full rounded-xl border border-line bg-cream px-3 py-2.5 text-sm outline-none focus:border-accent"
               />
@@ -1600,7 +1629,7 @@ function SiteDashboard() {
         <div className="fixed inset-0 z-[70] bg-paper text-ink">
           <div className="absolute inset-x-0 top-0 z-[80] border-b border-line bg-cream/95 px-3 py-2 shadow-sm backdrop-blur-xl">
             <div className="mx-auto flex max-w-5xl flex-wrap items-center justify-between gap-2">
-              <span className="min-w-0 truncate text-sm">Previewing as <strong>{draft.custom_text.recipient_name || "Maya"}</strong></span>
+              <span className="min-w-0 truncate text-sm">Previewing as <strong>{draft.custom_text.recipient_name || "Ana"}</strong></span>
               <div className="flex items-center gap-2">
                 <DeviceToggle value={device} onChange={setDevice} size="sm" />
                 <Button variant="outline" size="sm" onClick={() => setPreviewOpened(false)}>Replay intro</Button>

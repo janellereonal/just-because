@@ -1,4 +1,17 @@
 import type { ModuleType } from "@/lib/gift";
+import { SECTION_COPY } from "@/copy/strings";
+import { isNewSection } from "@/lib/sections";
+
+const NEW_EXAMPLE: Record<string, { glyph: string; line: string }> = {
+  openwhen: { glyph: "✉", line: "Open when you can't sleep" },
+  capsule: { glyph: "⧗", line: "Sealed for 364 days" },
+  superlatives: { glyph: "✪", line: "Best playlist · 4 votes" },
+  quiz: { glyph: "?", line: "Where did we first meet?" },
+  map: { glyph: "⌖", line: "Kyoto · Lisbon · our old flat" },
+  coupons: { glyph: "✂", line: "Good for one breakfast in bed" },
+  video: { glyph: "▶", line: "A video from Theo" },
+  doodle: { glyph: "✎", line: "A doodle from Bea" },
+};
 
 type Tone = { bg: string; ink: string; accent: string };
 
@@ -129,6 +142,20 @@ export function ModuleExample({
             <span key={String(glyph)} className="absolute grid size-5 place-items-center rounded-full text-[9px]" style={{ left: `${left}%`, top: `${top}%`, backgroundColor: tone.bg, color: tone.accent }}>{glyph}</span>
           ))}
         </div>
+      </Frame>
+    );
+  }
+  if (isNewSection(type)) {
+    const ex = NEW_EXAMPLE[type]!;
+    return (
+      <Frame tone={tone}>
+        <p className="flex items-center gap-2 text-[12px] font-semibold" style={{ color: tone.accent }}>
+          <span className="grid size-6 place-items-center rounded-full text-[12px]" style={{ background: `${tone.accent}22` }}>
+            {ex.glyph}
+          </span>
+          {SECTION_COPY[type].title}
+        </p>
+        <p className="mt-2">{ex.line}</p>
       </Frame>
     );
   }

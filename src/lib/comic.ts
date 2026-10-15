@@ -21,6 +21,14 @@ export const COMIC_CHAPTERS: Record<ModuleType, string> = {
   voice: "Transmissions",
   calendar: "Secret Missions",
   tree: "The Giving Tree",
+  openwhen: "Sealed Orders",
+  capsule: "Time Vault",
+  superlatives: "Hall of Fame",
+  quiz: "Pop Quiz",
+  map: "World Tour",
+  coupons: "Power-Ups",
+  video: "Live Footage",
+  doodle: "Fan Art",
 };
 
 export function normalizeComicSettings(value: unknown): ComicSettings {

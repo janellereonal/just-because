@@ -110,6 +110,12 @@ export const OPENINGS: Partial<Record<ThemeKind, Entry>> = {
   },
 };
 
+/** The stage behind a theme's object, for frames around it (gallery, previews). */
+export function openingBackground(kind: ThemeKind): React.CSSProperties {
+  const entry = OPENINGS[kind] ?? OPENINGS.valentine!;
+  return entry.background(designFor(kind).palette);
+}
+
 export function hasTactileOpening(kind: ThemeKind) {
   return !!OPENINGS[kind];
 }

@@ -3,7 +3,7 @@ import { X } from "lucide-react";
 import { toEmbedUrl } from "@/lib/gift";
 import { readableInk, surfaceColor } from "@/lib/palettes";
 import type { Palette } from "@/lib/themes";
-import { manilaToday, useMediaUrl, type Piece } from "@/lib/giftPieces";
+import { giftToday, useMediaUrl, type Piece } from "@/lib/giftPieces";
 
 /** Deterministic 0..1 from an id, so layouts don't jump between renders. */
 export function seed(id: string) {
@@ -44,7 +44,7 @@ export function PieceSheet({
     window.addEventListener("keydown", key);
     return () => window.removeEventListener("keydown", key);
   }, [onClose]);
-  const locked = piece.kind === "calendar" && !!piece.date && piece.date > manilaToday();
+  const locked = piece.kind === "calendar" && !!piece.date && piece.date > giftToday();
   return (
     <div className="bento-sheet-backdrop" onClick={onClose} role="presentation">
       <div

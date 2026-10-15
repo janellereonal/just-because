@@ -4,7 +4,7 @@ import { Lock, Mic, Music2, Pause, Play, RotateCw, SkipBack, SkipForward } from 
 import { FONT_PAIRINGS, toEmbedUrl } from "@/lib/gift";
 import { readableInk } from "@/lib/palettes";
 import {
-  manilaToday,
+  giftToday,
   useMediaUrl,
   usePieces,
   useReducedMotion,
@@ -33,7 +33,7 @@ function trackTitle(p: Piece) {
 function Liner({ piece, accent }: { piece: Piece; accent: string }) {
   const media = useMediaUrl(piece.media);
   const embed = piece.link ? toEmbedUrl(piece.link) : null;
-  const locked = piece.kind === "calendar" && !!piece.date && piece.date > manilaToday();
+  const locked = piece.kind === "calendar" && !!piece.date && piece.date > giftToday();
   if (piece.sealed || locked)
     return (
       <div className="mix-liner-sealed">

@@ -6,7 +6,7 @@ import { Lock, Mic, Music2, RotateCcw, Sparkles } from "lucide-react";
 import { FONT_PAIRINGS } from "@/lib/gift";
 import { readableInk, surfaceColor } from "@/lib/palettes";
 import {
-  manilaToday,
+  giftToday,
   meshGradient,
   useCountdown,
   usePieces,
@@ -185,7 +185,7 @@ export function HuntView({
   const [sheet, setSheet] = useState<Piece | null>(null);
   const [burst, setBurst] = useState(0);
   const [sticker, setSticker] = useState<string | null>(null);
-  const today = manilaToday();
+  const today = giftToday();
   const boxes = useMemo(
     () => data.notes.filter((p) => !p.sealed || p.kind !== "word"),
     [data.notes],

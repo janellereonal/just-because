@@ -48,10 +48,10 @@ export function PricingCards({ tiers = TIERS, priceFor, blockerFor, action, pric
               <h3 className="font-display text-2xl font-medium tracking-tight">{tier.name}</h3>
               <p className="mt-1 text-sm text-muted">{tier.audience}</p>
               {priceNote && <p className="mt-4 font-mono text-[11px] tracking-[0.12em] text-muted uppercase">{priceNote}</p>}
-              <p className={`${priceNote ? "mt-1" : "mt-4"} font-display text-4xl font-medium tracking-tight`}>
+              <p className={`${priceNote ? "mt-1" : "mt-4"} font-display text-4xl font-medium tracking-tight`} suppressHydrationWarning>
                 {formatPeso(price)}
               </p>
-              <p className="text-xs text-muted">
+              <p className="text-xs text-muted" suppressHydrationWarning>
                 {formatUsdApprox(price)} <span className="opacity-80">(approx.)</span>
               </p>
               {!compact && (

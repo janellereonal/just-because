@@ -6,7 +6,7 @@ import { WishCandles, useSkinPlay } from "@/components/SkinPlay";
 import { buzz, chime } from "@/lib/play";
 import { RotateCw } from "lucide-react";
 import { KIND_WORDS, themeKindOf } from "@/lib/themeKind";
-import { manilaMidnight } from "@/lib/giftPieces";
+import { giftMoment } from "@/lib/giftPieces";
 import {
   FONT_PAIRINGS,
   backgroundCss,
@@ -23,7 +23,9 @@ import {
 } from "@/lib/gift";
 import type { Palette, Theme } from "@/lib/themes";
 import { readableInk, readableOn, surfaceColor, surfaceBorder } from "@/lib/palettes";
+import { countdownTarget, formatMoment, localToday } from "@/lib/time";
 import { NoteCard } from "@/themes/_shared/NoteCard";
+import { NewSections } from "@/components/sections/NewSections";
 import { resolveIconSet } from "@/themes/_shared/iconSets";
 import { burstSet } from "@/themes/_shared/Sprinkles";
 import { castFor } from "@/themes/_shared/design";
@@ -123,7 +125,7 @@ function Countdown({ date, accent, heading, label }: { date: string; accent: str
     const t = setInterval(() => setNow(Date.now()), 1000);
     return () => clearInterval(t);
   }, []);
-  const target = manilaMidnight(date);
+  const target = giftMoment(date);
   const diff = target - now;
   const past = diff <= 0;
   const s = Math.max(0, Math.floor(diff / 1000));
@@ -144,6 +146,9 @@ function Countdown({ date, accent, heading, label }: { date: string; accent: str
       ) : (
         <>
           <p className="text-sm tracking-[0.18em] uppercase opacity-70">{label ?? `Counting down to ${heading}`}</p>
+          <p className="mt-1 text-xs opacity-60" suppressHydrationWarning>
+            {formatMoment(target)} your time
+          </p>
           <div className="mt-5 flex items-start justify-center gap-2 sm:gap-3" suppressHydrationWarning>
             {[
               [days, days === 1 ? "day" : "days"],
@@ -222,7 +227,7 @@ function CalendarGrid({
     return out;
   }, [entries]);
 
-  const today = new Date().toISOString().slice(0, 10);
+  const today = localToday();
 
   if (days.length === 0) {
     return <p className="text-sm opacity-60">No surprises added yet.</p>;
@@ -459,7 +464,7 @@ export function GiftSiteView({
 
   const sectionTitle = "sb-title text-[1.75rem] leading-tight font-semibold";
   const recipient = text.recipient_name?.trim();
-  const sampleName = recipient || "Maya";
+  const sampleName = recipient || "Ana";
   const voice = giftVoice(site.solo);
 
   /** Wraps the visitor's own contribution with a soft outline and a "Yours" tag. */
@@ -493,7 +498,7 @@ export function GiftSiteView({
 
   const hasContent =
     contributions.length > 0 ||
-    (enabled.has("countdown") && site.countdown_date) ||
+    (enabled.has("countdown") && countdownTarget(site)) ||
     (enabled.has("calendar") && calendarEntries.length > 0) ||
     (enabled.has("tree") && tree.length > 0);
 
@@ -594,10 +599,10 @@ export function GiftSiteView({
           ) : null}
         </header>
 
-        {enabled.has("countdown") && (site.countdown_date || sample) ? (
+        {enabled.has("countdown") && (countdownTarget(site) || sample) ? (
           <section className="sb-section mt-12">
             <Countdown
-              date={site.countdown_date ?? new Date(Date.now() + 12 * 86400000).toISOString().slice(0, 10)}
+              date={countdownTarget(site) ?? new Date(Date.now() + 12 * 86400000).toISOString()}
               accent={accentText}
               heading={text.countdown_title || titles.countdown_title}
               label={kind === "default" || text.countdown_title ? undefined : kindWords.countdown}
@@ -887,6 +892,19 @@ export function GiftSiteView({
             ) : null}
           </section>
         )}
+
+        <NewSections
+          kind={kind}
+          enabled={enabled}
+          contributions={contributions}
+          icons={icons}
+          hostRef={rootRef}
+          sample={!!sample}
+          recipient={text.recipient_name ?? ""}
+          siteId={site.id}
+          headingFont={fonts.heading}
+          accent={accentText}
+        />
 
         {!hasContent && !sample && (
           <p className="mt-14 text-center opacity-60">

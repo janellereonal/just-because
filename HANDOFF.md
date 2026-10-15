@@ -233,3 +233,10 @@ four new formats (Storybook, Mixtape, Scratch Cards, Constellation), custom intr
 `intro_settings` column, migration 0005) and much more play on themes (tap/spin 3D objects, catch
 particles, flip photos, birthday wish). Details and file map in `docs/NEXT-SESSION.md`.
 
+
+## 1e. Session 5 (15 Oct 2026)
+
+Theme system redesign (tactile openings, Cast, themed notes, theme fonts), a new themes gallery, a new
+landing page with example gifts, eight new sections, time-zone-aware countdowns and a chip-in fund data
+model (no payments). PRs #4, #5 and #6, merge after #3, in order. Migrations 0007 to 0010 run on deploy.
+Details: `docs/NEXT-SESSION.md`.

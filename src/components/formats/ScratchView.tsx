@@ -4,7 +4,7 @@ import { Lock, Mic, Music2, Sparkles } from "lucide-react";
 import { FONT_PAIRINGS } from "@/lib/gift";
 import { readableInk, surfaceColor } from "@/lib/palettes";
 import {
-  manilaToday,
+  giftToday,
   useMediaUrl,
   usePieces,
   useReducedMotion,
@@ -219,7 +219,7 @@ function Card({
   accent: string;
 }) {
   const media = useMediaUrl(piece.kind === "photo" ? piece.media : null);
-  const locked = piece.kind === "calendar" && !!piece.date && piece.date > manilaToday();
+  const locked = piece.kind === "calendar" && !!piece.date && piece.date > giftToday();
   const tilt = (seed(piece.id) - 0.5) * 4;
   return (
     <article

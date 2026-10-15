@@ -7,6 +7,7 @@ import { requireAdmin, requireSiteOwner } from "./guards";
 export type UploadKind = "contribution" | "calendar" | "theme" | "intro";
 
 const IMAGE = ["image/jpeg", "image/png", "image/webp", "image/gif", "image/heic", "image/heif"];
+const VIDEO = ["video/mp4", "video/quicktime", "video/webm"];
 const AUDIO = ["audio/mpeg", "audio/mp4", "audio/x-m4a", "audio/aac", "audio/wav", "audio/webm", "audio/ogg"];
 
 export function uploadPathname(kind: UploadKind, targetId: string, filename: string) {
@@ -35,7 +36,8 @@ export async function authorizeUpload(kind: UploadKind, targetId: string) {
     .from(schema.giftSites)
     .where(eq(schema.giftSites.id, targetId));
   if (!site) throw new Error("We couldn't find that gift.");
-  return { contentTypes: [...IMAGE, ...AUDIO], maxBytes: 25 * 1024 * 1024 };
+  // Video messages are the biggest thing a friend sends: about a minute on a phone.
+  return { contentTypes: [...IMAGE, ...AUDIO, ...VIDEO], maxBytes: 60 * 1024 * 1024 };
 }
 
 /* ---- local development only: no Vercel Blob token ---- */

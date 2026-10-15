@@ -1,6 +1,57 @@
 # Next session: picking up the Just Because redesign
 
-Updated 15 Oct 2026 (session 4), so a new session can carry on without missing anything.
+Updated 15 Oct 2026 (session 5), so a new session can carry on without missing anything.
+
+## Session 5 is done (15 Oct 2026): theme system, gallery, landing, new sections
+
+Four PRs, merge in order: **#3** Just me → **#4** `theme-system` (Phases 1–2) → **#5** `themes-gallery`
+(Phase 3) → **#6** `landing-sections` (Phase 4). Each branch sits on the one before.
+
+**Theme system (`src/themes/`).** Every theme opens like a real object, with a gesture and a plain
+button that does the same: Valentine's envelope (hold the seal), Anniversary record (drag the needle),
+Birthday cake (blow or tap candles), Wedding/Bridal invitation (slide it out of the vellum), Baby Shower
+mobile (pull the string), Christmas present (pull the ribbon, rope physics), New Year (hold to count
+3-2-1, the name appears in canvas sparks), Bon Voyage boarding pass (tear the stub, a stamp per friend),
+Pets (stroke the pet, it runs off and brings the gift). Registry: `src/themes/TactileOpening.tsx`
+(`OPENINGS`). Shared stage: `_shared/stage.tsx` (springs, `useBeats` with a dev-only `window.__jbBeat`
+freeze for screenshots, haptics, grain, parallax, `useHold`, `FallbackButton`), `_shared/opening.tsx`
+(shell, sound toggle, skip). Fonts and materials per theme: `_shared/design.ts` (`THEME_DESIGNS`). The
+old 3D opening is "Classic" in the Intro panel (`intro_settings.opening = "classic"`).
+
+**Cast.** `gift_sites.character` and `gift_sites.icon_set` (jsonb, migration 0007). Editor panel
+"Cast" (`src/components/CastPanel.tsx`): Characters, Customize, Upload (die-cut sticker), Sprinkles,
+Surprise me. Every particle in openings and on the gift page comes from the icon set. How to swap the
+placeholder characters for Rive: `docs/characters.md`.
+
+**Gift body.** Notes are themed (`_shared/NoteCard.tsx`). Font pairing `theme` is the new default
+(0008); Caveat and Permanent Marker are gone.
+
+**Gallery** (`/themes`, `src/components/OpeningCard.tsx`): each card plays its real opening on hover or
+when on screen, tap for full screen and do it yourself, one "Use this theme" button.
+
+**Phase 4.**
+- Landing (`src/routes/index.tsx`): hero phone is "Ana's 30th" (12 friends), closed until you open it,
+  then cycles formats; "See the full gift" → `/example/ana`. Sections bento with live mini-demos
+  (`landing/SectionsBento.tsx`), example gifts row (`landing/ExampleGifts.tsx`). Personas live in
+  `src/lib/demoGifts.ts` (Ana, Sam, Milo, Nora & James); `/example/$id` opens any of them.
+- **All landing and new-section copy is in `src/copy/strings.ts`.** Older screens still have inline copy.
+- New sections (`src/lib/sections.ts`, renderers `components/sections/NewSections.tsx`, form fields
+  `components/sections/SectionFields.tsx`): open-when letters, time capsule, superlatives, quiz, memory
+  map, coupon book, video messages, doodle guestbook. Extra fields go in `contributions.data` (jsonb,
+  migration 0010), cleaned by `normalizeSectionData` on the server. A time capsule's text and photo stay
+  on the server until it opens (`sealCapsule` in `api.ts`). Tile formats show them as notes, plus a
+  video/quiz block underneath; the comic gives them chapters.
+- Chip-in fund: **data model only** (`gift_funds`, `fund_pledges`, provider-agnostic, minor units +
+  currency). Shown as "Coming soon". No payment code.
+- Presets: `src/lib/presets.ts` picks each occasion's starting sections; the rest sit under "Add more"
+  in /create and the editor.
+- Time zones: `src/lib/time.ts`. Countdowns are a UTC moment (`gift_sites.countdown_at`, migration 0009,
+  old gifts backfilled to Manila midnight) shown in the viewer's zone. Calendar doors and tree reveals
+  open at the viewer's local midnight. Dates and money go through Intl.
+
+Worth a look next: real-phone check of every gesture (iOS Safari especially: mic, tilt permission,
+haptics are Android-only); the comic format still uses Bangers/Comic Neue on purpose; real Rive
+characters; moving older screens' copy into `strings.ts`; chip-in fund once a provider is chosen.
 
 ## Session 4 is done (15 Oct 2026, PR from `redesign`)
 

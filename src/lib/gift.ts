@@ -15,6 +15,8 @@ import { normalizeIntroSettings, type IntroSettings } from "@/lib/intro";
 import { normalizeCharacter, type CharacterSetting } from "@/themes/_shared/cast/types";
 import { normalizeIconSetting, type IconSetSetting } from "@/themes/_shared/iconSets";
 import { isGiftFormat, type GiftFormat } from "@/lib/formats";
+import { NEW_SECTION_TYPES, type NewSectionType } from "@/lib/sections";
+import { SECTION_COPY } from "@/copy/strings";
 
 export type ModuleType =
   | "letters"
@@ -24,7 +26,8 @@ export type ModuleType =
   | "voice"
   | "countdown"
   | "calendar"
-  | "tree";
+  | "tree"
+  | NewSectionType;
 
 export const MODULES: {
   type: ModuleType;
@@ -90,6 +93,13 @@ export const MODULES: {
     contributorPrompt: "Add an ornament",
     source: "guests",
   },
+  ...NEW_SECTION_TYPES.map((type) => ({
+    type,
+    label: SECTION_COPY[type].label,
+    blurb: SECTION_COPY[type].blurb,
+    contributorPrompt: SECTION_COPY[type].prompt,
+    source: "guests" as const,
+  })),
 ];
 
 export const GUEST_MODULES = MODULES.filter((m) => m.source === "guests");
@@ -208,6 +218,8 @@ export type GiftSite = {
   share_notes: boolean;
   font_choice: FontChoice;
   countdown_date: string | null;
+  /** UTC ISO instant; wins over countdown_date when set. */
+  countdown_at: string | null;
   calendar_locked: boolean;
   intro_text: string | null;
   /** The creator's custom opening (object, stickers, colors, background, words). */
@@ -263,6 +275,8 @@ export type Contribution = {
   visibility: "public" | "recipient";
   /** Added by the gift's creator from the editor. */
   by_owner?: boolean;
+  /** Extra fields for the newer sections (src/lib/sections.ts). */
+  data?: Record<string, unknown> | null;
   created_at: string;
 };
 
@@ -310,6 +324,7 @@ export function normalizeSite(row: Record<string, unknown>): GiftSite {
     share_notes: Boolean(row["share_notes"]),
     font_choice: (row["font_choice"] as FontChoice) ?? "theme",
     countdown_date: (row["countdown_date"] as string | null) ?? null,
+    countdown_at: row["countdown_at"] ? new Date(row["countdown_at"] as string).toISOString() : null,
     calendar_locked: Boolean(row["calendar_locked"]),
     intro_text: (row["intro_text"] as string | null) ?? null,
     intro_settings: normalizeIntroSettings(row["intro_settings"]),
@@ -368,6 +383,7 @@ export function normalizeContribution(row: Record<string, unknown>): Contributio
     ornament_key: (row["ornament_key"] as OrnamentKey | null) ?? null,
     visibility: row["visibility"] === "recipient" ? "recipient" : "public",
     by_owner: row["by_owner"] === true,
+    data: row["data"] && typeof row["data"] === "object" ? (row["data"] as Record<string, unknown>) : null,
     created_at: String(row["created_at"]),
   };
 }

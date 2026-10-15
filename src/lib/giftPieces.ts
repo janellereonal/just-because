@@ -3,6 +3,8 @@
  * Turns a gift's approved notes into one flat list of "pieces", adds friendly
  * samples for previews, and has the small hooks those views share.
  */
+import { countdownTarget, formatDay, localToday, momentOf } from "@/lib/time";
+import { isNewSection, sectionAsText } from "@/lib/sections";
 import { useEffect, useMemo, useState } from "react";
 import {
   defaultTitles,
@@ -40,17 +42,22 @@ const KIND: Record<ModuleType, PieceKind | null> = {
   tree: "ornament",
   calendar: "calendar",
   countdown: null,
+  // Newer sections show as notes (or a picture for doodles); video and quiz get their own block.
+  openwhen: "letter",
+  capsule: "letter",
+  superlatives: "letter",
+  map: "letter",
+  coupons: "letter",
+  doodle: "photo",
+  video: null,
+  quiz: null,
 };
 
-/** Midnight at the start of `date` in Asia/Manila (gift dates are Manila dates). */
-export function manilaMidnight(date: string): number {
-  return new Date(`${date.slice(0, 10)}T00:00:00+08:00`).getTime();
-}
+/** A gift moment in ms: an ISO instant, or a date's midnight in the viewer's zone. */
+export const giftMoment = momentOf;
 
-/** Today's date in Asia/Manila, as YYYY-MM-DD. */
-export function manilaToday(): string {
-  return new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Manila" }).format(new Date());
-}
+/** Today in the viewer's zone (calendar doors open at their local midnight). */
+export const giftToday = localToday;
 
 export function useCountdown(date: string | null) {
   const [now, setNow] = useState(() => Date.now());
@@ -60,7 +67,7 @@ export function useCountdown(date: string | null) {
     return () => window.clearInterval(t);
   }, [date]);
   if (!date) return null;
-  const s = Math.max(0, Math.floor((manilaMidnight(date) - now) / 1000));
+  const s = Math.max(0, Math.floor((giftMoment(date) - now) / 1000));
   return {
     done: s === 0,
     days: Math.floor(s / 86400),
@@ -161,7 +168,7 @@ export function usePieces({
 }) {
   return useMemo(() => {
     const enabled = new Set(modules.filter((m) => m.enabled).map((m) => m.module_type));
-    const name = site.custom_text.recipient_name?.trim() || "Maya";
+    const name = site.custom_text.recipient_name?.trim() || "Ana";
     // A note this viewer wrote shows unsealed; drop its sealed twin.
     const mineIds = new Set(contributions.filter((c) => c.mine && !c.sealed).map((c) => c.id));
     let pieces: Piece[] = contributions
@@ -177,8 +184,8 @@ export function usePieces({
             id: c.id,
             kind,
             author: c.author_name,
-            text: c.text_content,
-            media: c.sealed ? null : c.media_url,
+            text: isNewSection(c.module_type) ? sectionAsText(c.module_type, c.data, c.text_content, (iso) => formatDay(iso)) : c.text_content,
+            media: c.sealed || (c.module_type !== "doodle" && isNewSection(c.module_type)) ? null : c.media_url,
             link: c.external_link,
             sealed: !!c.sealed,
             mine: !!c.mine,
@@ -228,8 +235,8 @@ export function usePieces({
     }
     const titles = { ...defaultTitles(site.custom_text), ...site.custom_text };
     const countdownDate =
-      enabled.has("countdown") && (site.countdown_date || sample)
-        ? (site.countdown_date ?? new Date(Date.now() + 12 * 86400000).toISOString().slice(0, 10))
+      enabled.has("countdown") && (countdownTarget(site) || sample)
+        ? (countdownTarget(site) ?? new Date(Date.now() + 12 * 86400000).toISOString())
         : null;
     const friends = [...new Set(pieces.filter((p) => p.author && !p.sample).map((p) => p.author))];
     return {

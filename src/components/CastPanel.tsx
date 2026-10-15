@@ -54,18 +54,30 @@ export function CastPanel({
   const char = cast.character;
   const accessory = design.accessory;
   const wearing = char.accessory !== false;
-  const setChar = (character: CharacterSetting | null) => onChange({ ...value, character });
+  const setChar = (character: CharacterSetting | null) => {
+    remember(character);
+    onChange({ ...value, character });
+  };
   const setIcons = (icon_set: IconSetSetting | null) => onChange({ ...value, icon_set });
+
+  function remember(c: CharacterSetting | null) {
+    // The themes gallery shows the character you're working on.
+    try {
+      if (c) localStorage.setItem("jb-cast-draft", JSON.stringify(c));
+      else localStorage.removeItem("jb-cast-draft");
+    } catch {
+      /* private mode */
+    }
+  }
 
   function surprise() {
     const pool = CHARACTERS.filter((c) => c.id !== (char.type === "library" ? char.id : ""));
     const next = pool[Math.floor(Math.random() * pool.length)]!;
     const set = ICON_SETS.filter((s) => s.id !== "emoji")[Math.floor(Math.random() * (ICON_SETS.length - 1))]!;
     const pickColor = () => SWATCHES[Math.floor(Math.random() * SWATCHES.length)]!;
-    onChange({
-      character: { type: "library", id: next.id, accessory: true, colors: { primary: next.colors.primary, secondary: pickColor() } },
-      icon_set: { id: set.id },
-    });
+    const character: CharacterSetting = { type: "library", id: next.id, accessory: true, colors: { primary: next.colors.primary, secondary: pickColor() } };
+    remember(character);
+    onChange({ character, icon_set: { id: set.id } });
   }
 
   return (
