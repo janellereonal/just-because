@@ -235,7 +235,7 @@ function OpenWhen(p: Common) {
   const [open, setOpen] = useState<string | null>(null);
   const reduce = useReducedMotion();
   return (
-    <div className="mt-6 grid gap-5 sm:grid-cols-2">
+    <div className="mt-6 grid gap-5 @xl:grid-cols-2">
       {p.items.map((item) => {
         const when = String((item.data as { when?: string } | null)?.when ?? "");
         const isOpen = open === item.id;
@@ -338,7 +338,7 @@ function Capsule(p: Common) {
   const m = sectionMaterial(p.kind);
   const now = useNow(1000);
   return (
-    <div className="mt-6 grid gap-4 sm:grid-cols-2">
+    <div className="mt-6 grid gap-4 @xl:grid-cols-2">
       {p.items.map((item) => {
         const at = String((item.data as { unlock_at?: string } | null)?.unlock_at ?? "");
         const locked =
@@ -446,7 +446,7 @@ function Superlatives(p: Common) {
   const m = sectionMaterial(p.kind);
   const awards = useMemo(() => tallySuperlatives(p.items), [p.items]);
   return (
-    <ol className="mt-6 grid gap-4 sm:grid-cols-2">
+    <ol className="mt-6 grid gap-4 @xl:grid-cols-2">
       {awards.map((a, i) => (
         <motion.li
           key={a.award}
@@ -777,7 +777,7 @@ function Coupons(p: Common & { storeKey: string }) {
     }
   }
   return (
-    <div className="mt-6 grid gap-4 sm:grid-cols-2">
+    <div className="mt-6 grid gap-4 @xl:grid-cols-2">
       {p.items.map((it) => {
         const d = (it.data ?? {}) as { title?: string; fine_print?: string };
         const done = used.includes(it.id);
@@ -1019,14 +1019,14 @@ export function NewSections({
             {type === "map" ? <MemoryMap {...common} /> : null}
             {type === "coupons" ? <Coupons {...common} storeKey={`jb-coupons-${siteId}`} /> : null}
             {type === "video" ? (
-              <div className="mt-6 grid gap-4 sm:grid-cols-2">
+              <div className="mt-6 grid gap-4 @xl:grid-cols-2">
                 {items.map((it) => (
                   <VideoCard key={it.id} item={it} m={m} />
                 ))}
               </div>
             ) : null}
             {type === "doodle" ? (
-              <div className="mt-6 grid grid-cols-2 gap-4 sm:grid-cols-3">
+              <div className="mt-6 grid grid-cols-2 gap-4 @xl:grid-cols-3">
                 {items.map((it, k) => (
                   <DoodleCard key={it.id} item={it} m={m} k={k} />
                 ))}

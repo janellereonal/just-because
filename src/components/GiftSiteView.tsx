@@ -1,6 +1,7 @@
 import { giftVoice } from "@/lib/giftVoice";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { SkinDecor } from "@/components/SkinDecor";
+import { ScrollStory } from "@/components/ScrollStory";
 import { Theme3D, type Theme3DHandle } from "@/components/Theme3D";
 import { WishCandles, useSkinPlay } from "@/components/SkinPlay";
 import { buzz, chime } from "@/lib/play";
@@ -235,7 +236,7 @@ function CalendarGrid({
 
   return (
     <>
-      <div className="grid grid-cols-4 gap-2 sm:grid-cols-7">
+      <div className="grid grid-cols-4 gap-2 @xl:grid-cols-7">
         {days.map(({ date, entry }) => {
           const sealed = locked && date > today;
           const has = !!entry && !sealed;
@@ -539,6 +540,7 @@ export function GiftSiteView({
       className={`gift-scrap skin-${kind} min-h-screen`}
     >
       <SkinDecor kind={kind} icons={icons} colors={playColors} />
+      <ScrollStory kind={kind} rootRef={rootRef} icons={icons} accent={accentDeco} ink={palette.primary} />
       <div className="mx-auto max-w-3xl px-5 py-10 sm:py-14">
         <header className="sk-hero text-center">
           <Theme3D
@@ -657,7 +659,7 @@ export function GiftSiteView({
             >
               {text.letters_title || titles.letters_title}
             </h2>
-            <div className="sb-letters mt-6 grid gap-5 sm:grid-cols-2">
+            <div className="sb-letters mt-6 grid gap-5 @xl:grid-cols-2">
               {letters.length > 0
                 ? letters.map((item, li) =>
                     item.sealed ? (
@@ -689,7 +691,7 @@ export function GiftSiteView({
             >
               {text.photobooth_title || titles.photobooth_title}
             </h2>
-            <div className="sb-photos mt-6 grid grid-cols-2 gap-4 sm:grid-cols-3 sm:gap-5">
+            <div className="sb-photos mt-6 grid grid-cols-2 gap-4 @xl:grid-cols-3 @xl:gap-5">
               {photos.length > 0
                 ? photos.map((item) =>
                     item.sealed ? (

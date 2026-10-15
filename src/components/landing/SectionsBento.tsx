@@ -10,6 +10,16 @@ import { Pause, Play } from "lucide-react";
 import { LANDING } from "@/copy/strings";
 import { SPRING } from "@/themes/_shared/stage";
 import { formatMoment } from "@/lib/time";
+import {
+  AwardsDemo,
+  CapsuleDemo,
+  CouponDemo,
+  DoodleDemo,
+  MapDemo,
+  OpenWhenDemo,
+  QuizDemo,
+  VideoDemo,
+} from "@/components/landing/MoreTiles";
 
 const T = LANDING.inside.tiles;
 
@@ -368,6 +378,30 @@ export function SectionsBento() {
       </Tile>
       <Tile title={T.countdown.title} body={T.countdown.body}>
         <LiveCountdown />
+      </Tile>
+      <Tile title={T.openwhen.title} body={T.openwhen.body}>
+        <OpenWhenDemo />
+      </Tile>
+      <Tile title={T.capsule.title} body={T.capsule.body}>
+        <CapsuleDemo />
+      </Tile>
+      <Tile title={T.awards.title} body={T.awards.body}>
+        <AwardsDemo />
+      </Tile>
+      <Tile title={T.quiz.title} body={T.quiz.body}>
+        <QuizDemo />
+      </Tile>
+      <Tile title={T.map.title} body={T.map.body}>
+        <MapDemo />
+      </Tile>
+      <Tile title={T.coupons.title} body={T.coupons.body}>
+        <CouponDemo />
+      </Tile>
+      <Tile title={T.video.title} body={T.video.body}>
+        <VideoDemo />
+      </Tile>
+      <Tile title={T.doodle.title} body={T.doodle.body} className="sm:col-span-2 lg:col-span-2">
+        <DoodleDemo />
       </Tile>
     </div>
   );
