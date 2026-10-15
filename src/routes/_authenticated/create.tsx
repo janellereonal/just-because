@@ -8,6 +8,9 @@ import { createSite } from "@/lib/api";
 import { fetchThemes } from "@/lib/themes";
 import { usePalettes, suggestedPalettes } from "@/hooks/usePalettes";
 import { MODULES, type ModuleType } from "@/lib/gift";
+import { PRESETS } from "@/lib/presets";
+import { themeKindOf } from "@/lib/themeKind";
+import { ChipInSoon } from "@/components/sections/ChipInSoon";
 import { ModuleExample } from "@/components/ModuleExample";
 import { FormatPicker } from "@/components/FormatPicker";
 import { stageColorFor } from "@/components/ThemeCard";
@@ -101,7 +104,12 @@ function CreatePage() {
   const { data: allPalettes = [] } = usePalettes();
   // A new gift starts on the theme's first suggested palette so it already looks good.
   const defaultPalette = suggestedPalettes(activeTheme ?? null, allPalettes)[0] ?? null;
-  const suggested = (activeTheme?.default_modules ?? []) as ModuleType[];
+  const suggested: ModuleType[] = activeTheme ? PRESETS[themeKindOf(activeTheme)] : [];
+  const [showMore, setShowMore] = useState(false);
+  const pool = MODULES.filter((mod) => !(solo && mod.type === "tree"));
+  const presetMods = suggested.map((t) => pool.find((m) => m.type === t)).filter((m): m is (typeof pool)[number] => !!m);
+  const others = pool.filter((m) => !suggested.includes(m.type));
+  const listed = !suggested.length || showMore ? [...presetMods, ...others] : [...presetMods, ...others.filter((m) => selected.includes(m.type))];
 
   // Pre-select the theme's suggested modules until the creator edits the list.
   useEffect(() => {
@@ -376,7 +384,7 @@ function CreatePage() {
 
             <div className="mt-5 grid gap-5 md:grid-cols-[1fr_250px] md:items-start">
               <div className="space-y-2">
-                {MODULES.filter((mod) => !(solo && mod.type === "tree")).map((mod) => {
+                {listed.map((mod) => {
                   const on = selected.includes(mod.type);
                   const active = previewed === mod.type;
                   return (
@@ -425,6 +433,19 @@ function CreatePage() {
                     </div>
                   );
                 })}
+                {suggested.length && !showMore && others.some((m) => !selected.includes(m.type)) ? (
+                  <button
+                    type="button"
+                    onClick={() => setShowMore(true)}
+                    className="w-full rounded-2xl border border-dashed border-ink/20 px-4 py-3 text-left text-[15px] font-medium hover:bg-paper"
+                  >
+                    Add more
+                    <span className="block text-xs font-normal text-ink/60">
+                      {others.filter((m) => !selected.includes(m.type)).length} more sections: {others.filter((m) => !selected.includes(m.type)).slice(0, 4).map((m) => m.label.toLowerCase()).join(", ")}…
+                    </span>
+                  </button>
+                ) : null}
+                <ChipInSoon />
               </div>
 
               <div className="hidden md:sticky md:top-24 md:block">

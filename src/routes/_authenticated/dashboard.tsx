@@ -79,7 +79,7 @@ function GiftCard({ site, index }: { site: GiftSite; index: number }) {
         <div className="flex items-center justify-between gap-3">
           <span className={`rounded-full px-3 py-1 text-xs font-medium ${s.tone}`}>{s.label}</span>
           <span className="font-mono text-[11px] text-muted">
-            {new Date(site.created_at).toLocaleDateString("en-PH", {
+            {new Date(site.created_at).toLocaleDateString(undefined, {
               month: "short",
               day: "numeric",
               year: "numeric",

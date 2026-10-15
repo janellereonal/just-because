@@ -42,6 +42,7 @@ export function demoSite(format: GiftFormat): GiftSite {
     share_notes: true,
     font_choice: "playful",
     countdown_date: inTen,
+    countdown_at: null,
     calendar_locked: false,
     intro_text: null,
     intro_settings: {},

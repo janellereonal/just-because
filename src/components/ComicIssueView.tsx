@@ -1,5 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { manilaMidnight } from "@/lib/giftPieces";
+import { giftMoment } from "@/lib/giftPieces";
+import { countdownTarget, formatDay } from "@/lib/time";
+import { NEW_SECTION_TYPES, isNewSection, sectionAsText } from "@/lib/sections";
 import { ChevronLeft, ChevronRight, List, Repeat2, Share2, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { signedMediaUrl, toEmbedUrl, type CalendarEntry, type GiftSite, type ModuleType, type SiteModule, type ViewContribution } from "@/lib/gift";
@@ -46,7 +48,8 @@ function CountdownPage({ site, palette }: { site: GiftSite; palette: Palette }) 
     const timer = window.setInterval(() => setNow(Date.now()), 1000);
     return () => window.clearInterval(timer);
   }, []);
-  const target = site.countdown_date ? manilaMidnight(site.countdown_date) : now + 86400000;
+  const end = countdownTarget(site);
+  const target = end ? giftMoment(end) : now + 86400000;
   const seconds = Math.max(0, Math.floor((target - now) / 1000));
   const done = seconds <= 0;
   useEffect(() => {
@@ -116,6 +119,13 @@ function ComicPanel({ item, palette, type }: { item: ViewContribution; palette: 
     return <article className="comic-panel p-5"><div className="comic-cassette"><span>▶</span><span className="comic-title">TRACK</span></div><div className="comic-bubble mt-4">{item.text_content || "Press play on this one."}</div>{embed ? <iframe src={embed} title={`Song from ${item.author_name}`} loading="lazy" allow="encrypted-media; clipboard-write; picture-in-picture" className="mt-3 h-[152px] w-full border-4 border-ink" /> : item.external_link ? <a className="mt-3 block font-bold underline" href={item.external_link} target="_blank" rel="noreferrer">Listen to the track →</a> : null}<p className="comic-caption mt-2">Selected by {item.author_name}</p></article>;
   }
   if (type === "voice") return <article className="comic-panel p-5"><p className="comic-title text-2xl">INCOMING TRANSMISSION</p>{media ? <audio controls src={media} className="mt-4 w-full" /> : null}<div className="comic-bubble mt-4">{item.text_content || "Audio message"}</div><p className="comic-caption mt-2">From {item.author_name}</p></article>;
+  if (isNewSection(type)) {
+    if (type === "video") return <article className="comic-panel overflow-hidden">{media ? <video controls playsInline preload="metadata" src={media} className="aspect-video w-full bg-ink" /> : null}<p className="comic-caption">{item.text_content || "Live footage"} · {item.author_name}</p></article>;
+    if (type === "doodle") return <article className="comic-panel overflow-hidden bg-white">{media ? <img src={media} alt={`A drawing by ${item.author_name}`} className="aspect-square w-full object-contain" /> : null}<p className="comic-caption">Fan art by {item.author_name}</p></article>;
+    const d = (item.data ?? {}) as Record<string, unknown>;
+    const body = type === "quiz" ? `${String(d["question"] ?? "")}\n\nAnswer: ${String(d["answer"] ?? "")}` : sectionAsText(type, item.data, item.text_content, (iso) => formatDay(iso));
+    return <article className="comic-panel p-5"><div className="comic-bubble whitespace-pre-line">{body}</div><p className="comic-caption mt-2">{item.author_name}</p></article>;
+  }
   if (type === "tree") return <article className="comic-panel grid min-h-56 place-items-center p-5 text-center"><span className="text-6xl">★</span><div className="comic-bubble">{item.text_content || "A secret ornament message"}</div><p className="comic-caption">Hung by {item.author_name}</p></article>;
   return <article className="comic-panel p-5"><p className="comic-title text-3xl">{item.text_content || "SECRET POWER"}</p><p className="comic-caption mt-4">From {item.author_name}</p></article>;
 }
@@ -146,7 +156,7 @@ export function ComicIssueView({ kind, site, modules, contributions, calendarEnt
   const pages = useMemo<ComicPage[]>(() => {
     const out: ComicPage[] = [];
     if (enabled.has("countdown")) out.push({ key: "countdown", chapter: COMIC_CHAPTERS.countdown, body: <CountdownPage site={site} palette={palette} /> });
-    const types: ModuleType[] = ["photobooth", "letters", "songs", "wordcloud", "voice", "calendar", "tree"];
+    const types: ModuleType[] = ["photobooth", "letters", "songs", "wordcloud", "voice", "calendar", "tree", ...NEW_SECTION_TYPES];
     for (const type of types) {
       if (!enabled.has(type)) continue;
       if (type === "calendar") {

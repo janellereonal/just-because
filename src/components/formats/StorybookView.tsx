@@ -4,7 +4,7 @@ import { ChevronLeft, ChevronRight, Lock, Mic, Music2 } from "lucide-react";
 import { FONT_PAIRINGS, toEmbedUrl } from "@/lib/gift";
 import { readableInk } from "@/lib/palettes";
 import {
-  manilaToday,
+  giftToday,
   useMediaUrl,
   usePieces,
   useReducedMotion,
@@ -24,7 +24,7 @@ type Page =
 function PieceBody({ piece, accent }: { piece: Piece; accent: string }) {
   const media = useMediaUrl(piece.media);
   const embed = piece.link ? toEmbedUrl(piece.link) : null;
-  const locked = piece.kind === "calendar" && !!piece.date && piece.date > manilaToday();
+  const locked = piece.kind === "calendar" && !!piece.date && piece.date > giftToday();
   if (piece.sealed || locked)
     return (
       <div className="sbk-sealed">

@@ -1,4 +1,9 @@
-import { lazy, Suspense, useEffect } from "react";
+import { lazy, Suspense, useEffect, useMemo, useRef } from "react";
+import { NewSections } from "@/components/sections/NewSections";
+import { FONT_PAIRINGS } from "@/lib/gift";
+import { readableInk } from "@/lib/palettes";
+import { resolveIconSet } from "@/themes/_shared/iconSets";
+import { castFor } from "@/themes/_shared/design";
 import { GiftSiteView } from "@/components/GiftSiteView";
 import { ComicIssueView } from "@/components/ComicIssueView";
 import {
@@ -74,9 +79,40 @@ type Props = Omit<FormatViewProps, "palette"> & {
 export function FormatView(props: Props) {
   const kind = themeKindOf(props.theme);
   useEffect(() => loadThemeFonts(kind), [kind]);
+  const tiles = props.site.format !== "scrapbook" && props.site.format !== "comic";
   return (
     <div className="contents" style={themeFontVars(kind)}>
       <FormatBody {...props} />
+      {tiles ? <TileExtras {...props} kind={kind} /> : null}
+    </div>
+  );
+}
+
+/** Video and quiz don't fit a tile, so the tile formats show them underneath. */
+function TileExtras(props: Props & { kind: ReturnType<typeof themeKindOf> }) {
+  const host = useRef<HTMLDivElement | null>(null);
+  const palette = props.palette ?? resolvePalette(props.theme, props.site.custom_colors);
+  const enabled = new Set(props.modules.filter((m) => m.enabled).map((m) => m.module_type as string));
+  const has = ["video", "quiz"].some((t) => enabled.has(t) && (props.sample || props.contributions.some((c) => c.module_type === t)));
+  const icons = useMemo(() => resolveIconSet(castFor(props.kind, null, props.site.icon_set ?? null).iconSet, { recipient: props.site.custom_text.recipient_name ?? "", palette }), [props.kind, props.site.icon_set, props.site.custom_text.recipient_name, palette]);
+  if (!has) return null;
+  return (
+    <div ref={host} className="relative overflow-hidden px-5 pt-4 pb-16" style={{ background: palette.background, color: readableInk(palette.background) }}>
+      <div className="mx-auto max-w-3xl">
+        <NewSections
+          kind={props.kind}
+          enabled={enabled}
+          contributions={props.contributions}
+          icons={icons}
+          hostRef={host}
+          sample={!!props.sample}
+          recipient={props.site.custom_text.recipient_name ?? ""}
+          siteId={props.site.id}
+          headingFont={(FONT_PAIRINGS[props.site.font_choice] ?? FONT_PAIRINGS.theme).heading}
+          accent={palette.accent}
+          only={["video", "quiz"]}
+        />
+      </div>
     </div>
   );
 }

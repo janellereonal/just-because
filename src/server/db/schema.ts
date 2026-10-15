@@ -130,6 +130,8 @@ export const giftSites = pgTable(
     shareNotes: boolean("share_notes").notNull().default(false),
     fontChoice: text("font_choice").notNull().default("theme"),
     countdownDate: date("countdown_date"),
+    /** The exact moment the countdown ends (UTC). Shown in each viewer's own zone. */
+    countdownAt: timestamp("countdown_at", { withTimezone: true }),
     calendarLocked: boolean("calendar_locked").notNull().default(false),
     introText: text("intro_text"),
     /** The star of the opening: { type: "library" | "upload", id, colors, accessory, name_tag, upload_url }. Null = theme default. */
@@ -240,6 +242,8 @@ export const contributions = pgTable(
     deviceId: uuid("device_id"),
     /** Added by the gift's creator from the editor (their own notes). */
     byOwner: boolean("by_owner").notNull().default(false),
+    /** Extra fields for the newer sections (see src/lib/sections.ts). */
+    data: jsonb("data"),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   },
   (t) => [index("contributions_site_idx").on(t.siteId), index("contributions_site_device_idx").on(t.siteId, t.deviceId)],
@@ -260,4 +264,44 @@ export const calendarEntries = pgTable(
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   },
   (t) => [unique("calendar_entries_site_date").on(t.siteId, t.entryDate)],
+);
+
+/**
+ * Chip-in fund (not live yet). Provider-agnostic on purpose: amounts are in
+ * minor units with an ISO currency, and the payment provider is just a name
+ * plus its own reference, so PayMongo, PayPal or anything else fits.
+ */
+export const giftFunds = pgTable("gift_funds", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  siteId: uuid("site_id")
+    .notNull()
+    .unique()
+    .references(() => giftSites.id, { onDelete: "cascade" }),
+  title: text("title"),
+  goalMinor: integer("goal_minor"),
+  currency: text("currency").notNull().default("USD"),
+  /** draft | open | closed | paid_out */
+  status: text("status").notNull().default("draft"),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
+export const fundPledges = pgTable(
+  "fund_pledges",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    fundId: uuid("fund_id")
+      .notNull()
+      .references(() => giftFunds.id, { onDelete: "cascade" }),
+    authorName: text("author_name").notNull(),
+    amountMinor: integer("amount_minor").notNull(),
+    currency: text("currency").notNull(),
+    /** e.g. "paymongo", "paypal". Null until a provider is chosen. */
+    provider: text("provider"),
+    providerRef: text("provider_ref"),
+    /** pending | paid | refunded | failed */
+    status: text("status").notNull().default("pending"),
+    message: text("message"),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [index("fund_pledges_fund_idx").on(t.fundId)],
 );

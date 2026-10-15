@@ -26,10 +26,17 @@ import { FormatView } from "@/components/formats/FormatView";
 import { DevicePreview, DeviceToggle, type PreviewDevice } from "@/components/DevicePreview";
 import { ModuleExample } from "@/components/ModuleExample";
 import Bo from "@/components/Bo";
-import { CalendarDays, Image as ImageIcon, Lock, Mail, Mic, Music2, Sparkles, Type, Users } from "lucide-react";
+import { Brush, CalendarDays, CircleHelp, Hourglass, Image as ImageIcon, Lock, Mail, MailOpen, MapPin, Mic, Music2, Sparkles, Ticket, Trophy, Type, Users, Video } from "lucide-react";
+import { SectionFields } from "@/components/sections/SectionFields";
+import { SECTION_NEEDS, isNewSection, normalizeSectionData } from "@/lib/sections";
 import { meshGradient } from "@/lib/giftPieces";
 
-const MODULE_ICON: Partial<Record<ModuleType, typeof Mail>> = { letters: Mail, photobooth: ImageIcon, songs: Music2, wordcloud: Type, voice: Mic, tree: Sparkles, calendar: CalendarDays };
+const MODULE_ICON: Partial<Record<ModuleType, typeof Mail>> = {
+  letters: Mail, photobooth: ImageIcon, songs: Music2, wordcloud: Type, voice: Mic, tree: Sparkles, calendar: CalendarDays,
+  openwhen: MailOpen, capsule: Hourglass, superlatives: Trophy, quiz: CircleHelp, map: MapPin, coupons: Ticket, video: Video, doodle: Brush,
+};
+/** Short tab names for the newer sections. */
+const SHORT: Partial<Record<ModuleType, string>> = { openwhen: "Open-when", capsule: "Time capsule", superlatives: "Award", quiz: "Quiz", map: "Memory pin", coupons: "Coupon", video: "Video", doodle: "Doodle" };
 import { PageError, PageLoading, PageNotFound } from "@/components/PageStates";
 
 
@@ -45,6 +52,7 @@ type MineRecord = {
   external_link: string | null;
   ornament_key: OrnamentKey | null;
   visibility: "public" | "recipient";
+  data?: Record<string, unknown> | null;
   created_at: string;
 };
 
@@ -81,6 +89,7 @@ function toView(record: MineRecord, siteId: string): ViewContribution {
     created_at: record.created_at,
     ornament_key: record.ornament_key,
     visibility: record.visibility,
+    data: record.data ?? null,
     mine: true,
   };
 }
@@ -146,6 +155,7 @@ function ContributePage() {
   const [visibility, setVisibility] = useState<"public" | "recipient">("public");
   const [treeStep, setTreeStep] = useState<1 | 2>(1);
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [sectionData, setSectionData] = useState<Record<string, unknown>>({});
   const giftRef = useRef<HTMLDivElement | null>(null);
   const [device, setDevice] = useState<PreviewDevice>("phone");
 
@@ -260,6 +270,7 @@ function ContributePage() {
     setFile(null);
     setTreeStep(1);
     setEditingId(null);
+    setSectionData({});
   }
 
   function startEdit(record: MineRecord) {
@@ -271,6 +282,7 @@ function ContributePage() {
     setVisibility(record.visibility);
     setFile(null);
     if (record.ornament_key) setOrnament(record.ornament_key);
+    setSectionData(record.data ?? {});
     setTreeStep(2);
     setDone(false);
   }
@@ -317,6 +329,24 @@ function ContributePage() {
       toast.error("Please leave a message for your ornament.");
       return;
     }
+    let cleanData: Record<string, unknown> | null = null;
+    if (isNewSection(active)) {
+      const needs = SECTION_NEEDS[active];
+      const clean = normalizeSectionData(active, sectionData);
+      if (!clean) {
+        toast.error(active === "capsule" ? "Pick a date at least a day away." : active === "quiz" ? "Add the question, the right answer and at least one wrong one." : "Fill in the first field, please.");
+        return;
+      }
+      if (needs.text === "required" && !text.trim()) {
+        toast.error("Write a few words first.");
+        return;
+      }
+      if (needs.media === "required" && !file && !editingId) {
+        toast.error(active === "doodle" ? "Draw a little something first." : "Choose the file first.");
+        return;
+      }
+      cleanData = clean as Record<string, unknown>;
+    }
     setBusy(true);
     let mediaPath: string | null = null;
     if (file) {
@@ -343,6 +373,7 @@ function ContributePage() {
           externalLink: link.trim() || null,
           mediaUrl: mediaPath,
           visibility: active === "tree" ? visibility : "public",
+          ...(cleanData ? { data: cleanData as Record<string, never> } : {}),
         },
       }).catch(() => null);
       setBusy(false);
@@ -358,6 +389,7 @@ function ContributePage() {
               external_link: link.trim() || null,
               media_url: mediaPath ?? m.media_url,
               visibility: active === "tree" ? visibility : m.visibility,
+              data: cleanData ?? m.data ?? null,
             }
           : m,
       );
@@ -394,6 +426,7 @@ function ContributePage() {
           ornamentKey: active === "tree" ? ornament : null,
           visibility: active === "tree" ? visibility : "public",
           deviceId: getDeviceId(),
+          data: (cleanData as Record<string, never> | null) ?? null,
         },
       });
       full = result.full;
@@ -420,6 +453,7 @@ function ContributePage() {
       external_link: link.trim() || null,
       ornament_key: active === "tree" ? ornament : null,
       visibility: active === "tree" ? visibility : "public",
+      data: cleanData,
       created_at: new Date().toISOString(),
     };
     const next = [...mine, record];
@@ -540,19 +574,20 @@ function ContributePage() {
                       onClick={() => {
                         setModuleType(mod.type);
                         setEditingId(null);
+                        setSectionData({});
                         if (mod.type === "tree") setTreeStep(1);
                       }}
                       className="flex flex-col items-center gap-1.5 rounded-2xl px-2 py-3 text-center text-[13px] leading-tight font-medium transition-transform hover:-translate-y-0.5"
                       style={on ? { backgroundColor: palette.accent, color: onAccent } : { backgroundColor: palette.background, color: ink, boxShadow: `inset 0 0 0 1px ${ink}1a` }}
                     >
                       <Icon className="size-5" />
-                      {mod.label === "Voice messages" ? "Voice note" : mod.label === "Word cloud" ? "A word" : mod.label === "Photobooth" ? "Photo" : mod.label === "Letters" ? "Letter" : mod.label === "Songs" ? "Song" : mod.label}
+                      {SHORT[mod.type] ?? (mod.label === "Voice messages" ? "Voice note" : mod.label === "Word cloud" ? "A word" : mod.label === "Photobooth" ? "Photo" : mod.label === "Letters" ? "Letter" : mod.label === "Songs" ? "Song" : mod.label)}
                     </button>
                   );
                 })}
               </div>
 
-              {active ? (
+              {active && !isNewSection(active) ? (
                 <div className="mt-5 max-w-[260px]">
                   <p className="mb-2 text-xs opacity-70">It'll look something like this</p>
                   <ModuleExample
@@ -722,7 +757,22 @@ function ContributePage() {
                 </>
               ) : null}
 
-              {active !== "tree" || treeStep === 2 ? (
+              {active && isNewSection(active) ? (
+                <SectionFields
+                  type={active}
+                  data={sectionData}
+                  onData={setSectionData}
+                  text={text}
+                  onText={setText}
+                  file={file}
+                  onFile={setFile}
+                  fieldStyle={fieldStyle}
+                  accent={palette.accent}
+                  onAccent={onAccent}
+                />
+              ) : null}
+
+              {active === "tree" && treeStep === 2 ? (
                 <fieldset className="mt-4">
                   <legend className="text-sm font-medium">Who can read this?</legend>
                   <div className="mt-2 grid grid-cols-2 gap-2">
@@ -774,7 +824,7 @@ function ContributePage() {
                 {mine.map((record) => (
                   <li key={record.id} className="flex items-center justify-between gap-3">
                     <span className="min-w-0 flex-1 truncate opacity-85">
-                      {record.text_content || record.external_link || record.media_url || "Your item"}
+                      {record.text_content || String(Object.values(record.data ?? {}).find((v) => typeof v === "string") ?? "") || record.external_link || (record.media_url ? "A file" : "Your item")}
                     </span>
                     {canEdit ? (
                       <span className="flex shrink-0 gap-3 text-xs">

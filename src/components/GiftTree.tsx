@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { localToday } from "@/lib/time";
 import Bo from "@/components/Bo";
 import { ORNAMENTS, type ViewContribution } from "@/lib/gift";
 import { readableInk } from "@/lib/palettes";
@@ -35,7 +36,7 @@ export function GiftTree({
   const [open, setOpen] = useState<ViewContribution | null>(null);
   const pages = Math.max(1, Math.ceil(items.length / 12));
   const visible = items.slice(page * 12, page * 12 + 12);
-  const today = new Date().toISOString().slice(0, 10);
+  const today = localToday();
   const dateLocked = !!revealDate && revealDate > today;
 
   function select(item: ViewContribution) {

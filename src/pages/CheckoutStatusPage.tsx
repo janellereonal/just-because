@@ -84,7 +84,7 @@ function CheckoutStatusPage() {
         {order.kind === "extend" && order.site?.expiresAt ? (
           <p className="mt-1 text-ink/70">
             It now stays open until{" "}
-            {new Date(order.site.expiresAt).toLocaleDateString("en-PH", {
+            {new Date(order.site.expiresAt).toLocaleDateString(undefined, {
               month: "long",
               day: "numeric",
               year: "numeric",

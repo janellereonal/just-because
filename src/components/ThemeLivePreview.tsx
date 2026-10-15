@@ -110,6 +110,7 @@ export function buildPreviewSite(theme: Theme, palette: Palette | undefined): Gi
     share_notes: false,
     font_choice: themeFont(theme),
     countdown_date: new Date(Date.now() + 12 * 86400000).toISOString().slice(0, 10),
+    countdown_at: null,
     calendar_locked: false,
     intro_text: null,
     intro_settings: {},

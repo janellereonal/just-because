@@ -112,7 +112,7 @@ export function PlanPickerDialog({
 }
 
 function shortDate(iso: string) {
-  return new Date(iso).toLocaleDateString("en-PH", { month: "short", day: "numeric", year: "numeric" });
+  return new Date(iso).toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" });
 }
 
 /** Pay to keep a gift open for another stretch of its plan. Works before or after it ends. */
@@ -310,7 +310,7 @@ export function planSummary(billing: Billing | undefined): string | null {
   if (!tier) return null;
   if (billing.ended) return `${tier.name} plan, ended`;
   const until = billing.expiresAt
-    ? new Date(billing.expiresAt).toLocaleDateString("en-PH", { month: "short", day: "numeric", year: "numeric" })
+    ? new Date(billing.expiresAt).toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" })
     : null;
   return until ? `${tier.name} plan, open until ${until}` : `${tier.name} plan`;
 }

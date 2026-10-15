@@ -21,6 +21,7 @@ import { FORMAT_IDS } from "@/lib/formats";
 import { normalizeIntroSettings } from "@/lib/intro";
 import { normalizeCharacter } from "@/themes/_shared/cast/types";
 import { normalizeIconSetting } from "@/themes/_shared/iconSets";
+import { NEW_SECTION_TYPES, SECTION_NEEDS, capsuleLocked, isNewSection, normalizeSectionData } from "@/lib/sections";
 import { createServerFn } from "@tanstack/react-start";
 import { and, asc, desc, eq, inArray, ne, or, sql } from "drizzle-orm";
 import { z } from "zod";
@@ -66,8 +67,27 @@ const MODULE_TYPES = [
   "countdown",
   "calendar",
   "tree",
+  ...NEW_SECTION_TYPES,
 ] as const;
-const GUEST_TYPES = ["letters", "photobooth", "songs", "wordcloud", "voice", "tree"] as const;
+const GUEST_TYPES = ["letters", "photobooth", "songs", "wordcloud", "voice", "tree", ...NEW_SECTION_TYPES] as const;
+const OWNER_NOTE_TYPES = ["letters", "photobooth", "songs", "wordcloud", "voice", ...NEW_SECTION_TYPES] as const;
+
+/** Clean `data` for a section and check it has what it needs. Throws a friendly 400. */
+function sectionPayload(type: string, raw: unknown, text: string | null, media: string | null) {
+  if (!isNewSection(type)) return null;
+  const clean = normalizeSectionData(type, raw);
+  if (!clean) throw new HttpError(400, "Something's missing in that note. Check the fields and try again.");
+  const needs = SECTION_NEEDS[type];
+  if (needs.text === "required" && !text?.trim()) throw new HttpError(400, "Write a few words first.");
+  if (needs.media === "required" && !media) throw new HttpError(400, "Add the file first.");
+  return clean;
+}
+
+/** Public rows: a time capsule that hasn't opened keeps its words and pictures on the server. */
+function sealCapsule<T extends { moduleType: string; data: unknown; textContent: string | null; mediaUrl: string | null }>(row: T): T {
+  if (row.moduleType !== "capsule" || !capsuleLocked(row.data)) return row;
+  return { ...row, textContent: null, mediaUrl: null, data: { ...(row.data as object), locked: true } };
+}
 const ORNAMENT_KEYS = [
   "bauble", "star", "stocking", "candy-cane", "snowman", "gingerbread", "bell", "wreath",
   "mitten", "snow-globe", "gift", "heart", "candy", "cookie", "pinecone", "angel",
@@ -335,6 +355,7 @@ export const updateSite = createServerFn({ method: "POST" })
         custom_colors: paletteShape,
         font_choice: z.enum(["theme", "romantic", "playful", "modern", "handwritten"]),
         countdown_date: date,
+        countdown_at: z.string().datetime({ offset: true }).nullable().optional(),
         calendar_locked: z.boolean(),
         intro_text: z.string().max(2000).nullable(),
         background_style: z.enum(["paper", "clean", "formal", "gradient"]),
@@ -371,6 +392,7 @@ export const updateSite = createServerFn({ method: "POST" })
         customColors: p.custom_colors,
         fontChoice: p.font_choice,
         countdownDate: p.countdown_date,
+        ...(p.countdown_at !== undefined ? { countdownAt: p.countdown_at ? new Date(p.countdown_at) : null } : {}),
         calendarLocked: p.calendar_locked,
         introText: p.intro_text,
         backgroundStyle: p.background_style,
@@ -467,6 +489,7 @@ const publicColumns = {
   ornamentKey: c.ornamentKey,
   visibility: c.visibility,
   byOwner: c.byOwner,
+  data: c.data,
   createdAt: c.createdAt,
 };
 
@@ -499,7 +522,7 @@ export const listContributions = createServerFn({ method: "GET" })
         ),
       )
       .orderBy(asc(c.createdAt));
-    return rows.map(toRow);
+    return rows.map((r) => toRow(sealCapsule(r)));
   });
 
 /** Name, section and position only. Never other people's words, photos or audio. */
@@ -562,10 +585,13 @@ export const submitContribution = createServerFn({ method: "POST" })
       visibility: z.enum(["public", "recipient"]),
       /** Random id from the friend's browser, used only for counting contributors. Optional for old clients. */
       deviceId: id.nullable().optional(),
+      /** Extra fields for the newer sections. */
+      data: jsonObject.nullable().optional(),
     }),
   )
   .handler(async ({ data }) => {
     const db = getDb();
+    const sectionData = sectionPayload(data.moduleType, data.data, data.textContent, data.mediaUrl);
     const [site] = await db.select().from(schema.giftSites).where(eq(schema.giftSites.id, data.siteId));
     if (!site) throw new HttpError(404, "We couldn't find that gift.");
     if (site.solo) throw new HttpError(403, "This gift is just from one person, so it isn't taking notes from friends.");
@@ -591,6 +617,7 @@ export const submitContribution = createServerFn({ method: "POST" })
       visibility: data.moduleType === "tree" ? data.visibility : "public",
       editToken: data.editToken,
       deviceId,
+      data: sectionData,
     });
     await notifyNewNote(data.siteId, data.authorName).catch((e) => console.error("[notify]", e));
     return { ok: true as const, full: null };
@@ -606,15 +633,17 @@ export const saveOwnerNote = createServerFn({ method: "POST" })
     z.object({
       id,
       siteId: id,
-      moduleType: z.enum(["letters", "photobooth", "songs", "wordcloud", "voice"]),
+      moduleType: z.enum(OWNER_NOTE_TYPES),
       authorName: z.string().trim().min(1).max(120),
       textContent: shortText,
       mediaUrl,
       externalLink: link,
+      data: jsonObject.nullable().optional(),
     }),
   )
   .handler(async ({ data }) => {
     await requireSiteOwner(data.siteId);
+    const sectionData = sectionPayload(data.moduleType, data.data, data.textContent, data.mediaUrl);
     const db = getDb();
     const [existing] = await db
       .select({ siteId: c.siteId, byOwner: c.byOwner })
@@ -631,6 +660,7 @@ export const saveOwnerNote = createServerFn({ method: "POST" })
           textContent: data.textContent,
           mediaUrl: data.mediaUrl,
           externalLink: data.externalLink,
+          data: sectionData,
         })
         .where(eq(c.id, data.id));
       return { ok: true as const, full: null };
@@ -658,6 +688,7 @@ export const saveOwnerNote = createServerFn({ method: "POST" })
       status: "approved",
       visibility: "public",
       byOwner: true,
+      data: sectionData,
     });
     return { ok: true as const, full: null };
   });
@@ -989,11 +1020,13 @@ export const updateOwnContribution = createServerFn({ method: "POST" })
       externalLink: link,
       mediaUrl,
       visibility: z.enum(["public", "recipient"]).nullable(),
+      data: jsonObject.nullable().optional(),
     }),
   )
   .handler(async ({ data }) => {
     const row = await ownDraftContribution(data.id, data.token);
     if (!row) return { ok: false };
+    const sectionData = data.data !== undefined ? sectionPayload(row.moduleType, data.data, data.textContent, data.mediaUrl ?? "keep") : undefined;
     await getDb()
       .update(c)
       .set({
@@ -1001,6 +1034,7 @@ export const updateOwnContribution = createServerFn({ method: "POST" })
         externalLink: data.externalLink,
         ...(data.mediaUrl ? { mediaUrl: data.mediaUrl } : {}),
         ...(row.moduleType === "tree" && data.visibility ? { visibility: data.visibility } : {}),
+        ...(sectionData !== undefined ? { data: sectionData } : {}),
         status: "pending",
       })
       .where(eq(c.id, data.id));
