@@ -76,7 +76,7 @@ function PhotoCard({ item, accent }: { item: Contribution; accent: string }) {
             </span>
           </span>
           <span className="sb-flip-back rounded-[3px] bg-[var(--gift-surface)]">
-            <span className="sb-hand text-[clamp(1.25rem,5cqi,1.6rem)] leading-tight">
+            <span className="sb-hand line-clamp-5 text-[clamp(.95rem,3.6cqi,1.2rem)] leading-snug">
               {caption || "No words needed."}
             </span>
             <span className="sb-hand text-lg" style={{ color: accent }}>

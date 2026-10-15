@@ -83,8 +83,8 @@ function ShufflingPolaroids() {
   const [order, setOrder] = useState([0, 1, 2]);
   const photos = [
     { src: "/demo/cake.webp", cap: "The cake" },
-    { src: "/demo/city.webp", cap: "Rainy week" },
-    { src: "/demo/mountains.webp", cap: "Sunrise hike" },
+    { src: "/demo/tram.webp", cap: "Rainy week" },
+    { src: "/demo/hike.webp", cap: "Sunrise hike" },
   ];
   useEffect(() => {
     if (reduce) return;

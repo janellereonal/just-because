@@ -95,3 +95,5 @@
 .jb-steam { animation: jb-steam 2.8s cubic-bezier(.45,.05,.55,.95) infinite; }
 @keyframes jb-steam { 0%, 100% { transform: translateY(0); opacity: .55; } 50% { transform: translateY(-3px); opacity: .25; } }
 @media (prefers-reduced-motion: reduce) { .jb-wag, .jb-steam { animation: none; } }
+/* The back of a polaroid never makes the card taller than its photo. */
+.sb-flip-card > .sb-flip-back { position: absolute; inset: 0; overflow: hidden; }

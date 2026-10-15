@@ -154,7 +154,7 @@ export function BirthdayOpening(p: OpeningProps) {
 
       <Layer depth={8} rotate={4} className="relative mt-2" style={{ width: "min(78cqi, 360px)" }}>
         {/* The character dances beside the cake */}
-        <div className="absolute -left-[3%] bottom-[2%] z-[4]">
+        <div className="absolute -right-[8%] -bottom-[6%] z-[4]">
           <Character ref={cast} setting={p.character} accessory={p.accessory} size={84} live={!p.paused} showName={false} />
         </div>
 

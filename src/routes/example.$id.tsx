@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { FormatView } from "@/components/formats/FormatView";
 import { PageNotFound } from "@/components/PageStates";
@@ -22,12 +22,16 @@ export const Route = createFileRoute("/example/$id")({
 /** A whole example gift: open it with your hands, then scroll the notes. */
 function ExamplePage() {
   const { id } = Route.useParams();
+  // ?open=1 skips straight to the gift (handy for links that should land on the notes).
   const [opened, setOpened] = useState(false);
+  useEffect(() => {
+    if (new URLSearchParams(window.location.search).has("open")) setOpened(true);
+  }, []);
   if (!isDemoId(id)) return <PageNotFound message="We don't have that example." />;
   const g = DEMO_GIFTS[id];
   return (
     <div className="min-h-screen">
-      <div className="fixed inset-x-0 bottom-3 z-[70] flex justify-center px-3">
+      <div className={`fixed inset-x-0 bottom-3 z-[70] flex justify-center px-3 transition-opacity duration-500 ${opened ? "opacity-100" : "pointer-events-none opacity-0"}`}>
         <div className="flex items-center gap-3 rounded-full bg-ink/90 py-1.5 pr-1.5 pl-4 text-sm text-cream shadow-lg backdrop-blur">
           <span>{LANDING.example.banner}</span>
           <Link to="/themes" className="rounded-full bg-accent px-3.5 py-1.5 font-medium">
