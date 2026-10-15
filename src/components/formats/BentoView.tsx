@@ -1,3 +1,4 @@
+import { giftVoice } from "@/lib/giftVoice";
 import { useEffect, useRef, useState } from "react";
 import { Theme3D } from "@/components/Theme3D";
 import { themeKindOf } from "@/lib/themeKind";
@@ -239,6 +240,7 @@ export function BentoView({
 }: FormatViewProps) {
   const reduce = useReducedMotion();
   const data = usePieces({ site, modules, contributions, calendarEntries, sample });
+  const voice = giftVoice(site.solo);
   const fonts = FONT_PAIRINGS[site.font_choice] ?? FONT_PAIRINGS.playful;
   const cd = useCountdown(data.countdownDate);
   const [open, setOpen] = useState<Piece | null>(null);
@@ -247,7 +249,7 @@ export function BentoView({
   const intro =
     site.custom_text.intro_message?.trim() ||
     site.intro_text ||
-    `Everyone who loves you put something in here, ${data.name}. Take your time.`;
+    voice.intro(data.name);
   let i = 0;
 
   return (
@@ -335,10 +337,10 @@ export function BentoView({
               className="text-5xl leading-none font-semibold"
               style={{ fontFamily: fonts.heading }}
             >
-              {data.friends.length || (data.isSample ? 6 : 0)}
+              {voice.solo ? "♥" : data.friends.length || (data.isSample ? 6 : 0)}
             </p>
             <p className="text-sm opacity-75">
-              {data.friends.length === 1 ? "friend" : "friends"} · {data.notes.length}{" "}
+              {voice.solo ? (data.friends[0] ?? "me") : data.friends.length === 1 ? "friend" : "friends"} · {data.notes.length}{" "}
               {data.notes.length === 1 ? "piece" : "pieces"}
             </p>
           </div>
@@ -379,7 +381,7 @@ export function BentoView({
           {data.notes.length === 0 && !data.words.length ? (
             <div className="bento-tile bento-wide grid place-items-center text-center">
               <p className="max-w-xs text-base opacity-80">
-                Notes from friends will show up here as tiles.
+                {voice.empty("tiles")}
               </p>
             </div>
           ) : null}

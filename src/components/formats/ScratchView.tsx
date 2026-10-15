@@ -1,3 +1,4 @@
+import { giftVoice } from "@/lib/giftVoice";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Lock, Mic, Music2, Sparkles } from "lucide-react";
 import { FONT_PAIRINGS } from "@/lib/gift";
@@ -285,6 +286,7 @@ export function ScratchView({
   showShare,
 }: FormatViewProps) {
   const data = usePieces({ site, modules, contributions, calendarEntries, sample });
+  const voice = giftVoice(site.solo);
   const reduce = useReducedMotion();
   const fonts = FONT_PAIRINGS[site.font_choice] ?? FONT_PAIRINGS.romantic;
   const { done, add } = useScratched(site.id, !!sample);
@@ -375,7 +377,7 @@ export function ScratchView({
             <p className="mt-2">{site.custom_text.footer_note}</p>
           ) : null}
           {data.isSample ? (
-            <p className="mt-2 opacity-70">Sample cards, replaced when friends add theirs</p>
+            <p className="mt-2 opacity-70">{voice.sample}</p>
           ) : null}
           {showShare ? (
             <button

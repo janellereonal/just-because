@@ -128,10 +128,16 @@ export const giftSites = pgTable(
     customColors: jsonb("custom_colors").notNull().default(sql`'{}'::jsonb`),
     paletteId: uuid("palette_id").references(() => palettes.id),
     shareNotes: boolean("share_notes").notNull().default(false),
-    fontChoice: text("font_choice").notNull().default("romantic"),
+    fontChoice: text("font_choice").notNull().default("theme"),
     countdownDate: date("countdown_date"),
     calendarLocked: boolean("calendar_locked").notNull().default(false),
     introText: text("intro_text"),
+    /** The star of the opening: { type: "library" | "upload", id, colors, accessory, name_tag, upload_url }. Null = theme default. */
+    character: jsonb("character"),
+    /** The particles: { id } for a built-in set or { custom: [emoji or url] }. Null = theme default. */
+    iconSet: jsonb("icon_set"),
+    /** Just from the creator (no friends link). They add every note themselves. */
+    solo: boolean("solo").notNull().default(false),
     /** The creator's custom opening: object, stickers, colors, background, button words. */
     introSettings: jsonb("intro_settings").notNull().default(sql`'{}'::jsonb`),
     backgroundStyle: text("background_style").notNull().default("paper"),
@@ -232,6 +238,8 @@ export const contributions = pgTable(
      * contributors for plan caps. Never sent back to the browser. Null on old rows.
      */
     deviceId: uuid("device_id"),
+    /** Added by the gift's creator from the editor (their own notes). */
+    byOwner: boolean("by_owner").notNull().default(false),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   },
   (t) => [index("contributions_site_idx").on(t.siteId), index("contributions_site_device_idx").on(t.siteId, t.deviceId)],

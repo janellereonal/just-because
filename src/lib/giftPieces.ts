@@ -94,7 +94,7 @@ export function useReducedMotion() {
   return reduce;
 }
 
-function samples(name: string, enabled: Set<ModuleType>): Piece[] {
+function samples(name: string, enabled: Set<ModuleType>, solo = false): Piece[] {
   const base = { media: null, link: null, sealed: false, mine: false, sample: true };
   const out: Piece[] = [];
   if (enabled.has("letters"))
@@ -133,6 +133,7 @@ function samples(name: string, enabled: Set<ModuleType>): Piece[] {
   if (enabled.has("wordcloud"))
     for (const [i, w] of ["kind", "funny", "brave", "home"].entries())
       out.push({ ...base, id: `s-w${i}`, kind: "word", author: "Friends", text: w });
+  if (solo) for (const p of out) p.author = "You";
   if (enabled.has("tree"))
     out.push({
       ...base,
@@ -198,7 +199,7 @@ export function usePieces({
           date: e.entry_date.slice(0, 10),
         })),
       );
-    if (!pieces.length && sample) pieces = samples(name, enabled);
+    if (!pieces.length && sample) pieces = samples(name, enabled, site.solo);
 
     // Interleave: notes, then a photo, then a song… so tiles feel varied.
     const buckets = new Map<PieceKind, Piece[]>();

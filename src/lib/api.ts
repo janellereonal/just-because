@@ -19,6 +19,8 @@
  */
 import { FORMAT_IDS } from "@/lib/formats";
 import { normalizeIntroSettings } from "@/lib/intro";
+import { normalizeCharacter } from "@/themes/_shared/cast/types";
+import { normalizeIconSetting } from "@/themes/_shared/iconSets";
 import { createServerFn } from "@tanstack/react-start";
 import { and, asc, desc, eq, inArray, ne, or, sql } from "drizzle-orm";
 import { z } from "zod";
@@ -288,7 +290,9 @@ export const createSite = createServerFn({ method: "POST" })
       customColors: paletteShape,
       treeRevealDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).nullable(),
       modules: z.array(z.enum(MODULE_TYPES)).min(1),
-      fontChoice: z.enum(["romantic", "playful", "modern", "handwritten"]).optional(),
+      fontChoice: z.enum(["theme", "romantic", "playful", "modern", "handwritten"]).optional(),
+      /** Just from the creator: no friends link, they add every note. */
+      solo: z.boolean().optional(),
     }),
   )
   .handler(async ({ data }) => {
@@ -308,6 +312,7 @@ export const createSite = createServerFn({ method: "POST" })
           customColors: data.customColors,
           treeRevealDate: data.treeRevealDate,
           ...(data.fontChoice ? { fontChoice: data.fontChoice } : {}),
+          solo: data.solo ?? false,
         })
         .returning({ id: schema.giftSites.id });
       const unique = [...new Set(data.modules)];
@@ -328,7 +333,7 @@ export const updateSite = createServerFn({ method: "POST" })
         title: z.string().trim().min(1).max(200),
         custom_text: jsonObject,
         custom_colors: paletteShape,
-        font_choice: z.enum(["romantic", "playful", "modern", "handwritten"]),
+        font_choice: z.enum(["theme", "romantic", "playful", "modern", "handwritten"]),
         countdown_date: date,
         calendar_locked: z.boolean(),
         intro_text: z.string().max(2000).nullable(),
@@ -339,6 +344,7 @@ export const updateSite = createServerFn({ method: "POST" })
         status: z.enum(["draft", "published"]).optional(),
         format: z.enum(FORMAT_IDS),
         format_settings: jsonObject,
+        solo: z.boolean().optional(),
       }),
     }),
   )
@@ -374,6 +380,7 @@ export const updateSite = createServerFn({ method: "POST" })
         ...(p.status ? { status: p.status } : {}),
         format: p.format,
         formatSettings: p.format_settings,
+        ...(p.solo !== undefined ? { solo: p.solo } : {}),
       })
       .where(eq(schema.giftSites.id, data.id));
     return { ok: true };
@@ -391,6 +398,20 @@ export const updateIntroSettings = createServerFn({ method: "POST" })
       .set({ introSettings: settings })
       .where(eq(schema.giftSites.id, data.id));
     return { ok: true, settings };
+  });
+
+/** The gift's cast: its character and icon set. Cleaned server side; null = theme default. */
+export const updateCast = createServerFn({ method: "POST" })
+  .inputValidator(z.object({ id, character: jsonObject.nullable(), iconSet: jsonObject.nullable() }))
+  .handler(async ({ data }) => {
+    await requireSiteOwner(data.id);
+    const character = data.character ? normalizeCharacter(data.character) : null;
+    const iconSet = data.iconSet ? normalizeIconSetting(data.iconSet) : null;
+    await getDb()
+      .update(schema.giftSites)
+      .set({ character, iconSet })
+      .where(eq(schema.giftSites.id, data.id));
+    return { ok: true, character, iconSet };
   });
 
 export const deleteSite = createServerFn({ method: "POST" })
@@ -445,6 +466,7 @@ const publicColumns = {
   status: c.status,
   ornamentKey: c.ornamentKey,
   visibility: c.visibility,
+  byOwner: c.byOwner,
   createdAt: c.createdAt,
 };
 
@@ -546,6 +568,7 @@ export const submitContribution = createServerFn({ method: "POST" })
     const db = getDb();
     const [site] = await db.select().from(schema.giftSites).where(eq(schema.giftSites.id, data.siteId));
     if (!site) throw new HttpError(404, "We couldn't find that gift.");
+    if (site.solo) throw new HttpError(403, "This gift is just from one person, so it isn't taking notes from friends.");
     // Paid plans have caps. Tell the friend kindly instead of failing.
     const deviceId = data.deviceId ?? null;
     const room = await checkRoom(site, data.authorName, data.moduleType, deviceId);
@@ -570,6 +593,72 @@ export const submitContribution = createServerFn({ method: "POST" })
       deviceId,
     });
     await notifyNewNote(data.siteId, data.authorName).catch((e) => console.error("[notify]", e));
+    return { ok: true as const, full: null };
+  });
+
+/**
+ * The creator's own notes, added from the editor (the whole gift on "Just me"
+ * gifts). Approved straight away. Create when `id` is new, edit when it's one
+ * of their own notes on this gift.
+ */
+export const saveOwnerNote = createServerFn({ method: "POST" })
+  .inputValidator(
+    z.object({
+      id,
+      siteId: id,
+      moduleType: z.enum(["letters", "photobooth", "songs", "wordcloud", "voice"]),
+      authorName: z.string().trim().min(1).max(120),
+      textContent: shortText,
+      mediaUrl,
+      externalLink: link,
+    }),
+  )
+  .handler(async ({ data }) => {
+    await requireSiteOwner(data.siteId);
+    const db = getDb();
+    const [existing] = await db
+      .select({ siteId: c.siteId, byOwner: c.byOwner })
+      .from(c)
+      .where(eq(c.id, data.id));
+    if (existing) {
+      if (existing.siteId !== data.siteId || !existing.byOwner)
+        throw new HttpError(403, "You can only edit your own notes here.");
+      await db
+        .update(c)
+        .set({
+          moduleType: data.moduleType,
+          authorName: data.authorName,
+          textContent: data.textContent,
+          mediaUrl: data.mediaUrl,
+          externalLink: data.externalLink,
+        })
+        .where(eq(c.id, data.id));
+      return { ok: true as const, full: null };
+    }
+    const [site] = await db.select().from(schema.giftSites).where(eq(schema.giftSites.id, data.siteId));
+    if (!site) throw new HttpError(404, "We couldn't find that gift.");
+    const room = await checkRoom(site, data.authorName, data.moduleType, null);
+    if (!room.ok) return { ok: false as const, full: room.reason };
+    // Turn the section on if it isn't yet, so the note actually shows.
+    await db
+      .insert(schema.siteModules)
+      .values({ siteId: data.siteId, moduleType: data.moduleType, price: "0", enabled: true })
+      .onConflictDoUpdate({
+        target: [schema.siteModules.siteId, schema.siteModules.moduleType],
+        set: { enabled: true },
+      });
+    await db.insert(c).values({
+      id: data.id,
+      siteId: data.siteId,
+      moduleType: data.moduleType,
+      authorName: data.authorName,
+      textContent: data.textContent,
+      mediaUrl: data.mediaUrl,
+      externalLink: data.externalLink,
+      status: "approved",
+      visibility: "public",
+      byOwner: true,
+    });
     return { ok: true as const, full: null };
   });
 

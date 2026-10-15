@@ -1,0 +1,1 @@
+ALTER TABLE "gift_sites" ALTER COLUMN "font_choice" SET DEFAULT 'theme';

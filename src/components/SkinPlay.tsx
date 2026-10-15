@@ -3,6 +3,8 @@ import { Mic, Sparkles, Wind } from "lucide-react";
 import type { Theme3DHandle } from "@/components/Theme3D";
 import type { ThemeKind } from "@/lib/themeKind";
 import { KIND_BURST, burst, buzz, chime, reducedMotion } from "@/lib/play";
+import type { IconSet } from "@/themes/_shared/iconSets";
+import { burstSet } from "@/themes/_shared/Sprinkles";
 import { readableInk } from "@/lib/palettes";
 
 /** What you catch, per occasion. */
@@ -16,6 +18,7 @@ const CATCH_WORD: Record<ThemeKind, [string, string]> = {
   anniversary: ["petal", "petals"],
   wedding: ["petal", "petals"],
   bridal: ["bubble", "bubbles"],
+  baby: ["star", "stars"],
   default: ["sparkle", "sparkles"],
 };
 
@@ -56,6 +59,7 @@ export function useSkinPlay(
   kind: ThemeKind,
   colors: string[],
   enabled = true,
+  icons?: IconSet,
 ) {
   const caught = useRef(0);
   useEffect(() => {
@@ -97,12 +101,14 @@ export function useSkinPlay(
         }, 2600);
         caught.current += 1;
         const n = caught.current;
-        burst(root, e.clientX, e.clientY, {
-          shape: KIND_BURST[kind],
-          colors,
-          count: reduce ? 3 : 10,
-          spread: 0.6,
-        });
+        if (icons) burstSet(root, e.clientX, e.clientY, icons, { colors, count: reduce ? 3 : 10, spread: 0.6 });
+        else
+          burst(root, e.clientX, e.clientY, {
+            shape: KIND_BURST[kind],
+            colors,
+            count: reduce ? 3 : 10,
+            spread: 0.6,
+          });
         floatLabel(
           root,
           e.clientX,
@@ -123,7 +129,8 @@ export function useSkinPlay(
           ],
           { duration: 700, easing: "cubic-bezier(.3,1.5,.5,1)" },
         );
-        burst(root, e.clientX, e.clientY, { shape: "sparkles", colors, count: 6, spread: 0.4 });
+        if (icons) burstSet(root, e.clientX, e.clientY, icons, { colors, count: 6, spread: 0.4 });
+        else burst(root, e.clientX, e.clientY, { shape: "sparkles", colors, count: 6, spread: 0.4 });
         chime("chime");
         buzz(6);
       }
@@ -181,11 +188,13 @@ export function WishCandles({
   hostRef,
   colors,
   accent,
+  icons,
 }: {
   heroRef: React.RefObject<Theme3DHandle | null>;
   hostRef: React.RefObject<HTMLDivElement | null>;
   colors: string[];
   accent: string;
+  icons?: IconSet | undefined;
 }) {
   const [step, setStep] = useState<"idle" | "wish" | "listening" | "done">("idle");
   const stopMic = useRef<(() => void) | null>(null);
@@ -201,18 +210,23 @@ export function WishCandles({
     if (r) {
       const x = r.left + r.width / 2;
       const y = r.top - 120;
-      burst(hostRef.current, x, y, { shape: "confetti", colors, count: 40, spread: 2 });
-      window.setTimeout(
-        () =>
-          burst(hostRef.current, x, y, {
-            shape: "stars",
-            colors,
-            count: 18,
-            spread: 1.4,
-            up: true,
-          }),
-        200,
-      );
+      if (icons) {
+        burstSet(hostRef.current, x, y, icons, { colors, count: 34, spread: 2 });
+        window.setTimeout(() => burstSet(hostRef.current, x, y, icons, { colors, count: 16, spread: 1.4, up: true }), 200);
+      } else {
+        burst(hostRef.current, x, y, { shape: "confetti", colors, count: 40, spread: 2 });
+        window.setTimeout(
+          () =>
+            burst(hostRef.current, x, y, {
+              shape: "stars",
+              colors,
+              count: 18,
+              spread: 1.4,
+              up: true,
+            }),
+          200,
+        );
+      }
     }
     chime("tada");
     buzz([10, 50, 20]);

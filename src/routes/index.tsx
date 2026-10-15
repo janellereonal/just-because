@@ -218,6 +218,10 @@ function StepVisual({ n }: { n: string }) {
 
 const FAQ = [
   {
+    q: "Can I make one just from me?",
+    a: "Yes. Pick \"Just me\" when you start. There's no friends link, and you add every letter, photo, song and voice note yourself. Perfect for a partner, a best friend or your mom.",
+  },
+  {
     q: "Do my friends need an account?",
     a: "No. They open your link, type their name and add a note. That's it.",
   },
@@ -317,6 +321,19 @@ function Index() {
                 ),
               )}
             </ul>
+            <p
+              className="jb-reveal mt-4 text-sm text-ink/70"
+              style={{ "--d": "400ms" } as React.CSSProperties}
+            >
+              Just from you?{" "}
+              <Link
+                to="/create"
+                search={{ theme: undefined, format: undefined, from: "me" }}
+                className="font-semibold text-accent underline decoration-accent/40 underline-offset-4 hover:decoration-accent"
+              >
+                Make a solo gift for someone you love
+              </Link>
+            </p>
           </div>
           <div
             className="jb-reveal relative mt-12 min-w-0 lg:mt-0"

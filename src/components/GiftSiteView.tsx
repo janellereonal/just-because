@@ -1,8 +1,9 @@
+import { giftVoice } from "@/lib/giftVoice";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { SkinDecor } from "@/components/SkinDecor";
 import { Theme3D, type Theme3DHandle } from "@/components/Theme3D";
 import { WishCandles, useSkinPlay } from "@/components/SkinPlay";
-import { KIND_BURST, burst, buzz, chime } from "@/lib/play";
+import { buzz, chime } from "@/lib/play";
 import { RotateCw } from "lucide-react";
 import { KIND_WORDS, themeKindOf } from "@/lib/themeKind";
 import { manilaMidnight } from "@/lib/giftPieces";
@@ -22,6 +23,10 @@ import {
 } from "@/lib/gift";
 import type { Palette, Theme } from "@/lib/themes";
 import { readableInk, readableOn, surfaceColor, surfaceBorder } from "@/lib/palettes";
+import { NoteCard } from "@/themes/_shared/NoteCard";
+import { resolveIconSet } from "@/themes/_shared/iconSets";
+import { burstSet } from "@/themes/_shared/Sprinkles";
+import { castFor } from "@/themes/_shared/design";
 import Bo from "@/components/Bo";
 import { GiftTree } from "@/components/GiftTree";
 
@@ -400,7 +405,12 @@ export function GiftSiteView({
   const rootRef = useRef<HTMLDivElement | null>(null);
   const heroRef = useRef<Theme3DHandle | null>(null);
   const playColors = [palette.accent, palette.primary, "#FFD166", "#FFFFFF", "#7AD3B0"];
-  useSkinPlay(rootRef, kind, playColors);
+  const icons = useMemo(
+    () => resolveIconSet(castFor(kind, null, site.icon_set ?? null).iconSet, { recipient: text.recipient_name ?? "", palette }),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [JSON.stringify(site.icon_set), kind, text.recipient_name, palette.primary, palette.accent],
+  );
+  useSkinPlay(rootRef, kind, playColors, true, icons);
 
   useEffect(() => {
     if (!highlightField || !rootRef.current) return;
@@ -450,6 +460,7 @@ export function GiftSiteView({
   const sectionTitle = "sb-title text-[1.75rem] leading-tight font-semibold";
   const recipient = text.recipient_name?.trim();
   const sampleName = recipient || "Maya";
+  const voice = giftVoice(site.solo);
 
   /** Wraps the visitor's own contribution with a soft outline and a "Yours" tag. */
   function Mine({ item, children }: { item: ViewContribution; children: React.ReactNode }) {
@@ -522,7 +533,7 @@ export function GiftSiteView({
       }
       className={`gift-scrap skin-${kind} min-h-screen`}
     >
-      <SkinDecor kind={kind} />
+      <SkinDecor kind={kind} icons={icons} colors={playColors} />
       <div className="mx-auto max-w-3xl px-5 py-10 sm:py-14">
         <header className="sk-hero text-center">
           <Theme3D
@@ -532,13 +543,13 @@ export function GiftSiteView({
             interactive
             handleRef={heroRef}
             onPoke={(x, y, hit) => {
-              burst(rootRef.current, x, y, { shape: KIND_BURST[kind], colors: playColors, count: hit ? 16 : 10 });
+              burstSet(rootRef.current, x, y, icons, { colors: playColors, count: hit ? 16 : 10 });
               chime(hit ? "pop" : "boop");
               buzz(10);
             }}
           />
           {kind === "birthday" ? (
-            <WishCandles heroRef={heroRef} hostRef={rootRef} colors={playColors} accent={accentDeco} />
+            <WishCandles heroRef={heroRef} hostRef={rootRef} colors={playColors} accent={accentDeco} icons={icons} />
           ) : null}
           <p className="sk-badge mt-6">{kindWords.badge}</p>
           <h1
@@ -558,16 +569,16 @@ export function GiftSiteView({
             <p {...fp("intro_message", "mx-auto mt-5 max-w-[46ch] leading-relaxed opacity-80 text-pretty")}>
               {text.intro_message || (
                 <span className="opacity-50">
-                  Everyone who loves you put something in here. Take your time.
+                  {voice.solo ? "I made this just for you. Take your time." : "Everyone who loves you put something in here. Take your time."}
                 </span>
               )}
             </p>
           ) : null}
           {kind === "voyage" ? (
-            <div className="sk-pass" aria-label={`From everyone, to ${recipient || sampleName}`}>
+            <div className="sk-pass" aria-label={`From ${voice.solo ? "me" : "everyone"}, to ${recipient || sampleName}`}>
               <span>
                 <small>From</small>
-                <strong>Everyone</strong>
+                <strong>{voice.solo ? "Me" : "Everyone"}</strong>
               </span>
               <span className="sk-pass-plane" aria-hidden="true">
                 ✈
@@ -579,7 +590,7 @@ export function GiftSiteView({
             </div>
           ) : null}
           {sample && contributions.length === 0 ? (
-            <SampleNote>Sample, replaced when friends add theirs</SampleNote>
+            <SampleNote>{voice.sample}</SampleNote>
           ) : null}
         </header>
 
@@ -629,7 +640,7 @@ export function GiftSiteView({
                 sample={sample === true}
               />
             </div>
-            {tree.length === 0 && sample ? <SampleNote>Sample, replaced when friends add theirs</SampleNote> : null}
+            {tree.length === 0 && sample ? <SampleNote>{voice.sample}</SampleNote> : null}
           </section>
         ) : null}
 
@@ -643,37 +654,24 @@ export function GiftSiteView({
             </h2>
             <div className="sb-letters mt-6 grid gap-5 sm:grid-cols-2">
               {letters.length > 0
-                ? letters.map((item) =>
+                ? letters.map((item, li) =>
                     item.sealed ? (
                       <SealedLetter key={item.id} item={item} palette={palette} />
                     ) : (
                       <Mine key={item.id} item={item}>
-                        <article className="sb-letter bg-[var(--gift-surface)] p-6">
-                          <p className="leading-relaxed whitespace-pre-line">{item.text_content}</p>
-                          <p className="sb-hand mt-4 text-xl" style={{ color: accentText }}>
-                            {item.author_name}
-                          </p>
-                        </article>
+                        <NoteCard kind={kind} index={li} text={item.text_content ?? ""} author={item.author_name} accent={accentText} />
                       </Mine>
                     ),
                   )
                 : [
                     { t: `So lucky to know you, ${sampleName}. Love, Sam`, a: "Sam" },
                     { t: "You make every room warmer. Can't wait to celebrate.", a: "Alex" },
-                  ].map((s) => (
-                    <article
-                      key={s.a}
-                      className="sb-letter bg-[var(--gift-surface)] p-6 opacity-80"
-                    >
-                      <p className="leading-relaxed">{s.t}</p>
-                      <p className="sb-hand mt-4 text-xl" style={{ color: accentText }}>
-                        {s.a}
-                      </p>
-                    </article>
+                  ].map((s, li) => (
+                    <NoteCard key={s.a} kind={kind} index={li} text={s.t} author={s.a} accent={accentText} muted />
                   ))}
             </div>
             {letters.length === 0 && sample ? (
-              <SampleNote>Sample, replaced when friends add theirs</SampleNote>
+              <SampleNote>{voice.sample}</SampleNote>
             ) : null}
           </section>
         )}
@@ -710,7 +708,7 @@ export function GiftSiteView({
                   ))}
             </div>
             {photos.length === 0 && sample ? (
-              <SampleNote>Sample, replaced when friends add theirs</SampleNote>
+              <SampleNote>{voice.sample}</SampleNote>
             ) : null}
           </section>
         )}
@@ -763,7 +761,7 @@ export function GiftSiteView({
                 ))}
             </div>
             {cloud.length === 0 && sample ? (
-              <SampleNote>Sample, replaced when friends add theirs</SampleNote>
+              <SampleNote>{voice.sample}</SampleNote>
             ) : null}
           </section>
         )}
@@ -809,7 +807,7 @@ export function GiftSiteView({
               )}
             </div>
             {voices.length === 0 && sample ? (
-              <SampleNote>Sample, replaced when friends add theirs</SampleNote>
+              <SampleNote>{voice.sample}</SampleNote>
             ) : null}
           </section>
         )}
@@ -885,7 +883,7 @@ export function GiftSiteView({
               )}
             </div>
             {songs.length === 0 && sample ? (
-              <SampleNote>Sample, replaced when friends add theirs</SampleNote>
+              <SampleNote>{voice.sample}</SampleNote>
             ) : null}
           </section>
         )}
@@ -900,7 +898,7 @@ export function GiftSiteView({
           {text.footer_note || sample ? (
             <p {...fp("footer_note", "mb-3 opacity-80")}>
               {text.footer_note || (
-                <span className="opacity-50">With love, from all of us</span>
+                <span className="opacity-50">{voice.signoff}</span>
               )}
             </p>
           ) : null}

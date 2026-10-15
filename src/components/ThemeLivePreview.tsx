@@ -5,6 +5,7 @@ import { introStyleForTheme } from "@/lib/intro";
 import { GiftIntro } from "@/components/GiftIntro";
 import { themeKindOf } from "@/lib/themeKind";
 import { themeFont } from "@/components/ThemeMiniPreview";
+import { themeFontVars } from "@/themes/_shared/design";
 import {
   FONT_PAIRINGS,
   type BackgroundStyle,
@@ -112,6 +113,9 @@ export function buildPreviewSite(theme: Theme, palette: Palette | undefined): Gi
     calendar_locked: false,
     intro_text: null,
     intro_settings: {},
+    solo: false,
+    character: null,
+    icon_set: null,
     background_style: backgroundFor(theme),
     tree_reveal_date: null,
     tier: null,
@@ -261,7 +265,7 @@ export function ThemeLivePreview({ theme }: { theme: Theme }) {
       <Live3DContext.Provider value={false}>
         <div
           className="pointer-events-none absolute top-0 left-0 origin-top-left"
-          style={{ width: PHONE_WIDTH, transform: `scale(${scale}) translateY(${-offset}px)` }}
+          style={{ ...themeFontVars(themeKindOf(theme)), width: PHONE_WIDTH, transform: `scale(${scale}) translateY(${-offset}px)` }}
         >
           <div ref={innerRef}>
             {mounted && visible && phase === "gift" ? (

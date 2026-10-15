@@ -71,7 +71,7 @@ function GiftCard({ site, index }: { site: GiftSite; index: number }) {
             ) : null}
           </span>
           <span className="shrink-0 rounded-full bg-white/85 px-2.5 py-1 text-[11px] font-medium text-ink backdrop-blur">
-            {formatInfo(site.format).title}
+            {site.solo ? "Just me · " : ""}{formatInfo(site.format).title}
           </span>
         </span>
       </Link>
@@ -94,7 +94,7 @@ function GiftCard({ site, index }: { site: GiftSite; index: number }) {
           >
             <PencilLine className="size-4" /> Edit
           </Link>
-          {site.status !== "published" || !isGiftEnded(site) ? (
+          {!site.solo && (site.status !== "published" || !isGiftEnded(site)) ? (
             <button
               type="button"
               onClick={() => {

@@ -98,7 +98,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { rel: "preconnect", href: "https://fonts.gstatic.com", crossOrigin: "anonymous" },
       {
         rel: "stylesheet",
-        href: "https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;600;700&family=Lato:wght@400;700&family=Fredoka:wght@400;500;600;700&family=Nunito:wght@400;600&family=Poppins:wght@500;600&family=Caveat:wght@500;700&family=Karla:wght@400;600&display=swap",
+        href: "https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;600;700&family=Lato:wght@400;700&family=Fredoka:wght@400;500;600;700&family=Nunito:wght@400;600&family=Poppins:wght@500;600&family=Karla:wght@400;600&display=swap",
       },
       {
         rel: "stylesheet",
@@ -106,7 +106,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       },
       {
         rel: "stylesheet",
-        href: "https://fonts.googleapis.com/css2?family=Bangers&family=Comic+Neue:wght@400;700&family=Bricolage+Grotesque:opsz,wdth,wght@12..96,75..100,200..800&family=Permanent+Marker&family=Playfair+Display:ital,wght@1,700&display=swap",
+        href: "https://fonts.googleapis.com/css2?family=Bangers&family=Comic+Neue:wght@400;700&family=Bricolage+Grotesque:opsz,wdth,wght@12..96,75..100,200..800&family=Playfair+Display:ital,wght@1,700&display=swap",
       },
       { rel: "icon", href: "/favicon.png?v=bo-3d", type: "image/png", sizes: "64x64" },
       { rel: "shortcut icon", href: "/favicon.ico?v=bo-3d", type: "image/x-icon" },

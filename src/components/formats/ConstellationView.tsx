@@ -1,3 +1,4 @@
+import { giftVoice } from "@/lib/giftVoice";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { FONT_PAIRINGS } from "@/lib/gift";
 import { usePieces, useReducedMotion, type Piece } from "@/lib/giftPieces";
@@ -46,6 +47,7 @@ export function ConstellationView({
   showShare,
 }: FormatViewProps) {
   const data = usePieces({ site, modules, contributions, calendarEntries, sample });
+  const voice = giftVoice(site.solo);
   const reduce = useReducedMotion();
   const fonts = FONT_PAIRINGS[site.font_choice] ?? FONT_PAIRINGS.romantic;
   const stars = data.notes;
@@ -128,7 +130,9 @@ export function ConstellationView({
         </h1>
         <p className="cst-intro">
           {site.custom_text.intro_message?.trim() ||
-            "Every star up here is someone who loves you. Tap one to read it, and watch them connect."}
+            (voice.solo
+              ? "Every star up here is a memory of us. Tap one to read it, and watch them connect."
+              : "Every star up here is someone who loves you. Tap one to read it, and watch them connect.")}
         </p>
       </div>
 
@@ -277,7 +281,7 @@ export function ConstellationView({
             ? `You're the brightest one, ${data.name}.`
             : stars.length
               ? `${lit.length} of ${stars.length} stars found`
-              : "Stars from friends will appear here."}
+              : voice.empty("stars")}
         </p>
         {data.words.length ? (
           <p className="mt-4 text-sm opacity-75">
@@ -295,7 +299,7 @@ export function ConstellationView({
           <p className="mt-2 text-sm opacity-70">{site.custom_text.footer_note}</p>
         ) : null}
         {data.isSample ? (
-          <p className="mt-2 text-xs opacity-60">Sample stars, replaced when friends add theirs</p>
+          <p className="mt-2 text-xs opacity-60">{voice.sample}</p>
         ) : null}
         {showShare && done ? (
           <button

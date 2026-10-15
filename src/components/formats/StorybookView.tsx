@@ -1,3 +1,4 @@
+import { giftVoice } from "@/lib/giftVoice";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { ChevronLeft, ChevronRight, Lock, Mic, Music2 } from "lucide-react";
 import { FONT_PAIRINGS, toEmbedUrl } from "@/lib/gift";
@@ -106,6 +107,7 @@ export function StorybookView({
   showShare,
 }: FormatViewProps) {
   const data = usePieces({ site, modules, contributions, calendarEntries, sample });
+  const voice = giftVoice(site.solo);
   const reduce = useReducedMotion();
   const fonts = FONT_PAIRINGS[site.font_choice] ?? FONT_PAIRINGS.romantic;
   const ink = "#3b2f2a";
@@ -229,13 +231,13 @@ export function StorybookView({
             </p>
             <p className="sbk-body">
               {site.custom_text.intro_message?.trim() ||
-                "Everyone who loves you wrote a page. Turn slowly."}
+                (voice.solo ? "Every page here is ours. Turn slowly." : "Everyone who loves you wrote a page. Turn slowly.")}
             </p>
             {data.friends.length ? (
               <p className="sbk-small">Written by {data.friends.join(", ")}</p>
             ) : null}
             {data.isSample ? (
-              <p className="sbk-small opacity-60">Sample pages, replaced when friends add theirs</p>
+              <p className="sbk-small opacity-60">{voice.sample}</p>
             ) : null}
           </div>
         );

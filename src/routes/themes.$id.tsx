@@ -79,7 +79,7 @@ function ThemeDetailPage() {
       navigate({ to: "/auth" });
       return;
     }
-    navigate({ to: "/create", search: { theme: id, format } });
+    navigate({ to: "/create", search: { theme: id, format, from: undefined } });
   }
 
   const view = tour.phase === "intro" ? "opening" : "gift";

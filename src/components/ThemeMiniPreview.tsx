@@ -1,13 +1,12 @@
 import { FONT_PAIRINGS, type FontChoice } from "@/lib/gift";
 import type { Palette, Theme } from "@/lib/themes";
+import { themeKindOf } from "@/lib/themeKind";
+import { loadThemeFonts, themeFontVars } from "@/themes/_shared/design";
+import { useEffect } from "react";
 
-export function themeFont(theme: Pick<Theme, "category" | "name">): FontChoice {
-  const key = `${theme.category} ${theme.name}`.toLowerCase();
-  if (key.includes("wedding") || key.includes("anniversar") || key.includes("valentine") || key.includes("bridal"))
-    return "romantic";
-  if (key.includes("pet") || key.includes("birthday")) return "playful";
-  if (key.includes("new year") || key.includes("christmas")) return "modern";
-  return "handwritten";
+/** Previews use the theme's own type (see THEME_DESIGNS). */
+export function themeFont(_theme: Pick<Theme, "category" | "name">): FontChoice {
+  return "theme";
 }
 
 /** Scaled-down wireframe of a theme's published layout, in its own palette + font. */
@@ -21,6 +20,8 @@ export function ThemeMiniPreview({
   className?: string;
 }) {
   const p = palette ?? theme.palettes[0];
+  const kind = themeKindOf(theme);
+  useEffect(() => loadThemeFonts(kind), [kind]);
   if (!p) return null;
   const fonts = FONT_PAIRINGS[themeFont(theme)];
   const mods = theme.default_modules;
@@ -29,7 +30,7 @@ export function ThemeMiniPreview({
   return (
     <div
       className={`size-full overflow-hidden p-3 ${className ?? ""}`}
-      style={{ backgroundColor: p.background, color: p.primary, fontFamily: fonts.body }}
+      style={{ ...themeFontVars(kind), backgroundColor: p.background, color: p.primary, fontFamily: fonts.body }}
     >
       <div className="text-center">
         <p className="text-[6px] tracking-[0.2em] uppercase" style={{ color: p.accent }}>

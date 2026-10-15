@@ -13,10 +13,14 @@ import {
   setContributionStatus,
   setModuleEnabled,
   updateIntroSettings,
+  updateCast,
   updateSite,
   upsertCalendarEntry,
 } from "@/lib/api";
 import { IntroDesigner } from "@/components/IntroDesigner";
+import { CastPanel, type Cast } from "@/components/CastPanel";
+import { OwnNotes } from "@/components/OwnNotes";
+import { useAuth } from "@/hooks/useAuth";
 import { DevicePreview, DeviceToggle, type PreviewDevice } from "@/components/DevicePreview";
 import type { IntroSettings, IntroSticker } from "@/lib/intro";
 import { uploadFile } from "@/lib/upload";
@@ -89,7 +93,9 @@ import {
   PanelsTopLeft,
   Palette as PaletteIcon,
   Pencil,
+  PenLine,
   Send,
+  Smile,
   Type,
   UserPlus,
   X,
@@ -107,12 +113,14 @@ function initials(name: string) {
 
 
 type SectionKey =
+  | "notes"
   | "words"
   | "colors"
   | "fonts"
   | "background"
   | "sections"
   | "surprises"
+  | "cast"
   | "intro"
   | "comic"
   | "review";
@@ -144,24 +152,28 @@ const FIELD_GROUP: Record<string, SectionKey> = {
 };
 
 const SECTION_TITLES: Record<SectionKey, string> = {
+  notes: "Your notes",
   words: "Words",
   colors: "Colors",
   fonts: "Fonts",
   background: "Background",
   sections: "Sections",
   surprises: "Surprises",
+  cast: "Cast",
   intro: "Intro",
   comic: "Format",
   review: "Review",
 };
 
 const SECTION_ICONS: Record<SectionKey, LucideIcon> = {
+  notes: PenLine,
   words: Type,
   colors: PaletteIcon,
   fonts: CaseSensitive,
   background: LayoutTemplate,
   sections: LayoutGrid,
   surprises: CalendarDays,
+  cast: Smile,
   intro: Mail,
   comic: PanelsTopLeft,
   review: Inbox,
@@ -203,6 +215,8 @@ function SiteDashboard() {
   /** Bumped to replay the opening in the canvas while the Intro panel is open. */
   const [introCanvasKey, setIntroCanvasKey] = useState(0);
   const introSaveTimer = useRef<number | null>(null);
+  const castSaveTimer = useRef<number | null>(null);
+  const castLatest = useRef<Cast | null>(null);
   const introLatest = useRef<IntroSettings | null>(null);
   const [sheetOpen, setSheetOpen] = useState(false);
   const [renaming, setRenaming] = useState(false);
@@ -242,6 +256,7 @@ function SiteDashboard() {
     queryFn: () => fetchCalendarEntries(id),
   });
   const { data: billing } = useBilling(id);
+  const { user: authUser } = useAuth();
   /** Paid (or legacy) and not ended: the gift can go live without paying again. */
   const hasPlan = !!billing?.tier && !billing.ended;
   const planTier = getTier(billing?.tier);
@@ -250,15 +265,18 @@ function SiteDashboard() {
     if (site && !draft) setDraft(site);
   }, [site, draft]);
 
-  // Restore the last open rail section for this gift.
+  // Restore the last open rail section for this gift ("Your notes" first on a new Just me gift).
+  const sectionRestored = useRef(false);
   useEffect(() => {
-    if (typeof window === "undefined") return;
+    if (typeof window === "undefined" || !site || sectionRestored.current) return;
+    sectionRestored.current = true;
     const saved = window.localStorage.getItem(`jb:editor-section:${id}`);
     if (saved) setSection(saved as SectionKey);
-  }, [id]);
+    else if (site.solo) setSection("notes");
+  }, [id, site]);
 
   useEffect(() => {
-    if (typeof window === "undefined") return;
+    if (typeof window === "undefined" || !sectionRestored.current) return;
     window.localStorage.setItem(`jb:editor-section:${id}`, section);
   }, [id, section]);
 
@@ -388,6 +406,7 @@ function SiteDashboard() {
             palette_id: next.palette_id,
             share_notes: next.share_notes,
             ...(withStatus ? { status: next.status } : {}),
+            solo: next.solo,
             format: next.format,
             format_settings: next.format_settings as unknown as Record<string, never>,
           },
@@ -462,6 +481,25 @@ function SiteDashboard() {
           void queryClient.invalidateQueries({ queryKey: ["site", id] });
         })
         .catch(() => toast.error("Couldn't save the opening. Try again in a moment."))
+        .finally(() => setSaving(false));
+    }, 600);
+  }
+
+  /** Cast changes: shown at once in the preview, saved shortly after. */
+  function patchCast(next: Cast) {
+    castLatest.current = next;
+    setDraft((prev) => (prev ? { ...prev, character: next.character, icon_set: next.icon_set } : prev));
+    if (castSaveTimer.current) window.clearTimeout(castSaveTimer.current);
+    castSaveTimer.current = window.setTimeout(() => {
+      const c = castLatest.current;
+      if (!c) return;
+      setSaving(true);
+      updateCast({ data: { id, character: (c.character as Record<string, never> | null) ?? null, iconSet: (c.icon_set as Record<string, never> | null) ?? null } })
+        .then(() => {
+          setSavedAt(Date.now());
+          void queryClient.invalidateQueries({ queryKey: ["site", id] });
+        })
+        .catch(() => toast.error("Couldn't save the cast. Try again in a moment."))
         .finally(() => setSaving(false));
     }, 600);
   }
@@ -656,16 +694,19 @@ function SiteDashboard() {
     );
   }
 
+  const solo = draft.solo;
   const railSections: SectionKey[] = [
+    ...(solo ? (["notes"] as SectionKey[]) : []),
     "words",
     "colors",
     "fonts",
     "background",
     "sections",
     ...(enabledTypes.has("calendar") ? (["surprises"] as SectionKey[]) : []),
+    "cast",
     "intro",
     "comic",
-    "review",
+    ...(solo ? [] : (["notes", "review"] as SectionKey[])),
   ];
 
   const fieldInput = (
@@ -842,6 +883,15 @@ function SiteDashboard() {
         onChanged={() => queryClient.invalidateQueries({ queryKey: ["calendar", id] })}
       />
     ),
+    cast: (
+      <CastPanel
+        siteId={id}
+        kind={themeKindOf(theme)}
+        recipient={draft.custom_text.recipient_name ?? ""}
+        value={{ character: draft.character ?? null, icon_set: draft.icon_set ?? null }}
+        onChange={patchCast}
+      />
+    ),
     intro: (
       <div>
         <IntroDesigner
@@ -917,6 +967,19 @@ function SiteDashboard() {
           </>
         ) : <p className="text-xs text-muted">{formatInfo(draft.format).about}</p>}
       </div>
+    ),
+    notes: (
+      <OwnNotes
+        siteId={id}
+        solo={draft.solo}
+        onSoloChange={(next) => {
+          patch({ solo: next });
+          boSay(next ? "Just from you. Sweet." : "Friends can join in now.", next ? "love" : "happy");
+        }}
+        contributions={contributions}
+        recipient={draft.custom_text.recipient_name ?? ""}
+        defaultName={authUser?.name ?? ""}
+      />
     ),
     review: (
       <div className="space-y-3">
@@ -1017,6 +1080,9 @@ function SiteDashboard() {
       recipientName={draft.custom_text.recipient_name}
       introText={draft.intro_text ?? undefined}
       settings={draft.intro_settings}
+      character={draft.character}
+      iconSet={draft.icon_set}
+      contributors={friends}
       onOpen={() => setPreviewOpened(true)}
     />
   );
@@ -1024,7 +1090,7 @@ function SiteDashboard() {
     <FormatView key={draft.format === "comic" ? (previewOpened ? "comic-reader" : "comic-cover") : draft.format} site={draft} theme={theme} palette={paletteNow} modules={modules} contributions={approved} calendarEntries={calendarEntries} showCover={!previewOpened} sample showShare />
   );
 
-  const showIntroInCanvas = section === "intro" && formatInfo(draft.format).usesIntro;
+  const showIntroInCanvas = (section === "intro" || section === "cast") && formatInfo(draft.format).usesIntro;
   const canvasIntro = (
     <GiftIntro
       key={`canvas-intro-${introCanvasKey}`}
@@ -1037,6 +1103,9 @@ function SiteDashboard() {
       recipientName={draft.custom_text.recipient_name}
       introText={draft.intro_text ?? undefined}
       settings={draft.intro_settings}
+      character={draft.character}
+      iconSet={draft.icon_set}
+      contributors={friends}
       onStickerMove={moveIntroSticker}
       onOpen={() => window.setTimeout(() => setIntroCanvasKey((k) => k + 1), 900)}
     />
@@ -1204,6 +1273,20 @@ function SiteDashboard() {
         </div>
         </div>
         <div className="flex shrink-0 items-center gap-2">
+          {solo ? (
+            <Button
+              variant="outline"
+              className="hidden h-10 rounded-full min-[900px]:inline-flex"
+              onClick={() => {
+                setSection("notes");
+                setPanelOpen(true);
+              }}
+            >
+              <PenLine />
+              Add a note
+            </Button>
+          ) : (
+            <>
           <button
             type="button"
             onClick={() => {
@@ -1271,6 +1354,8 @@ function SiteDashboard() {
               </div>
             </PopoverContent>
           </Popover>
+            </>
+          )}
 
           <Button
             variant="outline"
@@ -1296,21 +1381,35 @@ function SiteDashboard() {
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
-              <DropdownMenuItem
-                onSelect={() => {
-                  setSection("review");
-                  setSheetOpen(true);
-                }}
-              >
-                <Inbox />
-                {friends.length > 0
-                  ? `${friends.length} friend${friends.length === 1 ? "" : "s"} added notes`
-                  : "No notes yet"}
-              </DropdownMenuItem>
-              <DropdownMenuItem onSelect={copyContributeLink}>
-                <UserPlus />
-                Invite friends
-              </DropdownMenuItem>
+              {solo ? (
+                <DropdownMenuItem
+                  onSelect={() => {
+                    setSection("notes");
+                    setSheetOpen(true);
+                  }}
+                >
+                  <PenLine />
+                  Add a note
+                </DropdownMenuItem>
+              ) : (
+                <>
+                  <DropdownMenuItem
+                    onSelect={() => {
+                      setSection("review");
+                      setSheetOpen(true);
+                    }}
+                  >
+                    <Inbox />
+                    {friends.length > 0
+                      ? `${friends.length} friend${friends.length === 1 ? "" : "s"} added notes`
+                      : "No notes yet"}
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onSelect={copyContributeLink}>
+                    <UserPlus />
+                    Invite friends
+                  </DropdownMenuItem>
+                </>
+              )}
               <DropdownMenuItem
                 onSelect={() => {
                   setPreviewOpened(false);
@@ -1491,6 +1590,9 @@ function SiteDashboard() {
           recipientName={draft.custom_text.recipient_name}
           introText={draft.intro_text ?? undefined}
           settings={draft.intro_settings}
+          character={draft.character}
+          iconSet={draft.icon_set}
+          contributors={friends}
           onOpen={() => setIntroPreview(false)}
         />
       ) : null}

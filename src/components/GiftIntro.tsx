@@ -6,6 +6,9 @@ import type { ThemeKind } from "@/lib/themeKind";
 import { backgroundCss, type BackgroundStyle } from "@/lib/gift";
 import { readableInk, readableOn } from "@/lib/palettes";
 import type { Palette } from "@/lib/themes";
+import { TactileOpening, hasTactileOpening } from "@/themes/TactileOpening";
+import type { CharacterSetting } from "@/themes/_shared/cast/types";
+import type { IconSetSetting } from "@/themes/_shared/iconSets";
 import { INTRO_COPY, type IntroSettings, type IntroSticker, type IntroStyle } from "@/lib/intro";
 import {
   KIND_BURST,
@@ -41,6 +44,7 @@ export const HERO_WORD: Record<ThemeKind, string> = {
   anniversary: "rings",
   wedding: "cake",
   bridal: "teacup",
+  baby: "mobile",
   default: "gift",
 };
 
@@ -331,7 +335,7 @@ function FlatHero({
   );
 }
 
-export function GiftIntro({
+function ClassicIntro({
   style,
   palette,
   fonts,
@@ -582,7 +586,7 @@ export function GiftIntro({
               <h1
                 className="text-[clamp(1.9rem,11cqi,3.5rem)] leading-tight font-bold [overflow-wrap:anywhere]"
                 style={{
-                  fontFamily: '"Caveat", cursive',
+                  fontFamily: "var(--jb-display, 'Fraunces', serif)",
                   color: ink,
                   animation: still ? undefined : "jb-write 1.1s ease-out both",
                 }}
@@ -692,5 +696,43 @@ export function GiftIntro({
         )}
       </div>
     </div>
+  );
+}
+
+type GiftIntroProps = React.ComponentProps<typeof ClassicIntro> & {
+  /** The gift's cast (character and sprinkles). Null = theme defaults. */
+  character?: CharacterSetting | null | undefined;
+  iconSet?: IconSetSetting | null | undefined;
+  /** Friends' names, for stamps and sparks. */
+  contributors?: string[] | undefined;
+};
+
+/**
+ * The gift's opening. By default the theme's signature object (a wax seal, a
+ * record, a cake…); "classic" in the intro settings keeps the earlier 3D one.
+ */
+export function GiftIntro(props: GiftIntroProps) {
+  const { character, iconSet, contributors, ...rest } = props;
+  const kind = props.kind ?? STYLE_KIND[props.style];
+  const s = props.settings ?? {};
+  if (s.opening === "classic" || !hasTactileOpening(kind)) return <ClassicIntro {...rest} />;
+  return (
+    <TactileOpening
+      kind={kind}
+      palette={props.palette}
+      recipientName={props.recipientName}
+      introText={props.introText}
+      badgeText={s.badge_text}
+      buttonText={s.button_text}
+      character={character}
+      iconSet={iconSet}
+      contributors={contributors ?? []}
+      contained={props.contained ?? false}
+      interactive={props.interactive ?? true}
+      paused={props.paused ?? false}
+      autoplay={props.autoOpenAfter !== undefined}
+      onOpen={props.onOpen}
+      onSkip={props.onSkip}
+    />
   );
 }

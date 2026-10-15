@@ -12,6 +12,8 @@ import type { Palette, Theme } from "@/lib/themes";
 import { normalizeTheme } from "@/lib/themes";
 import { normalizeComicSettings, type ComicSettings } from "@/lib/comic";
 import { normalizeIntroSettings, type IntroSettings } from "@/lib/intro";
+import { normalizeCharacter, type CharacterSetting } from "@/themes/_shared/cast/types";
+import { normalizeIconSetting, type IconSetSetting } from "@/themes/_shared/iconSets";
 import { isGiftFormat, type GiftFormat } from "@/lib/formats";
 
 export type ModuleType =
@@ -93,6 +95,12 @@ export const MODULES: {
 export const GUEST_MODULES = MODULES.filter((m) => m.source === "guests");
 
 export const FONT_PAIRINGS = {
+  /** The theme's own pair (set as CSS variables on the gift). New gifts start here. */
+  theme: {
+    label: "Theme's own",
+    heading: "var(--jb-display, 'Fraunces', serif)",
+    body: "var(--jb-text, 'DM Sans', sans-serif)",
+  },
   romantic: {
     label: "Romantic",
     heading: "'Playfair Display', serif",
@@ -100,7 +108,8 @@ export const FONT_PAIRINGS = {
   },
   playful: { label: "Playful", heading: "'Fredoka', sans-serif", body: "'Nunito', sans-serif" },
   modern: { label: "Modern", heading: "'Poppins', sans-serif", body: "'Inter', sans-serif" },
-  handwritten: { label: "Handwritten", heading: "'Caveat', cursive", body: "'Karla', sans-serif" },
+  // Key kept for saved gifts; the old script face is gone.
+  handwritten: { label: "Storybook", heading: "'Fraunces', serif", body: "'Karla', sans-serif" },
 } as const;
 
 export type FontChoice = keyof typeof FONT_PAIRINGS;
@@ -203,6 +212,12 @@ export type GiftSite = {
   intro_text: string | null;
   /** The creator's custom opening (object, stickers, colors, background, words). */
   intro_settings: IntroSettings;
+  /** Just from the creator: no friends link. */
+  solo: boolean;
+  /** The opening's character. Null = the theme's default. */
+  character: CharacterSetting | null;
+  /** The particles. Null = the theme's default. */
+  icon_set: IconSetSetting | null;
   background_style: BackgroundStyle;
   tree_reveal_date: string | null;
   /** sweet | celebration | keepsake | legacy, or null until paid. */
@@ -246,6 +261,8 @@ export type Contribution = {
   status: "pending" | "approved" | "hidden";
   ornament_key: OrnamentKey | null;
   visibility: "public" | "recipient";
+  /** Added by the gift's creator from the editor. */
+  by_owner?: boolean;
   created_at: string;
 };
 
@@ -291,11 +308,14 @@ export function normalizeSite(row: Record<string, unknown>): GiftSite {
     custom_colors: (row["custom_colors"] as Partial<Palette>) ?? {},
     palette_id: (row["palette_id"] as string | null) ?? null,
     share_notes: Boolean(row["share_notes"]),
-    font_choice: (row["font_choice"] as FontChoice) ?? "romantic",
+    font_choice: (row["font_choice"] as FontChoice) ?? "theme",
     countdown_date: (row["countdown_date"] as string | null) ?? null,
     calendar_locked: Boolean(row["calendar_locked"]),
     intro_text: (row["intro_text"] as string | null) ?? null,
     intro_settings: normalizeIntroSettings(row["intro_settings"]),
+    solo: row["solo"] === true,
+    character: normalizeCharacter(row["character"]),
+    icon_set: normalizeIconSetting(row["icon_set"]),
     background_style: ((row["background_style"] as BackgroundStyle) ?? "paper") as BackgroundStyle,
     tree_reveal_date: (row["tree_reveal_date"] as string | null) ?? null,
     tier: (row["tier"] as string | null) ?? null,
@@ -347,6 +367,7 @@ export function normalizeContribution(row: Record<string, unknown>): Contributio
     status: (row["status"] as Contribution["status"]) ?? "pending",
     ornament_key: (row["ornament_key"] as OrnamentKey | null) ?? null,
     visibility: row["visibility"] === "recipient" ? "recipient" : "public",
+    by_owner: row["by_owner"] === true,
     created_at: String(row["created_at"]),
   };
 }

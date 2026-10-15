@@ -1,4 +1,4 @@
-// Restores the 24 shared palettes and the 9 occasion themes. Idempotent.
+// Restores the shared palettes and the occasion themes. Idempotent.
 import postgres from "postgres";
 
 const url = process.env.DATABASE_URL_UNPOOLED || process.env.DATABASE_URL;
@@ -34,19 +34,30 @@ const palettes: [string, string, string, string, string][] = [
   ["Monochrome", "Earthy", "#FAFAF7", "#2B2522", "#8A8177"],
   ["Midnight Gold", "Dark", "#1A1F2E", "#E8C468", "#F5F0E1"],
   ["Sparkle", "Dark", "#20143A", "#9B6FE8", "#E8D9A0"],
+  // Signature palettes, one per theme (Oct 2026 theme system). Appended so ids stay stable.
+  ["Wax Seal", "Romantic", "#F6EEE3", "#B4335A", "#5E1424"],
+  ["Vinyl Night", "Dark", "#2B1D18", "#E9D6B0", "#B48DA3"],
+  ["Party Butter", "Bright", "#FFF3C4", "#FF7EB6", "#2D4BD6"],
+  ["Ivory Gold", "Soft", "#FBF7EE", "#9DB08F", "#A8843E"],
+  ["Nursery", "Soft", "#F5EFE4", "#8DB7E0", "#D9798C"],
+  ["Pine & Cranberry", "Earthy", "#F7F4EE", "#A3203A", "#1F4D3A"],
+  ["Midnight Toast", "Dark", "#10152E", "#E5C26B", "#A99BF5"],
+  ["Boarding Pass", "Soft", "#F6F0E4", "#5E9BD1", "#E2531F"],
+  ["Tennis Ball", "Earthy", "#F4EBDD", "#E98E62", "#A8461F"],
 ];
 const ids = new Map(palettes.map(([name], i) => [name, P(i + 1)]));
 
 const themes: [string, string, string, string[], string[]][] = [
-  ["Valentine's", "Romance", "Soft blush and deep rose for the people you adore.", ["letters", "photobooth", "songs"], ["Blush", "Deep Romance", "Berry"]],
-  ["Happy Birthday", "Celebration", "Confetti-bright layouts for another trip around the sun.", ["letters", "photobooth", "countdown"], ["Confetti", "Pastel Party", "Citrus"]],
-  ["Bon Voyage", "Farewell", "A warm send-off for someone moving on.", ["letters", "voice", "photobooth"], ["Golden Hour", "Soft Goodbye", "Sky"]],
-  ["Christmas", "Season", "Pine, ribbon and candlelight for the holidays.", ["countdown", "calendar", "photobooth", "tree"], ["Classic Christmas", "Cozy Cabin", "Midnight Gold"]],
-  ["Pets", "Companions", "For the furry ones who make the house a home.", ["photobooth", "wordcloud", "letters"], ["Sunny", "Lavender Paws", "Peach Fuzz"]],
-  ["New Year", "New year", "Midnight and gold for fresh beginnings.", ["countdown", "wordcloud", "photobooth"], ["Midnight Gold", "Sparkle", "Monochrome"]],
-  ["Anniversary", "Milestone", "Champagne and clay for the years you have shared.", ["letters", "photobooth", "countdown"], ["Timeless", "Rose Gold", "Just Because"]],
-  ["Weddings", "Wedding", "Ivory, sage and soft gold for the big day.", ["letters", "photobooth", "songs"], ["Ivory Sage", "Blush Bloom", "Matcha"]],
+  ["Valentine's", "Romance", "Soft blush and deep rose for the people you adore.", ["letters", "photobooth", "songs"], ["Wax Seal", "Blush", "Deep Romance", "Berry"]],
+  ["Happy Birthday", "Celebration", "Confetti-bright layouts for another trip around the sun.", ["letters", "photobooth", "countdown"], ["Party Butter", "Confetti", "Pastel Party", "Citrus"]],
+  ["Bon Voyage", "Farewell", "A warm send-off for someone moving on.", ["letters", "voice", "photobooth"], ["Boarding Pass", "Golden Hour", "Soft Goodbye", "Sky"]],
+  ["Christmas", "Season", "Pine, ribbon and candlelight for the holidays.", ["countdown", "calendar", "photobooth", "tree"], ["Pine & Cranberry", "Classic Christmas", "Cozy Cabin", "Midnight Gold"]],
+  ["Pets", "Companions", "For the furry ones who make the house a home.", ["photobooth", "wordcloud", "letters"], ["Tennis Ball", "Sunny", "Lavender Paws", "Peach Fuzz"]],
+  ["New Year", "New year", "Midnight and gold for fresh beginnings.", ["countdown", "wordcloud", "photobooth"], ["Midnight Toast", "Midnight Gold", "Sparkle", "Monochrome"]],
+  ["Anniversary", "Milestone", "Champagne and clay for the years you have shared.", ["letters", "photobooth", "countdown"], ["Vinyl Night", "Timeless", "Rose Gold", "Just Because"]],
+  ["Weddings", "Wedding", "Ivory, sage and soft gold for the big day.", ["letters", "photobooth", "songs"], ["Ivory Gold", "Ivory Sage", "Blush Bloom", "Matcha"]],
   ["Bridal Shower", "Shower", "Blush, peach and sage for the bride-to-be and her people.", ["letters", "photobooth", "wordcloud", "countdown"], ["Blush Bloom", "Peach Fuzz", "Ivory Sage"]],
+  ["Baby Shower", "Shower", "Powder blue, butter and blush for the little one on the way.", ["letters", "photobooth", "wordcloud", "countdown"], ["Nursery", "Sunny", "Sky"]],
 ];
 
 await sql.begin(async (tx) => {

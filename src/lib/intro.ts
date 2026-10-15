@@ -67,6 +67,8 @@ export type IntroSticker = {
 export type IntroBurst = "confetti" | "hearts" | "stars" | "bubbles" | "petals";
 
 export type IntroSettings = {
+  /** "classic" = the earlier 3D opening. Default: the theme's signature object. */
+  opening?: "classic";
   hero?: IntroHero;
   background?: IntroBackground;
   stickers?: IntroSticker[];
@@ -121,6 +123,7 @@ export function normalizeIntroSettings(value: unknown): IntroSettings {
   if (!value || typeof value !== "object" || Array.isArray(value)) return {};
   const v = value as Record<string, unknown>;
   const out: IntroSettings = {};
+  if (v["opening"] === "classic") out.opening = "classic";
   const h = v["hero"] as Record<string, unknown> | undefined;
   if (h && typeof h === "object") {
     if (h["type"] === "object" && KINDS.includes(String(h["kind"])))

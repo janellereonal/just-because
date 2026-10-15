@@ -143,6 +143,9 @@ function PublishedPage() {
           recipientName={site.custom_text.recipient_name}
           introText={site.intro_text ?? undefined}
           settings={site.intro_settings}
+          character={site.character}
+          iconSet={site.icon_set}
+          contributors={[...new Set(contributions.map((c) => c.author_name.trim()).filter(Boolean))]}
           onOpen={() => setOpened(true)}
           onSkip={() => {
             rememberIntroSkip(site.id);

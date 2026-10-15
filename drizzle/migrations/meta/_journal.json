@@ -43,6 +43,27 @@
       "when": 1792023566875,
       "tag": "0005_intro_settings",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1792064648052,
+      "tag": "0006_just_me",
+      "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1792066271483,
+      "tag": "0007_cast",
+      "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1792070042341,
+      "tag": "0008_theme_fonts",
+      "breakpoints": true
     }
   ]
 }
