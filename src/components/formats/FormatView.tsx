@@ -18,6 +18,18 @@ const BentoView = lazy(() =>
 const HuntView = lazy(() =>
   import("@/components/formats/HuntView").then((m) => ({ default: m.HuntView })),
 );
+const StorybookView = lazy(() =>
+  import("@/components/formats/StorybookView").then((m) => ({ default: m.StorybookView })),
+);
+const MixtapeView = lazy(() =>
+  import("@/components/formats/MixtapeView").then((m) => ({ default: m.MixtapeView })),
+);
+const ScratchView = lazy(() =>
+  import("@/components/formats/ScratchView").then((m) => ({ default: m.ScratchView })),
+);
+const ConstellationView = lazy(() =>
+  import("@/components/formats/ConstellationView").then((m) => ({ default: m.ConstellationView })),
+);
 const ZineView = lazy(() =>
   import("@/components/formats/ZineView").then((m) => ({ default: m.ZineView })),
 );
@@ -97,6 +109,30 @@ export function FormatView(props: Props) {
       return (
         <Suspense fallback={fallback}>
           <ZineView {...common} />
+        </Suspense>
+      );
+    case "storybook":
+      return (
+        <Suspense fallback={fallback}>
+          <StorybookView {...common} theme={theme} />
+        </Suspense>
+      );
+    case "mixtape":
+      return (
+        <Suspense fallback={fallback}>
+          <MixtapeView {...common} theme={theme} />
+        </Suspense>
+      );
+    case "scratch":
+      return (
+        <Suspense fallback={fallback}>
+          <ScratchView {...common} theme={theme} />
+        </Suspense>
+      );
+    case "stars":
+      return (
+        <Suspense fallback={fallback}>
+          <ConstellationView {...common} theme={theme} />
         </Suspense>
       );
     default:

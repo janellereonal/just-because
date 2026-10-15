@@ -16,12 +16,14 @@ export function introStyleForTheme(themeName: string | null | undefined): IntroS
   const key = (themeName ?? "").toLowerCase();
   if (key.includes("valentine")) return "envelope";
   if (key.includes("birthday")) return "giftbox";
-  if (key.includes("despidida") || key.includes("farewell") || key.includes("voyage")) return "boardingpass";
+  if (key.includes("despidida") || key.includes("farewell") || key.includes("voyage"))
+    return "boardingpass";
   if (key.includes("christmas")) return "present";
   if (key.includes("pet")) return "paw";
   if (key.includes("new year")) return "sparkler";
   if (key.includes("anniversary")) return "letter";
-  if (key.includes("wedding") || key.includes("bridal") || key.includes("shower")) return "invitation";
+  if (key.includes("wedding") || key.includes("bridal") || key.includes("shower"))
+    return "invitation";
   return "envelope";
 }
 
@@ -52,7 +54,15 @@ export type IntroBackground =
   | { type: "image"; url: string };
 
 /** A sticker floating around the opening: an emoji or an uploaded picture. */
-export type IntroSticker = { id: string; emoji?: string; url?: string; x: number; y: number; r: number; s: number };
+export type IntroSticker = {
+  id: string;
+  emoji?: string;
+  url?: string;
+  x: number;
+  y: number;
+  r: number;
+  s: number;
+};
 
 export type IntroBurst = "confetti" | "hearts" | "stars" | "bubbles" | "petals";
 
@@ -92,7 +102,18 @@ const emoji = (v: unknown) => {
   return t && !/[<>&"'`]/.test(t) ? t : undefined;
 };
 
-const KINDS = ["valentine", "birthday", "voyage", "christmas", "pets", "newyear", "anniversary", "wedding", "bridal", "default"];
+const KINDS = [
+  "valentine",
+  "birthday",
+  "voyage",
+  "christmas",
+  "pets",
+  "newyear",
+  "anniversary",
+  "wedding",
+  "bridal",
+  "default",
+];
 const BURSTS: IntroBurst[] = ["confetti", "hearts", "stars", "bubbles", "petals"];
 
 /** Cleans whatever is stored (or sent) into safe settings. Unknown bits are dropped. */
@@ -104,15 +125,19 @@ export function normalizeIntroSettings(value: unknown): IntroSettings {
   if (h && typeof h === "object") {
     if (h["type"] === "object" && KINDS.includes(String(h["kind"])))
       out.hero = { type: "object", kind: h["kind"] as ThemeKind };
-    else if (h["type"] === "emoji" && emoji(h["emoji"])) out.hero = { type: "emoji", emoji: emoji(h["emoji"])! };
-    else if (h["type"] === "image" && isSafeMediaUrl(h["url"])) out.hero = { type: "image", url: h["url"] };
+    else if (h["type"] === "emoji" && emoji(h["emoji"]))
+      out.hero = { type: "emoji", emoji: emoji(h["emoji"])! };
+    else if (h["type"] === "image" && isSafeMediaUrl(h["url"]))
+      out.hero = { type: "image", url: h["url"] };
   }
   const b = v["background"] as Record<string, unknown> | undefined;
   if (b && typeof b === "object") {
-    if (b["type"] === "solid" && color(b["color"])) out.background = { type: "solid", color: color(b["color"])! };
+    if (b["type"] === "solid" && color(b["color"]))
+      out.background = { type: "solid", color: color(b["color"])! };
     else if (b["type"] === "gradient" && color(b["from"]) && color(b["to"]))
       out.background = { type: "gradient", from: color(b["from"])!, to: color(b["to"])! };
-    else if (b["type"] === "image" && isSafeMediaUrl(b["url"])) out.background = { type: "image", url: b["url"] };
+    else if (b["type"] === "image" && isSafeMediaUrl(b["url"]))
+      out.background = { type: "image", url: b["url"] };
   }
   if (Array.isArray(v["stickers"])) {
     const stickers: IntroSticker[] = [];
@@ -123,7 +148,10 @@ export function normalizeIntroSettings(value: unknown): IntroSettings {
       const url = isSafeMediaUrl(s["url"]) ? s["url"] : undefined;
       if (!e && !url) continue;
       stickers.push({
-        id: typeof s["id"] === "string" ? s["id"].slice(0, 24) : Math.random().toString(36).slice(2, 10),
+        id:
+          typeof s["id"] === "string"
+            ? s["id"].slice(0, 24)
+            : Math.random().toString(36).slice(2, 10),
         ...(url ? { url } : { emoji: e! }),
         x: num(s["x"], 0, 1, 0.5),
         y: num(s["y"], 0, 1, 0.5),
@@ -148,4 +176,25 @@ export function normalizeIntroSettings(value: unknown): IntroSettings {
 }
 
 /** Sticker ideas for the picker. */
-export const STICKER_EMOJIS = ["💖", "🎀", "🌸", "✨", "🧸", "🍰", "🎈", "🌈", "⭐", "🍓", "🦋", "🌙", "🐶", "🐱", "🎂", "🥂", "💌", "🌻", "🍀", "🎵"];
+export const STICKER_EMOJIS = [
+  "💖",
+  "🎀",
+  "🌸",
+  "✨",
+  "🧸",
+  "🍰",
+  "🎈",
+  "🌈",
+  "⭐",
+  "🍓",
+  "🦋",
+  "🌙",
+  "🐶",
+  "🐱",
+  "🎂",
+  "🥂",
+  "💌",
+  "🌻",
+  "🍀",
+  "🎵",
+];

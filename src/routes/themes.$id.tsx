@@ -2,7 +2,7 @@ import { useMemo, useState } from "react";
 import { Pause, Play } from "lucide-react";
 import { DevicePreview, DeviceToggle, type PreviewDevice } from "@/components/DevicePreview";
 import { useGiftTour } from "@/hooks/useGiftTour";
-import { Live3DContext } from "@/components/Theme3D";
+import { Pause3DContext } from "@/components/Theme3D";
 import { themeKindOf } from "@/lib/themeKind";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
@@ -165,9 +165,9 @@ function ThemeDetailPage() {
                 }
               >
                 {/* One live 3D scene at a time: the gift's waits behind the opening. */}
-                <Live3DContext.Provider value={tour.phase === "gift"}>
+                <Pause3DContext.Provider value={tour.phase !== "gift"}>
                   <FormatView key={format} site={{ ...site, format }} theme={theme} palette={palette} modules={modules} contributions={[]} sample />
-                </Live3DContext.Provider>
+                </Pause3DContext.Provider>
               </DevicePreview>
             </div>
           </div>

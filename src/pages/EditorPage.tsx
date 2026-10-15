@@ -203,6 +203,7 @@ function SiteDashboard() {
   /** Bumped to replay the opening in the canvas while the Intro panel is open. */
   const [introCanvasKey, setIntroCanvasKey] = useState(0);
   const introSaveTimer = useRef<number | null>(null);
+  const introLatest = useRef<IntroSettings | null>(null);
   const [sheetOpen, setSheetOpen] = useState(false);
   const [renaming, setRenaming] = useState(false);
   const [fullPreview, setFullPreview] = useState(false);
@@ -443,12 +444,19 @@ function SiteDashboard() {
   }
 
   /** Intro designer changes: shown at once, saved on their own shortly after. */
-  function patchIntro(next: IntroSettings) {
-    setDraft((prev) => (prev ? { ...prev, intro_settings: next } : prev));
+  function patchIntro(update: (prev: IntroSettings) => IntroSettings) {
+    setDraft((prev) => {
+      if (!prev) return prev;
+      const next = update(prev.intro_settings);
+      introLatest.current = next;
+      return { ...prev, intro_settings: next };
+    });
     if (introSaveTimer.current) window.clearTimeout(introSaveTimer.current);
     introSaveTimer.current = window.setTimeout(() => {
+      const settings = introLatest.current;
+      if (!settings) return;
       setSaving(true);
-      updateIntroSettings({ data: { id, settings: next as Record<string, never> } })
+      updateIntroSettings({ data: { id, settings: settings as Record<string, never> } })
         .then(() => {
           setSavedAt(Date.now());
           void queryClient.invalidateQueries({ queryKey: ["site", id] });
@@ -459,11 +467,10 @@ function SiteDashboard() {
   }
 
   function moveIntroSticker(moved: IntroSticker) {
-    const current = draft?.intro_settings ?? {};
-    patchIntro({
+    patchIntro((current) => ({
       ...current,
       stickers: (current.stickers ?? []).map((st) => (st.id === moved.id ? { ...st, x: moved.x, y: moved.y } : st)),
-    });
+    }));
   }
 
   function patchText(key: keyof CustomText, value: string) {

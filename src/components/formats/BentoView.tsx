@@ -252,7 +252,8 @@ export function BentoView({
 
   return (
     <div
-      className="bento-root min-h-screen"
+      className="bento-root relative min-h-screen"
+      data-play-host
       style={
         {
           background: meshGradient(palette.primary, palette.accent, palette.background),
@@ -278,6 +279,8 @@ export function BentoView({
                 kind={themeKindOf(theme)}
                 palette={palette}
                 className="!absolute top-2 right-2 h-[42%] w-[72%] @md:h-[58%] @md:w-[62%] @2xl:top-4 @2xl:right-4"
+                interactive
+                burstColors={[palette.accent, palette.primary, "#FFD166", "#FFFFFF"]}
               />
             ) : null}
             <p className="text-[11px] font-semibold tracking-[0.2em] uppercase opacity-80">

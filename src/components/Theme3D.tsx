@@ -2,12 +2,16 @@ import { createContext, useContext, useEffect, useRef, useState } from "react";
 import type { ThemeKind } from "@/lib/themeKind";
 import type { Palette } from "@/lib/themes";
 import type { ThemeScene } from "@/lib/theme3d/scene";
+import { KIND_BURST, burst, buzz, chime } from "@/lib/play";
 
 /**
  * Small previews (theme cards, the landing demo) set this to false so a page full
  * of gifts shows still images instead of opening one WebGL context per card.
  */
 export const Live3DContext = createContext(true);
+
+/** Hold live scenes still (without throwing them away), e.g. a gift hidden behind its opening. */
+export const Pause3DContext = createContext(false);
 
 /** Bump when the stills in public/themes3d are re-rendered, to bust caches. */
 const STILL_VERSION = "1";
@@ -33,6 +37,7 @@ export function Theme3D({
   onPoke,
   handleRef,
   label,
+  burstColors,
 }: {
   kind: ThemeKind;
   palette: Palette;
@@ -44,15 +49,28 @@ export function Theme3D({
   handleRef?: React.MutableRefObject<Theme3DHandle | null>;
   /** Accessible name when interactive. */
   label?: string;
+  /** With no onPoke: burst these colors into the nearest [data-play-host] on a tap. */
+  burstColors?: string[];
 }) {
   const live = useContext(Live3DContext);
+  const held = useContext(Pause3DContext);
+  const heldRef = useRef(held);
+  heldRef.current = held;
+  const visibleRef = useRef(false);
   const wrapRef = useRef<HTMLDivElement | null>(null);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const sceneRef = useRef<ThemeScene | null>(null);
   const [ready, setReady] = useState(false);
   const [stillOk, setStillOk] = useState(true);
   const [wiggle, setWiggle] = useState(0);
-  const drag = useRef<{ x: number; y: number; t: number; moved: boolean; v: number; id: number } | null>(null);
+  const drag = useRef<{
+    x: number;
+    y: number;
+    t: number;
+    moved: boolean;
+    v: number;
+    id: number;
+  } | null>(null);
 
   useEffect(() => {
     if (!handleRef) return;
@@ -74,19 +92,42 @@ export function Theme3D({
     let hit = false;
     if (canvas && sceneRef.current && ready) {
       const r = canvas.getBoundingClientRect();
-      hit = sceneRef.current.poke(((clientX - r.left) / r.width) * 2 - 1, ((clientY - r.top) / r.height) * 2 - 1);
+      hit = sceneRef.current.poke(
+        ((clientX - r.left) / r.width) * 2 - 1,
+        ((clientY - r.top) / r.height) * 2 - 1,
+      );
       if (!hit) sceneRef.current.celebrate();
     } else {
       setWiggle((w) => w + 1);
     }
-    onPoke?.(clientX, clientY, hit);
+    if (onPoke) onPoke(clientX, clientY, hit);
+    else if (burstColors) {
+      const host =
+        wrapRef.current?.closest<HTMLElement>("[data-play-host]") ??
+        wrapRef.current?.parentElement ??
+        null;
+      burst(host, clientX, clientY, {
+        shape: KIND_BURST[kind],
+        colors: burstColors,
+        count: hit ? 16 : 10,
+      });
+      chime(hit ? "pop" : "boop");
+      buzz(10);
+    }
   }
 
   const handlers = interactive
     ? {
         onPointerDown: (e: React.PointerEvent) => {
           e.stopPropagation();
-          drag.current = { x: e.clientX, y: e.clientY, t: performance.now(), moved: false, v: 0, id: e.pointerId };
+          drag.current = {
+            x: e.clientX,
+            y: e.clientY,
+            t: performance.now(),
+            moved: false,
+            v: 0,
+            id: e.pointerId,
+          };
         },
         onPointerMove: (e: React.PointerEvent) => {
           const d = drag.current;
@@ -153,6 +194,7 @@ export function Theme3D({
         if (disposed || !mod.webglAvailable()) return;
         scene = mod.createThemeScene(canvas, kind, palette);
         sceneRef.current = scene;
+        scene.setPaused(heldRef.current || !visibleRef.current);
         await scene.ready;
         if (!disposed) setReady(true);
       } catch (error) {
@@ -162,14 +204,18 @@ export function Theme3D({
     const io = new IntersectionObserver(
       (entries) => {
         const visible = entries.some((e) => e.isIntersecting);
-        if (visible) void start();
-        scene?.setPaused(!visible);
+        visibleRef.current = visible;
+        if (visible && !heldRef.current) void start();
+        scene?.setPaused(!visible || heldRef.current);
       },
       { rootMargin: "150px" },
     );
     io.observe(wrap);
+    const wake = () => void start();
+    wrap.addEventListener("jb-3d-wake", wake);
     return () => {
       disposed = true;
+      wrap.removeEventListener("jb-3d-wake", wake);
       io.disconnect();
       scene?.dispose();
       scene = null;
@@ -177,6 +223,15 @@ export function Theme3D({
       setReady(false);
     };
   }, [live, kind, palette.accent, palette.primary, palette.background]);
+
+  useEffect(() => {
+    if (!live) return;
+    if (!held && visibleRef.current && !sceneRef.current) {
+      // Became unheld while on screen: nudge the observer path by re-checking.
+      wrapRef.current?.dispatchEvent(new Event("jb-3d-wake"));
+    }
+    sceneRef.current?.setPaused(held || !visibleRef.current);
+  }, [held, live]);
 
   return (
     <div

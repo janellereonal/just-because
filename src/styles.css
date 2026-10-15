@@ -2,6 +2,7 @@
 @source "../src";
 @import "tw-animate-css";
 @import "./styles/formats.css";
+@import "./styles/formats2.css";
 @import "./styles/landing.css";
 @import "./styles/skins.css";
 @import "./styles/play.css";

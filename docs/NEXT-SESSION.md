@@ -1,8 +1,43 @@
 # Next session: picking up the Just Because redesign
 
-Updated the night of 14 Oct 2026 (second session), so a new session can carry on without missing anything.
+Updated 15 Oct 2026 (session 4), so a new session can carry on without missing anything.
 
-## START HERE (session 4, written 15 Oct 2026 morning)
+## Session 4 is done (15 Oct 2026, PR from `redesign`)
+
+All six asks are in. What changed and where:
+
+1. **Phone fit.** `GiftIntro` is a size container (`[container:gift/inline-size]`, cqi units), so the
+   opening fits any preview. Scrapbook heading uses cqi. Format roots clip sideways overflow (the Zine
+   stickers caused a 368px scroll at 360). Header fits 360px. Audited 360/390/430 and landscape on every
+   page: no horizontal scroll. Comic cover subtitle now follows the occasion (no more "birthday issue" on
+   Valentine's).
+2. **Phone / Laptop previews.** `src/components/DevicePreview.tsx` (`DevicePreview`, `DeviceToggle`).
+   Laptop lays the gift out at a real 1280x800 and scales it down. The screen uses `contain: layout paint`,
+   so fixed sheets, comic covers and confetti stay inside the preview. Used on the theme page, editor canvas,
+   editor full screen, landing demo and contribute page.
+3. **Intro-first previews.** `src/hooks/useGiftTour.ts`: the opening plays, opens itself (~4.6s), the gift
+   scrolls, holds, loops. Any touch hands control over; "Pause the tour" / "Play the tour". Theme cards
+   (`ThemeLivePreview`) do the same with the real `GiftIntro` (`quick`, `paused`, `interactive={false}`,
+   stills only). `Pause3DContext` holds the gift's 3D scene while its opening covers it.
+4. **Four new formats**: Storybook (3D page turns, drag a page by its edge, spreads on wide screens),
+   Mixtape (cassette, reels spin, drag a reel to scrub, flip to side B), Scratch Cards (canvas foil,
+   remembered per device), Constellation (tap stars, lines connect into a heart). Files in
+   `src/components/formats/`, styles in `src/styles/formats2.css`, picker minis in `FormatPicker.tsx`.
+   Celebration and Keepsake get all 9 formats; Sweet unchanged.
+5. **Custom intros.** `gift_sites.intro_settings` jsonb (migration `0005_intro_settings.sql`), cleaned by
+   `normalizeIntroSettings` in `src/lib/intro.ts`, saved by `updateIntroSettings` (requireSiteOwner).
+   Upload kind `intro` (owner only, images, no SVG). Editor Intro panel = `IntroDesigner.tsx`; while it's
+   open the canvas shows the live opening and stickers can be dragged into place.
+6. **Playful themes.** `src/lib/play.ts` (bursts, synthesized chimes behind a sound toggle, haptics).
+   3D objects: tap to react (per-occasion move: heartbeat, globe spin, lights twinkle…), drag to spin,
+   5 taps for a secret. Gift pages: catch falling particles, tap lights and bunting, parallax with pointer
+   or tilt, polaroids flip for the caption, birthday "Make a wish" with tap or mic blow-out
+   (`SkinPlay.tsx`). Reduced motion keeps all of this calm.
+
+Not done / worth a look next: re-render `public/themes3d/*.webp` if scenes change; real-phone check of
+mic blow-out on iOS Safari; Sweet plan maybe gets Storybook too (her call).
+
+## Session 4 brief (kept for reference)
 
 The redesign is **live on justbecause.site** (PR #1 merged `redesign` into `main`). Work on `redesign`,
 check the preview, then open a PR `redesign` -> `main` for Janelle to merge. Claude's own pushes to

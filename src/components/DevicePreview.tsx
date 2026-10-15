@@ -160,7 +160,11 @@ export function DevicePreview({
     >
       <div className="mx-auto flex flex-col items-center" style={{ width: screenW + bezel * 2 }}>
         <div
-          className={frame ? "relative rounded-t-[18px] bg-ink shadow-[0_30px_60px_-30px_rgba(43,37,34,0.55)]" : "relative"}
+          className={
+            frame
+              ? "relative rounded-t-[18px] bg-ink shadow-[0_30px_60px_-30px_rgba(43,37,34,0.55)]"
+              : "relative"
+          }
           style={{ padding: bezel }}
         >
           {frame ? (
@@ -187,7 +191,11 @@ export function DevicePreview({
           </div>
         </div>
         {frame ? (
-          <div aria-hidden="true" className="relative h-[14px]" style={{ width: screenW + bezel * 2 + 56 }}>
+          <div
+            aria-hidden="true"
+            className="relative h-[14px]"
+            style={{ width: screenW + bezel * 2 + 56 }}
+          >
             <div className="absolute inset-x-0 top-0 h-[10px] rounded-b-[14px] bg-gradient-to-b from-[#cfc6c1] to-[#a99f99] shadow-[0_10px_20px_-10px_rgba(43,37,34,0.6)]" />
             <div className="absolute top-0 left-1/2 h-[5px] w-[18%] -translate-x-1/2 rounded-b-md bg-[#9a908a]" />
           </div>

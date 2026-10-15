@@ -133,7 +133,7 @@ export function FormatDemo({
         className="mt-3"
       />
       {device === "laptop" ? (
-        <div className="mt-5 w-[min(640px,calc(100vw-32px))]">
+        <div className="mt-5 w-full max-w-[640px] min-w-0">
           <DevicePreview device="laptop" scrollLabel="A sample gift for Maya on a laptop">
             <div key={format}>{gift}</div>
           </DevicePreview>

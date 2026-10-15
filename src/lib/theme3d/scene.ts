@@ -958,7 +958,8 @@ export function createThemeScene(
 
   let raf = 0;
   let paused = false;
-  const start = performance.now();
+  // Start where the pre-rendered still was taken (t = 1.2s), so the fade from still to live doesn't jump.
+  const start = performance.now() - 1200;
   function frame() {
     raf = 0;
     if (paused) return;
@@ -976,7 +977,7 @@ export function createThemeScene(
   }
 
   resize();
-  pose(still ? 1.2 : 0);
+  pose(1.2);
   renderer.render(scene, camera);
   if (!still && !reduce) raf = requestAnimationFrame(frame);
 

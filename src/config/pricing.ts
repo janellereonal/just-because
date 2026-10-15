@@ -65,7 +65,7 @@ export const TIERS: Tier[] = [
     mostPopular: true,
     contributors: { cap: 30, unlimited: false },
     photos: { cap: 150, unlimited: false },
-    formats: ["scrapbook", "comic", "bento", "hunt", "zine"],
+    formats: ["scrapbook", "comic", "bento", "hunt", "zine", "storybook", "mixtape", "scratch", "stars"],
     liveFor: { months: 12, label: "1 year" },
     extendAmount: 29900,
     features: { customLinkName: false, passwordProtection: true },
@@ -78,7 +78,7 @@ export const TIERS: Tier[] = [
     // "Unlimited" on the card, with a fair-use cap so one gift can't run away with storage.
     contributors: { cap: 500, unlimited: true },
     photos: { cap: 1000, unlimited: true },
-    formats: ["scrapbook", "comic", "bento", "hunt", "zine"],
+    formats: ["scrapbook", "comic", "bento", "hunt", "zine", "storybook", "mixtape", "scratch", "stars"],
     liveFor: { months: 36, label: "3 years" },
     extendAmount: 49900,
     features: { customLinkName: true, passwordProtection: true },
@@ -170,7 +170,7 @@ export function featureList(tier: Tier): string[] {
   const lines = [
     tier.contributors.unlimited ? "Unlimited contributors" : `Up to ${tier.contributors.cap} contributors`,
     tier.photos.unlimited ? "Unlimited photos" : `Up to ${tier.photos.cap} photos`,
-    tier.formats.length >= 5 ? `All ${tier.formats.length} formats, including Comic and Gift Hunt` : "Scrapbook and Bento formats",
+    tier.formats.length >= 5 ? `All ${tier.formats.length} formats, including Storybook and Mixtape` : "Scrapbook and Bento formats",
   ];
   if (tier.features.passwordProtection) lines.push("Password protection");
   if (tier.features.customLinkName) lines.push("Custom link name");

@@ -7,7 +7,8 @@
 import { useEffect, useState } from "react";
 import type { ThemeKind } from "@/lib/themeKind";
 
-export type BurstShape = "confetti" | "hearts" | "stars" | "bubbles" | "petals" | "snow" | "paws" | "sparkles";
+export type BurstShape =
+  "confetti" | "hearts" | "stars" | "bubbles" | "petals" | "snow" | "paws" | "sparkles";
 
 export const KIND_BURST: Record<ThemeKind, BurstShape> = {
   valentine: "hearts",
@@ -32,7 +33,9 @@ const GLYPH: Partial<Record<BurstShape, string[]>> = {
 };
 
 export function reducedMotion() {
-  return typeof window !== "undefined" && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  return (
+    typeof window !== "undefined" && window.matchMedia("(prefers-reduced-motion: reduce)").matches
+  );
 }
 
 /**
@@ -60,7 +63,8 @@ export function burst(
   const reduce = reducedMotion();
   const layer = document.createElement("div");
   layer.setAttribute("aria-hidden", "true");
-  layer.style.cssText = "position:absolute;inset:0;pointer-events:none;overflow:visible;z-index:80;contain:layout";
+  layer.style.cssText =
+    "position:absolute;inset:0;pointer-events:none;overflow:visible;z-index:80;contain:layout";
   host.appendChild(layer);
   const n = reduce ? 3 : count;
   let longest = 0;
@@ -101,8 +105,15 @@ export function burst(
           ]
         : [
             { opacity: 1, transform: "translate(-50%,-50%) scale(.3) rotate(0deg)" },
-            { opacity: 1, transform: `translate(calc(-50% + ${dx * 0.8}px), calc(-50% + ${dy * 0.8}px)) scale(1) rotate(${spin * 0.6}deg)`, offset: 0.45 },
-            { opacity: 0, transform: `translate(calc(-50% + ${dx}px), calc(-50% + ${dy + fall}px)) scale(.8) rotate(${spin}deg)` },
+            {
+              opacity: 1,
+              transform: `translate(calc(-50% + ${dx * 0.8}px), calc(-50% + ${dy * 0.8}px)) scale(1) rotate(${spin * 0.6}deg)`,
+              offset: 0.45,
+            },
+            {
+              opacity: 0,
+              transform: `translate(calc(-50% + ${dx}px), calc(-50% + ${dy + fall}px)) scale(.8) rotate(${spin}deg)`,
+            },
           ],
       { duration: dur, easing: "cubic-bezier(.15,.7,.3,1)", fill: "forwards" },
     );
@@ -153,19 +164,40 @@ export function chime(kind: ChimeKind = "pop") {
   if (typeof window === "undefined" || !soundOn()) return;
   try {
     const Ctor =
-      window.AudioContext ?? (window as unknown as { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
+      window.AudioContext ??
+      (window as unknown as { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
     if (!Ctor) return;
     audio ??= new Ctor();
     const ctx = audio;
     void ctx.resume();
     const now = ctx.currentTime;
     const notes: Record<ChimeKind, [number, number, OscillatorType][]> = {
-      pop: [[620, 0, "sine"], [930, 0.04, "sine"]],
-      boop: [[330, 0, "triangle"], [262, 0.07, "triangle"]],
-      chime: [[880, 0, "sine"], [1320, 0.09, "sine"], [1760, 0.18, "sine"]],
-      sparkle: [[1568, 0, "sine"], [2093, 0.06, "sine"], [2637, 0.12, "sine"], [3136, 0.18, "sine"]],
+      pop: [
+        [620, 0, "sine"],
+        [930, 0.04, "sine"],
+      ],
+      boop: [
+        [330, 0, "triangle"],
+        [262, 0.07, "triangle"],
+      ],
+      chime: [
+        [880, 0, "sine"],
+        [1320, 0.09, "sine"],
+        [1760, 0.18, "sine"],
+      ],
+      sparkle: [
+        [1568, 0, "sine"],
+        [2093, 0.06, "sine"],
+        [2637, 0.12, "sine"],
+        [3136, 0.18, "sine"],
+      ],
       whoosh: [[220, 0, "sawtooth"]],
-      tada: [[523, 0, "triangle"], [659, 0.1, "triangle"], [784, 0.2, "triangle"], [1046, 0.32, "triangle"]],
+      tada: [
+        [523, 0, "triangle"],
+        [659, 0.1, "triangle"],
+        [784, 0.2, "triangle"],
+        [1046, 0.32, "triangle"],
+      ],
     };
     for (const [freq, at, type] of notes[kind]) {
       const osc = ctx.createOscillator();

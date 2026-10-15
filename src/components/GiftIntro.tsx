@@ -7,7 +7,15 @@ import { backgroundCss, type BackgroundStyle } from "@/lib/gift";
 import { readableInk, readableOn } from "@/lib/palettes";
 import type { Palette } from "@/lib/themes";
 import { INTRO_COPY, type IntroSettings, type IntroSticker, type IntroStyle } from "@/lib/intro";
-import { KIND_BURST, burst, buzz, chime, reducedMotion, useSound, type BurstShape } from "@/lib/play";
+import {
+  KIND_BURST,
+  burst,
+  buzz,
+  chime,
+  reducedMotion,
+  useSound,
+  type BurstShape,
+} from "@/lib/play";
 
 export { INTRO_COPY, introStyleForTheme, type IntroStyle } from "@/lib/intro";
 
@@ -114,7 +122,13 @@ function Sticker({
   return (
     <span
       className={`absolute z-[3] select-none ${live ? "pointer-events-auto cursor-grab touch-none active:cursor-grabbing" : "pointer-events-none"}`}
-      style={{ left: `${pos.x * 100}%`, top: `${pos.y * 100}%`, width: box, height: box, transform: "translate(-50%,-50%)" }}
+      style={{
+        left: `${pos.x * 100}%`,
+        top: `${pos.y * 100}%`,
+        width: box,
+        height: box,
+        transform: "translate(-50%,-50%)",
+      }}
       role={editable ? "button" : undefined}
       aria-label={editable ? "Drag to move this sticker" : undefined}
       aria-hidden={editable ? undefined : "true"}
@@ -147,7 +161,12 @@ function Sticker({
           chime("boop");
         } else {
           setJelly((j) => j + 1);
-          burst(host.current, e.clientX, e.clientY, { shape: "sparkles", colors, count: 10, spread: 0.6 });
+          burst(host.current, e.clientX, e.clientY, {
+            shape: "sparkles",
+            colors,
+            count: 10,
+            spread: 0.6,
+          });
           chime("pop");
           buzz(8);
         }
@@ -159,14 +178,19 @@ function Sticker({
     >
       <span
         className="block size-full"
-        style={{ animation: `jb-float ${5 + ((sticker.x * 10) % 3)}s ease-in-out ${-sticker.y * 4}s infinite` }}
+        style={{
+          animation: `jb-float ${5 + ((sticker.x * 10) % 3)}s ease-in-out ${-sticker.y * 4}s infinite`,
+        }}
       >
         <span
           key={jelly}
           className="grid size-full place-items-center"
           style={{ animation: jelly ? "jb-jelly .6s ease" : undefined }}
         >
-          <span className="grid size-full place-items-center" style={{ transform: `rotate(${sticker.r}deg)` }}>
+          <span
+            className="grid size-full place-items-center"
+            style={{ transform: `rotate(${sticker.r}deg)` }}
+          >
             {sticker.url ? (
               <img
                 src={sticker.url}
@@ -273,7 +297,11 @@ function FlatHero({
         }}
       >
         <span className="block" style={{ animation: "jb-float 4.5s ease-in-out infinite" }}>
-          <span key={jelly} className="block" style={{ animation: jelly ? "jb-jelly .65s ease" : undefined }}>
+          <span
+            key={jelly}
+            className="block"
+            style={{ animation: jelly ? "jb-jelly .65s ease" : undefined }}
+          >
             {url ? (
               <img
                 src={url}
@@ -288,7 +316,10 @@ function FlatHero({
             ) : (
               <span
                 className="block leading-none"
-                style={{ fontSize: "clamp(110px, 34cqi, 220px)", filter: "drop-shadow(0 18px 16px rgba(0,0,0,.18))" }}
+                style={{
+                  fontSize: "clamp(110px, 34cqi, 220px)",
+                  filter: "drop-shadow(0 18px 16px rgba(0,0,0,.18))",
+                }}
               >
                 {emoji}
               </span>
@@ -361,13 +392,21 @@ export function GiftIntro({
   const bg = s.background ?? { type: "theme" as const };
 
   const bgColor =
-    bg.type === "solid" ? bg.color : bg.type === "gradient" ? bg.from : bg.type === "image" ? "#2B2522" : palette.background;
+    bg.type === "solid"
+      ? bg.color
+      : bg.type === "gradient"
+        ? bg.from
+        : bg.type === "image"
+          ? "#2B2522"
+          : palette.background;
   const ink = s.ink ?? (bg.type === "image" ? "#FFFFFF" : readableInk(bgColor));
   const muted = `${ink}B3`;
   const buttonBg = s.button ?? palette.primary;
   const buttonInk =
     s.button_ink ??
-    (readableOn(buttonBg, palette.background, 4.5) === palette.background ? palette.background : readableInk(buttonBg));
+    (readableOn(buttonBg, palette.background, 4.5) === palette.background
+      ? palette.background
+      : readableInk(buttonBg));
   const greeting = introText?.trim() || `For ${recipientName || "you"}`;
   const colors = [palette.primary, palette.accent, buttonBg, "#FFD166", "#FFFFFF"];
   const shape: BurstShape = s.burst ?? KIND_BURST[kind];
@@ -404,7 +443,13 @@ export function GiftIntro({
       const cy = r.top + r.height * 0.5;
       burst(rootRef.current, cx, cy, { shape, colors, count: 34, spread: 1.8 });
       window.setTimeout(
-        () => burst(rootRef.current, cx, cy - 40, { shape: "confetti", colors, count: 24, spread: 2.2 }),
+        () =>
+          burst(rootRef.current, cx, cy - 40, {
+            shape: "confetti",
+            colors,
+            count: 24,
+            spread: 2.2,
+          }),
         140,
       );
     }
@@ -439,7 +484,10 @@ export function GiftIntro({
       : bg.type === "solid"
         ? { backgroundColor: bg.color }
         : bg.type === "gradient"
-          ? { backgroundImage: `linear-gradient(160deg, ${bg.from}, ${bg.to})`, backgroundColor: bg.from }
+          ? {
+              backgroundImage: `linear-gradient(160deg, ${bg.from}, ${bg.to})`,
+              backgroundColor: bg.from,
+            }
           : { backgroundColor: "#2B2522" };
 
   return (
@@ -477,8 +525,16 @@ export function GiftIntro({
     >
       {bg.type === "image" ? (
         <>
-          <img src={bg.url} alt="" draggable={false} className="absolute inset-0 -z-10 size-full object-cover" />
-          <span aria-hidden="true" className="absolute inset-0 -z-10 bg-gradient-to-b from-black/35 via-black/10 to-black/45" />
+          <img
+            src={bg.url}
+            alt=""
+            draggable={false}
+            className="absolute inset-0 -z-10 size-full object-cover"
+          />
+          <span
+            aria-hidden="true"
+            className="absolute inset-0 -z-10 bg-gradient-to-b from-black/35 via-black/10 to-black/45"
+          />
         </>
       ) : null}
       {bg.type === "theme" ? <SkinDecor kind={kind} /> : <SkinParticles kind={kind} />}
@@ -607,14 +663,18 @@ export function GiftIntro({
                 <span
                   aria-hidden="true"
                   className="pointer-events-none absolute top-1/2 left-1/2 size-16 rounded-full"
-                  style={{ border: `2px solid ${buttonBg}`, opacity: 0, animation: "jb-ring 1.8s ease-out 1s infinite backwards" }}
+                  style={{
+                    border: `2px solid ${buttonBg}`,
+                    opacity: 0,
+                    animation: "jb-ring 1.8s ease-out 1s infinite backwards",
+                  }}
                 />
               ) : null}
             </button>
           ) : null}
         </div>
 
-        {paused ? (
+        {paused || !interactive ? (
           <span className="mt-3 h-8" />
         ) : (
           <button

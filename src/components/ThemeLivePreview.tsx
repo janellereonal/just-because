@@ -72,7 +72,8 @@ export function sampleFor(theme: Theme) {
   if (key.includes("pet")) return { heading: "Best boy, Milo", name: "Milo" };
   if (key.includes("new year")) return { heading: "Happy New Year, everyone", name: "the crew" };
   if (key.includes("anniversar")) return { heading: "Ten years, Liz", name: "Liz" };
-  if (key.includes("bridal") || key.includes("shower")) return { heading: "Showered with love, Bea", name: "Bea" };
+  if (key.includes("bridal") || key.includes("shower"))
+    return { heading: "Showered with love, Bea", name: "Bea" };
   if (key.includes("wedding")) return { heading: "Congratulations, Aya & Jun", name: "Aya & Jun" };
   return { heading: "Just because, Maya", name: "Maya" };
 }
@@ -128,7 +129,13 @@ export function previewModules(theme: Theme, siteId: string): SiteModule[] {
   const types = (
     theme.default_modules.length > 0 ? theme.default_modules : ["letters", "photobooth", "songs"]
   ) as ModuleType[];
-  return types.map((type, i) => ({ id: `${theme.id}-${i}`, site_id: siteId, module_type: type, price: 0, enabled: true }));
+  return types.map((type, i) => ({
+    id: `${theme.id}-${i}`,
+    site_id: siteId,
+    module_type: type,
+    price: 0,
+    enabled: true,
+  }));
 }
 
 /**

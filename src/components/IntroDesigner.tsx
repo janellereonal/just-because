@@ -25,11 +25,20 @@ const BURSTS: { id: IntroBurst; label: string; glyph: string }[] = [
   { id: "petals", label: "Petals", glyph: "🌸" },
 ];
 
-const field = "mt-1 w-full rounded-xl border border-line bg-cream px-3 py-2.5 text-sm outline-none focus:border-accent";
+const field =
+  "mt-1 w-full rounded-xl border border-line bg-cream px-3 py-2.5 text-sm outline-none focus:border-accent";
 const chip = (on: boolean) =>
   `squish rounded-full px-3 py-1.5 text-xs font-medium ring-1 transition-colors ${on ? "bg-ink text-cream ring-ink" : "bg-cream ring-line hover:bg-pink/40"}`;
 
-function Group({ title, hint, children }: { title: string; hint?: string; children: React.ReactNode }) {
+function Group({
+  title,
+  hint,
+  children,
+}: {
+  title: string;
+  hint?: string;
+  children: React.ReactNode;
+}) {
   return (
     <section className="border-t border-line pt-4">
       <h3 className="text-sm font-semibold">{title}</h3>
@@ -52,7 +61,10 @@ function ColorField({
 }) {
   return (
     <label className="flex items-center gap-2.5 rounded-xl bg-cream px-2.5 py-2 ring-1 ring-line">
-      <span className="relative size-8 shrink-0 overflow-hidden rounded-full ring-1 ring-ink/10" style={{ background: value ?? fallback }}>
+      <span
+        className="relative size-8 shrink-0 overflow-hidden rounded-full ring-1 ring-ink/10"
+        style={{ background: value ?? fallback }}
+      >
         <input
           type="color"
           value={value ?? fallback}
@@ -66,7 +78,11 @@ function ColorField({
         <span className="text-muted">{value ? value : "From your colors"}</span>
       </span>
       {value ? (
-        <button type="button" onClick={() => onChange(undefined)} className="text-xs text-muted underline">
+        <button
+          type="button"
+          onClick={() => onChange(undefined)}
+          className="text-xs text-muted underline"
+        >
           Reset
         </button>
       ) : null}
@@ -107,7 +123,8 @@ export function IntroDesigner({
 }: {
   siteId: string;
   settings: IntroSettings;
-  onChange: (next: IntroSettings) => void;
+  /** Gets an updater, so quick taps never overwrite each other. */
+  onChange: (update: (prev: IntroSettings) => IntroSettings) => void;
   palette: Palette;
   kind: ThemeKind;
   introStyle: IntroStyle;
@@ -121,11 +138,16 @@ export function IntroDesigner({
   const bg = settings.background ?? { type: "theme" as const };
   const stickers = settings.stickers ?? [];
   const copy = INTRO_COPY[introStyle];
-  const set = (patch: { [K in keyof IntroSettings]?: IntroSettings[K] | undefined }) => {
-    const next = { ...settings, ...patch } as Record<string, unknown>;
-    for (const k of Object.keys(next)) if (next[k] === undefined) delete next[k];
-    onChange(next as IntroSettings);
-  };
+  type Patch = { [K in keyof IntroSettings]?: IntroSettings[K] | undefined };
+  const set = (patch: Patch | ((prev: IntroSettings) => Patch)) =>
+    onChange((prev) => {
+      const next = { ...prev, ...(typeof patch === "function" ? patch(prev) : patch) } as Record<
+        string,
+        unknown
+      >;
+      for (const k of Object.keys(next)) if (next[k] === undefined) delete next[k];
+      return next as IntroSettings;
+    });
 
   async function upload(file: File | undefined, what: string, then: (url: string) => void) {
     if (!file) return;
@@ -152,14 +174,18 @@ export function IntroDesigner({
       toast.info(`Up to ${MAX_INTRO_STICKERS} stickers. Remove one to add another.`);
       return;
     }
-    set({ stickers: [...stickers, { id: newId(), ...freeSpot(stickers.length), ...s }] });
+    set((prev) => {
+      const list = prev.stickers ?? [];
+      if (list.length >= MAX_INTRO_STICKERS) return {};
+      return { stickers: [...list, { id: newId(), ...freeSpot(list.length), ...s }] };
+    });
   }
 
   return (
     <div className="space-y-4">
       <p className="text-xs text-muted">
-        The first screen they see. Change anything here and watch it in the preview. Drag stickers there to place
-        them.
+        The first screen they see. Change anything here and watch it in the preview. Drag stickers
+        there to place them.
       </p>
       {greeting}
 
@@ -185,7 +211,12 @@ export function IntroDesigner({
               title={`The ${HERO_WORD[k]}`}
               className={`squish grid aspect-square place-items-center overflow-hidden rounded-2xl bg-cream ring-2 ${hero.type === "object" && hero.kind === k ? "ring-ink" : "ring-line/0 hover:ring-ink/15"}`}
             >
-              <img src={themeStillUrl(k)} alt="" className="size-full object-contain" loading="lazy" />
+              <img
+                src={themeStillUrl(k)}
+                alt=""
+                className="size-full object-contain"
+                loading="lazy"
+              />
               <span className="sr-only">The {HERO_WORD[k]}</span>
             </button>
           ))}
@@ -220,7 +251,11 @@ export function IntroDesigner({
             onClick={() => heroFile.current?.click()}
             className="squish inline-flex shrink-0 items-center gap-1.5 rounded-xl bg-cream px-3 text-xs font-medium ring-1 ring-line hover:bg-pink/40"
           >
-            {busy === "hero" ? <Loader2 className="size-3.5 animate-spin" /> : <ImagePlus className="size-3.5" />}
+            {busy === "hero" ? (
+              <Loader2 className="size-3.5 animate-spin" />
+            ) : (
+              <ImagePlus className="size-3.5" />
+            )}
             Your picture
           </button>
           <input
@@ -228,15 +263,24 @@ export function IntroDesigner({
             type="file"
             accept="image/png,image/jpeg,image/webp,image/gif"
             className="hidden"
-            onChange={(e) => void upload(e.target.files?.[0], "hero", (url) => set({ hero: { type: "image", url } }))}
+            onChange={(e) =>
+              void upload(e.target.files?.[0], "hero", (url) =>
+                set({ hero: { type: "image", url } }),
+              )
+            }
           />
         </div>
         {hero.type === "image" ? (
-          <p className="mt-1.5 text-xs text-muted">Tip: a PNG with a see-through background looks like a real sticker.</p>
+          <p className="mt-1.5 text-xs text-muted">
+            Tip: a PNG with a see-through background looks like a real sticker.
+          </p>
         ) : null}
       </Group>
 
-      <Group title="Stickers" hint={`Up to ${MAX_INTRO_STICKERS}. They float, wobble and can be dragged around.`}>
+      <Group
+        title="Stickers"
+        hint={`Up to ${MAX_INTRO_STICKERS}. They float, wobble and can be dragged around.`}
+      >
         <div className="flex flex-wrap gap-1.5">
           {STICKER_EMOJIS.map((e) => (
             <button
@@ -254,7 +298,11 @@ export function IntroDesigner({
             onClick={() => stickerFile.current?.click()}
             className="squish inline-flex h-9 items-center gap-1.5 rounded-xl bg-cream px-3 text-xs font-medium ring-1 ring-line hover:bg-pink/40"
           >
-            {busy === "sticker" ? <Loader2 className="size-3.5 animate-spin" /> : <ImagePlus className="size-3.5" />}
+            {busy === "sticker" ? (
+              <Loader2 className="size-3.5 animate-spin" />
+            ) : (
+              <ImagePlus className="size-3.5" />
+            )}
             Upload
           </button>
           <input
@@ -262,18 +310,31 @@ export function IntroDesigner({
             type="file"
             accept="image/png,image/jpeg,image/webp,image/gif"
             className="hidden"
-            onChange={(e) => void upload(e.target.files?.[0], "sticker", (url) => addSticker({ url }))}
+            onChange={(e) =>
+              void upload(e.target.files?.[0], "sticker", (url) => addSticker({ url }))
+            }
           />
         </div>
         {stickers.length ? (
           <div className="mt-3">
             <div className="flex flex-wrap gap-2">
               {stickers.map((s) => (
-                <span key={s.id} className="group relative grid size-12 place-items-center rounded-xl bg-paper ring-1 ring-line">
-                  {s.url ? <img src={s.url} alt="" className="size-9 object-contain" /> : <span className="text-2xl">{s.emoji}</span>}
+                <span
+                  key={s.id}
+                  className="group relative grid size-12 place-items-center rounded-xl bg-paper ring-1 ring-line"
+                >
+                  {s.url ? (
+                    <img src={s.url} alt="" className="size-9 object-contain" />
+                  ) : (
+                    <span className="text-2xl">{s.emoji}</span>
+                  )}
                   <button
                     type="button"
-                    onClick={() => set({ stickers: stickers.filter((x) => x.id !== s.id) })}
+                    onClick={() =>
+                      set((prev) => ({
+                        stickers: (prev.stickers ?? []).filter((x) => x.id !== s.id),
+                      }))
+                    }
                     className="absolute -top-1.5 -right-1.5 grid size-5 place-items-center rounded-full bg-ink text-cream"
                     aria-label="Remove sticker"
                   >
@@ -291,7 +352,9 @@ export function IntroDesigner({
                   max={1.8}
                   step={0.1}
                   value={stickers[0]?.s ?? 1}
-                  onChange={(e) => set({ stickers: stickers.map((s) => ({ ...s, s: Number(e.target.value) })) })}
+                  onChange={(e) =>
+                    set({ stickers: stickers.map((s) => ({ ...s, s: Number(e.target.value) })) })
+                  }
                   className="flex-1 accent-[#C2366B]"
                 />
               </label>
@@ -301,7 +364,10 @@ export function IntroDesigner({
                   set({
                     stickers: stickers.map((s) => ({
                       ...s,
-                      x: Math.random() < 0.5 ? 0.08 + Math.random() * 0.22 : 0.7 + Math.random() * 0.22,
+                      x:
+                        Math.random() < 0.5
+                          ? 0.08 + Math.random() * 0.22
+                          : 0.7 + Math.random() * 0.22,
                       y: 0.08 + Math.random() * 0.84,
                       r: Math.round((Math.random() - 0.5) * 40),
                     })),
@@ -318,13 +384,21 @@ export function IntroDesigner({
 
       <Group title="Background">
         <div className="flex flex-wrap gap-1.5">
-          <button type="button" className={chip(bg.type === "theme")} onClick={() => set({ background: undefined })}>
+          <button
+            type="button"
+            className={chip(bg.type === "theme")}
+            onClick={() => set({ background: undefined })}
+          >
             From the theme
           </button>
           <button
             type="button"
             className={chip(bg.type === "solid")}
-            onClick={() => set({ background: { type: "solid", color: bg.type === "solid" ? bg.color : "#FFE3EC" } })}
+            onClick={() =>
+              set({
+                background: { type: "solid", color: bg.type === "solid" ? bg.color : "#FFE3EC" },
+              })
+            }
           >
             One color
           </button>
@@ -334,13 +408,19 @@ export function IntroDesigner({
             onClick={() =>
               set({
                 background:
-                  bg.type === "gradient" ? bg : { type: "gradient", from: "#FFD6E7", to: "#C9D7FF" },
+                  bg.type === "gradient"
+                    ? bg
+                    : { type: "gradient", from: "#FFD6E7", to: "#C9D7FF" },
               })
             }
           >
             Gradient
           </button>
-          <button type="button" className={chip(bg.type === "image")} onClick={() => bgFile.current?.click()}>
+          <button
+            type="button"
+            className={chip(bg.type === "image")}
+            onClick={() => bgFile.current?.click()}
+          >
             {busy === "bg" ? "Uploading…" : "Photo"}
           </button>
           <input
@@ -348,7 +428,11 @@ export function IntroDesigner({
             type="file"
             accept="image/png,image/jpeg,image/webp,image/gif"
             className="hidden"
-            onChange={(e) => void upload(e.target.files?.[0], "bg", (url) => set({ background: { type: "image", url } }))}
+            onChange={(e) =>
+              void upload(e.target.files?.[0], "bg", (url) =>
+                set({ background: { type: "image", url } }),
+              )
+            }
           />
         </div>
         {bg.type === "solid" ? (
@@ -363,17 +447,42 @@ export function IntroDesigner({
         ) : null}
         {bg.type === "gradient" ? (
           <div className="mt-2.5 grid grid-cols-2 gap-2">
-            <ColorField label="Top" value={bg.from} fallback="#FFD6E7" onChange={(v) => set({ background: { ...bg, from: v ?? "#FFD6E7" } })} />
-            <ColorField label="Bottom" value={bg.to} fallback="#C9D7FF" onChange={(v) => set({ background: { ...bg, to: v ?? "#C9D7FF" } })} />
+            <ColorField
+              label="Top"
+              value={bg.from}
+              fallback="#FFD6E7"
+              onChange={(v) => set({ background: { ...bg, from: v ?? "#FFD6E7" } })}
+            />
+            <ColorField
+              label="Bottom"
+              value={bg.to}
+              fallback="#C9D7FF"
+              onChange={(v) => set({ background: { ...bg, to: v ?? "#C9D7FF" } })}
+            />
           </div>
         ) : null}
       </Group>
 
       <Group title="Colors">
         <div className="grid gap-2">
-          <ColorField label="Text" value={settings.ink} fallback="#2B2522" onChange={(v) => set({ ink: v })} />
-          <ColorField label="Button" value={settings.button} fallback={palette.primary} onChange={(v) => set({ button: v })} />
-          <ColorField label="Button text" value={settings.button_ink} fallback="#FFFFFF" onChange={(v) => set({ button_ink: v })} />
+          <ColorField
+            label="Text"
+            value={settings.ink}
+            fallback="#2B2522"
+            onChange={(v) => set({ ink: v })}
+          />
+          <ColorField
+            label="Button"
+            value={settings.button}
+            fallback={palette.primary}
+            onChange={(v) => set({ button: v })}
+          />
+          <ColorField
+            label="Button text"
+            value={settings.button_ink}
+            fallback="#FFFFFF"
+            onChange={(v) => set({ button_ink: v })}
+          />
         </div>
       </Group>
 
@@ -402,11 +511,20 @@ export function IntroDesigner({
 
       <Group title="When it opens" hint="What bursts out when they tap the button.">
         <div className="flex flex-wrap gap-1.5">
-          <button type="button" className={chip(!settings.burst)} onClick={() => set({ burst: undefined })}>
+          <button
+            type="button"
+            className={chip(!settings.burst)}
+            onClick={() => set({ burst: undefined })}
+          >
             From the theme
           </button>
           {BURSTS.map((b) => (
-            <button key={b.id} type="button" className={chip(settings.burst === b.id)} onClick={() => set({ burst: b.id })}>
+            <button
+              key={b.id}
+              type="button"
+              className={chip(settings.burst === b.id)}
+              onClick={() => set({ burst: b.id })}
+            >
               {b.glyph} {b.label}
             </button>
           ))}
@@ -416,7 +534,7 @@ export function IntroDesigner({
       {Object.keys(settings).length ? (
         <button
           type="button"
-          onClick={() => onChange({})}
+          onClick={() => onChange(() => ({}))}
           className="inline-flex items-center gap-1.5 text-xs font-medium text-muted underline"
         >
           <RotateCcw className="size-3" /> Back to the theme's opening

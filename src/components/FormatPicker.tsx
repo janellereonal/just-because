@@ -40,6 +40,43 @@ function Mini({ id }: { id: GiftFormat }) {
           <i />
         </span>
       );
+    case "storybook":
+      return (
+        <span className="fmt-mini fmt-book" aria-hidden>
+          <i />
+          <i />
+          <i />
+        </span>
+      );
+    case "mixtape":
+      return (
+        <span className="fmt-mini fmt-tape" aria-hidden>
+          <b />
+          <i />
+          <i />
+        </span>
+      );
+    case "scratch":
+      return (
+        <span className="fmt-mini fmt-scratch" aria-hidden>
+          <b>you won</b>
+          <i />
+        </span>
+      );
+    case "stars":
+      return (
+        <span className="fmt-mini fmt-stars" aria-hidden>
+          <i />
+          <i />
+          <i />
+          <i />
+          <svg viewBox="0 0 100 64" preserveAspectRatio="none">
+            <line x1="14" y1="15" x2="36" y2="39" />
+            <line x1="36" y1="39" x2="60" y2="16" />
+            <line x1="60" y1="16" x2="84" y2="35" />
+          </svg>
+        </span>
+      );
     default:
       return (
         <span className="fmt-mini fmt-scrap" aria-hidden>
@@ -85,6 +122,7 @@ export function FormatPicker({
           return (
             <label
               key={f.id}
+              data-format={f.id}
               className={`fmt-card group ${active ? "is-active" : ""} ${allowed ? "" : "is-locked"}`}
             >
               <input
