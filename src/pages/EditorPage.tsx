@@ -1043,6 +1043,9 @@ function SiteDashboard() {
       recipientName={draft.custom_text.recipient_name}
       introText={draft.intro_text ?? undefined}
       settings={draft.intro_settings}
+      character={draft.character}
+      iconSet={draft.icon_set}
+      contributors={friends}
       onOpen={() => setPreviewOpened(true)}
     />
   );
@@ -1063,6 +1066,9 @@ function SiteDashboard() {
       recipientName={draft.custom_text.recipient_name}
       introText={draft.intro_text ?? undefined}
       settings={draft.intro_settings}
+      character={draft.character}
+      iconSet={draft.icon_set}
+      contributors={friends}
       onStickerMove={moveIntroSticker}
       onOpen={() => window.setTimeout(() => setIntroCanvasKey((k) => k + 1), 900)}
     />
@@ -1547,6 +1553,9 @@ function SiteDashboard() {
           recipientName={draft.custom_text.recipient_name}
           introText={draft.intro_text ?? undefined}
           settings={draft.intro_settings}
+          character={draft.character}
+          iconSet={draft.icon_set}
+          contributors={friends}
           onOpen={() => setIntroPreview(false)}
         />
       ) : null}

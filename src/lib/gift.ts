@@ -12,6 +12,8 @@ import type { Palette, Theme } from "@/lib/themes";
 import { normalizeTheme } from "@/lib/themes";
 import { normalizeComicSettings, type ComicSettings } from "@/lib/comic";
 import { normalizeIntroSettings, type IntroSettings } from "@/lib/intro";
+import { normalizeCharacter, type CharacterSetting } from "@/themes/_shared/cast/types";
+import { normalizeIconSetting, type IconSetSetting } from "@/themes/_shared/iconSets";
 import { isGiftFormat, type GiftFormat } from "@/lib/formats";
 
 export type ModuleType =
@@ -205,6 +207,10 @@ export type GiftSite = {
   intro_settings: IntroSettings;
   /** Just from the creator: no friends link. */
   solo: boolean;
+  /** The opening's character. Null = the theme's default. */
+  character: CharacterSetting | null;
+  /** The particles. Null = the theme's default. */
+  icon_set: IconSetSetting | null;
   background_style: BackgroundStyle;
   tree_reveal_date: string | null;
   /** sweet | celebration | keepsake | legacy, or null until paid. */
@@ -301,6 +307,8 @@ export function normalizeSite(row: Record<string, unknown>): GiftSite {
     intro_text: (row["intro_text"] as string | null) ?? null,
     intro_settings: normalizeIntroSettings(row["intro_settings"]),
     solo: row["solo"] === true,
+    character: normalizeCharacter(row["character"]),
+    icon_set: normalizeIconSetting(row["icon_set"]),
     background_style: ((row["background_style"] as BackgroundStyle) ?? "paper") as BackgroundStyle,
     tree_reveal_date: (row["tree_reveal_date"] as string | null) ?? null,
     tier: (row["tier"] as string | null) ?? null,

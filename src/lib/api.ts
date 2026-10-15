@@ -19,6 +19,8 @@
  */
 import { FORMAT_IDS } from "@/lib/formats";
 import { normalizeIntroSettings } from "@/lib/intro";
+import { normalizeCharacter } from "@/themes/_shared/cast/types";
+import { normalizeIconSetting } from "@/themes/_shared/iconSets";
 import { createServerFn } from "@tanstack/react-start";
 import { and, asc, desc, eq, inArray, ne, or, sql } from "drizzle-orm";
 import { z } from "zod";
@@ -396,6 +398,20 @@ export const updateIntroSettings = createServerFn({ method: "POST" })
       .set({ introSettings: settings })
       .where(eq(schema.giftSites.id, data.id));
     return { ok: true, settings };
+  });
+
+/** The gift's cast: its character and icon set. Cleaned server side; null = theme default. */
+export const updateCast = createServerFn({ method: "POST" })
+  .inputValidator(z.object({ id, character: jsonObject.nullable(), iconSet: jsonObject.nullable() }))
+  .handler(async ({ data }) => {
+    await requireSiteOwner(data.id);
+    const character = data.character ? normalizeCharacter(data.character) : null;
+    const iconSet = data.iconSet ? normalizeIconSetting(data.iconSet) : null;
+    await getDb()
+      .update(schema.giftSites)
+      .set({ character, iconSet })
+      .where(eq(schema.giftSites.id, data.id));
+    return { ok: true, character, iconSet };
   });
 
 export const deleteSite = createServerFn({ method: "POST" })

@@ -132,6 +132,10 @@ export const giftSites = pgTable(
     countdownDate: date("countdown_date"),
     calendarLocked: boolean("calendar_locked").notNull().default(false),
     introText: text("intro_text"),
+    /** The star of the opening: { type: "library" | "upload", id, colors, accessory, name_tag, upload_url }. Null = theme default. */
+    character: jsonb("character"),
+    /** The particles: { id } for a built-in set or { custom: [emoji or url] }. Null = theme default. */
+    iconSet: jsonb("icon_set"),
     /** Just from the creator (no friends link). They add every note themselves. */
     solo: boolean("solo").notNull().default(false),
     /** The creator's custom opening: object, stickers, colors, background, button words. */

@@ -16,6 +16,7 @@ const CATCH_WORD: Record<ThemeKind, [string, string]> = {
   anniversary: ["petal", "petals"],
   wedding: ["petal", "petals"],
   bridal: ["bubble", "bubbles"],
+  baby: ["star", "stars"],
   default: ["sparkle", "sparkles"],
 };
 

@@ -38,6 +38,7 @@ const COVER_SUBTITLE: Record<string, string> = {
   anniversary: "SPECIAL ANNIVERSARY ISSUE",
   wedding: "SPECIAL WEDDING ISSUE",
   bridal: "SPECIAL SHOWER ISSUE",
+  baby: "SPECIAL BABY ISSUE",
   default: "SPECIAL COLLECTOR'S ISSUE",
 };
 

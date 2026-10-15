@@ -13,6 +13,7 @@ export type ThemeKind =
   | "anniversary"
   | "wedding"
   | "bridal"
+  | "baby"
   | "default";
 
 export const THEME_KINDS: ThemeKind[] = [
@@ -25,6 +26,7 @@ export const THEME_KINDS: ThemeKind[] = [
   "anniversary",
   "wedding",
   "bridal",
+  "baby",
   "default",
 ];
 
@@ -40,6 +42,7 @@ export function themeKindOf(
   if (key.includes("pet") || key.includes("companion")) return "pets";
   if (key.includes("new year")) return "newyear";
   if (key.includes("anniversar") || key.includes("milestone")) return "anniversary";
+  if (key.includes("baby") || key.includes("stork")) return "baby";
   if (key.includes("bridal") || key.includes("shower")) return "bridal";
   if (key.includes("wedding")) return "wedding";
   return "default";
@@ -103,6 +106,12 @@ export const KIND_WORDS: Record<
     countdown: "Until the shower",
     letters: "Sweet notes",
     from: "Love,",
+  },
+  baby: {
+    badge: "Little one on the way",
+    countdown: "Until we meet you",
+    letters: "Notes for the new family",
+    from: "With love,",
   },
   default: {
     badge: "A gift for you",

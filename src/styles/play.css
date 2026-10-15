@@ -43,3 +43,48 @@
   .sb-flip.is-flipped .sb-flip-back { opacity: 1; }
   .sb-flip.is-flipped .sb-flip-front { opacity: 0; }
 }
+
+/* Sprinkles: icon-set particles with per-set physics. */
+.jb-sprinkle { position: absolute; display: block; will-change: transform, opacity; animation-timing-function: cubic-bezier(.37,0,.63,1); animation-iteration-count: infinite; }
+@keyframes jb-sprinkle-fall {
+  0% { transform: translate3d(0, -14cqi, 0) rotate(0deg); opacity: 0; }
+  12%, 85% { opacity: 1; }
+  100% { transform: translate3d(var(--dx), 120cqi, 0) rotate(calc(var(--rot) * 4)); opacity: 0; }
+}
+@keyframes jb-sprinkle-rise {
+  0% { transform: translate3d(0, 40cqi, 0) scale(.6); opacity: 0; }
+  15% { opacity: 1; }
+  100% { transform: translate3d(var(--dx), -60cqi, 0) scale(1.08) rotate(var(--rot)); opacity: 0; }
+}
+@keyframes jb-sprinkle-drift {
+  0%, 100% { transform: translate3d(0, 0, 0) rotate(0deg); opacity: .35; }
+  50% { transform: translate3d(var(--dx), -18px, 0) rotate(var(--rot)); opacity: 1; }
+}
+.jb-opening[data-paused] * { animation-play-state: paused !important; }
+@media (prefers-reduced-motion: reduce) {
+  .jb-sprinkle { animation: none !important; opacity: .6 !important; }
+}
+
+/* Birthday candle flame: a teardrop that flickers (transform only). */
+.jb-flame {
+  border-radius: 50% 50% 50% 50% / 62% 62% 38% 38%;
+  background: radial-gradient(60% 55% at 50% 72%, #fff 0 22%, #FFE48A 38%, #FFAA3A 66%, rgba(255,120,40,0) 100%);
+  box-shadow: 0 0 18px 6px rgba(255, 190, 80, .55), 0 0 44px 16px rgba(255, 170, 60, .25);
+  transform-origin: 50% 90%;
+  animation: jb-flicker 1.1s cubic-bezier(.45,.05,.55,.95) infinite alternate;
+}
+@keyframes jb-flicker {
+  0% { transform: scale(1, 1) rotate(-1deg); }
+  35% { transform: scale(.94, 1.08) rotate(2deg); }
+  70% { transform: scale(1.04, .95) rotate(-2deg); }
+  100% { transform: scale(.97, 1.05) rotate(1deg); }
+}
+@media (prefers-reduced-motion: reduce) { .jb-flame { animation: none; } }
+
+/* A soft "touch me" ring on grabbable parts. */
+.jb-pulse { animation: jb-pulse 1.9s cubic-bezier(.2,.7,.3,1) infinite; opacity: 0; }
+@keyframes jb-pulse { 0% { transform: translateX(-50%) scale(.5); opacity: .9; } 100% { transform: translateX(-50%) scale(1.5); opacity: 0; } }
+@media (prefers-reduced-motion: reduce) { .jb-pulse { animation: none; opacity: .5; } }
+.jb-ring-svg { transform-box: fill-box; transform-origin: center; animation: jb-ring-svg 1.8s cubic-bezier(.2,.7,.3,1) infinite; }
+@keyframes jb-ring-svg { 0% { transform: scale(.6); opacity: .9; } 100% { transform: scale(1.9); opacity: 0; } }
+@media (prefers-reduced-motion: reduce) { .jb-ring-svg { animation: none; opacity: .6; } }

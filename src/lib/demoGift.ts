@@ -46,6 +46,8 @@ export function demoSite(format: GiftFormat): GiftSite {
     intro_text: null,
     intro_settings: {},
     solo: false,
+    character: null,
+    icon_set: null,
     background_style: "clean",
     tree_reveal_date: null,
     tier: "celebration",

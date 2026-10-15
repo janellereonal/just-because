@@ -113,6 +113,8 @@ export function buildPreviewSite(theme: Theme, palette: Palette | undefined): Gi
     intro_text: null,
     intro_settings: {},
     solo: false,
+    character: null,
+    icon_set: null,
     background_style: backgroundFor(theme),
     tree_reveal_date: null,
     tier: null,

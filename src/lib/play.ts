@@ -20,6 +20,7 @@ export const KIND_BURST: Record<ThemeKind, BurstShape> = {
   anniversary: "hearts",
   wedding: "petals",
   bridal: "petals",
+  baby: "stars",
   default: "confetti",
 };
 
@@ -216,6 +217,98 @@ export function chime(kind: ChimeKind = "pop") {
   } catch {
     /* sound is a nicety */
   }
+}
+
+type Texture = "crack" | "crunch" | "rip" | "thunk" | "needle" | "fizz" | "purr" | "breath" | "paper";
+
+function ctxNow() {
+  if (typeof window === "undefined" || !soundOn()) return null;
+  try {
+    const Ctor =
+      window.AudioContext ?? (window as unknown as { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
+    if (!Ctor) return null;
+    audio ??= new Ctor();
+    void audio.resume();
+    return audio;
+  } catch {
+    return null;
+  }
+}
+
+/** Filtered noise for physical sounds: a seal cracking, paper tearing, a stamp landing. */
+export function foley(kind: Texture) {
+  const ctx = ctxNow();
+  if (!ctx) return;
+  try {
+    const spec: Record<Texture, { dur: number; type: BiquadFilterType; freq: number; q: number; gain: number; grains?: number }> = {
+      crack: { dur: 0.16, type: "bandpass", freq: 2400, q: 0.9, gain: 0.5, grains: 3 },
+      crunch: { dur: 0.32, type: "bandpass", freq: 1500, q: 0.7, gain: 0.35, grains: 6 },
+      rip: { dur: 0.55, type: "highpass", freq: 1800, q: 0.6, gain: 0.25, grains: 14 },
+      thunk: { dur: 0.12, type: "lowpass", freq: 260, q: 1.4, gain: 0.9 },
+      needle: { dur: 0.6, type: "bandpass", freq: 3200, q: 0.4, gain: 0.08, grains: 20 },
+      fizz: { dur: 0.9, type: "highpass", freq: 4200, q: 0.5, gain: 0.12 },
+      purr: { dur: 0.9, type: "lowpass", freq: 180, q: 3, gain: 0.5, grains: 9 },
+      breath: { dur: 0.7, type: "bandpass", freq: 900, q: 0.4, gain: 0.18 },
+      paper: { dur: 0.25, type: "bandpass", freq: 3000, q: 0.6, gain: 0.18, grains: 4 },
+    };
+    const sp = spec[kind];
+    const now = ctx.currentTime;
+    const len = Math.ceil(ctx.sampleRate * sp.dur);
+    const buf = ctx.createBuffer(1, len, ctx.sampleRate);
+    const data = buf.getChannelData(0);
+    const grains = sp.grains ?? 1;
+    for (let i = 0; i < len; i++) {
+      const t = i / len;
+      // Grainy envelopes make crackle; a single envelope makes a thump or a hiss.
+      const g = grains > 1 ? Math.max(0, Math.sin(t * Math.PI * grains)) ** 6 : 1;
+      data[i] = (Math.random() * 2 - 1) * g * (1 - t) ** (kind === "thunk" ? 3 : 1.4);
+    }
+    const src = ctx.createBufferSource();
+    src.buffer = buf;
+    const filter = ctx.createBiquadFilter();
+    filter.type = sp.type;
+    filter.frequency.value = sp.freq;
+    filter.Q.value = sp.q;
+    const gain = ctx.createGain();
+    gain.gain.value = sp.gain;
+    src.connect(filter).connect(gain).connect(ctx.destination);
+    if (kind === "thunk") {
+      // A low body under the thud.
+      const o = ctx.createOscillator();
+      const og = ctx.createGain();
+      o.frequency.setValueAtTime(120, now);
+      o.frequency.exponentialRampToValueAtTime(55, now + 0.12);
+      og.gain.setValueAtTime(0.35, now);
+      og.gain.exponentialRampToValueAtTime(0.0001, now + 0.16);
+      o.connect(og).connect(ctx.destination);
+      o.start(now);
+      o.stop(now + 0.2);
+    }
+    src.start(now);
+  } catch {
+    /* sound is a nicety */
+  }
+}
+
+/** A few notes, like a music box or a toast chime. Frequencies in Hz, spaced `step` seconds. */
+export function melody(notes: number[], step = 0.18, type: OscillatorType = "sine", peak = 0.07) {
+  const ctx = ctxNow();
+  if (!ctx) return;
+  const now = ctx.currentTime;
+  notes.forEach((f, i) => {
+    if (!f) return;
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.type = type;
+    osc.frequency.value = f;
+    const at = now + i * step;
+    gain.gain.setValueAtTime(0.0001, at);
+    gain.gain.exponentialRampToValueAtTime(peak, at + 0.01);
+    gain.gain.exponentialRampToValueAtTime(0.0001, at + step * 2.6);
+    osc.connect(gain).connect(ctx.destination);
+    osc.start(at);
+    osc.stop(at + step * 3);
+  });
 }
 
 /** A tiny tap on phones that support it. */
