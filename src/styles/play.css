@@ -88,3 +88,10 @@
 .jb-ring-svg { transform-box: fill-box; transform-origin: center; animation: jb-ring-svg 1.8s cubic-bezier(.2,.7,.3,1) infinite; }
 @keyframes jb-ring-svg { 0% { transform: scale(.6); opacity: .9; } 100% { transform: scale(1.9); opacity: 0; } }
 @media (prefers-reduced-motion: reduce) { .jb-ring-svg { animation: none; opacity: .6; } }
+
+/* Cast: tails wag, coffee steams. Calm under reduced motion. */
+.jb-wag { transform-box: view-box; animation: jb-wag 1.6s cubic-bezier(.45,.05,.55,.95) infinite; }
+@keyframes jb-wag { 0%, 100% { transform: rotate(-6deg); } 50% { transform: rotate(10deg); } }
+.jb-steam { animation: jb-steam 2.8s cubic-bezier(.45,.05,.55,.95) infinite; }
+@keyframes jb-steam { 0%, 100% { transform: translateY(0); opacity: .55; } 50% { transform: translateY(-3px); opacity: .25; } }
+@media (prefers-reduced-motion: reduce) { .jb-wag, .jb-steam { animation: none; } }

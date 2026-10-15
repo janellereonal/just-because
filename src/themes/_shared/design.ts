@@ -43,7 +43,8 @@ export type ThemeDesign = {
   /** Material colors for the opening (the gift body uses the gift's own palette). */
   palette: ThemePalette;
   accessory: AccessoryId | null;
-  defaultCharacter: string;
+  /** null: no character by default, the object tells the story. */
+  defaultCharacter: string | null;
   defaultIconSet: string;
   /** How long the gallery's silent preview loop runs, in ms. */
   previewLoop: number;
@@ -75,7 +76,7 @@ export const THEME_DESIGNS: Record<ThemeKind, ThemeDesign> = {
     text: g("Instrument Sans", "Instrument+Sans:wght@400..700", "sans-serif"),
     palette: { rose: "#B4335A", cream: "#F6EEE3", oxblood: "#5E1424", gold: "#C9A24A", linen: "#EDE3D4" },
     accessory: "bow",
-    defaultCharacter: "mascot",
+    defaultCharacter: null,
     defaultIconSet: "hearts",
     previewLoop: 3200,
   },
@@ -88,7 +89,7 @@ export const THEME_DESIGNS: Record<ThemeKind, ThemeDesign> = {
     text: SATOSHI,
     palette: { espresso: "#2B1D18", champagne: "#E9D6B0", plum: "#8E6A80", walnut: "#4A2F24", glow: "#FFCF8A" },
     accessory: "rose",
-    defaultCharacter: "mascot",
+    defaultCharacter: null,
     defaultIconSet: "stars",
     previewLoop: 3400,
   },
@@ -101,7 +102,7 @@ export const THEME_DESIGNS: Record<ThemeKind, ThemeDesign> = {
     text: SATOSHI,
     palette: { butter: "#FFE9A3", bubblegum: "#FF7EB6", cobalt: "#2D4BD6", mint: "#8DE3C6", cream: "#FFF8E6" },
     accessory: "party-hat",
-    defaultCharacter: "mascot",
+    defaultCharacter: "bear",
     defaultIconSet: "confetti",
     previewLoop: 3400,
   },
@@ -114,7 +115,7 @@ export const THEME_DESIGNS: Record<ThemeKind, ThemeDesign> = {
     text: INTER_TIGHT,
     palette: { ivory: "#FBF7EE", sage: "#9DB08F", gold: "#C9A55C", paper: "#F3EDE1", ink: "#3B3A33" },
     accessory: "veil",
-    defaultCharacter: "mascot",
+    defaultCharacter: null,
     defaultIconSet: "florals",
     previewLoop: 3200,
   },
@@ -127,7 +128,7 @@ export const THEME_DESIGNS: Record<ThemeKind, ThemeDesign> = {
     text: INTER_TIGHT,
     palette: { ivory: "#FCF3F0", sage: "#E0A9A3", gold: "#C9A55C", paper: "#F8ECE8", ink: "#4A3A3A" },
     accessory: "veil",
-    defaultCharacter: "mascot",
+    defaultCharacter: null,
     defaultIconSet: "florals",
     previewLoop: 3200,
   },
@@ -140,7 +141,7 @@ export const THEME_DESIGNS: Record<ThemeKind, ThemeDesign> = {
     text: g("DM Sans", "DM+Sans:opsz,wght@9..40,400..700", "sans-serif"),
     palette: { blue: "#AFCDEB", butter: "#FBE7A1", blush: "#F4BFC8", oat: "#F3ECE0", ink: "#3D4660" },
     accessory: "bonnet",
-    defaultCharacter: "mascot",
+    defaultCharacter: "duck",
     defaultIconSet: "stars",
     previewLoop: 3400,
   },
@@ -153,7 +154,7 @@ export const THEME_DESIGNS: Record<ThemeKind, ThemeDesign> = {
     text: fs("Erode", "erode@400,500,600", "serif"),
     palette: { pine: "#1F4D3A", cranberry: "#A3203A", gold: "#E2B95B", snow: "#F7F4EE", paper: "#B8283F" },
     accessory: "scarf",
-    defaultCharacter: "mascot",
+    defaultCharacter: null,
     defaultIconSet: "snowflakes",
     previewLoop: 3200,
   },
@@ -166,7 +167,7 @@ export const THEME_DESIGNS: Record<ThemeKind, ThemeDesign> = {
     text: fs("Boska", "boska@400,500,700", "serif"),
     palette: { navy: "#10152E", gold: "#E5C26B", silver: "#C9CED8", violet: "#8E7CF0", night: "#070A1A" },
     accessory: "crown",
-    defaultCharacter: "mascot",
+    defaultCharacter: null,
     defaultIconSet: "stars",
     previewLoop: 3600,
   },
@@ -179,7 +180,7 @@ export const THEME_DESIGNS: Record<ThemeKind, ThemeDesign> = {
     text: g("Space Mono", "Space+Mono:wght@400;700", "monospace"),
     palette: { sky: "#8EC0E8", kraft: "#C9A57A", cream: "#F6F0E4", orange: "#F2652E", ink: "#22303F" },
     accessory: "pilot-cap",
-    defaultCharacter: "mascot",
+    defaultCharacter: null,
     defaultIconSet: "stars",
     previewLoop: 3200,
   },
@@ -221,7 +222,7 @@ export function castFor(
 ) {
   const d = designFor(kind);
   return {
-    character: character ?? ({ type: "library", id: d.defaultCharacter, accessory: true } as CharacterSetting),
+    character: character ?? ((d.defaultCharacter ? { type: "library", id: d.defaultCharacter, accessory: true } : { type: "none" }) as CharacterSetting),
     iconSet: iconSet ?? ({ id: d.defaultIconSet } as IconSetSetting),
     accessory: d.accessory,
   };

@@ -174,7 +174,7 @@ export const Character = forwardRef<CharacterHandle, CharacterProps>(function Ch
   const tilt = useTransform(body.lx, (v) => v * 6);
 
   const content =
-    setting.type === "upload" ? (
+    setting.type === "none" ? null : setting.type === "upload" ? (
       <Sticker url={setting.upload_url} accessory={wearing} />
     ) : (
       <Drawn
@@ -190,6 +190,8 @@ export const Character = forwardRef<CharacterHandle, CharacterProps>(function Ch
         uid={uid}
       />
     );
+
+  if (setting.type === "none") return <div ref={rootRef} aria-hidden="true" style={{ width: 0, height: 0 }} />;
 
   return (
     <div

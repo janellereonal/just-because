@@ -256,17 +256,19 @@ export function NewYearOpening(p: OpeningProps) {
             live={!p.paused}
             showName={false}
           />
-          <motion.div
-            ref={popperRef}
-            className="absolute -top-[6px] -left-[18px] origin-bottom-right"
-            initial={false}
-            animate={
-              beat >= 2 ? { rotate: [-30, -52, -24, -34], x: [0, -4, 2, 0] } : { rotate: -30 }
-            }
-            transition={{ duration: 0.6, ease: [0.2, 0.8, 0.3, 1] }}
-          >
-            <Popper gold={c.gold!} violet={c.violet!} />
-          </motion.div>
+          {p.character.type !== "none" ? (
+            <motion.div
+              ref={popperRef}
+              className="absolute -top-[6px] -left-[18px] origin-bottom-right"
+              initial={false}
+              animate={
+                beat >= 2 ? { rotate: [-30, -52, -24, -34], x: [0, -4, 2, 0] } : { rotate: -30 }
+              }
+              transition={{ duration: 0.6, ease: [0.2, 0.8, 0.3, 1] }}
+            >
+              <Popper gold={c.gold!} violet={c.violet!} />
+            </motion.div>
+          ) : null}
         </div>
       </Layer>
     </div>
