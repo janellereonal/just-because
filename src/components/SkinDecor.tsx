@@ -41,7 +41,12 @@ function rng(seed: number) {
   };
 }
 
-export function SkinDecor({ kind }: { kind: ThemeKind }) {
+/** Just the floating particles, for openings with the creator's own background. */
+export function SkinParticles({ kind }: { kind: ThemeKind }) {
+  return <SkinDecor kind={kind} pattern={false} />;
+}
+
+export function SkinDecor({ kind, pattern = true }: { kind: ThemeKind; pattern?: boolean }) {
   const particles = useMemo<Particle[]>(() => {
     const r = rng(kind.length * 97 + 13);
     return Array.from({ length: COUNTS[kind] }, () => ({
@@ -57,7 +62,7 @@ export function SkinDecor({ kind }: { kind: ThemeKind }) {
 
   return (
     <div className="sk-decor" aria-hidden="true">
-      <div className="sk-pattern" />
+      {pattern ? <div className="sk-pattern" /> : null}
       <div className="sk-sky">
         {kind === "birthday" ? <Bunting /> : null}
         {kind === "christmas" ? <Lights /> : null}

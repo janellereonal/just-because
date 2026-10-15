@@ -277,7 +277,7 @@ export function BentoView({
               <Theme3D
                 kind={themeKindOf(theme)}
                 palette={palette}
-                className="!absolute top-2 right-2 h-[58%] w-[62%] @2xl:top-4 @2xl:right-4"
+                className="!absolute top-2 right-2 h-[42%] w-[72%] @md:h-[58%] @md:w-[62%] @2xl:top-4 @2xl:right-4"
               />
             ) : null}
             <p className="text-[11px] font-semibold tracking-[0.2em] uppercase opacity-80">

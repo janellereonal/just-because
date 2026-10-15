@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { Live3DContext } from "@/components/Theme3D";
 import { FormatView } from "@/components/formats/FormatView";
 import { FORMATS, type GiftFormat } from "@/lib/formats";
+import { DevicePreview, DeviceToggle, type PreviewDevice } from "@/components/DevicePreview";
 import { DEMO_MODULES, DEMO_NOTES, DEMO_PALETTE, DEMO_THEME, demoSite } from "@/lib/demoGift";
 
 const CYCLE_MS = 5200;
@@ -19,6 +20,7 @@ export function FormatDemo({
 }) {
   const [format, setFormat] = useState<GiftFormat>("bento");
   const [touched, setTouched] = useState(false);
+  const [device, setDevice] = useState<PreviewDevice>("phone");
   const [inView, setInView] = useState(false);
   const wrapRef = useRef<HTMLDivElement | null>(null);
   const screenRef = useRef<HTMLDivElement | null>(null);
@@ -61,6 +63,7 @@ export function FormatDemo({
     const el = screenRef.current;
     if (!el) return;
     el.scrollTop = 0;
+    if (device === "laptop") return;
     if (touched || !inView || window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
     let raf = 0;
     const start = performance.now() + 900;
@@ -87,7 +90,13 @@ export function FormatDemo({
       el.removeEventListener("touchstart", stop);
       el.removeEventListener("pointerdown", stop);
     };
-  }, [format, touched, inView]);
+  }, [format, touched, inView, device]);
+
+  const gift = (
+    <Live3DContext.Provider value={false}>
+      <FormatView site={site} theme={DEMO_THEME} palette={DEMO_PALETTE} modules={DEMO_MODULES} contributions={DEMO_NOTES} />
+    </Live3DContext.Provider>
+  );
 
   return (
     <div ref={wrapRef} className={`flex flex-col items-center ${className}`}>
@@ -114,28 +123,42 @@ export function FormatDemo({
           </button>
         ))}
       </div>
-      <div
-        className={`demo-phone relative mt-5 ${compact ? "h-[560px] w-[290px]" : "h-[600px] w-[300px] sm:h-[640px] sm:w-[320px]"}`}
-      >
-        <span className="demo-phone-notch" aria-hidden />
-        <div
-          ref={screenRef}
-          key={format}
-          className="demo-screen absolute inset-[10px] overflow-x-hidden overflow-y-auto rounded-[34px] [scrollbar-width:none]"
-          style={{ background: DEMO_PALETTE.background }}
-          aria-label={`A sample gift for Maya, shown as ${FORMATS.find((f) => f.id === format)?.title}`}
-        >
-          <Live3DContext.Provider value={false}>
-          <FormatView
-            site={site}
-            theme={DEMO_THEME}
-            palette={DEMO_PALETTE}
-            modules={DEMO_MODULES}
-            contributions={DEMO_NOTES}
-          />
-          </Live3DContext.Provider>
+      <DeviceToggle
+        value={device}
+        onChange={(d) => {
+          setTouched(true);
+          setDevice(d);
+        }}
+        size="sm"
+        className="mt-3"
+      />
+      {device === "laptop" ? (
+        <div className="mt-5 w-[min(640px,calc(100vw-32px))]">
+          <DevicePreview device="laptop" scrollLabel="A sample gift for Maya on a laptop">
+            <div key={format}>{gift}</div>
+          </DevicePreview>
         </div>
-      </div>
+      ) : (
+        <div
+          className={`demo-phone relative mt-5 ${compact ? "h-[560px] w-[290px]" : "h-[600px] w-[300px] sm:h-[640px] sm:w-[320px]"}`}
+        >
+          <span className="demo-phone-notch" aria-hidden />
+          <div
+            className="absolute inset-[10px] overflow-hidden rounded-[34px]"
+            style={{ contain: "layout paint" }}
+          >
+            <div
+              ref={screenRef}
+              key={format}
+              className="demo-screen absolute inset-0 overflow-x-hidden overflow-y-auto [scrollbar-width:none]"
+              style={{ background: DEMO_PALETTE.background }}
+              aria-label={`A sample gift for Maya, shown as ${FORMATS.find((f) => f.id === format)?.title}`}
+            >
+              {gift}
+            </div>
+          </div>
+        </div>
+      )}
       <p className="mt-4 max-w-[30ch] text-center text-sm text-ink/60">
         {FORMATS.find((f) => f.id === format)?.about} Tap around, it's a real gift.
       </p>

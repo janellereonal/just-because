@@ -12,9 +12,13 @@ import {
   deleteCalendarEntry,
   setContributionStatus,
   setModuleEnabled,
+  updateIntroSettings,
   updateSite,
   upsertCalendarEntry,
 } from "@/lib/api";
+import { IntroDesigner } from "@/components/IntroDesigner";
+import { DevicePreview, DeviceToggle, type PreviewDevice } from "@/components/DevicePreview";
+import type { IntroSettings, IntroSticker } from "@/lib/intro";
 import { uploadFile } from "@/lib/upload";
 import { GiftIntro } from "@/components/GiftIntro";
 import { BoBuddy } from "@/components/BoBuddy";
@@ -47,7 +51,7 @@ import { PageError, PageLoading, PageNotFound } from "@/components/PageStates";
 import { PalettePicker, paletteNameFor } from "@/components/PalettePicker";
 import { usePalettes } from "@/hooks/usePalettes";
 import { Button } from "@/components/ui/button";
-import { normalizeComicSettings, orderedComicIds, type ComicSettings } from "@/lib/comic";
+import { comicSettingDefaults, normalizeComicSettings, orderedComicIds, type ComicSettings } from "@/lib/comic";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -195,7 +199,10 @@ function SiteDashboard() {
   const [section, setSection] = useState<SectionKey>("words");
   const [panelOpen, setPanelOpen] = useState(true);
   const [focusField, setFocusField] = useState<keyof CustomText | null>(null);
-  const [device, setDevice] = useState<"phone" | "desktop">("phone");
+  const [device, setDevice] = useState<PreviewDevice>("phone");
+  /** Bumped to replay the opening in the canvas while the Intro panel is open. */
+  const [introCanvasKey, setIntroCanvasKey] = useState(0);
+  const introSaveTimer = useRef<number | null>(null);
   const [sheetOpen, setSheetOpen] = useState(false);
   const [renaming, setRenaming] = useState(false);
   const [fullPreview, setFullPreview] = useState(false);
@@ -433,6 +440,30 @@ function SiteDashboard() {
   function patch(update: Partial<GiftSite>) {
     setDraft((prev) => (prev ? { ...prev, ...update } : prev));
     setDirty(true);
+  }
+
+  /** Intro designer changes: shown at once, saved on their own shortly after. */
+  function patchIntro(next: IntroSettings) {
+    setDraft((prev) => (prev ? { ...prev, intro_settings: next } : prev));
+    if (introSaveTimer.current) window.clearTimeout(introSaveTimer.current);
+    introSaveTimer.current = window.setTimeout(() => {
+      setSaving(true);
+      updateIntroSettings({ data: { id, settings: next as Record<string, never> } })
+        .then(() => {
+          setSavedAt(Date.now());
+          void queryClient.invalidateQueries({ queryKey: ["site", id] });
+        })
+        .catch(() => toast.error("Couldn't save the opening. Try again in a moment."))
+        .finally(() => setSaving(false));
+    }, 600);
+  }
+
+  function moveIntroSticker(moved: IntroSticker) {
+    const current = draft?.intro_settings ?? {};
+    patchIntro({
+      ...current,
+      stickers: (current.stickers ?? []).map((st) => (st.id === moved.id ? { ...st, x: moved.x, y: moved.y } : st)),
+    });
   }
 
   function patchText(key: keyof CustomText, value: string) {
@@ -806,23 +837,42 @@ function SiteDashboard() {
     ),
     intro: (
       <div>
-        <p className="text-xs text-muted">
-          The first screen people see when they open your link. Its style comes from the theme.
-        </p>
-        <textarea
-          rows={2}
-          value={draft.intro_text ?? ""}
-          placeholder="For Maya, from everyone who loves her"
-          onChange={(e) => patch({ intro_text: e.target.value })}
-          className="mt-3 w-full rounded-xl border border-line bg-cream px-3 py-2.5 text-sm outline-none focus:border-accent"
+        <IntroDesigner
+          siteId={id}
+          settings={draft.intro_settings}
+          onChange={patchIntro}
+          palette={paletteNow}
+          kind={themeKindOf(theme)}
+          introStyle={introStyleForTheme(theme?.name)}
+          greeting={
+            <label className="block">
+              <span className="text-xs text-muted">Greeting</span>
+              <textarea
+                rows={2}
+                value={draft.intro_text ?? ""}
+                placeholder={`For ${draft.custom_text.recipient_name || "Maya"}, from everyone who loves her`}
+                onChange={(e) => patch({ intro_text: e.target.value })}
+                className="mt-1 w-full rounded-xl border border-line bg-cream px-3 py-2.5 text-sm outline-none focus:border-accent"
+              />
+            </label>
+          }
         />
-        <button
-          type="button"
-          onClick={() => setIntroPreview(true)}
-          className="mt-2 w-full rounded-full border border-line bg-cream px-4 py-2.5 text-sm font-medium hover:bg-glass/80"
-        >
-          Preview the reveal
-        </button>
+        <div className="mt-4 grid grid-cols-2 gap-2">
+          <button
+            type="button"
+            onClick={() => setIntroCanvasKey((k) => k + 1)}
+            className="rounded-full border border-line bg-cream px-4 py-2.5 text-sm font-medium hover:bg-glass/80"
+          >
+            Play it again
+          </button>
+          <button
+            type="button"
+            onClick={() => setIntroPreview(true)}
+            className="rounded-full border border-line bg-cream px-4 py-2.5 text-sm font-medium hover:bg-glass/80"
+          >
+            Full screen
+          </button>
+        </div>
         <GiftPasswordSetting
           siteId={id}
           tier={billing?.tier ?? null}
@@ -853,7 +903,7 @@ function SiteDashboard() {
         {draft.format === "comic" ? (
           <>
             <label className="block"><span className="text-xs text-muted">Cover title</span><input value={normalizeComicSettings(draft.format_settings).cover_title ?? ""} onChange={(event) => patchComic({ cover_title: event.target.value })} placeholder={`THE AMAZING ${(draft.custom_text.recipient_name || "YOU").toUpperCase()}`} className="mt-1 w-full rounded-xl border border-line bg-cream px-3 py-2.5 text-sm outline-none focus:border-accent" /></label>
-            <label className="block"><span className="text-xs text-muted">Cover subtitle</span><input value={normalizeComicSettings(draft.format_settings).cover_subtitle ?? ""} onChange={(event) => patchComic({ cover_subtitle: event.target.value })} placeholder="SPECIAL BIRTHDAY ISSUE" className="mt-1 w-full rounded-xl border border-line bg-cream px-3 py-2.5 text-sm outline-none focus:border-accent" /></label>
+            <label className="block"><span className="text-xs text-muted">Cover subtitle</span><input value={normalizeComicSettings(draft.format_settings).cover_subtitle ?? ""} onChange={(event) => patchComic({ cover_subtitle: event.target.value })} placeholder={comicSettingDefaults(draft.custom_text.recipient_name, themeKindOf(theme)).cover_subtitle} className="mt-1 w-full rounded-xl border border-line bg-cream px-3 py-2.5 text-sm outline-none focus:border-accent" /></label>
             <label className="flex items-start gap-3 rounded-xl border border-line bg-cream p-3"><input type="checkbox" checked={normalizeComicSettings(draft.format_settings).two_worlds === true} onChange={(event) => patchComic({ two_worlds: event.target.checked })} className="mt-0.5" /><span><span className="block text-sm font-medium">Two Worlds</span><span className="block text-xs text-muted">Let readers switch between two comic backdrops.</span></span></label>
             {normalizeComicSettings(draft.format_settings).two_worlds ? <div className="grid gap-3"><label><span className="text-xs text-muted">First world</span><input value={normalizeComicSettings(draft.format_settings).world_one ?? ""} onChange={(event) => patchComic({ world_one: event.target.value })} placeholder="HERO WORLD" className="mt-1 w-full rounded-xl border border-line bg-cream px-3 py-2.5 text-sm" /></label><label><span className="text-xs text-muted">Second world</span><input value={normalizeComicSettings(draft.format_settings).world_two ?? ""} onChange={(event) => patchComic({ world_two: event.target.value })} placeholder="OHANA WORLD" className="mt-1 w-full rounded-xl border border-line bg-cream px-3 py-2.5 text-sm" /></label></div> : null}
             <div><p className="text-sm font-medium">Panel organizer</p><p className="mt-1 text-xs text-muted">Reorder panels or move one into another chapter.</p><div className="mt-3 space-y-2">{orderedComicIds(contributions.map((item) => item.id), normalizeComicSettings(draft.format_settings).panel_order).map((itemId, index, orderedIds) => { const item = contributions.find((entry) => entry.id === itemId); if (!item) return null; const settings = normalizeComicSettings(draft.format_settings); const chapter = settings.chapter_overrides?.[item.id] ?? item.module_type; return <div key={item.id} className="rounded-xl border border-line bg-cream p-3"><div className="flex items-center gap-2"><span className="min-w-0 flex-1 truncate text-sm font-medium">{item.author_name}</span><Button type="button" size="icon" variant="ghost" disabled={index === 0} onClick={() => moveComicPanel(item.id, -1)} aria-label="Move panel up">↑</Button><Button type="button" size="icon" variant="ghost" disabled={index === orderedIds.length - 1} onClick={() => moveComicPanel(item.id, 1)} aria-label="Move panel down">↓</Button></div><select value={chapter} onChange={(event) => patchComic({ chapter_overrides: { ...settings.chapter_overrides, [item.id]: event.target.value } })} className="mt-2 w-full rounded-lg border border-line bg-paper px-2 py-2 text-xs">{MODULES.map((module) => <option key={module.type} value={module.type}>{module.label}</option>)}</select></div>; })}</div></div>
@@ -949,6 +999,42 @@ function SiteDashboard() {
   );
 
 
+  const fullScreenIntro = (
+    <GiftIntro
+      contained
+      style={introStyleForTheme(theme?.name)}
+      kind={themeKindOf(theme)}
+      palette={paletteNow}
+      fonts={FONT_PAIRINGS[draft.font_choice] ?? FONT_PAIRINGS.romantic}
+      backgroundStyle={draft.background_style}
+      recipientName={draft.custom_text.recipient_name}
+      introText={draft.intro_text ?? undefined}
+      settings={draft.intro_settings}
+      onOpen={() => setPreviewOpened(true)}
+    />
+  );
+  const fullScreenGift = (
+    <FormatView key={draft.format === "comic" ? (previewOpened ? "comic-reader" : "comic-cover") : draft.format} site={draft} theme={theme} palette={paletteNow} modules={modules} contributions={approved} calendarEntries={calendarEntries} showCover={!previewOpened} sample showShare />
+  );
+
+  const showIntroInCanvas = section === "intro" && formatInfo(draft.format).usesIntro;
+  const canvasIntro = (
+    <GiftIntro
+      key={`canvas-intro-${introCanvasKey}`}
+      contained
+      style={introStyleForTheme(theme?.name)}
+      kind={themeKindOf(theme)}
+      palette={paletteNow}
+      fonts={FONT_PAIRINGS[draft.font_choice] ?? FONT_PAIRINGS.romantic}
+      backgroundStyle={draft.background_style}
+      recipientName={draft.custom_text.recipient_name}
+      introText={draft.intro_text ?? undefined}
+      settings={draft.intro_settings}
+      onStickerMove={moveIntroSticker}
+      onOpen={() => window.setTimeout(() => setIntroCanvasKey((k) => k + 1), 900)}
+    />
+  );
+
   const canvas = (
     <div className="editor-canvas relative flex min-w-0 flex-1 flex-col">
       <div
@@ -966,24 +1052,28 @@ function SiteDashboard() {
           data-bo-say="I'll wait right here."
           className="pointer-events-none absolute right-10 bottom-5 h-px w-10"
         />
-        <div className="flex h-full justify-center">
-          <div
-            className={
-              device === "phone"
-                ? "h-full w-full max-w-[390px] overflow-hidden rounded-[28px] border border-line bg-cream shadow-xl"
-                : "h-full w-full overflow-hidden rounded-xl border border-line bg-cream shadow-sm"
-            }
-            style={
-              zoom
-                ? { transform: `scale(${zoom / 100})`, transformOrigin: "top center" }
-                : undefined
-            }
-          >
-            <div className="h-full overflow-y-auto overscroll-contain">
-               <FormatView site={draft} theme={theme} palette={paletteNow} modules={modules} contributions={approved} calendarEntries={calendarEntries} sample highlightField={focusField} onEditField={(field) => { openField(field); selectInPreview(field); }} />
+        {device === "laptop" ? (
+          <div className="flex h-full items-center justify-center">
+            <DevicePreview device="laptop" fit="contain" overlay={showIntroInCanvas ? canvasIntro : null}>
+              <FormatView site={draft} theme={theme} palette={paletteNow} modules={modules} contributions={approved} calendarEntries={calendarEntries} sample highlightField={focusField} onEditField={(field) => { openField(field); selectInPreview(field); }} />
+            </DevicePreview>
+          </div>
+        ) : (
+          <div className="flex h-full justify-center">
+            <div
+              className="relative h-full w-full max-w-[390px] overflow-hidden rounded-[28px] border border-line bg-cream shadow-xl"
+              style={{
+                contain: "layout paint",
+                ...(zoom ? { transform: `scale(${zoom / 100})`, transformOrigin: "top center" } : {}),
+              }}
+            >
+              <div className="h-full overflow-y-auto overscroll-contain">
+                 <FormatView site={draft} theme={theme} palette={paletteNow} modules={modules} contributions={approved} calendarEntries={calendarEntries} sample highlightField={focusField} onEditField={(field) => { openField(field); selectInPreview(field); }} />
+              </div>
+              {showIntroInCanvas ? canvasIntro : null}
             </div>
           </div>
-        </div>
+        )}
         {selected ? (
           <div
             className="pointer-events-auto absolute z-30 -translate-x-1/2 -translate-y-full pb-2"
@@ -1007,19 +1097,7 @@ function SiteDashboard() {
       {/* Canvas bottom bar, Canva-style */}
       <div className="flex shrink-0 items-center justify-between gap-2 border-t border-line bg-cream/95 px-3 py-2">
         <div className="flex items-center gap-2">
-          <div className="flex gap-1 rounded-full border border-line bg-paper p-0.5 text-[11px]">
-            {(["phone", "desktop"] as const).map((d) => (
-              <button
-                key={d}
-                onClick={() => setDevice(d)}
-                className={`rounded-full px-2.5 py-1 font-medium capitalize ${
-                  device === d ? "bg-ink text-cream" : "text-muted"
-                }`}
-              >
-                {d}
-              </button>
-            ))}
-          </div>
+          <DeviceToggle value={device} onChange={setDevice} size="sm" />
           <button
             type="button"
             onClick={() => setIntroPreview(true)}
@@ -1395,7 +1473,7 @@ function SiteDashboard() {
 
 
       {introPreview && draft.format === "comic" ? (
-        <ComicIssueView key="comic-cover-preview" site={draft} modules={modules} contributions={approved} calendarEntries={calendarEntries} palette={paletteNow} showCover sample onClose={() => setIntroPreview(false)} />
+        <ComicIssueView key="comic-cover-preview" site={draft} modules={modules} contributions={approved} calendarEntries={calendarEntries} palette={paletteNow} kind={themeKindOf(theme)} showCover sample onClose={() => setIntroPreview(false)} />
       ) : introPreview ? (
         <GiftIntro
           style={introStyleForTheme(theme?.name)}
@@ -1405,6 +1483,7 @@ function SiteDashboard() {
           backgroundStyle={draft.background_style}
           recipientName={draft.custom_text.recipient_name}
           introText={draft.intro_text ?? undefined}
+          settings={draft.intro_settings}
           onOpen={() => setIntroPreview(false)}
         />
       ) : null}
@@ -1414,32 +1493,31 @@ function SiteDashboard() {
             <div className="mx-auto flex max-w-5xl flex-wrap items-center justify-between gap-2">
               <span className="min-w-0 truncate text-sm">Previewing as <strong>{draft.custom_text.recipient_name || "Maya"}</strong></span>
               <div className="flex items-center gap-2">
-                <div className="flex rounded-full border border-line bg-paper p-0.5 text-xs">
-                  {(["phone", "desktop"] as const).map((view) => <button key={view} onClick={() => setDevice(view)} className={`rounded-full px-3 py-1.5 capitalize ${device === view ? "bg-ink text-cream" : "text-muted"}`}>{view}</button>)}
-                </div>
+                <DeviceToggle value={device} onChange={setDevice} size="sm" />
                 <Button variant="outline" size="sm" onClick={() => setPreviewOpened(false)}>Replay intro</Button>
                 <Button size="sm" onClick={() => setFullPreview(false)}>Back to editing</Button>
               </div>
             </div>
           </div>
           <div className="h-full overflow-auto pt-24 sm:pt-[62px]">
-            <div className={device === "phone" ? "relative mx-auto h-[calc(100vh-78px)] w-full max-w-[390px] overflow-y-auto rounded-[28px] border border-line shadow-xl" : "relative min-h-[calc(100vh-62px)]"}>
-              {!previewOpened && formatInfo(draft.format).usesIntro ? (
-                <GiftIntro
-                  contained
-                  style={introStyleForTheme(theme?.name)}
-          kind={themeKindOf(theme)}
-                  palette={paletteNow}
-                  fonts={FONT_PAIRINGS[draft.font_choice] ?? FONT_PAIRINGS.romantic}
-                  backgroundStyle={draft.background_style}
-                  recipientName={draft.custom_text.recipient_name}
-                  introText={draft.intro_text ?? undefined}
-                  onOpen={() => setPreviewOpened(true)}
-                />
-              ) : (
-                <FormatView key={draft.format === "comic" ? (previewOpened ? "comic-reader" : "comic-cover") : draft.format} site={draft} theme={theme} palette={paletteNow} modules={modules} contributions={approved} calendarEntries={calendarEntries} showCover={!previewOpened} sample showShare />
-              )}
-            </div>
+            {device === "laptop" ? (
+              <div className="mx-auto h-[calc(100%-16px)] max-w-[1400px] px-3 pt-3 sm:px-6">
+                <DevicePreview
+                  device="laptop"
+                  fit="contain"
+                  overlay={
+                    !previewOpened && formatInfo(draft.format).usesIntro ? fullScreenIntro : null
+                  }
+                >
+                  {fullScreenGift}
+                </DevicePreview>
+              </div>
+            ) : (
+              <div className="relative mx-auto h-[calc(100dvh-110px)] w-full max-w-[390px] overflow-hidden rounded-[28px] border border-line shadow-xl sm:h-[calc(100dvh-78px)]" style={{ contain: "layout paint" }}>
+                <div className="absolute inset-0 overflow-y-auto overscroll-contain">{fullScreenGift}</div>
+                {!previewOpened && formatInfo(draft.format).usesIntro ? fullScreenIntro : null}
+              </div>
+            )}
           </div>
         </div>
       ) : null}

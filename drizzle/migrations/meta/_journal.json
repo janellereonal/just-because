@@ -36,6 +36,13 @@
       "when": 1791898873789,
       "tag": "0004_gift_password",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1792023566875,
+      "tag": "0005_intro_settings",
+      "breakpoints": true
     }
   ]
 }

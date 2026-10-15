@@ -4,7 +4,7 @@ import { eq } from "drizzle-orm";
 import { getDb, schema } from "./db";
 import { requireAdmin, requireSiteOwner } from "./guards";
 
-export type UploadKind = "contribution" | "calendar" | "theme";
+export type UploadKind = "contribution" | "calendar" | "theme" | "intro";
 
 const IMAGE = ["image/jpeg", "image/png", "image/webp", "image/gif", "image/heic", "image/heif"];
 const AUDIO = ["audio/mpeg", "audio/mp4", "audio/x-m4a", "audio/aac", "audio/wav", "audio/webm", "audio/ogg"];
@@ -12,7 +12,7 @@ const AUDIO = ["audio/mpeg", "audio/mp4", "audio/x-m4a", "audio/aac", "audio/wav
 export function uploadPathname(kind: UploadKind, targetId: string, filename: string) {
   const folder = kind === "theme" ? "themes" : "gifts";
   const clean = filename.replace(/[^a-zA-Z0-9.]+/g, "-").slice(-80);
-  return `${folder}/${targetId}/${kind === "calendar" ? "calendar-" : ""}${clean}`;
+  return `${folder}/${targetId}/${kind === "calendar" ? "calendar-" : kind === "intro" ? "intro-" : ""}${clean}`;
 }
 
 /** Who may upload: friends to any existing gift, creators to their own calendar, admins to themes. */
@@ -20,6 +20,11 @@ export async function authorizeUpload(kind: UploadKind, targetId: string) {
   if (kind === "theme") {
     await requireAdmin();
     return { contentTypes: IMAGE, maxBytes: 10 * 1024 * 1024 };
+  }
+  if (kind === "intro") {
+    // Stickers, the opening's object and its background: images only, no SVG.
+    await requireSiteOwner(targetId);
+    return { contentTypes: ["image/jpeg", "image/png", "image/webp", "image/gif"], maxBytes: 8 * 1024 * 1024 };
   }
   if (kind === "calendar") {
     await requireSiteOwner(targetId);

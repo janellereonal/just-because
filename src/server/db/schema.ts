@@ -132,6 +132,8 @@ export const giftSites = pgTable(
     countdownDate: date("countdown_date"),
     calendarLocked: boolean("calendar_locked").notNull().default(false),
     introText: text("intro_text"),
+    /** The creator's custom opening: object, stickers, colors, background, button words. */
+    introSettings: jsonb("intro_settings").notNull().default(sql`'{}'::jsonb`),
     backgroundStyle: text("background_style").notNull().default("paper"),
     treeRevealDate: date("tree_reveal_date"),
     /** When the creator was last emailed about new notes (throttles alerts). */

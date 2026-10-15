@@ -4,7 +4,7 @@ import { z } from "zod";
 import { authorizeUpload, saveDevUpload, uploadPathname } from "@/server/uploads";
 
 const payloadSchema = z.object({
-  kind: z.enum(["contribution", "calendar", "theme"]),
+  kind: z.enum(["contribution", "calendar", "theme", "intro"]),
   targetId: z.string().uuid(),
 });
 

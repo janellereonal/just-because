@@ -10,6 +10,7 @@ import {
   type ViewContribution,
 } from "@/lib/gift";
 import type { Palette, Theme } from "@/lib/themes";
+import { themeKindOf } from "@/lib/themeKind";
 
 const BentoView = lazy(() =>
   import("@/components/formats/BentoView").then((m) => ({ default: m.BentoView })),
@@ -72,6 +73,7 @@ export function FormatView(props: Props) {
       return (
         <ComicIssueView
           {...common}
+          kind={themeKindOf(theme)}
           {...defined({
             showCover: props.showCover,
             onReplayCover: props.onReplayCover,

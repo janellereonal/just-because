@@ -490,7 +490,7 @@ export function GiftSiteView({
           <Theme3D kind={kind} palette={palette} className="sk-stage" />
           <p className="sk-badge mt-6">{kindWords.badge}</p>
           <h1
-            {...fp("heading", "sb-hero mt-3 text-[clamp(2.4rem,7vw,4.2rem)] leading-[1.02] font-semibold text-balance")}
+            {...fp("heading", "sb-hero mt-3 text-[clamp(2.2rem,9cqi,4.2rem)] leading-[1.02] font-semibold text-balance")}
             style={{ fontFamily: fonts.heading }}
           >
             {text.heading || (sample ? <span className="opacity-40">{titles.heading}</span> : site.title)}

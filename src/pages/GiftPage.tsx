@@ -142,6 +142,7 @@ function PublishedPage() {
           backgroundStyle={site.background_style ?? "paper"}
           recipientName={site.custom_text.recipient_name}
           introText={site.intro_text ?? undefined}
+          settings={site.intro_settings}
           onOpen={() => setOpened(true)}
           onSkip={() => {
             rememberIntroSkip(site.id);
