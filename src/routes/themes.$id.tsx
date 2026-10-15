@@ -1,4 +1,6 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { sampleNotes } from "@/lib/sampleSections";
+import type { ModuleType, SiteModule } from "@/lib/gift";
 import { Pause, Play } from "lucide-react";
 import { DevicePreview, DeviceToggle, type PreviewDevice } from "@/components/DevicePreview";
 import { useGiftTour } from "@/hooks/useGiftTour";
@@ -53,7 +55,30 @@ function ThemeDetailPage() {
   const palettes = useMemo(() => (theme ? themePalettes(theme, allPalettes) : []), [theme, allPalettes]);
   const palette = palettes[paletteIndex] ?? palettes[0];
   const site = useMemo(() => (theme ? buildPreviewSite(theme, palette) : null), [theme, palette]);
-  const modules = useMemo(() => (theme && site ? previewModules(theme, site.id) : []), [theme, site]);
+  const defaults = useMemo(() => (theme && site ? previewModules(theme, site.id).map((m) => m.module_type) : []), [theme, site]);
+  // Which sections the visitor is trying out. Starts on the theme's own picks.
+  const [tried, setTried] = useState<ModuleType[] | null>(null);
+  const on = tried ?? defaults;
+  const [justAdded, setJustAdded] = useState<ModuleType | null>(null);
+  const modules: SiteModule[] = useMemo(
+    () => (site ? MODULES.filter((m) => on.includes(m.type)).map((m, i) => ({ id: `try-${i}-${m.type}`, site_id: site.id, module_type: m.type, price: 0, enabled: true })) : []),
+    [site, on],
+  );
+  const notes = useMemo(() => (theme && site ? sampleNotes(sampleFor(theme).name, site.id) : []), [theme, site]);
+  // Glide the phone to a section the moment it's switched on.
+  useEffect(() => {
+    if (!justAdded) return;
+    const t = window.setTimeout(() => {
+      const box = tour.scrollRef.current;
+      const el = box?.querySelector<HTMLElement>(`[data-section="${justAdded}"]`);
+      if (!box || !el) return;
+      // Small screens: the chips sit under the gift, so bring the gift back into view first.
+      if (window.innerWidth < 1024) box.scrollIntoView({ block: "center", behavior: "smooth" });
+      const top = el.getBoundingClientRect().top - box.getBoundingClientRect().top + box.scrollTop - 16;
+      box.scrollTo({ top, behavior: "smooth" });
+    }, 120);
+    return () => window.clearTimeout(t);
+  }, [justAdded, tour.scrollRef]);
 
   if (isLoading) return <PageLoading label="Loading this theme…" />;
   if (error) return <PageError message="We couldn't load this theme just now." onRetry={() => void refetch()} />;
@@ -70,7 +95,13 @@ function ThemeDetailPage() {
   }
 
   const fonts = FONT_PAIRINGS[themeFont(theme)];
-  const included = MODULES.filter((m) => theme.default_modules.includes(m.type));
+  function toggleSection(type: ModuleType) {
+    const next = on.includes(type) ? on.filter((t) => t !== type) : [...on, type];
+    setTried(next);
+    tour.pause();
+    tour.showGift();
+    setJustAdded(on.includes(type) ? null : type);
+  }
   const sample = sampleFor(theme);
 
   function use() {
@@ -79,7 +110,7 @@ function ThemeDetailPage() {
       navigate({ to: "/auth" });
       return;
     }
-    navigate({ to: "/create", search: { theme: id, format, from: undefined } });
+    navigate({ to: "/create", search: { theme: id, format, from: undefined, sections: tried ? on.join(",") : undefined } });
   }
 
   const view = tour.phase === "intro" ? "opening" : "gift";
@@ -113,7 +144,7 @@ function ThemeDetailPage() {
 
         <div className="mt-3 grid gap-6 lg:grid-cols-[minmax(0,1fr)_340px]">
           {/* The stage: a phone playing the real gift */}
-          <div className="relative overflow-hidden rounded-[36px] px-3 pt-5 pb-6 sm:px-8" style={{ backgroundColor: stageColorFor(theme) }}>
+          <div className="relative overflow-hidden rounded-[36px] px-3 pt-5 pb-6 sm:px-8 lg:sticky lg:top-24 lg:self-start" style={{ backgroundColor: stageColorFor(theme) }}>
             <span aria-hidden="true" className="absolute -top-20 -right-16 size-64 rounded-full bg-white/40" />
             <span aria-hidden="true" className="absolute bottom-10 -left-20 size-56 rounded-full bg-white/30" />
 
@@ -166,7 +197,7 @@ function ThemeDetailPage() {
               >
                 {/* One live 3D scene at a time: the gift's waits behind the opening. */}
                 <Pause3DContext.Provider value={tour.phase !== "gift"}>
-                  <FormatView key={format} site={{ ...site, format }} theme={theme} palette={palette} modules={modules} contributions={[]} sample />
+                  <FormatView key={format} site={{ ...site, format }} theme={theme} palette={palette} modules={modules} contributions={notes} sample />
                 </Pause3DContext.Provider>
               </DevicePreview>
             </div>
@@ -237,19 +268,41 @@ function ThemeDetailPage() {
               <p className="mt-2 text-xs text-muted">{FORMATS.find((f) => f.id === format)?.about}</p>
             </div>
 
-            {included.length > 0 ? (
-              <div className="card-paper p-5">
-                <h2 className="font-display text-lg font-semibold">What friends can add</h2>
-                <ul className="mt-3 flex flex-wrap gap-2">
-                  {included.map((m) => (
-                    <li key={m.type} className="rounded-full bg-mint px-3 py-1.5 text-sm font-medium" title={m.blurb}>
-                      {m.label}
+            <div className="card-paper p-5">
+              <h2 className="font-display text-lg font-semibold">Try the sections</h2>
+              <p className="mt-1 text-sm text-muted">Switch any on and the gift fills in with sample notes, in this theme.</p>
+              <ul className="mt-3 flex flex-wrap gap-2">
+                {MODULES.map((m) => {
+                  const active = on.includes(m.type);
+                  return (
+                    <li key={m.type}>
+                      <button
+                        type="button"
+                        aria-pressed={active}
+                        onClick={() => toggleSection(m.type)}
+                        title={m.blurb}
+                        className={`squish inline-flex min-h-9 items-center gap-1.5 rounded-full px-3 text-sm font-medium transition-colors ${
+                          active ? "bg-ink text-cream" : "bg-paper ring-1 ring-ink/12 hover:bg-pink/40"
+                        }`}
+                      >
+                        <span aria-hidden="true" className="text-[13px]">{active ? "✓" : "+"}</span>
+                        {m.label}
+                      </button>
                     </li>
-                  ))}
-                </ul>
-                <p className="mt-3 text-xs text-muted">Every section can be turned on or off once you start.</p>
+                  );
+                })}
+              </ul>
+              <div className="mt-3 flex items-center gap-3 text-xs">
+                <button type="button" onClick={() => { setTried(MODULES.map((m) => m.type)); tour.showGift(); }} className="font-medium underline underline-offset-2">
+                  Turn them all on
+                </button>
+                {tried ? (
+                  <button type="button" onClick={() => setTried(null)} className="text-muted underline underline-offset-2">
+                    Back to the theme's picks
+                  </button>
+                ) : null}
               </div>
-            ) : null}
+            </div>
 
             <div className="sticky bottom-3 mt-auto flex flex-col gap-2 lg:static">
               <button

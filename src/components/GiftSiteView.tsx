@@ -382,6 +382,8 @@ type Props = {
   highlightField?: keyof CustomText | null;
   /** Shows a "Replay intro" link in the footer (published gift page). */
   onReplayIntro?: () => void;
+  /** Just the sections, no header, footer or scroll motif (small previews). */
+  sectionsOnly?: boolean;
 };
 
 export function GiftSiteView({
@@ -395,6 +397,7 @@ export function GiftSiteView({
   onEditField,
   highlightField,
   onReplayIntro,
+  sectionsOnly = false,
 }: Props) {
   const palette = resolvePalette(theme, site.custom_colors);
   // Small text always uses a legible colour; the accent is only kept when it passes contrast.
@@ -537,11 +540,12 @@ export function GiftSiteView({
           "--sk-head": fonts.heading,
         } as React.CSSProperties
       }
-      className={`gift-scrap skin-${kind} min-h-screen`}
+      className={`gift-scrap skin-${kind} ${sectionsOnly ? "jb-sections-only" : "min-h-screen"}`}
     >
       <SkinDecor kind={kind} icons={icons} colors={playColors} />
-      <ScrollStory kind={kind} rootRef={rootRef} icons={icons} accent={accentDeco} ink={palette.primary} />
-      <div className="mx-auto max-w-3xl px-5 py-10 sm:py-14">
+      {sectionsOnly ? null : <ScrollStory kind={kind} rootRef={rootRef} icons={icons} accent={accentDeco} ink={palette.primary} />}
+      <div className={sectionsOnly ? "px-4 pt-12 pb-6" : "mx-auto max-w-3xl px-5 py-10 sm:py-14"}>
+        {sectionsOnly ? null : (
         <header className="sk-hero text-center">
           <Theme3D
             kind={kind}
@@ -600,9 +604,10 @@ export function GiftSiteView({
             <SampleNote>{voice.sample}</SampleNote>
           ) : null}
         </header>
+        )}
 
         {enabled.has("countdown") && (countdownTarget(site) || sample) ? (
-          <section className="sb-section mt-12">
+          <section data-section="countdown" className="sb-section mt-12">
             <Countdown
               date={countdownTarget(site) ?? new Date(Date.now() + 12 * 86400000).toISOString()}
               accent={accentText}
@@ -613,7 +618,7 @@ export function GiftSiteView({
         ) : null}
 
         {enabled.has("calendar") && (calendarEntries.length > 0 || sample) && (
-          <section className="sb-section mt-16">
+          <section data-section="calendar" className="sb-section mt-16">
             <h2
               {...fp("calendar_title", sectionTitle)}
               style={{ fontFamily: fonts.heading, color: accentText }}
@@ -632,7 +637,7 @@ export function GiftSiteView({
         )}
 
         {enabled.has("tree") && (tree.length > 0 || sample) ? (
-          <section className="sb-section mt-16">
+          <section data-section="tree" className="sb-section mt-16">
             <h2
               {...fp("tree_title", sectionTitle)}
               style={{ fontFamily: fonts.heading, color: accentText }}
@@ -652,7 +657,7 @@ export function GiftSiteView({
         ) : null}
 
         {enabled.has("letters") && (letters.length > 0 || sample) && (
-          <section className="sb-section mt-16">
+          <section data-section="letters" className="sb-section mt-16">
             <h2
               {...fp("letters_title", sectionTitle)}
               style={{ fontFamily: fonts.heading, color: accentText }}
@@ -684,7 +689,7 @@ export function GiftSiteView({
         )}
 
         {enabled.has("photobooth") && (photos.length > 0 || sample) && (
-          <section className="sb-section mt-16">
+          <section data-section="photobooth" className="sb-section mt-16">
             <h2
               {...fp("photobooth_title", sectionTitle)}
               style={{ fontFamily: fonts.heading, color: accentText }}
@@ -721,7 +726,7 @@ export function GiftSiteView({
         )}
 
         {enabled.has("wordcloud") && (cloud.length > 0 || sample) && (
-          <section className="sb-section mt-16">
+          <section data-section="wordcloud" className="sb-section mt-16">
             <h2
               {...fp("wordcloud_title", sectionTitle)}
               style={{ fontFamily: fonts.heading, color: accentText }}
@@ -774,7 +779,7 @@ export function GiftSiteView({
         )}
 
         {enabled.has("voice") && (voices.length > 0 || sample) && (
-          <section className="sb-section mt-16">
+          <section data-section="voice" className="sb-section mt-16">
             <h2
               {...fp("voice_title", sectionTitle)}
               style={{ fontFamily: fonts.heading, color: accentText }}
@@ -820,7 +825,7 @@ export function GiftSiteView({
         )}
 
         {enabled.has("songs") && (songs.length > 0 || sample) && (
-          <section className="sb-section mt-16">
+          <section data-section="songs" className="sb-section mt-16">
             <h2
               {...fp("songs_title", sectionTitle)}
               style={{ fontFamily: fonts.heading, color: accentText }}
@@ -914,6 +919,7 @@ export function GiftSiteView({
           </p>
         )}
 
+        {sectionsOnly ? null : (
         <footer className="mt-16 border-t pt-8 text-center" style={{ borderColor: `${palette.accent}33` }}>
           {text.footer_note || sample ? (
             <p {...fp("footer_note", "mb-3 opacity-80")}>
@@ -950,6 +956,7 @@ export function GiftSiteView({
             </button>
           ) : null}
         </footer>
+        )}
       </div>
     </div>
   );

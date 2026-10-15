@@ -511,3 +511,7 @@
   .sk-fireworks span { opacity: 0.5; transform: scale(0.9); }
   .sk-p { opacity: 0.6; }
 }
+
+/* Small single-section previews (create page, theme page). */
+.jb-sections-only > div > .sb-section:first-child,
+.jb-sections-only > div > section:first-of-type { margin-top: .75rem; }

@@ -202,7 +202,7 @@ function Index() {
               {LANDING.hero.soloLead}{" "}
               <Link
                 to="/create"
-                search={{ theme: undefined, format: undefined, from: "me" }}
+                search={{ theme: undefined, format: undefined, from: "me", sections: undefined }}
                 className="font-semibold text-accent underline decoration-accent/40 underline-offset-4 hover:decoration-accent"
               >
                 {LANDING.hero.soloLink}
