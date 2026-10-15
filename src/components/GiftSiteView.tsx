@@ -1,3 +1,4 @@
+import { giftVoice } from "@/lib/giftVoice";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { SkinDecor } from "@/components/SkinDecor";
 import { Theme3D, type Theme3DHandle } from "@/components/Theme3D";
@@ -450,6 +451,7 @@ export function GiftSiteView({
   const sectionTitle = "sb-title text-[1.75rem] leading-tight font-semibold";
   const recipient = text.recipient_name?.trim();
   const sampleName = recipient || "Maya";
+  const voice = giftVoice(site.solo);
 
   /** Wraps the visitor's own contribution with a soft outline and a "Yours" tag. */
   function Mine({ item, children }: { item: ViewContribution; children: React.ReactNode }) {
@@ -558,16 +560,16 @@ export function GiftSiteView({
             <p {...fp("intro_message", "mx-auto mt-5 max-w-[46ch] leading-relaxed opacity-80 text-pretty")}>
               {text.intro_message || (
                 <span className="opacity-50">
-                  Everyone who loves you put something in here. Take your time.
+                  {voice.solo ? "I made this just for you. Take your time." : "Everyone who loves you put something in here. Take your time."}
                 </span>
               )}
             </p>
           ) : null}
           {kind === "voyage" ? (
-            <div className="sk-pass" aria-label={`From everyone, to ${recipient || sampleName}`}>
+            <div className="sk-pass" aria-label={`From ${voice.solo ? "me" : "everyone"}, to ${recipient || sampleName}`}>
               <span>
                 <small>From</small>
-                <strong>Everyone</strong>
+                <strong>{voice.solo ? "Me" : "Everyone"}</strong>
               </span>
               <span className="sk-pass-plane" aria-hidden="true">
                 ✈
@@ -579,7 +581,7 @@ export function GiftSiteView({
             </div>
           ) : null}
           {sample && contributions.length === 0 ? (
-            <SampleNote>Sample, replaced when friends add theirs</SampleNote>
+            <SampleNote>{voice.sample}</SampleNote>
           ) : null}
         </header>
 
@@ -629,7 +631,7 @@ export function GiftSiteView({
                 sample={sample === true}
               />
             </div>
-            {tree.length === 0 && sample ? <SampleNote>Sample, replaced when friends add theirs</SampleNote> : null}
+            {tree.length === 0 && sample ? <SampleNote>{voice.sample}</SampleNote> : null}
           </section>
         ) : null}
 
@@ -673,7 +675,7 @@ export function GiftSiteView({
                   ))}
             </div>
             {letters.length === 0 && sample ? (
-              <SampleNote>Sample, replaced when friends add theirs</SampleNote>
+              <SampleNote>{voice.sample}</SampleNote>
             ) : null}
           </section>
         )}
@@ -710,7 +712,7 @@ export function GiftSiteView({
                   ))}
             </div>
             {photos.length === 0 && sample ? (
-              <SampleNote>Sample, replaced when friends add theirs</SampleNote>
+              <SampleNote>{voice.sample}</SampleNote>
             ) : null}
           </section>
         )}
@@ -763,7 +765,7 @@ export function GiftSiteView({
                 ))}
             </div>
             {cloud.length === 0 && sample ? (
-              <SampleNote>Sample, replaced when friends add theirs</SampleNote>
+              <SampleNote>{voice.sample}</SampleNote>
             ) : null}
           </section>
         )}
@@ -809,7 +811,7 @@ export function GiftSiteView({
               )}
             </div>
             {voices.length === 0 && sample ? (
-              <SampleNote>Sample, replaced when friends add theirs</SampleNote>
+              <SampleNote>{voice.sample}</SampleNote>
             ) : null}
           </section>
         )}
@@ -885,7 +887,7 @@ export function GiftSiteView({
               )}
             </div>
             {songs.length === 0 && sample ? (
-              <SampleNote>Sample, replaced when friends add theirs</SampleNote>
+              <SampleNote>{voice.sample}</SampleNote>
             ) : null}
           </section>
         )}
@@ -900,7 +902,7 @@ export function GiftSiteView({
           {text.footer_note || sample ? (
             <p {...fp("footer_note", "mb-3 opacity-80")}>
               {text.footer_note || (
-                <span className="opacity-50">With love, from all of us</span>
+                <span className="opacity-50">{voice.signoff}</span>
               )}
             </p>
           ) : null}

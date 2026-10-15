@@ -203,6 +203,8 @@ export type GiftSite = {
   intro_text: string | null;
   /** The creator's custom opening (object, stickers, colors, background, words). */
   intro_settings: IntroSettings;
+  /** Just from the creator: no friends link. */
+  solo: boolean;
   background_style: BackgroundStyle;
   tree_reveal_date: string | null;
   /** sweet | celebration | keepsake | legacy, or null until paid. */
@@ -246,6 +248,8 @@ export type Contribution = {
   status: "pending" | "approved" | "hidden";
   ornament_key: OrnamentKey | null;
   visibility: "public" | "recipient";
+  /** Added by the gift's creator from the editor. */
+  by_owner?: boolean;
   created_at: string;
 };
 
@@ -296,6 +300,7 @@ export function normalizeSite(row: Record<string, unknown>): GiftSite {
     calendar_locked: Boolean(row["calendar_locked"]),
     intro_text: (row["intro_text"] as string | null) ?? null,
     intro_settings: normalizeIntroSettings(row["intro_settings"]),
+    solo: row["solo"] === true,
     background_style: ((row["background_style"] as BackgroundStyle) ?? "paper") as BackgroundStyle,
     tree_reveal_date: (row["tree_reveal_date"] as string | null) ?? null,
     tier: (row["tier"] as string | null) ?? null,
@@ -347,6 +352,7 @@ export function normalizeContribution(row: Record<string, unknown>): Contributio
     status: (row["status"] as Contribution["status"]) ?? "pending",
     ornament_key: (row["ornament_key"] as OrnamentKey | null) ?? null,
     visibility: row["visibility"] === "recipient" ? "recipient" : "public",
+    by_owner: row["by_owner"] === true,
     created_at: String(row["created_at"]),
   };
 }

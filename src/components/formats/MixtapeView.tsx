@@ -1,3 +1,4 @@
+import { giftVoice } from "@/lib/giftVoice";
 import { useEffect, useRef, useState } from "react";
 import { Lock, Mic, Music2, Pause, Play, RotateCw, SkipBack, SkipForward } from "lucide-react";
 import { FONT_PAIRINGS, toEmbedUrl } from "@/lib/gift";
@@ -91,6 +92,7 @@ export function MixtapeView({
   showShare,
 }: FormatViewProps) {
   const data = usePieces({ site, modules, contributions, calendarEntries, sample });
+  const voice = giftVoice(site.solo);
   const reduce = useReducedMotion();
   const fonts = FONT_PAIRINGS[site.font_choice] ?? FONT_PAIRINGS.romantic;
   const tracks = data.notes;
@@ -210,7 +212,7 @@ export function MixtapeView({
         </h1>
         <p className="mix-intro">
           {site.custom_text.intro_message?.trim() ||
-            `${tracks.length} tracks from the people who love you. Press play.`}
+            (voice.solo ? `${tracks.length} tracks, picked just for you. Press play.` : `${tracks.length} tracks from the people who love you. Press play.`)}
         </p>
 
         <div className={`mix-deck ${flipping ? "is-flipping" : ""}`}>
@@ -317,7 +319,7 @@ export function MixtapeView({
             <Liner piece={current} accent={palette.accent} />
           </div>
         ) : (
-          <p className="mix-empty">Notes from friends will show up here as tracks.</p>
+          <p className="mix-empty">{voice.empty("tracks")}</p>
         )}
 
         <ol className="mix-list" aria-label={`Side ${side}`}>
@@ -379,7 +381,7 @@ export function MixtapeView({
             <p className="mt-2 opacity-70">{site.custom_text.footer_note}</p>
           ) : null}
           {data.isSample ? (
-            <p className="mt-2 opacity-60">Sample tracks, replaced when friends add theirs</p>
+            <p className="mt-2 opacity-60">{voice.sample}</p>
           ) : null}
           {showShare ? (
             <button

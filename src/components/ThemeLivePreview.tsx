@@ -112,6 +112,7 @@ export function buildPreviewSite(theme: Theme, palette: Palette | undefined): Gi
     calendar_locked: false,
     intro_text: null,
     intro_settings: {},
+    solo: false,
     background_style: backgroundFor(theme),
     tree_reveal_date: null,
     tier: null,

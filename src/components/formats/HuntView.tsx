@@ -1,3 +1,4 @@
+import { giftVoice } from "@/lib/giftVoice";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Theme3D } from "@/components/Theme3D";
 import { themeKindOf } from "@/lib/themeKind";
@@ -176,6 +177,7 @@ export function HuntView({
 }: FormatViewProps) {
   const reduce = useReducedMotion();
   const data = usePieces({ site, modules, contributions, calendarEntries, sample });
+  const voice = giftVoice(site.solo);
   const fonts = FONT_PAIRINGS[site.font_choice] ?? FONT_PAIRINGS.playful;
   const cd = useCountdown(data.countdownDate);
   const ink = readableInk(palette.background);
@@ -328,7 +330,7 @@ export function HuntView({
 
         {boxes.length === 0 ? (
           <p className="mt-10 text-center opacity-70">
-            Notes from friends will show up here as little wrapped gifts.
+            {voice.empty("little wrapped gifts")}
           </p>
         ) : null}
 

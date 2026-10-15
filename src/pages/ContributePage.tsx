@@ -207,6 +207,21 @@ function ContributePage() {
   /* Someone who already added something can still add more; new names can't. */
   const noRoomForNewPeople = (room?.contributorsFull && mine.length === 0) || fullReason === "contributors";
   const photosFull = room?.photosFull || fullReason === "photos";
+  if (site.solo) {
+    return (
+      <div className="grid min-h-screen place-items-center px-6 text-center" style={{ backgroundColor: palette.background, color: ink }}>
+        <div className="max-w-md">
+          <Bo pose="idle" size={140} title="Bo" />
+          <h1 className="mt-4 text-3xl font-medium tracking-tight" style={{ fontFamily: fonts.heading }}>
+            This one is a solo gift
+          </h1>
+          <p className="mt-2 opacity-80 text-pretty">
+            {`${site.custom_text.recipient_name ? `${site.custom_text.recipient_name}'s gift` : "This gift"} is being made by one person, so it isn't taking notes from friends. If you were sent this link, ask them to switch it to "Me and friends".`}
+          </p>
+        </div>
+      </div>
+    );
+  }
   if (giftEnded || noRoomForNewPeople) {
     return (
       <div className="grid min-h-screen place-items-center px-6 text-center" style={{ backgroundColor: palette.background, color: ink }}>

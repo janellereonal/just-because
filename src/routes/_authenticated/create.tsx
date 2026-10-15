@@ -32,6 +32,8 @@ export const Route = createFileRoute("/_authenticated/create")({
   validateSearch: (search: Record<string, unknown>) => ({
     theme: typeof search["theme"] === "string" ? search["theme"] : undefined,
     format: isGiftFormat(search["format"]) ? search["format"] : undefined,
+    /** `from=me` starts on "Just me" (a gift from one person). */
+    from: search["from"] === "me" ? ("me" as const) : undefined,
   }),
   head: () => ({
     meta: [
@@ -49,13 +51,14 @@ export const Route = createFileRoute("/_authenticated/create")({
 
 function CreatePage() {
   const navigate = useNavigate();
-  const { theme: themeFromUrl, format: formatFromUrl } = Route.useSearch();
+  const { theme: themeFromUrl, format: formatFromUrl, from: fromUrl } = Route.useSearch();
   const { data: themes = [] } = useQuery({
     queryKey: ["themes", "published"],
     queryFn: () => fetchThemes(false),
   });
 
   const [title, setTitle] = useState("");
+  const [solo, setSolo] = useState(fromUrl === "me");
   const [themeId, setThemeId] = useState<string | undefined>(themeFromUrl);
   const [format, setFormat] = useState<GiftFormat>(formatFromUrl ?? "scrapbook");
   const [selected, setSelected] = useState<ModuleType[]>(["letters", "photobooth"]);
@@ -113,8 +116,8 @@ function CreatePage() {
 
   async function handleCreate(e: React.FormEvent) {
     e.preventDefault();
-    if (selected.length === 0) {
-      toast.error("Pick at least one thing friends can add.");
+    if ((solo ? selected.filter((t) => t !== "tree") : selected).length === 0) {
+      toast.error(solo ? "Pick at least one thing you'll add." : "Pick at least one thing friends can add.");
       return;
     }
     setBusy(true);
@@ -136,7 +139,8 @@ function CreatePage() {
           treeRevealDate: activeTheme?.name.toLowerCase().includes("christmas")
             ? `${new Date().getFullYear()}-12-25`
             : null,
-          modules: selected,
+          modules: solo ? selected.filter((t) => t !== "tree") : selected,
+          solo,
           ...(activeTheme ? { fontChoice: themeFont(activeTheme) } : {}),
         },
       });
@@ -181,11 +185,66 @@ function CreatePage() {
             Let's set up the gift
           </h1>
           <p className="mt-3 max-w-lg text-ink/65">
-            Takes a minute. You can change everything later, even after friends start adding notes.
+            {solo
+              ? "Takes a minute. You can change everything later, and add your notes whenever you're ready."
+              : "Takes a minute. You can change everything later, even after friends start adding notes."}
           </p>
         </div>
 
         <form onSubmit={handleCreate} className="mt-10 space-y-5" data-bo-zone>
+          <div className="card-paper relative p-5 sm:p-7">
+            {step(1, "Who's it from?", "You can switch this later.")}
+            <div className="mt-5 grid gap-2.5 sm:grid-cols-2" role="radiogroup" aria-label="Who's it from">
+              {(
+                [
+                  {
+                    value: false,
+                    title: "Me and friends",
+                    copy: "Share one link. Friends add their notes, photos and songs.",
+                    art: "👯",
+                    tint: "bg-butter/70",
+                  },
+                  {
+                    value: true,
+                    title: "Just me",
+                    copy: "For your partner, best friend or mom. You make every page yourself.",
+                    art: "💌",
+                    tint: "bg-pink/70",
+                  },
+                ] as const
+              ).map((o) => {
+                const on = solo === o.value;
+                return (
+                  <button
+                    key={o.title}
+                    type="button"
+                    role="radio"
+                    aria-checked={on}
+                    onClick={() => {
+                      setSolo(o.value);
+                      if (o.value) boSay("Aww, just from you. They're lucky.", "love");
+                      else boSay("The more, the merrier.", "happy");
+                    }}
+                    className={`squish relative flex items-start gap-3.5 rounded-2xl p-4 text-left transition-shadow ${o.tint} ${on ? "shadow-[0_0_0_2px_var(--accent)]" : "shadow-[0_0_0_1px_var(--line)] hover:shadow-[0_0_0_1px_var(--accent)]"}`}
+                  >
+                    <span aria-hidden className="grid size-11 shrink-0 place-items-center rounded-2xl bg-white/80 text-2xl">
+                      {o.art}
+                    </span>
+                    <span className="min-w-0">
+                      <span className="block font-display text-lg leading-tight font-semibold">{o.title}</span>
+                      <span className="mt-1 block text-sm text-ink/65">{o.copy}</span>
+                    </span>
+                    {on ? (
+                      <span className="absolute top-2.5 right-2.5 grid size-6 place-items-center rounded-full bg-ink text-[12px] text-cream">
+                        ✓
+                      </span>
+                    ) : null}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
           <div className="card-paper relative p-5 sm:p-7">
             <span
               aria-hidden
@@ -193,7 +252,7 @@ function CreatePage() {
             >
               <span className="sticky top-[46vh] block h-px w-24" data-bo-perch data-bo-x="0.5" />
             </span>
-            {step(1, "Give it a name", "This is the big title they'll see first.")}
+            {step(2, "Give it a name", "This is the big title they'll see first.")}
             <label htmlFor="gift-name" className="sr-only">
               Gift name
             </label>
@@ -202,7 +261,7 @@ function CreatePage() {
               required
               value={title}
               onChange={(e) => setTitle(e.target.value)}
-              placeholder="Happy 30th, Maya!"
+              placeholder={solo ? "Happy anniversary, love" : "Happy 30th, Maya"}
               className="mt-5 w-full rounded-2xl border border-line bg-paper px-5 py-4 font-display text-lg outline-none transition-colors focus:border-accent focus:bg-white"
             />
           </div>
@@ -219,7 +278,7 @@ function CreatePage() {
                 data-bo-say="Pick a mood. I'll dress up for it."
               />
             </span>
-            {step(2, "Pick a theme", "Sets the colors, the opening and Bo's outfit.")}
+            {step(3, "Pick a theme", "Sets the colors, the opening and Bo's outfit.")}
             <div
               className="mt-5 grid grid-cols-2 gap-2.5 sm:grid-cols-3"
               role="radiogroup"
@@ -286,7 +345,7 @@ function CreatePage() {
               />
             </span>
             {step(
-              3,
+              4,
               "Choose how it opens",
               "Same notes, different way to open them. Switch any time.",
             )}
@@ -304,12 +363,12 @@ function CreatePage() {
                 className="sticky top-[46vh] block h-px w-24"
                 data-bo-perch
                 data-bo-x="0.5"
-                data-bo-say="The more, the merrier."
+                data-bo-say={solo ? "What's going in?" : "The more, the merrier."}
               />
             </span>
             {step(
-              4,
-              "What can friends add?",
+              5,
+              solo ? "What will you add?" : "What can friends add?",
               activeTheme && suggested.length > 0
                 ? `We picked a few for ${activeTheme.name}. Turn on anything else.`
                 : "Turn on as many as you like.",
@@ -317,7 +376,7 @@ function CreatePage() {
 
             <div className="mt-5 grid gap-5 md:grid-cols-[1fr_250px] md:items-start">
               <div className="space-y-2">
-                {MODULES.map((mod) => {
+                {MODULES.filter((mod) => !(solo && mod.type === "tree")).map((mod) => {
                   const on = selected.includes(mod.type);
                   const active = previewed === mod.type;
                   return (
@@ -342,7 +401,7 @@ function CreatePage() {
                           </span>
                           <span className="block text-xs text-ink/60">
                             {mod.blurb}
-                            {mod.source === "creator" ? " You set this one up yourself." : ""}
+                            {mod.source === "creator" && !solo ? " You set this one up yourself." : ""}
                           </span>
                         </button>
                         <button
@@ -388,6 +447,7 @@ function CreatePage() {
           <div className="sticky bottom-4 z-20">
             <div className="flex items-center justify-between gap-4 rounded-full bg-ink/95 py-2 pr-2 pl-6 text-cream shadow-[0_20px_50px_-20px_rgba(43,37,34,.6)] backdrop-blur">
               <span className="min-w-0 truncate text-sm">
+                {solo ? "Just me · " : ""}
                 {selected.length} {selected.length === 1 ? "section" : "sections"} · {formatInfo(format).title}
               </span>
               <button

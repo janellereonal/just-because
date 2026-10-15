@@ -1,3 +1,4 @@
+import { giftVoice } from "@/lib/giftVoice";
 import { useState } from "react";
 import { Lock, Mic, Play } from "lucide-react";
 import { readableInk } from "@/lib/palettes";
@@ -184,6 +185,7 @@ export function ZineView({
 }: FormatViewProps) {
   const reduce = useReducedMotion();
   const data = usePieces({ site, modules, contributions, calendarEntries, sample });
+  const voice = giftVoice(site.solo);
   const cd = useCountdown(data.countdownDate);
   const [sheet, setSheet] = useState<Piece | null>(null);
   const accent = palette.accent;
@@ -215,7 +217,7 @@ export function ZineView({
               <p className="mt-3 max-w-md text-[17px] leading-snug">
                 {site.custom_text.intro_message?.trim() ||
                   site.intro_text ||
-                  "A zine made by everyone who loves you. Cut, pasted and slightly unhinged."}
+                  (voice.solo ? "A zine I made just for you. Cut, pasted and slightly unhinged." : "A zine made by everyone who loves you. Cut, pasted and slightly unhinged.")}
               </p>
             </div>
             {cd ? (
@@ -266,7 +268,7 @@ export function ZineView({
         </div>
         {data.notes.length === 0 && !data.words.length ? (
           <p className="zine-marker mt-6 text-center text-2xl">
-            notes from friends get pasted here
+            {voice.solo ? "your notes get pasted here" : "notes from friends get pasted here"}
           </p>
         ) : null}
 

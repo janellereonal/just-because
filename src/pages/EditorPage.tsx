@@ -17,6 +17,8 @@ import {
   upsertCalendarEntry,
 } from "@/lib/api";
 import { IntroDesigner } from "@/components/IntroDesigner";
+import { OwnNotes } from "@/components/OwnNotes";
+import { useAuth } from "@/hooks/useAuth";
 import { DevicePreview, DeviceToggle, type PreviewDevice } from "@/components/DevicePreview";
 import type { IntroSettings, IntroSticker } from "@/lib/intro";
 import { uploadFile } from "@/lib/upload";
@@ -89,6 +91,7 @@ import {
   PanelsTopLeft,
   Palette as PaletteIcon,
   Pencil,
+  PenLine,
   Send,
   Type,
   UserPlus,
@@ -107,6 +110,7 @@ function initials(name: string) {
 
 
 type SectionKey =
+  | "notes"
   | "words"
   | "colors"
   | "fonts"
@@ -144,6 +148,7 @@ const FIELD_GROUP: Record<string, SectionKey> = {
 };
 
 const SECTION_TITLES: Record<SectionKey, string> = {
+  notes: "Your notes",
   words: "Words",
   colors: "Colors",
   fonts: "Fonts",
@@ -156,6 +161,7 @@ const SECTION_TITLES: Record<SectionKey, string> = {
 };
 
 const SECTION_ICONS: Record<SectionKey, LucideIcon> = {
+  notes: PenLine,
   words: Type,
   colors: PaletteIcon,
   fonts: CaseSensitive,
@@ -242,6 +248,7 @@ function SiteDashboard() {
     queryFn: () => fetchCalendarEntries(id),
   });
   const { data: billing } = useBilling(id);
+  const { user: authUser } = useAuth();
   /** Paid (or legacy) and not ended: the gift can go live without paying again. */
   const hasPlan = !!billing?.tier && !billing.ended;
   const planTier = getTier(billing?.tier);
@@ -250,15 +257,18 @@ function SiteDashboard() {
     if (site && !draft) setDraft(site);
   }, [site, draft]);
 
-  // Restore the last open rail section for this gift.
+  // Restore the last open rail section for this gift ("Your notes" first on a new Just me gift).
+  const sectionRestored = useRef(false);
   useEffect(() => {
-    if (typeof window === "undefined") return;
+    if (typeof window === "undefined" || !site || sectionRestored.current) return;
+    sectionRestored.current = true;
     const saved = window.localStorage.getItem(`jb:editor-section:${id}`);
     if (saved) setSection(saved as SectionKey);
-  }, [id]);
+    else if (site.solo) setSection("notes");
+  }, [id, site]);
 
   useEffect(() => {
-    if (typeof window === "undefined") return;
+    if (typeof window === "undefined" || !sectionRestored.current) return;
     window.localStorage.setItem(`jb:editor-section:${id}`, section);
   }, [id, section]);
 
@@ -388,6 +398,7 @@ function SiteDashboard() {
             palette_id: next.palette_id,
             share_notes: next.share_notes,
             ...(withStatus ? { status: next.status } : {}),
+            solo: next.solo,
             format: next.format,
             format_settings: next.format_settings as unknown as Record<string, never>,
           },
@@ -656,7 +667,9 @@ function SiteDashboard() {
     );
   }
 
+  const solo = draft.solo;
   const railSections: SectionKey[] = [
+    ...(solo ? (["notes"] as SectionKey[]) : []),
     "words",
     "colors",
     "fonts",
@@ -665,7 +678,7 @@ function SiteDashboard() {
     ...(enabledTypes.has("calendar") ? (["surprises"] as SectionKey[]) : []),
     "intro",
     "comic",
-    "review",
+    ...(solo ? [] : (["notes", "review"] as SectionKey[])),
   ];
 
   const fieldInput = (
@@ -917,6 +930,19 @@ function SiteDashboard() {
           </>
         ) : <p className="text-xs text-muted">{formatInfo(draft.format).about}</p>}
       </div>
+    ),
+    notes: (
+      <OwnNotes
+        siteId={id}
+        solo={draft.solo}
+        onSoloChange={(next) => {
+          patch({ solo: next });
+          boSay(next ? "Just from you. Sweet." : "Friends can join in now.", next ? "love" : "happy");
+        }}
+        contributions={contributions}
+        recipient={draft.custom_text.recipient_name ?? ""}
+        defaultName={authUser?.name ?? ""}
+      />
     ),
     review: (
       <div className="space-y-3">
@@ -1204,6 +1230,20 @@ function SiteDashboard() {
         </div>
         </div>
         <div className="flex shrink-0 items-center gap-2">
+          {solo ? (
+            <Button
+              variant="outline"
+              className="hidden h-10 rounded-full min-[900px]:inline-flex"
+              onClick={() => {
+                setSection("notes");
+                setPanelOpen(true);
+              }}
+            >
+              <PenLine />
+              Add a note
+            </Button>
+          ) : (
+            <>
           <button
             type="button"
             onClick={() => {
@@ -1271,6 +1311,8 @@ function SiteDashboard() {
               </div>
             </PopoverContent>
           </Popover>
+            </>
+          )}
 
           <Button
             variant="outline"
@@ -1296,21 +1338,35 @@ function SiteDashboard() {
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
-              <DropdownMenuItem
-                onSelect={() => {
-                  setSection("review");
-                  setSheetOpen(true);
-                }}
-              >
-                <Inbox />
-                {friends.length > 0
-                  ? `${friends.length} friend${friends.length === 1 ? "" : "s"} added notes`
-                  : "No notes yet"}
-              </DropdownMenuItem>
-              <DropdownMenuItem onSelect={copyContributeLink}>
-                <UserPlus />
-                Invite friends
-              </DropdownMenuItem>
+              {solo ? (
+                <DropdownMenuItem
+                  onSelect={() => {
+                    setSection("notes");
+                    setSheetOpen(true);
+                  }}
+                >
+                  <PenLine />
+                  Add a note
+                </DropdownMenuItem>
+              ) : (
+                <>
+                  <DropdownMenuItem
+                    onSelect={() => {
+                      setSection("review");
+                      setSheetOpen(true);
+                    }}
+                  >
+                    <Inbox />
+                    {friends.length > 0
+                      ? `${friends.length} friend${friends.length === 1 ? "" : "s"} added notes`
+                      : "No notes yet"}
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onSelect={copyContributeLink}>
+                    <UserPlus />
+                    Invite friends
+                  </DropdownMenuItem>
+                </>
+              )}
               <DropdownMenuItem
                 onSelect={() => {
                   setPreviewOpened(false);

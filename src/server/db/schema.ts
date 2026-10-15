@@ -132,6 +132,8 @@ export const giftSites = pgTable(
     countdownDate: date("countdown_date"),
     calendarLocked: boolean("calendar_locked").notNull().default(false),
     introText: text("intro_text"),
+    /** Just from the creator (no friends link). They add every note themselves. */
+    solo: boolean("solo").notNull().default(false),
     /** The creator's custom opening: object, stickers, colors, background, button words. */
     introSettings: jsonb("intro_settings").notNull().default(sql`'{}'::jsonb`),
     backgroundStyle: text("background_style").notNull().default("paper"),
@@ -232,6 +234,8 @@ export const contributions = pgTable(
      * contributors for plan caps. Never sent back to the browser. Null on old rows.
      */
     deviceId: uuid("device_id"),
+    /** Added by the gift's creator from the editor (their own notes). */
+    byOwner: boolean("by_owner").notNull().default(false),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   },
   (t) => [index("contributions_site_idx").on(t.siteId), index("contributions_site_device_idx").on(t.siteId, t.deviceId)],
