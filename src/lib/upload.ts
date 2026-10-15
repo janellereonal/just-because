@@ -1,6 +1,6 @@
 import { upload } from "@vercel/blob/client";
 
-export type UploadKind = "contribution" | "calendar" | "theme";
+export type UploadKind = "contribution" | "calendar" | "theme" | "intro";
 
 function safeName(name: string) {
   return name.replace(/[^a-zA-Z0-9.]+/g, "-").slice(-80);
@@ -12,7 +12,7 @@ function safeName(name: string) {
  */
 export async function uploadFile(file: File, kind: UploadKind, targetId: string): Promise<string> {
   const folder = kind === "theme" ? "themes" : "gifts";
-  const pathname = `${folder}/${targetId}/${kind === "calendar" ? "calendar-" : ""}${safeName(file.name)}`;
+  const pathname = `${folder}/${targetId}/${kind === "calendar" ? "calendar-" : kind === "intro" ? "intro-" : ""}${safeName(file.name)}`;
   if (import.meta.env.DEV || import.meta.env["VITE_DEV_UPLOADS"] === "1") {
     const form = new FormData();
     form.set("file", file);

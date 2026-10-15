@@ -19,14 +19,14 @@ export function SiteHeader({ showMascot = true }: { showMascot?: boolean }) {
   }
 
   const link =
-    "rounded-full px-3.5 py-2 text-sm font-medium text-ink/75 transition-colors hover:bg-pink/60 hover:text-ink";
+    "rounded-full px-2.5 py-2 whitespace-nowrap min-[400px]:px-3.5 text-sm font-medium text-ink/75 transition-colors hover:bg-pink/60 hover:text-ink";
 
   return (
     <header data-bo-avoid className="sticky top-0 z-40 px-3 pt-3 sm:px-5">
-      <div className="mx-auto flex h-16 max-w-6xl items-center justify-between gap-3 rounded-full bg-glass/85 pr-2 pl-4 shadow-[0_8px_30px_-12px_rgba(194,54,107,0.25)] ring-1 ring-ink/5 backdrop-blur-xl">
-        <Link to="/" className="flex items-center gap-2" aria-label="Just Because, home">
+      <div className="mx-auto flex h-16 max-w-6xl items-center justify-between gap-3 rounded-full bg-glass/85 pr-2 pl-3 sm:pl-4 shadow-[0_8px_30px_-12px_rgba(194,54,107,0.25)] ring-1 ring-ink/5 backdrop-blur-xl">
+        <Link to="/" className="flex min-w-0 shrink-0 items-center gap-1.5 sm:gap-2" aria-label="Just Because, home">
           {showMascot ? <Bo pose="hello" size={38} title="Bo, the Just Because mascot" /> : null}
-          <span className="font-display text-xl font-semibold tracking-tight">
+          <span className="font-display text-lg font-semibold tracking-tight whitespace-nowrap min-[400px]:text-xl">
             Just <span className="text-accent">Because</span>
           </span>
         </Link>
@@ -48,7 +48,7 @@ export function SiteHeader({ showMascot = true }: { showMascot?: boolean }) {
             </Link>
           )}
         </nav>
-        <div className="flex items-center gap-1.5">
+        <div className="flex shrink-0 items-center gap-1 min-[400px]:gap-1.5">
           {user ? (
             <>
               <Link to="/dashboard" className={`${link} sm:hidden`}>
@@ -57,9 +57,9 @@ export function SiteHeader({ showMascot = true }: { showMascot?: boolean }) {
               <Link
                 to="/create"
                 search={{ theme: undefined, format: undefined }}
-                className="squish inline-flex min-h-11 items-center gap-1.5 rounded-full bg-accent px-4 text-sm font-medium text-cream hover:bg-accent/90 sm:px-5"
+                className="squish inline-flex min-h-11 items-center gap-1.5 rounded-full bg-accent px-3 text-sm font-medium whitespace-nowrap text-cream hover:bg-accent/90 min-[400px]:px-4 sm:px-5"
               >
-                <Plus className="size-4" /> New gift
+                <Plus className="size-4" /> <span className="max-[400px]:sr-only">New gift</span>
               </Link>
               <button
                 type="button"
@@ -78,7 +78,7 @@ export function SiteHeader({ showMascot = true }: { showMascot?: boolean }) {
               </Link>
               <Link
                 to="/auth"
-                className="squish inline-flex min-h-11 items-center rounded-full bg-accent px-5 text-sm font-medium text-cream hover:bg-accent/90"
+                className="squish inline-flex min-h-11 items-center rounded-full bg-accent px-4 text-sm whitespace-nowrap min-[400px]:px-5 font-medium text-cream hover:bg-accent/90"
               >
                 Sign in
               </Link>

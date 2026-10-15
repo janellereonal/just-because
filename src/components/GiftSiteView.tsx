@@ -1,6 +1,9 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { SkinDecor } from "@/components/SkinDecor";
-import { Theme3D } from "@/components/Theme3D";
+import { Theme3D, type Theme3DHandle } from "@/components/Theme3D";
+import { WishCandles, useSkinPlay } from "@/components/SkinPlay";
+import { KIND_BURST, burst, buzz, chime } from "@/lib/play";
+import { RotateCw } from "lucide-react";
 import { KIND_WORDS, themeKindOf } from "@/lib/themeKind";
 import { manilaMidnight } from "@/lib/giftPieces";
 import {
@@ -36,19 +39,51 @@ function useMediaUrl(path: string | null) {
   return url;
 }
 
+/** A polaroid. Tap it to flip it over and read what's written on the back. */
 function PhotoCard({ item, accent }: { item: Contribution; accent: string }) {
   const url = useMediaUrl(item.media_url);
+  const [flipped, setFlipped] = useState(false);
+  const caption = item.text_content?.trim();
   return (
     <figure className="sb-polaroid bg-[var(--gift-surface)] p-3 pb-4">
-      <div className="aspect-square w-full overflow-hidden rounded-[3px] bg-black/5">
-        {url ? (
-          <img src={url} alt={item.text_content ?? "Contributed photo"} className="size-full object-cover" />
-        ) : null}
-      </div>
+      <button
+        type="button"
+        className={`sb-flip ${flipped ? "is-flipped" : ""}`}
+        aria-pressed={flipped}
+        aria-label={flipped ? `Photo from ${item.author_name}. Flip it back.` : `Photo from ${item.author_name}. Flip it over for the note on the back.`}
+        onClick={() => {
+          setFlipped((f) => !f);
+          chime("whoosh");
+          buzz(6);
+        }}
+      >
+        <span className="sb-flip-card">
+          <span className="sb-flip-front relative block">
+            <span className="block aspect-square w-full overflow-hidden rounded-[3px] bg-black/5">
+              {url ? (
+                <img src={url} alt={caption ?? "Contributed photo"} className="size-full object-cover" draggable={false} />
+              ) : null}
+            </span>
+            <span className="sb-flip-hint" aria-hidden="true">
+              <RotateCw className="size-3.5" />
+            </span>
+          </span>
+          <span className="sb-flip-back rounded-[3px] bg-[var(--gift-surface)]">
+            <span className="sb-hand text-[clamp(1.25rem,5cqi,1.6rem)] leading-tight">
+              {caption || "No words needed."}
+            </span>
+            <span className="sb-hand text-lg" style={{ color: accent }}>
+              {item.author_name}
+            </span>
+            <span className="sb-stamp" aria-hidden="true" style={{ color: accent }}>
+              ♥
+            </span>
+          </span>
+        </span>
+      </button>
       <figcaption className="pt-3 text-sm">
-        {item.text_content ? <p className="sb-hand text-lg leading-tight">{item.text_content}</p> : null}
-        <p className="mt-1 text-xs opacity-70" style={{ color: accent }}>
-          {item.author_name}
+        <p className="text-xs opacity-70" style={{ color: accent }}>
+          {flipped ? "Tap to see the photo" : `From ${item.author_name}`}
         </p>
       </figcaption>
     </figure>
@@ -363,6 +398,9 @@ export function GiftSiteView({
   const enabled = new Set(modules.filter((m) => m.enabled).map((m) => m.module_type));
   const byType = (type: string) => contributions.filter((c) => c.module_type === type);
   const rootRef = useRef<HTMLDivElement | null>(null);
+  const heroRef = useRef<Theme3DHandle | null>(null);
+  const playColors = [palette.accent, palette.primary, "#FFD166", "#FFFFFF", "#7AD3B0"];
+  useSkinPlay(rootRef, kind, playColors);
 
   useEffect(() => {
     if (!highlightField || !rootRef.current) return;
@@ -487,10 +525,24 @@ export function GiftSiteView({
       <SkinDecor kind={kind} />
       <div className="mx-auto max-w-3xl px-5 py-10 sm:py-14">
         <header className="sk-hero text-center">
-          <Theme3D kind={kind} palette={palette} className="sk-stage" />
+          <Theme3D
+            kind={kind}
+            palette={palette}
+            className="sk-stage"
+            interactive
+            handleRef={heroRef}
+            onPoke={(x, y, hit) => {
+              burst(rootRef.current, x, y, { shape: KIND_BURST[kind], colors: playColors, count: hit ? 16 : 10 });
+              chime(hit ? "pop" : "boop");
+              buzz(10);
+            }}
+          />
+          {kind === "birthday" ? (
+            <WishCandles heroRef={heroRef} hostRef={rootRef} colors={playColors} accent={accentDeco} />
+          ) : null}
           <p className="sk-badge mt-6">{kindWords.badge}</p>
           <h1
-            {...fp("heading", "sb-hero mt-3 text-[clamp(2.4rem,7vw,4.2rem)] leading-[1.02] font-semibold text-balance")}
+            {...fp("heading", "sb-hero mt-3 text-[clamp(2.2rem,9cqi,4.2rem)] leading-[1.02] font-semibold text-balance")}
             style={{ fontFamily: fonts.heading }}
           >
             {text.heading || (sample ? <span className="opacity-40">{titles.heading}</span> : site.title)}

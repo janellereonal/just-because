@@ -225,3 +225,11 @@ E. **PayPal for buyers abroad (not built, notes only).**
   own background, particles, letters, photos, countdown and titles. The opening animation uses the
   occasion's 3D object instead of Bo.
 - New gifts start in their theme's font (`themeFont`).
+
+## 1d. Session 4 (15 Oct 2026)
+
+Phone fit everywhere, Phone/Laptop previews, intro-first auto tours on the theme page and cards,
+four new formats (Storybook, Mixtape, Scratch Cards, Constellation), custom intros (new
+`intro_settings` column, migration 0005) and much more play on themes (tap/spin 3D objects, catch
+particles, flip photos, birthday wish). Details and file map in `docs/NEXT-SESSION.md`.
+

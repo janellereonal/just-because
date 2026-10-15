@@ -18,6 +18,7 @@
  *    first; the password hash itself never leaves the server
  */
 import { FORMAT_IDS } from "@/lib/formats";
+import { normalizeIntroSettings } from "@/lib/intro";
 import { createServerFn } from "@tanstack/react-start";
 import { and, asc, desc, eq, inArray, ne, or, sql } from "drizzle-orm";
 import { z } from "zod";
@@ -376,6 +377,20 @@ export const updateSite = createServerFn({ method: "POST" })
       })
       .where(eq(schema.giftSites.id, data.id));
     return { ok: true };
+  });
+
+/** The creator's custom opening. Cleaned server side: only known keys, hex colors, safe upload URLs. */
+export const updateIntroSettings = createServerFn({ method: "POST" })
+  .inputValidator(z.object({ id, settings: jsonObject }))
+  .handler(async ({ data }) => {
+    await requireSiteOwner(data.id);
+    if (JSON.stringify(data.settings).length > 12_000) throw new HttpError(400, "That opening has too much in it.");
+    const settings = normalizeIntroSettings(data.settings);
+    await getDb()
+      .update(schema.giftSites)
+      .set({ introSettings: settings })
+      .where(eq(schema.giftSites.id, data.id));
+    return { ok: true, settings };
   });
 
 export const deleteSite = createServerFn({ method: "POST" })

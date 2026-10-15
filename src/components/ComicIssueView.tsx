@@ -18,6 +18,8 @@ type Props = {
   onReplayCover?: () => void;
   onClose?: () => void;
   sample?: boolean;
+  /** The occasion, for default cover words. */
+  kind?: string;
 };
 
 function useMedia(path: string | null) {
@@ -120,9 +122,9 @@ function ComicPanel({ item, palette, type }: { item: ViewContribution; palette: 
 
 type ComicPage = { key: string; chapter: string; body: React.ReactNode };
 
-export function ComicIssueView({ site, modules, contributions, calendarEntries = [], palette, showCover = false, showShare, onReplayCover, onClose, sample }: Props) {
+export function ComicIssueView({ kind, site, modules, contributions, calendarEntries = [], palette, showCover = false, showShare, onReplayCover, onClose, sample }: Props) {
   const settings = normalizeComicSettings(site.format_settings);
-  const defaults = comicSettingDefaults(site.custom_text.recipient_name);
+  const defaults = comicSettingDefaults(site.custom_text.recipient_name, kind);
   const [coverOpen, setCoverOpen] = useState(!showCover);
   const [page, setPage] = useState(0);
   const [menuOpen, setMenuOpen] = useState(false);

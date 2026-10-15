@@ -237,7 +237,8 @@ export function HuntView({
 
   return (
     <div
-      className="hunt-root min-h-screen"
+      className="hunt-root relative min-h-screen"
+      data-play-host
       style={
         {
           background: meshGradient(palette.primary, palette.accent, palette.background),
@@ -249,7 +250,7 @@ export function HuntView({
       <div className="mx-auto max-w-4xl px-4 py-10 @2xl:px-6 @2xl:py-14">
         <header className="text-center">
           {theme ? (
-            <Theme3D kind={themeKindOf(theme)} palette={palette} className="mx-auto mb-2 h-[clamp(160px,34cqi,260px)] w-full max-w-lg" />
+            <Theme3D kind={themeKindOf(theme)} palette={palette} className="mx-auto mb-2 h-[clamp(160px,34cqi,260px)] w-full max-w-lg" interactive burstColors={[palette.accent, palette.primary, "#FFD166", "#FFFFFF"]} />
           ) : null}
           <p className="text-[11px] font-semibold tracking-[0.2em] uppercase opacity-70">
             A gift hunt for {data.name}

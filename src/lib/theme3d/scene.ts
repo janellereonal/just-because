@@ -20,6 +20,17 @@ export type ThemeScene = {
   setPaused: (paused: boolean) => void;
   snapshot: () => string;
   dispose: () => void;
+  /** Tap at canvas coords (-1..1). The piece under the finger reacts, the rest follow. Returns true if a piece was hit. */
+  poke: (nx: number, ny: number) => boolean;
+  /** Drag to spin: radians per second added to the spin. */
+  fling: (velocity: number) => void;
+  /** Turn the whole scene by this many radians right now (while dragging). */
+  turn: (radians: number) => void;
+  /** A big happy reaction: everything jumps, the occasion does its thing. */
+  celebrate: () => void;
+  /** Birthday candles: blow them out (true if there were any). Relight with relight(). */
+  blowOut: () => boolean;
+  relight: () => void;
 };
 
 export function webglAvailable() {
@@ -778,6 +789,29 @@ export function createThemeScene(
   const size = box.getSize(new THREE.Vector3());
   const bases = pieces.map((p) => p.obj.position.clone());
   const baseRot = pieces.map((p) => p.obj.rotation.clone());
+  const baseScale = pieces.map((p) => p.obj.scale.clone());
+  /* Play: per-piece jumps and heartbeats, a spin you can fling, sparkle boosts. */
+  const jumps = pieces.map(() => ({ t0: -10, amp: 0, spins: 0 }));
+  const beats = pieces.map(() => -10);
+  let spinAngle = 0;
+  let spinVel = 0;
+  let boostUntil = -10;
+  let clock = 0;
+  let lastT = 0;
+  const puffs: { mesh: THREE.Mesh; t0: number; dx: number }[] = [];
+  const raycaster = new THREE.Raycaster();
+  /** The biggest piece: the heart, the cake, the globe… it does the occasion's special move. */
+  let star = 0;
+  {
+    let best = -1;
+    pieces.forEach((p, i) => {
+      const sz = new THREE.Box3().setFromObject(p.obj).getSize(new THREE.Vector3()).length();
+      if (sz > best && !p.orbit) {
+        best = sz;
+        star = i;
+      }
+    });
+  }
 
   const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
   let w = 0;
@@ -808,16 +842,44 @@ export function createThemeScene(
   if (!still && !reduce) window.addEventListener("pointermove", onPointer, { passive: true });
 
   function pose(t: number) {
+    clock = t;
+    const dt = Math.min(0.05, Math.max(0, t - lastT));
+    lastT = t;
     pointer.x += (pointer.tx - pointer.x) * 0.05;
     pointer.y += (pointer.ty - pointer.y) * 0.05;
-    root.rotation.y = pointer.x * 0.25;
+    spinAngle += spinVel * dt;
+    spinVel *= Math.pow(0.18, dt);
+    // Ease back toward facing front once the fling dies down.
+    if (Math.abs(spinVel) < 0.6) {
+      const target = Math.round(spinAngle / (Math.PI * 2)) * Math.PI * 2;
+      spinAngle += (target - spinAngle) * Math.min(1, dt * 2.2);
+    }
+    root.rotation.y = pointer.x * 0.25 + spinAngle;
     root.rotation.x = pointer.y * 0.12;
+    const boost = t < boostUntil ? 1 : 0;
     pieces.forEach((p, i) => {
       const base = bases[i]!;
       const r0 = baseRot[i]!;
+      const s0 = baseScale[i]!;
       const ph = p.phase ?? 0;
+      // Jump with squash and stretch.
+      const j = jumps[i]!;
+      const jk = (t - j.t0) / 0.7;
+      let lift = 0;
+      let sy = 1;
+      let extraSpin = 0;
+      if (jk >= 0 && jk < 1) {
+        lift = Math.sin(Math.PI * jk) * j.amp;
+        sy = jk < 0.12 ? 1 - jk * 1.6 : jk > 0.9 ? 1 - (1 - jk) * 2 : 1 + Math.sin(Math.PI * jk) * 0.12;
+        extraSpin = j.spins * Math.PI * 2 * (1 - Math.pow(1 - jk, 3));
+      }
+      // Heartbeat: two quick pulses.
+      const bk = (t - beats[i]!) / 0.75;
+      let pulse = 1;
+      if (bk >= 0 && bk < 1) pulse = 1 + 0.22 * Math.max(0, Math.sin(bk * Math.PI * 4)) * (1 - bk * 0.5);
+      p.obj.scale.set(s0.x * pulse * (2 - sy) ** 0.5, s0.y * pulse * sy, s0.z * pulse * (2 - sy) ** 0.5);
       if (p.orbit) {
-        const a = t * p.orbit.speed + ph;
+        const a = t * p.orbit.speed * (1 + boost * 2.5) + ph;
         p.obj.position.set(
           Math.cos(a) * p.orbit.radius - center.x,
           p.orbit.y + Math.sin(t * 1.3) * 0.15 - center.y,
@@ -826,8 +888,8 @@ export function createThemeScene(
         p.obj.rotation.set(0.55, -a, 0.25 + Math.sin(t * 1.3) * 0.2);
         return;
       }
-      p.obj.position.y = base.y + Math.sin(t * 1.1 + ph) * (p.bob ?? 0);
-      p.obj.rotation.y = r0.y + t * (p.spin ?? 0) * 0.6;
+      p.obj.position.y = base.y + Math.sin(t * 1.1 + ph) * (p.bob ?? 0) + lift;
+      p.obj.rotation.y = r0.y + t * (p.spin ?? 0) * 0.6 + extraSpin;
       p.obj.rotation.z = r0.z + Math.sin(t * 0.7 + ph) * 0.05;
     });
     root.traverse((o) => {
@@ -836,18 +898,68 @@ export function createThemeScene(
       if (o.userData["twinkle"] !== undefined) {
         const m = (o as THREE.Mesh).material as THREE.MeshStandardMaterial;
         m.emissiveIntensity =
-          0.5 + 0.6 * (0.5 + 0.5 * Math.sin(t * 3 + Number(o.userData["twinkle"])));
+          0.5 + 0.6 * (0.5 + 0.5 * Math.sin(t * (3 + boost * 9) + Number(o.userData["twinkle"]))) + boost * 0.8;
       }
       if (o.userData["bubble"] !== undefined) {
         const k = Number(o.userData["bubble"]);
-        o.position.y = 1.2 + ((t * 0.35 + k * 0.15) % 0.85);
+        o.position.y = 1.2 + ((t * 0.35 + k * 0.15) % 0.85) * (1 + boost);
       }
     });
+    for (let i = puffs.length - 1; i >= 0; i--) {
+      const puff = puffs[i]!;
+      const k = (t - puff.t0) / 1.6;
+      if (k >= 1) {
+        puff.mesh.parent?.remove(puff.mesh);
+        puff.mesh.geometry.dispose();
+        (puff.mesh.material as THREE.Material).dispose();
+        puffs.splice(i, 1);
+        continue;
+      }
+      puff.mesh.position.y += dt * 0.6;
+      puff.mesh.position.x += dt * puff.dx;
+      puff.mesh.scale.setScalar(0.4 + k * 1.6);
+      (puff.mesh.material as THREE.MeshStandardMaterial).opacity = 0.55 * (1 - k);
+    }
+  }
+
+  function jump(i: number, amp: number, delay = 0, spins = 0) {
+    const j = jumps[i];
+    if (!j) return;
+    j.t0 = clock + delay;
+    j.amp = amp;
+    j.spins = spins;
+  }
+
+  /** Each occasion's special move, done by its main piece. */
+  function signature(i: number) {
+    switch (kind) {
+      case "valentine":
+      case "anniversary":
+        beats[i] = clock;
+        jump(i, 0.12);
+        break;
+      case "voyage":
+        spinVel += 7;
+        boostUntil = clock + 2.2;
+        break;
+      case "christmas":
+      case "newyear":
+        boostUntil = clock + 2.5;
+        jump(i, 0.4, 0, 1);
+        break;
+      case "pets":
+        jump(i, 0.55);
+        jump(i, 0.3, 0.75);
+        break;
+      default:
+        jump(i, 0.45, 0, 1);
+    }
   }
 
   let raf = 0;
   let paused = false;
-  const start = performance.now();
+  // Start where the pre-rendered still was taken (t = 1.2s), so the fade from still to live doesn't jump.
+  const start = performance.now() - 1200;
   function frame() {
     raf = 0;
     if (paused) return;
@@ -865,13 +977,75 @@ export function createThemeScene(
   }
 
   resize();
-  pose(still ? 1.2 : 0);
+  pose(1.2);
   renderer.render(scene, camera);
   if (!still && !reduce) raf = requestAnimationFrame(frame);
 
+  const live = () => !reduce && !still;
   return {
     ready: Promise.resolve(),
     setPaused,
+    poke(nx, ny) {
+      if (!live()) return false;
+      raycaster.setFromCamera(new THREE.Vector2(nx, -ny), camera);
+      const hits = raycaster.intersectObjects(root.children, true);
+      let hit = -1;
+      if (hits[0]) {
+        let o: THREE.Object3D | null = hits[0].object;
+        while (o && hit < 0) {
+          const found = pieces.findIndex((p) => p.obj === o);
+          if (found >= 0) hit = found;
+          o = o.parent;
+        }
+      }
+      if (hit < 0) return false;
+      if (hit === star) signature(hit);
+      else jump(hit, 0.5, 0, Math.random() < 0.5 ? 1 : 0);
+      pieces.forEach((_, i) => {
+        if (i !== hit) jump(i, 0.12, 0.08 + Math.random() * 0.15);
+      });
+      return true;
+    },
+    fling(velocity) {
+      if (!live()) return;
+      spinVel += Math.max(-14, Math.min(14, velocity));
+    },
+    turn(radians) {
+      if (!live()) return;
+      spinAngle += radians;
+      spinVel = 0;
+    },
+    celebrate() {
+      if (!live()) return;
+      pieces.forEach((_, i) => jump(i, 0.35 + Math.random() * 0.25, i * 0.07, i === star ? 1 : 0));
+      if (kind === "valentine" || kind === "anniversary") beats[star] = clock + 0.3;
+      boostUntil = clock + 2.5;
+      spinVel += 4;
+    },
+    blowOut() {
+      let any = false;
+      root.traverse((o) => {
+        if (!o.userData["flicker"] || !o.visible) return;
+        any = true;
+        o.visible = false;
+        const wp = o.getWorldPosition(new THREE.Vector3());
+        for (let k = 0; k < 3; k++) {
+          const mesh = new THREE.Mesh(
+            new THREE.SphereGeometry(0.06, 12, 10),
+            new THREE.MeshStandardMaterial({ color: 0xdedede, transparent: true, opacity: 0.5, roughness: 1 }),
+          );
+          scene.add(mesh);
+          mesh.position.copy(wp).add(new THREE.Vector3(0, 0.05 + k * 0.08, 0));
+          puffs.push({ mesh, t0: clock + k * 0.12, dx: (Math.random() - 0.5) * 0.3 });
+        }
+      });
+      return any;
+    },
+    relight() {
+      root.traverse((o) => {
+        if (o.userData["flicker"]) o.visible = true;
+      });
+    },
     snapshot() {
       resize();
       pose(1.2);

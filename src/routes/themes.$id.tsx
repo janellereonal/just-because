@@ -1,4 +1,8 @@
 import { useMemo, useState } from "react";
+import { Pause, Play } from "lucide-react";
+import { DevicePreview, DeviceToggle, type PreviewDevice } from "@/components/DevicePreview";
+import { useGiftTour } from "@/hooks/useGiftTour";
+import { Pause3DContext } from "@/components/Theme3D";
 import { themeKindOf } from "@/lib/themeKind";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
@@ -31,15 +35,13 @@ export const Route = createFileRoute("/themes/$id")({
   component: ThemeDetailPage,
 });
 
-type View = "gift" | "opening";
-
 function ThemeDetailPage() {
   const { id } = Route.useParams();
   const navigate = useNavigate();
   const { user } = useAuth();
   const [paletteIndex, setPaletteIndex] = useState(0);
-  const [view, setView] = useState<View>("gift");
-  const [openingKey, setOpeningKey] = useState(0);
+  const [device, setDevice] = useState<PreviewDevice>("phone");
+  const tour = useGiftTour();
   const [format, setFormat] = useState<GiftFormat>("scrapbook");
   const { data: allPalettes = [] } = usePalettes();
 
@@ -80,17 +82,17 @@ function ThemeDetailPage() {
     navigate({ to: "/create", search: { theme: id, format } });
   }
 
+  const view = tour.phase === "intro" ? "opening" : "gift";
   function watchOpening() {
-    setView("opening");
-    setOpeningKey((k) => k + 1);
+    tour.showOpening();
   }
 
-  const tab = (value: View, label: string, onClick: () => void) => (
+  const tab = (value: "gift" | "opening", label: string, onClick: () => void) => (
     <button
       type="button"
       onClick={onClick}
       aria-pressed={view === value}
-      className={`min-h-11 flex-1 rounded-full px-4 text-sm font-medium transition-colors ${
+      className={`min-h-11 flex-1 rounded-full px-3 text-sm font-medium whitespace-nowrap transition-colors sm:px-4 ${
         view === value ? "bg-ink text-cream" : "text-ink/75 hover:bg-white/60"
       }`}
     >
@@ -111,38 +113,62 @@ function ThemeDetailPage() {
 
         <div className="mt-3 grid gap-6 lg:grid-cols-[minmax(0,1fr)_340px]">
           {/* The stage: a phone playing the real gift */}
-          <div className="relative overflow-hidden rounded-[36px] px-4 pt-5 pb-0 sm:px-8" style={{ backgroundColor: stageColorFor(theme) }}>
+          <div className="relative overflow-hidden rounded-[36px] px-3 pt-5 pb-6 sm:px-8" style={{ backgroundColor: stageColorFor(theme) }}>
             <span aria-hidden="true" className="absolute -top-20 -right-16 size-64 rounded-full bg-white/40" />
             <span aria-hidden="true" className="absolute bottom-10 -left-20 size-56 rounded-full bg-white/30" />
 
             <div className="relative mx-auto flex max-w-[420px] gap-1 rounded-full bg-white/45 p-1 backdrop-blur">
-              {tab("gift", "The gift", () => setView("gift"))}
+              {tab("gift", "The gift", () => {
+                tour.pause();
+                tour.showGift();
+              })}
               {tab("opening", "The opening", watchOpening)}
             </div>
+            <div className="relative mt-3 flex flex-wrap items-center justify-center gap-2">
+              <DeviceToggle value={device} onChange={setDevice} size="sm" />
+              {!tour.reduced ? (
+                <button
+                  type="button"
+                  onClick={() => (tour.playing ? tour.pause() : tour.play())}
+                  className="inline-flex min-h-8 items-center gap-1.5 rounded-full bg-white/60 px-3 text-[11px] font-medium ring-1 ring-ink/10 backdrop-blur hover:bg-white/80"
+                >
+                  {tour.playing ? <Pause className="size-3.5" /> : <Play className="size-3.5" />}
+                  {tour.playing ? "Pause the tour" : "Play the tour"}
+                </button>
+              ) : null}
+            </div>
 
-            <div className="relative mx-auto mt-5 w-full max-w-[390px]">
-              <div className="overflow-hidden rounded-t-[40px] border-[8px] border-b-0 border-ink bg-ink shadow-[0_30px_60px_-30px_rgba(43,37,34,0.6)]">
-                <div className="relative h-[min(720px,72vh)] overflow-hidden rounded-t-[32px]">
-                  {view === "gift" ? (
-                    <div className="absolute inset-0 overflow-y-auto overscroll-contain" tabIndex={0} aria-label={`${theme.name} sample gift, scrollable`}>
-                      <FormatView key={format} site={{ ...site, format }} theme={theme} palette={palette} modules={modules} contributions={[]} sample />
+            <div className={`relative mx-auto mt-4 w-full ${device === "phone" ? "max-w-[406px]" : ""}`}>
+              <DevicePreview
+                device={device}
+                
+                phoneHeight="min(720px, 72svh)"
+                scrollRef={tour.scrollRef}
+                scrollLabel={`${theme.name} sample gift, scrollable`}
+                overlay={
+                  tour.phase === "intro" ? (
+                    <div key={tour.introKey} className="absolute inset-0 animate-[jb-fade-in_.45s_ease_both]">
+                      <GiftIntro
+                        contained
+                        style={introStyleForTheme(theme.name)}
+                        kind={themeKindOf(theme)}
+                        palette={palette}
+                        fonts={fonts}
+                        backgroundStyle={backgroundFor(theme)}
+                        recipientName={sample.name}
+                        autoOpenAfter={tour.autoOpenAfter}
+                        onOpen={tour.onOpen}
+                        onSkip={tour.onOpen}
+                      />
                     </div>
-                  ) : (
-                    <GiftIntro
-                      key={openingKey}
-                      contained
-                      style={introStyleForTheme(theme.name)}
-                      kind={themeKindOf(theme)}
-                      palette={palette}
-                      fonts={fonts}
-                      backgroundStyle={backgroundFor(theme)}
-                      recipientName={sample.name}
-                      onOpen={() => setView("gift")}
-                      onSkip={() => setView("gift")}
-                    />
-                  )}
-                </div>
-              </div>
+                  ) : null
+                }
+              >
+                {/* One live 3D scene at a time: the gift's waits behind the opening. */}
+                <Pause3DContext.Provider value={tour.phase !== "gift"}>
+                  <FormatView key={format} site={{ ...site, format }} theme={theme} palette={palette} modules={modules} contributions={[]} sample />
+                </Pause3DContext.Provider>
+              </DevicePreview>
             </div>
           </div>
 
@@ -153,7 +179,7 @@ function ThemeDetailPage() {
               <h1 className="mt-1 font-display text-4xl leading-none font-semibold tracking-tight">{theme.name}</h1>
               {theme.description ? <p className="mt-3 text-muted">{theme.description}</p> : null}
               <p className="mt-3 text-sm text-muted">
-                This is a sample for {sample.name}. Scroll inside the phone to see it all.
+                This is a sample for {sample.name}. It plays on its own. Touch it any time to take over.
               </p>
             </div>
 
@@ -198,7 +224,7 @@ function ThemeDetailPage() {
                     aria-checked={format === f.id}
                     onClick={() => {
                       setFormat(f.id);
-                      setView("gift");
+                      tour.showGift();
                     }}
                     className={`squish rounded-full px-3.5 py-2 text-sm font-medium transition-colors ${
                       format === f.id ? "bg-ink text-cream" : "bg-paper ring-1 ring-ink/10 hover:bg-pink/40"

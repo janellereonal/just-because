@@ -3,7 +3,7 @@
  * The `format` column is plain text, so adding one here needs no migration.
  * Which plans can use which format lives in src/config/pricing.ts.
  */
-export const FORMAT_IDS = ["scrapbook", "comic", "bento", "hunt", "zine"] as const;
+export const FORMAT_IDS = ["scrapbook", "comic", "bento", "hunt", "zine", "storybook", "mixtape", "scratch", "stars"] as const;
 export type GiftFormat = (typeof FORMAT_IDS)[number];
 
 export type FormatInfo = {
@@ -39,7 +39,6 @@ export const FORMATS: FormatInfo[] = [
     copy: "Everything at a glance, in tiles",
     about: "Notes, photos and songs as a tidy grid of tiles. Tap any tile to open it.",
     usesIntro: true,
-    isNew: true,
   },
   {
     id: "hunt",
@@ -47,13 +46,43 @@ export const FORMATS: FormatInfo[] = [
     copy: "Unwrap every note, one by one",
     about: "Each note is a little wrapped box. They unwrap them all to finish the hunt.",
     usesIntro: true,
-    isNew: true,
   },
   {
     id: "zine",
     title: "Zine",
     copy: "Loud, handmade and a bit chaotic",
     about: "A cut-and-paste zine with stickers, scribbles and big type.",
+    usesIntro: true,
+  },
+  {
+    id: "storybook",
+    title: "Storybook",
+    copy: "A little book with real page turns",
+    about: "A hardcover book where every note is a chapter. Drag a page by its edge to turn it.",
+    usesIntro: true,
+    isNew: true,
+  },
+  {
+    id: "mixtape",
+    title: "Mixtape",
+    copy: "A cassette, every note a track",
+    about: "Press play and the reels turn. Spin a reel to scrub, flip the tape for side B.",
+    usesIntro: true,
+    isNew: true,
+  },
+  {
+    id: "scratch",
+    title: "Scratch Cards",
+    copy: "Scratch the foil to reveal each note",
+    about: "Every note hides under silver foil. They scratch it off with a finger, card by card.",
+    usesIntro: true,
+    isNew: true,
+  },
+  {
+    id: "stars",
+    title: "Constellation",
+    copy: "A night sky, every friend a star",
+    about: "Tap the stars to read them. Each one connects to the last, until they make a heart.",
     usesIntro: true,
     isNew: true,
   },

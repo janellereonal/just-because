@@ -11,6 +11,7 @@ import {
 import type { Palette, Theme } from "@/lib/themes";
 import { normalizeTheme } from "@/lib/themes";
 import { normalizeComicSettings, type ComicSettings } from "@/lib/comic";
+import { normalizeIntroSettings, type IntroSettings } from "@/lib/intro";
 import { isGiftFormat, type GiftFormat } from "@/lib/formats";
 
 export type ModuleType =
@@ -200,6 +201,8 @@ export type GiftSite = {
   countdown_date: string | null;
   calendar_locked: boolean;
   intro_text: string | null;
+  /** The creator's custom opening (object, stickers, colors, background, words). */
+  intro_settings: IntroSettings;
   background_style: BackgroundStyle;
   tree_reveal_date: string | null;
   /** sweet | celebration | keepsake | legacy, or null until paid. */
@@ -292,6 +295,7 @@ export function normalizeSite(row: Record<string, unknown>): GiftSite {
     countdown_date: (row["countdown_date"] as string | null) ?? null,
     calendar_locked: Boolean(row["calendar_locked"]),
     intro_text: (row["intro_text"] as string | null) ?? null,
+    intro_settings: normalizeIntroSettings(row["intro_settings"]),
     background_style: ((row["background_style"] as BackgroundStyle) ?? "paper") as BackgroundStyle,
     tree_reveal_date: (row["tree_reveal_date"] as string | null) ?? null,
     tier: (row["tier"] as string | null) ?? null,

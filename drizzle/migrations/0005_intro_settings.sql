@@ -1,0 +1,1 @@
+ALTER TABLE "gift_sites" ADD COLUMN "intro_settings" jsonb DEFAULT '{}'::jsonb NOT NULL;

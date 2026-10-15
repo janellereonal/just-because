@@ -23,6 +23,7 @@ import {
 } from "@/lib/gift";
 import { readableInk, surfaceColor } from "@/lib/palettes";
 import { FormatView } from "@/components/formats/FormatView";
+import { DevicePreview, DeviceToggle, type PreviewDevice } from "@/components/DevicePreview";
 import { ModuleExample } from "@/components/ModuleExample";
 import Bo from "@/components/Bo";
 import { CalendarDays, Image as ImageIcon, Lock, Mail, Mic, Music2, Sparkles, Type, Users } from "lucide-react";
@@ -146,6 +147,7 @@ function ContributePage() {
   const [treeStep, setTreeStep] = useState<1 | 2>(1);
   const [editingId, setEditingId] = useState<string | null>(null);
   const giftRef = useRef<HTMLDivElement | null>(null);
+  const [device, setDevice] = useState<PreviewDevice>("phone");
 
   const filePreview = useMemo(() => (file ? URL.createObjectURL(file) : null), [file]);
   useEffect(() => () => {
@@ -789,12 +791,19 @@ function ContributePage() {
                 : `${friendCount} friend${friendCount === 1 ? " has" : "s have"} added something so far`}
             </p>
           </div>
-          <div
-            ref={giftRef}
-            className="mt-3 max-h-[75vh] overflow-y-auto rounded-3xl ring-1 ring-black/5"
-            style={{ backgroundColor: palette.background }}
-          >
-            <FormatView site={site} theme={theme} palette={palette} modules={modules} contributions={giftContributions} calendarEntries={calendarEntries} sample />
+          <DeviceToggle value={device} onChange={setDevice} size="sm" className="mt-3" />
+          <div className="mt-3">
+            <DevicePreview
+              device={device}
+              frame={device === "laptop"}
+              phoneHeight="min(75svh, 760px)"
+              scrollRef={giftRef}
+              scrollLabel="The gift so far, scrollable"
+            >
+              <div style={{ backgroundColor: palette.background }}>
+                <FormatView site={site} theme={theme} palette={palette} modules={modules} contributions={giftContributions} calendarEntries={calendarEntries} sample />
+              </div>
+            </DevicePreview>
           </div>
         </div>
       </div>

@@ -44,6 +44,7 @@ export function demoSite(format: GiftFormat): GiftSite {
     countdown_date: inTen,
     calendar_locked: false,
     intro_text: null,
+    intro_settings: {},
     background_style: "clean",
     tree_reveal_date: null,
     tier: "celebration",

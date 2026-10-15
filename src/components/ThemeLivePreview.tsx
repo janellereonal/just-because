@@ -1,11 +1,12 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Live3DContext } from "@/components/Theme3D";
 import { GiftSiteView } from "@/components/GiftSiteView";
-import { INTRO_COPY, introStyleForTheme } from "@/lib/intro";
+import { introStyleForTheme } from "@/lib/intro";
+import { GiftIntro } from "@/components/GiftIntro";
+import { themeKindOf } from "@/lib/themeKind";
 import { themeFont } from "@/components/ThemeMiniPreview";
 import {
   FONT_PAIRINGS,
-  backgroundCss,
   type BackgroundStyle,
   type GiftSite,
   type ModuleType,
@@ -15,12 +16,10 @@ import type { Palette, Theme } from "@/lib/themes";
 import { usePalettes, suggestedPalettes } from "@/hooks/usePalettes";
 
 const PHONE_WIDTH = 390;
-const SCROLL_MS = 8000;
-const HOLD_MS = 1500;
-const RETURN_MS = 1000;
-const INTRO_MS = 1400;
-/** The opening now has its own tab on the theme page, so cards show the gift itself. */
-const SHOW_MINI_INTRO = false;
+const SCROLL_MS = 7000;
+const HOLD_MS = 1300;
+/** The card's opening opens by itself this long after it starts playing. */
+const INTRO_OPEN_MS = 2600;
 
 /* Only one mini preview plays at a time. */
 let currentId: string | null = null;
@@ -73,7 +72,8 @@ export function sampleFor(theme: Theme) {
   if (key.includes("pet")) return { heading: "Best boy, Milo", name: "Milo" };
   if (key.includes("new year")) return { heading: "Happy New Year, everyone", name: "the crew" };
   if (key.includes("anniversar")) return { heading: "Ten years, Liz", name: "Liz" };
-  if (key.includes("bridal") || key.includes("shower")) return { heading: "Showered with love, Bea", name: "Bea" };
+  if (key.includes("bridal") || key.includes("shower"))
+    return { heading: "Showered with love, Bea", name: "Bea" };
   if (key.includes("wedding")) return { heading: "Congratulations, Aya & Jun", name: "Aya & Jun" };
   return { heading: "Just because, Maya", name: "Maya" };
 }
@@ -84,63 +84,6 @@ export function backgroundFor(theme: Theme): BackgroundStyle {
   if (key.includes("new year")) return "gradient";
   if (key.includes("birthday") || key.includes("pet") || key.includes("shower")) return "clean";
   return "paper";
-}
-
-function MiniIntro({
-  theme,
-  palette,
-  fonts,
-  background,
-  opacity,
-  height,
-}: {
-  theme: Theme;
-  palette: Palette;
-  fonts: { heading: string; body: string };
-  background: BackgroundStyle;
-  opacity: number;
-  height: number;
-}) {
-  const style = introStyleForTheme(theme.name);
-  const copy = INTRO_COPY[style];
-  const sample = sampleFor(theme);
-  return (
-    <div
-      className="grid place-items-center px-8 text-center"
-      style={{
-        width: PHONE_WIDTH,
-        height,
-        ...backgroundCss(background, palette),
-        color: palette.primary,
-        fontFamily: fonts.body,
-        opacity,
-      }}
-    >
-      <div>
-        <p className="text-xs tracking-[0.22em] uppercase" style={{ color: palette.accent }}>
-          {copy.badge}
-        </p>
-        <div
-          className="mx-auto mt-6 grid size-24 place-items-center rounded-3xl text-4xl shadow-sm ring-1 ring-black/5"
-          style={{ backgroundColor: "rgba(255,255,255,0.7)" }}
-        >
-          {copy.glyph}
-        </div>
-        <p
-          className="mt-6 text-3xl leading-tight font-semibold text-balance"
-          style={{ fontFamily: fonts.heading }}
-        >
-          {sample.heading}
-        </p>
-        <p
-          className="mt-5 inline-block rounded-full px-5 py-2 text-sm"
-          style={{ backgroundColor: palette.accent, color: palette.background }}
-        >
-          {copy.action}
-        </p>
-      </div>
-    </div>
-  );
 }
 
 /** A sample gift for previews: a friendly recipient, the theme's font and background, and the given palette. */
@@ -168,6 +111,7 @@ export function buildPreviewSite(theme: Theme, palette: Palette | undefined): Gi
     countdown_date: new Date(Date.now() + 12 * 86400000).toISOString().slice(0, 10),
     calendar_locked: false,
     intro_text: null,
+    intro_settings: {},
     background_style: backgroundFor(theme),
     tree_reveal_date: null,
     tier: null,
@@ -185,10 +129,21 @@ export function previewModules(theme: Theme, siteId: string): SiteModule[] {
   const types = (
     theme.default_modules.length > 0 ? theme.default_modules : ["letters", "photobooth", "songs"]
   ) as ModuleType[];
-  return types.map((type, i) => ({ id: `${theme.id}-${i}`, site_id: siteId, module_type: type, price: 0, enabled: true }));
+  return types.map((type, i) => ({
+    id: `${theme.id}-${i}`,
+    site_id: siteId,
+    module_type: type,
+    price: 0,
+    enabled: true,
+  }));
 }
 
-/** A live, non-interactive mini gift site that slowly plays through the theme. */
+/**
+ * A live, non-interactive mini gift that plays like the real thing: the opening,
+ * it opens by itself, a slow scroll through the gift, then back to the opening.
+ * Cards that aren't playing rest on the opening's ready frame. Stills only (no
+ * WebGL per card).
+ */
 export function ThemeLivePreview({ theme }: { theme: Theme }) {
   const id = theme.id;
   const playing = useIsPlaying(id);
@@ -200,12 +155,14 @@ export function ThemeLivePreview({ theme }: { theme: Theme }) {
   const [mounted, setMounted] = useState(false);
   const [visible, setVisible] = useState(false);
   const [offset, setOffset] = useState(0);
-  const [introOpacity, setIntroOpacity] = useState(1);
+  const [phase, setPhase] = useState<"intro" | "gift">("intro");
+  const [introKey, setIntroKey] = useState(0);
 
   const { data: allPalettes = [] } = usePalettes();
   const palette = suggestedPalettes(theme, allPalettes)[0] ?? theme.palettes[0];
   const fonts = FONT_PAIRINGS[themeFont(theme)];
   const background = backgroundFor(theme);
+  const sample = sampleFor(theme);
 
   const site: GiftSite = useMemo(
     () => buildPreviewSite(theme, palette),
@@ -214,7 +171,7 @@ export function ThemeLivePreview({ theme }: { theme: Theme }) {
   );
   const modules = useMemo(() => previewModules(theme, site.id), [theme, site.id]);
 
-  // Scale the phone-width site down to the card, and mount only when on screen.
+  // Scale the phone-width gift down to the card, and mount only when on screen.
   useEffect(() => {
     const el = boxRef.current;
     if (!el) return;
@@ -229,7 +186,6 @@ export function ThemeLivePreview({ theme }: { theme: Theme }) {
       (entries) => {
         for (const e of entries) {
           if (e.isIntersecting) setMounted(true);
-          // Off-screen cards fall back to the static first frame and stop animating.
           setVisible(e.isIntersecting);
           if (!e.isIntersecting) releasePreview(id);
           // Touch devices play the card that is in view.
@@ -250,48 +206,48 @@ export function ThemeLivePreview({ theme }: { theme: Theme }) {
     // Re-run once the palette arrives: before that the box isn't rendered.
   }, [id, !!palette]);
 
-  // The slow top-to-bottom play, looping while the card stays active.
-  useEffect(() => {
-    if (!playing || reduced || !visible) {
-      setOffset(0);
-      setIntroOpacity(1);
-      return;
-    }
-    let raf = 0;
-    let cancelled = false;
-    const start = performance.now();
-    const viewport = (boxRef.current?.clientHeight ?? 0) / (scale || 1);
+  const active = playing && !reduced && visible;
 
+  // Stopped: back to the opening's resting frame.
+  useEffect(() => {
+    if (active) return;
+    setPhase("intro");
+    setOffset(0);
+  }, [active]);
+
+  // Playing the gift part: slow scroll, hold, then loop to the opening.
+  useEffect(() => {
+    if (!active || phase !== "gift") return;
+    let raf = 0;
+    let hold = 0;
+    let start = 0;
+    const viewport = (boxRef.current?.clientHeight ?? 0) / (scale || 1);
     const tick = (now: number) => {
-      if (cancelled) return;
+      if (!start) start = now;
       const max = Math.max(0, (innerRef.current?.scrollHeight ?? 0) - viewport);
-      const cycle = INTRO_MS + SCROLL_MS + HOLD_MS + RETURN_MS;
-      const t = (now - start) % cycle;
-      if (t < INTRO_MS) {
-        setIntroOpacity(t < INTRO_MS - 700 ? 1 : 1 - (t - (INTRO_MS - 700)) / 700);
-        setOffset(0);
-      } else if (t < INTRO_MS + SCROLL_MS) {
-        setIntroOpacity(0);
-        setOffset(max * ((t - INTRO_MS) / SCROLL_MS));
-      } else if (t < INTRO_MS + SCROLL_MS + HOLD_MS) {
-        setIntroOpacity(0);
-        setOffset(max);
-      } else {
-        const p = (t - INTRO_MS - SCROLL_MS - HOLD_MS) / RETURN_MS;
-        const eased = 1 - Math.pow(1 - p, 3);
-        setIntroOpacity(p);
-        setOffset(max * (1 - eased));
-      }
-      raf = requestAnimationFrame(tick);
+      const t = Math.min(1, (now - start) / SCROLL_MS);
+      const eased = t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2;
+      setOffset(max * eased);
+      if (t < 1) raf = requestAnimationFrame(tick);
+      else
+        hold = window.setTimeout(() => {
+          setPhase("intro");
+          setIntroKey((k) => k + 1);
+        }, HOLD_MS);
     };
     raf = requestAnimationFrame(tick);
     return () => {
-      cancelled = true;
       cancelAnimationFrame(raf);
+      window.clearTimeout(hold);
     };
-  }, [playing, reduced, visible, scale]);
+  }, [active, phase, scale]);
+
+  useEffect(() => {
+    if (phase === "intro") setOffset(0);
+  }, [phase]);
 
   if (!palette) return null;
+  const innerH = boxH / (scale || 1);
 
   return (
     <div
@@ -302,39 +258,44 @@ export function ThemeLivePreview({ theme }: { theme: Theme }) {
       onMouseLeave={() => releasePreview(id)}
       aria-hidden="true"
     >
-      <div
-        className="pointer-events-none absolute top-0 left-0 origin-top-left"
-        style={{
-          width: PHONE_WIDTH,
-          transform: `scale(${scale}) translateY(${-offset}px)`,
-        }}
-      >
-        <div ref={innerRef}>
-          {mounted && visible ? (
-            <Live3DContext.Provider value={false}>
+      <Live3DContext.Provider value={false}>
+        <div
+          className="pointer-events-none absolute top-0 left-0 origin-top-left"
+          style={{ width: PHONE_WIDTH, transform: `scale(${scale}) translateY(${-offset}px)` }}
+        >
+          <div ref={innerRef}>
+            {mounted && visible && phase === "gift" ? (
               <GiftSiteView site={site} theme={theme} modules={modules} contributions={[]} sample />
-            </Live3DContext.Provider>
-          ) : null}
+            ) : null}
+          </div>
         </div>
-      </div>
 
-      <div
-        className="pointer-events-none absolute top-0 left-0 origin-top-left"
-        style={{ transform: `scale(${scale})` }}
-      >
-        <MiniIntro
-          theme={theme}
-          palette={palette}
-          fonts={fonts}
-          background={background}
-          opacity={SHOW_MINI_INTRO ? (reduced ? 1 : introOpacity) : 0}
-          height={boxH / (scale || 1)}
-        />
-      </div>
+        {mounted && phase === "intro" && innerH > 0 ? (
+          <div
+            className="pointer-events-none absolute top-0 left-0 origin-top-left"
+            style={{ width: PHONE_WIDTH, height: innerH, transform: `scale(${scale})` }}
+          >
+            <div key={introKey} className="absolute inset-0 animate-[jb-fade-in_.4s_ease_both]">
+              <GiftIntro
+                contained
+                quick
+                interactive={false}
+                paused={!active}
+                style={introStyleForTheme(theme.name)}
+                kind={themeKindOf(theme)}
+                palette={palette}
+                fonts={fonts}
+                backgroundStyle={background}
+                recipientName={sample.name}
+                autoOpenAfter={active ? INTRO_OPEN_MS : undefined}
+                onOpen={() => setPhase("gift")}
+              />
+            </div>
+          </div>
+        ) : null}
+      </Live3DContext.Provider>
 
-      <span
-        className="absolute right-2 bottom-2 flex items-center gap-1 rounded-full bg-black/45 px-2 py-1 font-mono text-[9px] tracking-[0.12em] text-white uppercase"
-      >
+      <span className="absolute right-2 bottom-2 z-[70] flex items-center gap-1 rounded-full bg-black/45 px-2 py-1 font-mono text-[9px] tracking-[0.12em] text-white uppercase">
         <svg viewBox="0 0 10 10" className="size-2 fill-current" aria-hidden="true">
           <path d="M2 1l7 4-7 4z" />
         </svg>
