@@ -304,6 +304,8 @@ export const createSite = createServerFn({ method: "POST" })
   .inputValidator(
     z.object({
       title: z.string().trim().min(1).max(200),
+      /** Who it's for. The title is made from it, and it fills "for Ana" on the gift. */
+      recipientName: z.string().trim().min(1).max(80).optional(),
       themeId: id.nullable(),
       format: z.enum(FORMAT_IDS),
       paletteId: id.nullable(),
@@ -327,7 +329,7 @@ export const createSite = createServerFn({ method: "POST" })
           themeId: data.themeId,
           format: data.format,
           slug: slugify(data.title),
-          customText: { heading: data.title },
+          customText: { heading: data.title, ...(data.recipientName ? { recipient_name: data.recipientName } : {}) },
           paletteId: data.paletteId,
           customColors: data.customColors,
           treeRevealDate: data.treeRevealDate,

@@ -8,7 +8,7 @@ export function giftVoice(solo: boolean | undefined) {
         solo: true,
         sample: "Sample, replaced when you add your own",
         empty: (what: string) => `Your notes will show up here as ${what}.`,
-        intro: (name: string) => `I made this just for you, ${name}. Take your time.`,
+        intro: (name: string) => `I made this just for you${name ? `, ${name}` : ""}. Take your time.`,
         signoff: "With love, always",
       }
     : {
@@ -16,7 +16,7 @@ export function giftVoice(solo: boolean | undefined) {
         sample: "Sample, replaced when friends add theirs",
         empty: (what: string) => `Notes from friends will show up here as ${what}.`,
         intro: (name: string) =>
-          `Everyone who loves you put something in here, ${name}. Take your time.`,
+          `Everyone who loves you put something in here${name ? `, ${name}` : ""}. Take your time.`,
         signoff: "With love, from all of us",
       };
 }

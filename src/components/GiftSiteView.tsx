@@ -7,7 +7,7 @@ import { WishCandles, useSkinPlay } from "@/components/SkinPlay";
 import { buzz, chime } from "@/lib/play";
 import { RotateCw } from "lucide-react";
 import { giftHeading, KIND_WORDS, themeKindOf } from "@/lib/themeKind";
-import { SampleText } from "@/components/SampleMark";
+import { SampleText, usePlaceholderName } from "@/components/SampleMark";
 import { giftMoment } from "@/lib/giftPieces";
 import {
   FONT_PAIRINGS,
@@ -408,6 +408,7 @@ export function GiftSiteView({
   const fonts = FONT_PAIRINGS[site.font_choice] ?? FONT_PAIRINGS.romantic;
   const kind = themeKindOf(theme);
   const kindWords = KIND_WORDS[kind];
+  const placeholder = usePlaceholderName();
   const text: CustomText = site.custom_text ?? {};
   const titles = defaultTitles(text, kind);
   const enabled = new Set(modules.filter((m) => m.enabled).map((m) => m.module_type));
@@ -469,7 +470,9 @@ export function GiftSiteView({
 
   const sectionTitle = "sb-title text-[1.75rem] leading-tight font-semibold";
   const recipient = text.recipient_name?.trim();
-  const sampleName = recipient || "Ana";
+  // "Ana" only as the editor's labeled placeholder; elsewhere a nameless gift just says "you".
+  const nameIsSample = !recipient && placeholder && !!sample;
+  const sampleName = recipient || (nameIsSample ? "Ana" : "");
   const voice = giftVoice(site.solo);
 
   /** Wraps the visitor's own contribution with a soft outline and a "Yours" tag. */
@@ -572,8 +575,8 @@ export function GiftSiteView({
           </h1>
           <p {...fp("recipient_name", "mt-2 text-lg")} style={{ color: accentText }}>
             {recipient ? (
-              (text.heading ?? "").toLowerCase().includes(recipient.toLowerCase()) && !onEditField ? null : `for ${recipient}`
-            ) : sample ? (
+              (text.heading ?? "").toLowerCase().includes(recipient.toLowerCase()) ? null : `for ${recipient}`
+            ) : nameIsSample ? (
               <SampleText on>for {sampleName}</SampleText>
             ) : null}
           </p>
@@ -587,7 +590,7 @@ export function GiftSiteView({
             </p>
           ) : null}
           {kind === "voyage" ? (
-            <div className="sk-pass" aria-label={`From ${voice.solo ? "me" : "everyone"}, to ${recipient || sampleName}`}>
+            <div className="sk-pass" aria-label={`From ${voice.solo ? "me" : "everyone"}, to ${sampleName || "you"}`}>
               <span>
                 <small>From</small>
                 <strong>{voice.solo ? "Me" : "Everyone"}</strong>
@@ -597,7 +600,7 @@ export function GiftSiteView({
               </span>
               <span className="text-right">
                 <small>To</small>
-                <strong>{recipient || <SampleText on={!!sample} tag={false}>{sampleName}</SampleText>}</strong>
+                <strong>{recipient || (nameIsSample ? <SampleText on tag={false}>{sampleName}</SampleText> : "You")}</strong>
               </span>
             </div>
           ) : null}
@@ -677,7 +680,7 @@ export function GiftSiteView({
                     ),
                   )
                 : [
-                    { t: `So lucky to know you, ${sampleName}. Love, Sam`, a: "Sam" },
+                    { t: `So lucky to know you${sampleName ? `, ${sampleName}` : ""}. Love, Sam`, a: "Sam" },
                     { t: "You make every room warmer. Can't wait to celebrate.", a: "Alex" },
                   ].map((s, li) => (
                     <NoteCard key={s.a} kind={kind} index={li} text={s.t} author={s.a} accent={accentText} muted />
@@ -791,7 +794,7 @@ export function GiftSiteView({
               {voices.length > 0 ? (
                 voices.map((item) =>
                   item.sealed ? (
-                    <SealedMedia key={item.id} item={item} palette={palette} recipient={sampleName} />
+                    <SealedMedia key={item.id} item={item} palette={palette} recipient={sampleName || "the recipient"} />
                   ) : (
                     <Mine key={item.id} item={item}>
                       <VoiceCard item={item} accent={accentText} />
@@ -838,7 +841,7 @@ export function GiftSiteView({
                 songs.map((item) => {
                   if (item.sealed)
                     return (
-                      <SealedMedia key={item.id} item={item} palette={palette} recipient={sampleName} />
+                      <SealedMedia key={item.id} item={item} palette={palette} recipient={sampleName || "the recipient"} />
                     );
                   const embed = toEmbedUrl(item.external_link ?? "");
                   return (

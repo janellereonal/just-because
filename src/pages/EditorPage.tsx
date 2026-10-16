@@ -1458,7 +1458,7 @@ function SiteDashboard() {
           // Side room so Bo stands next to the laptop, never on top of its frame.
           <div className="flex h-full items-center justify-center min-[900px]:px-20">
             <DevicePreview device="laptop" fit="contain" overlay={showIntroInCanvas ? canvasIntro : null}>
-              <FormatView site={draft} theme={theme} palette={paletteNow} modules={modules} contributions={approved} calendarEntries={calendarEntries} sample highlightField={focusField} onEditField={(field) => { openField(field); selectInPreview(field); }} />
+              <FormatView site={draft} theme={theme} palette={paletteNow} modules={modules} contributions={approved} calendarEntries={calendarEntries} sample placeholderName highlightField={focusField} onEditField={(field) => { openField(field); selectInPreview(field); }} />
             </DevicePreview>
           </div>
         ) : (
@@ -1471,7 +1471,7 @@ function SiteDashboard() {
               }}
             >
               <div className="h-full overflow-y-auto overscroll-contain">
-                 <FormatView site={draft} theme={theme} palette={paletteNow} modules={modules} contributions={approved} calendarEntries={calendarEntries} sample highlightField={focusField} onEditField={(field) => { openField(field); selectInPreview(field); }} />
+                 <FormatView site={draft} theme={theme} palette={paletteNow} modules={modules} contributions={approved} calendarEntries={calendarEntries} sample placeholderName highlightField={focusField} onEditField={(field) => { openField(field); selectInPreview(field); }} />
               </div>
               {showIntroInCanvas ? canvasIntro : null}
             </div>
@@ -1594,9 +1594,17 @@ function SiteDashboard() {
               {theme.name}
             </span>
           ) : null}
-          {draft.custom_text.recipient_name ? (
+          {draft.custom_text.recipient_name?.trim() ? (
             <span className="truncate">for {draft.custom_text.recipient_name}</span>
-          ) : null}
+          ) : (
+            <button
+              type="button"
+              onClick={() => openField("recipient_name")}
+              className="truncate rounded-full bg-accent/12 px-2 py-0.5 font-medium text-accent hover:bg-accent/20"
+            >
+              Who's it for? Add their name
+            </button>
+          )}
           {daysToGo !== null ? <span className="shrink-0">· {daysToGo}</span> : null}
         </div>
         </div>
@@ -1814,7 +1822,7 @@ function SiteDashboard() {
         <div className="fixed inset-0 z-[70] bg-paper text-ink">
           <div className="absolute inset-x-0 top-0 z-[80] border-b border-line bg-cream/95 px-3 py-2 shadow-sm backdrop-blur-xl">
             <div className="mx-auto flex max-w-5xl flex-wrap items-center justify-between gap-2">
-              <span className="min-w-0 truncate text-sm">Previewing as <strong>{draft.custom_text.recipient_name || "Ana"}</strong></span>
+              <span className="min-w-0 truncate text-sm">{draft.custom_text.recipient_name?.trim() ? <>Previewing as <strong>{draft.custom_text.recipient_name.trim()}</strong></> : "Previewing the gift"}</span>
               <div className="flex items-center gap-2">
                 <DeviceToggle value={device} onChange={setDevice} size="sm" />
                 <Button variant="outline" size="sm" onClick={() => setPreviewOpened(false)}>Replay intro</Button>

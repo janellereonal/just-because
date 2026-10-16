@@ -28,7 +28,7 @@ export function GiftTree({
 }) {
   const sampleItems = useMemo<ViewContribution[]>(() => [
     { id: "tree-sam", site_id: "sample", module_type: "tree", author_name: "Sam", text_content: "You make every Christmas brighter.", media_url: null, external_link: null, status: "approved", created_at: "", ornament_key: "star", visibility: "public" },
-    { id: "tree-ana", site_id: "sample", module_type: "tree", author_name: "Ana", text_content: "A little wish, just for you.", media_url: null, external_link: null, status: "approved", created_at: "", ornament_key: "heart", visibility: "public" },
+    { id: "tree-ana", site_id: "sample", module_type: "tree", author_name: "Sam", text_content: "A little wish, just for you.", media_url: null, external_link: null, status: "approved", created_at: "", ornament_key: "heart", visibility: "public" },
     { id: "tree-bo", site_id: "sample", module_type: "tree", author_name: "Bo", text_content: "Warm hugs from all of us!", media_url: null, external_link: null, status: "approved", created_at: "", ornament_key: "gift", visibility: "public" },
   ], []);
   const items = contributions.length > 0 ? contributions : sample ? sampleItems : [];

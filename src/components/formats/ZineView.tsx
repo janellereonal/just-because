@@ -229,7 +229,7 @@ export function ZineView({
                 <p className="zine-huge">{cd.done ? "NOW" : cd.days}</p>
                 <span className="zine-mono">
                   {cd.done
-                    ? `HAPPY DAY ${data.name.toUpperCase()}`
+                    ? `HAPPY DAY${data.named ? ` ${data.name.toUpperCase()}` : ""}`
                     : `${cd.days === 1 ? "DAY" : "DAYS"} TO GO`}
                 </span>
               </div>
@@ -294,7 +294,7 @@ export function ZineView({
 
         <footer className="zine-back mt-16">
           <span className="zine-mono">BACK PAGE</span>
-          <p className="zine-headline mt-2">That's the issue, {data.name}.</p>
+          <p className="zine-headline mt-2">That's the issue{data.named ? `, ${data.name}` : ""}.</p>
           {data.friends.length ? (
             <p className="mt-3 text-[17px]">Made by {data.friends.join(", ")}.</p>
           ) : null}

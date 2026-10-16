@@ -289,7 +289,7 @@ export function StorybookView({
             <p className="sbk-the-end" style={{ fontFamily: fonts.heading }}>
               The end
             </p>
-            <p className="sbk-body">(For now. There are more pages still to write, {data.name}.)</p>
+            <p className="sbk-body">(For now. There are more pages still to write{data.named ? `, ${data.name}` : ""}.)</p>
             {site.custom_text.footer_note ? (
               <p className="sbk-small">{site.custom_text.footer_note}</p>
             ) : null}

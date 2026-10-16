@@ -127,7 +127,7 @@ export function ConstellationView({
       style={{ "--cst-accent": palette.accent, fontFamily: fonts.body } as React.CSSProperties}
     >
       <div className="mx-auto max-w-3xl px-4 pt-10 pb-14 text-center">
-        <p className="cst-kicker">Look up, <SampleText on={data.nameIsSample}>{data.name}</SampleText></p>
+        <p className="cst-kicker">Look up{data.named ? ", " : ""}{data.named ? <SampleText on={data.nameIsSample}>{data.name}</SampleText> : null}</p>
         <h1 className="cst-title" style={{ fontFamily: fonts.heading }}>
           {giftHeading(site.custom_text, theme)}
         </h1>
@@ -281,7 +281,7 @@ export function ConstellationView({
       <div className="mx-auto max-w-xl px-4 pt-6 pb-16 text-center">
         <p className="cst-progress" role="status" aria-live="polite">
           {done
-            ? `You're the brightest one, ${data.name}.`
+            ? `You're the brightest one${data.named ? `, ${data.name}` : ""}.`
             : stars.length
               ? `${lit.length} of ${stars.length} stars found`
               : voice.empty("stars")}
