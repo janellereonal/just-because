@@ -3,6 +3,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Theme3D } from "@/components/Theme3D";
 import { SampleText } from "@/components/SampleMark";
 import { themeKindOf, giftHeading } from "@/lib/themeKind";
+import { centerInScroller } from "@/lib/scroll";
 import { Lock, Mic, Music2, RotateCcw, Sparkles } from "lucide-react";
 import { FONT_PAIRINGS } from "@/lib/gift";
 import { readableInk, surfaceColor } from "@/lib/palettes";
@@ -230,10 +231,7 @@ export function HuntView({
     if (finished)
       window.setTimeout(
         () =>
-          finaleRef.current?.scrollIntoView({
-            behavior: reduce ? "auto" : "smooth",
-            block: "center",
-          }),
+          finaleRef.current && centerInScroller(finaleRef.current, null, reduce ? "auto" : "smooth"),
         120,
       );
   }

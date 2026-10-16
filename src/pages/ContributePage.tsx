@@ -25,6 +25,7 @@ import { readableInk, surfaceColor } from "@/lib/palettes";
 import { FormatView } from "@/components/formats/FormatView";
 import { DevicePreview, DeviceToggle, type PreviewDevice } from "@/components/DevicePreview";
 import { ModuleExample } from "@/components/ModuleExample";
+import { centerInScroller } from "@/lib/scroll";
 import { themeKindOf } from "@/lib/themeKind";
 import Bo from "@/components/Bo";
 import { Brush, CalendarDays, CircleHelp, Hourglass, Image as ImageIcon, Lock, Mail, MailOpen, MapPin, Mic, Music2, Sparkles, Ticket, Trophy, Type, Users, Video } from "lucide-react";
@@ -158,6 +159,7 @@ function ContributePage() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [sectionData, setSectionData] = useState<Record<string, unknown>>({});
   const giftRef = useRef<HTMLDivElement | null>(null);
+  const doneRef = useRef<HTMLDivElement | null>(null);
   const [device, setDevice] = useState<PreviewDevice>("phone");
 
   const filePreview = useMemo(() => (file ? URL.createObjectURL(file) : null), [file]);
@@ -169,10 +171,14 @@ function ContributePage() {
   useEffect(() => {
     if (!done) return;
     const t = window.setTimeout(() => {
-      giftRef.current?.querySelector("[data-mine='true']")?.scrollIntoView({
-        behavior: "smooth",
-        block: "center",
-      });
+      // The form collapses into a short message, so bring that message (and "Add something else") into view,
+      // then show their note inside the preview without moving the page again.
+      const card = doneRef.current?.getBoundingClientRect();
+      if (card && (card.top < 0 || card.bottom > window.innerHeight)) {
+        window.scrollTo({ top: window.scrollY + card.top - 96, behavior: "smooth" });
+      }
+      const mine = giftRef.current?.querySelector("[data-mine='true']");
+      if (mine) centerInScroller(mine, giftRef.current);
     }, 300);
     return () => window.clearTimeout(t);
   }, [done, submitCount]);
@@ -506,7 +512,7 @@ function ContributePage() {
       className="min-h-screen px-4 py-10 sm:px-6 sm:py-14"
       style={{ background: meshGradient(palette.primary, palette.accent, palette.background), color: ink, fontFamily: fonts.body }}
     >
-      <div className="mx-auto grid max-w-6xl gap-10 lg:grid-cols-[minmax(0,460px)_1fr]">
+      <div className="mx-auto grid max-w-6xl grid-cols-[minmax(0,1fr)] gap-10 lg:grid-cols-[minmax(0,460px)_minmax(0,1fr)]">
         <div>
           {done ? (
             <div className="flex items-center justify-center gap-3 text-left">
@@ -543,7 +549,7 @@ function ContributePage() {
           )}
 
           {done ? (
-            <div className="rise mt-8 rounded-[28px] p-8 text-center shadow-[0_24px_60px_-34px_rgba(43,37,34,.55)]" style={{ backgroundColor: surface }}>
+            <div ref={doneRef} className="rise mt-8 rounded-[28px] p-8 text-center shadow-[0_24px_60px_-34px_rgba(43,37,34,.55)]" style={{ backgroundColor: surface }}>
               <p className="text-[15px] opacity-85">
                 It's in. The organiser checks every note before the gift goes out, so {named || "they"} won't see it until then.
               </p>

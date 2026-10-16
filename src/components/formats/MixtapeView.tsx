@@ -1,6 +1,7 @@
 import { giftVoice } from "@/lib/giftVoice";
 import { SampleText } from "@/components/SampleMark";
 import { giftHeading } from "@/lib/themeKind";
+import { centerInScroller } from "@/lib/scroll";
 import { useEffect, useRef, useState } from "react";
 import { Lock, Mic, Music2, Pause, Play, RotateCw, SkipBack, SkipForward } from "lucide-react";
 import { FONT_PAIRINGS, toEmbedUrl } from "@/lib/gift";
@@ -130,10 +131,7 @@ export function MixtapeView({
     if (scroll)
       window.setTimeout(
         () =>
-          linerRef.current?.scrollIntoView({
-            behavior: reduce ? "auto" : "smooth",
-            block: "nearest",
-          }),
+          linerRef.current && centerInScroller(linerRef.current, null, reduce ? "auto" : "smooth"),
         60,
       );
   }

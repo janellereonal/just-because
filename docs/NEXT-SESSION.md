@@ -3,6 +3,41 @@
 Updated 16 Oct 2026 (sessions 6 to 8), so a new session, on any Claude account, can carry on without
 missing anything. Start with `HANDOFF.md` section 0.
 
+## Session 9f: end-to-end walk through on local (branch `e2e-fixes`, follow-up brief section E)
+
+Script: `tools/op/e2e.cjs` (not committed, lives with the other local helpers). Run from tools/screens with
+`NODE_PATH=$PWD/node_modules node ../op/e2e.cjs <outDir> signup create friend review wrap recipient expired`.
+Screens at 390 and 1280 for every step.
+
+What happened, step by step:
+1. **Sign up (phone) and sign in (laptop)**: works. Sign-up lands on /create. Signed out, /create goes to
+   /auth?next=/create and comes back after signing in. No email confirmation locally (no Resend key), as designed.
+2. **Create (laptop)**: "Who's it for?" -> "Happy birthday, Mia", birthday theme, Songs turned on from "More". Fine.
+3. **Friend link (phone)**: letter, photo and song all sent.
+   - FIXED: after a long note the friend page went wider than the phone (the one-column grid grew to the note's
+     length because "What you've added" doesn't wrap), so the page slid sideways. Grid columns are now `minmax(0,1fr)`.
+   - FIXED: after "Send it" the page stayed where the form was, so you landed inside the preview. It now scrolls
+     to "It's in" and "Add something else".
+   - FIXED (preventive): `scrollIntoView` also scrolls overflow:hidden ancestors (the phone frame, the editor shell).
+     Replaced with `centerInScroller` (`src/lib/scroll.ts`) on the friend page, editor, scrapbook, Gift Hunt, Mixtape.
+4. **Approve and hide (laptop)**: approved Jo's letter and Lia's song, hid Ken's photo. The rail badge, notes chip
+   and Wrap it up checklist all updated.
+5. **Wrap it up**: checklist ticks, plan picker opens at both sizes. **Stopped here**: PayMongo isn't configured
+   locally, so "Choose Sweet" fails with "We couldn't open the payment page" (server: `PAYMONGO_SECRET_KEY isn't set`).
+6. **Recipient (phone)**: simulated a paid gift in the local database only (tier, published, expiry). Intro, blow
+   out, then letters and songs; the hidden photo stays out. The song player was blank because this sandbox can't
+   reach YouTube. FIXED: an "Open in YouTube / Spotify" link under every player, for blocked networks.
+7. **Expired**: set the expiry in the past locally. /g shows "This gift has ended", the editor shows the ended banner
+   with "Extend this gift", My gifts says "Ended".
+
+For Janelle to decide:
+- /create lets you skip the theme; the gift then has no theme ("Just because, Mia"). Require one, or keep it optional?
+- My gifts still shows "Open gift" on an ended gift (it opens the goodbye page) and the subtitle still says "Share the
+  invite link" when every gift has ended. Hide or reword?
+- Paid gifts can't be deleted (see 9d).
+- Dev only: React logs "called use() to suspend…" from TanStack's lazy routes. Not seen in the production build.
+- Payment test with real PayMongo test keys is still to do (HANDOFF section 4).
+
 ## Session 9e: homepage and create page (branch `home-create`, follow-up brief section D)
 
 - Homepage order: hero, occasions, how it works, **example gifts**, what goes inside (6 tiles: letters, photos,
