@@ -19,10 +19,14 @@ export function localDate(value: string): Date {
   return new Date(momentOf(value.slice(0, 10)));
 }
 
+/** A date's day in the viewer's zone, as YYYY-MM-DD. Never use toISOString() for this: that's the UTC day. */
+export function localDateKey(d: Date): string {
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+}
+
 /** Today in the viewer's zone, as YYYY-MM-DD. */
 export function localToday(): string {
-  const d = new Date();
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+  return localDateKey(new Date());
 }
 
 /** The viewer's IANA zone, e.g. "Europe/Lisbon". */

@@ -215,9 +215,13 @@ async function canViewGift(siteId: string, opts: { allowSharedNotes?: boolean } 
   return !needsPassword(site) || isUnlocked(site);
 }
 
+/** Reads are cheap, but a flood of slug guesses isn't: generous per-visitor caps on public lookups. */
+const READ_LIMIT = "Lots of requests from here just now. Wait a minute and try again.";
+
 export const getSiteBySlug = createServerFn({ method: "GET" })
   .inputValidator(z.object({ slug: z.string().min(1).max(120) }))
   .handler(async ({ data }) => {
+    rateLimit(`slug:${clientIp()}`, 240, 60_000, READ_LIMIT);
     const [row] = await getDb().select().from(schema.giftSites).where(eq(schema.giftSites.slug, data.slug));
     if (!row) return null;
     return siteRow(row, { owner: isOwnerOf(await currentUser(), row) });
@@ -644,8 +648,8 @@ export const submitContribution = createServerFn({ method: "POST" })
       if (already.siteId === data.siteId && already.editToken === data.editToken) return { ok: true as const, full: null };
       throw new HttpError(409, "Something got mixed up. Refresh the page and try again.");
     }
-    await rateLimit(`note:ip:${clientIp()}`, 30, 10 * 60_000, "You're adding notes very quickly. Wait a few minutes and try again.");
-    await rateLimit(`note:gift:${data.siteId}`, 200, 60 * 60_000, "This gift is getting a lot of notes right now. Try again in a little while.");
+    rateLimit(`note:ip:${clientIp()}`, 30, 10 * 60_000, "You're adding notes very quickly. Wait a few minutes and try again.");
+    rateLimit(`note:gift:${data.siteId}`, 200, 60 * 60_000, "This gift is getting a lot of notes right now. Try again in a little while.");
     // Paid plans have caps. Tell the friend kindly instead of failing.
     const deviceId = data.deviceId ?? null;
     const room = await checkRoom(site, data.authorName, data.moduleType, deviceId);
@@ -752,6 +756,7 @@ export const saveOwnerNote = createServerFn({ method: "POST" })
 export const getGiftRoom = createServerFn({ method: "GET" })
   .inputValidator(z.object({ siteId: id }))
   .handler(async ({ data }) => {
+    rateLimit(`room:${clientIp()}`, 240, 60_000, READ_LIMIT);
     const [site] = await getDb().select().from(schema.giftSites).where(eq(schema.giftSites.id, data.siteId));
     if (!site) return { ended: false, contributorsFull: false, photosFull: false };
     const tier = getTier(site.tier);

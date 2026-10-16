@@ -317,7 +317,11 @@ export function melody(notes: number[], step = 0.18, type: OscillatorType = "sin
 /** A tiny tap on phones that support it. */
 export function buzz(pattern: number | number[] = 12) {
   try {
-    if (typeof navigator !== "undefined" && "vibrate" in navigator) navigator.vibrate(pattern);
+    if (typeof navigator === "undefined" || !("vibrate" in navigator)) return;
+    // Browsers refuse (and log an error) until the person has tapped the page.
+    const ua = (navigator as Navigator & { userActivation?: { hasBeenActive: boolean } }).userActivation;
+    if (ua && !ua.hasBeenActive) return;
+    navigator.vibrate(pattern);
   } catch {
     /* ignore */
   }
