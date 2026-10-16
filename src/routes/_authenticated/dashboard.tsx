@@ -1,5 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { noteSummary, type NoteCounts } from "@/lib/noteCounts";
+import { trackEvent } from "@/lib/track";
 import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
@@ -102,6 +103,7 @@ function GiftCard({ site, index, theme, counts }: { site: GiftSite; index: numbe
             <button
               type="button"
               onClick={() => {
+                trackEvent("invite_shared", site.id, { channel: "dashboard" });
                 void navigator.clipboard.writeText(friendsLink).then(
                   () => toast.success("Invite link copied"),
                   () => toast.error("Couldn't copy the link."),
