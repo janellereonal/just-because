@@ -1,5 +1,6 @@
 import { Suspense, lazy, useEffect, useState } from "react";
 import { trackEvent } from "@/lib/track";
+import { ExportGift } from "@/components/ExportGift";
 import { themeKindOf } from "@/lib/themeKind";
 import {useParams} from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -106,7 +107,7 @@ function PublishedPage() {
   }
   const isOwner = !!me && (me.id === site.creator_id || me.isAdmin);
   if (isGiftEnded(site) && site.status === "published") {
-    return <GiftEndedPage isOwner={isOwner} siteId={site.id} />;
+    return <GiftEndedPage isOwner={isOwner} siteId={site.id} title={site.title} />;
   }
   if (locked && isGiftOpen(site)) {
     return <PasswordGate slug={slug} recipient={site.custom_text.recipient_name} />;
@@ -268,17 +269,17 @@ function PasswordGate({ slug, recipient }: { slug: string; recipient?: string | 
 }
 
 /** A gift whose plan ran out. The link still lands somewhere kind. */
-function GiftEndedPage({ isOwner, siteId }: { isOwner: boolean; siteId: string }) {
+function GiftEndedPage({ isOwner, siteId, title }: { isOwner: boolean; siteId: string; title: string }) {
   const [extendOpen, setExtendOpen] = useState(false);
   return (
     <div className="grid min-h-screen place-items-center bg-paper px-6 text-center text-ink">
       <div className="max-w-md">
         <Bo pose="idle" size={150} title="Bo" />
-        <h1 className="mt-4 font-display text-3xl font-medium tracking-tight">This gift has ended</h1>
+        <h1 className="mt-4 font-display text-3xl font-medium tracking-tight">This gift has been wrapped up</h1>
         <p className="mt-2 text-muted text-pretty">
           {isOwner
-            ? "Your plan's time is up, so the link now shows this page. Everything friends added is still saved."
-            : "It was open for a while, and now it's wrapped up for good. Thanks for stopping by."}
+            ? "Your plan's time is up, so the link now shows this page. Everything friends added is still saved: extend it to open it again, or download a copy."
+            : "It was open for a while, and now it's tucked away. Thanks for stopping by."}
         </p>
         {isOwner ? (
           <div className="mt-6 flex flex-wrap justify-center gap-3">
@@ -289,6 +290,7 @@ function GiftEndedPage({ isOwner, siteId }: { isOwner: boolean; siteId: string }
             >
               Extend this gift
             </button>
+            <ExportGift siteId={siteId} title={title} />
             <a href={`/sites/${siteId}`} className="rounded-full border border-line px-6 py-3 text-sm font-medium">
               Back to the editor
             </a>
