@@ -280,7 +280,7 @@ export function castFor(
 const loaded = new Set<string>();
 
 /** Adds the stylesheet for a font once. Display faces are preloaded with high priority. */
-function loadFont(spec: FontSpec, priority: "high" | "low") {
+export function loadFont(spec: FontSpec, priority: "high" | "low") {
   if (typeof document === "undefined" || loaded.has(spec.query)) return;
   loaded.add(spec.query);
   const href =
