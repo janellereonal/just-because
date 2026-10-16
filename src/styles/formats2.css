@@ -251,3 +251,8 @@
   .sbk-leaf, .sbk-book { transition: opacity .3s ease !important; }
   .cst-line { stroke-dashoffset: 0; }
 }
+
+/* The homepage showroom's small swatches: dark formats keep their own night. */
+.fmt-swatch[data-format="comic"] { background: #1f2440; }
+.fmt-swatch[data-format="mixtape"] { background: linear-gradient(140deg, #2e2838, #4a3d5c); }
+.fmt-swatch[data-format="stars"] { background: radial-gradient(120% 90% at 50% 0%, #3a2f6b, #120f2a); }

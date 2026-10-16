@@ -282,7 +282,8 @@ export const listMySites = createServerFn({ method: "GET" }).handler(async () =>
     .from(schema.giftSites)
     .where(eq(schema.giftSites.creatorId, user.id))
     .orderBy(desc(schema.giftSites.createdAt));
-  return rows.map(toRow);
+  // siteRow drops password_hash; plain toRow sent it to the browser.
+  return rows.map((row) => siteRow(row, { owner: true }));
 });
 
 function slugify(value: string) {

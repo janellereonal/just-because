@@ -58,6 +58,7 @@ function ExamplePage() {
         palette={g.palette}
         modules={g.modules}
         contributions={g.notes}
+        calendarEntries={g.calendar}
         onReplayIntro={() => setOpened(false)}
       />
     </div>

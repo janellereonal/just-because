@@ -1,7 +1,7 @@
 import { forwardRef, useEffect, useId, useImperativeHandle, useRef, useState } from "react";
 import { animate, motion, useMotionValue, useSpring, useTransform, type MotionValue } from "motion/react";
 import { reducedMotion } from "@/lib/play";
-import { ACCESSORIES, characterById, type CharacterSpec } from "@/themes/_shared/cast/library";
+import { ACCESSORIES, CLAY_IMAGE, characterById, type CharacterSpec } from "@/themes/_shared/cast/library";
 import type { AccessoryId, CharacterHandle, CharacterSetting } from "@/themes/_shared/cast/types";
 
 type Mood = "idle" | "anticipate" | "celebrate" | "sad";
@@ -188,6 +188,7 @@ export const Character = forwardRef<CharacterHandle, CharacterProps>(function Ch
         mood={body.mood}
         blush={blush}
         uid={uid}
+        size={size}
       />
     );
 
@@ -249,6 +250,7 @@ function Drawn({
   mood,
   blush,
   uid,
+  size,
 }: {
   spec: CharacterSpec;
   colors: { primary?: string; secondary?: string; skin?: string } | undefined;
@@ -260,18 +262,23 @@ function Drawn({
   mood: Mood;
   blush: boolean;
   uid: string;
+  size: number;
 }) {
   const c = {
     primary: colors?.primary ?? spec.colors.primary,
     secondary: colors?.secondary ?? spec.colors.secondary,
     skin: colors?.skin ?? spec.colors.skin,
   };
-  const px = useTransform(lx, (v) => v * spec.eyes.size * 0.55);
-  const py = useTransform(ly, (v) => v * spec.eyes.size * 0.45);
+  // The clay still is rendered in the character's own colors; recolored ones stay drawn.
+  const own = (["primary", "secondary", "skin"] as const).every((k) => c[k].toLowerCase() === spec.colors[k].toLowerCase());
+  const clay = own ? spec.clay : undefined;
+  const f = clay ?? spec;
+  const px = useTransform(lx, (v) => v * f.eyes.size * 0.55);
+  const py = useTransform(ly, (v) => v * f.eyes.size * 0.45);
   const face = useTransform(lx, (v) => v * 2.2);
   const faceY = useTransform(ly, (v) => v * 1.6);
   const acc = accessory ? ACCESSORIES[accessory] : null;
-  const anchor = acc?.slot === "neck" ? spec.neck : spec.head;
+  const anchor = acc?.slot === "neck" ? f.neck : f.head;
   const s = anchor.w / 80;
   const happy = mood === "celebrate";
   const lid = sleepy ? 0.45 : 1;
@@ -288,15 +295,26 @@ function Drawn({
       {acc && acc.slot === "head" && accessory === "veil" ? (
         <g transform={`translate(${anchor.x} ${anchor.y}) scale(${s})`}>{acc.draw()}</g>
       ) : null}
-      {spec.body(c)}
+      {clay ? (
+        <image
+          href={`/clay/${spec.id}${size > 132 ? "" : "@256"}.webp`}
+          x={CLAY_IMAGE.x}
+          y={CLAY_IMAGE.y}
+          width={CLAY_IMAGE.size}
+          height={CLAY_IMAGE.size}
+          preserveAspectRatio="xMidYMid meet"
+        />
+      ) : (
+        spec.body(c)
+      )}
       <motion.g style={{ x: face, y: faceY }}>
-        {spec.cheeks ? (
+        {f.cheeks ? (
           <>
-            <ellipse cx={spec.cheeks.l[0]} cy={spec.cheeks.l[1]} rx="7" ry="4.5" fill="#F27A93" opacity={blush ? 0.75 : 0.32} />
-            <ellipse cx={spec.cheeks.r[0]} cy={spec.cheeks.r[1]} rx="7" ry="4.5" fill="#F27A93" opacity={blush ? 0.75 : 0.32} />
+            <ellipse cx={f.cheeks.l[0]} cy={f.cheeks.l[1]} rx="7" ry="4.5" fill="#F27A93" opacity={blush ? 0.75 : clay ? 0.4 : 0.32} />
+            <ellipse cx={f.cheeks.r[0]} cy={f.cheeks.r[1]} rx="7" ry="4.5" fill="#F27A93" opacity={blush ? 0.75 : clay ? 0.4 : 0.32} />
           </>
         ) : null}
-        {[spec.eyes.l, spec.eyes.r].map(([ex, ey], i) =>
+        {[f.eyes.l, f.eyes.r].map(([ex, ey], i) =>
           happy ? (
             <path key={i} d={`M${ex - 5} ${ey + 1}q5-7 10 0`} stroke={ink} strokeWidth="2.6" fill="none" strokeLinecap="round" />
           ) : (
@@ -304,29 +322,32 @@ function Drawn({
               <motion.ellipse
                 cx={ex}
                 cy={ey}
-                rx={spec.eyes.size}
-                ry={spec.eyes.size * 1.12}
+                rx={f.eyes.size}
+                ry={f.eyes.size * 1.12}
                 fill={ink}
-                style={{ x: px, y: py, originX: `${ex}px`, originY: `${ey}px` }}
+                // Squash around the eye's own centre. (Motion measures SVG origins from the
+                // shape's own box, so an origin in viewBox px put the pivot far below the
+                // face, and every blink slid the eyes down to the floor.)
+                style={{ x: px, y: py, originX: 0.5, originY: 0.5, transformBox: "fill-box" }}
                 animate={{ scaleY: closed ? 0.08 : lid }}
                 transition={{ type: "spring", stiffness: 700, damping: 30 }}
               />
               {!closed ? (
-                <motion.circle cx={ex + 1.6} cy={ey - 2} r={spec.eyes.size * 0.32} fill="#fff" style={{ x: px, y: py }} />
+                <motion.circle cx={ex + f.eyes.size * 0.38} cy={ey - f.eyes.size * 0.5} r={f.eyes.size * 0.32} fill="#fff" style={{ x: px, y: py }} />
               ) : null}
             </g>
           ),
         )}
-        {spec.mouth ? (
+        {f.mouth ? (
           <path
             d={
               mood === "sad"
-                ? `M${spec.mouth[0] - 5} ${spec.mouth[1] + 2}q5-5 10 0`
+                ? `M${f.mouth[0] - 5} ${f.mouth[1] + 2}q5-5 10 0`
                 : mood === "anticipate"
-                  ? `M${spec.mouth[0] - 3} ${spec.mouth[1]}a3 3 0 1 0 6 0a3 3 0 1 0-6 0`
+                  ? `M${f.mouth[0] - 3} ${f.mouth[1]}a3 3 0 1 0 6 0a3 3 0 1 0-6 0`
                   : happy
-                    ? `M${spec.mouth[0] - 7} ${spec.mouth[1] - 2}q7 10 14 0z`
-                    : `M${spec.mouth[0] - 5} ${spec.mouth[1] - 1}q5 5 10 0`
+                    ? `M${f.mouth[0] - 7} ${f.mouth[1] - 2}q7 10 14 0z`
+                    : `M${f.mouth[0] - 5} ${f.mouth[1] - 1}q5 5 10 0`
             }
             stroke={ink}
             strokeWidth="2.4"

@@ -1,5 +1,5 @@
-import { useMemo } from "react";
-import { iconElement, pick, type IconItem, type IconSet } from "@/themes/_shared/iconSets";
+import { useId, useMemo } from "react";
+import { iconElement, mixHex, pick, type IconItem, type IconSet } from "@/themes/_shared/iconSets";
 import { reducedMotion } from "@/lib/play";
 
 /** One icon from a set, as React. */
@@ -16,9 +16,28 @@ export function IconGlyph({
   size?: number;
   className?: string;
   style?: React.CSSProperties;
-  /** Felt: plush relief and a stitched edge (needs LightDefs on the page). */
-  material?: "felt";
+  /**
+   * Clay (default): soft matte shading and a contact shadow, drawn with a gradient (no filter, so
+   * dozens can float on a phone). Felt: plush relief and a stitched edge (needs LightDefs). Flat: plain.
+   */
+  material?: "clay" | "felt" | "flat";
 }) {
+  const gid = `jb-clay-${useId().replace(/:/g, "")}`;
+  const clay = material !== "felt" && material !== "flat" && /^#[0-9a-f]{6}$/i.test(color);
+  if (item.kind === "path" && clay)
+    return (
+      <svg viewBox="0 0 24 24" width={size} height={size} className={`overflow-visible ${className}`} style={style} aria-hidden="true">
+        <defs>
+          <radialGradient id={gid} cx="34%" cy="26%" r="85%">
+            <stop offset="0" stopColor={mixHex(color, "#ffffff", 0.42)} />
+            <stop offset=".5" stopColor={color} />
+            <stop offset="1" stopColor={mixHex(color, "#2b2522", 0.24)} />
+          </radialGradient>
+        </defs>
+        <path d={item.d} fill={mixHex(color, "#2b2522", 0.55)} opacity=".16" transform="translate(.7 1.3)" />
+        <path d={item.d} fill={`url(#${gid})`} />
+      </svg>
+    );
   if (item.kind === "path")
     return (
       <svg viewBox="0 0 24 24" width={size} height={size} className={material ? `overflow-visible ${className}` : className} style={style} aria-hidden="true">

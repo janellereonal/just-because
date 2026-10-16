@@ -3,7 +3,7 @@ import { FORMATS, type GiftFormat } from "@/lib/formats";
 import { formatPlanTag } from "@/config/pricing";
 
 /** A tiny live-ish preview of each format, drawn in CSS. */
-function Mini({ id }: { id: GiftFormat }) {
+export function FormatMini({ id }: { id: GiftFormat }) {
   switch (id) {
     case "comic":
       return (
@@ -135,7 +135,7 @@ export function FormatPicker({
                 onChange={() => onChange(f.id)}
               />
               <span className="fmt-stage">
-                <Mini id={f.id} />
+                <FormatMini id={f.id} />
                 {f.isNew ? <span className="fmt-new">New</span> : null}
                 {!allowed ? (
                   <span className="fmt-lock">

@@ -183,11 +183,28 @@ export function pick<T>(list: T[], i: number): T {
 }
 
 /** Markup for one icon (used by DOM bursts, which build elements by hand). */
+let burstSeq = 0;
+
+/** Mix two #rrggbb colors; t = 0 gives a, 1 gives b. */
+export function mixHex(a: string, b: string, t: number) {
+  const pa = parseInt(a.slice(1), 16);
+  const pb = parseInt(b.slice(1), 16);
+  const ch = (sh: number) => Math.round(((pa >> sh) & 255) * (1 - t) + ((pb >> sh) & 255) * t);
+  return `#${((ch(16) << 16) | (ch(8) << 8) | ch(0)).toString(16).padStart(6, "0")}`;
+}
+
 export function iconElement(item: IconItem, color: string, size: number, font = "inherit"): HTMLElement {
   if (item.kind === "path") {
     const span = document.createElement("span");
     span.style.cssText = `display:block;width:${size}px;height:${size}px`;
-    span.innerHTML = `<svg viewBox="0 0 24 24" width="${size}" height="${size}" aria-hidden="true"><path d="${item.d}" fill="${color}" ${item.d === LEAF ? `stroke="${color}" stroke-width="1.2"` : ""}/></svg>`;
+    const stroke = item.d === LEAF ? `stroke="${color}" stroke-width="1.2"` : "";
+    if (/^#[0-9a-f]{6}$/i.test(color)) {
+      // Same soft clay shading as IconGlyph, as a string for bursts.
+      const id = `jb-clay-b${(burstSeq = (burstSeq + 1) % 1e6)}`;
+      span.innerHTML = `<svg viewBox="0 0 24 24" width="${size}" height="${size}" overflow="visible" aria-hidden="true"><defs><radialGradient id="${id}" cx="34%" cy="26%" r="85%"><stop offset="0" stop-color="${mixHex(color, "#ffffff", 0.42)}"/><stop offset=".5" stop-color="${color}"/><stop offset="1" stop-color="${mixHex(color, "#2b2522", 0.24)}"/></radialGradient></defs><path d="${item.d}" fill="${mixHex(color, "#2b2522", 0.55)}" opacity=".16" transform="translate(.7 1.3)"/><path d="${item.d}" fill="url(#${id})" ${stroke}/></svg>`;
+    } else {
+      span.innerHTML = `<svg viewBox="0 0 24 24" width="${size}" height="${size}" aria-hidden="true"><path d="${item.d}" fill="${color}" ${stroke}/></svg>`;
+    }
     return span;
   }
   if (item.kind === "image") {
