@@ -74,3 +74,57 @@ export async function readDevUpload(name: string) {
     return null;
   }
 }
+
+/* ---- removing stored files ---- */
+
+const BLOB_HOST = /^https:\/\/[\w.-]+\.public\.blob\.vercel-storage\.com\//;
+const DEV_URL = /^\/api\/dev-uploads\/([\w.-]+)$/;
+
+/**
+ * Deletes stored files we own (Vercel Blob, or local dev uploads). Anything
+ * else (a Spotify link, a demo image) is left alone. Never throws: a file that
+ * can't be removed must not stop the delete that asked for it.
+ */
+export async function deleteMedia(urls: (string | null | undefined)[]) {
+  const ours = urls.filter((u): u is string => !!u);
+  const blobs = ours.filter((u) => BLOB_HOST.test(u));
+  if (blobs.length && process.env["BLOB_READ_WRITE_TOKEN"]) {
+    try {
+      const { del } = await import("@vercel/blob");
+      for (let i = 0; i < blobs.length; i += 100) await del(blobs.slice(i, i + 100));
+    } catch (error) {
+      console.error("[uploads] couldn't delete blobs", error);
+    }
+  }
+  for (const u of ours) {
+    const m = DEV_URL.exec(u);
+    if (!m) continue;
+    const { rm } = await import("node:fs/promises");
+    await rm(path.join(DEV_DIR, m[1]!), { force: true }).catch(() => {});
+    await rm(path.join(DEV_DIR, `${m[1]}.type`), { force: true }).catch(() => {});
+  }
+}
+
+/** Deletes every file stored for a gift: friends' photos and voice notes, calendar photos, opening pictures. */
+export async function deleteGiftMedia(siteId: string) {
+  if (process.env["BLOB_READ_WRITE_TOKEN"]) {
+    try {
+      const { del, list } = await import("@vercel/blob");
+      let cursor: string | undefined;
+      do {
+        const page = await list({ prefix: `gifts/${siteId}/`, limit: 1000, ...(cursor ? { cursor } : {}) });
+        if (page.blobs.length) await del(page.blobs.map((b) => b.url));
+        cursor = page.hasMore ? page.cursor : undefined;
+      } while (cursor);
+    } catch (error) {
+      console.error("[uploads] couldn't delete a gift's blobs", error);
+    }
+  }
+  // Local dev: files are named after their path, gifts_<siteId>_...
+  try {
+    const { readdir, rm } = await import("node:fs/promises");
+    for (const f of await readdir(DEV_DIR)) if (f.includes(`gifts_${siteId}_`)) await rm(path.join(DEV_DIR, f), { force: true });
+  } catch {
+    /* no dev uploads folder */
+  }
+}

@@ -36,8 +36,10 @@ function CheckoutStatusPage() {
     queryFn: () => getOrderStatus({ data: { orderId } }),
     refetchInterval: (query) => {
       const status = query.state.data?.status;
+      if (status === "paid") return false;
+      // After a cancel or a timeout, keep an eye out for a minute: they may have paid in another tab.
+      if (cancelled || status === "failed" || status === "expired") return Date.now() - started < 60_000 ? 5000 : false;
       if (status && status !== "pending") return false;
-      if (cancelled) return false;
       return 2000;
     },
   });

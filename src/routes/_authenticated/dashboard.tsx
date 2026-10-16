@@ -304,6 +304,11 @@ function Dashboard() {
             </Link>
           </div>
         )}
+        <p className="mt-12 text-center text-sm text-muted">
+          <Link to="/account" className="underline underline-offset-2 hover:text-ink">
+            Account settings
+          </Link>
+        </p>
       </section>
     </div>
   );

@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { countNotes, inGiftLabel, noteSummary, waitingLabel } from "@/lib/noteCounts";
+import { ExportGift } from "@/components/ExportGift";
 import { isFlagOn } from "@/config/flags";
 import { engineThemeForName } from "@/themes/engine/registry";
 import { t } from "@/i18n";
@@ -1331,6 +1332,9 @@ function SiteDashboard() {
             </p>
           </div>
         )}
+        <StepGroup title="Keep a copy" hint="Every note, photo and voice note, as a zip.">
+          <ExportGift siteId={id} title={draft.title} />
+        </StepGroup>
       </div>
     ),
     settings: (
