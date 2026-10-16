@@ -634,32 +634,34 @@ function HeroMock({ full = false }: { full?: boolean }) {
           <div className="flex justify-center lg:justify-end">
            <div className="relative">
             <div
-              className={`relative overflow-hidden rounded-[34px] border-[6px] border-[#1f1a18] bg-black ${full ? "h-[clamp(320px,calc(100svh-410px),520px)] lg:h-[clamp(420px,calc(100svh-120px),640px)]" : "h-[min(560px,60svh)]"}`}
-              style={{ aspectRatio: "9 / 18.5", boxShadow: "var(--kd-shadow-lift)" }}
+              className={`relative overflow-hidden rounded-[34px] border-[6px] border-[#1f1a18] ${full ? "h-[clamp(320px,calc(100svh-410px),520px)] lg:h-[clamp(420px,calc(100svh-120px),640px)]" : "h-[min(560px,60svh)]"}`}
+              style={{ aspectRatio: "9 / 18.5", boxShadow: "var(--kd-shadow-lift)", background: theme.palette.background }}
               aria-label="A gift opening"
             >
-              {peek ? (
-                <div className="grid h-full place-items-center p-6 text-center" style={{ background: theme.palette.background, color: theme.palette.ink }}>
-                  <div>
-                    <p className="kd-t12" style={{ opacity: 0.7 }}>
-                      12 friends
-                    </p>
-                    <p className="kd-d28 mt-1">For Ana</p>
-                    <p className="kd-t14 mt-3">“Thinking of you, always.”</p>
-                  </div>
+              {/* The gift peek waits underneath, so the opening reveals it through the object. */}
+              <div className="absolute inset-0 grid place-items-center p-6 text-center" style={{ background: theme.palette.background, color: theme.palette.ink }}>
+                <div>
+                  <p className="kd-t12" style={{ opacity: 0.7 }}>
+                    From all of us
+                  </p>
+                  <p className="kd-d28 mt-1">For Ana</p>
+                  <p className="kd-t14 mt-3">“Thinking of you, always.”</p>
                 </div>
-              ) : (
-                <EngineStage
-                  key={loop}
-                  theme={theme}
-                  slots={SAMPLE_SLOTS}
-                  greeting="For Ana, from all of us"
-                  contained
-                  interactive={false}
-                  autoplay
-                  contributors={["Jo", "Mika", "Sam"]}
-                  onOpen={() => setPeek(true)}
-                />
+              </div>
+              {peek ? null : (
+                <div className="absolute inset-0">
+                  <EngineStage
+                    key={loop}
+                    theme={theme}
+                    slots={SAMPLE_SLOTS}
+                    greeting="For Ana, from all of us"
+                    contained
+                    interactive={false}
+                    autoplay
+                    contributors={["Jo", "Mika", "Sam"]}
+                    onOpen={() => setPeek(true)}
+                  />
+                </div>
               )}
             </div>
             {/* Bo waits beside the phone, never on it. */}
