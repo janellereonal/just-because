@@ -60,11 +60,12 @@ No open PRs, no unmerged branches with work in them. Last merge: PR #8 (`1498b37
 | #6 | Landing with Ana's 30th, example gifts, 8 new sections, viewer time zones, chip-in fund data model |
 | #7 | Redrawn characters + "No one", crisp icons, full example gifts with media, scroll motion (`ScrollStory`), portal reveal, hero guided tour, bento tiles for all sections |
 | #8 | Theme page "Try the sections", real themed section previews on /create, sample notes for every section |
-| #9 (open) | Openings: light, material and depth pass (`src/themes/_shared/light.tsx`), real 3D present |
+| #9 | Handoff docs for the move to a new Claude account |
+| #10 (open) | Openings: light, material and depth pass (`src/themes/_shared/light.tsx`), real 3D present |
 
 **Open work, roughly in order** (details in sections 3 to 5 and `docs/NEXT-SESSION.md`)
 1. Janelle's PayMongo test run (section 4) and theme preview images (Admin → Upload preview).
-2. Openings: per-theme lighting / material / depth pass. Done on branch `openings-depth` (PR #9, see
+2. Openings: per-theme lighting / material / depth pass. Done on branch `openings-depth` (PR #10, see
    `docs/NEXT-SESSION.md` session 8). Next for it: a look on a real phone.
 3. Real-phone check of every gesture, especially iOS Safari (mic blow-out, tilt permission; haptics are Android only).
 4. Real Rive characters to replace the coded ones (`docs/characters.md`).
