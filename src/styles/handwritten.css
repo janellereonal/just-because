@@ -1,0 +1,264 @@
+/* ---------- Handwritten format: a well-loved notebook ---------- */
+.hw-root {
+  container: gift / inline-size;
+  overflow-x: clip;
+  min-height: 100vh;
+  padding: 18px 12px 64px;
+  color: #262220;
+  /* the desk under the notebook */
+  background:
+    radial-gradient(120% 80% at 20% 0%, rgb(255 255 255 / 0.5), transparent 60%),
+    linear-gradient(#e9dfcd, #e2d6c1);
+}
+@supports (background: color-mix(in srgb, red, blue)) {
+  .hw-root {
+    background:
+      radial-gradient(120% 80% at 20% 0%, rgb(255 255 255 / 0.45), transparent 60%),
+      linear-gradient(color-mix(in srgb, var(--hw-desk, #e9dfcd) 55%, #e9dfcd), color-mix(in srgb, var(--hw-desk, #e2d6c1) 55%, #d9ccb4));
+  }
+}
+.hw-book {
+  position: relative;
+  max-width: 880px;
+  margin: 0 auto;
+  padding: 34px clamp(14px, 5cqi, 48px) 48px;
+  border-radius: 6px 10px 8px 6px;
+  background-color: #fbf6ea;
+  /* paper grain */
+  background-image:
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23n)' opacity='.05'/%3E%3C/svg%3E"),
+    radial-gradient(circle at 1px 1px, rgb(42 75 155 / 0.13) 1px, transparent 1.3px);
+  background-size: auto, 22px 22px;
+  box-shadow:
+    0 1px 0 #fff inset,
+    0 2px 0 #efe6d4,
+    0 4px 0 #e6dcc6,
+    0 6px 0 #ddd1b9,
+    0 30px 60px -30px rgb(60 40 20 / 0.45);
+}
+
+/* spiral binding */
+.hw-rings {
+  position: absolute;
+  top: -12px;
+  left: 6%;
+  right: 6%;
+  display: flex;
+  justify-content: space-between;
+  pointer-events: none;
+}
+.hw-rings i {
+  width: clamp(10px, 2.6cqi, 16px);
+  height: 30px;
+  border-radius: 999px;
+  border: 3px solid #8d8a86;
+  border-bottom-color: #5e5b58;
+  background: linear-gradient(90deg, transparent 40%, rgb(255 255 255 / 0.5) 50%, transparent 60%);
+  box-shadow: 0 6px 0 -3px rgb(0 0 0 / 0.08);
+}
+.hw-rings i:nth-child(n + 9) { display: none; }
+@container gift (min-width: 560px) {
+  .hw-rings i:nth-child(n + 9) { display: block; }
+}
+
+/* ---------- cover ---------- */
+.hw-cover {
+  position: relative;
+  padding: 26px 0 30px;
+  text-align: center;
+  font-family: "Kalam", cursive;
+}
+.hw-kicker { font: 400 1.15rem/1 "Patrick Hand", cursive; opacity: 0.75; }
+.hw-name {
+  margin-top: 8px;
+  font: 400 clamp(3rem, 15cqi, 6.2rem)/1.05 "Gochi Hand", cursive;
+  color: #262220;
+  overflow-wrap: anywhere;
+}
+.hw-name.is-long { font-size: clamp(2.2rem, 9cqi, 4.2rem); }
+.hw-name-line { position: absolute; left: 0; right: 0; bottom: -10px; width: 100%; height: 16px; }
+.hw-name-ring { position: absolute; inset: -14% -6% -10%; width: 112%; height: 124%; pointer-events: none; }
+.hw-heading { margin-top: 14px; font: 700 clamp(1.3rem, 5cqi, 1.9rem)/1.2 "Kalam", cursive; color: var(--hw-accent); }
+.hw-intro { margin: 10px auto 0; max-width: 34ch; font: 400 1.25rem/1.45 "Patrick Hand", cursive; opacity: 0.85; }
+.hw-float { position: absolute; pointer-events: none; }
+.hw-f1 { top: 0; right: 4%; }
+.hw-f2 { top: 38%; left: 3%; }
+.hw-f3 { bottom: 10%; right: 9%; transform: rotate(12deg); }
+.hw-f4 { top: 6%; left: 10%; transform: rotate(-10deg); }
+@container gift (max-width: 520px) {
+  .hw-f2, .hw-f3, .hw-f4 { display: none; }
+  .hw-f1 { top: -6px; right: -4px; transform: scale(0.8); }
+}
+.hw-count { margin-top: 22px; display: inline-flex; align-items: center; gap: 10px; font-family: "Gochi Hand", cursive; }
+.hw-count-num { position: relative; z-index: 1; font-size: 2.6rem; line-height: 1; }
+.hw-count .hw-circle { position: absolute; inset: -18% -8%; width: 116%; height: 136%; }
+.hw-count-label { font-size: 1.5rem; }
+
+/* ---------- pages: masonry of notes ---------- */
+.hw-pages { columns: 1; column-gap: 26px; margin-top: 10px; }
+@container gift (min-width: 620px) {
+  .hw-pages { columns: 2; }
+}
+.hw-pages > * { break-inside: avoid; margin: 0 4px 30px; }
+
+.hw-note {
+  position: relative;
+  display: block;
+  font-size: clamp(16px, 2.2cqi, 18px);
+  padding: 26px 22px 18px 30px;
+  color: var(--ink);
+  transform: rotate(var(--rot));
+  box-shadow: 0 1px 1px rgb(0 0 0 / 0.06), 0 12px 22px -16px rgb(60 40 20 / 0.5);
+}
+.hw-text { position: relative; z-index: 1; line-height: 1.38; white-space: pre-line; overflow-wrap: anywhere; }
+.hw-sign { position: relative; z-index: 1; margin-top: 14px; text-align: right; }
+.hw-sign-line { position: absolute; left: -4%; right: -4%; bottom: -8px; width: 108%; height: 12px; }
+.hw-more { position: relative; z-index: 1; margin-top: 8px; font-size: 1.1em; text-decoration: underline; text-underline-offset: 3px; color: inherit; }
+.hw-corner { position: absolute; right: -10px; bottom: -14px; z-index: 2; transform: rotate(-8deg); }
+.hw-sealed { display: grid; justify-items: start; gap: 6px; }
+.hw-yours {
+  position: absolute; top: -10px; right: 14px; z-index: 3;
+  padding: 2px 10px; border-radius: 255px 15px 225px 15px / 15px 225px 15px 255px;
+  border: 2px solid var(--hw-accent); background: #fff; color: var(--hw-accent);
+  font: 700 0.85rem/1.3 "Kalam", cursive; transform: rotate(4deg);
+}
+
+/* papers */
+.hw-paper-lined {
+  background:
+    linear-gradient(90deg, transparent 18px, rgb(204 64 64 / 0.45) 18px, rgb(204 64 64 / 0.45) 19.5px, transparent 19.5px),
+    repeating-linear-gradient(#fffdf6 0 29px, rgb(42 75 155 / 0.22) 29px 30px);
+  background-position: 0 0, 0 14px;
+}
+.hw-paper-lined .hw-text { line-height: 30px; }
+.hw-paper-grid {
+  background-color: #fffefa;
+  background-image:
+    linear-gradient(rgb(42 75 155 / 0.11) 1px, transparent 1px),
+    linear-gradient(90deg, rgb(42 75 155 / 0.11) 1px, transparent 1px);
+  background-size: 18px 18px;
+}
+.hw-paper-card { background: #fff; border-top: 26px solid #fff; box-shadow: inset 0 2px 0 rgb(204 64 64 / 0.5), 0 1px 1px rgb(0 0 0 / 0.06), 0 12px 22px -16px rgb(60 40 20 / 0.5); padding-top: 12px; }
+.hw-paper-sticky, .hw-paper-sticky-pink, .hw-paper-sticky-mint {
+  background: linear-gradient(170deg, #fff4a3, #fde98b);
+  border-radius: 2px 2px 14px 2px / 2px 2px 26px 2px;
+}
+.hw-paper-sticky-pink { background: linear-gradient(170deg, #ffd9e2, #fcc6d4); }
+.hw-paper-sticky-mint { background: linear-gradient(170deg, #d7f3e3, #c3ead6); }
+
+/* fasteners */
+.hw-tape {
+  position: absolute; top: -12px; left: 50%; z-index: 3;
+  width: 96px; height: 24px; margin-left: -48px;
+  background: rgb(232 210 160 / 0.72);
+  transform: rotate(calc(var(--rot) * -2 - 3deg));
+  clip-path: polygon(3% 0, 97% 4%, 100% 100%, 0 96%);
+  box-shadow: 0 1px 2px rgb(0 0 0 / 0.08);
+}
+.hw-tape-dots {
+  background:
+    radial-gradient(circle, rgb(255 255 255 / 0.85) 2px, transparent 2.4px) 0 0 / 10px 10px,
+    color-mix(in srgb, var(--hw-accent) 55%, #fff 45%);
+  opacity: 0.85;
+}
+.hw-pin {
+  position: absolute; top: -7px; left: 50%; z-index: 3; width: 16px; height: 16px; margin-left: -8px; border-radius: 50%;
+  box-shadow: inset -3px -3px 0 rgb(0 0 0 / 0.2), 0 3px 4px rgb(0 0 0 / 0.25);
+}
+.hw-clip {
+  position: absolute; top: -26px; left: 6px; z-index: 3; width: 16px; height: 42px;
+  border: 3px solid #9a9690; border-radius: 10px;
+  transform: rotate(-6deg);
+}
+
+/* photos */
+.hw-photo { position: relative; transform: rotate(var(--rot)); width: 84%; }
+.hw-photo:nth-of-type(2n) { margin-left: auto !important; }
+@container gift (min-width: 620px) {
+  .hw-photo { width: auto; }
+}
+.hw-photo-frame { display: block; padding: 10px 10px 12px; background: #fff; box-shadow: 0 1px 1px rgb(0 0 0 / 0.06), 0 14px 24px -16px rgb(60 40 20 / 0.55); }
+.hw-photo-frame img, .hw-photo-empty { display: block; width: 100%; aspect-ratio: 4 / 5; object-fit: cover; background: #e9e3d7; }
+.hw-tape-photo { top: -10px; }
+.hw-photo figcaption { position: relative; margin-top: 10px; padding-left: 46px; color: #262220; }
+.hw-photo-arrow { position: absolute; left: 0; top: -14px; transform: scaleY(-1) rotate(-12deg); }
+.hw-photo-by { opacity: 0.6; font-size: 0.85em; }
+
+/* stickies: songs, voice notes, wishes */
+.hw-sticky {
+  font-size: clamp(16px, 2.2cqi, 18px);
+  position: relative; display: grid; gap: 8px; width: 100%; padding: 18px 18px 14px; text-align: left; color: #262220;
+  background: linear-gradient(170deg, #fff4a3, #fde98b);
+  transform: rotate(var(--rot));
+  border-radius: 2px 2px 14px 2px / 2px 2px 26px 2px;
+  box-shadow: 0 12px 22px -16px rgb(60 40 20 / 0.5);
+  transition: transform 200ms ease-out;
+}
+.hw-sticky:hover { transform: rotate(var(--rot)) translateY(-2px); }
+.hw-sticky-pink { background: linear-gradient(170deg, #ffd9e2, #fcc6d4); }
+.hw-sticky-top { display: flex; align-items: center; gap: 8px; }
+.hw-sticky-text { line-height: 1.35; overflow-wrap: anywhere; }
+.hw-sticky-play { position: absolute; right: 14px; top: 14px; display: grid; place-items: center; width: 34px; height: 34px; border-radius: 50%; color: #fff; }
+
+/* words */
+.hw-words { margin: 20px auto 0; max-width: 520px; padding: 22px 24px; background: #fffdf6; transform: rotate(-0.8deg); box-shadow: 0 12px 22px -16px rgb(60 40 20 / 0.5); }
+.hw-words-title { font: 700 1.6rem/1.2 "Kalam", cursive; color: var(--hw-accent); }
+.hw-words ul { margin-top: 10px; display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 6px 14px; }
+.hw-words li { display: flex; align-items: center; gap: 6px; font-size: 1.45rem; line-height: 1.2; }
+.hw-highlight {
+  background: linear-gradient(100deg, transparent 2%, color-mix(in srgb, var(--hw-accent) 30%, #fff36b 70%) 4%, color-mix(in srgb, var(--hw-accent) 30%, #fff36b 70%) 94%, transparent 97%) 0 60% / 100% 55% no-repeat;
+}
+
+/* last page */
+.hw-end { margin-top: 44px; padding-top: 28px; border-top: 2px dashed rgb(42 75 155 / 0.25); text-align: center; }
+.hw-end-title { font: 400 2.6rem/1 "Gochi Hand", cursive; }
+.hw-end-kicker { margin-top: 18px; font: 400 1.2rem/1 "Patrick Hand", cursive; opacity: 0.7; }
+.hw-signers { margin: 12px auto 0; max-width: 560px; display: flex; flex-wrap: wrap; justify-content: center; gap: 6px 22px; }
+.hw-signers span { display: inline-block; font-size: 1.7rem; transform: rotate(var(--rot)); }
+.hw-btn {
+  margin-top: 26px; padding: 10px 26px; font: 700 1.3rem/1 "Kalam", cursive; color: #262220; background: #fff;
+  border: 2.5px solid #262220; border-radius: 255px 15px 225px 15px / 15px 225px 15px 255px;
+  box-shadow: 3px 4px 0 var(--hw-accent); transition: transform 150ms ease-out, box-shadow 150ms ease-out;
+}
+.hw-btn:hover { transform: translate(-1px, -1px); box-shadow: 4px 5px 0 var(--hw-accent); }
+.hw-btn:active { transform: translate(2px, 2px); box-shadow: 1px 2px 0 var(--hw-accent); }
+.hw-empty { margin: 30px 0; text-align: center; font: 400 1.6rem/1.3 "Gochi Hand", cursive; opacity: 0.7; }
+
+/* ---------- drawing in ---------- */
+.hw-doodle { overflow: visible; }
+.hw-stroke { stroke-dasharray: 1; stroke-dashoffset: 1; }
+.hw-echo { opacity: 0.5; }
+.is-drawn .hw-stroke { animation: hw-draw 0.55s ease-out forwards; animation-delay: var(--hw-d, 0s); }
+.is-drawn .hw-echo { animation-delay: calc(var(--hw-d, 0s) + 0.12s); }
+.hw-underline, .hw-circle { overflow: visible; }
+.hw-underline .hw-stroke, .hw-circle .hw-stroke { animation-duration: 0.7s; animation-delay: 0.25s; }
+@keyframes hw-draw { to { stroke-dashoffset: 0; } }
+@media (prefers-reduced-motion: reduce) {
+  .hw-stroke { stroke-dashoffset: 0; animation: none !important; }
+  .hw-sticky, .hw-btn { transition: none; }
+}
+
+/* picker mini */
+.fmt-hand { background: #fbf6ea; border-radius: 6px; background-image: repeating-linear-gradient(#fbf6ea 0 11px, rgb(42 75 155 / 0.22) 11px 12px); }
+.fmt-hand i { left: 10%; top: 16px; width: 56%; height: 3px; border-radius: 3px; background: #2a4b9b; transform: rotate(-2deg); }
+.fmt-hand i + i { top: 28px; width: 40%; background: #2a4b9b; }
+.fmt-hand b { right: 10%; top: 10px; font: 400 26px/1 "Gochi Hand", cursive; color: #c2366b; }
+.fmt-card:hover .fmt-hand b { transform: rotate(-12deg) scale(1.1); transition: transform 0.3s ease-out; }
+
+/* margin doodles between pages */
+.hw-margin { display: flex; align-items: center; justify-content: center; gap: 18px; padding: 4px 0; }
+.hw-margin > :nth-child(2) { transform: translateY(8px); }
+/* "12 friends wrote in here" sticky on the cover */
+.hw-cover-sticky {
+  margin: 18px auto 0; width: max-content; padding: 10px 16px 12px;
+  font: 400 1.25rem/1.15 "Gochi Hand", cursive; color: #262220;
+  background: linear-gradient(170deg, #fff4a3, #fde98b); transform: rotate(-3deg);
+  box-shadow: 0 10px 18px -12px rgb(60 40 20 / 0.5);
+}
+@container gift (min-width: 700px) {
+  .hw-cover-sticky { position: absolute; right: 2%; top: 46%; margin: 0; transform: rotate(5deg); }
+}
+
+/* video and quiz, on a spread of their own */
+.hw-extras { position: relative; margin-top: 18px; }
+.hw-extras .sb-title { font-weight: 400; font-size: 2.2rem; }

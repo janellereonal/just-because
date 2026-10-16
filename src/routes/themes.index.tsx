@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { GALLERY_GROUPS } from "@/copy/strings";
 import { NEW_THEME_NAMES, PH_THEME_NAMES, needsCountry, orderThemes } from "@/lib/themeOrder";
 import { getVisitorCountry } from "@/lib/api";
 import { engineThemeForName } from "@/themes/engine/registry";
@@ -28,18 +29,18 @@ export const Route = createFileRoute("/themes/")({
 
 /** Friendly occasion groups for the filter chips. */
 const GROUPS: { id: string; label: string; match: (key: string) => boolean }[] = [
-  { id: "all", label: "All", match: () => true },
-  { id: "new", label: "New", match: (k) => NEW_THEME_NAMES.some((n) => k.includes(n)) },
-  { id: "christmas", label: "Christmas", match: (k) => /christmas|parol|simbang/.test(k) },
-  { id: "birthday", label: "Birthdays", match: (k) => k.includes("birthday") },
-  { id: "love", label: "Love", match: (k) => /valentine|romance|anniversar/.test(k) },
-  { id: "wedding", label: "Weddings & showers", match: (k) => /wedding|bridal|shower/.test(k) },
-  { id: "holiday", label: "Holidays", match: (k) => /christmas|new year|season/.test(k) },
-  { id: "goodbye", label: "Send-offs", match: (k) => /voyage|farewell|despidida/.test(k) },
-  { id: "pets", label: "Pets", match: (k) => /pet|companion/.test(k) },
-  { id: "style", label: "Any occasion", match: (k) => /handwritten|game|pixel|style/.test(k) },
-  { id: "family", label: "Family and far away", match: (k) => /care package|balikbayan|family/.test(k) },
-  { id: "philippines", label: "Philippines", match: (k) => PH_THEME_NAMES.some((n) => k.includes(n)) },
+  { id: "all", label: GALLERY_GROUPS["all"] ?? "all", match: () => true },
+  { id: "new", label: GALLERY_GROUPS["new"] ?? "new", match: (k) => NEW_THEME_NAMES.some((n) => k.includes(n)) },
+  { id: "christmas", label: GALLERY_GROUPS["christmas"] ?? "christmas", match: (k) => /christmas|parol|simbang/.test(k) },
+  { id: "birthday", label: GALLERY_GROUPS["birthday"] ?? "birthday", match: (k) => k.includes("birthday") },
+  { id: "love", label: GALLERY_GROUPS["love"] ?? "love", match: (k) => /valentine|romance|anniversar/.test(k) },
+  { id: "wedding", label: GALLERY_GROUPS["wedding"] ?? "wedding", match: (k) => /wedding|bridal|shower/.test(k) },
+  { id: "holiday", label: GALLERY_GROUPS["holiday"] ?? "holiday", match: (k) => /christmas|new year|season/.test(k) },
+  { id: "goodbye", label: GALLERY_GROUPS["goodbye"] ?? "goodbye", match: (k) => /voyage|farewell|despidida/.test(k) },
+  { id: "pets", label: GALLERY_GROUPS["pets"] ?? "pets", match: (k) => /pet|companion/.test(k) },
+  { id: "style", label: GALLERY_GROUPS["style"] ?? "style", match: (k) => /handwritten|game|pixel|style/.test(k) },
+  { id: "family", label: GALLERY_GROUPS["family"] ?? "family", match: (k) => /care package|balikbayan|family/.test(k) },
+  { id: "philippines", label: GALLERY_GROUPS["philippines"] ?? "philippines", match: (k) => PH_THEME_NAMES.some((n) => k.includes(n)) },
 ];
 
 const ENGINE_GROUPS = new Set(["new", "christmas", "family", "philippines"]);

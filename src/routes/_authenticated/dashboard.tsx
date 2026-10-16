@@ -1,4 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { noteSummary, type NoteCounts } from "@/lib/noteCounts";
+import { trackEvent } from "@/lib/track";
 import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
@@ -50,7 +52,7 @@ function status(site: GiftSite) {
   return { label: "Collecting notes", tone: "bg-pink text-ink" };
 }
 
-function GiftCard({ site, index, theme }: { site: GiftSite; index: number; theme: Theme | null }) {
+function GiftCard({ site, index, theme, counts }: { site: GiftSite; index: number; theme: Theme | null; counts: NoteCounts | null }) {
   const queryClient = useQueryClient();
   const [confirming, setConfirming] = useState(false);
   const [deleting, setDeleting] = useState(false);
@@ -88,6 +90,7 @@ function GiftCard({ site, index, theme }: { site: GiftSite; index: number; theme
             })}
           </span>
         </div>
+        {counts ? <p className="-mt-2 text-sm text-muted">{noteSummary(counts)}</p> : null}
         <div className="mt-auto flex flex-wrap gap-2">
           <Link
             to="/sites/$id"
@@ -100,6 +103,7 @@ function GiftCard({ site, index, theme }: { site: GiftSite; index: number; theme
             <button
               type="button"
               onClick={() => {
+                trackEvent("invite_shared", site.id, { channel: "dashboard" });
                 void navigator.clipboard.writeText(friendsLink).then(
                   () => toast.success("Invite link copied"),
                   () => toast.error("Couldn't copy the link."),
@@ -185,7 +189,7 @@ function Dashboard() {
     queryKey: ["my-sites"],
     queryFn: async () => {
       const data = await listMySites();
-      return data.map((row) => normalizeSite(row as Record<string, unknown>));
+      return data.map((row) => Object.assign(normalizeSite(row as Record<string, unknown>), { counts: (row.note_counts ?? null) as NoteCounts | null }));
     },
   });
   const { data: themes = [] } = useQuery({ queryKey: ["themes", "published"], queryFn: () => fetchThemes(false) });
@@ -285,7 +289,7 @@ function Dashboard() {
         ) : (
           <div className="mt-10 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
             {sites.map((site, i) => (
-              <GiftCard key={site.id} site={site} index={i} theme={themes.find((t) => t.id === site.theme_id) ?? null} />
+              <GiftCard key={site.id} site={site} counts={site.counts} index={i} theme={themes.find((t) => t.id === site.theme_id) ?? null} />
             ))}
             <Link
               to="/create"

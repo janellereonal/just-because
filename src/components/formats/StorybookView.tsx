@@ -1,4 +1,5 @@
 import { giftVoice } from "@/lib/giftVoice";
+import { shareGift } from "@/lib/track";
 import { SampleText } from "@/components/SampleMark";
 import { giftHeading } from "@/lib/themeKind";
 import { useCallback, useEffect, useRef, useState } from "react";
@@ -127,7 +128,9 @@ export function StorybookView({
     { type: "end" },
   ];
   const total = pages.length;
-  const [at, setAt] = useState(0);
+  // The theme's opening already opened the gift, so the book starts open on the first page
+  // (the cover is one page back). A layout never adds a second opening.
+  const [at, setAt] = useState(1);
   const [drag, setDrag] = useState<{ dir: 1 | -1; angle: number } | null>(null);
   const bookRef = useRef<HTMLDivElement | null>(null);
   const rootRef = useRef<HTMLDivElement | null>(null);
@@ -298,11 +301,7 @@ export function StorybookView({
                 type="button"
                 className="sbk-btn"
                 style={{ background: palette.accent, color: coverInk }}
-                onClick={() =>
-                  navigator.share
-                    ? void navigator.share({ title: site.title, url: location.href })
-                    : void navigator.clipboard.writeText(location.href)
-                }
+                onClick={() => shareGift(site)}
               >
                 Share the book
               </button>

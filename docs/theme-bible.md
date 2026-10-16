@@ -22,12 +22,90 @@ Every theme must pass all eight before it ships.
 5. **Sound and haptics, subtle and mutable.** Off until the viewer turns sound on. Short, quiet, made for the
    material (paper tears, wax cracks, bells ring). Haptics only on phones that support them, never before the
    first tap.
-6. **Works with every format.** The opening hands off cleanly to every gift format (scrapbook, bento, hunt,
-   zine, storybook, mixtape, scratch, stars). Comic shows its own cover instead of an opening.
+6. **Works with every layout.** The opening hands off cleanly to every layout (scrapbook, comic, bento, hunt,
+   zine, storybook, mixtape, scratch, stars, notebook). Every layout plays the theme's opening first; none has
+   an opening of its own (see "Themes, layouts and sections" below).
 7. **Meets the performance budget on a mid-range Android phone.** See "Performance budget" below.
 8. **Handles the hard cases.** Long names (40 characters with an apostrophe, an ampersand and an emoji),
    reduced motion, a missing photo, no friends yet, empty optional fields. Every gesture has a plain button
    that does the same thing, and works with a keyboard.
+
+## Themes, layouts and sections
+
+The model. Use these words everywhere: code comments, copy and docs.
+
+- **Theme = the wrapping.** It owns the opening object and gesture, the colors, fonts, materials and Bo's outfit.
+- **Layout = how they read it after it opens.** Scroll, pages, tiles, unwrapping one by one, a cassette, stars.
+  In code and in the database a layout is still called a "format" (`site.format`, `src/lib/formats.ts`, the
+  `FormatView` components). Those names never change, so saved gifts keep working. Users only ever see "layout".
+- **Sections = what friends can add.** Letters, photos, songs, quizzes and so on.
+
+**One rule: the theme owns the opening, the layout owns the reading.**
+
+Where each lives in the product:
+
+- Create flow: pick a theme. The layout comes with it (the theme's recommended layout), and sections start
+  from the occasion's defaults. There is no layout step; it's changed later in Gift settings.
+- Editor: Theme sits in **Look** (with "Change theme"). **Layout** and **Sections** sit together in **Gift settings**.
+  Picking a layout there previews the same gift in it on the canvas before you switch.
+- Changing the theme offers the new theme's recommended layout. It never forces it.
+- Public pages: `/themes`, `/layouts` (`/formats` redirects there) and `/sections`.
+- Every user-facing name (layouts, fonts, gallery filters, the first eight sections) is in `src/copy/strings.ts`
+  (`LAYOUT_NAMES`, `FONT_NAMES`, `GALLERY_GROUPS`, `SECTION_NAMES`, `SECTION_COPY`). Theme and palette names are
+  data in `scripts/seed.ts`. No two of these share a name.
+
+### Recommended layout per theme
+
+Lives in `src/lib/recommendedLayout.ts`, with a short reason that's shown in the editor, on the theme page and on
+`/layouts`. A test checks that every seeded theme has one and that engine themes start on the same layout.
+
+| Theme | Layout | Why |
+| --- | --- | --- |
+| Happy Birthday | Scrapbook | One long, cozy page, like a birthday card everyone signed. |
+| Valentine's | Storybook | A little book of love notes, one page at a time. |
+| Bon Voyage | Scrapbook | A travel scrapbook of everyone's send-off notes. Switch to Postcard Stack once it exists. |
+| Christmas, Winter Cabin Christmas, Parol Christmas | Scrapbook | Everything under one tree, in one scroll. |
+| Pets | Bento Board | Quick tiles, as short as a good belly rub. |
+| New Year | Constellation | A night sky, every friend a firework. |
+| Anniversary, Weddings | Storybook | Your story together, chapter by chapter. |
+| Bridal Shower, Baby Shower | Scrapbook | A scrapbook of advice, memories and toasts. |
+| Handwritten | Zine (Notebook once `handwrittenFormat` is on) | Cut, pasted and scribbled, like the note itself. |
+| Game Night | Gift Hunt | Each note is a prize to unwrap. |
+| Pixel | Bento Board | Tiles like a level select screen. |
+| Care Package, Balikbayan Box | Gift Hunt | Notes come out of the box one by one. |
+| Debut | Storybook | Eighteen years, told like a storybook. |
+| No theme ("Just because") | Scrapbook | One long, cozy page with every note. |
+
+New themes must add a row here and in `recommendedLayout.ts` (the test fails otherwise). An engine theme's
+`occasion.defaultFormat` must match.
+
+### No double openings
+
+The theme's opening is the only opening. After it finishes, the gift goes straight into reading.
+
+- A layout never plays its own intro animation or asks for a second "open" gesture.
+- Where a layout has a natural starting point (a book cover, a comic cover, a cassette label), it's a page you
+  can go back to, not a gate. Storybook starts open on the first page (the cover is one page back). Comic
+  starts in the reader; "See the cover" shows the cover on demand.
+- `usesIntro` is true for every layout in `src/lib/formats.ts`. A new layout keeps it that way.
+
+### Every layout wears the theme
+
+Layouts take the theme's palette (background, primary, accent) and its fonts (`--jb-display`, `--jb-text`, or the
+gift's font choice), so a Wedding Storybook looks like a wedding and a Christmas Bento looks like Christmas. A
+layout may keep its own material (zine paper, notebook paper, a cassette) but tints it with the theme.
+
+| Layout | Theme look |
+| --- | --- |
+| Scrapbook, Bento Board, Gift Hunt, Scratch Cards, Mixtape, Storybook, Comic Issue | Already used the palette and fonts. |
+| Constellation | Already tinted the sky with the theme's main color. |
+| Zine | Fixed (Oct 2026): paper tinted with the theme background, headline in the theme's display font, note sheets in the theme palette. |
+| Notebook (Handwritten) | Fixed (Oct 2026): the desk takes the theme background, doodles use the theme colors. The handwriting fonts stay, they are the layout. |
+
+### Tracking
+
+`layout_changed` (`from`, `to`, `was_recommended`) and `theme_changed` (`from`, `to`, `took_recommended`) are
+written by the server when the editor saves. /admin shows how many new gifts kept the recommended layout.
 
 ## Building a theme on the engine
 

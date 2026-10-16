@@ -13,6 +13,8 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as AdminRouteImport } from './routes/admin'
 import { Route as AuthRouteImport } from './routes/auth'
+import { Route as FormatsRouteImport } from './routes/formats'
+import { Route as LayoutsRouteImport } from './routes/layouts'
 import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as SectionsRouteImport } from './routes/sections'
 import { Route as AuthenticatedAccountRouteImport } from './routes/_authenticated/account'
@@ -55,6 +57,16 @@ const AdminRoute = AdminRouteImport.update({
 const AuthRoute = AuthRouteImport.update({
   id: '/auth',
   path: '/auth',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const FormatsRoute = FormatsRouteImport.update({
+  id: '/formats',
+  path: '/formats',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LayoutsRoute = LayoutsRouteImport.update({
+  id: '/layouts',
+  path: '/layouts',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ResetPasswordRoute = ResetPasswordRouteImport.update({
@@ -183,6 +195,8 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/admin': typeof AdminRoute
   '/auth': typeof AuthRoute
+  '/formats': typeof FormatsRoute
+  '/layouts': typeof LayoutsRoute
   '/reset-password': typeof ResetPasswordRoute
   '/sections': typeof SectionsRoute
   '/account': typeof AuthenticatedAccountRoute
@@ -212,6 +226,8 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/admin': typeof AdminRoute
   '/auth': typeof AuthRoute
+  '/formats': typeof FormatsRoute
+  '/layouts': typeof LayoutsRoute
   '/reset-password': typeof ResetPasswordRoute
   '/sections': typeof SectionsRoute
   '/account': typeof AuthenticatedAccountRoute
@@ -243,6 +259,8 @@ export interface FileRoutesById {
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/admin': typeof AdminRoute
   '/auth': typeof AuthRoute
+  '/formats': typeof FormatsRoute
+  '/layouts': typeof LayoutsRoute
   '/reset-password': typeof ResetPasswordRoute
   '/sections': typeof SectionsRoute
   '/_authenticated/account': typeof AuthenticatedAccountRoute
@@ -274,6 +292,8 @@ export interface FileRouteTypes {
     | '/'
     | '/admin'
     | '/auth'
+    | '/formats'
+    | '/layouts'
     | '/reset-password'
     | '/sections'
     | '/account'
@@ -303,6 +323,8 @@ export interface FileRouteTypes {
     | '/'
     | '/admin'
     | '/auth'
+    | '/formats'
+    | '/layouts'
     | '/reset-password'
     | '/sections'
     | '/account'
@@ -333,6 +355,8 @@ export interface FileRouteTypes {
     | '/_authenticated'
     | '/admin'
     | '/auth'
+    | '/formats'
+    | '/layouts'
     | '/reset-password'
     | '/sections'
     | '/_authenticated/account'
@@ -364,6 +388,8 @@ export interface RootRouteChildren {
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
   AdminRoute: typeof AdminRoute
   AuthRoute: typeof AuthRoute
+  FormatsRoute: typeof FormatsRoute
+  LayoutsRoute: typeof LayoutsRoute
   ResetPasswordRoute: typeof ResetPasswordRoute
   SectionsRoute: typeof SectionsRoute
   ApiUploadRoute: typeof ApiUploadRoute
@@ -413,6 +439,20 @@ declare module '@tanstack/react-router' {
       path: '/auth'
       fullPath: '/auth'
       preLoaderRoute: typeof AuthRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/formats': {
+      id: '/formats'
+      path: '/formats'
+      fullPath: '/formats'
+      preLoaderRoute: typeof FormatsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/layouts': {
+      id: '/layouts'
+      path: '/layouts'
+      fullPath: '/layouts'
+      preLoaderRoute: typeof LayoutsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/reset-password': {
@@ -610,6 +650,8 @@ const rootRouteChildren: RootRouteChildren = {
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
   AdminRoute: AdminRoute,
   AuthRoute: AuthRoute,
+  FormatsRoute: FormatsRoute,
+  LayoutsRoute: LayoutsRoute,
   ResetPasswordRoute: ResetPasswordRoute,
   SectionsRoute: SectionsRoute,
   ApiUploadRoute: ApiUploadRoute,

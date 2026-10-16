@@ -15,7 +15,9 @@ import { SiteHeader } from "@/components/SiteHeader";
 import { PageError, PageLoading, PageNotFound } from "@/components/PageStates";
 import { themeFont } from "@/components/ThemeMiniPreview";
 import { FormatView } from "@/components/formats/FormatView";
-import { FORMATS, type GiftFormat } from "@/lib/formats";
+import { FORMATS, offeredFormats, type GiftFormat } from "@/lib/formats";
+import { recommendedLayout } from "@/lib/recommendedLayout";
+import { LAYOUT_COPY, MODEL_LINE } from "@/copy/strings";
 import { GiftIntro } from "@/components/GiftIntro";
 import { backgroundFor, buildPreviewSite, previewModules, sampleFor } from "@/components/ThemeLivePreview";
 import { stageColorFor } from "@/components/ThemeCard";
@@ -46,13 +48,16 @@ function ThemeDetailPage() {
   const [paletteIndex, setPaletteIndex] = useState(0);
   const [device, setDevice] = useState<PreviewDevice>("phone");
   const tour = useGiftTour();
-  const [format, setFormat] = useState<GiftFormat>("scrapbook");
+  const [picked, setPicked] = useState<GiftFormat | null>(null);
   const { data: allPalettes = [] } = usePalettes();
 
   const { data: theme, isLoading, error, refetch } = useQuery({
     queryKey: ["theme", id],
     queryFn: () => fetchThemeById(id),
   });
+  // The theme's recommended layout, until they try another.
+  const rec = recommendedLayout(theme?.name);
+  const format = picked ?? rec.layout;
 
   const palettes = useMemo(() => (theme ? themePalettes(theme, allPalettes) : []), [theme, allPalettes]);
   const palette = palettes[paletteIndex] ?? palettes[0];
@@ -124,7 +129,7 @@ function ThemeDetailPage() {
   function use() {
     // Signed out, the /create guard sends them to sign in and brings them back with these picks.
     if (!user) toast.info("Sign in first, then you can start your gift.");
-    navigate({ to: "/create", search: { theme: id, format, from: undefined, sections: tried ? on.join(",") : undefined } });
+    navigate({ to: "/create", search: { theme: id, format: picked && picked !== rec.layout ? picked : undefined, from: undefined, sections: tried ? on.join(",") : undefined } });
   }
 
   const view = tour.phase === "intro" ? "opening" : "gift";
@@ -260,16 +265,17 @@ function ThemeDetailPage() {
             ) : null}
 
             <div className="card-paper p-5">
-              <h2 className="font-display text-lg font-semibold">See it as</h2>
-              <div className="mt-3 flex flex-wrap gap-2" role="radiogroup" aria-label="Format">
-                {FORMATS.map((f) => (
+              <h2 className="font-display text-lg font-semibold">{LAYOUT_COPY.pickerTitle}</h2>
+              <p className="mt-1 text-sm text-muted">{MODEL_LINE}</p>
+              <div className="mt-3 flex flex-wrap gap-2" role="radiogroup" aria-label={LAYOUT_COPY.pickerTitle}>
+                {offeredFormats().map((f) => (
                   <button
                     key={f.id}
                     type="button"
                     role="radio"
                     aria-checked={format === f.id}
                     onClick={() => {
-                      setFormat(f.id);
+                      setPicked(f.id);
                       tour.showGift();
                     }}
                     className={`squish rounded-full px-3.5 py-2 text-sm font-medium transition-colors ${
@@ -277,10 +283,14 @@ function ThemeDetailPage() {
                     }`}
                   >
                     {f.title}
+                    {f.id === rec.layout ? <span className="sr-only"> ({LAYOUT_COPY.recommended})</span> : null}
+                    {f.id === rec.layout ? <span aria-hidden className="ml-1.5 text-[10px] opacity-70">★</span> : null}
                   </button>
                 ))}
               </div>
-              <p className="mt-2 text-xs text-muted">{FORMATS.find((f) => f.id === format)?.about}</p>
+              <p className="mt-2 text-xs text-muted">
+                {format === rec.layout ? <><span className="font-semibold text-ink">{LAYOUT_COPY.recommended}.</span> {rec.why}</> : FORMATS.find((f) => f.id === format)?.about}
+              </p>
             </div>
 
             <div className="card-paper p-5">

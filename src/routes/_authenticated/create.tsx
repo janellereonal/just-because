@@ -14,9 +14,10 @@ import { MODULES, type ModuleType } from "@/lib/gift";
 import { PRESETS } from "@/lib/presets";
 import { occasionTitle, themeKindOf } from "@/lib/themeKind";
 import { SectionPreview } from "@/components/SectionPreview";
-import { FormatPicker } from "@/components/FormatPicker";
 import { stageColorFor } from "@/components/ThemeCard";
 import { formatInfo, isGiftFormat, type GiftFormat } from "@/lib/formats";
+import { recommendedLayout } from "@/lib/recommendedLayout";
+import { LAYOUT_COPY } from "@/copy/strings";
 import { BoBuddy } from "@/components/BoBuddy";
 import { accessoryForTheme, type BoAccessory } from "@/lib/bo3d/accessories";
 import { boAccessory, boReact, boSay, markGiftCreated } from "@/lib/mascot/bus";
@@ -76,7 +77,6 @@ function CreatePage() {
   const [recipient, setRecipient] = useState("");
   const [solo, setSolo] = useState(fromUrl === "me");
   const [themeId, setThemeId] = useState<string | undefined>(themeFromUrl);
-  const [format, setFormat] = useState<GiftFormat>(formatFromUrl ?? "scrapbook");
   // Sections tried on the theme page come along and count as the creator's own pick.
   const fromThemePage = (sectionsFromUrl ?? "").split(",").filter((t): t is ModuleType => MODULES.some((m) => m.type === t));
   const [selected, setSelected] = useState<ModuleType[]>(fromThemePage.length ? fromThemePage : ["letters", "photobooth"]);
@@ -85,6 +85,9 @@ function CreatePage() {
   const [busy, setBusy] = useState(false);
 
   const activeTheme = themes.find((t) => t.id === (themeId ?? themeFromUrl));
+  // Each theme comes with the layout it reads best in. A layout picked on the theme page wins.
+  const rec = recommendedLayout(activeTheme?.name);
+  const format: GiftFormat = formatFromUrl ?? rec.layout;
 
   // Bo reacts as the form fills in.
   const accessory = accessoryForTheme(activeTheme);
@@ -103,22 +106,10 @@ function CreatePage() {
   }, [recipient]);
   function pickTheme(id: string | undefined) {
     setThemeId(id);
-    // Engine themes suggest a format (Debut reads best as a storybook) unless one was picked in the link.
-    const occ = engineThemeForName(themes.find((x) => x.id === id)?.name)?.occasion;
-    if (occ && !formatFromUrl) setFormat(occ.defaultFormat);
     const acc = accessoryForTheme(themes.find((t) => t.id === id));
     if (acc) boSay(THEME_LINES[acc], "wink");
   }
-  function pickFormat(next: GiftFormat) {
-    setFormat(next);
-    if (next === "comic") {
-      boReact("bam");
-      boSay("BAM.", "surprised");
-    } else {
-      boReact("hug");
-      boSay("I love a good scrapbook.", "love");
-    }
-  }
+
   const { data: allPalettes = [] } = usePalettes();
   // A new gift starts on the theme's first suggested palette so it already looks good.
   const defaultPalette = suggestedPalettes(activeTheme ?? null, allPalettes)[0] ?? null;
@@ -389,28 +380,12 @@ function CreatePage() {
             {activeTheme?.description ? (
               <p className="mt-3 text-sm text-ink/60">{activeTheme.description}</p>
             ) : null}
-          </div>
-
-          <div className="card-paper relative p-5 sm:p-7">
-            <span
-              aria-hidden
-              className="pointer-events-none absolute inset-y-0 -right-36 hidden w-24 xl:block"
-            >
-              <span
-                className="sticky top-[46vh] block h-px w-24"
-                data-bo-perch
-                data-bo-x="0.5"
-                data-bo-say="How should it open?"
-              />
-            </span>
-            {step(
-              4,
-              "Choose how it opens",
-              "Same notes, different way to open them. Switch any time.",
-            )}
-            <div className="mt-4">
-              <FormatPicker value={format} onChange={pickFormat} bare />
-            </div>
+            {activeTheme ? (
+              <p className="mt-2 text-sm text-ink/60">
+                <span className="font-semibold text-ink">{LAYOUT_COPY.createLine(formatInfo(format).title)}</span>{" "}
+                {format === rec.layout ? rec.why : null} {LAYOUT_COPY.createHint}
+              </p>
+            ) : null}
           </div>
 
           <div className="card-paper relative p-5 sm:p-7">
@@ -426,7 +401,7 @@ function CreatePage() {
               />
             </span>
             {step(
-              5,
+              4,
               solo ? "What will you add?" : "What can friends add?",
               activeTheme && suggested.length > 0
                 ? `We picked a few for ${activeTheme.name}. Turn on anything else.`

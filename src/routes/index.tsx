@@ -312,8 +312,8 @@ function Index() {
         <PricingCards />
       </section>
 
-      {/* Formats */}
-      <section className="mx-auto max-w-6xl px-3 pt-24 sm:px-5">
+      {/* Layouts (internally "formats") */}
+      <section id="layouts" className="mx-auto max-w-6xl scroll-mt-24 px-3 pt-24 sm:px-5">
         <div className="relative overflow-hidden rounded-[40px] bg-ink px-6 py-10 text-cream sm:px-12">
           <span
             aria-hidden="true"
@@ -327,7 +327,7 @@ function Index() {
             className="relative max-w-2xl"
             data-bo-perch
             data-bo-x="0.9"
-            data-bo-say="Same notes, new outfit."
+            data-bo-say="Same notes, new way to read them."
           >
             <p className="font-mono text-[11px] tracking-[0.18em] text-pink uppercase">
               {LANDING_MORE.formats.kicker}

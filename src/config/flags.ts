@@ -11,6 +11,8 @@
 export const FLAGS = {
   /** "Turning" on birthday gifts: the cake shows the real age in candles. */
   birthdayAge: "birthdayAge",
+  /** The Handwritten format (a notebook of notes and doodles) in the format pickers. */
+  handwrittenFormat: "handwrittenFormat",
 } as const;
 
 export type FlagName = keyof typeof FLAGS;

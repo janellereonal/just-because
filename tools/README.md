@@ -30,6 +30,7 @@ The dev server must be running on http://localhost:8080 (`bun run dev`, see docs
 | `node shot.js <url> <out.png> [w] [h] [waitMs] [js] [full]` | One screenshot. `STATE=../state.json` for a signed-in session |
 | `node gestures.cjs [base]` | Performs all 13 engine gestures on `/dev/themes?tab=gestures` by mouse, then keyboard, and prints which completed |
 | `node multi.js plan.json` | Several screenshots in one browser. Plan: `{state, outDir, shots: [{name, url, w, h, wait, js, until, full}]}`; shots with the same url and size reuse the page, so `js` can click through an editor |
+| `node transition.cjs <url> <out> [w] [h] [giftSeconds] [slow]` | Records a gift's opening handing off to its layout as a GIF (plus `<out>-end.jpg`). Presses the opening's plain button and runs the page in slow motion so frames keep up on the software GPU |
 | `node tour.js` | Landing hero: opens Ana's gift and captures the guided tour + bento tiles |
 | `node gal.js` | Themes gallery card loop and the full-screen opening |
 | `node portal.js /example/sam sam` | Frames of the opening-to-gift portal reveal |

@@ -1,4 +1,5 @@
 import { giftVoice } from "@/lib/giftVoice";
+import { shareGift } from "@/lib/track";
 import { SampleText } from "@/components/SampleMark";
 import { giftHeading } from "@/lib/themeKind";
 import { useState } from "react";
@@ -211,7 +212,8 @@ export function ZineView({
       : [];
 
   return (
-    <div className="zine-root min-h-screen" style={{ "--z-accent": accent } as React.CSSProperties}>
+    // The paper is tinted with the theme's background, so each occasion's zine has its own stock.
+    <div className="zine-root min-h-screen" style={{ "--z-accent": accent, "--z-theme": palette.background } as React.CSSProperties}>
       <div className="mx-auto max-w-5xl px-4 py-8 @2xl:px-8 @2xl:py-12">
         <header className="zine-masthead">
           <div className="flex items-center justify-between gap-3">
@@ -313,11 +315,7 @@ export function ZineView({
             <button
               type="button"
               className="zine-btn mt-6"
-              onClick={() =>
-                navigator.share
-                  ? void navigator.share({ title: site.title, url: location.href })
-                  : void navigator.clipboard.writeText(location.href)
-              }
+              onClick={() => shareGift(site)}
             >
               Share the zine
             </button>
@@ -327,7 +325,7 @@ export function ZineView({
       {sheet ? (
         <PieceSheet
           piece={sheet}
-          palette={{ background: "#F4F1EA", primary: "#111111", accent }}
+          palette={{ background: palette.background, primary: palette.primary, accent }}
           onClose={() => setSheet(null)}
         />
       ) : null}

@@ -211,11 +211,11 @@ export const LANDING = {
 
 export const LANDING_MORE = {
   formats: {
-    kicker: "Formats",
-    title: "Nine ways to open the same gift.",
+    kicker: "Layouts",
+    title: "One gift, lots of ways to read it.",
     body: "Switch any time. Nobody has to rewrite their note.",
     isNew: "New",
-    pickLabel: "Formats",
+    pickLabel: "Layouts",
     screenLabel: (name: string) => `Ana's 30th as a ${name}`,
   },
   themes: { link: (n: number) => `See all ${n || ""} themes`.replace("  ", " ") },
@@ -251,8 +251,8 @@ export const LANDING_MORE = {
       a: "The link is only shared by you. On Celebration and Keepsake you can add a password too.",
     },
     {
-      q: "Can I change the format later?",
-      a: "Any time before or after you send it. The notes stay the same, only the way it opens changes.",
+      q: "Can I change the layout later?",
+      a: "Any time before or after you send it. The notes stay the same, only the way they read it changes.",
     },
   ],
   stepVisuals: {
@@ -335,7 +335,7 @@ export const COMIC_COPY = {
   next: "Next page",
   share: "Share this issue",
   close: "Close",
-  replay: "Replay cover",
+  replay: "See the cover",
   backToEdit: "Back to editing",
   meanwhile: "Meanwhile, in the other world…",
   mine: "You're in this issue",
@@ -408,3 +408,179 @@ export const SECTIONS_PAGE = {
   cta: "Start a gift",
   link: (n: number) => `See all ${n} sections`,
 } as const;
+
+/** The friend page (contribute). */
+export const FRIEND_PAGE = {
+  /** How each section reads in "Add a note, a photo or a song". */
+  things: {
+    letters: "a note",
+    photobooth: "a photo",
+    songs: "a song",
+    voice: "a voice note",
+    wordcloud: "a word",
+    tree: "an ornament",
+    calendar: "a surprise",
+    countdown: "a countdown",
+    openwhen: "an open-when letter",
+    capsule: "a time capsule note",
+    superlatives: "an award",
+    quiz: "a quiz question",
+    map: "a place",
+    coupons: "a coupon",
+    video: "a video",
+    doodle: "a doodle",
+  } as Record<string, string>,
+  notReady: "The organiser is still setting this up. Check back soon.",
+  more: "More",
+  fewer: "Fewer",
+};
+
+/** "Add a note, a photo or a song." built from the sections that are on. */
+export function friendAddLine(types: readonly string[]): string {
+  const words = types.map((t) => FRIEND_PAGE.things[t]).filter((w): w is string => !!w);
+  if (words.length === 0) return "";
+  if (words.length === 1) return `Add ${words[0]}.`;
+  if (words.length <= 3) return `Add ${words.slice(0, -1).join(", ")} or ${words[words.length - 1]}.`;
+  return `Add ${words.slice(0, 3).join(", ")} and more.`;
+}
+
+/**
+ * Sample letters shown in previews before friends add theirs, matched to the occasion.
+ * The first one is also the friend page example. `{name}` becomes ", Ana" or nothing.
+ */
+export const SAMPLE_LETTERS: Record<string, [string, string, string]> = {
+  valentine: ["Happy Valentine's Day{name}. You make ordinary days feel special.", "Still my favourite person to sit next to.", "Thank you for loving me so well."],
+  birthday: ["Happy birthday{name}. Here's to your best year yet.", "Another year of you is a gift to all of us.", "Cake first, then we talk. Love you."],
+  voyage: ["Safe travels{name}. Send us a postcard from there.", "Go see everything. We'll keep your seat warm.", "Proud of you for taking the leap."],
+  christmas: ["Merry Christmas{name}. You make the season brighter.", "Thank you for every gift that wasn't wrapped.", "Here's to cocoa, carols and you."],
+  pets: ["Who's a good one{name}? You are.", "Thank you for every greeting at the door.", "Best nap buddy there ever was."],
+  newyear: ["Happy New Year{name}. Here's to your best year yet.", "So glad we got through last year together.", "Big plans, small steps. We're with you."],
+  anniversary: ["Happy anniversary{name}. Here's to many more years together.", "You two make it look easy.", "Thank you for showing us what love looks like."],
+  wedding: ["Congratulations{name}. So happy for you both.", "What a day, and what a pair.", "Wishing you a lifetime of good mornings."],
+  bridal: ["Can't wait to celebrate you{name}.", "Here's to the bride, and the best is yet to come.", "So happy for you. Save me a dance."],
+  baby: ["Welcome to the world, little one{name}.", "That little one is so lucky to have you.", "Sleep when you can. We're here for the rest."],
+  handwritten: ["I wrote this one by hand, just for you{name}.", "A few words I've been meaning to say.", "Keep this for a rainy day."],
+  game: ["You always win{name}, and I don't even mind.", "Player two, ready when you are.", "GG. Thanks for every round."],
+  pixel: ["Achievement unlocked: best friend{name}.", "Extra life, just for you.", "Press start on a great year."],
+  default: ["Thinking of you{name}, always.", "You make every room warmer.", "Thank you for always showing up."],
+};
+
+/** One sample letter, with the name filled in (or left out). */
+export function sampleLetter(kind: string, i: number, name = ""): string {
+  const set = SAMPLE_LETTERS[kind] ?? SAMPLE_LETTERS["default"]!;
+  return set[i % set.length]!.replace("{name}", name ? `, ${name}` : "");
+}
+
+/** Shown on every format while it's showing sample notes. */
+export const SAMPLE_BADGE = {
+  friends: "Sample notes. Friends' notes replace these.",
+  solo: "Sample notes. Yours replace these.",
+};
+
+/* ------------------------------------------------------------------ */
+/* Names: themes own the opening, layouts own the reading, sections    */
+/* are what friends add. Every name lives here so none of them clash.  */
+/* ------------------------------------------------------------------ */
+
+/** Layout names (internally "formats"; ids and saved values never change). */
+export const LAYOUT_NAMES: Record<string, { title: string; copy: string; about: string }> = {
+  scrapbook: { title: "Scrapbook", copy: "A warm, scrolling collection", about: "Every section in one long, cozy page." },
+  comic: { title: "Comic Issue", copy: "Chapters with comic page turns", about: "Chapters they flip through like a comic, with a cover they can look at any time." },
+  bento: { title: "Bento Board", copy: "Everything at a glance, in tiles", about: "Notes, photos and songs as a tidy grid of tiles. Tap any tile to open it." },
+  hunt: { title: "Gift Hunt", copy: "Unwrap every note, one by one", about: "Each note is a little wrapped box. They unwrap them all to finish the hunt." },
+  zine: { title: "Zine", copy: "Loud, handmade and a bit chaotic", about: "A cut-and-paste zine with stickers, scribbles and big type." },
+  storybook: { title: "Storybook", copy: "A little book with real page turns", about: "A hardcover book where every note is a chapter. Drag a page by its edge to turn it." },
+  mixtape: { title: "Mixtape", copy: "A cassette, every note a track", about: "Press play and the reels turn. Spin a reel to scrub, flip the tape for side B." },
+  scratch: { title: "Scratch Cards", copy: "Scratch the foil to reveal each note", about: "Every note hides under silver foil. They scratch it off with a finger, card by card." },
+  stars: { title: "Constellation", copy: "A night sky, every friend a star", about: "Tap the stars to read them. Each one connects to the last, until they make a heart." },
+  handwritten: {
+    title: "Notebook",
+    copy: "Handwritten notes and doodles",
+    about: "Every friend writes in their own hand, on lined pages and sticky notes, with doodles that draw themselves in.",
+  },
+};
+
+/** Font pairing labels. Renamed where they clashed with a layout or theme (Storybook, Comic, Pixel). */
+export const FONT_NAMES: Record<string, string> = {
+  theme: "Theme's own",
+  romantic: "Romantic",
+  playful: "Playful",
+  modern: "Modern",
+  handwritten: "Fairytale",
+  storybook: "Fable",
+  elegant: "Elegant",
+  bold: "Bold",
+  bubbly: "Bubbly",
+  penpal: "Pen pal",
+  typewriter: "Typewriter",
+  groovy: "Groovy",
+  retro: "Retro",
+  comic: "Inked",
+  pixel: "8-bit",
+};
+
+/** The first eight section names, as friends and organisers see them. */
+export const SECTION_NAMES: Record<string, string> = {
+  letters: "Letters",
+  photobooth: "Photobooth",
+  songs: "Songs",
+  wordcloud: "Word cloud",
+  voice: "Voice messages",
+  countdown: "Countdown",
+  calendar: "Calendar",
+  tree: "Tree",
+  // Newer sections are named in SECTION_COPY (with their blurb and prompt).
+};
+
+/** Theme gallery filters. Renamed where they matched a theme's own name (Christmas, Pets). */
+export const GALLERY_GROUPS: Record<string, string> = {
+  all: "All",
+  new: "New",
+  christmas: "Christmas season",
+  birthday: "Birthdays",
+  love: "Love",
+  wedding: "Weddings & showers",
+  holiday: "Holidays",
+  goodbye: "Send-offs",
+  pets: "For pets",
+  style: "Any occasion",
+  family: "Family and far away",
+  philippines: "Philippines",
+};
+
+/** The one-line model, shown above the layout picker. */
+export const MODEL_LINE = "Theme is the wrapping. Layout is how they read it. Sections are what friends can add.";
+
+/** The /layouts page (/formats redirects here). */
+export const LAYOUTS_PAGE = {
+  meta: "Every way to read a Just Because gift. Same notes, a different way to flip through them.",
+  kicker: "Layouts",
+  title: "One gift, lots of ways to read it.",
+  body: "The theme is how the gift opens. The layout is how they read it after that. Switch any time, and nobody has to rewrite their note.",
+  pairsTitle: "What each theme reads best as",
+  pairsBody: "Every theme starts on the layout that suits it. You can pick another in Gift settings.",
+  cta: "Start a gift",
+};
+
+export const LAYOUT_COPY = {
+  pickerTitle: "Layout",
+  pickerHint: "How they'll read it. Same notes, different way to flip through them.",
+  legend: "Choose a layout",
+  recommended: "Recommended for this theme",
+  switchTitle: (name: string) => `Switch to ${name}?`,
+  switchBody: "Your notes, words and colors stay. Only how they read it changes.",
+  previewing: (name: string) => `Previewing ${name}`,
+  keep: (name: string) => `Keep ${name}`,
+  switchTo: "Switch",
+  upgradeForAll: "Upgrade for every layout.",
+  notInPlan: (plan: string) => `${plan} doesn't include this layout. Upgrade to use it.`,
+  themeRow: "Theme",
+  themeHint: "The wrapping: the opening, colors, fonts and Bo's outfit.",
+  changeTheme: "Change theme",
+  createLine: (layout: string) => `Reads as ${layout}.`,
+  createHint: "You can change the layout any time in Gift settings.",
+  closeThemes: "Keep this theme",
+  themeColorsNote: "A new theme brings its own colors. Your notes and words stay.",
+  /** Offered after a theme change, never forced. */
+  themeLayoutAsk: (theme: string, layout: string) => `${theme} reads best as ${layout}. Switch the layout too?`,
+};

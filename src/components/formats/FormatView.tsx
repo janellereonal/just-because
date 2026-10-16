@@ -1,4 +1,6 @@
 import { lazy, Suspense, useEffect, useMemo, useRef } from "react";
+import { SAMPLE_BADGE } from "@/copy/strings";
+import { GiftKindContext } from "@/lib/giftPieces";
 import { NewSections } from "@/components/sections/NewSections";
 import { FONT_PAIRINGS, loadPairingFonts } from "@/lib/gift";
 import { readableInk } from "@/lib/palettes";
@@ -37,6 +39,9 @@ const ScratchView = lazy(() =>
 );
 const ConstellationView = lazy(() =>
   import("@/components/formats/ConstellationView").then((m) => ({ default: m.ConstellationView })),
+);
+const HandwrittenView = lazy(() =>
+  import("@/components/formats/HandwrittenView").then((m) => ({ default: m.HandwrittenView })),
 );
 const ZineView = lazy(() =>
   import("@/components/formats/ZineView").then((m) => ({ default: m.ZineView })),
@@ -84,7 +89,8 @@ export function FormatView(props: Props) {
   const kind = themeKindOf(props.theme);
   useEffect(() => loadThemeFonts(kind), [kind]);
   useEffect(() => loadPairingFonts(props.site.font_choice), [props.site.font_choice]);
-  const tiles = props.site.format !== "scrapbook" && props.site.format !== "comic";
+  // Handwritten draws video and quiz inside its own notebook.
+  const tiles = props.site.format !== "scrapbook" && props.site.format !== "comic" && props.site.format !== "handwritten";
   const cast = castFor(kind, props.site.character ?? null, props.site.icon_set ?? null);
   const palette = props.palette ?? resolvePalette(props.theme, props.site.custom_colors);
   const roamIcons = useMemo(
@@ -94,11 +100,21 @@ export function FormatView(props: Props) {
   );
   return (
     <PlaceholderNameContext.Provider value={!!props.placeholderName}>
+      <GiftKindContext.Provider value={kind}>
       <div className="contents" style={themeFontVars(kind)}>
+        {/* Every format says when it's showing samples. The scrapbook labels each section itself. */}
+        {props.sample && props.site.format !== "scrapbook" && props.contributions.length === 0 ? (
+          <div className="pointer-events-none sticky top-0 z-[60] flex h-0 items-start justify-center overflow-visible">
+            <span className="mt-3 rounded-full px-3 py-1 text-[11px] font-medium whitespace-nowrap shadow-sm" style={{ background: "rgba(43,37,34,.86)", color: "#FBF8F2" }}>
+              {props.site.solo ? SAMPLE_BADGE.solo : SAMPLE_BADGE.friends}
+            </span>
+          </div>
+        ) : null}
         <FormatBody {...props} />
         {tiles ? <TileExtras {...props} kind={kind} /> : null}
         {roamIcons ? <Roamer icons={roamIcons} index={cast.roam} /> : null}
       </div>
+      </GiftKindContext.Provider>
     </PlaceholderNameContext.Provider>
   );
 }
@@ -198,6 +214,12 @@ function FormatBody(props: Props) {
       return (
         <Suspense fallback={fallback}>
           <ConstellationView {...common} theme={theme} />
+        </Suspense>
+      );
+    case "handwritten":
+      return (
+        <Suspense fallback={fallback}>
+          <HandwrittenView {...common} theme={theme} />
         </Suspense>
       );
     default:

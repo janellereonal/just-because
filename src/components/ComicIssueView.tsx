@@ -8,6 +8,7 @@
  * Everything is sized with container queries, so it reads the same in a
  * phone preview on a laptop as on a real phone.
  */
+import { shareGift } from "@/lib/track";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { AnimatePresence, motion, useReducedMotion, type PanInfo } from "motion/react";
 import { ChevronLeft, ChevronRight, List, Repeat2, Share2, X } from "lucide-react";
@@ -519,7 +520,7 @@ export function ComicIssueView({ kind, site, modules, contributions, calendarEnt
                   type="button"
                   className="cx-icon"
                   aria-label={COMIC_COPY.share}
-                  onClick={() => (navigator.share ? void navigator.share({ title: site.title, url: window.location.href }) : void navigator.clipboard.writeText(window.location.href))}
+                  onClick={() => shareGift(site)}
                 >
                   <Share2 className="size-4" />
                 </button>
@@ -582,10 +583,8 @@ export function ComicIssueView({ kind, site, modules, contributions, calendarEnt
               <button
                 type="button"
                 className="cx-replay"
-                onClick={() => {
-                  setCoverOpen(false);
-                  onReplayCover();
-                }}
+                // The theme's opening already played; the cover is there to look at, not a second opening.
+                onClick={() => setCoverOpen(false)}
               >
                 {COMIC_COPY.replay}
               </button>
