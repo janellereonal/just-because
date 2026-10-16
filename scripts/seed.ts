@@ -36,6 +36,8 @@ const palettes: [string, string, string, string, string][] = [
   ["Monochrome", "Earthy", "#FAFAF7", "#2B2522", "#8A8177"],
   ["Midnight Gold", "Dark", "#1A1F2E", "#E8C468", "#F5F0E1"],
   ["Sparkle", "Dark", "#20143A", "#9B6FE8", "#E8D9A0"],
+  // Palettes never share a name with a theme (Oct 2026: Game Night, Winter Cabin and Balikbayan
+  // palettes became Tabletop, Fireside and Homeward). The id is what gifts keep, so renames are safe.
   // Signature palettes, one per theme (Oct 2026 theme system). Appended so ids stay stable.
   ["Wax Seal", "Romantic", "#F6EEE3", "#B4335A", "#5E1424"],
   ["Vinyl Night", "Dark", "#2B1D18", "#E9D6B0", "#B48DA3"],
@@ -50,18 +52,18 @@ const palettes: [string, string, string, string, string][] = [
   ["Fountain Pen", "Soft", "#FBF6EA", "#2A3A6B", "#B8485F"],
   ["Love Note", "Romantic", "#FFF1EC", "#B8485F", "#2A3A6B"],
   ["Kraft Paper", "Earthy", "#F3E7D3", "#7A5230", "#2A3A6B"],
-  ["Game Night", "Bright", "#FFF6E5", "#22305E", "#D93A33"],
+  ["Tabletop", "Bright", "#FFF6E5", "#22305E", "#D93A33"],
   ["Board Game", "Bright", "#EAF6EE", "#22305E", "#C9302A"],
   ["Felt Table", "Dark", "#1E4D3B", "#FFD34E", "#FFF6E5"],
   ["Pixel Night", "Dark", "#1B1640", "#3DF2B0", "#FF5DA2"],
   ["Arcade", "Bright", "#FFF4D6", "#5B3FE0", "#D9336F"],
   ["Handheld", "Soft", "#E3EDC9", "#306230", "#6A4BD8"],
   // Engine themes (Winter Cabin, Care Package, Balikbayan Box, Parol, Debut), Oct 2026. Appended so ids stay stable.
-  ["Winter Cabin", "Earthy", "#F7F3EC", "#2F5D46", "#B5621E"],
+  ["Fireside", "Earthy", "#F7F3EC", "#2F5D46", "#B5621E"],
   ["Snowy Pine", "Soft", "#EEF3F5", "#2F5D46", "#A23A2C"],
   ["Kraft Mail", "Earthy", "#F3E9DA", "#7A5230", "#2F5D86"],
   ["Air Mail", "Soft", "#F1F5F8", "#2F5D86", "#C8452B"],
-  ["Balikbayan", "Earthy", "#F6EBDD", "#1F4E8C", "#B83A2E"],
+  ["Homeward", "Earthy", "#F6EBDD", "#1F4E8C", "#B83A2E"],
   ["Parol Night", "Dark", "#141B3A", "#E8B04B", "#F6EEDC"],
   ["Capiz", "Soft", "#FBF6EA", "#A8432E", "#1F3A6E"],
   ["Debut Rose", "Romantic", "#FBF5EF", "#A8566A", "#8A6A2E"],
@@ -83,12 +85,12 @@ const themes: [string, string, string, string[], string[], ("published" | "draft
   ["Bridal Shower", "Shower", "Blush, peach and sage for the bride-to-be and her people.", ["letters", "photobooth", "wordcloud", "countdown"], ["Blush Bloom", "Peach Fuzz", "Ivory Sage"]],
   ["Baby Shower", "Shower", "Powder blue, butter and blush for the little one on the way.", ["letters", "photobooth", "wordcloud", "countdown"], ["Nursery", "Sunny", "Sky"]],
   ["Handwritten", "Any occasion", "Ink on paper, folded in four. For any occasion that needs a few real words.", ["letters", "openwhen", "capsule", "photobooth"], ["Fountain Pen", "Love Note", "Kraft Paper"]],
-  ["Game Night", "Any occasion", "Dice, tokens and a board, for the friend who always wins.", ["letters", "quiz", "superlatives", "photobooth"], ["Game Night", "Board Game", "Felt Table"]],
+  ["Game Night", "Any occasion", "Dice, tokens and a board, for the friend who always wins.", ["letters", "quiz", "superlatives", "photobooth"], ["Tabletop", "Board Game", "Felt Table"]],
   ["Pixel", "Any occasion", "Eight-bit hearts and coins on a little console. Press start.", ["letters", "quiz", "superlatives", "photobooth"], ["Pixel Night", "Arcade", "Handheld"]],
   // Built on the theme engine (src/themes/engine). Drafts until an admin publishes them.
-  ["Winter Cabin Christmas", "Season", "Wipe the frost off a cabin window to find a warm room, a fire, and a tree hung with everyone's notes.", ["letters", "photobooth", "songs", "countdown"], ["Winter Cabin", "Snowy Pine", "Pine & Cranberry"], "draft"],
+  ["Winter Cabin Christmas", "Season", "Wipe the frost off a cabin window to find a warm room, a fire, and a tree hung with everyone's notes.", ["letters", "photobooth", "songs", "countdown"], ["Fireside", "Snowy Pine", "Pine & Cranberry"], "draft"],
   ["Care Package", "Family", "A parcel from far away. Peel the tape and the notes come out as things packed inside.", ["letters", "photobooth", "voice", "songs"], ["Kraft Mail", "Air Mail", "Kraft Paper"], "draft"],
-  ["Balikbayan Box", "Family", "A box from home, taped and marked, with pasalubong inside from everyone who misses them.", ["letters", "photobooth", "voice", "songs"], ["Balikbayan", "Kraft Mail", "Golden Hour"], "draft"],
+  ["Balikbayan Box", "Family", "A box from home, taped and marked, with pasalubong inside from everyone who misses them.", ["letters", "photobooth", "voice", "songs"], ["Homeward", "Kraft Mail", "Golden Hour"], "draft"],
   ["Parol Christmas", "Season", "A capiz parol where every note lights part of the star. Turn on Simbang Gabi for one a night.", ["letters", "photobooth", "songs", "voice"], ["Parol Night", "Capiz", "Midnight Gold"], "draft"],
   ["Debut", "Birthday", "A curtain, 18 candles and 18 roses. Each candle holds a wish for their eighteenth.", ["letters", "photobooth", "songs", "voice", "superlatives"], ["Debut Rose", "Debut Night", "Blush Bloom"], "draft"],
 ];

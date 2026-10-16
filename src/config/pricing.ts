@@ -178,7 +178,7 @@ export function featureList(tier: Tier): string[] {
   const lines = [
     tier.contributors.unlimited ? "Unlimited contributors" : `Up to ${tier.contributors.cap} contributors`,
     tier.photos.unlimited ? "Unlimited photos" : `Up to ${tier.photos.cap} photos`,
-    tier.formats.length >= 5 ? `All ${tier.formats.length} formats, including Storybook and Mixtape` : "Scrapbook and Bento formats",
+    tier.formats.length >= 5 ? `All ${tier.formats.length} layouts, including Storybook and Mixtape` : "Scrapbook and Bento layouts",
   ];
   if (tier.features.passwordProtection) lines.push("Password protection");
   if (tier.features.customLinkName) lines.push("Custom link name");

@@ -128,7 +128,9 @@ export function StorybookView({
     { type: "end" },
   ];
   const total = pages.length;
-  const [at, setAt] = useState(0);
+  // The theme's opening already opened the gift, so the book starts open on the first page
+  // (the cover is one page back). A layout never adds a second opening.
+  const [at, setAt] = useState(1);
   const [drag, setDrag] = useState<{ dir: 1 | -1; angle: number } | null>(null);
   const bookRef = useRef<HTMLDivElement | null>(null);
   const rootRef = useRef<HTMLDivElement | null>(null);

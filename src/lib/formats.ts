@@ -1,9 +1,12 @@
 /**
- * Gift formats: different ways to show the same notes, photos and songs.
+ * Gift formats, called "layouts" everywhere people can see: how they read the gift after the
+ * theme's opening. Same notes, photos and songs, a different way to flip through them.
+ * Names and copy live in LAYOUT_NAMES (src/copy/strings.ts).
  * The `format` column is plain text, so adding one here needs no migration.
  * Which plans can use which format lives in src/config/pricing.ts.
  */
 import { isFlagOn, type FlagName } from "@/config/flags";
+import { LAYOUT_NAMES } from "@/copy/strings";
 export const FORMAT_IDS = ["scrapbook", "comic", "bento", "hunt", "zine", "storybook", "mixtape", "scratch", "stars", "handwritten"] as const;
 export type GiftFormat = (typeof FORMAT_IDS)[number];
 
@@ -14,7 +17,10 @@ export type FormatInfo = {
   copy: string;
   /** Longer line for the editor. */
   about: string;
-  /** Shows the gift opening animation first (comic has its own cover). */
+  /**
+   * Plays the theme's opening first. True for every layout: the theme owns the opening and
+   * the layout owns the reading, so a layout never adds a second opening of its own.
+   */
   usesIntro: boolean;
   isNew?: boolean;
   /** Only offered in pickers while this flag is on (src/config/flags.ts). Saved gifts always render. */
@@ -24,76 +30,56 @@ export type FormatInfo = {
 export const FORMATS: FormatInfo[] = [
   {
     id: "scrapbook",
-    title: "Scrapbook",
-    copy: "A warm, scrolling collection",
-    about: "Every section in one long, cozy page.",
+    ...LAYOUT_NAMES["scrapbook"]!,
     usesIntro: true,
   },
   {
     id: "comic",
-    title: "Comic Issue",
-    copy: "A cover and page-turn adventure",
-    about: "A comic cover, then chapters they flip through.",
-    usesIntro: false,
+    ...LAYOUT_NAMES["comic"]!,
+    usesIntro: true,
   },
   {
     id: "bento",
-    title: "Bento Board",
-    copy: "Everything at a glance, in tiles",
-    about: "Notes, photos and songs as a tidy grid of tiles. Tap any tile to open it.",
+    ...LAYOUT_NAMES["bento"]!,
     usesIntro: true,
   },
   {
     id: "hunt",
-    title: "Gift Hunt",
-    copy: "Unwrap every note, one by one",
-    about: "Each note is a little wrapped box. They unwrap them all to finish the hunt.",
+    ...LAYOUT_NAMES["hunt"]!,
     usesIntro: true,
   },
   {
     id: "zine",
-    title: "Zine",
-    copy: "Loud, handmade and a bit chaotic",
-    about: "A cut-and-paste zine with stickers, scribbles and big type.",
+    ...LAYOUT_NAMES["zine"]!,
     usesIntro: true,
   },
   {
     id: "storybook",
-    title: "Storybook",
-    copy: "A little book with real page turns",
-    about: "A hardcover book where every note is a chapter. Drag a page by its edge to turn it.",
+    ...LAYOUT_NAMES["storybook"]!,
     usesIntro: true,
     isNew: true,
   },
   {
     id: "mixtape",
-    title: "Mixtape",
-    copy: "A cassette, every note a track",
-    about: "Press play and the reels turn. Spin a reel to scrub, flip the tape for side B.",
+    ...LAYOUT_NAMES["mixtape"]!,
     usesIntro: true,
     isNew: true,
   },
   {
     id: "scratch",
-    title: "Scratch Cards",
-    copy: "Scratch the foil to reveal each note",
-    about: "Every note hides under silver foil. They scratch it off with a finger, card by card.",
+    ...LAYOUT_NAMES["scratch"]!,
     usesIntro: true,
     isNew: true,
   },
   {
     id: "stars",
-    title: "Constellation",
-    copy: "A night sky, every friend a star",
-    about: "Tap the stars to read them. Each one connects to the last, until they make a heart.",
+    ...LAYOUT_NAMES["stars"]!,
     usesIntro: true,
     isNew: true,
   },
   {
     id: "handwritten",
-    title: "Handwritten",
-    copy: "A notebook of notes and doodles",
-    about: "Every friend writes in their own hand, on lined pages and sticky notes, with doodles that draw themselves in.",
+    ...LAYOUT_NAMES["handwritten"]!,
     usesIntro: true,
     isNew: true,
     flag: "handwrittenFormat",

@@ -17,6 +17,9 @@ import { ComicIssueView } from "@/components/ComicIssueView";
 import { FormatPicker } from "@/components/FormatPicker";
 import { FormatView } from "@/components/formats/FormatView";
 import { FORMATS, formatInfo } from "@/lib/formats";
+import { recommendedLayout } from "@/lib/recommendedLayout";
+import { LAYOUT_COPY, MODEL_LINE } from "@/copy/strings";
+import { fetchThemes, type Theme } from "@/lib/themes";
 import {
   deleteCalendarEntry,
   deleteContributions,
@@ -68,7 +71,7 @@ import type { Palette } from "@/lib/themes";
 import Bo from "@/components/Bo";
 import { PageError, PageLoading, PageNotFound } from "@/components/PageStates";
 import { PalettePicker, paletteNameFor } from "@/components/PalettePicker";
-import { usePalettes } from "@/hooks/usePalettes";
+import { usePalettes, suggestedPalettes } from "@/hooks/usePalettes";
 import { Button } from "@/components/ui/button";
 import { comicSettingDefaults, normalizeComicSettings, orderedComicIds, type ComicSettings } from "@/lib/comic";
 import {
@@ -166,6 +169,38 @@ const SECTION_TITLES: Record<SectionKey, string> = {
 };
 
 
+/** Published themes to switch to. The layout switch is offered after, never forced. */
+function ThemeChoices({ current, onPick }: { current: string | null; onPick: (theme: Theme) => void }) {
+  const { data: themes = [], isLoading } = useQuery({ queryKey: ["themes"], queryFn: () => fetchThemes() });
+  const { data: allPalettes = [] } = usePalettes();
+  if (isLoading) return <div className="mt-3 h-24 animate-pulse rounded-xl bg-cream" />;
+  return (
+    <div className="mt-3">
+      <p className="text-xs text-muted">{LAYOUT_COPY.themeColorsNote}</p>
+      <div className="mt-2 grid max-h-72 grid-cols-2 gap-2 overflow-y-auto pr-1">
+        {themes.map((t) => {
+          const pal = allPalettes.find((p) => p.id === t.suggested_palette_ids[0]) ?? t.palettes[0];
+          const on = t.id === current;
+          return (
+            <button
+              key={t.id}
+              type="button"
+              disabled={on}
+              onClick={() => onPick(t)}
+              className={`flex items-center gap-2 rounded-xl border px-2.5 py-2 text-left text-xs transition-colors ${on ? "border-accent bg-accent/8" : "border-line bg-paper hover:border-ink/40"}`}
+            >
+              <span aria-hidden className="flex shrink-0 overflow-hidden rounded-full border border-line">
+                {pal ? [pal.background, pal.primary, pal.accent].map((c) => <span key={c} className="size-3.5" style={{ background: c }} />) : null}
+              </span>
+              <span className="min-w-0 truncate font-medium">{t.name}</span>
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
 /** A titled group inside a step. Touching it can switch what the preview shows. */
 function StepGroup({
   title,
@@ -251,6 +286,9 @@ function SiteDashboard() {
   const [canvasView, setCanvasView] = useState<"intro" | "gift">("intro");
   const [customizeLook, setCustomizeLook] = useState(false);
   const [formatAsk, setFormatAsk] = useState<GiftSite["format"] | null>(null);
+  const [themeList, setThemeList] = useState(false);
+  /** After a theme change: the new theme's layout, offered (never forced). */
+  const [themeLayoutAsk, setThemeLayoutAsk] = useState<{ theme: string; layout: GiftSite["format"] } | null>(null);
   /** A section with notes in it that the organiser asked to turn off. */
   const [offAsk, setOffAsk] = useState<string | null>(null);
   const [panelOpen, setPanelOpen] = useState(true);
@@ -314,10 +352,13 @@ function SiteDashboard() {
     refetch: refetchSite,
   } = useQuery({ queryKey: ["site", id], queryFn: () => fetchSiteById(id) });
   const palettesQuery = usePalettes();
+  // The draft's theme, so a theme change shows at once (the old one stays up while it loads).
+  const themeId = draft?.theme_id ?? site?.theme_id ?? null;
   const { data: theme = null } = useQuery({
-    queryKey: ["theme", site?.theme_id],
-    queryFn: () => fetchTheme(site?.theme_id ?? null),
+    queryKey: ["theme", themeId],
+    queryFn: () => fetchTheme(themeId),
     enabled: !!site,
+    placeholderData: (prev) => prev,
   });
   const engineTheme = engineThemeForName(theme?.name);
   const { data: modules = [] } = useQuery({
@@ -496,6 +537,7 @@ function SiteDashboard() {
             solo: next.solo,
             format: next.format,
             format_settings: next.format_settings as unknown as Record<string, never>,
+            ...(next.theme_id ? { theme_id: next.theme_id } : {}),
           },
         },
       });
@@ -791,6 +833,8 @@ function SiteDashboard() {
   }
 
   const paletteNow = resolvePalette(theme, draft.custom_colors);
+  // While a layout is being considered, the canvas shows the same gift in it.
+  const canvasSite = formatAsk ? { ...draft, format: formatAsk } : draft;
   const allPalettes = palettesQuery.data ?? [];
 
   if (publishSuccess) {
@@ -869,8 +913,9 @@ function SiteDashboard() {
   }
 
   function chooseFormat(next: GiftSite["format"]) {
-    if (next === draft?.format) return;
-    setFormatAsk(next);
+    // The canvas previews the picked layout until it's confirmed (or kept).
+    setFormatAsk(next === draft?.format ? null : next);
+    setCanvasView("gift");
   }
 
   const fieldInput = (
@@ -1037,6 +1082,50 @@ function SiteDashboard() {
     ),
     look: (
       <div className="space-y-5">
+        <StepGroup title={LAYOUT_COPY.themeRow} hint={LAYOUT_COPY.themeHint} onActivate={() => setCanvasView("gift")}>
+          <div className="flex items-center justify-between gap-3 rounded-xl border border-line bg-cream px-3 py-2.5">
+            <span className="min-w-0">
+              <span className="block truncate text-sm font-semibold">{theme?.name ?? "No theme"}</span>
+              <span className="block text-xs text-muted">{formatInfo(draft.format).title} layout</span>
+            </span>
+            <Button type="button" size="sm" variant="outline" className="shrink-0 rounded-full" onClick={() => setThemeList((v) => !v)} aria-expanded={themeList}>
+              {themeList ? LAYOUT_COPY.closeThemes : LAYOUT_COPY.changeTheme}
+            </Button>
+          </div>
+          {themeList ? (
+            <ThemeChoices
+              current={theme?.id ?? null}
+              onPick={(next) => {
+                setThemeList(false);
+                // The new theme's first palette, like a new gift gets.
+                const pal = suggestedPalettes(next, palettesQuery.data ?? [])[0];
+                patch({
+                  theme_id: next.id,
+                  palette_id: pal?.id ?? null,
+                  custom_colors: pal ? { background: pal.background, primary: pal.primary, accent: pal.accent } : {},
+                });
+                const rec = recommendedLayout(next.name).layout;
+                const allowed = !planTier || planTier.formats.includes(rec);
+                setThemeLayoutAsk(rec !== draft.format && allowed ? { theme: next.name, layout: rec } : null);
+                boSay(`${next.name}. Nice.`, "happy");
+              }}
+            />
+          ) : null}
+          {themeLayoutAsk ? (
+            <div className="mt-3 rounded-xl border border-accent/40 bg-[#FBEDE6] p-3" role="alertdialog" aria-label={LAYOUT_COPY.switchTitle(formatInfo(themeLayoutAsk.layout).title)}>
+              <p className="text-sm font-medium">{LAYOUT_COPY.themeLayoutAsk(themeLayoutAsk.theme, formatInfo(themeLayoutAsk.layout).title)}</p>
+              <p className="mt-1 text-xs text-muted">{recommendedLayout(themeLayoutAsk.theme).why}</p>
+              <div className="mt-3 flex gap-2">
+                <Button size="sm" className="rounded-full" onClick={() => { patch({ format: themeLayoutAsk.layout }); setThemeLayoutAsk(null); }}>
+                  {LAYOUT_COPY.switchTo}
+                </Button>
+                <Button size="sm" variant="outline" className="rounded-full" onClick={() => setThemeLayoutAsk(null)}>
+                  {LAYOUT_COPY.keep(formatInfo(draft.format).title)}
+                </Button>
+              </div>
+            </div>
+          ) : null}
+        </StepGroup>
         <StepGroup title="Palette" onActivate={() => setCanvasView("gift")}>
           <PalettePicker
             theme={theme}
@@ -1368,13 +1457,14 @@ function SiteDashboard() {
             {solo ? "You make every page. There's no invite link." : "Friends add theirs through the invite link. You can add yours too."}
           </p>
         </StepGroup>
-        <StepGroup title="How it opens" hint="Same notes, a different way to open them.">
+        <StepGroup title={LAYOUT_COPY.pickerTitle} hint={MODEL_LINE} onActivate={() => setCanvasView("gift")}>
           {formatAsk ? (
-            <div className="sticky top-0 z-10 mb-3 rounded-xl border border-accent/40 bg-[#FBEDE6] p-3 shadow-sm" role="alertdialog" aria-label="Switch format">
-              <p className="text-sm font-medium">Switch to {formatInfo(formatAsk).title}?</p>
+            <div className="sticky top-0 z-10 mb-3 rounded-xl border border-accent/40 bg-[#FBEDE6] p-3 shadow-sm" role="alertdialog" aria-label={LAYOUT_COPY.switchTitle(formatInfo(formatAsk).title)}>
+              <p className="font-mono text-[10px] tracking-[0.14em] text-accent uppercase">{LAYOUT_COPY.previewing(formatInfo(formatAsk).title)}</p>
+              <p className="mt-1 text-sm font-medium">{LAYOUT_COPY.switchTitle(formatInfo(formatAsk).title)}</p>
               <p className="mt-1 text-xs text-muted">
-                Your notes, words and colors stay. Only the way it opens changes
-                {draft.format === "comic" ? ". The comic's cover and panel order are kept in case you switch back." : "."}
+                {LAYOUT_COPY.switchBody}
+                {draft.format === "comic" ? " The comic's cover and panel order are kept in case you switch back." : ""}
               </p>
               <div className="mt-3 flex gap-2">
                 <Button
@@ -1389,18 +1479,19 @@ function SiteDashboard() {
                     }
                   }}
                 >
-                  Switch
+                  {LAYOUT_COPY.switchTo}
                 </Button>
                 <Button size="sm" variant="outline" className="rounded-full" onClick={() => setFormatAsk(null)}>
-                  Keep {formatInfo(draft.format).title}
+                  {LAYOUT_COPY.keep(formatInfo(draft.format).title)}
                 </Button>
               </div>
             </div>
           ) : null}
           <FormatPicker
-            value={draft.format}
+            value={formatAsk ?? draft.format}
             onChange={chooseFormat}
             isAllowed={(format) => !planTier || planTier.formats.includes(format)}
+            recommended={recommendedLayout(theme?.name).layout}
             compact
           />
           {planTier && planTier.formats.length < FORMATS.length ? (
@@ -1408,7 +1499,7 @@ function SiteDashboard() {
               {planTier.name} includes {planTier.formats.map((f) => formatInfo(f).title).join(" and ")}.{" "}
               {billing && billing.upgrades.length > 0 ? (
                 <button type="button" className="text-accent underline underline-offset-2" onClick={() => setPlanPicker("upgrade")}>
-                  Upgrade for every format.
+                  {LAYOUT_COPY.upgradeForAll}
                 </button>
               ) : null}
             </p>
@@ -1689,7 +1780,7 @@ function SiteDashboard() {
           // Side room so Bo stands next to the laptop, never on top of its frame.
           <div className="flex h-full items-center justify-center min-[900px]:px-20">
             <DevicePreview device="laptop" fit="contain" overlay={showIntroInCanvas ? canvasIntro : null}>
-              <FormatView site={draft} theme={theme} palette={paletteNow} modules={modules} contributions={approved} calendarEntries={calendarEntries} sample placeholderName highlightField={focusField} onEditField={(field) => { openField(field); selectInPreview(field); }} />
+              <FormatView site={canvasSite} theme={theme} palette={paletteNow} modules={modules} contributions={approved} calendarEntries={calendarEntries} sample placeholderName highlightField={focusField} onEditField={(field) => { openField(field); selectInPreview(field); }} />
             </DevicePreview>
           </div>
         ) : (
@@ -1702,7 +1793,7 @@ function SiteDashboard() {
               }}
             >
               <div className="h-full overflow-y-auto overscroll-contain">
-                 <FormatView site={draft} theme={theme} palette={paletteNow} modules={modules} contributions={approved} calendarEntries={calendarEntries} sample placeholderName highlightField={focusField} onEditField={(field) => { openField(field); selectInPreview(field); }} />
+                 <FormatView site={canvasSite} theme={theme} palette={paletteNow} modules={modules} contributions={approved} calendarEntries={calendarEntries} sample placeholderName highlightField={focusField} onEditField={(field) => { openField(field); selectInPreview(field); }} />
               </div>
               {showIntroInCanvas ? canvasIntro : null}
             </div>

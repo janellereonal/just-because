@@ -21,6 +21,8 @@ export const EVENT_NAMES = [
   "theme_opening_completed",
   "theme_replayed",
   "theme_shared",
+  "layout_changed",
+  "theme_changed",
 ] as const;
 export type EventName = (typeof EVENT_NAMES)[number];
 
@@ -51,6 +53,10 @@ export const EVENT_PROPS: Record<EventName, Record<string, readonly string[] | "
   theme_opening_completed: {},
   theme_replayed: {},
   theme_shared: { channel: ["share", "copy"] },
+  // Layout ids, and whether the new one is the theme's recommended layout.
+  layout_changed: { from: [] as string[], to: [] as string[], was_recommended: "bool" },
+  // Theme ids (uuids), and whether the layout was switched to the new theme's pick.
+  theme_changed: { from: [] as string[], to: [] as string[], took_recommended: "bool" },
 };
 
 /** Keep only known labels; free-form values (an empty list) are cut to 40 safe characters. */

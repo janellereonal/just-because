@@ -17,7 +17,7 @@ import { normalizeCharacter, type CharacterSetting } from "@/themes/_shared/cast
 import { normalizeIconSetting, type IconSetSetting } from "@/themes/_shared/iconSets";
 import { isGiftFormat, type GiftFormat } from "@/lib/formats";
 import { NEW_SECTION_TYPES, type NewSectionType } from "@/lib/sections";
-import { SECTION_COPY } from "@/copy/strings";
+import { FONT_NAMES, SECTION_COPY, SECTION_NAMES } from "@/copy/strings";
 import { KIND_WORDS, type ThemeKind } from "@/lib/themeKind";
 
 export type ModuleType =
@@ -41,56 +41,56 @@ export const MODULES: {
 }[] = [
   {
     type: "letters",
-    label: "Letters",
+    label: SECTION_NAMES["letters"] ?? "Letters",
     blurb: "Written notes and messages from everyone.",
     contributorPrompt: "Write a message",
     source: "guests",
   },
   {
     type: "photobooth",
-    label: "Photobooth",
+    label: SECTION_NAMES["photobooth"] ?? "Photobooth",
     blurb: "Photos with an optional caption.",
     contributorPrompt: "Add a photo",
     source: "guests",
   },
   {
     type: "songs",
-    label: "Songs",
+    label: SECTION_NAMES["songs"] ?? "Songs",
     blurb: "Spotify or YouTube links, playable on the page.",
     contributorPrompt: "Share a song",
     source: "guests",
   },
   {
     type: "wordcloud",
-    label: "Word cloud",
+    label: SECTION_NAMES["wordcloud"] ?? "Word cloud",
     blurb: "A few words each, gathered into one cloud.",
     contributorPrompt: "Add a word",
     source: "guests",
   },
   {
     type: "voice",
-    label: "Voice messages",
+    label: SECTION_NAMES["voice"] ?? "Voice messages",
     blurb: "Short audio clips people upload.",
     contributorPrompt: "Upload a voice note",
     source: "guests",
   },
   {
     type: "countdown",
-    label: "Countdown",
+    label: SECTION_NAMES["countdown"] ?? "Countdown",
     blurb: "A live countdown to the big day. You set the date.",
     contributorPrompt: "",
     source: "creator",
   },
   {
     type: "calendar",
-    label: "Calendar",
+    label: SECTION_NAMES["calendar"] ?? "Calendar",
     blurb: "An advent-style grid. You hide a surprise behind each date.",
     contributorPrompt: "",
     source: "creator",
   },
   {
     type: "tree",
-    label: "Tree",
+    label: SECTION_NAMES["tree"] ?? "Tree",
     blurb: "Friends hang ornaments with messages on a shared tree.",
     contributorPrompt: "Add an ornament",
     source: "guests",
@@ -118,20 +118,20 @@ export const FONT_PAIRINGS = {
     heading: "'Playfair Display', serif",
     body: "'Lato', sans-serif",
   },
-  playful: { label: "Playful", heading: "'Fredoka', sans-serif", body: "'Nunito', sans-serif" },
-  modern: { label: "Modern", heading: "'Poppins', sans-serif", body: "'Inter', sans-serif" },
+  playful: { label: FONT_NAMES["playful"] ?? "Playful", heading: "'Fredoka', sans-serif", body: "'Nunito', sans-serif" },
+  modern: { label: FONT_NAMES["modern"] ?? "Modern", heading: "'Poppins', sans-serif", body: "'Inter', sans-serif" },
   // Key kept for saved gifts; the old script face is gone.
-  handwritten: { label: "Fairytale", heading: "'Fraunces', serif", body: "'Karla', sans-serif" },
-  storybook: { label: "Storybook", heading: "'Young Serif', serif", body: "'Nunito', sans-serif", google: "Young+Serif&family=Nunito:wght@400;600;700" },
-  elegant: { label: "Elegant", heading: "'Cormorant Garamond', serif", body: "'Lato', sans-serif", google: "Cormorant+Garamond:wght@500;600;700&family=Lato:wght@400;700" },
-  bold: { label: "Bold", heading: "'Bricolage Grotesque', sans-serif", body: "'DM Sans', sans-serif", google: "Bricolage+Grotesque:opsz,wght@12..96,600..800&family=DM+Sans:wght@400;500;700" },
-  bubbly: { label: "Bubbly", heading: "'Baloo 2', sans-serif", body: "'Nunito', sans-serif", google: "Baloo+2:wght@600;700;800&family=Nunito:wght@400;600;700" },
-  penpal: { label: "Pen pal", heading: "'Kalam', cursive", body: "'Patrick Hand', sans-serif", google: "Kalam:wght@400;700&family=Patrick+Hand" },
-  typewriter: { label: "Typewriter", heading: "'Courier Prime', monospace", body: "'Karla', sans-serif", google: "Courier+Prime:wght@400;700&family=Karla:wght@400;600" },
-  groovy: { label: "Groovy", heading: "'Shrikhand', serif", body: "'DM Sans', sans-serif", google: "Shrikhand&family=DM+Sans:wght@400;500;700" },
-  retro: { label: "Retro", heading: "'Bungee', sans-serif", body: "'Outfit', sans-serif", google: "Bungee&family=Outfit:wght@400;500;700" },
-  comic: { label: "Comic", heading: "'Bangers', sans-serif", body: "'Comic Neue', sans-serif", google: "Bangers&family=Comic+Neue:wght@400;700" },
-  pixel: { label: "Pixel", heading: "'Pixelify Sans', sans-serif", body: "'Outfit', sans-serif", google: "Pixelify+Sans:wght@500;700&family=Outfit:wght@400;500;700" },
+  handwritten: { label: FONT_NAMES["handwritten"] ?? "Fairytale", heading: "'Fraunces', serif", body: "'Karla', sans-serif" },
+  storybook: { label: FONT_NAMES["storybook"] ?? "Storybook", heading: "'Young Serif', serif", body: "'Nunito', sans-serif", google: "Young+Serif&family=Nunito:wght@400;600;700" },
+  elegant: { label: FONT_NAMES["elegant"] ?? "Elegant", heading: "'Cormorant Garamond', serif", body: "'Lato', sans-serif", google: "Cormorant+Garamond:wght@500;600;700&family=Lato:wght@400;700" },
+  bold: { label: FONT_NAMES["bold"] ?? "Bold", heading: "'Bricolage Grotesque', sans-serif", body: "'DM Sans', sans-serif", google: "Bricolage+Grotesque:opsz,wght@12..96,600..800&family=DM+Sans:wght@400;500;700" },
+  bubbly: { label: FONT_NAMES["bubbly"] ?? "Bubbly", heading: "'Baloo 2', sans-serif", body: "'Nunito', sans-serif", google: "Baloo+2:wght@600;700;800&family=Nunito:wght@400;600;700" },
+  penpal: { label: FONT_NAMES["penpal"] ?? "Pen pal", heading: "'Kalam', cursive", body: "'Patrick Hand', sans-serif", google: "Kalam:wght@400;700&family=Patrick+Hand" },
+  typewriter: { label: FONT_NAMES["typewriter"] ?? "Typewriter", heading: "'Courier Prime', monospace", body: "'Karla', sans-serif", google: "Courier+Prime:wght@400;700&family=Karla:wght@400;600" },
+  groovy: { label: FONT_NAMES["groovy"] ?? "Groovy", heading: "'Shrikhand', serif", body: "'DM Sans', sans-serif", google: "Shrikhand&family=DM+Sans:wght@400;500;700" },
+  retro: { label: FONT_NAMES["retro"] ?? "Retro", heading: "'Bungee', sans-serif", body: "'Outfit', sans-serif", google: "Bungee&family=Outfit:wght@400;500;700" },
+  comic: { label: FONT_NAMES["comic"] ?? "Comic", heading: "'Bangers', sans-serif", body: "'Comic Neue', sans-serif", google: "Bangers&family=Comic+Neue:wght@400;700" },
+  pixel: { label: FONT_NAMES["pixel"] ?? "Pixel", heading: "'Pixelify Sans', sans-serif", body: "'Outfit', sans-serif", google: "Pixelify+Sans:wght@500;700&family=Outfit:wght@400;500;700" },
 } as const;
 
 export const FONT_CHOICES: readonly FontChoiceId[] = FONT_CHOICE_IDS;
@@ -220,10 +220,10 @@ export type CalendarEntry = {
 };
 
 export const BACKGROUND_STYLES = {
-  paper: { label: "Paper", hint: "Warm scrapbook texture" },
-  clean: { label: "Clean", hint: "Plain and minimal" },
-  formal: { label: "Formal", hint: "Subtle linen weave" },
-  gradient: { label: "Soft gradient", hint: "Your palette, blended" },
+  paper: { label: FONT_NAMES["paper"] ?? "Paper", hint: "Warm scrapbook texture" },
+  clean: { label: FONT_NAMES["clean"] ?? "Clean", hint: "Plain and minimal" },
+  formal: { label: FONT_NAMES["formal"] ?? "Formal", hint: "Subtle linen weave" },
+  gradient: { label: FONT_NAMES["gradient"] ?? "Soft gradient", hint: "Your palette, blended" },
 } as const;
 
 export type BackgroundStyle = keyof typeof BACKGROUND_STYLES;

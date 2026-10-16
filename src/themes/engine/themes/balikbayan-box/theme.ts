@@ -30,7 +30,7 @@ export default defineTheme({
   handoff: { default: { mode: "reveal" } },
   load: () => import("./Object"),
   occasion: {
-    defaultFormat: "scrapbook",
+    defaultFormat: "hunt",
     sections: ["letters", "photobooth", "voice", "songs"],
     prompts: ["occasion.parcel2.prompt1", "occasion.parcel2.prompt2", "occasion.parcel2.prompt3", "occasion.parcel2.prompt4"],
     heading: "occasion.balikbayan.heading",

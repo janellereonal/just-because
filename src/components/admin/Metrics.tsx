@@ -42,12 +42,13 @@ export function Metrics() {
         <p className="mt-6 text-sm text-muted">Counting…</p>
       ) : (
         <>
-          <div className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
+          <div className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
             <Stat label="Gifts with 5+ notes" value={pct(data.pctWith5)} detail={`${data.giftsWith5} of ${n(data.gifts, "gift", "gifts")} made`} />
             <Stat label="Friend page to note" value={pct(data.viewToNote)} detail={`${n(data.friendNotes, "note", "notes")} from ${n(data.friendViews, "visit", "visits")}`} />
             <Stat label="Wrapped, then paid" value={pct(data.wrapToPay)} detail={`${data.paid} of ${n(data.wrapped, "gift", "gifts")}`} />
             <Stat label="Recipient opened it" value={pct(data.openRate)} detail={`${data.opened} of ${n(data.published, "sent gift", "sent gifts")}`} />
             <Stat label="Sign-up to first share" value={hours(data.medianHoursToShare)} detail={`Median, ${n(data.sharers, "person", "people")}`} />
+            <Stat label="Kept the recommended layout" value={pct(data.keptLayoutPct)} detail={`${data.keptLayout} of ${n(data.gifts, "gift", "gifts")}. ${n(data.layoutChanges, "layout change", "layout changes")}, ${n(data.themeChanges, "theme change", "theme changes")}`} />
           </div>
           <details className="mt-4 rounded-2xl border border-line bg-cream px-4 py-3 text-sm">
             <summary className="cursor-pointer font-medium">All events in this range</summary>

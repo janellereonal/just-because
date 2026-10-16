@@ -583,10 +583,8 @@ export function ComicIssueView({ kind, site, modules, contributions, calendarEnt
               <button
                 type="button"
                 className="cx-replay"
-                onClick={() => {
-                  setCoverOpen(false);
-                  onReplayCover();
-                }}
+                // The theme's opening already played; the cover is there to look at, not a second opening.
+                onClick={() => setCoverOpen(false)}
               >
                 {COMIC_COPY.replay}
               </button>

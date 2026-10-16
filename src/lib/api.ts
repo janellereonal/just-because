@@ -18,6 +18,7 @@
  *    first; the password hash itself never leaves the server
  */
 import { FORMAT_IDS } from "@/lib/formats";
+import { recommendedLayout } from "@/lib/recommendedLayout";
 import { FONT_CHOICE_IDS } from "@/lib/fontChoices";
 import { FIELD_NAMES, LIMITS, customTextLimit, noteTextLimit, tooLong } from "@/lib/limits";
 import { normalizeIntroSettings } from "@/lib/intro";
@@ -446,11 +447,12 @@ export const updateSite = createServerFn({ method: "POST" })
         format: z.enum(FORMAT_IDS),
         format_settings: jsonObject,
         solo: z.boolean().optional(),
+        theme_id: id.optional(),
       }),
     }),
   )
   .handler(async ({ data }) => {
-    await requireSiteOwner(data.id);
+    const owner = await requireSiteOwner(data.id);
     const [site] = await getDb().select().from(schema.giftSites).where(eq(schema.giftSites.id, data.id));
     if (!site) throw new HttpError(404, "We couldn't find that gift.");
     const p = data.patch;
@@ -477,8 +479,18 @@ export const updateSite = createServerFn({ method: "POST" })
       }
     }
     const tier = getTier(site.tier);
+    // A new theme: only a published one (admins may pick drafts).
+    let nextTheme: { id: string; name: string } | null = null;
+    if (p.theme_id && p.theme_id !== site.themeId) {
+      const [t] = await getDb()
+        .select({ id: schema.themes.id, name: schema.themes.name, status: schema.themes.status })
+        .from(schema.themes)
+        .where(eq(schema.themes.id, p.theme_id));
+      if (!t || (t.status !== "published" && !owner.user.isAdmin)) throw new HttpError(404, "We couldn't find that theme.");
+      nextTheme = t;
+    }
     if (tier && !tier.formats.includes(p.format)) {
-      throw new HttpError(400, `${tier.name} doesn't include that format. Upgrade to use it.`);
+      throw new HttpError(400, `${tier.name} doesn't include that layout. Upgrade to use it.`);
     }
     await getDb()
       .update(schema.giftSites)
@@ -499,8 +511,20 @@ export const updateSite = createServerFn({ method: "POST" })
         format: p.format,
         formatSettings: p.format_settings,
         ...(p.solo !== undefined ? { solo: p.solo } : {}),
+        ...(nextTheme ? { themeId: nextTheme.id } : {}),
       })
       .where(eq(schema.giftSites.id, data.id));
+    // Do people keep the layout their theme recommends?
+    if (nextTheme || p.format !== site.format) {
+      const themeName = nextTheme?.name ?? (site.themeId
+        ? (await getDb().select({ name: schema.themes.name }).from(schema.themes).where(eq(schema.themes.id, site.themeId)))[0]?.name
+        : null);
+      const pick = recommendedLayout(themeName).layout;
+      if (nextTheme)
+        await track("theme_changed", { siteId: site.id, userId: owner.user.id, props: { from: site.themeId ?? "none", to: nextTheme.id, took_recommended: p.format === pick } });
+      if (p.format !== site.format)
+        await track("layout_changed", { siteId: site.id, userId: owner.user.id, props: { from: site.format, to: p.format, was_recommended: p.format === pick } });
+    }
     return { ok: true };
   });
 
@@ -1397,6 +1421,13 @@ export const getMetrics = createServerFn({ method: "GET" })
     const hours = [...shares].map((r) => Number(r.hours)).filter((h) => Number.isFinite(h));
     const pct = (a: number, b: number) => (b > 0 ? Math.round((a / b) * 1000) / 10 : null);
     const views = byName["friend_page_viewed"]?.n ?? 0;
+    // Gifts made in the window that are still on their theme's recommended layout.
+    const layoutRows = await db
+      .select({ format: schema.giftSites.format, theme: schema.themes.name })
+      .from(schema.giftSites)
+      .leftJoin(schema.themes, eq(schema.themes.id, schema.giftSites.themeId))
+      .where(sql`${schema.giftSites.createdAt} > ${since}`);
+    const keptLayout = layoutRows.filter((r) => r.format === recommendedLayout(r.theme).layout).length;
     return {
       days: data.days,
       gifts: gifts.length,
@@ -1413,6 +1444,10 @@ export const getMetrics = createServerFn({ method: "GET" })
       openRate: pct(opens?.opened ?? 0, opens?.published ?? 0),
       medianHoursToShare: median(hours),
       sharers: hours.length,
+      keptLayout,
+      keptLayoutPct: pct(keptLayout, layoutRows.length),
+      layoutChanges: byName["layout_changed"]?.n ?? 0,
+      themeChanges: byName["theme_changed"]?.n ?? 0,
       events: counts.map((r) => ({ name: r.name, count: r.n, gifts: r.sites })).sort((a, b) => a.name.localeCompare(b.name)),
     };
   });

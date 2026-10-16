@@ -71,7 +71,7 @@ export function tierBlocker(tier: Tier, usage: Usage, format: string): string | 
   if (usage.photos > tier.photos.cap)
     return `This gift has ${usage.photos} photos. ${tier.name} fits ${tier.photos.cap}.`;
   if (!tier.formats.includes(format as Tier["formats"][number]))
-    return `${tier.name} doesn't include this format. Switch to ${tier.formats.map((f) => formatInfo(f).title).join(" or ")} to use it.`;
+    return `${tier.name} doesn't include this layout. Switch to ${tier.formats.map((f) => formatInfo(f).title).join(" or ")} to use it.`;
   return null;
 }
 
