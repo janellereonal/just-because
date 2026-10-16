@@ -27,7 +27,10 @@ const CANDLES = 5;
 export function BirthdayOpening(p: OpeningProps) {
   const c = p.design.palette;
   const cast = useRef<CharacterHandle | null>(null);
-  const [out, setOut] = useState<boolean[]>(() => Array(CANDLES).fill(false));
+  // The real age when the organiser gave it: that many candles up to 10, number candles above.
+  const digits = p.age && p.age > 10 ? String(p.age).split("") : null;
+  const count = digits ? digits.length : p.age && p.age > 0 ? p.age : CANDLES;
+  const [out, setOut] = useState<boolean[]>(() => Array(count).fill(false));
   const [breath, setBreath] = useState(0);
   const [mic, setMic] = useState<"off" | "asking" | "on" | "denied">("off");
   const stopMic = useRef<(() => void) | null>(null);
@@ -140,7 +143,11 @@ export function BirthdayOpening(p: OpeningProps) {
   }
 
   const lean = Math.min(1, breath) * 26;
-  const lit = out.filter((o) => !o).length / CANDLES;
+  const lit = out.filter((o) => !o).length / count;
+  // Narrower and closer together when there are many candles, so ten still fit.
+  // Without an age it's the cake as it always was: five candles, 10% wide, 5% apart.
+  const candleW = digits ? 20 : p.age ? Math.min(10, 72 / count) : 10;
+  const candleGap = digits ? 4 : p.age ? Math.min(5, 22 / count) : 5;
   return (
     <div className="relative flex w-full flex-col items-center">
       {/* The room: lights down while the candles burn, back up once they're out */}
@@ -176,7 +183,7 @@ export function BirthdayOpening(p: OpeningProps) {
 
         <div className="relative mx-auto" style={{ width: "78%" }}>
           {/* Candles */}
-          <div className="relative z-[3] flex justify-center gap-[5%] px-[10%]" style={{ height: "clamp(70px,22cqi,110px)", marginBottom: `${-ELLIPSE * 0.7 * 50 * 0.9}%` }}>
+          <div className="relative z-[3] flex justify-center px-[10%]" style={{ gap: `${candleGap}%`, height: "clamp(70px,22cqi,110px)", marginBottom: `${-ELLIPSE * 0.7 * 50 * 0.9}%` }}>
             {out.map((isOut, i) => (
               <button
                 key={i}
@@ -184,16 +191,32 @@ export function BirthdayOpening(p: OpeningProps) {
                   flameRefs.current[i] = el;
                 }}
                 type="button"
-                aria-label={isOut ? `Candle ${i + 1} is out` : `Blow out candle ${i + 1}`}
+                aria-label={digits ? (isOut ? `The ${digits[i]} is out` : `Blow out the ${digits[i]}`) : isOut ? `Candle ${i + 1} is out` : `Blow out candle ${i + 1}`}
                 disabled={isOut || !p.interactive || p.paused}
                 onClick={(e) => {
                   e.stopPropagation();
                   blowOut(i);
                 }}
-                className="relative flex h-full w-[10%] min-w-5 touch-manipulation items-end justify-center outline-none focus-visible:ring-4 focus-visible:ring-white/70"
+                className="relative flex h-full min-w-5 touch-manipulation items-end justify-center outline-none focus-visible:ring-4 focus-visible:ring-white/70"
+                style={{ width: `${candleW}%` }}
               >
+                {digits ? (
+                  <span
+                    className="absolute bottom-0 left-1/2 -translate-x-1/2 leading-[0.8] font-black"
+                    style={{
+                      fontSize: "clamp(52px,17cqi,84px)",
+                      fontFamily: "var(--jb-display)",
+                      color: i % 2 ? c.mint : c.cobalt,
+                      WebkitTextStroke: "2px #fff",
+                      textShadow: "0 2px 0 rgba(0,0,0,.12), inset 0 0 4px rgba(255,255,255,.5)",
+                    }}
+                    aria-hidden
+                  >
+                    {digits[i]}
+                  </span>
+                ) : null}
                 <span
-                  className="block w-[56%] rounded-t-[3px]"
+                  className={`block w-[56%] rounded-t-[3px] ${digits ? "invisible" : ""}`}
                   style={{
                     height: `${52 + ((i * 7) % 3) * 6}%`,
                     background: [

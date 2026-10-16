@@ -9,6 +9,7 @@ import { defineTheme } from "@/themes/engine/define";
 export default defineTheme({
   id: "kraft-parcel",
   name: "Kraft Parcel (sample)",
+  dbName: "Kraft Parcel (sample)",
   object: "A taped cardboard parcel with a shipping label",
   gesture: "tear",
   gestureOptions: { distance: 220 },
@@ -27,5 +28,12 @@ export default defineTheme({
   price: { kind: "free" },
   handoff: { default: { mode: "reveal" }, comic: { mode: "fade" } },
   load: () => import("./Object"),
+  occasion: {
+    defaultFormat: "scrapbook",
+    sections: ["letters", "photobooth", "voice"],
+    prompts: ["occasion.parcel.prompt1", "occasion.parcel.prompt2", "occasion.parcel.prompt3"],
+    heading: "occasion.parcel.heading",
+    greeting: "occasion.parcel.greeting",
+  },
   status: "dev",
 });

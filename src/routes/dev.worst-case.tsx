@@ -13,6 +13,8 @@ import { FONT_PAIRINGS, type SiteModule } from "@/lib/gift";
 import { introStyleForTheme } from "@/lib/intro";
 import { LIMITS } from "@/lib/limits";
 import type { GiftFormat } from "@/lib/formats";
+import { ENGINE_THEMES } from "@/themes/engine/registry";
+import { WORST_SLOTS } from "@/themes/engine/slots";
 
 /**
  * Dev only: every field at its limit, to see where layouts break.
@@ -28,6 +30,8 @@ export const Route = createFileRoute("/dev/worst-case")({
     format: (typeof s["format"] === "string" ? s["format"] : "scrapbook") as GiftFormat,
     intro: s["intro"] === 1 || s["intro"] === "1" || s["intro"] === true,
     cover: s["cover"] === 1 || s["cover"] === "1" || s["cover"] === true,
+    /** An engine theme's id (winter-cabin, parol...): its opening at the limits. Use with intro=1. */
+    engine: typeof s["engine"] === "string" ? s["engine"] : "",
   }),
   component: WorstCase,
 });
@@ -54,7 +58,8 @@ const WORST = {
 };
 
 function WorstCase() {
-  const { kind, format, intro, cover } = Route.useSearch();
+  const { kind, format, intro, cover, engine } = Route.useSearch();
+  const engineDef = ENGINE_THEMES.find((x) => x.id === engine);
   const { data: themes = [] } = useQuery({ queryKey: ["themes", false], queryFn: () => fetchThemes(false) });
   const { data: all = [] } = usePalettes();
   const theme = themes.find((t) => themeKindOf(t) === kind);
@@ -110,6 +115,14 @@ function WorstCase() {
         character={null}
         iconSet={null}
         contributors={[WORST_NAME, "Jo", "Mika"]}
+        {...(engineDef
+          ? {
+              themeName: engineDef.dbName,
+              slots: WORST_SLOTS,
+              notes: notes.map((n) => ({ id: n.id, author: n.author_name, text: n.text_content, media: null, kind: n.module_type })),
+              themeOptions: { simbang: true, now: "2026-12-24T08:00:00", year: 2026 },
+            }
+          : {})}
         onOpen={() => {}}
         onSkip={() => {}}
       />

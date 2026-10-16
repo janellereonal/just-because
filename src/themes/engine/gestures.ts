@@ -112,6 +112,8 @@ export type Gesture = {
   bind: React.HTMLAttributes<HTMLElement> & { tabIndex: number; role: string; "aria-label": string };
   /** Finish now (the plain button). */
   complete: () => void;
+  /** Set progress from the theme's own targets (lighting panels one by one, say). Completes at the threshold. */
+  setProgress: (p: number) => void;
   reset: () => void;
   label: string;
   hint: string;
@@ -488,6 +490,7 @@ export function useGesture(kind: GestureKind, options: GestureOptions): Gesture 
       style: { touchAction: kind === "scratch" || kind === "wipe" || kind === "spin" || drag ? "none" : "manipulation" },
     },
     complete: finish,
+    setProgress: (p: number) => report(Math.max(0, Math.min(1, p)), { animateTo: true }),
     reset,
     label,
     hint,

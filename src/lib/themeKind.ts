@@ -45,7 +45,7 @@ export function themeKindOf(
   if (key.includes("pixel") || key.includes("8-bit") || key.includes("arcade")) return "pixel";
   if (key.includes("game night") || key.includes("board game") || /\bgame\b/.test(key)) return "game";
   if (key.includes("valentine") || key.includes("romance")) return "valentine";
-  if (key.includes("birthday")) return "birthday";
+  if (key.includes("birthday") || key.includes("debut")) return "birthday";
   if (key.includes("voyage") || key.includes("farewell") || key.includes("despidida"))
     return "voyage";
   if (key.includes("christmas")) return "christmas";

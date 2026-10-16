@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { previewEngineProps } from "@/lib/engineGift";
 import { sampleNotes } from "@/lib/sampleSections";
 import { DEMO_GIFTS, DEMO_ORDER } from "@/lib/demoGifts";
 import type { ModuleType, SiteModule } from "@/lib/gift";
@@ -200,6 +201,7 @@ function ThemeDetailPage() {
                         fonts={fonts}
                         backgroundStyle={backgroundFor(theme)}
                         recipientName={sample.name}
+                        {...previewEngineProps(theme.name, sample.name)}
                         autoOpenAfter={tour.autoOpenAfter}
                         onOpen={tour.onOpen}
                         onSkip={tour.onOpen}

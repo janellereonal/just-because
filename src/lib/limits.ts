@@ -50,6 +50,8 @@ export function customTextLimit(key: string): number {
   if (key === "recipient_name") return LIMITS.recipientName;
   if (key === "intro_message") return LIMITS.introMessage;
   if (key === "footer_note") return LIMITS.footer;
+  if (key === "turning") return 3;
+  if (key === "to_place" || key === "from_place") return LIMITS.sectionTitle;
   return LIMITS.sectionTitle;
 }
 
@@ -59,6 +61,9 @@ export const FIELD_NAMES: Record<string, string> = {
   recipient_name: "their name",
   intro_message: "the message under the title",
   footer_note: "the footer note",
+  turning: "the age",
+  to_place: "where it's going",
+  from_place: "where it's from",
 };
 
 export const tooLong = (what: string, max: number) => `Keep ${what} under ${max} characters.`;

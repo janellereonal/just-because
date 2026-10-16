@@ -16,6 +16,7 @@ import type { CharacterSetting } from "@/themes/_shared/cast/types";
 export const Route = createFileRoute("/dev/openings")({
   validateSearch: (s: Record<string, unknown>) => ({
     kind: (typeof s["kind"] === "string" ? s["kind"] : "valentine") as ThemeKind,
+    age: typeof s["age"] === "number" ? s["age"] : undefined,
     auto: s["auto"] === true || s["auto"] === 1 || s["auto"] === "1" || s["auto"] === "true",
     beat: typeof s["beat"] === "number" ? s["beat"] : typeof s["beat"] === "string" ? Number(s["beat"]) : undefined,
     name: typeof s["name"] === "string" ? s["name"] : "Ana",
@@ -28,7 +29,8 @@ export const Route = createFileRoute("/dev/openings")({
 const PALETTE = { background: "#FBF8F2", primary: "#B5623E", accent: "#E9C9B6" };
 
 function DevOpenings() {
-  const { kind, auto, beat, name, stay, char } = Route.useSearch();
+  const search = Route.useSearch();
+  const { kind, auto, beat, name, stay, char } = search;
   const preset = char?.startsWith("person:") ? presetById(char.slice(7)) : undefined;
   const character: CharacterSetting | null = preset
     ? { type: "person", person: preset.person, preset: preset.id, accessory: true }
@@ -56,6 +58,7 @@ function DevOpenings() {
         palette={PALETTE}
         recipientName={name}
         contributors={["Mia", "Leo", "Priya", "Tom", "Sofia"]}
+        age={search.age ?? null}
         autoplay={auto}
         character={character}
         onOpen={() => {}}

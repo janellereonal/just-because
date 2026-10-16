@@ -13,7 +13,7 @@ import { t } from "@/i18n";
 import { useGesture } from "./gestures";
 import { resolveSlots, type SlotInput } from "./slots";
 import { SOUND_PACKS } from "./sound";
-import type { EngineObject, ThemeDefinition } from "./define";
+import type { EngineNote, EngineObject, ThemeDefinition, ThemeOptions } from "./define";
 
 const loaded = new Map<string, React.LazyExoticComponent<EngineObject>>();
 function objectFor(def: ThemeDefinition) {
@@ -25,28 +25,39 @@ function objectFor(def: ThemeDefinition) {
   return c;
 }
 
+/** Start loading a theme's object early (a gallery card coming into view, say). */
+export function preloadEngineObject(def: ThemeDefinition) {
+  void def.load();
+}
+
 export type EngineStageProps = {
   theme: ThemeDefinition;
   slots: SlotInput;
-  greeting?: string;
-  badge?: string;
-  buttonText?: string;
-  icons?: IconSet | null;
-  contributors?: string[];
-  contained?: boolean;
-  interactive?: boolean;
-  paused?: boolean;
+  greeting?: string | undefined;
+  badge?: string | undefined;
+  buttonText?: string | undefined;
+  icons?: IconSet | null | undefined;
+  contributors?: string[] | undefined;
+  notes?: EngineNote[] | undefined;
+  options?: ThemeOptions | undefined;
+  contained?: boolean | undefined;
+  interactive?: boolean | undefined;
+  paused?: boolean | undefined;
   /** Previews: do the gesture by itself, then open. */
-  autoplay?: boolean;
+  autoplay?: boolean | undefined;
   onOpen: () => void;
-  onSkip?: () => void;
+  onSkip?: (() => void) | undefined;
 };
 
 export function EngineStage(p: EngineStageProps) {
   const def = p.theme;
   const interactive = p.interactive ?? true;
   const paused = p.paused ?? false;
-  const slots = useMemo(() => resolveSlots(p.slots, { accent: def.palette.accent, accent2: def.palette.accent2 }), [p.slots, def]);
+  const slots = useMemo(
+    () => resolveSlots(p.slots, { accent: def.palette.accent, accent2: def.palette.accent2 }),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [JSON.stringify(p.slots), def],
+  );
   const [hint, setHint] = useState("");
   useEffect(() => {
     loadFont(def.fonts.display, "high");
@@ -62,19 +73,21 @@ export function EngineStage(p: EngineStageProps) {
       interactive={interactive}
       paused={paused}
       onDone={p.onOpen}
-      onSkip={p.onSkip}
-      hint={hint}
+      onSkip={p.onSkip ?? p.onOpen}
+      hint={interactive && !paused ? hint : ""}
       badge={p.badge ?? ""}
-      {...(p.icons ? { sprinkles: p.icons } : {})}
+      {...(p.icons ? { sprinkles: p.icons, sprinkleOpacity: 0.25 } : {})}
     >
       {({ hostRef, open, reduced }) => (
         <EngineBody
           def={def}
           slots={slots}
-          greeting={p.greeting ?? ""}
-          buttonText={p.buttonText ?? t("opening.open")}
+          greeting={p.greeting?.trim() || `For ${slots.recipient}`}
+          buttonText={p.buttonText ?? ""}
           icons={p.icons ?? null}
           contributors={p.contributors ?? []}
+          notes={p.notes ?? []}
+          options={p.options ?? {}}
           interactive={interactive}
           paused={paused}
           autoplay={p.autoplay ?? false}
@@ -95,6 +108,8 @@ function EngineBody(b: {
   buttonText: string;
   icons: IconSet | null;
   contributors: string[];
+  notes: EngineNote[];
+  options: ThemeOptions;
   interactive: boolean;
   paused: boolean;
   autoplay: boolean;
@@ -105,16 +120,21 @@ function EngineBody(b: {
 }) {
   const { def } = b;
   const pack = SOUND_PACKS[def.sound];
+  const stay = def.afterDone === "stay" && !b.autoplay;
   const gesture = useGesture(def.gesture, {
     ...def.gestureOptions,
     sound: def.gestureOptions?.sound ?? { tick: pack.tick, done: pack.done },
     enabled: b.interactive && !b.paused,
     // A beat after the payoff, so it can be seen and heard before the gift takes over.
-    onDone: () => window.setTimeout(b.open, b.reduced ? 250 : 900),
+    onDone: () => {
+      if (!stay) window.setTimeout(b.open, b.reduced ? 250 : 1300);
+    },
   });
 
   useEffect(() => {
-    b.setHint(gesture.done ? "" : def.hint ? t(def.hint) : gesture.hint);
+    // After the gesture, themes that stay open own the hint ("Tap an ornament to read it").
+    if (!gesture.done) b.setHint(def.hint ? t(def.hint) : gesture.hint);
+    else if (!stay) b.setHint("");
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [gesture.done, gesture.hint]);
 
@@ -129,9 +149,10 @@ function EngineBody(b: {
   }, [b.autoplay, b.paused]);
 
   const Obj = objectFor(def);
+  const label = gesture.done && stay ? t("opening.openGift") : b.buttonText || t(def.button ?? "opening.open");
   return (
     <div
-      className="relative flex size-full flex-col items-center justify-center pt-[clamp(44px,11cqi,72px)] pb-[clamp(96px,22cqi,120px)]"
+      className="relative flex size-full flex-col items-center justify-center pt-[clamp(44px,11cqi,72px)] pb-[clamp(96px,22cqi,120px)] [container-type:size]"
       style={{ ["--jb-display" as string]: def.fonts.display.family, ["--jb-text" as string]: def.fonts.text.family, fontFamily: "var(--jb-text)" } as React.CSSProperties}
     >
       <Suspense fallback={null}>
@@ -149,11 +170,19 @@ function EngineBody(b: {
           reduced={b.reduced}
           hostRef={b.hostRef}
           setHint={b.setHint}
+          notes={b.notes}
+          options={b.options}
+          openNow={b.open}
         />
       </Suspense>
       <div className="relative z-[45] mt-4 h-11">
-        <FallbackButton onClick={gesture.complete} color={def.palette.ink} ink={def.palette.ink} hidden={gesture.done || !b.interactive || b.paused}>
-          {b.buttonText}
+        <FallbackButton
+          onClick={gesture.done ? b.open : gesture.complete}
+          color={def.palette.ink}
+          ink={def.palette.ink}
+          hidden={(gesture.done && !stay) || !b.interactive || b.paused}
+        >
+          {label}
         </FallbackButton>
       </div>
     </div>

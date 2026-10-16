@@ -215,6 +215,17 @@ async function canViewGift(siteId: string, opts: { allowSharedNotes?: boolean } 
   return !needsPassword(site) || isUnlocked(site);
 }
 
+/**
+ * The visitor's country (ISO code like "PH"), from Vercel's edge header. Only
+ * used to order themes (Balikbayan Box first for the Philippines, say). Null
+ * locally and when unknown.
+ */
+export const getVisitorCountry = createServerFn({ method: "GET" }).handler(async () => {
+  const { getRequest } = await import("@tanstack/react-start/server");
+  const raw = getRequest()?.headers.get("x-vercel-ip-country") ?? "";
+  return /^[A-Z]{2}$/.test(raw) ? raw : null;
+});
+
 /** Reads are cheap, but a flood of slug guesses isn't: generous per-visitor caps on public lookups. */
 const READ_LIMIT = "Lots of requests from here just now. Wait a minute and try again.";
 

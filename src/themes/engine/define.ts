@@ -48,6 +48,26 @@ export type EnginePalette = {
   accent2: string;
 };
 
+/** A friend's note, as an opening can show it (approved, public notes only). */
+export type EngineNote = {
+  id: string;
+  author: string;
+  text: string | null;
+  /** A photo or other media URL, when the note has one. */
+  media: string | null;
+  /** Which section it came from (letters, photobooth...). */
+  kind: string;
+};
+
+/** Gift-level options a theme offers (Simbang Gabi on Parol, say). Stored in the gift's intro settings. */
+export type ThemeOptions = {
+  simbang?: boolean;
+  /** The Christmas the gift is for (Simbang Gabi counts nights in that December). */
+  year?: number;
+  /** Dev only: pretend it's this moment (ISO), to preview a night. */
+  now?: string;
+};
+
 /** What every engine theme's object gets. */
 export type EngineObjectProps = {
   theme: ThemeDefinition;
@@ -65,13 +85,31 @@ export type EngineObjectProps = {
   /** Positioned host for particles (the whole stage). */
   hostRef: React.RefObject<HTMLDivElement | null>;
   setHint: (hint: string) => void;
+  /** Friends' notes, for objects that hold them (ornaments, parcel items, treasures). */
+  notes: EngineNote[];
+  options: ThemeOptions;
+  /** Open the gift now (themes with afterDone "stay" call this, or the button does). */
+  openNow: () => void;
 };
 
 export type EngineObject = (props: EngineObjectProps) => React.ReactNode;
 
+/** Starting data for gifts made with this theme (the occasion template). */
+export type OccasionTemplate = {
+  defaultFormat: GiftFormat;
+  sections: string[];
+  /** 3 to 5 ideas shown to friends when they write. */
+  prompts: MessageKey[];
+  /** Example heading and greeting, with {name} for the recipient. */
+  heading: MessageKey;
+  greeting: MessageKey;
+};
+
 export type ThemeDefinition = {
   /** Lower-case id, also the folder name. */
   id: string;
+  /** The theme row's name in the database. Gifts find their engine theme by it. */
+  dbName: string;
   /** Display name, and other names by region ("Balikbayan Box" for PH, "Care Package" elsewhere). */
   name: string;
   regionalNames?: Record<string, string>;
@@ -81,6 +119,8 @@ export type ThemeDefinition = {
   gestureOptions?: Omit<GestureOptions, "onDone">;
   /** The hint under the object, if the gesture's own one doesn't fit ("Pull off the tape"). */
   hint?: MessageKey;
+  /** The plain button's label before the gesture is done ("Light it all up"). Default: "Open it". */
+  button?: MessageKey;
   materials: MaterialName[];
   effects: ParticlePreset[];
   sound: SoundPackName;
@@ -96,6 +136,14 @@ export type ThemeDefinition = {
   handoff: { default: Handoff } & Partial<Record<GiftFormat, Handoff>>;
   /** The object, loaded only when the theme is shown. */
   load: () => Promise<{ default: EngineObject }>;
+  /**
+   * After the gesture: "open" hands off to the gift a beat later; "stay" keeps the
+   * object up so people can tap what's inside, and the button says "Open your gift".
+   */
+  afterDone?: "open" | "stay";
+  /** Options this theme offers on a gift. */
+  offers?: (keyof ThemeOptions)[];
+  occasion: OccasionTemplate;
   /** Static files the opening needs (for the performance budget). Paths under /public. */
   assets?: string[];
   /** Strings the theme uses, so the translation check knows them. */
@@ -147,8 +195,15 @@ export function validateTheme(def: ThemeDefinition): string[] {
     if (r !== "global" && !/^[A-Z]{2}$/.test(r)) out.push(`region "${r}" should be "global" or a two-letter country code`);
   }
   for (const f of Object.keys(def.handoff)) if (f !== "default" && !(FORMAT_IDS as readonly string[]).includes(f)) out.push(`handoff for unknown format "${f}"`);
+  if (def.button && !hasMessage(def.button)) out.push(`button "${def.button}" isn't in src/i18n/en.ts`);
   if (def.hint && !hasMessage(def.hint)) out.push(`hint "${def.hint}" isn't in src/i18n/en.ts`);
   for (const k of def.strings ?? []) if (!hasMessage(k)) out.push(`string "${k}" isn't in src/i18n/en.ts`);
   if (def.status === "draft" && !def.flag) out.push("a draft theme needs a flag");
+  if (!def.dbName.trim()) out.push("dbName is empty (gifts find the theme by it)");
+  const o = def.occasion;
+  if (!(FORMAT_IDS as readonly string[]).includes(o.defaultFormat)) out.push(`occasion.defaultFormat "${o.defaultFormat}" isn't a format`);
+  if (!o.sections.length) out.push("occasion.sections is empty");
+  if (o.prompts.length < 3 || o.prompts.length > 5) out.push("give friends 3 to 5 prompts");
+  for (const k of [...o.prompts, o.heading, o.greeting]) if (!hasMessage(k)) out.push(`string "${k}" isn't in src/i18n/en.ts`);
   return out;
 }
