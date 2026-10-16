@@ -170,3 +170,10 @@ and search matches names and tags.
 | `ornament` | Ornament | Objects | christmas, newyear |
 | `suitcase` | Suitcase | Objects | voyage, trip |
 | `sun` | Sun | Objects | summer, voyage, morning |
+
+## People you build (Oct 2026)
+
+`src/themes/_shared/cast/person.ts` lists every option (age, skin, face, hair, hair color, facial hair, glasses,
+hat, outfit, outfit color, held item) and the 40 ready-made people. `src/lib/clay/person.ts` builds the clay model
+from a config. The face is live SVG from `personFace()`, which uses the same head layout as the model.
+A saved person is `{ type: "person", person, preset?, image_url? }`. See docs/NEXT-SESSION.md, session 12b.

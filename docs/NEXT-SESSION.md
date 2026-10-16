@@ -3,6 +3,22 @@
 Updated 16 Oct 2026 (sessions 6 to 8), so a new session, on any Claude account, can carry on without
 missing anything. Start with `HANDOFF.md` section 0.
 
+## Session 12b: the people builder (branch `people-builder`, on top of `characters-library`)
+
+- **Make a person** in Characters: age (4), skin tone (10), face (6), hair (24) and hair color (10), facial hair (5),
+  glasses (5), hat (12), outfit (20) and outfit color (12), and what they hold (20). Every option shows as a real
+  thumbnail of this person wearing it. "Start from" has 40 ready-made people (`PEOPLE` in `cast/person.ts`).
+- Saved on the gift as `{ type: "person", person, preset?, image_url? }` (cleaned by `normalizePerson`). The 3D model
+  is `src/lib/clay/person.ts`; it shares the head layout with the live face (`personFace`), so faces line up.
+- Where the still comes from: `image_url` (baked in the editor 2.5 s after the last change, uploaded as an intro
+  picture), else the preset file in `public/clay/people/`, else rendered in the browser with three.js (loaded on
+  demand, one render at a time). Gift pages only need 3D for a person that hasn't been baked yet.
+- "Little you" is hidden from the picker; gifts that use it keep working, and "Make a person" starts from its colors.
+- A person with their own hat doesn't also wear the theme's hat.
+- Re-render the 40 presets: `cd tools/screens && PEOPLE=1 node clay.js ../op/people 640 && python3 clay_webp.py ../op/people ../../public/clay/people`.
+- `/dev/people` shows them all; `/dev/openings?kind=birthday&char=person:birthday-kid` puts one in an opening.
+- Each baked change uploads a new small WebP (about 10 KB). Old ones aren't cleaned up yet.
+
 ## Session 12a: the character library (branch `characters-library`, on top of `new-themes`)
 
 - 36 new clay characters (18 animals, 18 little friends), all modelled in three.js like the first cast, so they

@@ -17,6 +17,8 @@ import { ICON_SETS, MAX_CUSTOM_ICONS, resolveIconSet, type IconSetSetting, type 
 import { IconGlyph } from "@/themes/_shared/Sprinkles";
 import { SPRING } from "@/themes/_shared/stage";
 import { CAST_COPY } from "@/copy/strings";
+import { NEW_PERSON, PersonBuilder } from "@/components/PersonBuilder";
+import { PEOPLE, personFromLegacy } from "@/themes/_shared/cast/person";
 
 type Tab = "characters" | "customize" | "upload" | "sprinkles";
 const TABS: { key: Tab; label: string }[] = [
@@ -53,6 +55,7 @@ export function CastPanel({
   simple?: boolean;
 }) {
   const [tab, setTab] = useState<Tab>("characters");
+  const [building, setBuilding] = useState(false);
   const design = designFor(kind);
   const cast = castFor(kind, value.character, value.icon_set);
   const char = cast.character;
@@ -154,8 +157,56 @@ export function CastPanel({
 
       <AnimatePresence mode="wait" initial={false}>
         <motion.div key={tab} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -6 }} transition={SPRING.soft} className="mt-4">
-          {tab === "characters" ? (
+          {tab === "characters" && building && char.type === "person" ? (
+            <PersonBuilder siteId={siteId} value={char} accessory={accessory} onChange={setChar} onBack={() => setBuilding(false)} />
+          ) : null}
+          {tab === "characters" && !(building && char.type === "person") ? (
             <div>
+              <div className="mb-4">
+                <p className="font-mono text-[10px] tracking-[0.18em] text-muted uppercase">{CAST_COPY.people}</p>
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (char.type !== "person") {
+                      const legacy = char.type === "library" && char.id === "person";
+                      setChar({ ...NEW_PERSON, person: legacy ? personFromLegacy(char.colors) : NEW_PERSON.person, accessory: wearing, ...(char.name_tag ? { name_tag: char.name_tag } : {}) });
+                    }
+                    setBuilding(true);
+                  }}
+                  className="mt-2 flex w-full items-center gap-3 rounded-2xl border border-dashed border-ink/25 bg-cream px-3 py-2.5 text-left text-sm hover:bg-glass/80"
+                >
+                  <span className="grid size-11 shrink-0 place-items-center overflow-hidden rounded-full bg-paper">
+                    {char.type === "person" ? (
+                      <Character setting={char} size={44} live={false} follow={false} showName={false} />
+                    ) : (
+                      <img src="/clay/people/bookworm@256.webp" alt="" width={44} height={44} />
+                    )}
+                  </span>
+                  <span>
+                    <span className="block font-medium">{char.type === "person" ? CAST_COPY.editPerson : CAST_COPY.makePerson}</span>
+                    <span className="block text-xs text-muted">{CAST_COPY.makePersonHint}</span>
+                  </span>
+                </button>
+                <div className="mt-2 grid grid-cols-4 gap-2">
+                  {PEOPLE.slice(0, 8).map((pp) => {
+                    const on = char.type === "person" && char.preset === pp.id;
+                    return (
+                      <motion.button
+                        key={pp.id}
+                        type="button"
+                        whileTap={{ scale: 0.92 }}
+                        onClick={() => setChar({ type: "person", person: pp.person, preset: pp.id, accessory: wearing, ...(char.name_tag ? { name_tag: char.name_tag } : {}) })}
+                        aria-pressed={on}
+                        className={`grid place-items-center rounded-2xl border p-1 transition-colors ${on ? "border-accent bg-accent/8" : "border-line bg-cream hover:bg-glass/80"}`}
+                        title={pp.name}
+                      >
+                        <Character setting={{ type: "person", person: pp.person, preset: pp.id, accessory: wearing }} accessory={accessory} size={58} live={false} follow={false} showName={false} />
+                        <span className="w-full truncate text-center text-[11px]">{pp.name}</span>
+                      </motion.button>
+                    );
+                  })}
+                </div>
+              </div>
               <button
                 type="button"
                 onClick={() => setChar({ type: "none" })}
@@ -169,7 +220,8 @@ export function CastPanel({
                 </span>
               </button>
               {(["Mascot", "Animals", "Little people", "Objects"] as const).map((cat) => {
-                const list = CHARACTERS.filter((c) => c.category === cat);
+                // "Little you" is now the people builder; old gifts that use it keep working.
+                const list = CHARACTERS.filter((c) => c.category === cat && c.id !== "person");
                 if (!list.length) return null;
                 return (
                   <div key={cat} className="mb-4">
@@ -207,7 +259,7 @@ export function CastPanel({
 
           {tab === "customize" ? (
             <div className="space-y-4">
-              {char.type === "library" ? (
+              {char.type === "library" && characterById(char.id).body ? (
                 (["primary", "secondary", "skin"] as const).map((slot) => {
                   const base = characterById(char.id).colors[slot];
                   const now = char.colors?.[slot] ?? base;
@@ -234,7 +286,7 @@ export function CastPanel({
                   );
                 })
               ) : (
-                <p className="text-sm text-muted">Your own picture keeps its colors. You can still give it a name tag.</p>
+                <p className="text-sm text-muted">{char.type === "upload" ? "Your own picture keeps its colors. You can still give it a name tag." : CAST_COPY.keepsColors}</p>
               )}
               <label className="block">
                 <span className="text-xs text-muted">Name tag (optional)</span>
