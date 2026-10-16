@@ -11,6 +11,8 @@
 export const FLAGS = {
   /** "Turning" on birthday gifts: the cake shows the real age in candles. */
   birthdayAge: "birthdayAge",
+  /** A short guide before a new organiser's first gift, on /create. */
+  newUserGuide: "newUserGuide",
 } as const;
 
 export type FlagName = keyof typeof FLAGS;

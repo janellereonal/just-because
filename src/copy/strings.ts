@@ -408,3 +408,43 @@ export const SECTIONS_PAGE = {
   cta: "Start a gift",
   link: (n: number) => `See all ${n} sections`,
 } as const;
+
+/** The short guide a new organiser sees before their first gift (flag newUserGuide). */
+export const GUIDE_COPY = {
+  kicker: "Before you start",
+  title: "Here's how your gift comes together",
+  label: "How a gift comes together",
+  steps: [
+    {
+      n: "01",
+      title: "Pick a theme",
+      body: "It's the wrapping: how the gift opens, its colors and Bo's outfit.",
+      bo: "Pick a mood. I'll dress up for it.",
+    },
+    {
+      n: "02",
+      title: "Share one link",
+      body: "Friends add letters, photos and songs from their phone. No app, no account. Or make it just from you.",
+      bo: "The more, the merrier.",
+    },
+    {
+      n: "03",
+      title: "Read everything first",
+      body: "Every note waits for you. Keep the sweet ones and hide anything you'd rather not send.",
+      bo: "You get the first look.",
+    },
+    {
+      n: "04",
+      title: "Wrap it up and send",
+      body: "Making the gift and collecting notes is free. When it's ready, pick a plan and send one link they can keep.",
+      bo: "Then they open it.",
+    },
+  ],
+  stepOf: (n: number, of: number) => `Step ${n} of ${of}`,
+  next: "Next",
+  back: "Back",
+  skip: "Skip",
+  start: "Start my gift",
+  reopen: "How does this work?",
+  close: "Close the guide",
+};
