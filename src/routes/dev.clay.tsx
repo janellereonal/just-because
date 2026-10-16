@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { CHARACTERS } from "@/themes/_shared/cast/library";
+import { PEOPLE } from "@/themes/_shared/cast/person";
 
 /**
  * Dev only: renders every clay figure with three.js. tools/screens/clay.js
@@ -13,9 +14,11 @@ function DevClay() {
   useEffect(() => {
     if (!import.meta.env.DEV) return;
     let alive = true;
-    void import("@/lib/clay/scene").then(({ CLAY, renderClay }) => {
-      const w = window as unknown as { __clay?: (id: string, px?: number) => string; __clayIds?: string[] };
+    void import("@/lib/clay/scene").then(({ CLAY, renderClay, renderPerson }) => {
+      const w = window as unknown as { __clay?: (id: string, px?: number) => string; __clayIds?: string[]; __person?: (id: string, px?: number) => string; __peopleIds?: string[] };
       w.__clay = (id, px) => renderClay(id, CHARACTERS.find((c) => c.id === id)!.colors, px);
+      w.__person = (id, px) => renderPerson(PEOPLE.find((p) => p.id === id)!.person, px);
+      w.__peopleIds = PEOPLE.map((p) => p.id);
       w.__clayIds = Object.keys(CLAY);
       if (!alive) return;
       setShots(Object.keys(CLAY).map((id) => ({ id, url: w.__clay!(id, 320) })));

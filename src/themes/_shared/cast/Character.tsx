@@ -3,6 +3,7 @@ import { animate, motion, useMotionValue, useSpring, useTransform, type MotionVa
 import { reducedMotion } from "@/lib/play";
 import { ACCESSORIES, CLAY_IMAGE, characterById, type CharacterSpec } from "@/themes/_shared/cast/library";
 import type { AccessoryId, CharacterHandle, CharacterSetting } from "@/themes/_shared/cast/types";
+import { personFace, personKey, presetById, type PersonConfig } from "@/themes/_shared/cast/person";
 
 type Mood = "idle" | "anticipate" | "celebrate" | "sad";
 
@@ -173,9 +174,26 @@ export const Character = forwardRef<CharacterHandle, CharacterProps>(function Ch
 
   const tilt = useTransform(body.lx, (v) => v * 6);
 
+  const person = setting.type === "person" ? setting : null;
+  const personSrc = usePersonImage(person, size);
   const content =
     setting.type === "none" ? null : setting.type === "upload" ? (
       <Sticker url={setting.upload_url} accessory={wearing} />
+    ) : setting.type === "person" ? (
+      <Drawn
+        spec={personSpec(setting.person)}
+        image={personSrc}
+        colors={undefined}
+        accessory={personFace(setting.person).ownHat && wearing && ACCESSORIES[wearing].slot === "head" ? null : wearing}
+        lx={body.lx}
+        ly={body.ly}
+        closed={closed || body.mood === "sad"}
+        sleepy={sleepy}
+        mood={body.mood}
+        blush={blush}
+        uid={uid}
+        size={size}
+      />
     ) : (
       <Drawn
         spec={characterById(setting.id)}
@@ -241,6 +259,7 @@ export const Character = forwardRef<CharacterHandle, CharacterProps>(function Ch
 
 function Drawn({
   spec,
+  image,
   colors,
   accessory,
   lx,
@@ -253,6 +272,8 @@ function Drawn({
   size,
 }: {
   spec: CharacterSpec;
+  /** A still to use instead of public/clay/<id>.webp (people from the builder). Null while it renders. */
+  image?: string | null;
   colors: { primary?: string; secondary?: string; skin?: string } | undefined;
   accessory: AccessoryId | null;
   lx: MotionValue<number>;
@@ -280,7 +301,11 @@ function Drawn({
   const acc = accessory ? ACCESSORIES[accessory] : null;
   const anchor = acc?.slot === "neck" ? f.neck : f.head;
   const s = anchor.w / 80;
-  const happy = mood === "celebrate";
+  const expr = clay?.expression ?? "smile";
+  const happy = mood === "celebrate" || (mood === "idle" && expr === "joy");
+  const grin = mood === "idle" && (expr === "grin" || expr === "joy");
+  const wow = mood === "idle" && expr === "wow";
+  const calm = mood === "idle" && expr === "calm";
   const lid = sleepy ? 0.45 : 1;
   const ink = clay?.ink ?? "#2B2522";
   return (
@@ -295,7 +320,9 @@ function Drawn({
       {acc && acc.slot === "head" && accessory === "veil" ? (
         <g transform={`translate(${anchor.x} ${anchor.y}) scale(${s})`}>{acc.draw()}</g>
       ) : null}
-      {clay ? (
+      {image !== undefined ? (
+        image ? <image href={image} x={CLAY_IMAGE.x} y={CLAY_IMAGE.y} width={CLAY_IMAGE.size} height={CLAY_IMAGE.size} preserveAspectRatio="xMidYMid meet" /> : null
+      ) : clay ? (
         <image
           href={`/clay/${spec.id}${size > 132 ? "" : "@256"}.webp`}
           x={CLAY_IMAGE.x}
@@ -308,22 +335,24 @@ function Drawn({
         spec.body?.(c)
       )}
       <motion.g style={{ x: face, y: faceY }}>
-        {f.cheeks ? (
+        {f.cheeks && !(image !== undefined && !image) ? (
           <>
             <ellipse cx={f.cheeks.l[0]} cy={f.cheeks.l[1]} rx="7" ry="4.5" fill="#F27A93" opacity={blush ? 0.75 : clay ? 0.4 : 0.32} />
             <ellipse cx={f.cheeks.r[0]} cy={f.cheeks.r[1]} rx="7" ry="4.5" fill="#F27A93" opacity={blush ? 0.75 : clay ? 0.4 : 0.32} />
           </>
         ) : null}
-        {[f.eyes.l, f.eyes.r].map(([ex, ey], i) =>
-          happy ? (
-            <path key={i} d={`M${ex - 5} ${ey + 1}q5-7 10 0`} stroke={ink} strokeWidth="2.6" fill="none" strokeLinecap="round" />
+        {(clay?.hideEyes || (image !== undefined && !image) ? [] : [f.eyes.l, f.eyes.r]).map(([ex, ey], i) =>
+          happy || (i === 1 && mood === "idle" && expr === "wink") ? (
+            <path key={i} d={`M${ex - 4.5} ${ey + 1}q4.5-6 9 0`} stroke={ink} strokeWidth="2.4" fill="none" strokeLinecap="round" />
+          ) : calm ? (
+            <path key={i} d={`M${ex - 4.5} ${ey - 1}q4.5 5 9 0`} stroke={ink} strokeWidth="2.2" fill="none" strokeLinecap="round" />
           ) : (
             <g key={i}>
               <motion.ellipse
                 cx={ex}
                 cy={ey}
-                rx={f.eyes.size}
-                ry={f.eyes.size * 1.12}
+                rx={f.eyes.size * (wow ? 1.15 : 1)}
+                ry={f.eyes.size * (wow ? 1.3 : 1.12)}
                 fill={ink}
                 // Squash around the eye's own centre. (Motion measures SVG origins from the
                 // shape's own box, so an origin in viewBox px put the pivot far below the
@@ -338,10 +367,14 @@ function Drawn({
             </g>
           ),
         )}
-        {f.mouth ? (
+        {f.mouth && !(image !== undefined && !image) ? (
           <path
             d={
-              mood === "sad"
+              wow
+                ? `M${f.mouth[0] - 2.6} ${f.mouth[1] + 0.5}a2.6 3.2 0 1 0 5.2 0a2.6 3.2 0 1 0-5.2 0`
+                : grin && !happy
+                  ? `M${f.mouth[0] - 6} ${f.mouth[1] - 2}q6 9 12 0z`
+                  : mood === "sad"
                 ? `M${f.mouth[0] - 5} ${f.mouth[1] + 2}q5-5 10 0`
                 : mood === "anticipate"
                   ? `M${f.mouth[0] - 3} ${f.mouth[1]}a3 3 0 1 0 6 0a3 3 0 1 0-6 0`
@@ -351,7 +384,7 @@ function Drawn({
             }
             stroke={ink}
             strokeWidth="2.4"
-            fill={happy ? "#E8576E" : mood === "anticipate" ? ink : "none"}
+            fill={happy || grin ? "#E8576E" : mood === "anticipate" || wow ? ink : "none"}
             strokeLinecap="round"
             strokeLinejoin="round"
           />
@@ -386,4 +419,86 @@ function Sticker({ url, accessory }: { url: string; accessory: AccessoryId | nul
       ) : null}
     </div>
   );
+}
+
+/* ---------- people from the builder ---------- */
+
+const specCache = new Map<string, CharacterSpec>();
+/** A person as a cast spec: their face map, no drawn body. */
+function personSpec(p: PersonConfig): CharacterSpec {
+  const key = personKey(p);
+  let spec = specCache.get(key);
+  if (!spec) {
+    const f = personFace(p);
+    spec = { id: `person-${key}`, name: "Person", category: "Little people", colors: { primary: "#FFFFFF", secondary: "#FFFFFF", skin: "#FFFFFF" }, ...f, clay: f };
+    specCache.set(key, spec);
+  }
+  return spec;
+}
+
+const liveCache = new Map<string, string>();
+const pending = new Map<string, Promise<string>>();
+let queue: Promise<unknown> = Promise.resolve();
+
+/**
+ * Renders a person in the browser (three.js, loaded on demand), once per look
+ * and size. Renders run one at a time with a breath between, so a grid of
+ * thumbnails doesn't freeze the page.
+ */
+export function renderPersonLive(p: PersonConfig, px = 360): Promise<string> {
+  const key = `${personKey(p)}@${px}`;
+  const hit = liveCache.get(key);
+  if (hit) return Promise.resolve(hit);
+  let job = pending.get(key);
+  if (!job) {
+    job = queue.then(() =>
+      import("@/lib/clay/scene").then(
+        ({ renderPerson }) =>
+          new Promise<string>((resolve) => {
+            const url = renderPerson(p, px);
+            liveCache.set(key, url);
+            pending.delete(key);
+            setTimeout(() => resolve(url), 16);
+          }),
+      ),
+    );
+    queue = job.catch(() => undefined);
+    pending.set(key, job);
+  }
+  return job;
+}
+
+/**
+ * Where a person's still comes from: the baked upload, else the preset's file
+ * (when it hasn't been changed), else a render in the browser.
+ */
+function usePersonImage(setting: Extract<CharacterSetting, { type: "person" }> | null, size: number): string | null {
+  const key = setting ? personKey(setting.person) : "";
+  const preset = setting?.preset ? presetById(setting.preset) : undefined;
+  const fixed = !setting
+    ? null
+    : setting.image_url
+      ? setting.image_url
+      : preset && personKey(preset.person) === key
+        ? `/clay/people/${preset.id}${size > 132 ? "" : "@256"}.webp`
+        : null;
+  const px = size > 132 ? 360 : size > 72 ? 200 : 128;
+  const [live, setLive] = useState<string | null>(() => (setting && !fixed ? (liveCache.get(`${key}@${px}`) ?? null) : null));
+  useEffect(() => {
+    if (!setting || fixed) return;
+    let alive = true;
+    const cached = liveCache.get(`${key}@${px}`);
+    if (cached) {
+      setLive(cached);
+      return;
+    }
+    void renderPersonLive(setting.person, px).then((url) => {
+      if (alive) setLive(url);
+    });
+    return () => {
+      alive = false;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [key, fixed, px]);
+  return fixed ?? live;
 }

@@ -21,6 +21,7 @@ import { Route as ContributeSlugRouteImport } from './routes/contribute.$slug'
 import { Route as DevCastRouteImport } from './routes/dev.cast'
 import { Route as DevClayRouteImport } from './routes/dev.clay'
 import { Route as DevOpeningsRouteImport } from './routes/dev.openings'
+import { Route as DevPeopleRouteImport } from './routes/dev.people'
 import { Route as ExampleIdRouteImport } from './routes/example.$id'
 import { Route as GSlugRouteImport } from './routes/g.$slug'
 import { Route as ThemesIndexRouteImport } from './routes/themes.index'
@@ -90,6 +91,11 @@ const DevOpeningsRoute = DevOpeningsRouteImport.update({
   path: '/dev/openings',
   getParentRoute: () => rootRouteImport,
 } as any)
+const DevPeopleRoute = DevPeopleRouteImport.update({
+  id: '/dev/people',
+  path: '/dev/people',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ExampleIdRoute = ExampleIdRouteImport.update({
   id: '/example/$id',
   path: '/example/$id',
@@ -149,6 +155,7 @@ export interface FileRoutesByFullPath {
   '/dev/cast': typeof DevCastRoute
   '/dev/clay': typeof DevClayRoute
   '/dev/openings': typeof DevOpeningsRoute
+  '/dev/people': typeof DevPeopleRoute
   '/example/$id': typeof ExampleIdRoute
   '/g/$slug': typeof GSlugRoute
   '/themes/$id': typeof ThemesIdRoute
@@ -171,6 +178,7 @@ export interface FileRoutesByTo {
   '/dev/cast': typeof DevCastRoute
   '/dev/clay': typeof DevClayRoute
   '/dev/openings': typeof DevOpeningsRoute
+  '/dev/people': typeof DevPeopleRoute
   '/example/$id': typeof ExampleIdRoute
   '/g/$slug': typeof GSlugRoute
   '/themes/$id': typeof ThemesIdRoute
@@ -195,6 +203,7 @@ export interface FileRoutesById {
   '/dev/cast': typeof DevCastRoute
   '/dev/clay': typeof DevClayRoute
   '/dev/openings': typeof DevOpeningsRoute
+  '/dev/people': typeof DevPeopleRoute
   '/example/$id': typeof ExampleIdRoute
   '/g/$slug': typeof GSlugRoute
   '/themes/$id': typeof ThemesIdRoute
@@ -219,6 +228,7 @@ export interface FileRouteTypes {
     | '/dev/cast'
     | '/dev/clay'
     | '/dev/openings'
+    | '/dev/people'
     | '/example/$id'
     | '/g/$slug'
     | '/themes/$id'
@@ -241,6 +251,7 @@ export interface FileRouteTypes {
     | '/dev/cast'
     | '/dev/clay'
     | '/dev/openings'
+    | '/dev/people'
     | '/example/$id'
     | '/g/$slug'
     | '/themes/$id'
@@ -264,6 +275,7 @@ export interface FileRouteTypes {
     | '/dev/cast'
     | '/dev/clay'
     | '/dev/openings'
+    | '/dev/people'
     | '/example/$id'
     | '/g/$slug'
     | '/themes/$id'
@@ -286,6 +298,7 @@ export interface RootRouteChildren {
   DevCastRoute: typeof DevCastRoute
   DevClayRoute: typeof DevClayRoute
   DevOpeningsRoute: typeof DevOpeningsRoute
+  DevPeopleRoute: typeof DevPeopleRoute
   ExampleIdRoute: typeof ExampleIdRoute
   GSlugRoute: typeof GSlugRoute
   ThemesIdRoute: typeof ThemesIdRoute
@@ -379,6 +392,13 @@ declare module '@tanstack/react-router' {
       path: '/dev/openings'
       fullPath: '/dev/openings'
       preLoaderRoute: typeof DevOpeningsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/dev/people': {
+      id: '/dev/people'
+      path: '/dev/people'
+      fullPath: '/dev/people'
+      preLoaderRoute: typeof DevPeopleRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/example/$id': {
@@ -475,6 +495,7 @@ const rootRouteChildren: RootRouteChildren = {
   DevCastRoute: DevCastRoute,
   DevClayRoute: DevClayRoute,
   DevOpeningsRoute: DevOpeningsRoute,
+  DevPeopleRoute: DevPeopleRoute,
   ExampleIdRoute: ExampleIdRoute,
   GSlugRoute: GSlugRoute,
   ThemesIdRoute: ThemesIdRoute,

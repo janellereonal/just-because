@@ -16,6 +16,8 @@ import { RoomEnvironment } from "three/examples/jsm/environments/RoomEnvironment
 import { blob, clay, cone, curl, egg, feet, fluff, mesh, pillow, shade, torus, W, type ClayRecipe } from "@/lib/clay/shapes";
 import { ANIMALS } from "@/lib/clay/animals";
 import { OBJECTS } from "@/lib/clay/objects";
+import { buildPerson } from "@/lib/clay/person";
+import type { PersonConfig } from "@/themes/_shared/cast/person";
 
 /** The image covers this box (a little past 0..120 so tails and ears fit). */
 export const CLAY_BOX = { min: -10, max: 130 };
@@ -269,6 +271,30 @@ function setup(px: number) {
 export function renderClay(id: string, colors: { primary: string; secondary: string; skin: string }, px = 560): string {
   const recipe = CLAY[id];
   if (!recipe) throw new Error(`No clay recipe for ${id}`);
+  draw(recipe(colors), px);
+  return shared!.renderer.domElement.toDataURL("image/png");
+}
+
+/** A person from the builder, as a PNG data URL (previews). */
+export function renderPerson(p: PersonConfig, px = 320): string {
+  draw(buildPerson(p), px);
+  return shared!.renderer.domElement.toDataURL("image/png");
+}
+
+/** A person from the builder as a WebP file, to upload (falls back to PNG). */
+export function personFile(p: PersonConfig, px = 512): Promise<Blob> {
+  draw(buildPerson(p), px);
+  const canvas = shared!.renderer.domElement;
+  return new Promise((resolve, reject) =>
+    canvas.toBlob(
+      (b) => (b ? resolve(b) : canvas.toBlob((png) => (png ? resolve(png) : reject(new Error("No image"))), "image/png")),
+      "image/webp",
+      0.9,
+    ),
+  );
+}
+
+function draw(objects: THREE.Object3D[], px: number) {
   const { renderer, env } = setup(px);
   const scene = new THREE.Scene();
   scene.environment = env;
@@ -326,14 +352,12 @@ export function renderClay(id: string, colors: { primary: string; secondary: str
   scene.add(contact);
 
   const figure = new THREE.Group();
-  recipe(colors).forEach((o) => figure.add(o));
+  objects.forEach((o) => figure.add(o));
   scene.add(figure);
 
   renderer.render(scene, cam);
-  const url = renderer.domElement.toDataURL("image/png");
 
   scene.traverse((o) => {
     if (o instanceof THREE.Mesh) o.geometry.dispose();
   });
-  return url;
 }

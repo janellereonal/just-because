@@ -38,6 +38,10 @@ export type CharacterSpec = {
     neck: { x: number; y: number; w: number };
     /** Eye and mouth color when the default ink would vanish (dark screens). */
     ink?: string;
+    /** People from the builder: their resting face, sunglasses, their own hat. */
+    expression?: "smile" | "grin" | "joy" | "wink" | "wow" | "calm";
+    hideEyes?: boolean;
+    ownHat?: boolean;
   };
 };
 
