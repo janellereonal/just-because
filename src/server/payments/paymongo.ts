@@ -14,6 +14,8 @@ import { enabledPaymentMethods } from "@/config/pricing";
 import type { CheckoutOrder, CheckoutResult, PaidEvent, PaymentProvider, WebhookOutcome } from "./types";
 
 const PAID_EVENT = "checkout_session.payment.paid";
+/** How old a webhook signature may be, in seconds. */
+export const SIGNATURE_TOLERANCE_S = 600;
 
 function apiBase() {
   // Override only for local testing against a fake server.
@@ -148,11 +150,21 @@ async function handleWebhook(rawBody: string, headers: Headers): Promise<Webhook
     !!secret &&
     !!sig &&
     safeEqualHex(createHmac("sha256", secret).update(`${sig.t}.${rawBody}`).digest("hex"), live ? sig.li : sig.te);
-  if (!signed || !eventId) {
+  // A signature older than this could be a replay; treat it as a hint instead (we re-fetch either way).
+  const fresh = !!sig && Math.abs(Date.now() / 1000 - Number(sig.t)) <= SIGNATURE_TOLERANCE_S;
+  if (!signed || !eventId || !fresh) {
     return {
       kind: "check",
       checkoutId,
-      reason: !secret ? "no webhook secret set" : !sig ? "no signature" : "signature didn't match our secret",
+      reason: !secret
+        ? "no webhook secret set"
+        : !sig
+          ? "no signature"
+          : !signed
+            ? "signature didn't match our secret"
+            : !fresh
+              ? "signature too old"
+              : "no event id",
     };
   }
 

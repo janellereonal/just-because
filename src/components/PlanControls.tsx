@@ -87,6 +87,19 @@ export function PlanPickerDialog({
           </DialogDescription>
         </DialogHeader>
         {billing ? (
+          <p className="-mt-1 rounded-xl bg-cream px-3 py-2 text-sm text-muted">
+            So far this gift has{" "}
+            <b className="text-ink">
+              {billing.usage.contributors} {billing.usage.contributors === 1 ? "friend" : "friends"}
+            </b>{" "}
+            and{" "}
+            <b className="text-ink">
+              {billing.usage.photos} {billing.usage.photos === 1 ? "photo" : "photos"}
+            </b>
+            . Each plan says how many it holds; friends can keep adding until it's full.
+          </p>
+        ) : null}
+        {billing ? (
           tiers.length > 0 ? (
             <PricingCards
               tiers={tiers}
