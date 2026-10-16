@@ -22,7 +22,7 @@ export const Route = createFileRoute("/dev/worst-case")({
   beforeLoad: () => {
     if (!import.meta.env.DEV) throw notFound();
   },
-  head: () => ({ meta: [{ name: "robots", content: "noindex, nofollow" }, { title: "Worst case | dev" }] }),
+  // Dev only: the route is a 404 in production, so it never needs a robots tag.
   validateSearch: (s: Record<string, unknown>) => ({
     kind: typeof s["kind"] === "string" ? s["kind"] : "birthday",
     format: (typeof s["format"] === "string" ? s["format"] : "scrapbook") as GiftFormat,
