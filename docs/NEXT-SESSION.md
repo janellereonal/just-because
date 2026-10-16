@@ -19,9 +19,9 @@ work goes on autonomously. Her rules for this run:
 |---|---|---|
 | 1 | Launch PR 1: Trust, privacy and sharing | Draft [#23](https://github.com/janellereonal/just-because/pull/23), waits for Janelle (schema, robots, headers, privacy) |
 | 2 | Launch PR 2: Input hardening and reliability | 2a **merged** [#25](https://github.com/janellereonal/just-because/pull/25); 2b [#26](https://github.com/janellereonal/just-because/pull/26) waits for Janelle (privacy) |
-| 3 | Revenue PR 1: Theme engine and Theme Bible | Next |
-| 4 | Revenue PR 2: Christmas, global and Filipino-first themes | |
-| 5 | Launch PR 3: Payments and gift lifecycle | |
+| 3 | Revenue PR 1: Theme engine and Theme Bible | **Merged** [#28](https://github.com/janellereonal/just-because/pull/28) |
+| 4 | Revenue PR 2: Christmas, global and Filipino-first themes | **Merged** [#29](https://github.com/janellereonal/just-because/pull/29). Themes are drafts: review, then publish in /admin |
+| 5 | Launch PR 3: Payments and gift lifecycle | Next |
 | 6 | Launch PR 4: Editor and organiser fixes | |
 | 7 | Launch PR 5: Metrics | |
 | 8 | Revenue PR 3: Pricing, tiers, add-ons and payments | waits for 5 |
@@ -45,8 +45,57 @@ The three prompts are saved in `docs/prompts/` (launch.md, revenue.md, design.md
   Sentry, because Sentry needs an account, a key and a CSP change. Do you want Sentry later?
 - Photos from iPhones in HEIC, plus videos and voice notes, keep their metadata (most browsers can't redraw HEIC).
   Convert HEIC on the server later, or ask friends' phones to send JPEG (iOS does this when the picker allows it)?
+- New themes (#29): get a cultural review of Balikbayan Box, Parol and Simbang Gabi, and Debut, then publish
+  each in /admin (Theme library). They're drafts until then.
+- Turn on the birthday age? Set `VITE_FLAGS=birthdayAge` in Vercel and redeploy.
+- Simbang Gabi gates notes in the browser, so someone technical could read ahead with dev tools. Fine for a
+  surprise; say if you want it enforced on the server too (that touches the privacy rules in api.ts).
 - Rate limits are in memory per server instance. Fine for launch; a shared store (Upstash or Postgres) would make
   them exact across instances. Worth it?
+
+### Revenue PR 1 (#28, merged): the theme engine
+- `src/themes/engine/`:
+  - `useGesture` handles 13 gestures (touch, mouse, keyboard, reduced motion). The maths is in `core/progress.ts`, with tests.
+  - Materials, particles, synthesised sound packs and haptics.
+  - Slots with fallbacks.
+  - `defineTheme` and `validateTheme`.
+  - `EngineStage` runs a theme inside the shared opening shell.
+  - `kraft-parcel` is a dev-only sample theme.
+- `src/i18n/`: `t()` and strings in `en.ts`. Dates, numbers and money use the visitor's locale.
+- `/dev/themes` is the playground (dev only):
+  - `?theme=&size=phone|laptop&worst=1&autoplay=1&simbang=1&now=2026-12-19&notes=9`
+  - `&bare=1` shows the opening full screen, for screenshots.
+- Performance:
+  - `bun tools/perf/theme-budget.ts` checks size (400 KB).
+  - `node tools/perf/theme-fps.cjs <base> <id>` measures frame times with 4x CPU and slow 4G.
+  - `bun test` runs the tests. There's no CI yet.
+- `docs/theme-bible.md` has the 8 checks, cultural themes, and an audit of the 13 current themes with their top 3 fixes.
+
+### Revenue PR 2 (#29, merged): the new themes
+- Engine themes:
+  - `winter-cabin`, `care-package`, `balikbayan-box` (shares `care-package/Parcel.tsx`), `parol` and `debut`.
+  - Each has `theme.ts` (config plus occasion template) and `Object.tsx`.
+  - They're found by theme name (`engineThemeForName`). `TactileOpening` renders `EngineStage` for them, so every surface works.
+  - Gift data comes through `src/lib/engineGift.ts` (`engineIntroProps`, `previewEngineProps`, `simbangVisible`).
+- Simbang Gabi:
+  - Logic is in `src/themes/engine/simbang.ts`, with tests.
+  - It's a switch in `intro_settings.simbang` (opening settings, Parol only).
+  - The gift page shows only the notes that have opened, plus a night banner.
+  - Test it with `tools/screens/simbang.cjs <slug> <iso date> <out.png>`, which uses a fake clock.
+- Birthday:
+  - The "Turning" age is stored as `custom_text.turning` and shown as candles. It's behind flag `birthdayAge`.
+  - Flags live in `src/config/flags.ts` (env `VITE_FLAGS`). They're on in dev.
+- Seed:
+  - The 5 themes are seeded as `draft` (the seed's sixth column). It never changes an existing row's status.
+  - It also adds 9 palettes, which only show as their theme's suggestions (`THEME_ONLY_PALETTES` in PalettePicker).
+- Gallery:
+  - New groups: New, Christmas, Family and far away, and Philippines. They appear once an engine theme is published.
+  - `src/lib/themeOrder.ts` handles ordering by visitor country (`getVisitorCountry`, from the Vercel header): Balikbayan Box first for PH, Care Package first elsewhere.
+- Tools:
+  - `engine-shots.cjs <id> <outDir> [w] [h] [query]` saves rest, mid, done and note screenshots.
+  - `record.cjs <id> <out.mp4>` records via Chrome's screencast (about 4 fps in the sandbox).
+  - `edtest.cjs` fills an editor field.
+- Locally the 5 themes are published in the local DB. Local test gift with Simbang on: `pasko-for-lola-p4my6`.
 
 ### Launch PR 2a (#25, merged) and 2b (#26, waiting for Janelle)
 - **2a, merged:**
