@@ -166,3 +166,31 @@ export function giftLiveEmail(opts: { to: string; recipient: string; liveUrl: st
     footnote: `Need to change something? You can still edit it here: ${opts.editorUrl}`,
   });
 }
+
+export function conciergeRequestEmail(opts: {
+  to: string;
+  organiser: string;
+  recipient: string;
+  occasion: string;
+  deadline: string;
+  friends: number;
+  contact: string;
+  timeZone: string;
+  notes: string | null;
+  adminUrl: string;
+  giftUrl: string | null;
+}) {
+  return sendMail({
+    to: opts.to,
+    subject: `Concierge request: ${opts.recipient}'s ${opts.occasion}, by ${opts.deadline}`,
+    heading: `${opts.organiser} wants us to handle ${opts.recipient}'s gift`,
+    body: [
+      `Occasion: ${opts.occasion}. Needed by ${opts.deadline} (${opts.timeZone}).`,
+      `About ${opts.friends} friends. Reach them at: ${opts.contact}.`,
+      ...(opts.notes ? [`Notes: ${opts.notes}`] : []),
+      ...(opts.giftUrl ? [`Their gift: ${opts.giftUrl}`] : []),
+      "They were told we'd contact them within 24 hours with next steps.",
+    ],
+    button: { label: "Open concierge requests", url: opts.adminUrl },
+  });
+}

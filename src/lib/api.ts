@@ -1216,3 +1216,101 @@ export const deleteCalendarEntry = createServerFn({ method: "POST" })
     await db.delete(schema.calendarEntries).where(eq(schema.calendarEntries.id, data.id));
     return { ok: true };
   });
+
+/* ------------------------------------------------------------------ */
+/* Concierge beta ("Want us to handle it?"), handled by hand            */
+/* ------------------------------------------------------------------ */
+
+const CONCIERGE_STATUSES = ["new", "contacted", "in_progress", "done"] as const;
+
+export const submitConciergeRequest = createServerFn({ method: "POST" })
+  .inputValidator(
+    z.object({
+      siteId: id.nullable(),
+      recipient: z.string().trim().min(1, "Add who it's for.").max(LIMITS.recipientName, tooLong("their name", LIMITS.recipientName)),
+      occasion: z.string().trim().min(1, "Add the occasion.").max(80, tooLong("the occasion", 80)),
+      deadline: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Pick the day it needs to be ready."),
+      friends: z.number().int().min(1, "About how many friends?").max(1000),
+      contact: z.string().trim().min(3, "Tell us how to reach you.").max(160, tooLong("how to reach you", 160)),
+      timeZone: z.string().trim().min(1).max(64),
+      notes: z.string().trim().max(1500, tooLong("the notes", 1500)).optional(),
+    }),
+  )
+  .handler(async ({ data }) => {
+    const user = await requireUser();
+    rateLimit(`concierge:${user.id}`, 5, 24 * 60 * 60_000, "You've sent a few requests today. We'll be in touch soon.");
+    if (data.siteId) await requireSiteOwner(data.siteId);
+    const today = new Date().toISOString().slice(0, 10);
+    if (data.deadline < today) throw new HttpError(422, "That day has already passed. Pick a day from today on.");
+    const [row] = await getDb()
+      .insert(schema.conciergeRequests)
+      .values({
+        userId: user.id,
+        siteId: data.siteId,
+        recipient: data.recipient,
+        occasion: data.occasion,
+        deadline: data.deadline,
+        friends: data.friends,
+        contact: data.contact,
+        timeZone: data.timeZone,
+        notes: data.notes || null,
+      })
+      .returning({ id: schema.conciergeRequests.id });
+    // Who gets it: CONCIERGE_EMAIL if it's set (see .env.example), otherwise every admin.
+    const { conciergeRequestEmail, siteUrl } = await import("@/server/email");
+    const to = process.env["CONCIERGE_EMAIL"]
+      ? [process.env["CONCIERGE_EMAIL"]]
+      : (await getDb().select({ email: schema.user.email }).from(schema.user).where(eq(schema.user.isAdmin, true))).map((a) => a.email);
+    for (const email of to)
+      await conciergeRequestEmail({
+        to: email,
+        organiser: user.name || user.email,
+        recipient: data.recipient,
+        occasion: data.occasion,
+        deadline: data.deadline,
+        friends: data.friends,
+        contact: data.contact,
+        timeZone: data.timeZone,
+        notes: data.notes || null,
+        adminUrl: `${siteUrl()}/admin#concierge`,
+        giftUrl: data.siteId ? `${siteUrl()}/sites/${data.siteId}` : null,
+      });
+    return { ok: true as const, id: row!.id };
+  });
+
+export const listConciergeRequests = createServerFn({ method: "GET" }).handler(async () => {
+  await requireAdmin();
+  const r = schema.conciergeRequests;
+  const rows = await getDb()
+    .select({
+      id: r.id,
+      siteId: r.siteId,
+      recipient: r.recipient,
+      occasion: r.occasion,
+      deadline: r.deadline,
+      friends: r.friends,
+      contact: r.contact,
+      timeZone: r.timeZone,
+      notes: r.notes,
+      status: r.status,
+      createdAt: r.createdAt,
+      organiser: schema.user.name,
+      organiserEmail: schema.user.email,
+    })
+    .from(r)
+    .leftJoin(schema.user, eq(schema.user.id, r.userId))
+    .orderBy(desc(r.createdAt))
+    .limit(200);
+  return rows.map(toRow);
+});
+
+export const setConciergeStatus = createServerFn({ method: "POST" })
+  .inputValidator(z.object({ id, status: z.enum(CONCIERGE_STATUSES) }))
+  .handler(async ({ data }) => {
+    await requireAdmin();
+    await getDb()
+      .update(schema.conciergeRequests)
+      .set({ status: data.status, updatedAt: new Date() })
+      .where(eq(schema.conciergeRequests.id, data.id));
+    return { ok: true };
+  });

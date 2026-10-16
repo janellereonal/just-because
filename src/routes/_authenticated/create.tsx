@@ -1,4 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
+import { OCCASION_NAMES } from "@/copy/strings";
+import { ConciergeOffer } from "@/components/ConciergeOffer";
 import { engineThemeForName } from "@/themes/engine/registry";
 import { themeFont } from "@/components/ThemeMiniPreview";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
@@ -513,6 +515,10 @@ function CreatePage() {
                 </p>
               </div>
             </div>
+          </div>
+
+          <div className="mb-6">
+            <ConciergeOffer recipient={recipient.trim()} occasion={OCCASION_NAMES[themeKindOf(activeTheme)] ?? ""} />
           </div>
 
           <div className="sticky bottom-4 z-20">
