@@ -3,6 +3,26 @@
 Updated 16 Oct 2026 (sessions 6 to 8), so a new session, on any Claude account, can carry on without
 missing anything. Start with `HANDOFF.md` section 0.
 
+## Session 9 (16 Oct 2026): editor quick fixes (branch `editor-quick-fixes`, PR 1 of the editor brief)
+
+- Palettes: every Main and Accent in `scripts/seed.ts` now passes 3:1 on its background, so no suggested
+  palette shows "hard to read". Fixed in OKLCH (same hue, a bit more chroma, darker). Existing gifts keep
+  the colors they copied at creation (`custom_colors`) until the owner picks a palette again.
+- Font "Storybook" is now "Fairytale" (key `handwritten` unchanged).
+- Intro panel lost its "Play it again" and "Full screen" (the bottom bar has them; "Replay intro" replays in the
+  canvas while the intro is showing there). Zoom shows one "Fit".
+- Bo: the laptop and phone previews keep 80px side room at 900px and up; below 900px Bo isn't shown in the editor.
+- Placeholders: `SampleText` / `SampleTag` (`src/components/SampleMark.tsx`, styles in play.css) fade sample text
+  and add a small "sample" tag. Used for the recipient name in every format and the scrapbook's intro and footer.
+  `usePieces` returns `nameIsSample`.
+- Heading: `giftHeading(text, theme)` in `src/lib/themeKind.ts` falls back to an occasion line
+  (`KIND_WORDS[kind].occasion`, "Happy bridal shower") when a gift has no heading. New gifts still copy the gift
+  name into the heading; the recipient-name step on /create (follow-up brief, section B) replaces that.
+- Words: example placeholders, a hint under Footer note. "Invite link" everywhere. Review's empty state has an
+  Invite friends button. Top bar: "No notes yet" button became a "0 notes" status chip.
+- Removed the reading-progress thread (line + bead) on the right edge of scrapbook gifts; it looked like a control.
+- Screenshot helper `tools/screens/multi.js`: several shots in one browser from a JSON plan.
+
 ## Session 8 (16 Oct 2026): light, material and depth on the openings (branch `openings-depth`)
 
 **The kit: `src/themes/_shared/light.tsx`.** One key light for every theme (up, left, a little in front),

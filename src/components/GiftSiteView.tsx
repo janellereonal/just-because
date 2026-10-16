@@ -6,7 +6,8 @@ import { Theme3D, type Theme3DHandle } from "@/components/Theme3D";
 import { WishCandles, useSkinPlay } from "@/components/SkinPlay";
 import { buzz, chime } from "@/lib/play";
 import { RotateCw } from "lucide-react";
-import { KIND_WORDS, themeKindOf } from "@/lib/themeKind";
+import { giftHeading, KIND_WORDS, themeKindOf } from "@/lib/themeKind";
+import { SampleText } from "@/components/SampleMark";
 import { giftMoment } from "@/lib/giftPieces";
 import {
   FONT_PAIRINGS,
@@ -294,7 +295,7 @@ function CalendarGrid({
 }
 
 function SampleNote({ children }: { children: React.ReactNode }) {
-  return <p className="mt-2 text-xs opacity-50 italic">{children}</p>;
+  return <p className="mt-3 text-sm opacity-70 italic">{children}</p>;
 }
 
 function SealedLetter({ item, palette }: { item: ViewContribution; palette: Palette }) {
@@ -408,7 +409,7 @@ export function GiftSiteView({
   const kind = themeKindOf(theme);
   const kindWords = KIND_WORDS[kind];
   const text: CustomText = site.custom_text ?? {};
-  const titles = defaultTitles(text);
+  const titles = defaultTitles(text, kind);
   const enabled = new Set(modules.filter((m) => m.enabled).map((m) => m.module_type));
   const byType = (type: string) => contributions.filter((c) => c.module_type === type);
   const rootRef = useRef<HTMLDivElement | null>(null);
@@ -567,21 +568,21 @@ export function GiftSiteView({
             {...fp("heading", "sb-hero mt-3 text-[clamp(2.2rem,9cqi,4.2rem)] leading-[1.02] font-semibold text-balance")}
             style={{ fontFamily: fonts.heading }}
           >
-            {text.heading || (sample ? <span className="opacity-40">{titles.heading}</span> : site.title)}
+            {giftHeading(text, theme)}
           </h1>
           <p {...fp("recipient_name", "mt-2 text-lg")} style={{ color: accentText }}>
             {recipient ? (
               (text.heading ?? "").toLowerCase().includes(recipient.toLowerCase()) && !onEditField ? null : `for ${recipient}`
             ) : sample ? (
-              <span className="opacity-40">for {sampleName}</span>
+              <SampleText on>for {sampleName}</SampleText>
             ) : null}
           </p>
           {text.intro_message || sample ? (
             <p {...fp("intro_message", "mx-auto mt-5 max-w-[46ch] leading-relaxed opacity-80 text-pretty")}>
               {text.intro_message || (
-                <span className="opacity-50">
+                <SampleText on>
                   {voice.solo ? "I made this just for you. Take your time." : "Everyone who loves you put something in here. Take your time."}
-                </span>
+                </SampleText>
               )}
             </p>
           ) : null}
@@ -596,7 +597,7 @@ export function GiftSiteView({
               </span>
               <span className="text-right">
                 <small>To</small>
-                <strong>{recipient || sampleName}</strong>
+                <strong>{recipient || <SampleText on={!!sample} tag={false}>{sampleName}</SampleText>}</strong>
               </span>
             </div>
           ) : null}
@@ -924,7 +925,7 @@ export function GiftSiteView({
           {text.footer_note || sample ? (
             <p {...fp("footer_note", "mb-3 opacity-80")}>
               {text.footer_note || (
-                <span className="opacity-50">{voice.signoff}</span>
+                <SampleText on>{voice.signoff}</SampleText>
               )}
             </p>
           ) : null}

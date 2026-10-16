@@ -241,6 +241,8 @@ export function usePieces({
     const friends = [...new Set(pieces.filter((p) => p.author && !p.sample).map((p) => p.author))];
     return {
       name,
+      /** No recipient yet, so `name` is the sample "Ana" (shown faded with a "sample" tag). */
+      nameIsSample: !!sample && !site.custom_text.recipient_name?.trim(),
       titles,
       countdownDate,
       notes: mixed.filter((p) => p.kind !== "word"),

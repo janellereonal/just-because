@@ -1,4 +1,6 @@
 import { giftVoice } from "@/lib/giftVoice";
+import { SampleText } from "@/components/SampleMark";
+import { giftHeading } from "@/lib/themeKind";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { ChevronLeft, ChevronRight, Lock, Mic, Music2 } from "lucide-react";
 import { FONT_PAIRINGS, toEmbedUrl } from "@/lib/gift";
@@ -98,6 +100,7 @@ function PieceBody({ piece, accent }: { piece: Piece; accent: string }) {
  * arrow keys. Reduced motion: pages simply fade.
  */
 export function StorybookView({
+  theme,
   site,
   modules,
   contributions,
@@ -112,7 +115,7 @@ export function StorybookView({
   const fonts = FONT_PAIRINGS[site.font_choice] ?? FONT_PAIRINGS.romantic;
   const ink = "#3b2f2a";
   const coverInk = readableInk(palette.accent);
-  const heading = site.custom_text.heading?.trim() || site.title;
+  const heading = giftHeading(site.custom_text, theme);
 
   const pages: Page[] = [
     { type: "cover" },
@@ -212,7 +215,7 @@ export function StorybookView({
           <div className="sbk-cover" style={{ background: palette.accent, color: coverInk }}>
             <span className="sbk-cover-frame" />
             <p className="sbk-cover-kicker">A storybook for</p>
-            <h1 style={{ fontFamily: fonts.heading }}>{data.name}</h1>
+            <h1 style={{ fontFamily: fonts.heading }}><SampleText on={data.nameIsSample}>{data.name}</SampleText></h1>
             <p className="sbk-cover-sub">{heading}</p>
             <span className="sbk-cover-emblem" aria-hidden="true">
               ✦
@@ -227,7 +230,7 @@ export function StorybookView({
               This book belongs to
             </p>
             <p className="sbk-name" style={{ fontFamily: fonts.heading }}>
-              {data.name}
+              <SampleText on={data.nameIsSample}>{data.name}</SampleText>
             </p>
             <p className="sbk-body">
               {site.custom_text.intro_message?.trim() ||

@@ -2,7 +2,8 @@ import { giftVoice } from "@/lib/giftVoice";
 import { localDate } from "@/lib/time";
 import { useEffect, useRef, useState } from "react";
 import { Theme3D } from "@/components/Theme3D";
-import { themeKindOf } from "@/lib/themeKind";
+import { SampleText } from "@/components/SampleMark";
+import { themeKindOf, giftHeading } from "@/lib/themeKind";
 import { Lock, Mic, Music2, Play, Share2, Sparkles } from "lucide-react";
 import { FONT_PAIRINGS } from "@/lib/gift";
 import { readableInk, surfaceColor } from "@/lib/palettes";
@@ -246,7 +247,7 @@ export function BentoView({
   const cd = useCountdown(data.countdownDate);
   const [open, setOpen] = useState<Piece | null>(null);
   const ink = readableInk(palette.background);
-  const heading = site.custom_text.heading?.trim() || site.title || `For ${data.name}`;
+  const heading = giftHeading(site.custom_text, theme);
   const intro =
     site.custom_text.intro_message?.trim() ||
     site.intro_text ||
@@ -287,7 +288,7 @@ export function BentoView({
               />
             ) : null}
             <p className="text-[11px] font-semibold tracking-[0.2em] uppercase opacity-80">
-              A gift for {data.name}
+              A gift for <SampleText on={data.nameIsSample}>{data.name}</SampleText>
             </p>
             <h1
               className="mt-3 text-[clamp(2.2rem,5.5cqi,4.25rem)] leading-[0.95] font-semibold tracking-tight"

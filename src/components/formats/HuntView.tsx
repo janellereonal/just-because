@@ -1,7 +1,8 @@
 import { giftVoice } from "@/lib/giftVoice";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Theme3D } from "@/components/Theme3D";
-import { themeKindOf } from "@/lib/themeKind";
+import { SampleText } from "@/components/SampleMark";
+import { themeKindOf, giftHeading } from "@/lib/themeKind";
 import { Lock, Mic, Music2, RotateCcw, Sparkles } from "lucide-react";
 import { FONT_PAIRINGS } from "@/lib/gift";
 import { readableInk, surfaceColor } from "@/lib/palettes";
@@ -255,13 +256,13 @@ export function HuntView({
             <Theme3D kind={themeKindOf(theme)} palette={palette} className="mx-auto mb-2 h-[clamp(160px,34cqi,260px)] w-full max-w-lg" interactive burstColors={[palette.accent, palette.primary, "#FFD166", "#FFFFFF"]} />
           ) : null}
           <p className="text-[11px] font-semibold tracking-[0.2em] uppercase opacity-70">
-            A gift hunt for {data.name}
+            A gift hunt for <SampleText on={data.nameIsSample}>{data.name}</SampleText>
           </p>
           <h1
             className="mx-auto mt-3 max-w-2xl text-[clamp(2.1rem,6cqi,3.75rem)] leading-[1] font-semibold tracking-tight"
             style={{ fontFamily: fonts.heading }}
           >
-            {site.custom_text.heading?.trim() || site.title}
+            {giftHeading(site.custom_text, theme)}
           </h1>
           <p className="mx-auto mt-4 max-w-md text-[15px] leading-relaxed opacity-80">
             {site.custom_text.intro_message?.trim() ||

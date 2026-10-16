@@ -17,3 +17,16 @@ export function useIsMobile() {
 
   return !!isMobile;
 }
+
+/** True once the window is at least `px` wide (false on the server and first render). */
+export function useMinWidth(px: number) {
+  const [wide, setWide] = React.useState(false);
+  React.useEffect(() => {
+    const mql = window.matchMedia(`(min-width: ${px}px)`);
+    const onChange = () => setWide(mql.matches);
+    onChange();
+    mql.addEventListener("change", onChange);
+    return () => mql.removeEventListener("change", onChange);
+  }, [px]);
+  return wide;
+}
