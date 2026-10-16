@@ -243,7 +243,7 @@ function Dashboard() {
                 </span>
               ) : null}
               <Link
-                to="/themes"
+                to="/create"
                 className="squish inline-flex min-h-12 items-center gap-2 rounded-full bg-accent px-6 text-sm font-semibold text-cream hover:bg-accent/90"
               >
                 <Plus className="size-4" /> New gift
@@ -276,7 +276,7 @@ function Dashboard() {
                   Pick a theme, share one link with friends, and watch the notes roll in.
                 </p>
                 <Link
-                  to="/themes"
+                  to="/create"
                   className="squish mt-7 inline-flex min-h-12 items-center rounded-full bg-ink px-6 text-sm font-semibold text-cream"
                 >
                   Start a gift
@@ -307,7 +307,7 @@ function Dashboard() {
               <GiftCard key={site.id} site={site} index={i} />
             ))}
             <Link
-              to="/themes"
+              to="/create"
               className="group grid min-h-64 place-items-center rounded-[28px] border-2 border-dashed border-ink/12 text-center transition-colors hover:border-accent/50 hover:bg-pink/20"
             >
               <span>

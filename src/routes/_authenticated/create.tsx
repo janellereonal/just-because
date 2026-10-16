@@ -10,7 +10,6 @@ import { usePalettes, suggestedPalettes } from "@/hooks/usePalettes";
 import { MODULES, type ModuleType } from "@/lib/gift";
 import { PRESETS } from "@/lib/presets";
 import { occasionTitle, themeKindOf } from "@/lib/themeKind";
-import { ChipInSoon } from "@/components/sections/ChipInSoon";
 import { SectionPreview } from "@/components/SectionPreview";
 import { FormatPicker } from "@/components/FormatPicker";
 import { stageColorFor } from "@/components/ThemeCard";
@@ -32,7 +31,14 @@ const THEME_LINES: Record<BoAccessory, string> = {
 };
 
 export const Route = createFileRoute("/_authenticated/create")({
-  validateSearch: (search: Record<string, unknown>) => ({
+  validateSearch: (
+    search: Record<string, unknown>,
+  ): {
+    theme?: string | undefined;
+    format?: GiftFormat | undefined;
+    from?: "me" | undefined;
+    sections?: string | undefined;
+  } => ({
     theme: typeof search["theme"] === "string" ? search["theme"] : undefined,
     format: isGiftFormat(search["format"]) ? search["format"] : undefined,
     /** `from=me` starts on "Just me" (a gift from one person). */
@@ -111,9 +117,14 @@ function CreatePage() {
   const suggested: ModuleType[] = activeTheme ? PRESETS[themeKindOf(activeTheme)] : [];
   const [showMore, setShowMore] = useState(false);
   const pool = MODULES.filter((mod) => !(solo && mod.type === "tree"));
-  const presetMods = suggested.map((t) => pool.find((m) => m.type === t)).filter((m): m is (typeof pool)[number] => !!m);
-  const others = pool.filter((m) => !suggested.includes(m.type));
-  const listed = !suggested.length || showMore ? [...presetMods, ...others] : [...presetMods, ...others.filter((m) => selected.includes(m.type))];
+  // Five rows to start: the theme's picks, topped up with the everyday ones. "More" shows the rest.
+  const CORE: ModuleType[] = ["letters", "photobooth", "songs", "voice", "wordcloud"];
+  const ordered = [...new Set<ModuleType>([...suggested, ...CORE, ...pool.map((m) => m.type)])]
+    .map((t) => pool.find((m) => m.type === t))
+    .filter((m): m is (typeof pool)[number] => !!m);
+  const firstFive = ordered.slice(0, 5).map((m) => m.type);
+  const listed = showMore ? ordered : ordered.filter((m) => firstFive.includes(m.type) || selected.includes(m.type));
+  const hidden = ordered.filter((m) => !listed.includes(m));
 
   // Pre-select the theme's suggested modules until the creator edits the list.
   useEffect(() => {
@@ -448,19 +459,18 @@ function CreatePage() {
                     </div>
                   );
                 })}
-                {suggested.length && !showMore && others.some((m) => !selected.includes(m.type)) ? (
+                {!showMore && hidden.length > 0 ? (
                   <button
                     type="button"
                     onClick={() => setShowMore(true)}
                     className="w-full rounded-2xl border border-dashed border-ink/20 px-4 py-3 text-left text-[15px] font-medium hover:bg-paper"
                   >
-                    Add more
+                    More
                     <span className="block text-xs font-normal text-ink/60">
-                      {others.filter((m) => !selected.includes(m.type)).length} more sections: {others.filter((m) => !selected.includes(m.type)).slice(0, 4).map((m) => m.label.toLowerCase()).join(", ")}…
+                      {hidden.length} more sections: {hidden.slice(0, 4).map((m) => m.label.toLowerCase()).join(", ")}…
                     </span>
                   </button>
                 ) : null}
-                <ChipInSoon />
               </div>
 
               <div className="hidden md:sticky md:top-24 md:block">
@@ -482,9 +492,12 @@ function CreatePage() {
 
           <div className="sticky bottom-4 z-20">
             <div className="flex items-center justify-between gap-4 rounded-full bg-ink/95 py-2 pr-2 pl-6 text-cream shadow-[0_20px_50px_-20px_rgba(43,37,34,.6)] backdrop-blur">
-              <span className="min-w-0 truncate text-sm">
-                {solo ? "Just me · " : ""}
-                {selected.length} {selected.length === 1 ? "section" : "sections"} · {formatInfo(format).title}
+              <span className="min-w-0 leading-tight">
+                {activeTheme ? <span className="block truncate text-[11px] text-cream/70">{activeTheme.name}{solo ? " · Just me" : ""}</span> : null}
+                <span className="block truncate text-sm">
+                  {formatInfo(format).title} · {selected.length} {selected.length === 1 ? "section" : "sections"}
+                  {!activeTheme && solo ? " · Just me" : ""}
+                </span>
               </span>
               <button
                 type="submit"

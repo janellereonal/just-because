@@ -105,11 +105,8 @@ function ThemeDetailPage() {
   const sample = sampleFor(theme);
 
   function use() {
-    if (!user) {
-      toast.info("Sign in first, then you can start your gift.");
-      navigate({ to: "/auth" });
-      return;
-    }
+    // Signed out, the /create guard sends them to sign in and brings them back with these picks.
+    if (!user) toast.info("Sign in first, then you can start your gift.");
     navigate({ to: "/create", search: { theme: id, format, from: undefined, sections: tried ? on.join(",") : undefined } });
   }
 

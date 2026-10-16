@@ -67,12 +67,9 @@ function ThemesPage() {
   }
 
   function useTheme(id: string, name: string) {
-    if (!user) {
-      toast.info("Sign in first, then you can start your gift.");
-      navigate({ to: "/auth" });
-      return;
-    }
-    toast.success(`${name} it is. Now let's name your gift.`);
+    // Signed out, the /create guard sends them to sign in and brings them back here with the theme.
+    if (!user) toast.info("Sign in first, then you can start your gift.");
+    else toast.success(`${name} it is. Now, who's it for?`);
     navigate({ to: "/create", search: { theme: id, format: undefined, from: undefined, sections: undefined } });
   }
 

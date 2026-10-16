@@ -1,5 +1,6 @@
 import { Lock } from "lucide-react";
 import { FORMATS, type GiftFormat } from "@/lib/formats";
+import { formatPlanTag } from "@/config/pricing";
 
 /** A tiny live-ish preview of each format, drawn in CSS. */
 function Mini({ id }: { id: GiftFormat }) {
@@ -138,7 +139,11 @@ export function FormatPicker({
                 {f.isNew ? <span className="fmt-new">New</span> : null}
                 {!allowed ? (
                   <span className="fmt-lock">
-                    <Lock className="size-3" /> Bigger plan
+                    <Lock className="size-3" /> {formatPlanTag(f.id) ?? "Bigger plan"}
+                  </span>
+                ) : formatPlanTag(f.id) ? (
+                  <span className="fmt-plan" title={`Needs the ${formatPlanTag(f.id)} plan or higher`}>
+                    {formatPlanTag(f.id)}
                   </span>
                 ) : null}
               </span>

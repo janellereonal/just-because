@@ -3,6 +3,21 @@
 Updated 16 Oct 2026 (sessions 6 to 8), so a new session, on any Claude account, can carry on without
 missing anything. Start with `HANDOFF.md` section 0.
 
+## Session 9e: homepage and create page (branch `home-create`, follow-up brief section D)
+
+- Homepage order: hero, occasions, how it works, **example gifts**, what goes inside (6 tiles: letters, photos,
+  songs, voice notes, open-when, time capsule, then "And 10 more, from quizzes to doodles"), plans, **formats**
+  (one row of 4 with "See all 9"), FAQ, closing.
+- Every start button goes to /create (hero, closing, My gifts, example banner). /themes stays in the nav.
+  Signed out, /create sends you to /auth with `?next=` and brings you back (default after sign-in is /create).
+  `safeNext` only allows same-site paths.
+- /create: the section list starts with five rows (the theme's picks, topped up with letters, photobooth, songs,
+  voice, word cloud) plus anything already on; "More" shows the rest. Chip-in "coming soon" is gone.
+  The bottom bar reads "Bridal Shower" over "Scrapbook · 5 sections".
+- Formats carry a plan tag ("Celebration") when the first plan doesn't include them, on /create and in the
+  editor's Gift settings (`formatPlanTag` in pricing.ts, `.fmt-plan`). A plan that can't use a format still shows
+  the lock, now with the plan's name.
+
 ## Session 9d: quick fixes outside the editor (branch `outside-fixes`, follow-up brief section C)
 
 - Friend page: the sample letter line matches the occasion (`ModuleExample kind`, `LETTER_LINE`).

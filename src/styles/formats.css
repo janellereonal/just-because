@@ -58,6 +58,20 @@
 }
 .fmt-new { background: var(--ink); color: var(--cream); }
 .fmt-lock { background: rgba(255, 255, 255, 0.9); color: var(--ink); }
+/* Which plan a format needs; sits top left so it never fights the "New" badge. */
+.fmt-plan {
+  position: absolute;
+  top: 7px;
+  left: 7px;
+  border-radius: 999px;
+  padding: 2px 8px;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  background: rgba(255, 255, 255, 0.88);
+  color: var(--ink);
+  box-shadow: 0 1px 0 rgba(43, 37, 34, 0.08);
+}
 .fmt-mini { position: relative; display: block; width: 78%; height: 64px; }
 .fmt-mini i, .fmt-mini b { position: absolute; display: block; }
 .fmt-card:hover .fmt-mini, .fmt-card.is-active .fmt-mini { animation: none; }
