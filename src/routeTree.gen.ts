@@ -19,6 +19,7 @@ import { Route as AuthenticatedDashboardRouteImport } from './routes/_authentica
 import { Route as ApiUploadRouteImport } from './routes/api/upload'
 import { Route as ContributeSlugRouteImport } from './routes/contribute.$slug'
 import { Route as DevCastRouteImport } from './routes/dev.cast'
+import { Route as DevOpeningsRouteImport } from './routes/dev.openings'
 import { Route as ExampleIdRouteImport } from './routes/example.$id'
 import { Route as GSlugRouteImport } from './routes/g.$slug'
 import { Route as ThemesIndexRouteImport } from './routes/themes.index'
@@ -78,6 +79,11 @@ const DevCastRoute = DevCastRouteImport.update({
   path: '/dev/cast',
   getParentRoute: () => rootRouteImport,
 } as any)
+const DevOpeningsRoute = DevOpeningsRouteImport.update({
+  id: '/dev/openings',
+  path: '/dev/openings',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ExampleIdRoute = ExampleIdRouteImport.update({
   id: '/example/$id',
   path: '/example/$id',
@@ -135,6 +141,7 @@ export interface FileRoutesByFullPath {
   '/api/upload': typeof ApiUploadRoute
   '/contribute/$slug': typeof ContributeSlugRoute
   '/dev/cast': typeof DevCastRoute
+  '/dev/openings': typeof DevOpeningsRoute
   '/example/$id': typeof ExampleIdRoute
   '/g/$slug': typeof GSlugRoute
   '/themes/$id': typeof ThemesIdRoute
@@ -155,6 +162,7 @@ export interface FileRoutesByTo {
   '/api/upload': typeof ApiUploadRoute
   '/contribute/$slug': typeof ContributeSlugRoute
   '/dev/cast': typeof DevCastRoute
+  '/dev/openings': typeof DevOpeningsRoute
   '/example/$id': typeof ExampleIdRoute
   '/g/$slug': typeof GSlugRoute
   '/themes/$id': typeof ThemesIdRoute
@@ -177,6 +185,7 @@ export interface FileRoutesById {
   '/api/upload': typeof ApiUploadRoute
   '/contribute/$slug': typeof ContributeSlugRoute
   '/dev/cast': typeof DevCastRoute
+  '/dev/openings': typeof DevOpeningsRoute
   '/example/$id': typeof ExampleIdRoute
   '/g/$slug': typeof GSlugRoute
   '/themes/$id': typeof ThemesIdRoute
@@ -199,6 +208,7 @@ export interface FileRouteTypes {
     | '/api/upload'
     | '/contribute/$slug'
     | '/dev/cast'
+    | '/dev/openings'
     | '/example/$id'
     | '/g/$slug'
     | '/themes/$id'
@@ -219,6 +229,7 @@ export interface FileRouteTypes {
     | '/api/upload'
     | '/contribute/$slug'
     | '/dev/cast'
+    | '/dev/openings'
     | '/example/$id'
     | '/g/$slug'
     | '/themes/$id'
@@ -240,6 +251,7 @@ export interface FileRouteTypes {
     | '/api/upload'
     | '/contribute/$slug'
     | '/dev/cast'
+    | '/dev/openings'
     | '/example/$id'
     | '/g/$slug'
     | '/themes/$id'
@@ -260,6 +272,7 @@ export interface RootRouteChildren {
   ApiUploadRoute: typeof ApiUploadRoute
   ContributeSlugRoute: typeof ContributeSlugRoute
   DevCastRoute: typeof DevCastRoute
+  DevOpeningsRoute: typeof DevOpeningsRoute
   ExampleIdRoute: typeof ExampleIdRoute
   GSlugRoute: typeof GSlugRoute
   ThemesIdRoute: typeof ThemesIdRoute
@@ -339,6 +352,13 @@ declare module '@tanstack/react-router' {
       path: '/dev/cast'
       fullPath: '/dev/cast'
       preLoaderRoute: typeof DevCastRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/dev/openings': {
+      id: '/dev/openings'
+      path: '/dev/openings'
+      fullPath: '/dev/openings'
+      preLoaderRoute: typeof DevOpeningsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/example/$id': {
@@ -433,6 +453,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiUploadRoute: ApiUploadRoute,
   ContributeSlugRoute: ContributeSlugRoute,
   DevCastRoute: DevCastRoute,
+  DevOpeningsRoute: DevOpeningsRoute,
   ExampleIdRoute: ExampleIdRoute,
   GSlugRoute: GSlugRoute,
   ThemesIdRoute: ThemesIdRoute,

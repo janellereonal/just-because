@@ -16,7 +16,11 @@ import type { ThemePalette } from "@/themes/_shared/design";
 import { FallbackButton, Layer, SPRING, useBeats, useHaptics } from "@/themes/_shared/stage";
 import { burstSet } from "@/themes/_shared/Sprinkles";
 import { pick } from "@/themes/_shared/iconSets";
+import { ContactShadow, Sheen, TEXTURE, Texture } from "@/themes/_shared/light";
 import { foley, melody } from "@/lib/play";
+
+/** The cake is seen from a little above: an ellipse's height is this share of its width. */
+const ELLIPSE = 0.17;
 
 const CANDLES = 5;
 
@@ -136,10 +140,22 @@ export function BirthdayOpening(p: OpeningProps) {
   }
 
   const lean = Math.min(1, breath) * 26;
+  const lit = out.filter((o) => !o).length / CANDLES;
   return (
     <div className="relative flex w-full flex-col items-center">
+      {/* The room: lights down while the candles burn, back up once they're out */}
+      <motion.div
+        aria-hidden="true"
+        className="pointer-events-none absolute inset-x-0 top-1/2 h-[260cqi] -translate-y-1/2"
+        style={{ background: "radial-gradient(55cqi 50cqi at 50% 50%, transparent 30%, rgba(214,96,38,.3) 100%)" }}
+        initial={false}
+        animate={{ opacity: lit > 0 ? 0.35 + lit * 0.45 : 0 }}
+        transition={{ duration: lit > 0 ? 0.4 : 0.9, ease: [0.4, 0, 0.2, 1] }}
+      />
       <Layer depth={-16} className="pointer-events-none absolute -inset-[35%]">
-        <div className="size-full" style={{ background: `radial-gradient(45% 35% at 50% 52%, ${allOut ? "transparent" : "#FFD98A55"}, transparent 70%)`, transition: "background 1s" }} />
+        <div className="size-full" style={{ opacity: lit, transition: "opacity .6s" }}>
+          <div className="jb-candlelight size-full" style={{ background: "radial-gradient(45% 35% at 50% 52%, #FFD98A66, transparent 70%)" }} />
+        </div>
       </Layer>
 
       <div className="relative z-[3] h-[clamp(64px,19cqi,120px)] w-[92cqi] max-w-[460px] text-center" style={{ color: c.cobalt }}>
@@ -152,7 +168,7 @@ export function BirthdayOpening(p: OpeningProps) {
         </AnimatePresence>
       </div>
 
-      <Layer depth={8} rotate={4} className="relative mt-2" style={{ width: "min(78cqi, 360px)" }}>
+      <Layer depth={8} rotate={2} className="relative mt-2" style={{ width: "min(78cqi, 360px)" }}>
         {/* The character dances beside the cake */}
         <div className="absolute -right-[8%] -bottom-[6%] z-[4]">
           <Character ref={cast} setting={p.character} accessory={p.accessory} size={84} live={!p.paused} showName={false} />
@@ -160,7 +176,7 @@ export function BirthdayOpening(p: OpeningProps) {
 
         <div className="relative mx-auto" style={{ width: "78%" }}>
           {/* Candles */}
-          <div className="relative z-[2] flex justify-center gap-[5%] px-[10%]" style={{ height: "clamp(70px,22cqi,110px)" }}>
+          <div className="relative z-[3] flex justify-center gap-[5%] px-[10%]" style={{ height: "clamp(70px,22cqi,110px)", marginBottom: `${-ELLIPSE * 0.7 * 50 * 0.9}%` }}>
             {out.map((isOut, i) => (
               <button
                 key={i}
@@ -180,8 +196,12 @@ export function BirthdayOpening(p: OpeningProps) {
                   className="block w-[56%] rounded-t-[3px]"
                   style={{
                     height: `${52 + ((i * 7) % 3) * 6}%`,
-                    background: `repeating-linear-gradient(-35deg, ${i % 2 ? c.mint : c.cobalt} 0 6px, #fff 6px 11px)`,
-                    boxShadow: "inset -3px 0 0 rgba(0,0,0,.08)",
+                    background: [
+                      "linear-gradient(90deg, rgba(0,0,0,.12), rgba(255,255,255,.45) 30%, rgba(255,255,255,0) 55%, rgba(0,0,0,.22))",
+                      `repeating-linear-gradient(-35deg, ${i % 2 ? c.mint : c.cobalt} 0 6px, #fff 6px 11px)`,
+                    ].join(","),
+                    // Lit from its own flame and its neighbours': warm on top.
+                    boxShadow: isOut ? "none" : "inset 0 6px 6px -4px rgba(255,214,140,.7)",
                   }}
                 />
                 <span className="absolute left-1/2 h-[10%] w-[2px] -translate-x-1/2 bg-[#3a2a22]" style={{ bottom: `${52 + ((i * 7) % 3) * 6}%` }} />
@@ -206,20 +226,18 @@ export function BirthdayOpening(p: OpeningProps) {
             ))}
           </div>
 
-          {/* Cake: top tier */}
-          <div className="relative z-[1] mx-auto -mt-[2px] w-[70%]" style={{ aspectRatio: "3.2" }}>
-            <Tier color={c.bubblegum!} frosting="#FFF8EE" set={p.iconSet} seed={1} />
+          {/* Cake: top tier, then the bottom tier tucked under it, then the plate */}
+          <div className="relative z-[2] mx-auto w-[70%]">
+            <Tier color={c.bubblegum!} frosting="#FFF8EE" set={p.iconSet} seed={1} body={0.36} lit={lit} />
           </div>
-          {/* Cake: bottom tier */}
-          <div className="relative mx-auto w-full" style={{ aspectRatio: "3" }}>
-            <Tier color={c.cream!} frosting={c.bubblegum!} set={p.iconSet} seed={5} dark />
+          <div className="relative z-[1] mx-auto w-full" style={{ marginTop: `${-(ELLIPSE * 0.7 * 50 + ELLIPSE * 50)}%` }}>
+            <Tier color={c.cream!} frosting={c.bubblegum!} set={p.iconSet} seed={5} body={0.3} lit={lit * 0.6} dark />
           </div>
-          {/* Plate */}
-          <div className="relative -mt-[4%] h-[clamp(14px,4cqi,22px)] w-[118%] -translate-x-[8%] rounded-[50%]" style={{ background: "linear-gradient(180deg,#fff,#E9E2EF)", boxShadow: "0 18px 30px -16px rgba(45,75,214,.45)" }} />
+          <Plate width={1.18} />
         </div>
       </Layer>
 
-      <div className="mt-[6cqi] flex h-11 items-center gap-2">
+      <div className="mt-[min(6cqi,27px)] flex h-11 items-center gap-2">
         {mic === "off" || mic === "denied" ? (
           <motion.button
             type="button"
@@ -242,26 +260,91 @@ export function BirthdayOpening(p: OpeningProps) {
   );
 }
 
-function Tier({ color, frosting, set, seed, dark = false }: { color: string; frosting: string; set: OpeningProps["iconSet"]; seed: number; dark?: boolean }) {
+/**
+ * One tier, drawn as a cylinder seen from a little above: an elliptical top,
+ * a body shaded round (light from the left), and a curved bottom edge.
+ * `body` is the straight part's height as a share of the width.
+ */
+function Tier({
+  color,
+  frosting,
+  set,
+  seed,
+  body,
+  lit,
+  dark = false,
+}: {
+  color: string;
+  frosting: string;
+  set: OpeningProps["iconSet"];
+  seed: number;
+  body: number;
+  /** How much candlelight falls on it (0..1). */
+  lit: number;
+  dark?: boolean;
+}) {
   const colors = set.colors.length ? set.colors : ["#FF7EB6", "#2D4BD6", "#8DE3C6", "#FFD166"];
+  const e = ELLIPSE;
+  const total = body + e;
+  const pct = (v: number) => `${(v / total) * 100}%`;
   return (
-    <div className="absolute inset-0 overflow-hidden rounded-[14px_14px_10px_10px]" style={{ background: color, boxShadow: `inset -14px 0 22px -14px rgba(0,0,0,.18), inset 10px 0 18px -12px rgba(255,255,255,.6)` }}>
-      <svg viewBox="0 0 100 30" preserveAspectRatio="none" className="absolute inset-x-0 top-0 h-[46%] w-full" aria-hidden="true">
-        <path d="M0 0h100v10c-4 0-4 9-8 9s-4-6-8-6-4 11-9 11-4-8-8-8-4 6-8 6-4-10-9-10-4 7-8 7-4-9-8-9-4 12-9 12-4-9-8-9-5 5-9 5V0z" fill={frosting} />
-      </svg>
-      {Array.from({ length: 12 }, (_, i) => (
+    <div className="relative w-full" style={{ aspectRatio: `${1 / total}` }}>
+      {/* Body */}
+      <div
+        className="absolute inset-x-0 bottom-0 overflow-hidden"
+        style={{ top: pct(e / 2), background: color, borderRadius: `0 0 50% 50% / 0 0 ${((e / 2) / (body + e / 2)) * 100}% ${((e / 2) / (body + e / 2)) * 100}%` }}
+      >
+        <Texture material="grain" opacity={0.14} />
+        {/* Frosting drips over the edge */}
+        <svg viewBox="0 0 100 30" preserveAspectRatio="none" className="absolute inset-x-0 top-0 h-[44%] w-full" aria-hidden="true">
+          <path d="M0 0h100v10c-4 0-4 9-8 9s-4-6-8-6-4 11-9 11-4-8-8-8-4 6-8 6-4-10-9-10-4 7-8 7-4-9-8-9-4 12-9 12-4-9-8-9-5 5-9 5V0z" fill={frosting} />
+        </svg>
+        {Array.from({ length: 12 }, (_, i) => (
+          <span
+            key={i}
+            className="absolute h-[7%] w-[2.6%] rounded-full"
+            style={{
+              left: `${6 + ((i * 37 + seed * 11) % 88)}%`,
+              top: `${dark ? 54 : 56 + ((i * 13) % 26)}%`,
+              background: pick(colors, i + seed),
+              transform: `rotate(${(i * 47) % 180}deg)`,
+              boxShadow: "inset -1px -1px 0 rgba(0,0,0,.15)",
+            }}
+          />
+        ))}
+        {/* Round shading: lit from the left, turning away to the right */}
         <span
-          key={i}
-          className="absolute h-[7%] w-[2.6%] rounded-full"
-          style={{
-            left: `${6 + ((i * 37 + seed * 11) % 88)}%`,
-            top: `${dark ? 50 : 52 + ((i * 13) % 30)}%`,
-            background: pick(colors, i + seed),
-            transform: `rotate(${(i * 47) % 180}deg)`,
-            opacity: 0.9,
-          }}
+          aria-hidden="true"
+          className="absolute inset-0 block"
+          style={{ background: "linear-gradient(90deg, rgba(0,0,0,.1), rgba(255,255,255,.34) 24%, rgba(255,255,255,.05) 44%, rgba(0,0,0,.04) 70%, rgba(60,10,40,.22))" }}
         />
-      ))}
+        {/* The top's shadow just under the rim */}
+        <span aria-hidden="true" className="absolute inset-x-0 top-0 block h-[30%]" style={{ background: "linear-gradient(180deg, rgba(60,20,40,.14), transparent)" }} />
+      </div>
+      {/* Top: the frosted surface, catching the candles' light */}
+      <div className="absolute inset-x-0 top-0 overflow-hidden rounded-[50%]" style={{ height: pct(e), background: `radial-gradient(70% 90% at 38% 30%, #fff, ${frosting} 60%, color-mix(in srgb, ${frosting} 85%, #000))`, boxShadow: "inset 0 -2px 3px rgba(0,0,0,.08)" }}>
+        <Texture material="grain" opacity={0.2} />
+        <span aria-hidden="true" className="absolute inset-0 block" style={{ opacity: lit, transition: "opacity .5s" }}>
+          <span className="jb-candlelight absolute inset-0 block" style={{ background: "radial-gradient(60% 80% at 50% 50%, rgba(255,200,110,.75), rgba(255,170,80,.25) 55%, transparent 80%)" }} />
+        </span>
+      </div>
+    </div>
+  );
+}
+
+/** A porcelain plate: elliptical top with a rim, and its thickness below. */
+function Plate({ width }: { width: number }) {
+  const e = ELLIPSE;
+  return (
+    <div className="relative z-0" style={{ width: `${width * 100}%`, marginLeft: `${-((width - 1) / 2) * 100}%`, aspectRatio: `${1 / e}`, marginTop: `${-(e / 2 + (e * width) / 2) * 100}%` }}>
+      <ContactShadow tint="45,40,110" strength={0.8} className="inset-x-[2%] top-[38%] h-[90%]" style={{ transform: "translate(3%, 22%)", filter: "blur(6px)" }} />
+      {/* Thickness */}
+      <span aria-hidden="true" className="absolute inset-0 block rounded-[50%]" style={{ background: "linear-gradient(90deg,#d9d2e4,#f4f0f8 30%,#c8bfd6)", transform: "translateY(9%)" }} />
+      {/* Top, with a raised rim and the cake's shadow on it */}
+      <span aria-hidden="true" className="absolute inset-0 block overflow-hidden rounded-[50%]" style={{ background: "radial-gradient(75% 70% at 40% 35%, #ffffff, #f1edf6 60%, #ddd5e8)", boxShadow: "inset 0 0 0 2px rgba(255,255,255,.9), inset 0 0 0 5px rgba(200,190,220,.45)" }}>
+        <span className="absolute inset-[16%_12%_20%_12%] block rounded-[50%]" style={{ background: "rgba(80,50,110,.22)", filter: "blur(5px)", transform: "translate(5%, 8%)" }} />
+        <Sheen strength={0.8} angle={100} width={16} travel={30} />
+      </span>
     </div>
   );
 }
@@ -287,7 +370,11 @@ export const birthdayBackground = (c: ThemePalette): React.CSSProperties => ({
   backgroundColor: c.butter,
   backgroundImage: [
     `radial-gradient(70% 55% at 50% 60%, #FFF6D6 0%, transparent 70%)`,
+    // A table edge under the cake, a wall behind it.
+    `linear-gradient(180deg, transparent 0 65.6%, rgba(255,255,255,.35) 65.8%, rgba(255,150,190,.12) 66.4%, rgba(255,150,190,.06))`,
     `linear-gradient(180deg, ${c.butter}, #FFE08A)`,
-    "radial-gradient(130% 100% at 50% 40%, transparent 55%, rgba(120,80,0,.16))",
+    "radial-gradient(130% 100% at 50% 40%, transparent 55%, rgba(120,80,0,.18))",
+    TEXTURE.grain,
   ].join(","),
+  backgroundSize: "auto, auto, auto, auto, 160px 160px",
 });

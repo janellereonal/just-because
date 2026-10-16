@@ -7,7 +7,7 @@
  * Beats (ms after zero): 0 rocket · 750 name in sparks · 1500 popper ·
  * 2300 greeting + friends' fireworks · 4300 open.
  */
-import { useEffect, useRef, useState } from "react";
+import { memo, useEffect, useMemo, useRef, useState } from "react";
 import { animate, AnimatePresence, motion, useMotionValue } from "motion/react";
 import { Character } from "@/themes/_shared/cast/Character";
 import type { CharacterHandle } from "@/themes/_shared/cast/types";
@@ -22,6 +22,7 @@ import {
   useHold,
 } from "@/themes/_shared/stage";
 import { burstSet } from "@/themes/_shared/Sprinkles";
+import { TEXTURE } from "@/themes/_shared/light";
 import { foley, melody } from "@/lib/play";
 
 const HOLD_MS = 2400;
@@ -32,6 +33,8 @@ export function NewYearOpening(p: OpeningProps) {
   const sky = useRef<Sky | null>(null);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const popperRef = useRef<HTMLDivElement | null>(null);
+  const flashRef = useRef<HTMLDivElement | null>(null);
+  const roofsLitRef = useRef<SVGGElement | null>(null);
   const [done, setDone] = useState(false);
   const [auto, setAuto] = useState(0);
   const h = useHaptics();
@@ -101,7 +104,17 @@ export function NewYearOpening(p: OpeningProps) {
     if (!el) return;
     // The name is drawn in the theme's display face, so warm it up early.
     void document.fonts?.load("700 40px 'Clash Display'").catch(() => {});
-    const s = new Sky(el, sparkColors);
+    const s = new Sky(el, sparkColors, (x, y, color, big) => {
+      // Each burst lights the sky around it and catches the rooftops.
+      const f = flashRef.current;
+      const w = el.clientWidth || 1;
+      const hgt = el.clientHeight || 1;
+      if (f) {
+        f.style.background = `radial-gradient(${big ? 70 : 38}% ${big ? 55 : 30}% at ${(x / w) * 100}% ${(y / hgt) * 100}%, ${color}, transparent 70%)`;
+        f.animate([{ opacity: 0 }, { opacity: big ? 0.55 : 0.3, offset: 0.12 }, { opacity: 0 }], { duration: big ? 1600 : 900, easing: "cubic-bezier(.2,.7,.3,1)" });
+      }
+      roofsLitRef.current?.animate([{ opacity: 0 }, { opacity: big ? 0.9 : 0.5, offset: 0.12 }, { opacity: 0 }], { duration: big ? 1600 : 900, easing: "cubic-bezier(.2,.7,.3,1)" });
+    });
     sky.current = s;
     return () => s.stop();
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -130,6 +143,16 @@ export function NewYearOpening(p: OpeningProps) {
       className="relative flex size-full flex-col items-center justify-center"
       style={{ color: c.silver }}
     >
+      {/* Stars at three distances: the far ones barely move */}
+      <Stars depth={-3} count={26} lo={0.8} hi={1.4} seed={3} />
+      <Stars depth={-8} count={14} lo={1.2} hi={2} seed={8} />
+      <Stars depth={-14} count={6} lo={2} hi={2.8} seed={13} />
+      {/* Light from the fireworks, washing over the sky */}
+      <div ref={flashRef} aria-hidden="true" className="pointer-events-none absolute inset-0 z-[2] opacity-0" />
+      {/* The city below, windows on, rooftops catching each burst */}
+      <Layer depth={-5} className="pointer-events-none absolute inset-x-[-8%] bottom-[-1%] z-[2] h-[19%]">
+        <Skyline night={c.night!} navy={c.navy!} gold={c.gold!} violet={c.violet!} litRef={roofsLitRef} />
+      </Layer>
       <canvas
         ref={canvasRef}
         aria-hidden="true"
@@ -161,14 +184,11 @@ export function NewYearOpening(p: OpeningProps) {
                 className="pointer-events-none absolute inset-0 size-full -rotate-90"
                 aria-hidden="true"
               >
-                <circle
-                  cx="50"
-                  cy="50"
-                  r="46"
-                  fill="none"
-                  stroke={`${c.silver}26`}
-                  strokeWidth="0.8"
-                />
+                {/* An engraved ring: a dark groove with a light lip on its lower edge */}
+                <circle cx="50" cy="50" r="46" fill="none" stroke="rgba(0,0,0,.5)" strokeWidth="2.6" />
+                <circle cx="50" cy="50" r="46" fill="none" stroke={`${c.silver}30`} strokeWidth="0.8" />
+                <circle cx="50.35" cy="50.5" r="47.3" fill="none" stroke="rgba(255,255,255,.1)" strokeWidth="0.5" />
+                <circle cx="50" cy="50" r="46" fill="none" stroke={c.gold} strokeOpacity=".16" strokeWidth="6" strokeLinecap="round" strokeDasharray={ring} strokeDashoffset={ring * (1 - progress)} />
                 <circle
                   cx="50"
                   cy="50"
@@ -196,7 +216,11 @@ export function NewYearOpening(p: OpeningProps) {
                     fontWeight: weight,
                     letterSpacing: "-0.04em",
                     color: progress > 0 ? "#FFF6DD" : c.silver,
-                    textShadow: progress > 0 ? `0 0 ${10 + within * 30}px ${c.gold}AA` : "none",
+                    // Cut from metal: a lit top edge, a few px of body falling to the lower right, then glow.
+                    textShadow:
+                      progress > 0
+                        ? `-1px -1px 0 rgba(255,255,255,.5), 0.6px 1px 0 #E5C26B, 1.2px 2px 0 #C9A24A, 1.8px 3px 0 #A9832F, 2.4px 4px 0 #8C6B22, 3px 6px 10px rgba(0,0,0,.55), 0 0 ${10 + within * 30}px ${c.gold}AA`
+                        : `-1px -1px 0 rgba(255,255,255,.18), 0.6px 1px 0 #8f94a3, 1.2px 2px 0 #7a7f8e, 1.8px 3px 0 #646979, 3px 6px 10px rgba(0,0,0,.6)`,
                   }}
                 >
                   {count}
@@ -302,6 +326,106 @@ function Popper({ gold, violet }: { gold: string; violet: string }) {
   );
 }
 
+/* ---------- stars and the city ---------- */
+
+function seeded(seed: number) {
+  let s = seed >>> 0;
+  return () => {
+    s = (s * 1664525 + 1013904223) >>> 0;
+    return s / 4294967296;
+  };
+}
+
+/** One layer of stars, twinkling at their own pace, drifting with the tilt at their depth. */
+// Memoized: the countdown re-renders every frame while it's held.
+const Stars = memo(function Stars({ depth, count, lo, hi, seed }: { depth: number; count: number; lo: number; hi: number; seed: number }) {
+  const stars = useMemo(() => {
+    const r = seeded(seed * 977);
+    return Array.from({ length: count }, () => ({ x: r() * 100, y: r() * 72, s: lo + r() * (hi - lo), d: -r() * 4, t: 2.4 + r() * 3 }));
+  }, [count, seed, lo, hi]);
+  return (
+    <Layer depth={depth} className="pointer-events-none absolute inset-[-4%] z-[1]">
+      {stars.map((st, i) => (
+        <span
+          key={i}
+          aria-hidden="true"
+          className="jb-twinkle absolute block rounded-full"
+          style={{
+            left: `${st.x}%`,
+            top: `${st.y}%`,
+            width: st.s,
+            height: st.s,
+            background: "#fff",
+            boxShadow: st.s > 1.9 ? `0 0 ${st.s * 3}px rgba(255,255,255,.7)` : "none",
+            animationDelay: `${st.d}s`,
+            animationDuration: `${st.t}s`,
+          }}
+        />
+      ))}
+    </Layer>
+  );
+});
+
+/**
+ * A city skyline: two rows of buildings (the far row hazier), lit windows,
+ * a few blinking on and off, and a copy of the rooftops lit in gold that the
+ * fireworks flash on.
+ */
+const Skyline = memo(function Skyline({ night, navy, gold, violet, litRef }: { night: string; navy: string; gold: string; violet: string; litRef: React.RefObject<SVGGElement | null> }) {
+  const city = useMemo(() => {
+    const r = seeded(2026);
+    const row = (y0: number, hMin: number, hMax: number, wMin: number, wMax: number) => {
+      const out: { x: number; w: number; h: number; spire: boolean }[] = [];
+      let x = -10;
+      while (x < 420) {
+        const w = wMin + r() * (wMax - wMin);
+        out.push({ x, w, h: hMin + r() * (hMax - hMin), spire: r() > 0.86 });
+        x += w + (r() > 0.7 ? 2 : 0);
+      }
+      return out.map((b) => ({ ...b, y: y0 - b.h }));
+    };
+    const back = row(120, 40, 92, 14, 30);
+    const front = row(120, 18, 62, 12, 26);
+    const windows: { x: number; y: number; blink: boolean; d: number }[] = [];
+    for (const b of front) {
+      for (let wy = b.y + 6; wy < 116; wy += 7) {
+        for (let wx = b.x + 3; wx < b.x + b.w - 4; wx += 5) {
+          if (r() < 0.32) windows.push({ x: wx, y: wy, blink: r() < 0.12, d: -r() * 7 });
+        }
+      }
+    }
+    return { back, front, windows };
+  }, []);
+  const roof = (b: { x: number; y: number; w: number; h: number; spire: boolean }) =>
+    `M${b.x.toFixed(1)} 121V${b.y.toFixed(1)}h${b.w.toFixed(1)}V121z` + (b.spire ? `M${(b.x + b.w / 2 - 1).toFixed(1)} ${b.y.toFixed(1)}v-12h2v12z` : "");
+  const top = (b: { x: number; y: number; w: number }) => `M${b.x.toFixed(1)} ${b.y.toFixed(1)}h${b.w.toFixed(1)}`;
+  return (
+    <svg viewBox="0 0 400 120" preserveAspectRatio="xMidYMax slice" className="size-full" aria-hidden="true">
+      <defs>
+        <linearGradient id="jb-ny-back" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stopColor={navy} />
+          <stop offset="1" stopColor={night} />
+        </linearGradient>
+        <linearGradient id="jb-ny-haze" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stopColor={violet} stopOpacity="0" />
+          <stop offset="1" stopColor={violet} stopOpacity=".28" />
+        </linearGradient>
+      </defs>
+      <path d={city.back.map(roof).join("")} fill="url(#jb-ny-back)" opacity=".75" />
+      <rect x="-20" y="40" width="440" height="80" fill="url(#jb-ny-haze)" />
+      <path d={city.front.map(roof).join("")} fill={night} />
+      {city.windows.map((w, i) => (
+        <rect key={i} x={w.x} y={w.y} width="2.2" height="3" rx=".4" fill="#FFD98A" opacity=".8" className={w.blink ? "jb-window" : undefined} style={w.blink ? { animationDelay: `${w.d}s` } : undefined} />
+      ))}
+      {/* Rooftops lit by the fireworks */}
+      <g ref={litRef} opacity="0">
+        <path d={city.back.map(top).join("")} fill="none" stroke={gold} strokeOpacity=".55" strokeWidth="1" />
+        <path d={city.front.map(top).join("")} fill="none" stroke={gold} strokeWidth="1.3" strokeLinecap="round" />
+      </g>
+    </svg>
+  );
+});
+
 /* ---------- the sky ---------- */
 
 type Spark = {
@@ -340,6 +464,7 @@ class Sky {
   constructor(
     private el: HTMLCanvasElement,
     private colors: string[],
+    private onBurst?: (x: number, y: number, color: string, big: boolean) => void,
   ) {
     this.ctx = el.getContext("2d");
     this.ro = new ResizeObserver(() => this.resize());
@@ -413,6 +538,7 @@ class Sky {
   }
 
   private explodeName(name: string, cx: number, cy: number, now: number) {
+    this.onBurst?.(cx, cy, this.colors[0] ?? "#E5C26B", true);
     const pts = this.namePoints(name);
     this.holdUntil = now + 2600;
     pts.forEach((pt, i) => {
@@ -471,6 +597,7 @@ class Sky {
       const cy = this.h * (0.1 + Math.random() * 0.25);
       const color = this.colors[(k + 1) % this.colors.length] ?? "#fff";
       const t = now + k * 260;
+      window.setTimeout(() => this.onBurst?.(cx, cy, color, false), k * 260);
       for (let i = 0; i < 36; i++) {
         const a = (i / 36) * Math.PI * 2;
         const sp = 1.6 + Math.random() * 1.6;
@@ -601,6 +728,10 @@ export const newYearBackground = (c: ThemePalette): React.CSSProperties => ({
     "radial-gradient(1px 1px at 88% 46%, #ffffff99, transparent)",
     "radial-gradient(1.5px 1.5px at 22% 64%, #ffffff88, transparent)",
     `radial-gradient(70% 45% at 50% 100%, ${c.violet}40, transparent 70%)`,
+    // City glow on the low clouds
+    `radial-gradient(90% 22% at 50% 92%, rgba(255,190,120,.12), transparent 70%)`,
     `linear-gradient(180deg, ${c.night}, ${c.navy} 70%)`,
+    TEXTURE.grain,
   ].join(","),
+  backgroundSize: "auto, auto, auto, auto, auto, auto, auto, auto, auto, 160px 160px",
 });

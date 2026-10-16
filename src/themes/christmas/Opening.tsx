@@ -1,37 +1,56 @@
 /**
  * CHRISTMAS (and the default gift) — a wrapped present with a real ribbon.
- * Gesture: pull the ribbon's loose end. It behaves like a rope (verlet), and
- * when pulled far enough the bow unties, the bands slide off and the paper
- * falls open. Snow drifts in layers. Character wears a knit scarf.
+ * The present is a real 3D box: faces in one preserve-3d space, each shaded
+ * by the key light as the box turns, a lid that sits over the top, and a
+ * shadow on the floor. Gesture: pull the ribbon's loose end. It behaves like
+ * a rope (verlet), and when pulled far enough the bow unties, the bands slip
+ * off, the lid lifts away and the four sides fall open around a warm light.
  * Beats (ms after the bow unties): 0 bands slide · 420 lid lifts ·
- * 700 paper falls open · 1300 glow + tag · 2600 open.
+ * 700 sides fall open · 1300 glow + greeting · 2600 open.
  */
-import { useEffect, useRef, useState } from "react";
-import { motion } from "motion/react";
+import { useEffect, useId, useRef, useState } from "react";
+import { motion, useSpring, useTransform, type MotionValue } from "motion/react";
 import { Character } from "@/themes/_shared/cast/Character";
 import type { CharacterHandle } from "@/themes/_shared/cast/types";
 import { Greeting, type OpeningProps } from "@/themes/_shared/opening";
 import type { ThemePalette } from "@/themes/_shared/design";
 import { FallbackButton, Layer, SPRING, useBeats, useHaptics } from "@/themes/_shared/stage";
 import { burstSet } from "@/themes/_shared/Sprinkles";
+import { FaceLight, Object3D, Sheen, TEXTURE, Texture } from "@/themes/_shared/light";
 import { foley, melody } from "@/lib/play";
 
 type Pt = { x: number; y: number; px: number; py: number };
 const LINKS = 9;
 const SEG = 13;
+/** The SVG over the box is 240 units square. */
+const VB = 240;
 
-/** A short verlet rope: point 0 is pinned to the bow, the last follows the finger. */
-function useRope(anchor: () => { x: number; y: number }) {
+/**
+ * A short verlet rope: point 0 follows the bow (wherever the box has turned
+ * to), the last follows the finger. It draws straight into the SVG (no React
+ * render per frame).
+ */
+function useRope(
+  anchor: () => { x: number; y: number },
+  draw: (d: string, end: { x: number; y: number }, a: { x: number; y: number }) => void,
+  live: boolean,
+  /** Draw once and stop (a paused preview). */
+  still: boolean,
+) {
   const pts = useRef<Pt[]>([]);
-  const [d, setD] = useState("");
   const grab = useRef<{ x: number; y: number } | null>(null);
+  /** The anchor as of the last frame, so others don't have to measure it again. */
+  const last = useRef<{ x: number; y: number } | null>(null);
   const raf = useRef(0);
   useEffect(() => {
+    if (!live) return;
     const a = anchor();
-    pts.current = Array.from({ length: LINKS }, (_, i) => ({ x: a.x + i * 3, y: a.y + i * SEG, px: a.x + i * 3, py: a.y + i * SEG }));
+    if (!pts.current.length) pts.current = Array.from({ length: LINKS }, (_, i) => ({ x: a.x + i * 3, y: a.y + i * SEG, px: a.x + i * 3, py: a.y + i * SEG }));
+    let lastA = { x: NaN, y: NaN };
     const step = () => {
       const p = pts.current;
       const a2 = anchor();
+      last.current = a2;
       for (let i = 0; i < p.length; i++) {
         const q = p[i]!;
         const vx = (q.x - q.px) * 0.94;
@@ -65,33 +84,70 @@ function useRope(anchor: () => { x: number; y: number }) {
           n.y -= dy * diff;
         }
       }
-      // Only re-render while the rope is actually moving.
-      let motion = 0;
-      for (const q of p) motion += Math.abs(q.x - q.px) + Math.abs(q.y - q.py);
-      if (motion > 0.05 || grab.current) setD(p.map((q, i) => `${i ? "L" : "M"}${q.x.toFixed(1)} ${q.y.toFixed(1)}`).join(" "));
+      // Only touch the DOM while something actually moves.
+      let moving = Math.abs(a2.x - lastA.x) + Math.abs(a2.y - lastA.y) > 0.02;
+      for (const q of p) moving ||= Math.abs(q.x - q.px) + Math.abs(q.y - q.py) > 0.05;
+      if (moving || grab.current) {
+        lastA = a2;
+        draw(p.map((q, i) => `${i ? "L" : "M"}${q.x.toFixed(1)} ${q.y.toFixed(1)}`).join(" "), p[p.length - 1]!, a2);
+      }
+      if (still) {
+        // Let the rope settle for a moment, then stop: nothing moves in a paused preview.
+        settle += 1;
+        if (settle > 90) return;
+      }
       raf.current = requestAnimationFrame(step);
     };
-    setD(pts.current.map((q, i) => `${i ? "L" : "M"}${q.x} ${q.y}`).join(" "));
+    let settle = 0;
     raf.current = requestAnimationFrame(step);
     return () => cancelAnimationFrame(raf.current);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [live, still]);
   const end = () => pts.current[pts.current.length - 1] ?? { x: 0, y: 0 };
-  return { d, grab, end };
+  return { grab, end, last };
 }
 
 export function ChristmasOpening(p: OpeningProps) {
   const c = p.design.palette;
+  // The default gift sits on a light background, so its words are dark.
+  const ink = p.kind === "default" ? "#2B2522" : c.snow!;
   const cast = useRef<CharacterHandle | null>(null);
   const boxRef = useRef<HTMLDivElement | null>(null);
   const svgRef = useRef<SVGSVGElement | null>(null);
+  const knotRef = useRef<HTMLSpanElement | null>(null);
+  const bowRef = useRef<SVGGElement | null>(null);
+  const ropeRefs = useRef<(SVGPathElement | null)[]>([]);
+  const endRefs = useRef<(SVGCircleElement | null)[]>([]);
   const [untied, setUntied] = useState(false);
+  const uid = useId().replace(/:/g, "");
   const h = useHaptics();
   const beat = useBeats(untied, [0, 420, 700, 1300, 2600]);
   const pullStart = useRef<{ x: number; y: number } | null>(null);
   const lastTick = useRef(0);
-  // The rope lives in the box's own coordinate space (an SVG over the bow).
-  const rope = useRope(() => ({ x: 132, y: 58 }));
+
+  /** Where the knot is, in the SVG's units: the top of the lid, wherever the box has turned. */
+  function knot() {
+    const k = knotRef.current?.getBoundingClientRect();
+    const s = svgRef.current?.getBoundingClientRect();
+    if (!k || !s || !s.width) return { x: 120, y: 52 };
+    return { x: ((k.left + k.width / 2 - s.left) / s.width) * VB, y: ((k.top + k.height / 2 - s.top) / s.height) * VB };
+  }
+  const rope = useRope(
+    () => {
+      const k = knot();
+      return { x: k.x + 7, y: k.y + 9 };
+    },
+    (d, end, a) => {
+      ropeRefs.current.forEach((el) => el?.setAttribute("d", d));
+      endRefs.current.forEach((el) => {
+        el?.setAttribute("cx", end.x.toFixed(1));
+        el?.setAttribute("cy", end.y.toFixed(1));
+      });
+      bowRef.current?.setAttribute("transform", `translate(${(a.x - 7 - 120).toFixed(1)} ${(a.y - 9 - 44).toFixed(1)})`);
+    },
+    !untied,
+    p.paused,
+  );
 
   function untie() {
     if (untied) return;
@@ -106,7 +162,7 @@ export function ChristmasOpening(p: OpeningProps) {
   useEffect(() => {
     if (beat === 4) {
       const r = boxRef.current?.getBoundingClientRect();
-      if (r) burstSet(p.hostRef.current, r.left + r.width / 2, r.top + r.height * 0.3, p.iconSet, { colors: [c.gold!, "#fff", c.cranberry!], count: 28, spread: 1.8, up: true });
+      if (r) burstSet(p.hostRef.current, r.left + r.width / 2, r.top + r.height * 0.45, p.iconSet, { colors: [c.gold!, "#fff", c.cranberry!], count: 28, spread: 1.8, up: true });
       melody([659, 659, 659, 0, 659, 659, 659, 0, 659, 784, 523, 587, 659], 0.16, "sine", 0.05);
       h.success();
     }
@@ -126,7 +182,8 @@ export function ChristmasOpening(p: OpeningProps) {
     const t0 = performance.now() + 700;
     const tick = (now: number) => {
       const k = Math.max(0, Math.min(1, (now - t0) / 900));
-      rope.grab.current = k > 0 ? { x: 150 + k * 90, y: 150 + k * 70 } : null;
+      const a = rope.last.current ?? knot();
+      rope.grab.current = k > 0 ? { x: a.x + 30 + k * 90, y: a.y + 90 + k * 70 } : null;
       if (k >= 1) {
         untie();
         return;
@@ -140,7 +197,7 @@ export function ChristmasOpening(p: OpeningProps) {
 
   function toLocal(e: React.PointerEvent) {
     const r = svgRef.current!.getBoundingClientRect();
-    return { x: ((e.clientX - r.left) / r.width) * 240, y: ((e.clientY - r.top) / r.height) * 240 };
+    return { x: ((e.clientX - r.left) / r.width) * VB, y: ((e.clientY - r.top) / r.height) * VB };
   }
   const handlers = {
     onPointerDown: (e: React.PointerEvent) => {
@@ -156,7 +213,8 @@ export function ChristmasOpening(p: OpeningProps) {
       if (!pullStart.current) return;
       const pt = toLocal(e);
       rope.grab.current = pt;
-      const dist = Math.hypot(pt.x - 132, pt.y - 58);
+      const a = knot();
+      const dist = Math.hypot(pt.x - a.x, pt.y - a.y);
       const k = Math.floor(dist / 30);
       if (k > lastTick.current) {
         lastTick.current = k;
@@ -182,9 +240,22 @@ export function ChristmasOpening(p: OpeningProps) {
   const ribbon = c.gold!;
   const pattern = `radial-gradient(circle at 25% 25%, ${c.gold}AA 0 2px, transparent 2.5px) 0 0 / 18px 18px, radial-gradient(circle at 75% 75%, #ffffff55 0 1.5px, transparent 2px) 0 0 / 18px 18px, ${paper}`;
 
+  // The four sides fall outwards, one after another.
+  const fall = { stiffness: 170, damping: 11, mass: 0.8 };
+  const folds = [useSpring(0, fall), useSpring(0, fall), useSpring(0, fall), useSpring(0, fall)];
+  useEffect(() => {
+    if (p.reduced) {
+      folds.forEach((f) => f.jump(paperOpen ? -62 : 0));
+      return;
+    }
+    const timers = folds.map((f, i) => window.setTimeout(() => f.set(paperOpen ? -62 : 0), paperOpen ? i * 70 : 0));
+    return () => timers.forEach(window.clearTimeout);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [paperOpen]);
+
   return (
     <div className="relative flex w-full flex-col items-center">
-      <div className="relative z-[3] h-[clamp(60px,17cqi,100px)] text-center" style={{ color: c.snow }}>
+      <div className="relative z-[3] h-[clamp(60px,17cqi,100px)] text-center" style={{ color: ink }}>
         {glow ? (
           <motion.div initial={{ y: 26, opacity: 0, scale: 0.9 }} animate={{ y: 0, opacity: 1, scale: 1 }} transition={SPRING.wobbly}>
             <Greeting text={p.greeting} className="text-[clamp(2rem,11cqi,3.4rem)]" />
@@ -192,54 +263,92 @@ export function ChristmasOpening(p: OpeningProps) {
         ) : null}
       </div>
 
-      <Layer depth={9} rotate={6} className="relative mt-[4cqi]" style={{ width: "min(66cqi, 300px)", aspectRatio: "1" }}>
+      <Layer depth={9} className="relative mt-[min(4cqi,18px)]" style={{ width: "min(66cqi, 300px)", aspectRatio: "1", ["--s" as string]: "calc(min(66cqi, 300px) * .58)" } as React.CSSProperties}>
         <div ref={boxRef} className="absolute inset-0">
-          {/* Warm light inside the box */}
-          <motion.div className="absolute inset-[10%] rounded-[10px]" animate={{ opacity: paperOpen ? 1 : 0, scale: glow ? 1.25 : 1 }} transition={SPRING.soft} style={{ background: `radial-gradient(circle, #FFF2C2, ${c.gold}88 45%, transparent 72%)`, filter: "blur(6px)" }} />
-          {/* Paper sides fall open like petals */}
-          {(["left", "right", "front"] as const).map((side, i) => (
-            <motion.div
-              key={side}
-              className="absolute"
-              style={{
-                left: side === "right" ? "50%" : 0,
-                right: side === "left" ? "50%" : 0,
-                top: side === "front" ? "40%" : "18%",
-                bottom: 0,
-                background: pattern,
-                transformOrigin: side === "left" ? "0% 100%" : side === "right" ? "100% 100%" : "50% 100%",
-                borderRadius: 8,
-                boxShadow: "inset 0 -14px 24px -16px rgba(0,0,0,.45), 0 24px 30px -22px rgba(0,0,0,.6)",
-                zIndex: side === "front" ? 3 : 2,
-              }}
-              animate={paperOpen ? { rotate: side === "left" ? -32 : side === "right" ? 32 : 0, rotateX: side === "front" ? 74 : 0, y: side === "front" ? 18 : 6, scale: side === "front" ? 1 : 0.92 } : { rotate: 0, rotateX: 0, y: 0, scale: 1 }}
-              transition={{ ...SPRING.wobbly, delay: paperOpen ? i * 0.07 : 0 }}
-            />
-          ))}
-          {/* The lid */}
+          {/* Warm light from inside, and slow rays once it's open */}
           <motion.div
-            className="absolute inset-x-[-5%] top-[10%] z-[5] h-[17%] rounded-[8px]"
-            style={{ background: pattern, boxShadow: "0 10px 16px -10px rgba(0,0,0,.55), inset 0 2px 0 rgba(255,255,255,.18)" }}
-            animate={lidOff ? { y: -170, x: 50, rotate: 24, opacity: 0 } : { y: 0, x: 0, rotate: 0, opacity: 1 }}
-            transition={{ ...SPRING.heavy, opacity: { delay: lidOff ? 0.4 : 0, duration: 0.3 } }}
+            aria-hidden="true"
+            className="pointer-events-none absolute -inset-[30%]"
+            initial={false}
+            animate={{ opacity: paperOpen ? 1 : 0, scale: glow ? 1.15 : 0.9 }}
+            transition={SPRING.soft}
+            style={{ background: `radial-gradient(closest-side, #FFF2C2, ${c.gold}88 40%, transparent 75%)` }}
           />
-          {/* Ribbon bands */}
-          <motion.div className="absolute top-[10%] bottom-0 left-1/2 z-[6] w-[12%] -translate-x-1/2" style={{ background: `linear-gradient(90deg, #B98A2E, ${ribbon}, #F4D98F, ${ribbon}, #B98A2E)` }} animate={bandsOff ? { scaleY: 0, opacity: 0 } : { scaleY: 1, opacity: 1 }} transition={SPRING.snappy} />
-          <motion.div className="absolute inset-x-0 top-[52%] z-[6] h-[12%]" style={{ background: `linear-gradient(180deg, #B98A2E, ${ribbon}, #F4D98F, ${ribbon}, #B98A2E)` }} animate={bandsOff ? { scaleX: 0, opacity: 0 } : { scaleX: 1, opacity: 1 }} transition={SPRING.snappy} />
-          {/* Bow + the pullable ribbon end (a rope) */}
-          <svg ref={svgRef} viewBox="0 0 240 240" className="absolute inset-0 z-[7] size-full overflow-visible" aria-hidden={untied}>
-            <motion.g animate={bandsOff ? { scale: 0.2, opacity: 0, y: -40 } : { scale: 1, opacity: 1, y: 0 }} transition={SPRING.snappy} style={{ originX: "120px", originY: "40px" }}>
-              <path d="M120 44c-18-30-58-30-52-6 4 14 30 12 52 6zM120 44c18-30 58-30 52-6-4 14-30 12-52 6z" fill={ribbon} stroke="#9C7426" strokeWidth="2" />
-              <path d="M120 44c-6 12-16 26-26 34M120 44c6 14 10 20 12 14" stroke="#9C7426" strokeWidth="2" fill="none" />
-              <circle cx="120" cy="44" r="9" fill="#C69A3B" />
-            </motion.g>
+          <motion.div
+            aria-hidden="true"
+            className="jb-rays pointer-events-none absolute -inset-[45%] rounded-full"
+            initial={false}
+            animate={{ opacity: glow ? 0.55 : 0 }}
+            transition={{ duration: 0.8 }}
+            style={{
+              background: `repeating-conic-gradient(from 0deg, #FFF2C2 0 6deg, transparent 6deg 18deg)`,
+              WebkitMaskImage: "radial-gradient(closest-side, #000 20%, transparent 75%)",
+              maskImage: "radial-gradient(closest-side, #000 20%, transparent 75%)",
+            }}
+          />
+
+          <Object3D pose={{ x: -19, y: -27 }} strength={13} perspective={1250} className="absolute top-[34%] left-[21%] aspect-square w-[58%]">
+            {/* Shadow on the floor, away from the light */}
+            <span
+              aria-hidden="true"
+              className="pointer-events-none absolute inset-[-14%] block rounded-[16%]"
+              style={{ transform: "rotateX(90deg) translateZ(calc(var(--s) / -2 - 1px)) translate(12%, -10%)", background: "rgba(0,0,0,.42)", filter: "blur(14px)" }}
+            />
+            {/* The floor of the box, inside */}
+            <span aria-hidden="true" className="pointer-events-none absolute inset-0 block overflow-hidden" style={{ transform: "rotateX(90deg) translateZ(calc(var(--s) / -2))", background: "#F2E6D3" }}>
+              <Texture material="card" />
+              <motion.span className="absolute inset-0 block" initial={false} animate={{ opacity: paperOpen ? 1 : 0 }} style={{ background: `radial-gradient(closest-side, #FFF6D8, ${c.gold}66 60%, transparent)` }} />
+            </span>
+            {/* Light standing up out of the box */}
+            <motion.span
+              aria-hidden="true"
+              className="pointer-events-none absolute inset-[-20%] block"
+              initial={false}
+              animate={{ opacity: paperOpen ? 0.9 : 0 }}
+              transition={{ duration: 0.6 }}
+              style={{ background: "radial-gradient(closest-side, rgba(255,246,214,.95), rgba(255,226,150,.4) 50%, transparent)" }}
+            />
+
+            {/* Four sides: front, right, back, left. Each falls open around its bottom edge. */}
+            {[0, 90, 180, -90].map((turn, i) => (
+              <Side key={turn} turn={turn} fold={folds[i]!} pattern={pattern} ribbon={ribbon} bandsOff={bandsOff} />
+            ))}
+
+            {/* The lid sits over the top */}
+            <Lid off={lidOff} pattern={pattern} ribbon={ribbon} bandsOff={bandsOff} knotRef={knotRef} reduced={p.reduced} />
+          </Object3D>
+
+          {/* Bow + the pullable ribbon end (a rope), drawn flat over the box */}
+          <svg ref={svgRef} viewBox={`0 0 ${VB} ${VB}`} className="absolute inset-0 z-[7] size-full overflow-visible" aria-hidden={untied}>
+            <g ref={bowRef}>
+              <motion.g initial={false} animate={bandsOff ? { scale: 0.2, opacity: 0, y: -40 } : { scale: 1, opacity: 1, y: 0 }} transition={SPRING.snappy} style={{ originX: "120px", originY: "44px" }}>
+                <defs>
+                  <linearGradient id={`bow${uid}`} x1="0" y1="0" x2="0.4" y2="1">
+                    <stop offset="0" stopColor="#FBE7AE" />
+                    <stop offset=".45" stopColor={ribbon} />
+                    <stop offset="1" stopColor="#9C7426" />
+                  </linearGradient>
+                  <radialGradient id={`knot${uid}`} cx=".35" cy=".3" r=".8">
+                    <stop offset="0" stopColor="#FFF0C2" />
+                    <stop offset=".5" stopColor="#C69A3B" />
+                    <stop offset="1" stopColor="#7E5D1C" />
+                  </radialGradient>
+                </defs>
+                <path d="M120 44c-18-30-58-30-52-6 4 14 30 12 52 6zM120 44c18-30 58-30 52-6-4 14-30 12-52 6z" fill="rgba(0,0,0,.22)" transform="translate(2.5 4)" />
+                <path d="M120 44c-18-30-58-30-52-6 4 14 30 12 52 6zM120 44c18-30 58-30 52-6-4 14-30 12-52 6z" fill={`url(#bow${uid})`} />
+                <path d="M78 30c6-6 18-6 26 2M162 30c-6-6-18-6-26 2" fill="none" stroke="#FFF4CF" strokeOpacity=".7" strokeWidth="2" strokeLinecap="round" />
+                <path d="M120 44c-18-30-58-30-52-6 4 14 30 12 52 6zM120 44c18-30 58-30 52-6-4 14-30 12-52 6z" fill="none" stroke="#9C7426" strokeWidth="1.5" />
+                <path d="M120 44c-6 12-16 26-26 34M120 44c6 14 10 20 12 14" stroke="#9C7426" strokeWidth="2" fill="none" />
+                <circle cx="120" cy="44" r="9" fill={`url(#knot${uid})`} />
+              </motion.g>
+            </g>
             {!untied ? (
               <>
-                <path d={rope.d} stroke={ribbon} strokeWidth="9" strokeLinecap="round" fill="none" style={{ filter: "drop-shadow(0 3px 2px rgba(0,0,0,.3))" }} />
-                <path d={rope.d} stroke="#F4D98F" strokeWidth="3" strokeLinecap="round" fill="none" opacity=".6" />
+                <path ref={(el) => void (ropeRefs.current[0] = el)} stroke="rgba(0,0,0,.16)" strokeWidth="12" strokeLinecap="round" fill="none" transform="translate(3 5)" />
+                <path ref={(el) => void (ropeRefs.current[1] = el)} stroke={ribbon} strokeWidth="9" strokeLinecap="round" fill="none" />
+                <path ref={(el) => void (ropeRefs.current[2] = el)} stroke="#F4D98F" strokeWidth="3" strokeLinecap="round" fill="none" opacity=".6" transform="translate(-1 -1.2)" />
                 <circle
-                  cx={rope.end().x}
-                  cy={rope.end().y}
+                  ref={(el) => void (endRefs.current[0] = el)}
                   r="22"
                   fill="transparent"
                   className="cursor-grab touch-none active:cursor-grabbing"
@@ -254,7 +363,7 @@ export function ChristmasOpening(p: OpeningProps) {
                     }
                   }}
                 />
-                {p.interactive && !p.paused ? <circle cx={rope.end().x} cy={rope.end().y} r="12" fill="none" stroke="#fff" strokeWidth="2" className="jb-ring-svg" /> : null}
+                {p.interactive && !p.paused ? <circle ref={(el) => void (endRefs.current[1] = el)} r="12" fill="none" stroke="#fff" strokeWidth="2" className="jb-ring-svg" /> : null}
               </>
             ) : null}
           </svg>
@@ -264,8 +373,8 @@ export function ChristmasOpening(p: OpeningProps) {
         </div>
       </Layer>
 
-      <div className="mt-[10cqi] h-11">
-        <FallbackButton onClick={untie} color={c.snow!} ink={c.snow!} hidden={untied || !p.interactive || p.paused}>
+      <div className="mt-[min(10cqi,45px)] h-11">
+        <FallbackButton onClick={untie} color={ink} ink={ink} hidden={untied || !p.interactive || p.paused}>
           {p.buttonText}
         </FallbackButton>
       </div>
@@ -273,19 +382,133 @@ export function ChristmasOpening(p: OpeningProps) {
   );
 }
 
+const HALF = "calc(var(--s) / 2)";
+const NEG_HALF = "calc(var(--s) / -2)";
+const BAND = (ribbon: string, dir: "90deg" | "180deg") => `linear-gradient(${dir}, #B98A2E, ${ribbon} 22%, #F4D98F 50%, ${ribbon} 78%, #B98A2E)`;
+
+/** World normal of a side before it falls: front faces the viewer. */
+function sideNormal(turn: number): [number, number, number] {
+  const r = (turn * Math.PI) / 180;
+  return [Math.round(Math.sin(r)), 0, Math.round(Math.cos(r))];
+}
+
+/** One side of the box: wrapping paper outside, plain card inside. */
+function Side({ turn, fold, pattern, ribbon, bandsOff }: { turn: number; fold: MotionValue<number>; pattern: string; ribbon: string; bandsOff: boolean }) {
+  const transform = useTransform(fold, (f) => `rotateY(${turn}deg) translateZ(${HALF}) translateY(${HALF}) rotateX(${f.toFixed(2)}deg) translateY(${NEG_HALF})`);
+  return (
+    <motion.div className="absolute inset-0" style={{ transform, transformStyle: "preserve-3d" }}>
+      {/* Outside */}
+      <span className="absolute inset-0 block overflow-hidden" style={{ background: pattern, backfaceVisibility: "hidden", boxShadow: "inset 0 -14px 24px -16px rgba(0,0,0,.35)" }}>
+        <Texture material="paper" opacity={0.35} />
+        {/* Ribbon: across the middle, and down the middle on the front and back */}
+        <motion.span className="absolute inset-x-0 top-1/2 block h-[13%] -translate-y-1/2" style={{ background: BAND(ribbon, "180deg"), boxShadow: "0 2px 3px rgba(0,0,0,.25)" }} initial={false} animate={bandsOff ? { scaleX: 0, opacity: 0 } : { scaleX: 1, opacity: 1 }} transition={SPRING.snappy} />
+        {turn === 0 || turn === 180 ? (
+          <motion.span className="absolute inset-y-0 left-1/2 block w-[13%] -translate-x-1/2" style={{ background: BAND(ribbon, "90deg"), boxShadow: "2px 0 3px rgba(0,0,0,.2)" }} initial={false} animate={bandsOff ? { scaleY: 0, opacity: 0 } : { scaleY: 1, opacity: 1 }} transition={SPRING.snappy} />
+        ) : null}
+        <Sheen strength={0.55} angle={105} width={20} travel={45} />
+        <FaceLight normal={sideNormal(turn)} max={0.6} ambient={0.32} />
+      </span>
+      {/* Inside */}
+      <span className="absolute inset-0 block overflow-hidden" style={{ background: "#F4EBDD", backfaceVisibility: "hidden", transform: "rotateY(180deg)" }}>
+        <Texture material="card" />
+        <span className="absolute inset-0 block" style={{ background: "linear-gradient(0deg, rgba(120,80,30,.18), transparent 60%)" }} />
+        <FaceLight normal={[0, -1, 0]} max={0.4} ambient={0.5} />
+      </span>
+    </motion.div>
+  );
+}
+
+/** The lid: a shallow box a little wider than the present, sitting over its top. */
+function Lid({
+  off,
+  pattern,
+  ribbon,
+  bandsOff,
+  knotRef,
+  reduced,
+}: {
+  off: boolean;
+  pattern: string;
+  ribbon: string;
+  bandsOff: boolean;
+  knotRef: React.RefObject<HTMLSpanElement | null>;
+  reduced: boolean;
+}) {
+  // Lid height as a share of the box, and how far it overhangs.
+  const lh = 0.2;
+  const W = 1.08;
+  const top = `translateY(calc(var(--s) * ${-0.5 - lh * 0.3}))`;
+  const sideY = `translateY(calc(var(--s) * ${-0.5 + lh * 0.2}))`;
+  const fade = { opacity: off ? 0 : 1, transition: { delay: off && !reduced ? 0.35 : 0, duration: 0.3 } };
+  return (
+    <motion.div
+      className="absolute inset-0"
+      style={{ transformStyle: "preserve-3d" }}
+      initial={false}
+      animate={off ? { y: -190, x: 46, rotateZ: 24, rotateX: -24 } : { y: 0, x: 0, rotateZ: 0, rotateX: 0 }}
+      transition={SPRING.heavy}
+    >
+      {/* Top */}
+      <motion.span
+        className="absolute block overflow-hidden"
+        style={{ inset: `${((1 - W) / 2) * 100}%`, transform: `${top} rotateX(90deg)`, background: pattern, boxShadow: "inset 0 0 0 1px rgba(255,255,255,.12)" }}
+        initial={false}
+        animate={fade}
+      >
+        <Texture material="paper" opacity={0.35} />
+        <motion.span className="absolute inset-x-0 top-1/2 block h-[12%] -translate-y-1/2" style={{ background: BAND(ribbon, "180deg") }} initial={false} animate={bandsOff ? { scaleX: 0, opacity: 0 } : { scaleX: 1, opacity: 1 }} transition={SPRING.snappy} />
+        <motion.span className="absolute inset-y-0 left-1/2 block w-[12%] -translate-x-1/2" style={{ background: BAND(ribbon, "90deg") }} initial={false} animate={bandsOff ? { scaleY: 0, opacity: 0 } : { scaleY: 1, opacity: 1 }} transition={SPRING.snappy} />
+        {/* The knot sits in the middle: the bow and the rope follow it */}
+        <span ref={knotRef} className="absolute top-1/2 left-1/2 block size-px" />
+        <Sheen strength={0.7} angle={120} width={18} travel={40} />
+        <FaceLight normal={[0, -1, 0]} max={0.6} ambient={0.32} />
+      </motion.span>
+      {/* Sides of the lid */}
+      {[0, 90, 180, -90].map((turn) => (
+        <motion.span
+          key={turn}
+          className="absolute block overflow-hidden"
+          style={{
+            left: `${((1 - W) / 2) * 100}%`,
+            right: `${((1 - W) / 2) * 100}%`,
+            top: `${50 - lh * 50}%`,
+            height: `${lh * 100}%`,
+            transform: `${sideY} rotateY(${turn}deg) translateZ(calc(var(--s) * ${W / 2}))`,
+            background: pattern,
+            backfaceVisibility: "hidden",
+            boxShadow: "inset 0 -3px 4px rgba(0,0,0,.25), inset 0 2px 0 rgba(255,255,255,.18)",
+          }}
+          initial={false}
+          animate={fade}
+        >
+          <motion.span className="absolute inset-y-0 left-1/2 block w-[12%] -translate-x-1/2" style={{ background: BAND(ribbon, "90deg") }} initial={false} animate={bandsOff ? { scaleY: 0, opacity: 0 } : { scaleY: 1, opacity: 1 }} transition={SPRING.snappy} />
+          <FaceLight normal={sideNormal(turn)} max={0.6} ambient={0.32} />
+        </motion.span>
+      ))}
+    </motion.div>
+  );
+}
+
 export const christmasBackground = (c: ThemePalette): React.CSSProperties => ({
   backgroundColor: c.pine,
   backgroundImage: [
-    `radial-gradient(55% 45% at 50% 52%, ${c.gold}30, transparent 70%)`,
-    "radial-gradient(130% 100% at 50% 40%, transparent 50%, rgba(0,0,0,.45))",
+    // Fairy-light glow behind, a soft lamp from the top left, then the room falling into shadow.
+    `radial-gradient(55% 45% at 50% 56%, ${c.gold}30, transparent 70%)`,
+    `radial-gradient(50% 35% at 22% 12%, rgba(255,236,190,.14), transparent 70%)`,
+    "radial-gradient(130% 100% at 50% 40%, transparent 48%, rgba(0,0,0,.5))",
     `linear-gradient(180deg, #163A2B, ${c.pine})`,
+    TEXTURE.grain,
   ].join(","),
+  backgroundSize: "auto, auto, auto, auto, 160px 160px",
 });
 
 export const defaultBackground = (c: ThemePalette): React.CSSProperties => ({
   backgroundColor: c.snow,
   backgroundImage: [
-    `radial-gradient(55% 45% at 50% 52%, ${c.gold}66, transparent 70%)`,
-    "radial-gradient(130% 100% at 50% 40%, transparent 55%, rgba(43,37,34,.18))",
+    `radial-gradient(55% 45% at 50% 56%, ${c.gold}66, transparent 70%)`,
+    `radial-gradient(50% 35% at 22% 12%, rgba(255,255,255,.7), transparent 70%)`,
+    "radial-gradient(130% 100% at 50% 40%, transparent 55%, rgba(43,37,34,.2))",
+    TEXTURE.grain,
   ].join(","),
+  backgroundSize: "auto, auto, auto, 160px 160px",
 });

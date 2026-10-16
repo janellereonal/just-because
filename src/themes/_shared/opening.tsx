@@ -5,10 +5,11 @@ import type { Palette } from "@/lib/themes";
 import type { ThemeKind } from "@/lib/themeKind";
 import { reducedMotion, useSound } from "@/lib/play";
 import { designFor, loadThemeFonts, themeFontVars, type ThemeDesign } from "@/themes/_shared/design";
-import { Grain, ParallaxRoot, SPRING } from "@/themes/_shared/stage";
+import { Grain, Layer, ParallaxRoot, SPRING } from "@/themes/_shared/stage";
 import type { AccessoryId, CharacterSetting } from "@/themes/_shared/cast/types";
 import type { IconSet } from "@/themes/_shared/iconSets";
 import { SprinkleField } from "@/themes/_shared/Sprinkles";
+import { LightDefs } from "@/themes/_shared/light";
 
 export type OpeningProps = {
   kind: ThemeKind;
@@ -96,6 +97,8 @@ export function OpeningShell({
 
   function open() {
     if (opening) return;
+    // Dev only: hold the last moment to inspect it (/dev/openings?stay=1).
+    if (import.meta.env.DEV && (window as unknown as { __jbStay?: boolean }).__jbStay) return;
     setOpening(true);
     window.setTimeout(onDone, reduced ? 300 : 1050);
   }
@@ -133,9 +136,25 @@ export function OpeningShell({
         }
         data-paused={paused ? "" : undefined}
       >
-        {sprinkles ? <SprinkleField set={sprinkles} count={14} opacity={sprinkleOpacity} seed={kind.length} /> : null}
-        <ParallaxRoot enabled={interactive && !paused} className="absolute inset-0 grid place-items-center [perspective:1200px]">
+        <LightDefs />
+        <ParallaxRoot enabled={interactive && !paused} drift={!paused} className="absolute inset-0 grid place-items-center [perspective:1200px]">
+          {/* The icon set at three depths: far and soft, mid and sharp, a few out-of-focus ones in front. */}
+          {sprinkles ? (
+            <>
+              <Layer depth={-7} className="pointer-events-none absolute inset-0">
+                <SprinkleField set={sprinkles} count={8} opacity={sprinkleOpacity * 0.7} seed={kind.length} size={[7, 13]} blur={0.7} />
+              </Layer>
+              <Layer depth={5} className="pointer-events-none absolute inset-0">
+                <SprinkleField set={sprinkles} count={6} opacity={sprinkleOpacity} seed={kind.length + 3} size={[13, 22]} />
+              </Layer>
+            </>
+          ) : null}
           {children({ hostRef, open, opening, reduced })}
+          {sprinkles ? (
+            <Layer depth={24} className="pointer-events-none absolute inset-0 z-[30]">
+              <SprinkleField set={sprinkles} count={3} opacity={sprinkleOpacity * 0.75} seed={kind.length + 11} size={[30, 46]} blur={3.2} />
+            </Layer>
+          ) : null}
         </ParallaxRoot>
         <Grain opacity={grain} />
 

@@ -15,6 +15,7 @@ import { Greeting, type OpeningProps } from "@/themes/_shared/opening";
 import type { ThemePalette } from "@/themes/_shared/design";
 import { FallbackButton, Layer, SPRING, useBeats, useHaptics } from "@/themes/_shared/stage";
 import { burstSet } from "@/themes/_shared/Sprinkles";
+import { LightShaft, TEXTURE_SOFT, Texture } from "@/themes/_shared/light";
 import { foley, melody } from "@/lib/play";
 
 /** How much stroking (in px of back-and-forth) makes a happy pet. */
@@ -190,28 +191,46 @@ export function PetsOpening(p: OpeningProps) {
         ) : null}
       </div>
 
+      {/* Sunlight through the window, top left, with dust in it */}
+      <Layer depth={-12} className="pointer-events-none absolute -inset-[30%]">
+        <LightShaft color="255,240,205" strength={0.85} motes={12} angle={30} />
+      </Layer>
+
       {/* The rug, the ball, the pet */}
       <Layer
         depth={10}
         className="relative z-[3] mt-4"
         style={{ width: "min(88cqi, 400px)", height: "clamp(260px,70cqi,330px)" }}
       >
+        <Floor wood={c.oat!} />
+        {/* Braided rug, a little thick, on the floorboards */}
+        <div className="absolute inset-x-[4%] bottom-[2%] h-[30%] rounded-[50%]" style={{ background: `color-mix(in srgb, ${c.terracotta} 70%, #000)`, transform: "translateY(5px)", boxShadow: "3px 10px 16px -6px rgba(60,30,15,.45)" }} aria-hidden="true" />
         <div
-          className="absolute inset-x-[4%] bottom-[2%] h-[30%] rounded-[50%]"
+          className="absolute inset-x-[4%] bottom-[2%] h-[30%] overflow-hidden rounded-[50%]"
           style={{
-            background: `radial-gradient(closest-side, ${c.peach}, ${c.peach}CC 70%, ${c.terracotta}55)`,
-            boxShadow: `inset 0 0 0 6px ${c.oat}66`,
+            background: [
+              `repeating-radial-gradient(closest-side, transparent 0 7%, ${c.terracotta}30 7% 9%, transparent 9% 15%)`,
+              `radial-gradient(closest-side, ${c.peach}, ${c.peach}DD 70%, ${c.terracotta}88)`,
+            ].join(","),
+            boxShadow: `inset 0 0 0 6px ${c.oat}66, inset 0 0 0 9px ${c.terracotta}55`,
           }}
-        />
+          aria-hidden="true"
+        >
+          <Texture material="felt" opacity={0.4} />
+          <span className="absolute inset-0 block" style={{ background: "linear-gradient(120deg, rgba(255,245,225,.35), transparent 50%, rgba(80,30,10,.12))" }} />
+        </div>
+        <span className="absolute bottom-[13%] left-[11%] block h-2 w-8 rounded-[50%]" style={{ background: "radial-gradient(closest-side, rgba(60,30,15,.45), transparent)", transform: "translate(5px, 4px)" }} aria-hidden="true" />
         <span
           className="absolute bottom-[14%] left-[10%] block size-8 rounded-full"
           style={{
             background: `radial-gradient(circle at 35% 35%, #F1F7A0, ${c.tennis} 60%, #A9B53A)`,
-            boxShadow: "0 6px 6px -4px rgba(0,0,0,.3)",
+            boxShadow: "inset -3px -4px 6px rgba(70,80,10,.35)",
           }}
           aria-hidden="true"
         >
+          <Texture material="felt" opacity={0.35} />
           <span className="absolute inset-[3px] rounded-full border-2 border-white/70 border-t-transparent border-l-transparent" />
+          <span className="absolute top-[18%] left-[22%] block size-[22%] rounded-full bg-white/70 blur-[1px]" />
         </span>
 
         {/* The gift, once it's been dropped */}
@@ -234,6 +253,7 @@ export function PetsOpening(p: OpeningProps) {
         >
           {/* Coming back from the other side: jump to the left edge first */}
           <ReturnFromLeft active={carrying}>
+            <PetShadow active={(away || carrying) && !p.reduced} />
             <Trot active={(away || carrying) && !p.reduced}>
               <motion.div
                 animate={beat === 1 ? { rotate: [0, -8, 8, -6, 6, 0] } : { rotate: 0 }}
@@ -320,6 +340,68 @@ export function PetsOpening(p: OpeningProps) {
   );
 }
 
+/** The pet's shadow stays on the floor and shrinks a little at the top of each hop. */
+function PetShadow({ active }: { active: boolean }) {
+  return (
+    <motion.span
+      aria-hidden="true"
+      className="pointer-events-none absolute bottom-[-4px] left-1/2 block h-[16px] w-[62%] rounded-[50%]"
+      style={{ x: "-46%", background: "radial-gradient(closest-side, rgba(60,30,15,.42), rgba(60,30,15,.12) 70%, transparent)" }}
+      animate={active ? { scale: [1, 0.78, 1], opacity: [1, 0.6, 1] } : { scale: 1, opacity: 1 }}
+      transition={active ? { duration: 0.32, repeat: Infinity, ease: [0.3, 0, 0.7, 1] } : SPRING.soft}
+    />
+  );
+}
+
+/**
+ * Floorboards in real perspective: a plane hinged at the skirting board and
+ * laid towards you, so the boards run off to a vanishing point. Window light
+ * falls across it in four panes.
+ */
+function Floor({ wood }: { wood: string }) {
+  return (
+    <div aria-hidden="true" className="pointer-events-none absolute top-[48%] -right-[60cqi] -left-[60cqi] h-[120cqi]" style={{ perspective: "520px", perspectiveOrigin: "50% -60%", clipPath: "inset(-12px 0 0 0)" }}>
+      {/* Skirting board */}
+      <span className="absolute inset-x-0 top-0 block h-[10px] -translate-y-full" style={{ background: "linear-gradient(180deg, #FBF6EC, #E9DDC8)", boxShadow: "0 1px 0 rgba(80,50,20,.25), inset 0 1px 0 #fff" }} />
+      <div
+        className="absolute inset-x-0 top-0 h-[160%] origin-top"
+        style={{
+          transform: "rotateX(74deg)",
+          backgroundColor: `color-mix(in srgb, ${wood} 45%, #D9B68C)`,
+          backgroundImage: [
+            // Seams between boards, then board ends staggered every other board
+            "repeating-linear-gradient(90deg, rgba(110,70,35,.32) 0 1.5px, transparent 1.5px 64px)",
+            "repeating-linear-gradient(0deg, transparent 0 230px, rgba(110,70,35,.25) 230px 232px)",
+            // Each board a slightly different tone
+            "repeating-linear-gradient(90deg, rgba(255,240,215,.16) 0 64px, rgba(120,75,35,.06) 64px 128px, rgba(255,230,200,.08) 128px 192px, rgba(120,75,35,.12) 192px 256px, transparent 256px 320px)",
+          ].join(","),
+          backgroundSize: "auto, 128px 100%, auto",
+        }}
+      >
+        <Texture material="wood" opacity={0.18} scale={0.7} />
+        {/* Window light: four panes, soft edges */}
+        <span
+          className="absolute top-[7%] left-[41%] block h-[15%] w-[17%]"
+          style={{
+            transform: "skewX(-28deg)",
+            background: [
+              "linear-gradient(90deg, transparent 47%, rgba(0,0,0,.0) 47% 53%, transparent 53%)",
+              "linear-gradient(rgba(255,246,222,.42), rgba(255,246,222,.42))",
+            ].join(","),
+            WebkitMaskImage: "linear-gradient(90deg, #000 47%, transparent 47% 53%, #000 53%), linear-gradient(#000 47%, transparent 47% 53%, #000 53%)",
+            WebkitMaskComposite: "source-in",
+            maskImage: "linear-gradient(90deg, #000 47%, transparent 47% 53%, #000 53%), linear-gradient(#000 47%, transparent 47% 53%, #000 53%)",
+            maskComposite: "intersect",
+            filter: "blur(3px)",
+          }}
+        />
+        {/* The floor darkens towards the back wall */}
+        <span className="absolute inset-0 block" style={{ background: "linear-gradient(180deg, rgba(60,35,15,.3), transparent 25%)" }} />
+      </div>
+    </div>
+  );
+}
+
 /** Bouncy little steps while moving. */
 function Trot({ active, children }: { active: boolean; children: React.ReactNode }) {
   return (
@@ -363,11 +445,18 @@ function GiftBox({
     <div className="relative" style={{ width: s, height: s }}>
       <motion.div
         className="absolute inset-x-[-6%] top-0 z-[2] h-[28%] rounded-[4px]"
-        style={{ background: paper, boxShadow: "0 3px 0 rgba(0,0,0,.12)" }}
+        style={{ background: paper, boxShadow: "0 3px 0 rgba(0,0,0,.12), inset 0 2px 0 rgba(255,255,255,.25)" }}
         initial={false}
         animate={open ? { y: -s * 0.7, rotate: -24, x: -s * 0.2 } : { y: 0, rotate: 0, x: 0 }}
         transition={SPRING.wobbly}
       >
+        {/* The lid's top, seen from a little above */}
+        <span
+          className="absolute inset-x-0 top-0 block h-[90%] origin-bottom rounded-t-[4px]"
+          style={{ background: `linear-gradient(180deg, color-mix(in srgb, ${paper} 70%, #fff), ${paper})`, transform: "translateY(-100%) perspective(160px) rotateX(58deg)" }}
+        >
+          <span className="absolute inset-y-0 left-1/2 w-[18%] -translate-x-1/2" style={{ background: ribbon }} />
+        </span>
         <span
           className="absolute inset-y-0 left-1/2 w-[18%] -translate-x-1/2"
           style={{ background: ribbon }}
@@ -376,8 +465,8 @@ function GiftBox({
       <div
         className="absolute inset-x-0 top-[24%] bottom-0 rounded-[4px]"
         style={{
-          background: paper,
-          boxShadow: "inset 0 -8px 0 rgba(0,0,0,.08), 0 8px 10px -6px rgba(0,0,0,.3)",
+          background: `linear-gradient(90deg, color-mix(in srgb, ${paper} 85%, #fff), ${paper} 50%, color-mix(in srgb, ${paper} 82%, #000))`,
+          boxShadow: "inset 0 -8px 0 rgba(0,0,0,.08), 4px 8px 10px -6px rgba(0,0,0,.35)",
         }}
       >
         <span
@@ -392,8 +481,10 @@ function GiftBox({
 export const petsBackground = (c: ThemePalette): React.CSSProperties => ({
   backgroundColor: c.oat,
   backgroundImage: [
-    // Wall, a warm patch of sunlight, then the floor.
+    // A warm patch of sunlight on the wall; the floor is drawn by the opening itself.
     `radial-gradient(40% 26% at 72% 26%, #FFF8E8, transparent 70%)`,
-    `linear-gradient(180deg, ${c.oat} 0 62%, #E6D6BC 62% 100%)`,
+    `linear-gradient(180deg, ${c.oat}, color-mix(in srgb, ${c.oat} 88%, #8a6a4a))`,
+    TEXTURE_SOFT.paper,
   ].join(","),
+  backgroundSize: "auto, auto, 260px 260px",
 });

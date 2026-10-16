@@ -16,6 +16,7 @@ import type { ThemePalette } from "@/themes/_shared/design";
 import { FallbackButton, Layer, SPRING, useBeats, useHaptics } from "@/themes/_shared/stage";
 import { burstSet } from "@/themes/_shared/Sprinkles";
 import { initialsOf } from "@/themes/_shared/iconSets";
+import { FloorShadow, LightPool, Object3D, Sheen, TEXTURE, Texture, rim } from "@/themes/_shared/light";
 import { foley, melody } from "@/lib/play";
 
 const STAMP_GAP = 240;
@@ -134,7 +135,25 @@ export function VoyageOpening(p: OpeningProps) {
       className="relative flex size-full flex-col items-center justify-center"
       style={{ color: c.ink }}
     >
-      <Layer depth={8} rotate={5} className="relative z-[3]" style={{ width: "min(80cqi, 340px)" }}>
+      {/* Sun up and to the left, and clouds at three distances */}
+      <LightPool color="rgba(255,236,190,.85)" shape="closest-side at 50% 50%" className="-top-[22%] -left-[30%] aspect-square w-[90%]" />
+      <Layer depth={-4} className="pointer-events-none absolute inset-0 z-[1]">
+        <Cloud className="top-[12%] left-[6%] w-[34%]" opacity={0.7} drift={60} />
+        <Cloud className="top-[24%] right-[-6%] w-[30%]" opacity={0.55} drift={48} delay={-20} />
+      </Layer>
+      <Layer depth={-9} className="pointer-events-none absolute inset-0 z-[2]">
+        <Cloud className="bottom-[16%] left-[-10%] w-[52%]" opacity={0.85} drift={36} delay={-8} />
+        <Cloud className="bottom-[30%] right-[-14%] w-[46%]" opacity={0.75} drift={42} delay={-30} />
+      </Layer>
+
+      <Layer depth={8} className="relative z-[3]" style={{ width: "min(80cqi, 340px)" }}>
+        <Object3D pose={{ x: 10, y: 9, z: -2.5 }} strength={10} settle={beat >= 2} innerClassName="!size-auto">
+        {/* Its shadow, far below on the cloud tops */}
+        <div className="pointer-events-none absolute inset-0" style={{ transform: "translateZ(-70px)", transformStyle: "preserve-3d" }}>
+          <motion.div className="absolute inset-0" animate={{ opacity: torn ? 0.6 : 1 }}>
+            <FloorShadow lift={0.7} tint="40,80,130" strength={0.55} depth={10} radius={18} className="inset-[4%]" />
+          </motion.div>
+        </div>
         <div ref={passRef} className="relative" style={{ fontFamily: "var(--jb-text)" }}>
           {/* The main pass */}
           <motion.div
@@ -143,13 +162,15 @@ export function VoyageOpening(p: OpeningProps) {
             transition={SPRING.heavy}
             style={{
               background: c.cream,
-              boxShadow: "0 22px 40px -24px rgba(34,48,63,.55)",
+              boxShadow: rim(0.8),
               ...(paperMask("bottom") as object),
             }}
           >
+            <Texture material="card" />
+            <Sheen strength={0.75} angle={112} width={20} travel={60} />
             <div
-              className="flex items-center justify-between px-5 py-3"
-              style={{ background: c.orange, color: c.cream }}
+              className="relative flex items-center justify-between px-5 py-3"
+              style={{ background: `linear-gradient(180deg, color-mix(in srgb, ${c.orange} 88%, #fff), ${c.orange})`, color: c.cream }}
             >
               <span className="text-[11px] font-bold tracking-[0.24em] uppercase">
                 {p.badge || "Boarding pass"}
@@ -297,10 +318,12 @@ export function VoyageOpening(p: OpeningProps) {
               }
               style={{
                 background: c.cream,
-                boxShadow: "0 22px 40px -24px rgba(34,48,63,.55)",
+                boxShadow: rim(0.8),
                 ...(paperMask("top") as object),
               }}
             >
+              <Texture material="card" />
+              <Sheen strength={0.75} angle={112} width={20} travel={60} />
               <div className="flex items-center justify-between text-[10px] leading-tight">
                 <Field label="Passenger" value={p.recipient} />
                 <Field label="Seat" value="1A" />
@@ -309,6 +332,8 @@ export function VoyageOpening(p: OpeningProps) {
             </motion.div>
           </motion.div>
         </div>
+
+        </Object3D>
 
         {/* The character, ready to go */}
         <div className="absolute -top-[72px] right-[2%] z-[7] flex items-end">
@@ -339,6 +364,11 @@ export function VoyageOpening(p: OpeningProps) {
           </motion.div>
         ) : null}
       </div>
+
+      {/* One cloud drifts past in front, out of focus */}
+      <Layer depth={22} className="pointer-events-none absolute inset-0 z-[5]">
+        <Cloud className="bottom-[4%] left-[-24%] w-[70%]" opacity={0.7} drift={30} delay={-12} blur={6} />
+      </Layer>
 
       <div className="relative z-[45] h-11">
         <FallbackButton
@@ -489,6 +519,32 @@ function Suitcase({ color, band }: { color: string; band: string }) {
   );
 }
 
+/**
+ * A cumulus cloud: lit from the top left, shaded underneath, drifting slowly.
+ * Width sets its size; it keeps its own shape.
+ */
+function Cloud({ className = "", opacity = 0.8, drift = 40, delay = 0, blur = 0 }: { className?: string; opacity?: number; drift?: number; delay?: number; blur?: number }) {
+  return (
+    <span aria-hidden="true" className={`jb-cloud absolute block aspect-[2.4] ${className}`} style={{ opacity, animationDuration: `${drift}s`, animationDelay: `${delay}s`, filter: blur ? `blur(${blur}px)` : undefined }}>
+      <span
+        className="absolute inset-0 block"
+        style={{
+          background: [
+            "radial-gradient(30% 46% at 34% 46%, #fff 0 60%, transparent 62%)",
+            "radial-gradient(26% 40% at 58% 36%, #fff 0 60%, transparent 62%)",
+            "radial-gradient(22% 34% at 78% 54%, #fff 0 60%, transparent 62%)",
+            "radial-gradient(20% 30% at 16% 62%, #fff 0 60%, transparent 62%)",
+            "radial-gradient(44% 22% at 50% 66%, #fff 0 64%, transparent 66%)",
+          ].join(","),
+          filter: "blur(1.5px)",
+        }}
+      />
+      {/* Underside in shade */}
+      <span className="absolute inset-0 block" style={{ background: "linear-gradient(180deg, transparent 45%, rgba(110,150,190,.35) 80%)", WebkitMaskImage: "radial-gradient(40% 46% at 50% 55%, #000 60%, transparent 75%)", maskImage: "radial-gradient(40% 46% at 50% 55%, #000 60%, transparent 75%)" }} />
+    </span>
+  );
+}
+
 export const voyageBackground = (c: ThemePalette): React.CSSProperties => ({
   backgroundColor: c.sky,
   backgroundImage: [
@@ -498,5 +554,7 @@ export const voyageBackground = (c: ThemePalette): React.CSSProperties => ({
     "radial-gradient(30% 7% at 74% 78%, rgba(255,255,255,.55), transparent 70%)",
     `radial-gradient(90% 40% at 50% 110%, ${c.orange}44, transparent 70%)`,
     `linear-gradient(180deg, #6FAEDF, ${c.sky} 55%, #CFE3F1)`,
+    TEXTURE.grain,
   ].join(","),
+  backgroundSize: "auto, auto, auto, auto, auto, 160px 160px",
 });
