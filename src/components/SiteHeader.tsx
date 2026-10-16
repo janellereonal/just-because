@@ -34,7 +34,8 @@ export function SiteHeader({ showMascot = true }: { showMascot?: boolean }) {
           <Link to="/themes" className={link} activeProps={{ className: "bg-pink/70 text-ink" }}>
             Themes
           </Link>
-          <Link to="/layouts" className={link} activeProps={{ className: "bg-pink/70 text-ink" }}>
+          {/* Wide screens only, so the bar never overflows on tablets when signed in. */}
+          <Link to="/layouts" className={`${link} hidden lg:inline-flex`} activeProps={{ className: "bg-pink/70 text-ink" }}>
             Layouts
           </Link>
           <Link to="/sections" className={link} activeProps={{ className: "bg-pink/70 text-ink" }}>

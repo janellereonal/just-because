@@ -384,7 +384,7 @@ button.bento-tile:hover .bento-wave i:nth-child(odd) { transform: scaleY(1.25); 
   background-position: 0 0, 3px 5px;
 }
 @supports (background: color-mix(in srgb, red, blue)) {
-  .zine-root { --z-paper: color-mix(in srgb, var(--z-theme, #f4f1ea) 32%, #f4f1ea); }
+  .zine-root { --z-paper: color-mix(in srgb, var(--z-theme, #f4f1ea) 24%, #f4f1ea); }
 }
 .zine-mono { font-family: "JetBrains Mono", ui-monospace, monospace; font-size: 11px; letter-spacing: .12em; text-transform: uppercase; }
 .zine-marker { font-family: var(--jb-display, "Fraunces", serif); line-height: 1.1; }
