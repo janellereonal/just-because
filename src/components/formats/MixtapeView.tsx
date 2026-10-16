@@ -49,7 +49,7 @@ function Liner({ piece, accent }: { piece: Piece; accent: string }) {
   return (
     <div className="mix-liner-body">
       {piece.kind === "photo" && media ? (
-        <img src={media} alt={piece.text ?? ""} className="mix-liner-photo" />
+        <img src={media} alt={piece.text ?? ""} className="mix-liner-photo" data-framed={piece.framed || undefined} />
       ) : null}
       {piece.kind === "voice" && media ? <audio controls src={media} className="w-full" /> : null}
       {embed ? (

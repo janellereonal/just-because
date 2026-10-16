@@ -524,3 +524,6 @@ button.bento-tile:hover .bento-wave i:nth-child(odd) { transform: scaleY(1.25); 
 .hunt-box:nth-child(6n) { --paper: radial-gradient(rgba(255,255,255,.6) 1.6px, transparent 2px) 0 0 / 9px 9px; }
 .hunt-body, .hunt-lid { background: var(--paper, none), var(--tint); }
 .hunt-bow::before, .hunt-bow::after { border-width: 6px; }
+
+/* Photobooth photos have a frame and a message drawn in: every layout shows them whole. */
+img[data-framed] { object-fit: contain !important; }

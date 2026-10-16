@@ -113,7 +113,7 @@ function Panel({ item, type, index }: { item: ViewContribution; type: ModuleType
   if (type === "photobooth")
     return (
       <article className="cx-panel cx-photo">
-        <div className="cx-photo-frame">{media ? <img src={media} alt={item.text_content ?? COMIC_COPY.photoAlt} /> : <div className="cx-photo-empty" aria-hidden="true" />}</div>
+        <div className="cx-photo-frame">{media ? <img src={media} alt={item.text_content ?? COMIC_COPY.photoAlt} data-framed={item.data?.["framed"] === true || undefined} /> : <div className="cx-photo-empty" aria-hidden="true" />}</div>
         <div className="cx-photo-cap">
           <Caption>{item.text_content || COMIC_COPY.legendary}</Caption>
         </div>

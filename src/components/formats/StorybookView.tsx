@@ -46,7 +46,7 @@ function PieceBody({ piece, accent }: { piece: Piece; accent: string }) {
           style={{ transform: `rotate(${(seed(piece.id) - 0.5) * 6}deg)` }}
         >
           {media ? (
-            <img src={media} alt={piece.text ?? ""} draggable={false} />
+            <img src={media} alt={piece.text ?? ""} draggable={false} data-framed={piece.framed || undefined} />
           ) : (
             <span className="sbk-photo-empty" />
           )}
