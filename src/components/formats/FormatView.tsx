@@ -1,6 +1,6 @@
 import { lazy, Suspense, useEffect, useMemo, useRef } from "react";
 import { NewSections } from "@/components/sections/NewSections";
-import { FONT_PAIRINGS } from "@/lib/gift";
+import { FONT_PAIRINGS, loadPairingFonts } from "@/lib/gift";
 import { readableInk } from "@/lib/palettes";
 import { resolveIconSet } from "@/themes/_shared/iconSets";
 import { castFor } from "@/themes/_shared/design";
@@ -83,6 +83,7 @@ type Props = Omit<FormatViewProps, "palette"> & {
 export function FormatView(props: Props) {
   const kind = themeKindOf(props.theme);
   useEffect(() => loadThemeFonts(kind), [kind]);
+  useEffect(() => loadPairingFonts(props.site.font_choice), [props.site.font_choice]);
   const tiles = props.site.format !== "scrapbook" && props.site.format !== "comic";
   const cast = castFor(kind, props.site.character ?? null, props.site.icon_set ?? null);
   const palette = props.palette ?? resolvePalette(props.theme, props.site.custom_colors);

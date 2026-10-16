@@ -3,6 +3,25 @@
 Updated 16 Oct 2026 (sessions 6 to 8), so a new session, on any Claude account, can carry on without
 missing anything. Start with `HANDOFF.md` section 0.
 
+## Session 13: polish batch, part 1 (branch `polish-pass`)
+
+- **Gallery:** opening a theme full screen now lands on a whole sample gift (`SampleGift`, the theme's sections
+  then the other good ones), with a compact Use this theme bar. Gallery cards and the sample use each theme's own
+  first palette (they were all on the fallback palette before).
+- **Comic Issue rebuilt** (`ComicIssueView.tsx`, `styles/comic.css`): masthead cover with the gift's character on a
+  burst, cover blurbs and barcode; pages of panels with speech bubbles that have real tails, caption boxes, tapes,
+  transmissions, power words, missions and a credits back cover; page turns by drag, swipe, arrows or keys.
+  Everything is sized by container queries (the old one used window breakpoints, which broke in phone previews).
+- **Tree:** clay tree (`public/clay/xtree.webp`) and 16 clay ornaments (`orn-<key>.webp`, recipes in
+  `src/lib/clay/tree.ts`). Ornaments sway, wiggle on tap and open into the note. The ornament picker uses them too.
+- **Sections page** `/sections` (also in the top menu, and "See all 16 sections" on the homepage): every section,
+  live, filterable, lazy-mounted.
+- **Fonts:** 10 new pairings (Storybook, Elegant, Bold, Bubbly, Pen pal, Typewriter, Groovy, Retro, Comic, Pixel),
+  loaded on demand (`loadPairingFonts`). Saved ids are in `src/lib/fontChoices.ts` (server-safe).
+- Dev: `/dev/format?kind=christmas&format=comic&cover=1` shows any theme in any format.
+- Screenshots: `tools/screens/fonts.cjs` serves Google Fonts from `~/.fonts`, so shots use the real faces;
+  `pages.cjs` screenshots paged views with real clicks.
+
 ## Session 12c: the character picker (branch `characters-picker`, on top of `people-builder`)
 
 - `src/components/CharacterPicker.tsx`, used in the Look step and in Customize > Characters and sprinkles.

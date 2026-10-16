@@ -272,14 +272,14 @@ export function OpeningPreviewModal({
                       setOpened(false);
                       setRound((n) => n + 1);
                     }}
-                    className="min-h-11 shrink-0 rounded-full px-3 text-[13px] font-medium text-ink/75 hover:bg-ink/5 hover:text-ink"
+                    className="min-h-11 shrink-0 rounded-full px-2.5 text-[12.5px] font-medium whitespace-nowrap text-ink/75 hover:bg-ink/5 hover:text-ink"
                   >
                     {SHOWCASE_COPY.again}
                   </button>
-                  <button type="button" onClick={() => onUse(theme)} className="squish min-h-11 flex-1 rounded-full bg-accent px-5 text-[15px] font-medium text-cream">
+                  <button type="button" onClick={() => onUse(theme)} className="squish min-h-11 flex-1 rounded-full bg-accent px-4 text-[15px] font-medium whitespace-nowrap text-cream">
                     {SHOWCASE_COPY.use}
                   </button>
-                  <button type="button" onClick={() => onSample(theme)} className="min-h-11 shrink-0 rounded-full px-3 text-[13px] font-medium text-ink/75 hover:bg-ink/5 hover:text-ink">
+                  <button type="button" onClick={() => onSample(theme)} className="min-h-11 shrink-0 rounded-full px-2.5 text-[12.5px] font-medium whitespace-nowrap text-ink/75 hover:bg-ink/5 hover:text-ink">
                     {SHOWCASE_COPY.details}
                   </button>
                 </div>

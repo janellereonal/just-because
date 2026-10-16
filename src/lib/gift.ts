@@ -1,3 +1,4 @@
+import { FONT_CHOICE_IDS, type FontChoiceId } from "@/lib/fontChoices";
 import {
   getSiteById,
   getSiteBySlug,
@@ -121,9 +122,40 @@ export const FONT_PAIRINGS = {
   modern: { label: "Modern", heading: "'Poppins', sans-serif", body: "'Inter', sans-serif" },
   // Key kept for saved gifts; the old script face is gone.
   handwritten: { label: "Fairytale", heading: "'Fraunces', serif", body: "'Karla', sans-serif" },
+  storybook: { label: "Storybook", heading: "'Young Serif', serif", body: "'Nunito', sans-serif", google: "Young+Serif&family=Nunito:wght@400;600;700" },
+  elegant: { label: "Elegant", heading: "'Cormorant Garamond', serif", body: "'Lato', sans-serif", google: "Cormorant+Garamond:wght@500;600;700&family=Lato:wght@400;700" },
+  bold: { label: "Bold", heading: "'Bricolage Grotesque', sans-serif", body: "'DM Sans', sans-serif", google: "Bricolage+Grotesque:opsz,wght@12..96,600..800&family=DM+Sans:wght@400;500;700" },
+  bubbly: { label: "Bubbly", heading: "'Baloo 2', sans-serif", body: "'Nunito', sans-serif", google: "Baloo+2:wght@600;700;800&family=Nunito:wght@400;600;700" },
+  penpal: { label: "Pen pal", heading: "'Kalam', cursive", body: "'Patrick Hand', sans-serif", google: "Kalam:wght@400;700&family=Patrick+Hand" },
+  typewriter: { label: "Typewriter", heading: "'Courier Prime', monospace", body: "'Karla', sans-serif", google: "Courier+Prime:wght@400;700&family=Karla:wght@400;600" },
+  groovy: { label: "Groovy", heading: "'Shrikhand', serif", body: "'DM Sans', sans-serif", google: "Shrikhand&family=DM+Sans:wght@400;500;700" },
+  retro: { label: "Retro", heading: "'Bungee', sans-serif", body: "'Outfit', sans-serif", google: "Bungee&family=Outfit:wght@400;500;700" },
+  comic: { label: "Comic", heading: "'Bangers', sans-serif", body: "'Comic Neue', sans-serif", google: "Bangers&family=Comic+Neue:wght@400;700" },
+  pixel: { label: "Pixel", heading: "'Pixelify Sans', sans-serif", body: "'Outfit', sans-serif", google: "Pixelify+Sans:wght@500;700&family=Outfit:wght@400;500;700" },
 } as const;
 
-export type FontChoice = keyof typeof FONT_PAIRINGS;
+export const FONT_CHOICES: readonly FontChoiceId[] = FONT_CHOICE_IDS;
+// Every saved id has a pairing, and every pairing has an id.
+const _fontsMatch: Record<FontChoiceId, unknown> = FONT_PAIRINGS;
+void _fontsMatch;
+
+const fontLinks = new Set<string>();
+/** Loads a pairing's fonts (the first five come with the page). */
+export function loadPairingFonts(...choices: string[]) {
+  if (typeof document === "undefined") return;
+  for (const c of choices) {
+    const pair = (FONT_PAIRINGS as Record<string, { google?: string }>)[c];
+    const q = pair?.google;
+    if (!q || fontLinks.has(q)) continue;
+    fontLinks.add(q);
+    const link = document.createElement("link");
+    link.rel = "stylesheet";
+    link.href = `https://fonts.googleapis.com/css2?family=${q}&display=swap`;
+    document.head.appendChild(link);
+  }
+}
+
+export type FontChoice = FontChoiceId;
 
 export type CustomText = {
   heading?: string;
@@ -323,7 +355,7 @@ export function normalizeSite(row: Record<string, unknown>): GiftSite {
     custom_colors: (row["custom_colors"] as Partial<Palette>) ?? {},
     palette_id: (row["palette_id"] as string | null) ?? null,
     share_notes: Boolean(row["share_notes"]),
-    font_choice: (row["font_choice"] as FontChoice) ?? "theme",
+    font_choice: (FONT_CHOICES as string[]).includes(String(row["font_choice"])) ? (row["font_choice"] as FontChoice) : "theme",
     countdown_date: (row["countdown_date"] as string | null) ?? null,
     countdown_at: row["countdown_at"] ? new Date(row["countdown_at"] as string).toISOString() : null,
     calendar_locked: Boolean(row["calendar_locked"]),

@@ -34,6 +34,8 @@ import { introStyleForTheme } from "@/lib/intro";
 import {
   BACKGROUND_STYLES,
   FONT_PAIRINGS,
+  FONT_CHOICES,
+  loadPairingFonts,
   MODULES,
   backgroundCss,
   defaultTitles,
@@ -900,20 +902,31 @@ function SiteDashboard() {
             ))}
           </div>
         </StepGroup>
-        <StepGroup title="Font" onActivate={() => setCanvasView("gift")}>
+        <StepGroup
+          title="Font"
+          onActivate={() => {
+            setCanvasView("gift");
+            loadPairingFonts(...FONT_CHOICES);
+          }}
+        >
           <div className="grid grid-cols-3 gap-2">
-            {(Object.keys(FONT_PAIRINGS) as FontChoice[]).map((fk) => (
+            {FONT_CHOICES.map((fk) => (
               <button
                 key={fk}
                 type="button"
                 onClick={() => patch({ font_choice: fk })}
+                onPointerEnter={() => loadPairingFonts(...FONT_CHOICES)}
                 aria-pressed={draft.font_choice === fk}
-                style={{ fontFamily: FONT_PAIRINGS[fk].heading }}
-                className={`squish truncate rounded-xl border px-2 py-2.5 text-sm transition-colors ${
-                  draft.font_choice === fk ? "border-accent bg-accent/8" : "border-line bg-cream"
+                className={`squish grid min-w-0 justify-items-center gap-0.5 rounded-xl border px-1.5 pt-2 pb-1.5 transition-colors ${
+                  draft.font_choice === fk ? "border-accent bg-accent/8" : "border-line bg-cream hover:bg-glass/80"
                 }`}
               >
-                {FONT_PAIRINGS[fk].label}
+                <span className="text-xl leading-none" style={{ fontFamily: FONT_PAIRINGS[fk].heading }} aria-hidden="true">
+                  Aa
+                </span>
+                <span className="w-full truncate text-center text-[11px] text-ink/75" style={{ fontFamily: FONT_PAIRINGS[fk].body }}>
+                  {FONT_PAIRINGS[fk].label}
+                </span>
               </button>
             ))}
           </div>
