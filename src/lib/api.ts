@@ -300,8 +300,27 @@ export const listMySites = createServerFn({ method: "GET" }).handler(async () =>
     .from(schema.giftSites)
     .where(eq(schema.giftSites.creatorId, user.id))
     .orderBy(desc(schema.giftSites.createdAt));
+  // Note counts for each card, counted the same way as the editor (src/lib/noteCounts.ts).
+  const ids = rows.map((r) => r.id);
+  const tallies = ids.length
+    ? await getDb()
+        .select({ siteId: c.siteId, status: c.status, n: sql<number>`count(*)::int` })
+        .from(c)
+        .where(inArray(c.siteId, ids))
+        .groupBy(c.siteId, c.status)
+    : [];
+  const countsFor = (siteId: string) => {
+    const out = { inGift: 0, waiting: 0, hidden: 0 };
+    for (const t of tallies) {
+      if (t.siteId !== siteId) continue;
+      if (t.status === "approved") out.inGift += t.n;
+      else if (t.status === "pending") out.waiting += t.n;
+      else if (t.status === "hidden") out.hidden += t.n;
+    }
+    return out;
+  };
   // siteRow drops password_hash; plain toRow sent it to the browser.
-  return rows.map((row) => siteRow(row, { owner: true }));
+  return rows.map((row) => ({ ...siteRow(row, { owner: true }), note_counts: countsFor(row.id) }));
 });
 
 function slugify(value: string) {
@@ -517,6 +536,15 @@ export const setModuleEnabled = createServerFn({ method: "POST" })
   .inputValidator(z.object({ siteId: id, moduleType: z.enum(MODULE_TYPES), enabled: z.boolean() }))
   .handler(async ({ data }) => {
     await requireSiteOwner(data.siteId);
+    if (!data.enabled) {
+      // A gift always keeps at least one section, or friends have nothing to add to.
+      const on = await getDb()
+        .select({ type: schema.siteModules.moduleType })
+        .from(schema.siteModules)
+        .where(and(eq(schema.siteModules.siteId, data.siteId), eq(schema.siteModules.enabled, true)));
+      if (on.length <= 1 && on.some((m) => m.type === data.moduleType))
+        throw new HttpError(409, "A gift needs at least one section. Turn another one on first.");
+    }
     await getDb()
       .insert(schema.siteModules)
       .values({ siteId: data.siteId, moduleType: data.moduleType, enabled: data.enabled, price: "0" })
@@ -594,6 +622,8 @@ export const listSealedContributions = createServerFn({ method: "GET" })
         visibility: c.visibility,
         status: c.status,
         createdAt: c.createdAt,
+        // Lets the friend page count friends without the organiser.
+        byOwner: c.byOwner,
       })
       .from(c)
       .where(and(eq(c.siteId, data.siteId), inArray(c.status, ["pending", "approved"])))

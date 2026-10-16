@@ -169,6 +169,14 @@ export type CustomText = {
   countdown_title?: string;
   calendar_title?: string;
   tree_title?: string;
+  openwhen_title?: string;
+  capsule_title?: string;
+  superlatives_title?: string;
+  quiz_title?: string;
+  map_title?: string;
+  coupons_title?: string;
+  video_title?: string;
+  doodle_title?: string;
   footer_note?: string;
   /** Birthday: the age they're turning (digits). */
   turning?: string;
@@ -190,6 +198,14 @@ export function defaultTitles(text: CustomText, kind: ThemeKind = "default") {
     countdown_title: "the big day",
     calendar_title: "Advent surprises",
     tree_title: "Our tree",
+    openwhen_title: SECTION_COPY.openwhen.title,
+    capsule_title: SECTION_COPY.capsule.title,
+    superlatives_title: SECTION_COPY.superlatives.title,
+    quiz_title: SECTION_COPY.quiz.title,
+    map_title: SECTION_COPY.map.title,
+    coupons_title: SECTION_COPY.coupons.title,
+    video_title: SECTION_COPY.video.title,
+    doodle_title: SECTION_COPY.doodle.title,
   };
 }
 
