@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
+import { trackEvent } from "@/lib/track";
 import { isFlagOn } from "@/config/flags";
 import { engineThemeForName } from "@/themes/engine/registry";
 import { t } from "@/i18n";
@@ -580,6 +581,7 @@ function SiteDashboard() {
 
   function copyContributeLink() {
     boReact("wave");
+    trackEvent("invite_shared", id, { channel: "copy" });
     void navigator.clipboard.writeText(contributeUrl);
     const who = draft?.custom_text.recipient_name?.trim();
     toast.success(who ? `Invite link copied. Send it to ${who}'s friends.` : "Invite link copied. Send it to friends.");
@@ -1032,13 +1034,13 @@ function SiteDashboard() {
             </div>
             <div className="mt-2 flex gap-2">
               <Button variant="outline" size="sm" className="flex-1 rounded-full" asChild>
-                <a href={messengerUrl} target="_blank" rel="noreferrer">
+                <a href={messengerUrl} target="_blank" rel="noreferrer" onClick={() => trackEvent("invite_shared", id, { channel: "messenger" })}>
                   <MessageCircle />
                   Messenger
                 </a>
               </Button>
               <Button variant="outline" size="sm" className="flex-1 rounded-full" asChild>
-                <a href={whatsappUrl} target="_blank" rel="noreferrer">
+                <a href={whatsappUrl} target="_blank" rel="noreferrer" onClick={() => trackEvent("invite_shared", id, { channel: "whatsapp" })}>
                   <Send />
                   WhatsApp
                 </a>

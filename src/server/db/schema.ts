@@ -305,3 +305,20 @@ export const fundPledges = pgTable(
   },
   (t) => [index("fund_pledges_fund_idx").on(t.fundId)],
 );
+
+/**
+ * Product events for the admin metrics page (src/server/events.ts). No note content, no IP,
+ * no cookies: just what happened, to which gift, by which signed-in user if any.
+ */
+export const events = pgTable(
+  "events",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    name: text("name").notNull(),
+    siteId: uuid("site_id").references(() => giftSites.id, { onDelete: "set null" }),
+    userId: text("user_id").references(() => user.id, { onDelete: "set null" }),
+    props: jsonb("props").$type<Record<string, string | number | boolean>>(),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [index("events_name_at_idx").on(t.name, t.createdAt), index("events_site_idx").on(t.siteId)],
+);

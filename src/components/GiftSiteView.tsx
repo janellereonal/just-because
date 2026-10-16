@@ -1,4 +1,5 @@
 import { giftVoice } from "@/lib/giftVoice";
+import { trackEvent } from "@/lib/track";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { SkinDecor } from "@/components/SkinDecor";
 import { ScrollStory } from "@/components/ScrollStory";
@@ -1013,6 +1014,16 @@ export function GiftSiteView({
             <p className="text-sm">Made with Just Because</p>
           </div>
           <p className="mt-1 text-xs opacity-70">Tag us and use #justbecause</p>
+          {showShare && !sample ? (
+            <a
+              href="/"
+              onClick={() => trackEvent("make_your_own_clicked", site.id, { source: "gift_footer" })}
+              className="mt-2 inline-block text-xs underline underline-offset-2 opacity-80"
+              style={{ color: accentText }}
+            >
+              Make one for someone
+            </a>
+          ) : null}
           {onReplayIntro ? (
             <button
               type="button"

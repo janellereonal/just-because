@@ -2,6 +2,7 @@
  * Plans, limits and payments for gifts. Prices come only from
  * src/config/pricing.ts; nothing about an amount is taken from the browser.
  */
+import { track } from "@/server/events";
 import { formatInfo } from "@/lib/formats";
 import { and, eq, inArray, sql } from "drizzle-orm";
 import {
@@ -174,6 +175,8 @@ export function upgradeOptions(currentTier: string | null) {
  */
 export async function applyPaidEvent(event: PaidEvent, provider: string): Promise<string> {
   const db = getDb();
+  /** Set once the payment is applied, for the metrics event after the transaction. */
+  let purchased: { siteId: string; ownerId: string; plan: string; kind: string } | null = null;
   const result = await db.transaction(async (tx) => {
     const inserted = await tx
       .insert(schema.webhookEvents)
@@ -216,6 +219,7 @@ export async function applyPaidEvent(event: PaidEvent, provider: string): Promis
       console.warn(`[payments] order ${order.id} paid but gift ${site.id} already on ${site.tier}. Needs a refund.`);
       return { msg: `order ${order.id}: duplicate payment flagged for refund` };
     }
+    purchased = { siteId: site.id, ownerId: order.ownerId, plan: tier.id, kind: order.kind };
 
     if (order.kind === "extend") {
       const expiresAt = extendedExpiry(site.expiresAt, tier, now);
@@ -246,6 +250,8 @@ export async function applyPaidEvent(event: PaidEvent, provider: string): Promis
   if ("publishedSiteId" in result && result.publishedSiteId) {
     await notifyGiftLive(result.publishedSiteId).catch((e) => console.error("[notify]", e));
   }
+  const bought = purchased as { siteId: string; ownerId: string; plan: string; kind: string } | null;
+  if (bought) await track("plan_purchased", { siteId: bought.siteId, userId: bought.ownerId, props: { plan: bought.plan, kind: bought.kind } });
   return result.msg;
 }
 
