@@ -1,4 +1,8 @@
 import { OrnamentIcon } from "@/components/GiftTree";
+import { engineThemeForName } from "@/themes/engine/registry";
+import { t } from "@/i18n";
+import { CharCount } from "@/components/ui/CharCount";
+import { LIMITS, noteTextLimit, tooLong } from "@/lib/limits";
 import { useEffect, useMemo, useRef, useState } from "react";
 import {useParams} from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -150,10 +154,17 @@ function ContributePage() {
 
   const [moduleType, setModuleType] = useState<ModuleType | null>(null);
   const [name, setName] = useState("");
+  const [pickedIdea, setIdea] = useState<string | null>(null);
   const [text, setText] = useState("");
   const [link, setLink] = useState("");
   const [file, setFile] = useState<File | null>(null);
   const [busy, setBusy] = useState(false);
+  const sendingRef = useRef(false);
+  /** The id for the note being written, kept across retries so a repeat send is the same note. */
+  const pendingIds = useRef<{ id: string; editToken: string } | null>(null);
+  useEffect(() => {
+    pendingIds.current = null;
+  }, [moduleType]);
   const [done, setDone] = useState(false);
   const [submitCount, setSubmitCount] = useState(0);
   const [ornament, setOrnament] = useState<OrnamentKey>("bauble");
@@ -213,6 +224,9 @@ function ContributePage() {
   const palette = resolvePalette(theme, site.custom_colors);
   const ink = readableInk(palette.background);
   const onAccent = readableInk(palette.accent);
+  const accent = palette.accent;
+  // Themes on the theme engine give friends a few ideas to write about.
+  const ideas = (engineThemeForName(theme?.name)?.occasion.prompts ?? []).map((k) => t(k));
   const surface = surfaceColor(palette.background);
   const fonts = FONT_PAIRINGS[site.font_choice] ?? FONT_PAIRINGS.romantic;
   // Older gifts may have no recipient name; never fall back to the gift's name (often the organiser's own).
@@ -321,6 +335,8 @@ function ContributePage() {
   async function submit(e: React.FormEvent) {
     e.preventDefault();
     if (!active || !site) return;
+    // One send at a time: taps during a send are ignored (state updates too late for fast taps).
+    if (sendingRef.current) return;
     if (active === "photobooth" && !file && !editingId) {
       toast.error("Please choose a photo.");
       return;
@@ -363,7 +379,26 @@ function ContributePage() {
       }
       cleanData = clean as Record<string, unknown>;
     }
+    if (name.trim().length > LIMITS.friendName) {
+      toast.error(tooLong("your name", LIMITS.friendName));
+      return;
+    }
+    if (text.trim() && [...text.trim()].length > noteTextLimit(active)) {
+      toast.error(tooLong(active === "wordcloud" ? "your words" : "your note", noteTextLimit(active)));
+      return;
+    }
+    sendingRef.current = true;
     setBusy(true);
+    try {
+      await send(active, cleanData);
+    } finally {
+      sendingRef.current = false;
+      setBusy(false);
+    }
+  }
+
+  async function send(active: ModuleType, cleanData: Record<string, unknown> | null) {
+    if (!site) return;
     let mediaPath: string | null = null;
     if (file) {
       try {
@@ -419,15 +454,17 @@ function ContributePage() {
       return;
     }
 
-    const editToken = crypto.randomUUID();
-    const newId = crypto.randomUUID();
-    /* Pending rows aren't readable by guests, so the id is minted here. */
+    /* Pending rows aren't readable by guests, so the id is minted here, once per note:
+       a retry after a failure reuses it, and the server treats a repeat as the same note. */
+    pendingIds.current ??= { id: crypto.randomUUID(), editToken: crypto.randomUUID() };
+    const { id: newId, editToken } = pendingIds.current;
     let failed = false;
     if (active === "countdown" || active === "calendar") {
       setBusy(false);
       return;
     }
     let full: "contributors" | "photos" | "ended" | null = null;
+    let errorText = "Something went wrong. Please try again.";
     try {
       const result = await submitContribution({
         data: {
@@ -446,19 +483,22 @@ function ContributePage() {
         },
       });
       full = result.full;
-    } catch {
+    } catch (err) {
       failed = true;
+      if (err instanceof Error && err.message && !/fetch|network/i.test(err.message)) errorText = err.message;
+      else errorText = "We couldn't reach the gift. Check your connection and try again.";
     }
-    setBusy(false);
     if (full) {
       setFullReason(full);
       void refetchRoom();
       return;
     }
     if (failed) {
-      toast.error("Something went wrong. Please try again.");
+      // What they wrote stays in the form.
+      toast.error(errorText);
       return;
     }
+    pendingIds.current = null;
     const record: MineRecord = {
       id: newId,
       edit_token: editToken,
@@ -667,7 +707,7 @@ function ContributePage() {
                   </label>
                   <input
                     value={name}
-                    maxLength={active === "tree" ? 20 : undefined}
+                    maxLength={active === "tree" ? 20 : LIMITS.friendName}
                     disabled={!!editingId}
                     onChange={(e) => setName(e.target.value)}
                     placeholder={active === "tree" ? "Nickname" : "Who's this from?"}
@@ -688,23 +728,43 @@ function ContributePage() {
                   <label className="mt-4 block text-sm font-medium">Caption (optional)</label>
                   <input
                     value={text}
+                    maxLength={LIMITS.caption}
                     onChange={(e) => setText(e.target.value)}
                     className="mt-2 w-full rounded-xl px-4 py-3 text-sm outline-none"
                     style={fieldStyle}
                   />
+                  <CharCount value={text} max={LIMITS.caption} className="mt-1 block text-right" />
                 </>
               ) : null}
 
               {active === "letters" ? (
                 <>
                   <label className="mt-4 block text-sm font-medium">Your message</label>
+                  {ideas.length ? (
+                    <div className="mt-2 flex flex-wrap gap-1.5" aria-label={t("contribute.ideas")}>
+                      {ideas.map((idea) => (
+                        <button
+                          key={idea}
+                          type="button"
+                          onClick={() => setIdea(idea)}
+                          className="rounded-full px-3 py-1.5 text-xs"
+                          style={idea === pickedIdea ? { background: accent, color: onAccent } : { ...fieldStyle }}
+                        >
+                          {idea}
+                        </button>
+                      ))}
+                    </div>
+                  ) : null}
                   <textarea
                     rows={5}
                     value={text}
+                    placeholder={pickedIdea ?? undefined}
+                    maxLength={LIMITS.letter}
                     onChange={(e) => setText(e.target.value)}
                     className="mt-2 w-full rounded-xl px-4 py-3 text-sm outline-none"
                     style={fieldStyle}
                   />
+                  <CharCount value={text} max={LIMITS.letter} className="mt-1 block text-right" />
                 </>
               ) : null}
 
@@ -721,10 +781,12 @@ function ContributePage() {
                   <label className="mt-4 block text-sm font-medium">Why this song? (optional)</label>
                   <input
                     value={text}
+                    maxLength={LIMITS.caption}
                     onChange={(e) => setText(e.target.value)}
                     className="mt-2 w-full rounded-xl px-4 py-3 text-sm outline-none"
                     style={fieldStyle}
                   />
+                  <CharCount value={text} max={LIMITS.caption} className="mt-1 block text-right" />
                 </>
               ) : null}
 
@@ -735,6 +797,7 @@ function ContributePage() {
                   </label>
                   <input
                     value={text}
+                    maxLength={LIMITS.words}
                     onChange={(e) => setText(e.target.value)}
                     placeholder="kind, funny, unstoppable"
                     className="mt-2 w-full rounded-xl px-4 py-3 text-sm outline-none"
@@ -751,10 +814,12 @@ function ContributePage() {
                   <label className="mt-4 block text-sm font-medium">A short note (optional)</label>
                   <input
                     value={text}
+                    maxLength={LIMITS.caption}
                     onChange={(e) => setText(e.target.value)}
                     className="mt-2 w-full rounded-xl px-4 py-3 text-sm outline-none"
                     style={fieldStyle}
                   />
+                  <CharCount value={text} max={LIMITS.caption} className="mt-1 block text-right" />
                 </>
               ) : null}
 
@@ -763,13 +828,13 @@ function ContributePage() {
                   <label className="mt-4 block text-sm font-medium">Message</label>
                   <textarea
                     rows={5}
-                    maxLength={500}
+                    maxLength={LIMITS.ornament}
                     value={text}
                     onChange={(e) => setText(e.target.value)}
                     className="mt-2 w-full rounded-xl px-4 py-3 text-sm outline-none"
                     style={fieldStyle}
                   />
-                  <p className="mt-1 text-right text-xs opacity-70">{text.length}/500</p>
+                  <p className="mt-1 text-right text-xs opacity-70">{text.length}/{LIMITS.ornament}</p>
                 </>
               ) : null}
 

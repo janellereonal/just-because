@@ -282,11 +282,13 @@ export function BentoView({
               <Theme3D
                 kind={themeKindOf(theme)}
                 palette={palette}
-                className="!absolute top-2 right-2 h-[42%] w-[72%] @md:h-[58%] @md:w-[62%] @2xl:top-4 @2xl:right-4"
+                className="!absolute top-2 right-2 h-[170px] w-[72%] @md:h-[220px] @md:w-[62%] @2xl:top-4 @2xl:right-4"
                 interactive
                 burstColors={[palette.accent, palette.primary, "#FFD166", "#FFFFFF"]}
               />
             ) : null}
+            {/* Keeps the words below the 3D piece, however long the heading gets. */}
+            {theme ? <span aria-hidden className="block h-[150px] shrink-0 @md:h-[196px]" /> : null}
             <p className="text-[11px] font-semibold tracking-[0.2em] uppercase opacity-80">
               A gift for <SampleText on={data.nameIsSample}>{data.name}</SampleText>
             </p>

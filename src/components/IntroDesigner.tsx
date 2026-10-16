@@ -1,4 +1,7 @@
 import { useRef, useState } from "react";
+import { t } from "@/i18n";
+import { CharCount } from "@/components/ui/CharCount";
+import { LIMITS } from "@/lib/limits";
 import { ImagePlus, Loader2, RotateCcw, Shuffle, X } from "lucide-react";
 import { toast } from "sonner";
 import { themeStillUrl } from "@/components/Theme3D";
@@ -120,7 +123,10 @@ export function IntroDesigner({
   kind,
   introStyle,
   greeting,
+  offers = [],
 }: {
+  /** Options the gift's theme offers (Simbang Gabi on Parol Christmas). */
+  offers?: string[] | undefined;
   siteId: string;
   settings: IntroSettings;
   /** Gets an updater, so quick taps never overwrite each other. */
@@ -186,10 +192,13 @@ export function IntroDesigner({
     <div className="space-y-4">
       <div className="space-y-2.5">
         <label className="block">
-          <span className="text-xs text-muted">Small line on top</span>
+          <span className="flex items-baseline justify-between gap-2">
+            <span className="text-xs text-muted">Small line on top</span>
+            <CharCount value={settings.badge_text} max={LIMITS.openingLine} />
+          </span>
           <input
             className={field}
-            maxLength={48}
+            maxLength={LIMITS.openingLine}
             placeholder={copy.badge}
             value={settings.badge_text ?? ""}
             onChange={(e) => set({ badge_text: e.target.value || undefined })}
@@ -197,15 +206,24 @@ export function IntroDesigner({
         </label>
         {greeting}
         <label className="block">
-          <span className="text-xs text-muted">Button</span>
+          <span className="flex items-baseline justify-between gap-2">
+            <span className="text-xs text-muted">Button</span>
+            <CharCount value={settings.button_text} max={LIMITS.button} />
+          </span>
           <input
             className={field}
-            maxLength={40}
+            maxLength={LIMITS.button}
             placeholder={copy.action}
             value={settings.button_text ?? ""}
             onChange={(e) => set({ button_text: e.target.value || undefined })}
           />
         </label>
+        {offers.includes("simbang") ? (
+          <label className="flex items-start gap-3 rounded-xl border border-line bg-cream p-3">
+            <input type="checkbox" className="mt-0.5" checked={settings.simbang === true} onChange={(e) => set({ simbang: e.target.checked || undefined })} />
+            <span className="text-sm">{t("theme.parol.simbangOption")}</span>
+          </label>
+        ) : null}
       </div>
 
       <Group title="Opening style">

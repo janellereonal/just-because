@@ -170,6 +170,11 @@ export type CustomText = {
   calendar_title?: string;
   tree_title?: string;
   footer_note?: string;
+  /** Birthday: the age they're turning (digits). */
+  turning?: string;
+  /** Parcel themes: where it's going and where it's from ("Lisbon, Portugal"). */
+  to_place?: string;
+  from_place?: string;
 };
 
 /** Sensible pre-filled titles, based on the occasion and who the gift is for. */

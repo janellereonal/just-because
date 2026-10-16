@@ -12,7 +12,7 @@ const { useLocalFonts } = require('./fonts.cjs');
     const out = [];
     p.on('console', (m) => { const t = m.text(); if (/Content Security Policy|Refused to/.test(t)) out.push('CSP ' + t.slice(0, 220)); });
     p.on('pageerror', (e) => out.push('ERR ' + e.message.slice(0, 200)));
-    await p.goto('http://localhost:8080' + path, { waitUntil: 'load', timeout: 90000 }).catch((e) => out.push('GOTO ' + e.message));
+    await p.goto((process.env.BASE || 'http://localhost:8080') + path, { waitUntil: 'load', timeout: 90000 }).catch((e) => out.push('GOTO ' + e.message));
     await p.waitForTimeout(8000);
     await p.evaluate(() => window.scrollTo(0, document.body.scrollHeight / 2));
     await p.waitForTimeout(3000);

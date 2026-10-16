@@ -19,5 +19,6 @@
       "source": "/(dashboard|admin|auth|create)",
       "headers": [{ "key": "X-Robots-Tag", "value": "noindex, nofollow, noarchive" }]
     }
-  ]
+  ],
+  "crons": [{ "path": "/api/cron/daily", "schedule": "0 1 * * *" }]
 }

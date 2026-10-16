@@ -152,6 +152,8 @@ export const giftSites = pgTable(
     publishedAt: timestamp("published_at", { withTimezone: true }),
     /** When the gift stops being open. Null = never (legacy). */
     expiresAt: timestamp("expires_at", { withTimezone: true }),
+    /** When we emailed the organiser that the plan ends soon (once per end date). */
+    expiryRemindedAt: timestamp("expiry_reminded_at", { withTimezone: true }),
     /**
      * scrypt hash of the recipient password (paid feature). Never the password
      * itself, and never sent to the browser. Null = no password.
@@ -193,13 +195,11 @@ export const orders = pgTable(
   "orders",
   {
     id: uuid("id").primaryKey().defaultRandom(),
-    siteId: uuid("site_id")
-      .notNull()
-      .references(() => giftSites.id, { onDelete: "cascade" }),
-    ownerId: text("owner_id")
-      .notNull()
-      .references(() => user.id, { onDelete: "cascade" }),
-    /** publish = first payment, upgrade = paying the difference to a higher tier. */
+    /** Null once the gift is deleted: the payment record is kept for accounting and refunds. */
+    siteId: uuid("site_id").references(() => giftSites.id, { onDelete: "set null" }),
+    /** Null once the account is deleted, for the same reason. */
+    ownerId: text("owner_id").references(() => user.id, { onDelete: "set null" }),
+    /** publish = first payment, upgrade = paying the difference to a higher tier, extend = more time on the same tier. */
     kind: text("kind").notNull().default("publish"),
     tier: text("tier").notNull(),
     /** For upgrades: the tier the gift was on. */
@@ -217,6 +217,26 @@ export const orders = pgTable(
     updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
   },
   (t) => [index("orders_site_idx").on(t.siteId)],
+);
+
+/**
+ * Every payment signal we get and what we did with it: webhooks (signed or
+ * not), confirm-page checks, editor checks and the daily job. For debugging
+ * and support; never holds card details, only ids and an outcome.
+ */
+export const paymentLog = pgTable(
+  "payment_log",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    at: timestamp("at", { withTimezone: true }).notNull().defaultNow(),
+    /** webhook | confirm | billing | cron */
+    source: text("source").notNull(),
+    event: text("event").notNull(),
+    checkoutId: text("checkout_id"),
+    orderId: uuid("order_id"),
+    outcome: text("outcome").notNull(),
+  },
+  (t) => [index("payment_log_at_idx").on(t.at), index("payment_log_checkout_idx").on(t.checkoutId)],
 );
 
 /** Webhook event ids we've already handled, so retries are ignored. */

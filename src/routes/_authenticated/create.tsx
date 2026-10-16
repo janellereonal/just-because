@@ -1,10 +1,13 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { engineThemeForName } from "@/themes/engine/registry";
 import { themeFont } from "@/components/ThemeMiniPreview";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { SiteHeader } from "@/components/SiteHeader";
-import { createSite } from "@/lib/api";
+import { createSite, getVisitorCountry } from "@/lib/api";
+import { needsCountry, orderThemes } from "@/lib/themeOrder";
+import { LIMITS } from "@/lib/limits";
 import { fetchThemes } from "@/lib/themes";
 import { usePalettes, suggestedPalettes } from "@/hooks/usePalettes";
 import { MODULES, type ModuleType } from "@/lib/gift";
@@ -63,10 +66,12 @@ export const Route = createFileRoute("/_authenticated/create")({
 function CreatePage() {
   const navigate = useNavigate();
   const { theme: themeFromUrl, format: formatFromUrl, from: fromUrl, sections: sectionsFromUrl } = Route.useSearch();
-  const { data: themes = [] } = useQuery({
+  const { data: rawThemes = [] } = useQuery({
     queryKey: ["themes", "published"],
     queryFn: () => fetchThemes(false),
   });
+  const { data: country = null } = useQuery({ queryKey: ["visitor-country"], queryFn: () => getVisitorCountry(), staleTime: Infinity, enabled: needsCountry(rawThemes) });
+  const themes = useMemo(() => orderThemes(rawThemes, country), [rawThemes, country]);
 
   const [recipient, setRecipient] = useState("");
   const [solo, setSolo] = useState(fromUrl === "me");
@@ -98,6 +103,9 @@ function CreatePage() {
   }, [recipient]);
   function pickTheme(id: string | undefined) {
     setThemeId(id);
+    // Engine themes suggest a format (Debut reads best as a storybook) unless one was picked in the link.
+    const occ = engineThemeForName(themes.find((x) => x.id === id)?.name)?.occasion;
+    if (occ && !formatFromUrl) setFormat(occ.defaultFormat);
     const acc = accessoryForTheme(themes.find((t) => t.id === id));
     if (acc) boSay(THEME_LINES[acc], "wink");
   }
@@ -114,7 +122,13 @@ function CreatePage() {
   const { data: allPalettes = [] } = usePalettes();
   // A new gift starts on the theme's first suggested palette so it already looks good.
   const defaultPalette = suggestedPalettes(activeTheme ?? null, allPalettes)[0] ?? null;
-  const suggested: ModuleType[] = activeTheme ? PRESETS[themeKindOf(activeTheme)] : [];
+  // Themes on the theme engine bring their own starting sections (their occasion template).
+  const engineOccasion = engineThemeForName(activeTheme?.name)?.occasion;
+  const suggested: ModuleType[] = activeTheme
+    ? engineOccasion
+      ? (engineOccasion.sections.filter((x) => MODULES.some((m) => m.type === x)) as ModuleType[])
+      : PRESETS[themeKindOf(activeTheme)]
+    : [];
   const [showMore, setShowMore] = useState(false);
   const pool = MODULES.filter((mod) => !(solo && mod.type === "tree"));
   // Five rows to start: the theme's picks, topped up with the everyday ones. "More" shows the rest.
@@ -137,12 +151,20 @@ function CreatePage() {
     setSelected((prev) => (prev.includes(type) ? prev.filter((t) => t !== type) : [...prev, type]));
   }
 
+  const creating = useRef(false);
   async function handleCreate(e: React.FormEvent) {
     e.preventDefault();
+    if (creating.current) return;
+    if (!recipient.trim()) {
+      toast.error("Add the name of who it's for.");
+      document.getElementById("gift-for")?.focus();
+      return;
+    }
     if ((solo ? selected.filter((t) => t !== "tree") : selected).length === 0) {
       toast.error(solo ? "Pick at least one thing you'll add." : "Pick at least one thing friends can add.");
       return;
     }
+    creating.current = true;
     setBusy(true);
     let data: { id: string };
     try {
@@ -168,11 +190,14 @@ function CreatePage() {
           ...(activeTheme ? { fontChoice: themeFont(activeTheme) } : {}),
         },
       });
-    } catch {
+    } catch (error) {
+      creating.current = false;
       setBusy(false);
-      toast.error("Couldn't create that gift. Please try again.");
+      const msg = error instanceof Error ? error.message : "";
+      toast.error(msg && msg.length < 160 && !/fetch|network/i.test(msg) ? msg : "Couldn't create that gift. Please try again.");
       return;
     }
+    creating.current = false;
     setBusy(false);
     markGiftCreated();
     navigate({ to: "/sites/$id", params: { id: data.id } });
@@ -283,7 +308,7 @@ function CreatePage() {
             <input
               id="gift-for"
               required
-              maxLength={80}
+              maxLength={LIMITS.recipientName}
               autoComplete="off"
               value={recipient}
               onChange={(e) => setRecipient(e.target.value)}

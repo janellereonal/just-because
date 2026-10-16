@@ -26,7 +26,7 @@ import {
 } from "@/lib/gift";
 import type { Palette, Theme } from "@/lib/themes";
 import { readableInk, readableOn, surfaceColor, surfaceBorder } from "@/lib/palettes";
-import { countdownTarget, formatMoment, localToday } from "@/lib/time";
+import { countdownTarget, formatMoment, localDateKey, localToday } from "@/lib/time";
 import { NoteCard } from "@/themes/_shared/NoteCard";
 import { NewSections } from "@/components/sections/NewSections";
 import { resolveIconSet } from "@/themes/_shared/iconSets";
@@ -290,7 +290,8 @@ function CalendarGrid({
     const end = new Date(Math.max(...dates));
     const out: { date: string; entry: CalendarEntry | undefined }[] = [];
     for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
-      const iso = d.toISOString().slice(0, 10);
+      // The local day: toISOString() would give the UTC day, one off for anyone ahead of UTC.
+      const iso = localDateKey(d);
       out.push({ date: iso, entry: entries.find((e) => e.entry_date === iso) });
     }
     return out;
@@ -585,7 +586,7 @@ export function GiftSiteView({
       return {
         id: `sample-${i}`,
         site_id: site.id,
-        entry_date: d.toISOString().slice(0, 10),
+        entry_date: localDateKey(d),
         type: "message" as const,
         text_content: "A little surprise for today.",
         media_url: null,

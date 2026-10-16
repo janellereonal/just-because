@@ -32,7 +32,7 @@ export const BASE_HEADERS: Record<string, string> = {
 };
 
 /** Private pages: never in search results. */
-export const PRIVATE_PATHS = [/^\/g\//, /^\/contribute\//, /^\/sites\//, /^\/dashboard/, /^\/dev\//, /^\/auth/, /^\/admin/, /^\/checkout\//, /^\/create/, /^\/reset-password/];
+export const PRIVATE_PATHS = [/^\/g\//, /^\/contribute\//, /^\/sites\//, /^\/dashboard/, /^\/dev\//, /^\/auth/, /^\/admin/, /^\/checkout\//, /^\/create/, /^\/reset-password/, /^\/account/];
 export const isPrivatePath = (path: string) => PRIVATE_PATHS.some((r) => r.test(path));
 
 export function withSecurityHeaders(request: Request, response: Response): Response {

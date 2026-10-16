@@ -44,7 +44,8 @@
 .jb-screen .sbk-stage { min-height: 100%; }
 .sbk-book {
   position: relative;
-  width: min(440px, 84cqi);
+  /* As big as the screen allows, leaving room for the buttons underneath. */
+  width: min(460px, 90cqi, calc((100svh - 190px) * 0.723));
   aspect-ratio: 3 / 4.15;
   transform-style: preserve-3d;
   touch-action: pan-y;
@@ -55,7 +56,7 @@
 }
 .sbk-book:active { cursor: grabbing; }
 @container gift (min-width: 760px) {
-  .sbk-book { width: min(400px, 38cqi); }
+  .sbk-book { width: min(440px, 38cqi, calc((100svh - 200px) * 0.723)); }
   .sbk-book:not(.is-closed) { transform: translateX(50%); }
 }
 .sbk-edges { position: absolute; inset: 1% -1.4% 1% 6%; border-radius: 4px 14px 14px 4px; background: #efe5d4; box-shadow: 2px 0 0 #e6dac6, 4px 0 0 #f2e9da, 6px 0 0 #e1d4be, 8px 2px 18px -6px rgba(0,0,0,.35); transform: translateZ(-2px); }
@@ -123,10 +124,10 @@
 .sbk-btn { margin-top: 1.2em; border-radius: 999px; padding: .6em 1.3em; font-weight: 600; font-size: .9em; }
 .sbk-link { margin-top: .9em; font-size: .8em; text-decoration: underline; opacity: .7; }
 .sbk-nav { margin-top: 26px; display: flex; align-items: center; gap: 14px; }
-.sbk-nav button { display: grid; place-items: center; width: 46px; height: 46px; border-radius: 999px; background: rgba(255,255,255,.75); box-shadow: 0 6px 14px -8px rgba(0,0,0,.4); transition: transform .2s ease, opacity .2s; }
+.sbk-nav button { display: grid; place-items: center; width: 46px; height: 46px; border-radius: 999px; background: rgba(255,255,255,.92); color: #2B2522; box-shadow: 0 6px 14px -8px rgba(0,0,0,.4); transition: transform .2s ease, opacity .2s; }
 .sbk-nav button:active { transform: scale(.92); }
 .sbk-nav button:disabled { opacity: .35; }
-.sbk-count { min-width: 9ch; text-align: center; font-size: 13px; font-weight: 600; font-variant-numeric: tabular-nums; }
+.sbk-count { min-width: 9ch; text-align: center; font-size: 13px; font-weight: 600; font-variant-numeric: tabular-nums; padding: .45em .9em; border-radius: 999px; background: rgba(255,255,255,.88); color: #2B2522; }
 
 /* ---------- Mixtape ---------- */
 .mix-root { background: radial-gradient(120% 70% at 50% 0%, var(--mix-bg), color-mix(in oklab, var(--mix-primary) 30%, var(--mix-bg))); }
@@ -188,7 +189,7 @@
 
 /* ---------- Scratch Cards ---------- */
 .scr-kicker { font-size: 11px; font-weight: 600; letter-spacing: .22em; text-transform: uppercase; opacity: .7; }
-.scr-title { margin-top: 8px; font-size: clamp(2rem, 8cqi, 3.4rem); line-height: 1; font-weight: 700; overflow-wrap: anywhere; }
+.scr-title { margin-top: 8px; font-size: clamp(2rem, 8cqi, 3.4rem); line-height: 1.08; text-wrap: balance; font-weight: 700; overflow-wrap: anywhere; }
 .scr-progress { margin-top: 18px; display: inline-flex; align-items: center; gap: 8px; border-radius: 999px; padding: 8px 16px; background: var(--scr-surface); font-size: 14px; font-weight: 600; box-shadow: 0 6px 16px -10px rgba(0,0,0,.3); }
 .scr-grid { margin-top: 28px; display: grid; gap: 20px; grid-template-columns: 1fr; }
 @container gift (min-width: 460px) { .scr-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
@@ -217,9 +218,13 @@
 .scr-word { border-radius: 999px; padding: 6px 14px; background: var(--scr-surface); font-weight: 600; font-size: 14px; }
 
 /* ---------- Constellation ---------- */
-.cst-root { background: radial-gradient(130% 70% at 50% 0%, #40357a 0%, #1d1940 45%, #0d0b20 100%); color: #f4f0ff; }
+/* The night takes a hint of the gift's own color, so every theme gets its own sky. */
+.cst-root { --cst-tint: #40357a; background: radial-gradient(130% 70% at 50% 0%, #40357a 0%, #1d1940 45%, #0d0b20 100%); color: #f4f0ff; }
+@supports (background: color-mix(in oklab, red, blue)) {
+  .cst-root { background: radial-gradient(130% 70% at 50% 0%, color-mix(in oklab, var(--cst-tint) 48%, #1d1940) 0%, color-mix(in oklab, var(--cst-tint) 22%, #12102a) 45%, color-mix(in oklab, var(--cst-tint) 8%, #08071a) 100%); }
+}
 .cst-kicker { font-size: 11px; font-weight: 600; letter-spacing: .24em; text-transform: uppercase; opacity: .7; }
-.cst-title { margin-top: 8px; font-size: clamp(2rem, 8.5cqi, 3.4rem); line-height: 1.02; font-weight: 700; overflow-wrap: anywhere; text-shadow: 0 0 24px rgba(200,180,255,.45); }
+.cst-title { margin-top: 8px; font-size: clamp(2rem, 8.5cqi, 3.4rem); line-height: 1.1; text-wrap: balance; font-weight: 700; overflow-wrap: anywhere; text-shadow: 0 0 24px rgba(200,180,255,.45); }
 .cst-intro { margin: 12px auto 0; max-width: 36ch; line-height: 1.5; opacity: .8; }
 .cst-sky { position: relative; width: 100%; max-width: 760px; margin: 0 auto; aspect-ratio: 1 / 1.05; overflow: hidden; touch-action: pan-y; cursor: grab; user-select: none; -webkit-user-select: none; }
 @container gift (min-width: 640px) { .cst-sky { aspect-ratio: 4 / 3; } }

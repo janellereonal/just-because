@@ -22,6 +22,10 @@ import { ChristmasOpening, christmasBackground, defaultBackground } from "@/them
 import { HandwrittenOpening, handwrittenBackground } from "@/themes/handwritten/Opening";
 import { GameOpening, gameBackground } from "@/themes/game/Opening";
 import { PixelOpening, pixelBackground } from "@/themes/pixel/Opening";
+import { EngineStage } from "@/themes/engine/EngineStage";
+import { engineThemeForName } from "@/themes/engine/registry";
+import type { EngineNote, ThemeOptions } from "@/themes/engine/define";
+import type { SlotInput } from "@/themes/engine/slots";
 
 type Entry = {
   Component: OpeningComponent;
@@ -161,7 +165,19 @@ export function TactileOpening({
   autoplay = false,
   onOpen,
   onSkip,
+  themeName,
+  notes,
+  slots,
+  options,
+  age,
 }: {
+  age?: number | null | undefined;
+  /** The theme row's name: themes built on the engine are found by it. */
+  themeName?: string | null | undefined;
+  /** Engine themes: friends' notes, extra personalisation and options. */
+  notes?: EngineNote[] | undefined;
+  slots?: SlotInput | undefined;
+  options?: ThemeOptions | undefined;
   kind: ThemeKind;
   palette: Palette;
   recipientName?: string | undefined;
@@ -178,6 +194,7 @@ export function TactileOpening({
   onOpen: () => void;
   onSkip?: (() => void) | undefined;
 }) {
+  const engine = engineThemeForName(themeName);
   const entry = OPENINGS[kind] ?? OPENINGS.valentine!;
   const design = designFor(kind);
   const cast = castFor(kind, character, iconSetting);
@@ -188,6 +205,27 @@ export function TactileOpening({
     [JSON.stringify(cast.iconSet), recipient, palette.primary, palette.accent],
   );
   const [hint, setHint] = useState("");
+  if (engine) {
+    return (
+      <EngineStage
+        theme={engine}
+        slots={{ ...slots, recipient: recipientName?.trim() || slots?.recipient || "" }}
+        greeting={introText}
+        badge={badgeText || engine.name}
+        buttonText={buttonText}
+        icons={iconSetting ? set : null}
+        contributors={contributors}
+        notes={notes}
+        options={options}
+        contained={contained}
+        interactive={interactive}
+        paused={paused}
+        autoplay={autoplay}
+        onOpen={onOpen}
+        onSkip={onSkip}
+      />
+    );
+  }
   const Component = entry.Component;
   const c = design.palette;
   return (
@@ -218,6 +256,7 @@ export function TactileOpening({
           accessory={cast.accessory}
           iconSet={set}
           contributors={contributors}
+          age={age ?? null}
           interactive={interactive}
           paused={paused}
           autoplay={autoplay}

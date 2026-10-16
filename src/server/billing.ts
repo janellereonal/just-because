@@ -18,7 +18,7 @@ import {
 } from "@/config/pricing";
 import { getDb, schema } from "./db";
 import { HttpError } from "./guards";
-import { notifyGiftLive } from "./notify";
+import { notifyPaid } from "./notify";
 import type { PaidEvent } from "./payments/types";
 
 type Site = typeof schema.giftSites.$inferSelect;
@@ -167,21 +167,35 @@ export function upgradeOptions(currentTier: string | null) {
 
 /* ---------------- confirming payment (webhook) ---------------- */
 
+export type PaymentSource = "webhook" | "confirm" | "billing" | "cron";
+
+/** Writes one line to payment_log. Never throws: logging must not break a payment. */
+export async function logPayment(source: PaymentSource, event: string, outcome: string, ids: { checkoutId?: string | null; orderId?: string | null } = {}) {
+  console.info(`[payments] ${source} ${event}${ids.checkoutId ? ` ${ids.checkoutId}` : ""}: ${outcome}`);
+  try {
+    await getDb()
+      .insert(schema.paymentLog)
+      .values({ source, event: event.slice(0, 120), outcome: outcome.slice(0, 500), checkoutId: ids.checkoutId ?? null, orderId: ids.orderId ?? null });
+  } catch (error) {
+    console.error("[payments] couldn't write payment_log", error);
+  }
+}
+
 /**
- * Marks the order paid and opens (or upgrades) the gift, exactly once per
- * order. Safe to call again for the same event or order: it does nothing.
- * Returns what happened, for logging.
+ * Marks the order paid and opens (or upgrades, or extends) the gift, exactly
+ * once per order. Safe to call any number of times, from any path (webhook,
+ * confirm page, editor, daily job): the order row is locked, and once it's
+ * paid nothing else happens.
+ *
+ * A payment that arrives after the order was cancelled or timed out still
+ * counts: the buyer was charged, so the gift opens.
+ *
+ * The event id is only recorded once the order is actually applied, so an
+ * early check that found nothing (or a mismatch) never blocks a later one.
  */
-export async function applyPaidEvent(event: PaidEvent, provider: string): Promise<string> {
+export async function applyPaidEvent(event: PaidEvent, provider: string, source: PaymentSource = "webhook"): Promise<string> {
   const db = getDb();
   const result = await db.transaction(async (tx) => {
-    const inserted = await tx
-      .insert(schema.webhookEvents)
-      .values({ id: `${provider}:${event.eventId}`, provider, type: event.eventType })
-      .onConflictDoNothing()
-      .returning({ id: schema.webhookEvents.id });
-    if (inserted.length === 0) return { msg: "duplicate event, skipped" };
-
     const [order] = await tx
       .select()
       .from(schema.orders)
@@ -189,20 +203,30 @@ export async function applyPaidEvent(event: PaidEvent, provider: string): Promis
       .for("update");
     if (!order) return { msg: `no order for checkout ${event.checkoutId}` };
     if (event.orderId && event.orderId !== order.id)
-      return { msg: `order mismatch: session says ${event.orderId}, we have ${order.id}` };
-    if (order.status === "paid") return { msg: `order ${order.id} already paid` };
+      return { msg: `order mismatch: session says ${event.orderId}, we have ${order.id}`, orderId: order.id };
+    if (order.status === "paid") return { msg: `order ${order.id} already paid`, orderId: order.id };
     if (event.amountPaid < order.amount)
-      return { msg: `order ${order.id}: paid ${event.amountPaid} < expected ${order.amount}, not publishing` };
+      return { msg: `order ${order.id}: paid ${event.amountPaid} < expected ${order.amount}, not publishing`, orderId: order.id };
+
+    // Recorded here, inside the same transaction as the order update.
+    const inserted = await tx
+      .insert(schema.webhookEvents)
+      .values({ id: `${provider}:${event.eventId}`, provider, type: event.eventType })
+      .onConflictDoNothing()
+      .returning({ id: schema.webhookEvents.id });
+    if (inserted.length === 0) return { msg: "duplicate event, skipped", orderId: order.id };
 
     const tier = getTier(order.tier)!;
     const now = new Date();
+    const late = order.status !== "pending" ? ` (late: order was ${order.status})` : "";
     await tx
       .update(schema.orders)
       .set({ status: "paid", providerPaymentId: event.paymentId, updatedAt: now })
       .where(eq(schema.orders.id, order.id));
 
+    if (!order.siteId) return { msg: `order ${order.id}: paid${late}, but its gift was deleted. Needs a refund.`, orderId: order.id };
     const [site] = await tx.select().from(schema.giftSites).where(eq(schema.giftSites.id, order.siteId)).for("update");
-    if (!site) return { msg: `order ${order.id}: gift was deleted` };
+    if (!site) return { msg: `order ${order.id}: paid${late}, but its gift was deleted. Needs a refund.`, orderId: order.id };
 
     // Paid twice (e.g. two tabs)? Keep the better plan and flag it. Refunds would be handled here later
     // (see "Refunds" in HANDOFF.md). Extends always stack, so paying twice just adds more time.
@@ -213,14 +237,14 @@ export async function applyPaidEvent(event: PaidEvent, provider: string): Promis
           ? !getTier(site.tier)
           : !!site.tier;
     if (alreadyCovered) {
-      console.warn(`[payments] order ${order.id} paid but gift ${site.id} already on ${site.tier}. Needs a refund.`);
-      return { msg: `order ${order.id}: duplicate payment flagged for refund` };
+      return { msg: `order ${order.id}: duplicate payment${late}, gift ${site.id} already on ${site.tier}. Needs a refund.`, orderId: order.id };
     }
 
     if (order.kind === "extend") {
       const expiresAt = extendedExpiry(site.expiresAt, tier, now);
-      await tx.update(schema.giftSites).set({ expiresAt }).where(eq(schema.giftSites.id, site.id));
-      return { msg: `order ${order.id}: extended gift ${site.id} to ${expiresAt.toISOString()}` };
+      // A new end date gets its own reminder.
+      await tx.update(schema.giftSites).set({ expiresAt, expiryRemindedAt: null }).where(eq(schema.giftSites.id, site.id));
+      return { msg: `order ${order.id}${late}: extended gift ${site.id} to ${expiresAt.toISOString()}`, orderId: order.id, paid: order.id };
     }
 
     if (order.kind === "upgrade") {
@@ -233,20 +257,66 @@ export async function applyPaidEvent(event: PaidEvent, provider: string): Promis
         : expiryFrom(publishedAt, tier);
       await tx
         .update(schema.giftSites)
-        .set({ tier: tier.id, expiresAt })
+        .set({ tier: tier.id, expiresAt, expiryRemindedAt: null })
         .where(eq(schema.giftSites.id, site.id));
-      return { msg: `order ${order.id}: upgraded gift ${site.id} to ${tier.id}` };
+      return { msg: `order ${order.id}${late}: upgraded gift ${site.id} to ${tier.id}`, orderId: order.id, paid: order.id };
     }
     await tx
       .update(schema.giftSites)
-      .set({ status: "published", tier: tier.id, publishedAt: now, expiresAt: expiryFrom(now, tier) })
+      .set({ status: "published", tier: tier.id, publishedAt: now, expiresAt: expiryFrom(now, tier), expiryRemindedAt: null })
       .where(eq(schema.giftSites.id, site.id));
-    return { msg: `order ${order.id}: published gift ${site.id} on ${tier.id}`, publishedSiteId: site.id };
+    return { msg: `order ${order.id}${late}: published gift ${site.id} on ${tier.id}`, orderId: order.id, paid: order.id };
   });
-  if ("publishedSiteId" in result && result.publishedSiteId) {
-    await notifyGiftLive(result.publishedSiteId).catch((e) => console.error("[notify]", e));
+  await logPayment(source, event.eventType, result.msg, { checkoutId: event.checkoutId, orderId: result.orderId ?? null });
+  if ("paid" in result && result.paid) {
+    // One email per order: the receipt (with "it's live" for a first payment).
+    await notifyPaid(result.paid).catch((e) => console.error("[notify]", e));
   }
   return result.msg;
+}
+
+/** Last time we asked the provider about each order, so polling and page loads don't hammer it. */
+const lastProviderCheck = new Map<string, number>();
+
+/**
+ * Asks the payment provider whether an order that isn't marked paid actually
+ * was (paid in another tab after cancelling, after it timed out, or the
+ * webhook never came), and applies it if so. At most once per `everyMs` per
+ * order and instance. Returns true if the order is now paid.
+ */
+export async function reconcileOrder(
+  order: Pick<typeof schema.orders.$inferSelect, "id" | "status" | "provider" | "providerCheckoutId" | "createdAt">,
+  source: PaymentSource,
+  everyMs = 5000,
+): Promise<boolean> {
+  if (order.status === "paid" || !order.providerCheckoutId) return order.status === "paid";
+  // Checkout sessions don't take payments after about a day; a week is plenty of margin.
+  if (Date.now() - order.createdAt.getTime() > 7 * 86_400_000) return false;
+  const last = lastProviderCheck.get(order.id) ?? 0;
+  if (Date.now() - last < everyMs) return false;
+  lastProviderCheck.set(order.id, Date.now());
+  if (lastProviderCheck.size > 5000) lastProviderCheck.clear();
+  try {
+    const { getProvider } = await import("./payments");
+    const provider = getProvider(order.provider);
+    const paid = await provider.checkPaid(order.providerCheckoutId);
+    if (!paid) return false;
+    const msg = await applyPaidEvent(paid, provider.name, source);
+    return /published|upgraded|extended|already paid/.test(msg);
+  } catch (error) {
+    await logPayment(source, "check failed", error instanceof Error ? error.message : String(error), { checkoutId: order.providerCheckoutId, orderId: order.id });
+    return false;
+  }
+}
+
+/** Checks a gift's recent unpaid orders with the provider (used when the editor loads billing). */
+export async function reconcileSiteOrders(siteId: string, source: PaymentSource = "billing") {
+  const recent = await getDb()
+    .select()
+    .from(schema.orders)
+    .where(and(eq(schema.orders.siteId, siteId), inArray(schema.orders.status, ["pending", "failed", "expired"]), sql`${schema.orders.createdAt} > now() - interval '7 days'`, sql`${schema.orders.providerCheckoutId} is not null`))
+    .limit(5);
+  for (const o of recent) await reconcileOrder(o, source, 60_000);
 }
 
 /**

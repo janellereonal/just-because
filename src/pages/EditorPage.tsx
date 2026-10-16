@@ -1,4 +1,11 @@
 import { useEffect, useMemo, useRef, useState } from "react";
+import { ExportGift } from "@/components/ExportGift";
+import { isFlagOn } from "@/config/flags";
+import { engineThemeForName } from "@/themes/engine/registry";
+import { t } from "@/i18n";
+import { engineIntroProps } from "@/lib/engineGift";
+import { CharCount } from "@/components/ui/CharCount";
+import { LIMITS, customTextLimit } from "@/lib/limits";
 import { themeKindOf } from "@/lib/themeKind";
 import {Link, useParams} from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -256,6 +263,7 @@ function SiteDashboard() {
     queryFn: () => fetchTheme(site?.theme_id ?? null),
     enabled: !!site,
   });
+  const engineTheme = engineThemeForName(theme?.name);
   const { data: modules = [] } = useQuery({
     queryKey: ["modules", id],
     queryFn: () => fetchModules(id),
@@ -741,10 +749,13 @@ function SiteDashboard() {
   const fieldInput = (
     key: keyof CustomText,
     label: string,
-    opts: { long?: boolean; placeholder?: string; hint?: string } = {},
+    opts: { long?: boolean; placeholder?: string; hint?: string; numeric?: boolean } = {},
   ) => (
     <label className="block">
-      <span className="text-xs text-muted">{label}</span>
+      <span className="flex items-baseline justify-between gap-2">
+        <span className="text-xs text-muted">{label}</span>
+        <CharCount value={draft.custom_text[key]} max={customTextLimit(key)} />
+      </span>
       {opts.long ? (
         <textarea
           ref={(el) => {
@@ -752,6 +763,8 @@ function SiteDashboard() {
             fieldRefs.current[key] = el;
           }}
           rows={3}
+          maxLength={customTextLimit(key)}
+          {...(opts.numeric ? { inputMode: "numeric" as const, pattern: "[0-9]*" } : {})}
           value={draft.custom_text[key] ?? ""}
           placeholder={opts.placeholder ?? label}
           onFocus={() => setFocusField(key)}
@@ -764,6 +777,7 @@ function SiteDashboard() {
             if (el && el.getClientRects().length === 0) return;
             fieldRefs.current[key] = el;
           }}
+          maxLength={customTextLimit(key)}
           value={draft.custom_text[key] ?? ""}
           placeholder={opts.placeholder ?? label}
           onFocus={() => setFocusField(key)}
@@ -787,11 +801,16 @@ function SiteDashboard() {
               palette={paletteNow}
               kind={themeKindOf(theme)}
               introStyle={introStyleForTheme(theme?.name)}
+              offers={engineTheme?.offers}
               greeting={
                 <label className="block">
-                  <span className="text-xs text-muted">Greeting</span>
+                  <span className="flex items-baseline justify-between gap-2">
+                    <span className="text-xs text-muted">Greeting</span>
+                    <CharCount value={draft.intro_text} max={LIMITS.greeting} />
+                  </span>
                   <textarea
                     rows={2}
+                    maxLength={LIMITS.greeting}
                     value={draft.intro_text ?? ""}
                     placeholder={
                       solo
@@ -814,6 +833,11 @@ function SiteDashboard() {
           <div className="space-y-3">
             {fieldInput("heading", "Heading", { placeholder: titles.heading })}
             {fieldInput("recipient_name", "Who it's for", { placeholder: "Their name" })}
+            {themeKindOf(theme) === "birthday" && !engineTheme && isFlagOn("birthdayAge")
+              ? fieldInput("turning", t("birthday.turning"), { placeholder: "30", hint: t("birthday.turningHint"), numeric: true })
+              : null}
+            {engineTheme?.slots.includes("place") ? fieldInput("to_place", t("editor.toPlace"), { placeholder: "Lisbon, Portugal", hint: t("editor.toPlaceHint") }) : null}
+            {engineTheme?.slots.includes("senderPlace") ? fieldInput("from_place", t("editor.fromPlace"), { placeholder: "Manila, Philippines", hint: t("editor.fromPlaceHint") }) : null}
             {fieldInput("intro_message", "Message under the title", {
               long: true,
               placeholder: solo ? "I made this just for you. Take your time." : "We all got together to make you something.",
@@ -1160,6 +1184,9 @@ function SiteDashboard() {
             </p>
           </div>
         )}
+        <StepGroup title="Keep a copy" hint="Every note, photo and voice note, as a zip.">
+          <ExportGift siteId={id} title={draft.title} />
+        </StepGroup>
       </div>
     ),
     settings: (
@@ -1239,10 +1266,10 @@ function SiteDashboard() {
           <div className="mt-4 space-y-4">
         {draft.format === "comic" ? (
           <>
-            <label className="block"><span className="text-xs text-muted">Cover title</span><input value={normalizeComicSettings(draft.format_settings).cover_title ?? ""} onChange={(event) => patchComic({ cover_title: event.target.value })} placeholder={`THE AMAZING ${(draft.custom_text.recipient_name || "YOU").toUpperCase()}`} className="mt-1 w-full rounded-xl border border-line bg-cream px-3 py-2.5 text-sm outline-none focus:border-accent" /></label>
-            <label className="block"><span className="text-xs text-muted">Cover subtitle</span><input value={normalizeComicSettings(draft.format_settings).cover_subtitle ?? ""} onChange={(event) => patchComic({ cover_subtitle: event.target.value })} placeholder={comicSettingDefaults(draft.custom_text.recipient_name, themeKindOf(theme)).cover_subtitle} className="mt-1 w-full rounded-xl border border-line bg-cream px-3 py-2.5 text-sm outline-none focus:border-accent" /></label>
+            <label className="block"><span className="text-xs text-muted">Cover title</span><input value={normalizeComicSettings(draft.format_settings).cover_title ?? ""} maxLength={LIMITS.comicCover} onChange={(event) => patchComic({ cover_title: event.target.value })} placeholder={`THE AMAZING ${(draft.custom_text.recipient_name || "YOU").toUpperCase()}`} className="mt-1 w-full rounded-xl border border-line bg-cream px-3 py-2.5 text-sm outline-none focus:border-accent" /></label>
+            <label className="block"><span className="text-xs text-muted">Cover subtitle</span><input value={normalizeComicSettings(draft.format_settings).cover_subtitle ?? ""} maxLength={LIMITS.comicCover} onChange={(event) => patchComic({ cover_subtitle: event.target.value })} placeholder={comicSettingDefaults(draft.custom_text.recipient_name, themeKindOf(theme)).cover_subtitle} className="mt-1 w-full rounded-xl border border-line bg-cream px-3 py-2.5 text-sm outline-none focus:border-accent" /></label>
             <label className="flex items-start gap-3 rounded-xl border border-line bg-cream p-3"><input type="checkbox" checked={normalizeComicSettings(draft.format_settings).two_worlds === true} onChange={(event) => patchComic({ two_worlds: event.target.checked })} className="mt-0.5" /><span><span className="block text-sm font-medium">Two Worlds</span><span className="block text-xs text-muted">Let readers switch between two comic backdrops.</span></span></label>
-            {normalizeComicSettings(draft.format_settings).two_worlds ? <div className="grid gap-3"><label><span className="text-xs text-muted">First world</span><input value={normalizeComicSettings(draft.format_settings).world_one ?? ""} onChange={(event) => patchComic({ world_one: event.target.value })} placeholder="HERO WORLD" className="mt-1 w-full rounded-xl border border-line bg-cream px-3 py-2.5 text-sm" /></label><label><span className="text-xs text-muted">Second world</span><input value={normalizeComicSettings(draft.format_settings).world_two ?? ""} onChange={(event) => patchComic({ world_two: event.target.value })} placeholder="OHANA WORLD" className="mt-1 w-full rounded-xl border border-line bg-cream px-3 py-2.5 text-sm" /></label></div> : null}
+            {normalizeComicSettings(draft.format_settings).two_worlds ? <div className="grid gap-3"><label><span className="text-xs text-muted">First world</span><input value={normalizeComicSettings(draft.format_settings).world_one ?? ""} maxLength={LIMITS.sectionTitle} onChange={(event) => patchComic({ world_one: event.target.value })} placeholder="HERO WORLD" className="mt-1 w-full rounded-xl border border-line bg-cream px-3 py-2.5 text-sm" /></label><label><span className="text-xs text-muted">Second world</span><input value={normalizeComicSettings(draft.format_settings).world_two ?? ""} maxLength={LIMITS.sectionTitle} onChange={(event) => patchComic({ world_two: event.target.value })} placeholder="OHANA WORLD" className="mt-1 w-full rounded-xl border border-line bg-cream px-3 py-2.5 text-sm" /></label></div> : null}
             <div><p className="text-sm font-medium">Panel organizer</p><p className="mt-1 text-xs text-muted">Reorder panels or move one into another chapter.</p><div className="mt-3 space-y-2">{orderedComicIds(contributions.map((item) => item.id), normalizeComicSettings(draft.format_settings).panel_order).map((itemId, index, orderedIds) => { const item = contributions.find((entry) => entry.id === itemId); if (!item) return null; const settings = normalizeComicSettings(draft.format_settings); const chapter = settings.chapter_overrides?.[item.id] ?? item.module_type; return <div key={item.id} className="rounded-xl border border-line bg-cream p-3"><div className="flex items-center gap-2"><span className="min-w-0 flex-1 truncate text-sm font-medium">{item.author_name}</span><Button type="button" size="icon" variant="ghost" disabled={index === 0} onClick={() => moveComicPanel(item.id, -1)} aria-label="Move panel up">↑</Button><Button type="button" size="icon" variant="ghost" disabled={index === orderedIds.length - 1} onClick={() => moveComicPanel(item.id, 1)} aria-label="Move panel down">↓</Button></div><select value={chapter} onChange={(event) => patchComic({ chapter_overrides: { ...settings.chapter_overrides, [item.id]: event.target.value } })} className="mt-2 w-full rounded-lg border border-line bg-paper px-2 py-2 text-xs">{MODULES.map((module) => <option key={module.type} value={module.type}>{module.label}</option>)}</select></div>; })}</div></div>
           </>
         ) : <p className="text-xs text-muted">{formatInfo(draft.format).about}</p>}
@@ -1423,6 +1450,7 @@ function SiteDashboard() {
       character={draft.character}
       iconSet={draft.icon_set}
       contributors={friends}
+      {...engineIntroProps(theme?.name, draft, approved)}
       onOpen={() => setPreviewOpened(true)}
     />
   );
@@ -1446,6 +1474,7 @@ function SiteDashboard() {
       character={draft.character}
       iconSet={draft.icon_set}
       contributors={friends}
+      {...engineIntroProps(theme?.name, draft, approved)}
       onStickerMove={moveIntroSticker}
       onOpen={() => window.setTimeout(() => setIntroCanvasKey((k) => k + 1), 900)}
     />
@@ -1829,6 +1858,7 @@ function SiteDashboard() {
           character={draft.character}
           iconSet={draft.icon_set}
           contributors={friends}
+          {...engineIntroProps(theme?.name, draft, approved)}
           onOpen={() => setIntroPreview(false)}
         />
       ) : null}

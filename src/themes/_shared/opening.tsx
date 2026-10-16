@@ -26,6 +26,8 @@ export type OpeningProps = {
   iconSet: IconSet;
   /** Friends' names, for stamps, sparks and tags. */
   contributors: string[];
+  /** Birthday: the age they're turning, when the organiser gave it (flag: birthdayAge). */
+  age?: number | null | undefined;
   interactive: boolean;
   /** Rest on the first frame (a gallery card that isn't playing). */
   paused: boolean;
@@ -187,7 +189,7 @@ export function OpeningShell({
                 {sound ? <Volume2 className="size-[18px]" /> : <VolumeX className="size-[18px]" />}
               </button>
             ) : null}
-            <div className="pointer-events-none absolute inset-x-0 bottom-[max(14px,4cqi)] z-[45] flex flex-col items-center gap-1.5 px-6 text-center">
+            <div className="pointer-events-none absolute inset-x-0 bottom-[max(14px,min(4cqi,28px))] z-[45] flex flex-col items-center gap-1.5 px-6 text-center">
               <AnimatePresence mode="wait">
                 {!opening && hint ? (
                   <motion.p
@@ -221,13 +223,28 @@ export function OpeningShell({
 }
 
 /** The greeting, set in the theme's display face with soft optical sizing. */
+/** Long greetings get smaller so they still fit the card or box they sit on. */
+export function greetingScale(text: string): number {
+  const n = [...text].length;
+  if (n <= 32) return 1;
+  if (n <= 52) return 0.82;
+  if (n <= 80) return 0.68;
+  return 0.56;
+}
+
 export function Greeting({ text, className = "", style }: { text: string; className?: string; style?: React.CSSProperties }) {
   return (
     <span
       className={`block leading-[0.95] tracking-[-0.02em] [overflow-wrap:anywhere] ${className}`}
       style={{ fontFamily: "var(--jb-display)", fontVariationSettings: '"opsz" 144, "SOFT" 100', ...style }}
     >
-      {text}
+      {/* Never more than five lines, whatever the length. */}
+      <span
+        className="block overflow-hidden pb-[0.08em] [-webkit-box-orient:vertical] [-webkit-line-clamp:5] [display:-webkit-box]"
+        style={{ fontSize: `${greetingScale(text)}em` }}
+      >
+        {text}
+      </span>
     </span>
   );
 }

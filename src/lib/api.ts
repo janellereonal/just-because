@@ -19,6 +19,7 @@
  */
 import { FORMAT_IDS } from "@/lib/formats";
 import { FONT_CHOICE_IDS } from "@/lib/fontChoices";
+import { FIELD_NAMES, LIMITS, customTextLimit, noteTextLimit, tooLong } from "@/lib/limits";
 import { normalizeIntroSettings } from "@/lib/intro";
 import { normalizeCharacter } from "@/themes/_shared/cast/types";
 import { normalizeIconSetting } from "@/themes/_shared/iconSets";
@@ -28,6 +29,7 @@ import { and, asc, desc, eq, inArray, ne, or, sql } from "drizzle-orm";
 import { z } from "zod";
 import { getDb, schema } from "@/server/db";
 import { notifyNewNote } from "@/server/notify";
+import { clientIp, rateLimit } from "@/server/rateLimit";
 import {
   checkRoom,
   expireStaleOrders,
@@ -214,9 +216,45 @@ async function canViewGift(siteId: string, opts: { allowSharedNotes?: boolean } 
   return !needsPassword(site) || isUnlocked(site);
 }
 
+/**
+ * The visitor's country (ISO code like "PH"), from Vercel's edge header. Only
+ * used to order themes (Balikbayan Box first for the Philippines, say). Null
+ * locally and when unknown.
+ */
+export const getVisitorCountry = createServerFn({ method: "GET" }).handler(async () => {
+  const { getRequest } = await import("@tanstack/react-start/server");
+  const raw = getRequest()?.headers.get("x-vercel-ip-country") ?? "";
+  return /^[A-Z]{2}$/.test(raw) ? raw : null;
+});
+
+/**
+ * Deletes the signed-in person's account and everything in it: their gifts,
+ * every note friends added to them, and every stored photo and voice note.
+ * Payment records are kept (without the account or gift) for accounting and
+ * refunds. They have to type DELETE, and it can't be undone.
+ */
+export const deleteAccount = createServerFn({ method: "POST" })
+  .inputValidator(z.object({ confirm: z.literal("DELETE") }))
+  .handler(async ({ data }) => {
+    void data;
+    const user = await requireUser();
+    const db = getDb();
+    const gifts = await db.select({ id: schema.giftSites.id }).from(schema.giftSites).where(eq(schema.giftSites.creatorId, user.id));
+    // Rows first (orders keep their record with the gift and owner set to null), then the files.
+    await db.delete(schema.user).where(eq(schema.user.id, user.id));
+    const { deleteGiftMedia } = await import("@/server/uploads");
+    for (const g of gifts) await deleteGiftMedia(g.id);
+    console.info(`[account] deleted an account and ${gifts.length} gifts`);
+    return { ok: true, gifts: gifts.length };
+  });
+
+/** Reads are cheap, but a flood of slug guesses isn't: generous per-visitor caps on public lookups. */
+const READ_LIMIT = "Lots of requests from here just now. Wait a minute and try again.";
+
 export const getSiteBySlug = createServerFn({ method: "GET" })
   .inputValidator(z.object({ slug: z.string().min(1).max(120) }))
   .handler(async ({ data }) => {
+    rateLimit(`slug:${clientIp()}`, 240, 60_000, READ_LIMIT);
     const [row] = await getDb().select().from(schema.giftSites).where(eq(schema.giftSites.slug, data.slug));
     if (!row) return null;
     return siteRow(row, { owner: isOwnerOf(await currentUser(), row) });
@@ -319,7 +357,7 @@ export const createSite = createServerFn({ method: "POST" })
     z.object({
       title: z.string().trim().min(1).max(200),
       /** Who it's for. The title is made from it, and it fills "for Ana" on the gift. */
-      recipientName: z.string().trim().min(1).max(80).optional(),
+      recipientName: z.string().trim().min(1, "Add the name of who it's for.").max(LIMITS.recipientName, tooLong("their name", LIMITS.recipientName)).optional(),
       themeId: id.nullable(),
       format: z.enum(FORMAT_IDS),
       paletteId: id.nullable(),
@@ -334,6 +372,22 @@ export const createSite = createServerFn({ method: "POST" })
   .handler(async ({ data }) => {
     const user = await requireUser();
     const db = getDb();
+    // A double tap on "Create" makes one gift, not two: the same title from the
+    // same person within a few seconds returns the gift that was just made.
+    const [recent] = await db
+      .select({ id: schema.giftSites.id })
+      .from(schema.giftSites)
+      .where(
+        and(
+          eq(schema.giftSites.creatorId, user.id),
+          eq(schema.giftSites.title, data.title),
+          sql`${schema.giftSites.createdAt} > now() - interval '15 seconds'`,
+        ),
+      )
+      .orderBy(desc(schema.giftSites.createdAt))
+      .limit(1);
+    if (recent) return { id: recent.id };
+    rateLimit(`create:${user.id}`, 30, 60 * 60_000, "That's a lot of new gifts in a short time. Take a breather and try again in a bit.");
     const slug = await uniqueSlug();
     return db.transaction(async (tx) => {
       const [site] = await tx
@@ -374,7 +428,7 @@ export const updateSite = createServerFn({ method: "POST" })
         countdown_date: date,
         countdown_at: z.string().datetime({ offset: true }).nullable().optional(),
         calendar_locked: z.boolean(),
-        intro_text: z.string().max(2000).nullable(),
+        intro_text: z.string().trim().max(LIMITS.greeting, tooLong("the greeting", LIMITS.greeting)).nullable(),
         background_style: z.enum(["paper", "clean", "formal", "gradient"]),
         tree_reveal_date: date,
         palette_id: id.nullable(),
@@ -391,11 +445,27 @@ export const updateSite = createServerFn({ method: "POST" })
     const [site] = await getDb().select().from(schema.giftSites).where(eq(schema.giftSites.id, data.id));
     if (!site) throw new HttpError(404, "We couldn't find that gift.");
     const p = data.patch;
+    // Words: trimmed, with the same limits the editor's counters show.
+    const cleanText: Record<string, string> = {};
+    for (const [k, v] of Object.entries(p.custom_text)) {
+      if (typeof v !== "string") continue;
+      const t = v.trim();
+      const max = customTextLimit(k);
+      if ([...t].length > max) throw new HttpError(422, tooLong(FIELD_NAMES[k] ?? "that title", max));
+      if (t) cleanText[k] = t;
+    }
+    p.custom_text = cleanText;
     // Going live needs a paid plan. The first publish happens in the payment webhook;
     // this only re-opens a paid gift that the owner had taken offline.
     if (p.status === "published" && site.status !== "published") {
       if (!site.tier) throw new HttpError(402, "Pick a plan to publish this gift.");
       if (isExpired(site)) throw new HttpError(400, "This gift has ended.");
+      // While it was offline it could collect past its plan's limits; it has to fit again to reopen.
+      const reopenTier = getTier(site.tier);
+      if (reopenTier) {
+        const blocker = tierBlocker(reopenTier, await siteUsage(site.id), p.format);
+        if (blocker) throw new HttpError(409, `${blocker} Upgrade, or hide a few, to reopen it.`);
+      }
     }
     const tier = getTier(site.tier);
     if (tier && !tier.formats.includes(p.format)) {
@@ -466,6 +536,9 @@ export const deleteSite = createServerFn({ method: "POST" })
       .limit(1);
     if (paid) throw new Error("This gift has a paid plan, so it stays. You can unpublish it from the editor.");
     await db.delete(schema.giftSites).where(eq(schema.giftSites.id, data.id));
+    // Every photo, voice note and picture stored for it goes too.
+    const { deleteGiftMedia } = await import("@/server/uploads");
+    await deleteGiftMedia(data.id);
     return { ok: true };
   });
 
@@ -602,7 +675,7 @@ export const submitContribution = createServerFn({ method: "POST" })
       editToken: id,
       siteId: id,
       moduleType: z.enum(GUEST_TYPES),
-      authorName: z.string().trim().min(1).max(120),
+      authorName: z.string().trim().min(1, "Add your name so they know who it's from.").max(LIMITS.friendName, tooLong("your name", LIMITS.friendName)),
       textContent: shortText,
       mediaUrl,
       externalLink: link,
@@ -616,11 +689,22 @@ export const submitContribution = createServerFn({ method: "POST" })
   )
   .handler(async ({ data }) => {
     const db = getDb();
+    data.textContent = data.textContent?.trim() || null;
+    const textMax = noteTextLimit(data.moduleType);
+    if (data.textContent && [...data.textContent].length > textMax) throw new HttpError(422, tooLong(data.moduleType === "wordcloud" ? "your word" : "your note", textMax));
     const sectionData = sectionPayload(data.moduleType, data.data, data.textContent, data.mediaUrl);
     const [site] = await db.select().from(schema.giftSites).where(eq(schema.giftSites.id, data.siteId));
     if (!site) throw new HttpError(404, "We couldn't find that gift.");
     if (site.disabledAt) throw new HttpError(403, "This gift has been paused, so it isn't taking notes right now.");
     if (site.solo) throw new HttpError(403, "This gift is just from one person, so it isn't taking notes from friends.");
+    // The same note sent twice (fast taps, a retry after a dropped connection) is saved once.
+    const [already] = await db.select({ siteId: c.siteId, editToken: c.editToken }).from(c).where(eq(c.id, data.id));
+    if (already) {
+      if (already.siteId === data.siteId && already.editToken === data.editToken) return { ok: true as const, full: null };
+      throw new HttpError(409, "Something got mixed up. Refresh the page and try again.");
+    }
+    rateLimit(`note:ip:${clientIp()}`, 30, 10 * 60_000, "You're adding notes very quickly. Wait a few minutes and try again.");
+    rateLimit(`note:gift:${data.siteId}`, 200, 60 * 60_000, "This gift is getting a lot of notes right now. Try again in a little while.");
     // Paid plans have caps. Tell the friend kindly instead of failing.
     const deviceId = data.deviceId ?? null;
     const room = await checkRoom(site, data.authorName, data.moduleType, deviceId);
@@ -630,7 +714,7 @@ export const submitContribution = createServerFn({ method: "POST" })
       .from(schema.siteModules)
       .where(and(eq(schema.siteModules.siteId, data.siteId), eq(schema.siteModules.moduleType, data.moduleType)));
     if (!module?.enabled) throw new HttpError(400, "That section isn't open on this gift.");
-    await db.insert(c).values({
+    const inserted = await db.insert(c).values({
       id: data.id,
       siteId: data.siteId,
       moduleType: data.moduleType,
@@ -644,8 +728,9 @@ export const submitContribution = createServerFn({ method: "POST" })
       editToken: data.editToken,
       deviceId,
       data: sectionData,
-    });
-    await notifyNewNote(data.siteId, data.authorName).catch((e) => console.error("[notify]", e));
+    }).onConflictDoNothing({ target: c.id }).returning({ id: c.id });
+    // Two identical requests at the same moment: only the first one notifies.
+    if (inserted.length) await notifyNewNote(data.siteId, data.authorName).catch((e) => console.error("[notify]", e));
     return { ok: true as const, full: null };
   });
 
@@ -660,7 +745,7 @@ export const saveOwnerNote = createServerFn({ method: "POST" })
       id,
       siteId: id,
       moduleType: z.enum(OWNER_NOTE_TYPES),
-      authorName: z.string().trim().min(1).max(120),
+      authorName: z.string().trim().min(1, "Add your name so they know who it's from.").max(LIMITS.friendName, tooLong("your name", LIMITS.friendName)),
       textContent: shortText,
       mediaUrl,
       externalLink: link,
@@ -669,6 +754,9 @@ export const saveOwnerNote = createServerFn({ method: "POST" })
   )
   .handler(async ({ data }) => {
     await requireSiteOwner(data.siteId);
+    data.textContent = data.textContent?.trim() || null;
+    const textMax = noteTextLimit(data.moduleType);
+    if (data.textContent && [...data.textContent].length > textMax) throw new HttpError(422, tooLong(data.moduleType === "wordcloud" ? "the word" : "the note", textMax));
     const sectionData = sectionPayload(data.moduleType, data.data, data.textContent, data.mediaUrl);
     const db = getDb();
     const [existing] = await db
@@ -703,7 +791,7 @@ export const saveOwnerNote = createServerFn({ method: "POST" })
         target: [schema.siteModules.siteId, schema.siteModules.moduleType],
         set: { enabled: true },
       });
-    await db.insert(c).values({
+    const inserted = await db.insert(c).values({
       id: data.id,
       siteId: data.siteId,
       moduleType: data.moduleType,
@@ -723,6 +811,7 @@ export const saveOwnerNote = createServerFn({ method: "POST" })
 export const getGiftRoom = createServerFn({ method: "GET" })
   .inputValidator(z.object({ siteId: id }))
   .handler(async ({ data }) => {
+    rateLimit(`room:${clientIp()}`, 240, 60_000, READ_LIMIT);
     const [site] = await getDb().select().from(schema.giftSites).where(eq(schema.giftSites.id, data.siteId));
     if (!site) return { ended: false, contributorsFull: false, photosFull: false };
     const tier = getTier(site.tier);
@@ -753,6 +842,10 @@ async function ownedSite(siteId: string) {
 export const getBilling = createServerFn({ method: "GET" })
   .inputValidator(z.object({ siteId: id }))
   .handler(async ({ data }) => {
+    const { site: before } = await ownedSite(data.siteId);
+    // A payment that came in without a webhook (closed tab, paid after cancelling) is found here.
+    const { reconcileSiteOrders } = await import("@/server/billing");
+    await reconcileSiteOrders(before.id, "billing");
     const { site } = await ownedSite(data.siteId);
     await expireStaleOrders(site.id);
     const usage = await siteUsage(site.id);
@@ -874,38 +967,22 @@ async function ownedOrder(orderId: string) {
   return order;
 }
 
-/** Last time we asked the provider about each order, so polling doesn't hammer it. */
-const lastProviderCheck = new Map<string, number>();
-
 /**
  * Polled by the "Confirming your payment" page. The webhook is the main way an
- * order gets marked paid; as a backup, while the order is pending we ask the
- * provider directly (at most every 5s per order), using our secret key, and
- * apply the same idempotent `applyPaidEvent`. Nothing from the browser is trusted.
+ * order gets marked paid; as a backup we ask the provider directly (at most
+ * every 5s per order) whenever the order isn't marked paid, including after a
+ * cancel or a timeout, since the buyer may have paid in another tab. Nothing
+ * from the browser is trusted.
  */
 export const getOrderStatus = createServerFn({ method: "GET" })
   .inputValidator(z.object({ orderId: id }))
   .handler(async ({ data }) => {
     let order = await ownedOrder(data.orderId);
-    if (order.status === "pending" && order.providerCheckoutId) {
-      const last = lastProviderCheck.get(order.id) ?? 0;
-      if (Date.now() - last > 5000) {
-        lastProviderCheck.set(order.id, Date.now());
-        try {
-          const { getProvider } = await import("@/server/payments");
-          const { applyPaidEvent } = await import("@/server/billing");
-          const provider = getProvider(order.provider);
-          const paid = await provider.checkPaid(order.providerCheckoutId);
-          if (paid) {
-            const msg = await applyPaidEvent(paid, provider.name);
-            console.info(`[payments] confirm-page check ${order.id}: ${msg}`);
-            order = await ownedOrder(data.orderId);
-          }
-        } catch (error) {
-          console.error("[payments] confirm-page check failed", error);
-        }
-      }
+    if (order.status !== "paid") {
+      const { reconcileOrder } = await import("@/server/billing");
+      if (await reconcileOrder(order, "confirm", 5000)) order = await ownedOrder(data.orderId);
     }
+    if (!order.siteId) return { id: order.id, status: order.status, kind: order.kind, tier: order.tier, amount: order.amount, site: null };
     const [site] = await getDb()
       .select({
         id: schema.giftSites.id,
@@ -914,7 +991,7 @@ export const getOrderStatus = createServerFn({ method: "GET" })
         expiresAt: schema.giftSites.expiresAt,
       })
       .from(schema.giftSites)
-      .where(eq(schema.giftSites.id, order.siteId));
+      .where(eq(schema.giftSites.id, order.siteId!));
     return {
       id: order.id,
       status: order.status,
@@ -938,6 +1015,13 @@ export const cancelOrder = createServerFn({ method: "POST" })
     }
     return { ok: true };
   });
+
+/** Admin: the latest payment signals and what we did with each (webhooks, checks, the daily job). */
+export const listPaymentLog = createServerFn({ method: "GET" }).handler(async () => {
+  await requireAdmin();
+  const rows = await getDb().select().from(schema.paymentLog).orderBy(desc(schema.paymentLog.at)).limit(60);
+  return rows.map((r) => ({ ...r, at: r.at.toISOString() }));
+});
 
 /** Admin checklist for payments. Reports what's set, never the values. */
 export const getPaymentsSetup = createServerFn({ method: "GET" }).handler(async () => {
@@ -1052,6 +1136,9 @@ export const updateOwnContribution = createServerFn({ method: "POST" })
   .handler(async ({ data }) => {
     const row = await ownDraftContribution(data.id, data.token);
     if (!row) return { ok: false };
+    data.textContent = data.textContent?.trim() || null;
+    const textMax = noteTextLimit(row.moduleType as never);
+    if (data.textContent && [...data.textContent].length > textMax) throw new HttpError(422, tooLong("your note", textMax));
     const sectionData = data.data !== undefined ? sectionPayload(row.moduleType, data.data, data.textContent, data.mediaUrl ?? "keep") : undefined;
     await getDb()
       .update(c)
@@ -1072,9 +1159,17 @@ export const deleteOwnContribution = createServerFn({ method: "POST" })
   .handler(async ({ data }) => {
     const row = await ownDraftContribution(data.id, data.token);
     if (!row) return { ok: false };
-    await getDb().delete(c).where(eq(c.id, data.id));
+    const gone = await getDb().delete(c).where(eq(c.id, data.id)).returning({ media: c.mediaUrl, data: c.data });
+    const { deleteMedia } = await import("@/server/uploads");
+    await deleteMedia(gone.flatMap((r) => [r.media, ...mediaInData(r.data)]));
     return { ok: true };
   });
+
+/** Stored files a newer section keeps in `data` (a capsule photo, a doodle...). */
+function mediaInData(data: unknown): string[] {
+  if (!data || typeof data !== "object") return [];
+  return Object.values(data as Record<string, unknown>).filter((v): v is string => typeof v === "string" && /^(https:\/\/[\w.-]+\.public\.blob\.vercel-storage\.com\/|\/api\/dev-uploads\/)/.test(v));
+}
 
 async function contributionSite(contributionIds: string[]) {
   const rows = await getDb()
@@ -1092,7 +1187,20 @@ export const setContributionStatus = createServerFn({ method: "POST" })
     z.object({ ids: z.array(id).min(1).max(500), status: z.enum(["pending", "approved", "hidden"]) }),
   )
   .handler(async ({ data }) => {
-    await requireSiteOwner(await contributionSite(data.ids));
+    const siteId = await contributionSite(data.ids);
+    await requireSiteOwner(siteId);
+    const [site] = await getDb().select().from(schema.giftSites).where(eq(schema.giftSites.id, siteId));
+    if (site && data.status !== "hidden") {
+      // Showing hidden items again counts towards the plan, like a new note would.
+      const hidden = await getDb().select().from(c).where(and(inArray(c.id, data.ids), eq(c.status, "hidden")));
+      for (const row of hidden) {
+        const room = await checkRoom(site, row.authorName, row.moduleType, row.deviceId);
+        if (!room.ok && room.reason !== "ended") {
+          throw new HttpError(409, room.reason === "photos" ? "This gift has all the photos its plan holds. Upgrade to show more." : "This gift has all the friends its plan holds. Upgrade to show more.");
+        }
+        await getDb().update(c).set({ status: data.status }).where(eq(c.id, row.id));
+      }
+    }
     await getDb().update(c).set({ status: data.status }).where(inArray(c.id, data.ids));
     return { ok: true };
   });
@@ -1101,7 +1209,9 @@ export const deleteContributions = createServerFn({ method: "POST" })
   .inputValidator(z.object({ ids: z.array(id).min(1).max(500) }))
   .handler(async ({ data }) => {
     await requireSiteOwner(await contributionSite(data.ids));
-    await getDb().delete(c).where(inArray(c.id, data.ids));
+    const gone = await getDb().delete(c).where(inArray(c.id, data.ids)).returning({ media: c.mediaUrl, data: c.data });
+    const { deleteMedia } = await import("@/server/uploads");
+    await deleteMedia(gone.flatMap((r) => [r.media, ...mediaInData(r.data)]));
     return { ok: true };
   });
 

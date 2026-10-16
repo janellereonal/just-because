@@ -388,7 +388,10 @@ function Field({ label, value, wide = false }: { label: string; value: string; w
   return (
     <div className={wide ? "col-span-3" : ""}>
       <div className="text-[8.5px] tracking-[0.2em] uppercase opacity-55">{label}</div>
-      <div className="truncate text-[12px] font-bold uppercase">{value}</div>
+      {/* The date is the viewer's own today, so it can differ from the server's. */}
+      <div className="truncate text-[12px] font-bold uppercase" suppressHydrationWarning>
+        {value}
+      </div>
     </div>
   );
 }

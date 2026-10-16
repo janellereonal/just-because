@@ -1,4 +1,5 @@
 import { Suspense, lazy, useEffect, useState } from "react";
+import { ExportGift } from "@/components/ExportGift";
 import { themeKindOf } from "@/lib/themeKind";
 import {useParams} from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -30,6 +31,8 @@ import { getMe, unlockGift } from "@/lib/api";
 import Bo from "@/components/Bo";
 import { ExtendDialog } from "@/components/PlanControls";
 import { clearIntroSkip, hasSkippedIntro, rememberIntroSkip } from "@/lib/introSkip";
+import { engineIntroProps, simbangVisible } from "@/lib/engineGift";
+import { t } from "@/i18n";
 
 
 function PublishedPage() {
@@ -102,7 +105,7 @@ function PublishedPage() {
     return <PageNotFound title={REPORT_COPY.pausedTitle} message={REPORT_COPY.pausedBody} actionLabel={REPORT_COPY.makeYourOwn} actionTo="/" showHeader={false} />;
   }
   if (isGiftEnded(site) && site.status === "published") {
-    return <GiftEndedPage isOwner={isOwner} siteId={site.id} />;
+    return <GiftEndedPage isOwner={isOwner} siteId={site.id} title={site.title} />;
   }
   if (locked && isGiftOpen(site)) {
     return <PasswordGate slug={slug} recipient={site.custom_text.recipient_name} />;
@@ -119,6 +122,9 @@ function PublishedPage() {
     );
   }
   const previewing = !isGiftOpen(site);
+  // Simbang Gabi (Parol Christmas): only tonight's notes and earlier are open.
+  const simbang = simbangVisible(theme?.name, site, contributions);
+  const shown = simbang.notes;
 
   const palette = resolvePalette(theme, site.custom_colors);
   const fonts = FONT_PAIRINGS[site.font_choice] ?? FONT_PAIRINGS.romantic;
@@ -138,6 +144,13 @@ function PublishedPage() {
           </a>
         </div>
       ) : null}
+      {opened && simbang.night !== null && simbang.night < 9 ? (
+        <div className="pointer-events-none fixed inset-x-0 bottom-4 z-[55] flex justify-center px-4">
+          <p className="rounded-full bg-ink/85 px-4 py-2 text-center text-xs text-cream shadow-lg backdrop-blur">
+            {simbang.night === 0 ? t("theme.parol.before") : `${t("theme.parol.night", { n: simbang.night })}. ${t("theme.parol.next")}`}
+          </p>
+        </div>
+      ) : null}
       {!opened && formatInfo(site.format).usesIntro ? (
         <Suspense fallback={<PageLoading label="Opening your gift…" />}>
         {/* The gift waits underneath, so the opening can reveal it through the object. */}
@@ -147,7 +160,7 @@ function PublishedPage() {
             theme={theme}
             palette={palette}
             modules={modules}
-            contributions={[...contributions.filter((item) => item.module_type !== "tree"), ...treeOrnaments]}
+            contributions={[...shown.filter((item) => item.module_type !== "tree"), ...treeOrnaments]}
             calendarEntries={calendarEntries}
           />
         </div>
@@ -163,6 +176,7 @@ function PublishedPage() {
           character={site.character}
           iconSet={site.icon_set}
           contributors={[...new Set(contributions.map((c) => c.author_name.trim()).filter(Boolean))]}
+          {...engineIntroProps(theme?.name, site, contributions)}
           onOpen={() => setOpened(true)}
           onSkip={() => {
             rememberIntroSkip(site.id);
@@ -176,7 +190,7 @@ function PublishedPage() {
           theme={theme}
           palette={palette}
           modules={modules}
-          contributions={[...contributions.filter((item) => item.module_type !== "tree"), ...treeOrnaments]}
+          contributions={[...shown.filter((item) => item.module_type !== "tree"), ...treeOrnaments]}
           calendarEntries={calendarEntries}
           showShare
           showCover={!opened}
@@ -258,17 +272,17 @@ function PasswordGate({ slug, recipient }: { slug: string; recipient?: string | 
 }
 
 /** A gift whose plan ran out. The link still lands somewhere kind. */
-function GiftEndedPage({ isOwner, siteId }: { isOwner: boolean; siteId: string }) {
+function GiftEndedPage({ isOwner, siteId, title }: { isOwner: boolean; siteId: string; title: string }) {
   const [extendOpen, setExtendOpen] = useState(false);
   return (
     <div className="grid min-h-screen place-items-center bg-paper px-6 text-center text-ink">
       <div className="max-w-md">
         <Bo pose="idle" size={150} title="Bo" />
-        <h1 className="mt-4 font-display text-3xl font-medium tracking-tight">This gift has ended</h1>
+        <h1 className="mt-4 font-display text-3xl font-medium tracking-tight">This gift has been wrapped up</h1>
         <p className="mt-2 text-muted text-pretty">
           {isOwner
-            ? "Your plan's time is up, so the link now shows this page. Everything friends added is still saved."
-            : "It was open for a while, and now it's wrapped up for good. Thanks for stopping by."}
+            ? "Your plan's time is up, so the link now shows this page. Everything friends added is still saved: extend it to open it again, or download a copy."
+            : "It was open for a while, and now it's tucked away. Thanks for stopping by."}
         </p>
         {isOwner ? (
           <div className="mt-6 flex flex-wrap justify-center gap-3">
@@ -279,6 +293,7 @@ function GiftEndedPage({ isOwner, siteId }: { isOwner: boolean; siteId: string }
             >
               Extend this gift
             </button>
+            <ExportGift siteId={siteId} title={title} />
             <a href={`/sites/${siteId}`} className="rounded-full border border-line px-6 py-3 text-sm font-medium">
               Back to the editor
             </a>

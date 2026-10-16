@@ -81,6 +81,8 @@ export type IntroSettings = {
   button_text?: string;
   badge_text?: string;
   burst?: IntroBurst;
+  /** Parol Christmas: Simbang Gabi, one note a night from 16 to 24 December. */
+  simbang?: boolean;
 };
 
 export const MAX_INTRO_STICKERS = 8;
@@ -177,6 +179,7 @@ export function normalizeIntroSettings(value: unknown): IntroSettings {
   const badge = text(v["badge_text"], 48);
   if (badge) out.badge_text = badge;
   if (BURSTS.includes(v["burst"] as IntroBurst)) out.burst = v["burst"] as IntroBurst;
+  if (v["simbang"] === true) out.simbang = true;
   return out;
 }
 
