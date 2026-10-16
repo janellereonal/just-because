@@ -1,25 +1,14 @@
 /**
- * "What goes inside": neutral cream cards, each with a small live demo of the
+ * "What goes inside": six cream cards, each with a small live demo of the
  * section: letters fanning out, polaroids shuffling, a little music player,
- * a voice clip you can play, a word cloud putting itself together and a
- * countdown that's actually counting (in your own time zone).
+ * a voice clip you can play, an open-when letter and a sealed time capsule.
  */
 import { useEffect, useRef, useState } from "react";
 import { motion, useInView, useReducedMotion } from "motion/react";
 import { Pause, Play } from "lucide-react";
 import { LANDING } from "@/copy/strings";
 import { SPRING } from "@/themes/_shared/stage";
-import { formatMoment } from "@/lib/time";
-import {
-  AwardsDemo,
-  CapsuleDemo,
-  CouponDemo,
-  DoodleDemo,
-  MapDemo,
-  OpenWhenDemo,
-  QuizDemo,
-  VideoDemo,
-} from "@/components/landing/MoreTiles";
+import { CapsuleDemo, OpenWhenDemo } from "@/components/landing/MoreTiles";
 
 const T = LANDING.inside.tiles;
 
@@ -271,92 +260,8 @@ function VoiceClip() {
   );
 }
 
-/* Words drift in from everywhere and settle into a cloud. */
-function WordCloud() {
-  const ref = useRef<HTMLDivElement | null>(null);
-  const seen = useInView(ref, { once: true, amount: 0.6 });
-  const words = [
-    ["kind", 1.6],
-    ["funny", 1.15],
-    ["brave", 1.35],
-    ["home", 0.95],
-    ["loyal", 1.05],
-    ["generous", 0.9],
-    ["golden", 1.25],
-    ["calm", 0.85],
-  ] as const;
-  return (
-    <div
-      ref={ref}
-      className="flex max-w-[260px] flex-wrap items-baseline justify-center gap-x-3 gap-y-1"
-    >
-      {words.map(([w, s], i) => (
-        <motion.span
-          key={w}
-          className="font-display font-semibold"
-          style={{
-            fontSize: `${s * 1.15}rem`,
-            color: i % 3 === 0 ? "var(--color-accent, #B5623E)" : "#2B2522",
-          }}
-          initial={{
-            opacity: 0,
-            x: ((i * 73) % 120) - 60,
-            y: ((i * 41) % 90) - 45,
-            rotate: ((i * 29) % 40) - 20,
-          }}
-          animate={seen ? { opacity: 1, x: 0, y: 0, rotate: 0 } : {}}
-          transition={{ ...SPRING.wobbly, delay: i * 0.07 }}
-        >
-          {w}
-        </motion.span>
-      ))}
-    </div>
-  );
-}
-
-/* A real countdown to four days from now, shown in your own zone. */
-function LiveCountdown() {
-  const [target] = useState(() => Date.now() + 4 * 86400000 + 3 * 3600000);
-  const [now, setNow] = useState(() => Date.now());
-  useEffect(() => {
-    const t = window.setInterval(() => setNow(Date.now()), 1000);
-    return () => window.clearInterval(t);
-  }, []);
-  const s = Math.max(0, Math.floor((target - now) / 1000));
-  const parts = [
-    [Math.floor(s / 86400), "days"],
-    [Math.floor((s % 86400) / 3600), "hrs"],
-    [Math.floor((s % 3600) / 60), "min"],
-    [s % 60, "sec"],
-  ] as const;
-  return (
-    <div className="text-center">
-      <div className="flex gap-2" suppressHydrationWarning>
-        {parts.map(([v, l]) => (
-          <span
-            key={l}
-            className="flex w-14 flex-col items-center rounded-xl bg-white py-2 ring-1 ring-ink/6"
-          >
-            <motion.span
-              key={v}
-              initial={{ y: -8, opacity: 0 }}
-              animate={{ y: 0, opacity: 1 }}
-              transition={SPRING.snappy}
-              className="font-display text-2xl font-semibold tabular-nums"
-              suppressHydrationWarning
-            >
-              {String(v).padStart(2, "0")}
-            </motion.span>
-            <span className="text-[10px] tracking-[0.14em] text-ink/55 uppercase">{l}</span>
-          </span>
-        ))}
-      </div>
-      <p className="mt-2 text-[11px] text-ink/55" suppressHydrationWarning>
-        {formatMoment(target)}, your time
-      </p>
-    </div>
-  );
-}
+/** The six on the homepage. The rest are named in the line underneath. */
+export const BENTO_COUNT = 6;
 
 export function SectionsBento() {
   return (
@@ -373,35 +278,11 @@ export function SectionsBento() {
       <Tile title={T.voice.title} body={T.voice.body}>
         <VoiceClip />
       </Tile>
-      <Tile title={T.words.title} body={T.words.body}>
-        <WordCloud />
-      </Tile>
-      <Tile title={T.countdown.title} body={T.countdown.body}>
-        <LiveCountdown />
-      </Tile>
       <Tile title={T.openwhen.title} body={T.openwhen.body}>
         <OpenWhenDemo />
       </Tile>
       <Tile title={T.capsule.title} body={T.capsule.body}>
         <CapsuleDemo />
-      </Tile>
-      <Tile title={T.awards.title} body={T.awards.body}>
-        <AwardsDemo />
-      </Tile>
-      <Tile title={T.quiz.title} body={T.quiz.body}>
-        <QuizDemo />
-      </Tile>
-      <Tile title={T.map.title} body={T.map.body}>
-        <MapDemo />
-      </Tile>
-      <Tile title={T.coupons.title} body={T.coupons.body}>
-        <CouponDemo />
-      </Tile>
-      <Tile title={T.video.title} body={T.video.body}>
-        <VideoDemo />
-      </Tile>
-      <Tile title={T.doodle.title} body={T.doodle.body} className="sm:col-span-2 lg:col-span-2">
-        <DoodleDemo />
       </Tile>
     </div>
   );

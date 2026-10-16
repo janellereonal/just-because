@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
@@ -17,7 +18,8 @@ import {
   Type,
 } from "lucide-react";
 import { SiteHeader } from "@/components/SiteHeader";
-import { SectionsBento } from "@/components/landing/SectionsBento";
+import { BENTO_COUNT, SectionsBento } from "@/components/landing/SectionsBento";
+import { MODULES } from "@/lib/gift";
 import { ExampleGifts } from "@/components/landing/ExampleGifts";
 import { LANDING, LANDING_MORE } from "@/copy/strings";
 import { fetchThemes } from "@/lib/themes";
@@ -127,6 +129,7 @@ const FAQ = [
 
 function Index() {
   const { user } = useAuth();
+  const [allFormats, setAllFormats] = useState(false);
   const navigate = useNavigate();
   const { data: themes = [] } = useQuery({
     queryKey: ["themes", "published"],
@@ -175,7 +178,7 @@ function Index() {
               style={{ "--d": "280ms" } as React.CSSProperties}
             >
               <Link
-                to="/themes"
+                to="/create"
                 className="squish inline-flex min-h-14 items-center gap-2 rounded-full bg-ink px-7 text-base font-semibold text-cream hover:bg-ink/90"
               >
                 {LANDING.hero.primary}
@@ -280,26 +283,6 @@ function Index() {
         </div>
       </section>
 
-      {/* What friends can add */}
-      <section className="mx-auto max-w-6xl px-3 pt-24 sm:px-5">
-        <div
-          className="max-w-2xl"
-          data-bo-perch
-          data-bo-x="0.9"
-          data-bo-say="I can hold all of this."
-        >
-          <p className="font-mono text-[11px] tracking-[0.18em] text-accent uppercase">
-            {LANDING.inside.kicker}
-          </p>
-          <h2 className="mt-2 font-display text-[clamp(2rem,4.5vw,3.2rem)] leading-[1.02] font-semibold tracking-tight text-balance">
-            {LANDING.inside.title}
-          </h2>
-          <p className="mt-3 text-ink/70">{LANDING.inside.body}</p>
-        </div>
-        <SectionsBento />
-        <p className="mt-5 max-w-2xl text-[15px] text-ink/70">{LANDING.inside.more}</p>
-      </section>
-
       {/* Example gifts */}
       <section className="mx-auto max-w-6xl px-3 pt-24 sm:px-5">
         <div className="flex flex-wrap items-end justify-between gap-4">
@@ -321,9 +304,48 @@ function Index() {
         <ExampleGifts />
       </section>
 
+      {/* What friends can add */}
+      <section className="mx-auto max-w-6xl px-3 pt-24 sm:px-5">
+        <div
+          className="max-w-2xl"
+          data-bo-perch
+          data-bo-x="0.9"
+          data-bo-say="I can hold all of this."
+        >
+          <p className="font-mono text-[11px] tracking-[0.18em] text-accent uppercase">
+            {LANDING.inside.kicker}
+          </p>
+          <h2 className="mt-2 font-display text-[clamp(2rem,4.5vw,3.2rem)] leading-[1.02] font-semibold tracking-tight text-balance">
+            {LANDING.inside.title}
+          </h2>
+          <p className="mt-3 text-ink/70">{LANDING.inside.body}</p>
+        </div>
+        <SectionsBento />
+        <p className="mt-5 max-w-2xl text-[15px] text-ink/70">{LANDING.inside.more(MODULES.length - BENTO_COUNT)}</p>
+      </section>
+
+      {/* Pricing */}
+      <section id="pricing" className="mx-auto max-w-6xl scroll-mt-24 px-3 pt-24 sm:px-5">
+        <div
+          className="mb-8 max-w-2xl"
+          data-bo-perch
+          data-bo-x="0.9"
+          data-bo-say="Plans come at the very end."
+        >
+          <p className="font-mono text-[11px] tracking-[0.18em] text-accent uppercase">
+            {LANDING_MORE.plans.kicker}
+          </p>
+          <h2 className="mt-2 font-display text-[clamp(2rem,4.5vw,3.2rem)] leading-[1.02] font-semibold tracking-tight text-balance">
+            {LANDING_MORE.plans.title}
+          </h2>
+          <p className="mt-3 text-ink/75 text-pretty">{LANDING_MORE.plans.body}</p>
+        </div>
+        <PricingCards />
+      </section>
+
       {/* Formats */}
       <section className="mx-auto max-w-6xl px-3 pt-24 sm:px-5">
-        <div className="relative overflow-hidden rounded-[40px] bg-ink px-6 py-14 text-cream sm:px-12">
+        <div className="relative overflow-hidden rounded-[40px] bg-ink px-6 py-10 text-cream sm:px-12">
           <span
             aria-hidden="true"
             className="absolute -top-20 -right-10 size-72 rounded-full bg-accent/35 blur-3xl"
@@ -346,8 +368,8 @@ function Index() {
             </h2>
             <p className="mt-3 text-cream/70">{LANDING_MORE.formats.body}</p>
           </div>
-          <div className="relative mt-10 grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
-            {FORMATS.map((f) => (
+          <div className="relative mt-8 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+            {(allFormats ? FORMATS : FORMATS.slice(0, 4)).map((f) => (
               <button
                 key={f.id}
                 type="button"
@@ -374,26 +396,15 @@ function Index() {
               </button>
             ))}
           </div>
+          <button
+            type="button"
+            onClick={() => setAllFormats((v) => !v)}
+            aria-expanded={allFormats}
+            className="squish relative mt-5 inline-flex min-h-11 items-center rounded-full bg-white/10 px-5 text-sm font-medium ring-1 ring-white/15 hover:bg-white/15"
+          >
+            {allFormats ? LANDING_MORE.formats.seeFewer : LANDING_MORE.formats.seeAll(FORMATS.length)}
+          </button>
         </div>
-      </section>
-
-      {/* Pricing */}
-      <section id="pricing" className="mx-auto max-w-6xl scroll-mt-24 px-3 pt-24 sm:px-5">
-        <div
-          className="mb-8 max-w-2xl"
-          data-bo-perch
-          data-bo-x="0.9"
-          data-bo-say="Plans come at the very end."
-        >
-          <p className="font-mono text-[11px] tracking-[0.18em] text-accent uppercase">
-            {LANDING_MORE.plans.kicker}
-          </p>
-          <h2 className="mt-2 font-display text-[clamp(2rem,4.5vw,3.2rem)] leading-[1.02] font-semibold tracking-tight text-balance">
-            {LANDING_MORE.plans.title}
-          </h2>
-          <p className="mt-3 text-ink/75 text-pretty">{LANDING_MORE.plans.body}</p>
-        </div>
-        <PricingCards />
       </section>
 
       {/* FAQ */}
@@ -442,7 +453,7 @@ function Index() {
             </h2>
             <p className="text-ink/70">{LANDING.closing.body}</p>
             <Link
-              to="/themes"
+              to="/create"
               className="squish mt-2 inline-flex min-h-14 items-center rounded-full bg-ink px-8 text-base font-semibold text-cream hover:bg-ink/90"
             >
               {LANDING.closing.cta}

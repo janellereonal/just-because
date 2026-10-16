@@ -7,7 +7,18 @@ import { getAuthOptions } from "@/lib/api";
 import { SiteHeader } from "@/components/SiteHeader";
 import Bo from "@/components/Bo";
 
+/** Only same-site paths, so the link can't send anyone elsewhere after signing in. */
+function safeNext(value: unknown): string | undefined {
+  return typeof value === "string" && value.startsWith("/") && !value.startsWith("//") && !value.startsWith("/\\")
+    ? value
+    : undefined;
+}
+
 export const Route = createFileRoute("/auth")({
+  validateSearch: (search: Record<string, unknown>): { next?: string } => {
+    const next = safeNext(search["next"]);
+    return next ? { next } : {};
+  },
   head: () => ({
     meta: [
       { title: "Sign in | Just Because" },
@@ -27,6 +38,8 @@ export const Route = createFileRoute("/auth")({
 
 function AuthPage() {
   const navigate = useNavigate();
+  const { next } = Route.useSearch();
+  const after = next ?? "/create";
   const [mode, setMode] = useState<"signin" | "signup" | "forgot">("signin");
   const [sentTo, setSentTo] = useState<{ email: string; kind: "verify" | "reset" } | null>(null);
   const [email, setEmail] = useState("");
@@ -38,7 +51,7 @@ function AuthPage() {
   async function resend() {
     if (!sentTo) return;
     setBusy(true);
-    await authClient.sendVerificationEmail({ email: sentTo.email, callbackURL: "/themes" }).catch(() => null);
+    await authClient.sendVerificationEmail({ email: sentTo.email, callbackURL: after }).catch(() => null);
     setBusy(false);
     setResent(true);
   }
@@ -51,7 +64,7 @@ function AuthPage() {
     setBusy(true);
     const { error } = await authClient.signIn.social({
       provider: "google",
-      callbackURL: "/themes",
+      callbackURL: after,
       errorCallbackURL: "/auth",
     });
     if (error) {
@@ -75,7 +88,7 @@ function AuthPage() {
         email,
         password,
         name: name.trim() || email.split("@")[0]!,
-        callbackURL: "/themes",
+        callbackURL: after,
       });
       setBusy(false);
       if (error) {
@@ -86,10 +99,10 @@ function AuthPage() {
         setSentTo({ email, kind: "verify" });
         return;
       }
-      navigate({ to: "/themes" });
+      navigate({ href: after });
       return;
     }
-    const { error } = await authClient.signIn.email({ email, password, callbackURL: "/themes" });
+    const { error } = await authClient.signIn.email({ email, password, callbackURL: after });
     setBusy(false);
     if (error) {
       if (error.status === 403) {
@@ -103,7 +116,7 @@ function AuthPage() {
       );
       return;
     }
-    navigate({ to: "/themes" });
+    navigate({ href: after });
   }
 
   return (

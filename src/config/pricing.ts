@@ -144,6 +144,12 @@ export function getTier(id: string | null | undefined): Tier | null {
   return TIERS.find((t) => t.id === id) ?? null;
 }
 
+/** The plan a format first appears in, when that isn't the first plan ("Celebration" for Storybook). */
+export function formatPlanTag(format: GiftFormatId): string | null {
+  const first = TIERS.findIndex((t) => t.formats.includes(format));
+  return first > 0 ? TIERS[first]!.name : null;
+}
+
 export function tierRank(id: string | null | undefined): number {
   if (id === LEGACY_TIER) return Number.POSITIVE_INFINITY;
   return TIERS.findIndex((t) => t.id === id);

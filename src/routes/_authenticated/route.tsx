@@ -3,9 +3,10 @@ import { getMe } from "@/lib/api";
 
 export const Route = createFileRoute("/_authenticated")({
   ssr: false,
-  beforeLoad: async () => {
+  beforeLoad: async ({ location }) => {
     const user = await getMe();
-    if (!user) throw redirect({ to: "/auth" });
+    // Come back to where they were headed (a new gift, a gift they were editing) after signing in.
+    if (!user) throw redirect({ to: "/auth", search: { next: location.href } });
     return { user };
   },
   component: () => <Outlet />,

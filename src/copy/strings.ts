@@ -186,7 +186,7 @@ export const LANDING = {
       video: { title: "Videos", body: "Short clips from everyone, playing right in the gift." },
       doodle: { title: "Doodle guestbook", body: "Draw something with your finger. It doesn't have to be good." },
     },
-    more: "Mix and match. Turn on just the ones that fit.",
+    more: (n: number) => `And ${n} more, from quizzes to doodles. Turn on just the ones that fit.`,
   },
   examples: {
     kicker: "Example gifts",
@@ -211,6 +211,8 @@ export const LANDING_MORE = {
     body: "Switch any time. Nobody has to rewrite their note.",
     tryIt: "Try it above",
     isNew: "New",
+    seeAll: (n: number) => `See all ${n}`,
+    seeFewer: "Show fewer",
   },
   themes: { link: (n: number) => `See all ${n || ""} themes`.replace("  ", " ") },
   plans: {
