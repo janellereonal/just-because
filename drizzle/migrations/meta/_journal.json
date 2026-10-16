@@ -78,6 +78,13 @@
       "when": 1792072021742,
       "tag": "0010_sections_and_fund",
       "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "7",
+      "when": 1792154683427,
+      "tag": "0011_milky_white_queen",
+      "breakpoints": true
     }
   ]
 }

@@ -3,6 +3,7 @@ import { AnimatePresence, LayoutGroup, motion, useReducedMotion } from "motion/r
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { X } from "lucide-react";
 import { SiteHeader } from "@/components/SiteHeader";
+import { SiteFooter } from "@/components/SiteFooter";
 import { SectionPreview } from "@/components/SectionPreview";
 import { MODULES, type ModuleType } from "@/lib/gift";
 import { SECTIONS_PAGE } from "@/copy/strings";
@@ -146,6 +147,7 @@ function SectionsPage() {
           </Link>
         </div>
       </main>
+      <SiteFooter />
 
       <AnimatePresence>
         {openMod ? (

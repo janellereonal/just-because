@@ -166,3 +166,14 @@ export function giftLiveEmail(opts: { to: string; recipient: string; liveUrl: st
     footnote: `Need to change something? You can still edit it here: ${opts.editorUrl}`,
   });
 }
+
+/** A visitor reported a gift. Goes to every admin. */
+export function reportEmail(opts: { to: string; slug: string; reason: string; details: string | null; page: string; adminUrl: string }) {
+  return sendMail({
+    to: opts.to,
+    subject: `Gift reported: ${opts.reason}`,
+    heading: "Someone reported a gift",
+    body: [`Reason: ${opts.reason}`, `Gift: /g/${opts.slug} (reported from the ${opts.page} page)`, ...(opts.details ? [`Details: ${opts.details}`] : [])],
+    button: { label: "Review it in admin", url: opts.adminUrl },
+  });
+}
