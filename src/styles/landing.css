@@ -142,7 +142,7 @@ html[data-intro="skip"] .jb-reveal { animation: rise .8s var(--ease-paper) both;
 .demo-screen { animation: demo-swap .5s var(--ease-paper) both; }
 @keyframes demo-swap { from { opacity: 0; transform: scale(.97); } to { opacity: 1; transform: none; } }
 /* Gift views inside the phone shouldn't grab the whole viewport. */
-.demo-screen .min-h-screen, .demo-screen .comic-reader { min-height: 100%; }
+.demo-screen .min-h-screen, .demo-screen .cx-root { min-height: 100%; }
 
 /* ---------- Floating notes around the hero phone ---------- */
 .float-note {

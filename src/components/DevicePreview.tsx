@@ -135,7 +135,7 @@ export function DevicePreview({
             />
           ) : null}
           <div
-            className={`jb-screen relative overflow-hidden bg-paper ${frame ? "rounded-[36px]" : "rounded-[28px]"}`}
+            className={`jb-screen ${frame ? "jb-notched" : ""} relative overflow-hidden bg-paper ${frame ? "rounded-[36px]" : "rounded-[28px]"}`}
             style={{ height: phoneHeight, contain: "layout paint" }}
           >
             {screen}

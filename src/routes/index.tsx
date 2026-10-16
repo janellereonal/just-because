@@ -8,6 +8,7 @@ import {
 } from "lucide-react";
 import { SiteHeader } from "@/components/SiteHeader";
 import { BENTO_COUNT, SectionsBento } from "@/components/landing/SectionsBento";
+import { SECTIONS_PAGE } from "@/copy/strings";
 import { MODULES } from "@/lib/gift";
 import { ExampleGifts } from "@/components/landing/ExampleGifts";
 import { LANDING, LANDING_MORE } from "@/copy/strings";
@@ -266,19 +267,27 @@ function Index() {
 
       {/* What friends can add */}
       <section className="mx-auto max-w-6xl px-3 pt-24 sm:px-5">
-        <div
-          className="max-w-2xl"
-          data-bo-perch
-          data-bo-x="0.9"
-          data-bo-say="I can hold all of this."
-        >
-          <p className="font-mono text-[11px] tracking-[0.18em] text-accent uppercase">
-            {LANDING.inside.kicker}
-          </p>
-          <h2 className="mt-2 font-display text-[clamp(2rem,4.5vw,3.2rem)] leading-[1.02] font-semibold tracking-tight text-balance">
-            {LANDING.inside.title}
-          </h2>
-          <p className="mt-3 text-ink/70">{LANDING.inside.body}</p>
+        <div className="flex flex-wrap items-end justify-between gap-4">
+          <div
+            className="max-w-2xl"
+            data-bo-perch
+            data-bo-x="0.9"
+            data-bo-say="I can hold all of this."
+          >
+            <p className="font-mono text-[11px] tracking-[0.18em] text-accent uppercase">
+              {LANDING.inside.kicker}
+            </p>
+            <h2 className="mt-2 font-display text-[clamp(2rem,4.5vw,3.2rem)] leading-[1.02] font-semibold tracking-tight text-balance">
+              {LANDING.inside.title}
+            </h2>
+            <p className="mt-3 text-ink/70">{LANDING.inside.body}</p>
+          </div>
+          <Link
+            to="/sections"
+            className="squish inline-flex min-h-12 items-center rounded-full bg-glass px-5 text-sm font-medium ring-1 ring-ink/12 hover:bg-pink/40"
+          >
+            {SECTIONS_PAGE.link(MODULES.length)}
+          </Link>
         </div>
         <SectionsBento />
         <p className="mt-5 max-w-2xl text-[15px] text-ink/70">{LANDING.inside.more(MODULES.length - BENTO_COUNT)}</p>

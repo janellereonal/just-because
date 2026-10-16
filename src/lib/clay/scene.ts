@@ -16,6 +16,7 @@ import { RoomEnvironment } from "three/examples/jsm/environments/RoomEnvironment
 import { blob, clay, cone, curl, egg, feet, fluff, mesh, pillow, shade, torus, W, type ClayRecipe } from "@/lib/clay/shapes";
 import { ANIMALS } from "@/lib/clay/animals";
 import { OBJECTS } from "@/lib/clay/objects";
+import { TREE } from "@/lib/clay/tree";
 import { buildPerson } from "@/lib/clay/person";
 import type { PersonConfig } from "@/themes/_shared/cast/person";
 
@@ -30,6 +31,7 @@ export type { ClayRecipe };
 export const CLAY: Record<string, ClayRecipe> = {
   ...ANIMALS,
   ...OBJECTS,
+  ...TREE,
   dog: (c) => [
     // Tail, then body, then ears and muzzle in front.
     ...curl([86, 96, -16], 5, c.primary, 0.7),

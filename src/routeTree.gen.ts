@@ -14,12 +14,14 @@ import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/
 import { Route as AdminRouteImport } from './routes/admin'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as ResetPasswordRouteImport } from './routes/reset-password'
+import { Route as SectionsRouteImport } from './routes/sections'
 import { Route as AuthenticatedCreateRouteImport } from './routes/_authenticated/create'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as ApiUploadRouteImport } from './routes/api/upload'
 import { Route as ContributeSlugRouteImport } from './routes/contribute.$slug'
 import { Route as DevCastRouteImport } from './routes/dev.cast'
 import { Route as DevClayRouteImport } from './routes/dev.clay'
+import { Route as DevFormatRouteImport } from './routes/dev.format'
 import { Route as DevOpeningsRouteImport } from './routes/dev.openings'
 import { Route as DevPeopleRouteImport } from './routes/dev.people'
 import { Route as ExampleIdRouteImport } from './routes/example.$id'
@@ -56,6 +58,11 @@ const ResetPasswordRoute = ResetPasswordRouteImport.update({
   path: '/reset-password',
   getParentRoute: () => rootRouteImport,
 } as any)
+const SectionsRoute = SectionsRouteImport.update({
+  id: '/sections',
+  path: '/sections',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AuthenticatedCreateRoute = AuthenticatedCreateRouteImport.update({
   id: '/create',
   path: '/create',
@@ -84,6 +91,11 @@ const DevCastRoute = DevCastRouteImport.update({
 const DevClayRoute = DevClayRouteImport.update({
   id: '/dev/clay',
   path: '/dev/clay',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DevFormatRoute = DevFormatRouteImport.update({
+  id: '/dev/format',
+  path: '/dev/format',
   getParentRoute: () => rootRouteImport,
 } as any)
 const DevOpeningsRoute = DevOpeningsRouteImport.update({
@@ -148,12 +160,14 @@ export interface FileRoutesByFullPath {
   '/admin': typeof AdminRoute
   '/auth': typeof AuthRoute
   '/reset-password': typeof ResetPasswordRoute
+  '/sections': typeof SectionsRoute
   '/create': typeof AuthenticatedCreateRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/api/upload': typeof ApiUploadRoute
   '/contribute/$slug': typeof ContributeSlugRoute
   '/dev/cast': typeof DevCastRoute
   '/dev/clay': typeof DevClayRoute
+  '/dev/format': typeof DevFormatRoute
   '/dev/openings': typeof DevOpeningsRoute
   '/dev/people': typeof DevPeopleRoute
   '/example/$id': typeof ExampleIdRoute
@@ -171,12 +185,14 @@ export interface FileRoutesByTo {
   '/admin': typeof AdminRoute
   '/auth': typeof AuthRoute
   '/reset-password': typeof ResetPasswordRoute
+  '/sections': typeof SectionsRoute
   '/create': typeof AuthenticatedCreateRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/api/upload': typeof ApiUploadRoute
   '/contribute/$slug': typeof ContributeSlugRoute
   '/dev/cast': typeof DevCastRoute
   '/dev/clay': typeof DevClayRoute
+  '/dev/format': typeof DevFormatRoute
   '/dev/openings': typeof DevOpeningsRoute
   '/dev/people': typeof DevPeopleRoute
   '/example/$id': typeof ExampleIdRoute
@@ -196,12 +212,14 @@ export interface FileRoutesById {
   '/admin': typeof AdminRoute
   '/auth': typeof AuthRoute
   '/reset-password': typeof ResetPasswordRoute
+  '/sections': typeof SectionsRoute
   '/_authenticated/create': typeof AuthenticatedCreateRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
   '/api/upload': typeof ApiUploadRoute
   '/contribute/$slug': typeof ContributeSlugRoute
   '/dev/cast': typeof DevCastRoute
   '/dev/clay': typeof DevClayRoute
+  '/dev/format': typeof DevFormatRoute
   '/dev/openings': typeof DevOpeningsRoute
   '/dev/people': typeof DevPeopleRoute
   '/example/$id': typeof ExampleIdRoute
@@ -221,12 +239,14 @@ export interface FileRouteTypes {
     | '/admin'
     | '/auth'
     | '/reset-password'
+    | '/sections'
     | '/create'
     | '/dashboard'
     | '/api/upload'
     | '/contribute/$slug'
     | '/dev/cast'
     | '/dev/clay'
+    | '/dev/format'
     | '/dev/openings'
     | '/dev/people'
     | '/example/$id'
@@ -244,12 +264,14 @@ export interface FileRouteTypes {
     | '/admin'
     | '/auth'
     | '/reset-password'
+    | '/sections'
     | '/create'
     | '/dashboard'
     | '/api/upload'
     | '/contribute/$slug'
     | '/dev/cast'
     | '/dev/clay'
+    | '/dev/format'
     | '/dev/openings'
     | '/dev/people'
     | '/example/$id'
@@ -268,12 +290,14 @@ export interface FileRouteTypes {
     | '/admin'
     | '/auth'
     | '/reset-password'
+    | '/sections'
     | '/_authenticated/create'
     | '/_authenticated/dashboard'
     | '/api/upload'
     | '/contribute/$slug'
     | '/dev/cast'
     | '/dev/clay'
+    | '/dev/format'
     | '/dev/openings'
     | '/dev/people'
     | '/example/$id'
@@ -293,10 +317,12 @@ export interface RootRouteChildren {
   AdminRoute: typeof AdminRoute
   AuthRoute: typeof AuthRoute
   ResetPasswordRoute: typeof ResetPasswordRoute
+  SectionsRoute: typeof SectionsRoute
   ApiUploadRoute: typeof ApiUploadRoute
   ContributeSlugRoute: typeof ContributeSlugRoute
   DevCastRoute: typeof DevCastRoute
   DevClayRoute: typeof DevClayRoute
+  DevFormatRoute: typeof DevFormatRoute
   DevOpeningsRoute: typeof DevOpeningsRoute
   DevPeopleRoute: typeof DevPeopleRoute
   ExampleIdRoute: typeof ExampleIdRoute
@@ -345,6 +371,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ResetPasswordRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/sections': {
+      id: '/sections'
+      path: '/sections'
+      fullPath: '/sections'
+      preLoaderRoute: typeof SectionsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/_authenticated/create': {
       id: '/_authenticated/create'
       path: '/create'
@@ -385,6 +418,13 @@ declare module '@tanstack/react-router' {
       path: '/dev/clay'
       fullPath: '/dev/clay'
       preLoaderRoute: typeof DevClayRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/dev/format': {
+      id: '/dev/format'
+      path: '/dev/format'
+      fullPath: '/dev/format'
+      preLoaderRoute: typeof DevFormatRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/dev/openings': {
@@ -490,10 +530,12 @@ const rootRouteChildren: RootRouteChildren = {
   AdminRoute: AdminRoute,
   AuthRoute: AuthRoute,
   ResetPasswordRoute: ResetPasswordRoute,
+  SectionsRoute: SectionsRoute,
   ApiUploadRoute: ApiUploadRoute,
   ContributeSlugRoute: ContributeSlugRoute,
   DevCastRoute: DevCastRoute,
   DevClayRoute: DevClayRoute,
+  DevFormatRoute: DevFormatRoute,
   DevOpeningsRoute: DevOpeningsRoute,
   DevPeopleRoute: DevPeopleRoute,
   ExampleIdRoute: ExampleIdRoute,
