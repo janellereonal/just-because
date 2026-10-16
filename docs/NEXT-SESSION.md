@@ -18,8 +18,8 @@ work goes on autonomously. Her rules for this run:
 | # | Item | Status |
 |---|---|---|
 | 1 | Launch PR 1: Trust, privacy and sharing | Draft [#23](https://github.com/janellereonal/just-because/pull/23), waits for Janelle (schema, robots, headers, privacy) |
-| 2 | Launch PR 2: Input hardening and reliability | Next |
-| 3 | Revenue PR 1: Theme engine and Theme Bible | |
+| 2 | Launch PR 2: Input hardening and reliability | 2a **merged** [#25](https://github.com/janellereonal/just-because/pull/25); 2b [#26](https://github.com/janellereonal/just-because/pull/26) waits for Janelle (privacy) |
+| 3 | Revenue PR 1: Theme engine and Theme Bible | Next |
 | 4 | Revenue PR 2: Christmas, global and Filipino-first themes | |
 | 5 | Launch PR 3: Payments and gift lifecycle | |
 | 6 | Launch PR 4: Editor and organiser fixes | |
@@ -41,6 +41,45 @@ The three prompts are saved in `docs/prompts/` (launch.md, revenue.md, design.md
   age 16; contents kept 90 days after a plan ends, then deleted; unpaid drafts deleted after 12 months without
   changes; refunds within 7 days if the recipient hasn't opened it. PR 3 will implement the retention rules.
 - Socials for the footer (`SITE.socials`, hidden while empty).
+- Error reports (#26): I used our own `/api/client-error` endpoint that writes to the Vercel logs instead of
+  Sentry, because Sentry needs an account, a key and a CSP change. Do you want Sentry later?
+- Photos from iPhones in HEIC, plus videos and voice notes, keep their metadata (most browsers can't redraw HEIC).
+  Convert HEIC on the server later, or ask friends' phones to send JPEG (iOS does this when the picker allows it)?
+- Rate limits are in memory per server instance. Fine for launch; a shared store (Upstash or Postgres) would make
+  them exact across instances. Worth it?
+
+### Launch PR 2a (#25, merged) and 2b (#26, waiting for Janelle)
+- **2a, merged:**
+  - Text limits in one place: `src/lib/limits.ts`, with counters from `src/components/ui/CharCount.tsx`.
+  - Server-function error middleware `fnErrors` in `src/start.ts` turns errors into real status codes and safe
+    messages: 422 validation, 401, 403, 429, 500.
+  - `rateLimit()` and `clientIp()` in `src/server/rateLimit.ts`.
+  - Notes are idempotent: retries reuse the id and edit token, and the insert ignores repeats. A triple tap saves
+    one note.
+  - Create has a 15-second same-title guard, so a double tap makes one gift.
+  - Calendar fix: doors used the UTC day, which put every door one day early for viewers ahead of UTC. Use
+    `localDateKey()` from `src/lib/time.ts`, never `toISOString().slice(0, 10)`.
+  - Long-text fixes from `/dev/worst-case` (dev only; `?kind=&format=`, `&intro=1` shows the opening):
+    - Greetings scale down and clamp to five lines.
+    - Hint and Skip on openings stay off the button.
+    - Monograms use letters only (`initialsOf`).
+    - The zine masthead wraps between words.
+    - The bento hero reserves space for its 3D piece.
+    - Note cards reveal as soon as they enter the screen.
+  - Scratch foils and the night sky follow the gift's palette.
+  - The storybook is sized to the screen, with readable controls on dark backgrounds.
+  - The Roamer checks a spot is clear of text and controls before parking there, and again after scrolling.
+  - Tools: `tools/screens/cal.cjs` counts calendar doors in a time zone (`TZID=Asia/Manila`); `console.cjs` prints
+    console errors; `fn.cjs` calls a server function; `tap.cjs` triple-taps Send.
+- **2b, waiting for Janelle (privacy):**
+  - `preparePhoto()` in `src/lib/upload.ts` redraws JPEG, PNG and WebP to remove EXIF and GPS, turns them
+    upright and caps them at 2560px. Upload errors are friendlier.
+  - `src/lib/clientErrors.ts` plus `/api/client-error`: scrubbed browser errors go to the server log, at most five
+    per page load.
+  - `tools/screens/up.cjs` uploads a file through the friend page.
+- **Not reproduced:** the dev-only "This page didn't load" from the stress test, and React #418 on the live
+  homepage. The likely #418 causes (the calendar UTC day and two date labels) are fixed in 2a. Check the
+  console on prod after deploys.
 
 ### Launch PR 1 (#23, branch `launch-trust`, waiting for Janelle): what's in it
 - /privacy, /terms, /refunds, /contact (mailto form), shared footer on marketing and legal pages, draft banner
