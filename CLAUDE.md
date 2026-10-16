@@ -86,6 +86,13 @@ Locally, without `BLOB_READ_WRITE_TOKEN` uploads save to `.dev-uploads/`, and wi
 - We don't handle `payment.failed` on purpose: it's per attempt, and hosted checkout lets the
   buyer retry on the same session. Unpaid orders count as abandoned after 24h.
 - Live keys (`sk_live_`) are refused unless `PAYMONGO_ALLOW_LIVE=true`.
+- Every webhook call, confirm-page check and cron check is written to `payment_log` (shown in
+  /admin). A payment that lands after the order was cancelled or timed out still counts.
+- `/api/cron/daily` (Vercel Cron, needs `CRON_SECRET`) sends the "ends in 14 days" reminder,
+  re-checks unpaid orders from the last 2 days and expires stale ones.
+- Orders keep their row when a gift or account is deleted (`site_id`/`owner_id` set null).
+- Tests: `bun test src` (the billing test runs only against a localhost DATABASE_URL, with
+  the fake PayMongo in `tools/payments/fake-paymongo.ts`).
 - Local testing without PayMongo: set `PAYMONGO_API_URL` to a fake server that mimics
   `/v1/checkout_sessions` and signs webhooks with `PAYMONGO_WEBHOOK_SECRET`.
 

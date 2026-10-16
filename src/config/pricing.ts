@@ -203,9 +203,14 @@ export function featureList(tier: Tier): string[] {
   return lines;
 }
 
+/** Calendar months later, keeping the day but never spilling into the next month (30 Nov + 3 = 28 Feb). */
 export function addMonths(from: Date, months: number): Date {
   const d = new Date(from);
-  d.setMonth(d.getMonth() + months);
+  const day = d.getUTCDate();
+  d.setUTCDate(1);
+  d.setUTCMonth(d.getUTCMonth() + months);
+  const lastDay = new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth() + 1, 0)).getUTCDate();
+  d.setUTCDate(Math.min(day, lastDay));
   return d;
 }
 

@@ -194,3 +194,55 @@ export function conciergeRequestEmail(opts: {
     button: { label: "Open concierge requests", url: opts.adminUrl },
   });
 }
+
+/** The receipt, sent once per paid order. A first payment also says the gift is live. */
+export function receiptEmail(opts: {
+  to: string;
+  kind: "publish" | "upgrade" | "extend";
+  recipient: string;
+  planName: string;
+  amount: string;
+  orderId: string;
+  paidOn: string;
+  openUntil: string | null;
+  liveUrl: string;
+  editorUrl: string;
+}) {
+  const what =
+    opts.kind === "publish" ? `${opts.planName} plan` : opts.kind === "upgrade" ? `Upgrade to ${opts.planName}` : `${opts.planName}, more time`;
+  const heading =
+    opts.kind === "publish"
+      ? `${opts.recipient}'s gift is wrapped up`
+      : opts.kind === "upgrade"
+        ? `${opts.recipient}'s gift is on ${opts.planName} now`
+        : `${opts.recipient}'s gift is open for longer`;
+  return sendMail({
+    to: opts.to,
+    subject: opts.kind === "publish" ? `Receipt: ${opts.recipient}'s gift is ready to open` : `Receipt for ${opts.recipient}'s gift`,
+    heading,
+    body: [
+      opts.kind === "publish" ? `Thank you. Everything everyone added is in one place now. Send the link to ${opts.recipient} whenever you're ready.` : "Thank you. Here's your receipt.",
+      `Gift: ${opts.recipient}'s gift`,
+      `Paid: ${opts.amount} for ${what}, on ${opts.paidOn}`,
+      ...(opts.openUntil ? [`Open until: ${opts.openUntil}`] : []),
+      `Order: ${opts.orderId}`,
+    ],
+    button: { label: "Open the gift", url: opts.liveUrl },
+    footnote: `PayMongo also sends a payment receipt. Questions about this payment? Reply to this email. Manage the gift here: ${opts.editorUrl}`,
+  });
+}
+
+/** Two weeks before a plan ends. */
+export function expiryReminderEmail(opts: { to: string; recipient: string; endsOn: string; editorUrl: string; liveUrl: string }) {
+  return sendMail({
+    to: opts.to,
+    subject: `${opts.recipient}'s gift closes on ${opts.endsOn}`,
+    heading: `${opts.recipient}'s gift closes in two weeks`,
+    body: [
+      `The link stays open until ${opts.endsOn}. After that it shows a "this gift has been wrapped up" page, and everything friends added stays saved for you.`,
+      "Want it open for longer? You can extend it from the editor. You can also download every note and photo there.",
+    ],
+    button: { label: "Extend or download", url: opts.editorUrl },
+    footnote: `The gift: ${opts.liveUrl}`,
+  });
+}

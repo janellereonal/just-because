@@ -1,4 +1,5 @@
-CREATE TABLE "concierge_requests" (
+-- Concierge requests. Safe to run where an earlier preview already created it.
+CREATE TABLE IF NOT EXISTS "concierge_requests" (
 	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
 	"user_id" text,
 	"site_id" uuid,
@@ -14,6 +15,8 @@ CREATE TABLE "concierge_requests" (
 	"updated_at" timestamp with time zone DEFAULT now() NOT NULL
 );
 --> statement-breakpoint
+ALTER TABLE "concierge_requests" DROP CONSTRAINT IF EXISTS "concierge_requests_user_id_user_id_fk";--> statement-breakpoint
 ALTER TABLE "concierge_requests" ADD CONSTRAINT "concierge_requests_user_id_user_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."user"("id") ON DELETE set null ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "concierge_requests" DROP CONSTRAINT IF EXISTS "concierge_requests_site_id_gift_sites_id_fk";--> statement-breakpoint
 ALTER TABLE "concierge_requests" ADD CONSTRAINT "concierge_requests_site_id_gift_sites_id_fk" FOREIGN KEY ("site_id") REFERENCES "public"."gift_sites"("id") ON DELETE set null ON UPDATE no action;--> statement-breakpoint
-CREATE INDEX "concierge_status_idx" ON "concierge_requests" USING btree ("status","created_at");
+CREATE INDEX IF NOT EXISTS "concierge_status_idx" ON "concierge_requests" USING btree ("status","created_at");
