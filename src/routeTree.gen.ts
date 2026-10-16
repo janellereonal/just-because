@@ -22,6 +22,7 @@ import { Route as ApiUploadRouteImport } from './routes/api/upload'
 import { Route as ContributeSlugRouteImport } from './routes/contribute.$slug'
 import { Route as DevCastRouteImport } from './routes/dev.cast'
 import { Route as DevClayRouteImport } from './routes/dev.clay'
+import { Route as DevDesignRouteImport } from './routes/dev.design'
 import { Route as DevFormatRouteImport } from './routes/dev.format'
 import { Route as DevOpeningsRouteImport } from './routes/dev.openings'
 import { Route as DevPeopleRouteImport } from './routes/dev.people'
@@ -100,6 +101,11 @@ const DevCastRoute = DevCastRouteImport.update({
 const DevClayRoute = DevClayRouteImport.update({
   id: '/dev/clay',
   path: '/dev/clay',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DevDesignRoute = DevDesignRouteImport.update({
+  id: '/dev/design',
+  path: '/dev/design',
   getParentRoute: () => rootRouteImport,
 } as any)
 const DevFormatRoute = DevFormatRouteImport.update({
@@ -192,6 +198,7 @@ export interface FileRoutesByFullPath {
   '/contribute/$slug': typeof ContributeSlugRoute
   '/dev/cast': typeof DevCastRoute
   '/dev/clay': typeof DevClayRoute
+  '/dev/design': typeof DevDesignRoute
   '/dev/format': typeof DevFormatRoute
   '/dev/openings': typeof DevOpeningsRoute
   '/dev/people': typeof DevPeopleRoute
@@ -221,6 +228,7 @@ export interface FileRoutesByTo {
   '/contribute/$slug': typeof ContributeSlugRoute
   '/dev/cast': typeof DevCastRoute
   '/dev/clay': typeof DevClayRoute
+  '/dev/design': typeof DevDesignRoute
   '/dev/format': typeof DevFormatRoute
   '/dev/openings': typeof DevOpeningsRoute
   '/dev/people': typeof DevPeopleRoute
@@ -252,6 +260,7 @@ export interface FileRoutesById {
   '/contribute/$slug': typeof ContributeSlugRoute
   '/dev/cast': typeof DevCastRoute
   '/dev/clay': typeof DevClayRoute
+  '/dev/design': typeof DevDesignRoute
   '/dev/format': typeof DevFormatRoute
   '/dev/openings': typeof DevOpeningsRoute
   '/dev/people': typeof DevPeopleRoute
@@ -283,6 +292,7 @@ export interface FileRouteTypes {
     | '/contribute/$slug'
     | '/dev/cast'
     | '/dev/clay'
+    | '/dev/design'
     | '/dev/format'
     | '/dev/openings'
     | '/dev/people'
@@ -312,6 +322,7 @@ export interface FileRouteTypes {
     | '/contribute/$slug'
     | '/dev/cast'
     | '/dev/clay'
+    | '/dev/design'
     | '/dev/format'
     | '/dev/openings'
     | '/dev/people'
@@ -342,6 +353,7 @@ export interface FileRouteTypes {
     | '/contribute/$slug'
     | '/dev/cast'
     | '/dev/clay'
+    | '/dev/design'
     | '/dev/format'
     | '/dev/openings'
     | '/dev/people'
@@ -370,6 +382,7 @@ export interface RootRouteChildren {
   ContributeSlugRoute: typeof ContributeSlugRoute
   DevCastRoute: typeof DevCastRoute
   DevClayRoute: typeof DevClayRoute
+  DevDesignRoute: typeof DevDesignRoute
   DevFormatRoute: typeof DevFormatRoute
   DevOpeningsRoute: typeof DevOpeningsRoute
   DevPeopleRoute: typeof DevPeopleRoute
@@ -476,6 +489,13 @@ declare module '@tanstack/react-router' {
       path: '/dev/clay'
       fullPath: '/dev/clay'
       preLoaderRoute: typeof DevClayRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/dev/design': {
+      id: '/dev/design'
+      path: '/dev/design'
+      fullPath: '/dev/design'
+      preLoaderRoute: typeof DevDesignRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/dev/format': {
@@ -616,6 +636,7 @@ const rootRouteChildren: RootRouteChildren = {
   ContributeSlugRoute: ContributeSlugRoute,
   DevCastRoute: DevCastRoute,
   DevClayRoute: DevClayRoute,
+  DevDesignRoute: DevDesignRoute,
   DevFormatRoute: DevFormatRoute,
   DevOpeningsRoute: DevOpeningsRoute,
   DevPeopleRoute: DevPeopleRoute,
