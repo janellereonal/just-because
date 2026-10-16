@@ -3,6 +3,15 @@
 Updated 16 Oct 2026 (sessions 6 to 8), so a new session, on any Claude account, can carry on without
 missing anything. Start with `HANDOFF.md` section 0.
 
+## Session 12c: the character picker (branch `characters-picker`, on top of `people-builder`)
+
+- `src/components/CharacterPicker.tsx`, used in the Look step and in Customize > Characters and sprinkles.
+- First view, made for the gift: Bo, three people, three animals and three little friends whose tags include the
+  theme kind (falling back to Bookworm/Explorer/Barista, Dog/Cat/Bunny, Star/Heart/Cake), No one, and "See all".
+  The picked character stays visible even when it isn't a suggestion.
+- See all: search (names and tags), tabs For this gift / People / Animals / Little friends, Surprise me (a quarter
+  of the time a brand new random person), Make a person. Tiles mount their still only when scrolled into view.
+
 ## Session 12b: the people builder (branch `people-builder`, on top of `characters-library`)
 
 - **Make a person** in Characters: age (4), skin tone (10), face (6), hair (24) and hair color (10), facial hair (5),
