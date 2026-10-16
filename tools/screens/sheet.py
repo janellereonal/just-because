@@ -1,5 +1,5 @@
 """Contact sheet of screenshots. usage: python3 sheet.py out.png cols w img1 img2 ...
-Each image is scaled to width w and labelled with its file name."""
+Each image is scaled to width w and labelled with its folder and file name."""
 import sys
 from pathlib import Path
 from PIL import Image, ImageDraw
@@ -10,7 +10,8 @@ ims = []
 for f in files:
     im = Image.open(f).convert("RGB")
     im = im.resize((w, int(im.height * w / im.width)))
-    ims.append((Path(f).stem, im))
+    p = Path(f)
+    ims.append((f"{p.parent.name}/{p.stem}" if p.parent.name not in ("", ".") else p.stem, im))
 h = max(im.height for _, im in ims) + 22
 rows = (len(ims) + cols - 1) // cols
 sheet = Image.new("RGB", (cols * (w + 8) + 8, rows * (h + 8) + 8), "#222")
