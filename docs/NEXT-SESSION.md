@@ -1,5 +1,34 @@
 # Next session: picking up Just Because
 
+## Latest (17 Oct 2026, afternoon)
+
+**Merged since the morning:** #31 (payments and gift lifecycle) and the hotfix #41 (re-applies #31's migration safely), both merged by Janelle, plus docs #40.
+Migrations in the open PRs are renumbered to 0013 and written idempotently (`IF NOT EXISTS`), so a skipped migration can't break production again.
+
+**Open, waiting for Janelle (merge in this order):**
+1. [#23](https://github.com/janellereonal/just-because/pull/23) Launch PR 1: trust, privacy and sharing
+2. [#26](https://github.com/janellereonal/just-because/pull/26) Launch PR 2b: photo privacy
+3. [#33](https://github.com/janellereonal/just-because/pull/33) Launch PR 4: editor and organiser fixes
+4. [#35](https://github.com/janellereonal/just-because/pull/35) Launch PR 5: metrics
+5. [#36](https://github.com/janellereonal/just-because/pull/36) Revenue PR 6: theme metrics (on top of #35)
+6. [#38](https://github.com/janellereonal/just-because/pull/38) Revenue PR 5: concierge (flag `concierge`)
+7. [#42](https://github.com/janellereonal/just-because/pull/42) Handwritten becomes a Notebook layout (flag `handwrittenFormat`)
+8. [#43](https://github.com/janellereonal/just-because/pull/43) Add-on 6b: themes, layouts and sections. **Not flagged, so not auto-merged.** It includes #33, #35/#36 and #42, so merge it after them. It lets owners change the theme in the editor: Janelle to confirm.
+9. [#44](https://github.com/janellereonal/just-because/pull/44) Photobooth: camera, frames and a message (flag `photoboothCamera`)
+10. [#45](https://github.com/janellereonal/just-because/pull/45) New-user guide on /create (flag `newUserGuide`)
+
+Also still open: [#37](https://github.com/janellereonal/just-because/pull/37) design foundation (draft, waits for the design OK).
+
+#44 and #45 meet the self-merge rules but are held so the queue above doesn't pick up conflicts. After each merge, merge main into the remaining branches. The only conflicts are first-import lines (keep both), `flags.ts` and appends at the end of `strings.ts`.
+
+**Flags to turn on when ready** (`VITE_FLAGS`, comma list): `birthdayAge`, `concierge`, `handwrittenFormat`, `photoboothCamera`, `newUserGuide`.
+
+**Next up:** Revenue PR 3 (pricing and add-ons) and Revenue PR 4 (reminders). Both are unblocked now that #31 is merged.
+
+**Questions:**
+- Keep "Change theme" in the editor (#43), or make the theme fixed once a gift is made?
+- Do Vercel previews get their own Neon branch? If not, PR previews run migrations on the live database.
+
 ## Morning report (17 Oct 2026)
 
 ### 1. Merged automatically
