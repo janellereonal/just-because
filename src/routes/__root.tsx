@@ -12,6 +12,7 @@ import { type ReactNode } from "react";
 import { Toaster } from "sonner";
 
 import appCss from "../styles.css?url";
+import { marketingShareTags } from "@/lib/share";
 
 function NotFoundComponent() {
   return (
@@ -75,19 +76,8 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "Just Because" },
-      {
-        name: "description",
-        content: "Collaborative gift websites made for the people you love.",
-      },
       { name: "author", content: "Just Because" },
-      { property: "og:title", content: "Just Because" },
-      {
-        property: "og:description",
-        content: "Collaborative gift websites made for the people you love.",
-      },
-      { property: "og:type", content: "website" },
-      { name: "twitter:card", content: "summary_large_image" },
+      ...marketingShareTags("Just Because | One gift from everyone who loves them", "Make one gift together. Friends add letters, photos, songs and voice notes from their phones, and they open it all at once."),
     ],
     links: [
       {

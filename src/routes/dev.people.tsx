@@ -1,9 +1,11 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { NOINDEX } from "@/lib/seo";
 import { Character } from "@/themes/_shared/cast/Character";
 import { PEOPLE } from "@/themes/_shared/cast/person";
 
 /** Dev only: the 40 ready-made people with their live faces, for checking the art. */
 export const Route = createFileRoute("/dev/people")({
+  head: () => ({ meta: [NOINDEX] }),
   component: () =>
     import.meta.env.DEV ? (
       <div className="grid min-h-screen grid-cols-5 gap-4 bg-[#F4EEE3] p-6">

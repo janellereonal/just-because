@@ -7,6 +7,7 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { SiteHeader } from "@/components/SiteHeader";
+import { SiteFooter } from "@/components/SiteFooter";
 import { OpeningCard, OpeningPreviewModal } from "@/components/OpeningCard";
 import { normalizeCharacter, type CharacterSetting } from "@/themes/_shared/cast/types";
 import { SPRING } from "@/themes/_shared/stage";
@@ -174,6 +175,7 @@ function ThemesPage() {
           </motion.div>
         )}
       </section>
+      <SiteFooter />
 
       <OpeningPreviewModal
         theme={full}
