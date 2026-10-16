@@ -1,5 +1,5 @@
 {
-  "id": "9fa649c9-9ddd-4c49-9af3-d03c0fff934e",
+  "id": "711f661b-b850-4c8c-92d1-8ab81f383071",
   "prevId": "fcf11b4c-5bcc-47fd-a464-9bac23736af6",
   "version": "7",
   "dialect": "postgresql",
@@ -101,24 +101,24 @@
             }
           ],
           "isUnique": false,
-          "concurrently": false,
+          "with": {},
           "method": "btree",
-          "with": {}
+          "concurrently": false
         }
       },
       "foreignKeys": {
         "account_user_id_user_id_fk": {
           "name": "account_user_id_user_id_fk",
           "tableFrom": "account",
-          "tableTo": "user",
           "columnsFrom": [
             "user_id"
           ],
+          "tableTo": "user",
           "columnsTo": [
             "id"
           ],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
+          "onUpdate": "no action",
+          "onDelete": "cascade"
         }
       },
       "compositePrimaryKeys": {},
@@ -188,26 +188,26 @@
         "calendar_entries_site_id_gift_sites_id_fk": {
           "name": "calendar_entries_site_id_gift_sites_id_fk",
           "tableFrom": "calendar_entries",
-          "tableTo": "gift_sites",
           "columnsFrom": [
             "site_id"
           ],
+          "tableTo": "gift_sites",
           "columnsTo": [
             "id"
           ],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
+          "onUpdate": "no action",
+          "onDelete": "cascade"
         }
       },
       "compositePrimaryKeys": {},
       "uniqueConstraints": {
         "calendar_entries_site_date": {
           "name": "calendar_entries_site_date",
-          "nullsNotDistinct": false,
           "columns": [
             "site_id",
             "entry_date"
-          ]
+          ],
+          "nullsNotDistinct": false
         }
       },
       "policies": {},
@@ -326,9 +326,9 @@
             }
           ],
           "isUnique": false,
-          "concurrently": false,
+          "with": {},
           "method": "btree",
-          "with": {}
+          "concurrently": false
         },
         "contributions_site_device_idx": {
           "name": "contributions_site_device_idx",
@@ -347,139 +347,24 @@
             }
           ],
           "isUnique": false,
-          "concurrently": false,
+          "with": {},
           "method": "btree",
-          "with": {}
+          "concurrently": false
         }
       },
       "foreignKeys": {
         "contributions_site_id_gift_sites_id_fk": {
           "name": "contributions_site_id_gift_sites_id_fk",
           "tableFrom": "contributions",
-          "tableTo": "gift_sites",
           "columnsFrom": [
             "site_id"
           ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
-        }
-      },
-      "compositePrimaryKeys": {},
-      "uniqueConstraints": {},
-      "policies": {},
-      "checkConstraints": {},
-      "isRLSEnabled": false
-    },
-    "public.events": {
-      "name": "events",
-      "schema": "",
-      "columns": {
-        "id": {
-          "name": "id",
-          "type": "uuid",
-          "primaryKey": true,
-          "notNull": true,
-          "default": "gen_random_uuid()"
-        },
-        "name": {
-          "name": "name",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "site_id": {
-          "name": "site_id",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "user_id": {
-          "name": "user_id",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "props": {
-          "name": "props",
-          "type": "jsonb",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "created_at": {
-          "name": "created_at",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "now()"
-        }
-      },
-      "indexes": {
-        "events_name_at_idx": {
-          "name": "events_name_at_idx",
-          "columns": [
-            {
-              "expression": "name",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            },
-            {
-              "expression": "created_at",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": false,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        },
-        "events_site_idx": {
-          "name": "events_site_idx",
-          "columns": [
-            {
-              "expression": "site_id",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": false,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        }
-      },
-      "foreignKeys": {
-        "events_site_id_gift_sites_id_fk": {
-          "name": "events_site_id_gift_sites_id_fk",
-          "tableFrom": "events",
           "tableTo": "gift_sites",
-          "columnsFrom": [
-            "site_id"
-          ],
           "columnsTo": [
             "id"
           ],
-          "onDelete": "set null",
-          "onUpdate": "no action"
-        },
-        "events_user_id_user_id_fk": {
-          "name": "events_user_id_user_id_fk",
-          "tableFrom": "events",
-          "tableTo": "user",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "set null",
-          "onUpdate": "no action"
+          "onUpdate": "no action",
+          "onDelete": "cascade"
         }
       },
       "compositePrimaryKeys": {},
@@ -568,24 +453,24 @@
             }
           ],
           "isUnique": false,
-          "concurrently": false,
+          "with": {},
           "method": "btree",
-          "with": {}
+          "concurrently": false
         }
       },
       "foreignKeys": {
         "fund_pledges_fund_id_gift_funds_id_fk": {
           "name": "fund_pledges_fund_id_gift_funds_id_fk",
           "tableFrom": "fund_pledges",
-          "tableTo": "gift_funds",
           "columnsFrom": [
             "fund_id"
           ],
+          "tableTo": "gift_funds",
           "columnsTo": [
             "id"
           ],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
+          "onUpdate": "no action",
+          "onDelete": "cascade"
         }
       },
       "compositePrimaryKeys": {},
@@ -650,25 +535,25 @@
         "gift_funds_site_id_gift_sites_id_fk": {
           "name": "gift_funds_site_id_gift_sites_id_fk",
           "tableFrom": "gift_funds",
-          "tableTo": "gift_sites",
           "columnsFrom": [
             "site_id"
           ],
+          "tableTo": "gift_sites",
           "columnsTo": [
             "id"
           ],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
+          "onUpdate": "no action",
+          "onDelete": "cascade"
         }
       },
       "compositePrimaryKeys": {},
       "uniqueConstraints": {
         "gift_funds_site_id_unique": {
           "name": "gift_funds_site_id_unique",
-          "nullsNotDistinct": false,
           "columns": [
             "site_id"
-          ]
+          ],
+          "nullsNotDistinct": false
         }
       },
       "policies": {},
@@ -885,60 +770,60 @@
             }
           ],
           "isUnique": false,
-          "concurrently": false,
+          "with": {},
           "method": "btree",
-          "with": {}
+          "concurrently": false
         }
       },
       "foreignKeys": {
         "gift_sites_creator_id_user_id_fk": {
           "name": "gift_sites_creator_id_user_id_fk",
           "tableFrom": "gift_sites",
-          "tableTo": "user",
           "columnsFrom": [
             "creator_id"
           ],
+          "tableTo": "user",
           "columnsTo": [
             "id"
           ],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
+          "onUpdate": "no action",
+          "onDelete": "cascade"
         },
         "gift_sites_theme_id_themes_id_fk": {
           "name": "gift_sites_theme_id_themes_id_fk",
           "tableFrom": "gift_sites",
-          "tableTo": "themes",
           "columnsFrom": [
             "theme_id"
           ],
+          "tableTo": "themes",
           "columnsTo": [
             "id"
           ],
-          "onDelete": "set null",
-          "onUpdate": "no action"
+          "onUpdate": "no action",
+          "onDelete": "set null"
         },
         "gift_sites_palette_id_palettes_id_fk": {
           "name": "gift_sites_palette_id_palettes_id_fk",
           "tableFrom": "gift_sites",
-          "tableTo": "palettes",
           "columnsFrom": [
             "palette_id"
           ],
+          "tableTo": "palettes",
           "columnsTo": [
             "id"
           ],
-          "onDelete": "no action",
-          "onUpdate": "no action"
+          "onUpdate": "no action",
+          "onDelete": "no action"
         }
       },
       "compositePrimaryKeys": {},
       "uniqueConstraints": {
         "gift_sites_slug_unique": {
           "name": "gift_sites_slug_unique",
-          "nullsNotDistinct": false,
           "columns": [
             "slug"
-          ]
+          ],
+          "nullsNotDistinct": false
         }
       },
       "policies": {},
@@ -1060,47 +945,47 @@
             }
           ],
           "isUnique": false,
-          "concurrently": false,
+          "with": {},
           "method": "btree",
-          "with": {}
+          "concurrently": false
         }
       },
       "foreignKeys": {
         "orders_site_id_gift_sites_id_fk": {
           "name": "orders_site_id_gift_sites_id_fk",
           "tableFrom": "orders",
-          "tableTo": "gift_sites",
           "columnsFrom": [
             "site_id"
           ],
+          "tableTo": "gift_sites",
           "columnsTo": [
             "id"
           ],
-          "onDelete": "set null",
-          "onUpdate": "no action"
+          "onUpdate": "no action",
+          "onDelete": "set null"
         },
         "orders_owner_id_user_id_fk": {
           "name": "orders_owner_id_user_id_fk",
           "tableFrom": "orders",
-          "tableTo": "user",
           "columnsFrom": [
             "owner_id"
           ],
+          "tableTo": "user",
           "columnsTo": [
             "id"
           ],
-          "onDelete": "set null",
-          "onUpdate": "no action"
+          "onUpdate": "no action",
+          "onDelete": "set null"
         }
       },
       "compositePrimaryKeys": {},
       "uniqueConstraints": {
         "orders_provider_checkout_id_unique": {
           "name": "orders_provider_checkout_id_unique",
-          "nullsNotDistinct": false,
           "columns": [
             "provider_checkout_id"
-          ]
+          ],
+          "nullsNotDistinct": false
         }
       },
       "policies": {},
@@ -1169,10 +1054,10 @@
       "uniqueConstraints": {
         "palettes_name_unique": {
           "name": "palettes_name_unique",
-          "nullsNotDistinct": false,
           "columns": [
             "name"
-          ]
+          ],
+          "nullsNotDistinct": false
         }
       },
       "policies": {},
@@ -1240,9 +1125,9 @@
             }
           ],
           "isUnique": false,
-          "concurrently": false,
+          "with": {},
           "method": "btree",
-          "with": {}
+          "concurrently": false
         },
         "payment_log_checkout_idx": {
           "name": "payment_log_checkout_idx",
@@ -1255,9 +1140,9 @@
             }
           ],
           "isUnique": false,
-          "concurrently": false,
+          "with": {},
           "method": "btree",
-          "with": {}
+          "concurrently": false
         }
       },
       "foreignKeys": {},
@@ -1334,34 +1219,34 @@
             }
           ],
           "isUnique": false,
-          "concurrently": false,
+          "with": {},
           "method": "btree",
-          "with": {}
+          "concurrently": false
         }
       },
       "foreignKeys": {
         "session_user_id_user_id_fk": {
           "name": "session_user_id_user_id_fk",
           "tableFrom": "session",
-          "tableTo": "user",
           "columnsFrom": [
             "user_id"
           ],
+          "tableTo": "user",
           "columnsTo": [
             "id"
           ],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
+          "onUpdate": "no action",
+          "onDelete": "cascade"
         }
       },
       "compositePrimaryKeys": {},
       "uniqueConstraints": {
         "session_token_unique": {
           "name": "session_token_unique",
-          "nullsNotDistinct": false,
           "columns": [
             "token"
-          ]
+          ],
+          "nullsNotDistinct": false
         }
       },
       "policies": {},
@@ -1411,26 +1296,26 @@
         "site_modules_site_id_gift_sites_id_fk": {
           "name": "site_modules_site_id_gift_sites_id_fk",
           "tableFrom": "site_modules",
-          "tableTo": "gift_sites",
           "columnsFrom": [
             "site_id"
           ],
+          "tableTo": "gift_sites",
           "columnsTo": [
             "id"
           ],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
+          "onUpdate": "no action",
+          "onDelete": "cascade"
         }
       },
       "compositePrimaryKeys": {},
       "uniqueConstraints": {
         "site_modules_site_type": {
           "name": "site_modules_site_type",
-          "nullsNotDistinct": false,
           "columns": [
             "site_id",
             "module_type"
-          ]
+          ],
+          "nullsNotDistinct": false
         }
       },
       "policies": {},
@@ -1579,10 +1464,10 @@
       "uniqueConstraints": {
         "user_email_unique": {
           "name": "user_email_unique",
-          "nullsNotDistinct": false,
           "columns": [
             "email"
-          ]
+          ],
+          "nullsNotDistinct": false
         }
       },
       "policies": {},
@@ -1681,10 +1566,10 @@
   },
   "enums": {},
   "schemas": {},
+  "views": {},
   "sequences": {},
   "roles": {},
   "policies": {},
-  "views": {},
   "_meta": {
     "columns": {},
     "schemas": {},
