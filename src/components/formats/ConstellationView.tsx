@@ -124,7 +124,7 @@ export function ConstellationView({
       ref={rootRef}
       className="cst-root relative min-h-screen"
       data-play-host
-      style={{ "--cst-accent": palette.accent, fontFamily: fonts.body } as React.CSSProperties}
+      style={{ "--cst-accent": palette.accent, "--cst-tint": palette.primary, fontFamily: fonts.body } as React.CSSProperties}
     >
       <div className="mx-auto max-w-3xl px-4 pt-10 pb-14 text-center">
         <p className="cst-kicker">Look up{data.named ? ", " : ""}{data.named ? <SampleText on={data.nameIsSample}>{data.name}</SampleText> : null}</p>

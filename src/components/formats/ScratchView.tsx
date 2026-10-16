@@ -1,4 +1,5 @@
 import { giftVoice } from "@/lib/giftVoice";
+import { mixHex } from "@/themes/_shared/iconSets";
 import { SampleText } from "@/components/SampleMark";
 import { giftHeading } from "@/lib/themeKind";
 import { useCallback, useEffect, useRef, useState } from "react";
@@ -47,12 +48,15 @@ function useScratched(siteId: string, sample: boolean) {
   return { done, add };
 }
 
-const FOILS = [
-  ["#d9d4e8", "#bfb6dc", "#efeaf9"],
-  ["#e6d3b3", "#c9a96e", "#f7ead2"],
-  ["#cfe3e0", "#9ccbc4", "#ecf7f5"],
-  ["#f0c9d6", "#dd9db4", "#fbe8ef"],
-];
+/** Foils in the gift's own colors: the accent, the primary and a blend, kept light so they still read as foil. */
+function foilFor(index: number, colors: string[]): [string, string, string] {
+  const hex = (c: string | undefined, fb: string) => (c && /^#[0-9a-f]{6}$/i.test(c) ? c : fb);
+  const accent = hex(colors[0], "#B5623E");
+  const primary = hex(colors[1], accent);
+  const bases = [accent, primary, mixHex(accent, primary, 0.5), mixHex(accent, "#C9A96E", 0.45)];
+  const base = bases[index % bases.length]!;
+  return [mixHex(base, "#FFFFFF", 0.6), mixHex(base, "#FFFFFF", 0.38), mixHex(base, "#FFFFFF", 0.86)];
+}
 
 /** The silver foil, drawn on a canvas you can scratch away. */
 function Foil({
@@ -87,7 +91,7 @@ function Foil({
     const ctx = c.getContext("2d");
     if (!ctx) return;
     ctx.scale(dpr, dpr);
-    const [a, b, hi] = FOILS[index % FOILS.length] as [string, string, string];
+    const [a, b, hi] = foilFor(index, colors);
     const g = ctx.createLinearGradient(0, 0, r.width, r.height);
     g.addColorStop(0, a);
     g.addColorStop(0.45, hi);

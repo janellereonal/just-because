@@ -187,13 +187,17 @@ export function normalizeIconSetting(value: unknown): IconSetSetting | null {
 
 /** Initials from a name: "Nora & James" → "N&J", "Ana" → "A". */
 export function initialsOf(name: string) {
-  const parts = name
-    .split(/\s*(?:&|and|\+)\s*|\s+/i)
-    .map((p) => p.trim())
-    .filter(Boolean);
-  if (!parts.length) return "♥";
-  if (/&|\band\b|\+/i.test(name) && parts.length >= 2) return `${parts[0]![0]!.toUpperCase()}&${parts[1]![0]!.toUpperCase()}`;
-  return parts[0]![0]!.toUpperCase();
+  // Letters only: skip emoji, apostrophes and numbers at the start of a word.
+  const letter = (word: string) => word.match(/\p{L}/u)?.[0]?.toLocaleUpperCase() ?? "";
+  // "Ana & Ben", "Ana and Ben", "Ana + Ben": one initial from each person.
+  const sides = name
+    .split(/\s+and\s+|\s*[&+]\s*/i)
+    .map((side) => side.trim())
+    .filter((side) => letter(side));
+  if (!sides.length) return "♥";
+  const first = (side: string) => letter(side.split(/\s+/).find((w) => letter(w)) ?? "");
+  if (sides.length >= 2) return `${first(sides[0]!)}&${first(sides[1]!)}`;
+  return first(sides[0]!);
 }
 
 /** Turns a gift's setting into a ready-to-draw icon set. */

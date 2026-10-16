@@ -1,0 +1,23 @@
+const { chromium } = require('playwright-core');
+const sp = require('@sparticuz/chromium').default;
+(async () => {
+  const b = await chromium.launch({ executablePath: await sp.executablePath(), args: sp.args });
+  const p = await (await b.newContext({ viewport: { width: 390, height: 844 }, hasTouch: true })).newPage();
+  p.on('pageerror', e => console.log('ERR', e.message.slice(0, 200)));
+  await p.goto('http://localhost:8080/contribute/game-on-kai-gm1', { waitUntil: 'load' });
+  await p.waitForTimeout(7000);
+  const btns = await p.evaluate(() => [...document.querySelectorAll('button')].map(b => b.textContent.trim()).filter(Boolean).slice(0, 30));
+  console.log(btns.join(' | '));
+  const letter = p.locator('button', { hasText: /letter/i }).first();
+  if (await letter.count()) await letter.click();
+  await p.waitForTimeout(800);
+  const nameInput = p.locator('input[type=text], input:not([type])').first();
+  await nameInput.fill('Tap Tester');
+  await p.locator('textarea').first().fill('Triple tap test ' + Date.now());
+  const send = p.locator('button[type=submit]').first();
+  console.log('send:', await send.textContent());
+  await Promise.all([send.click({ noWaitAfter: true }), send.click({ noWaitAfter: true, force: true }), send.click({ noWaitAfter: true, force: true })]);
+  await p.waitForTimeout(4000);
+  await p.screenshot({ path: '../op/trust/tap.png' });
+  await b.close();
+})();
