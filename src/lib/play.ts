@@ -224,6 +224,11 @@ export function chime(kind: ChimeKind = "pop") {
 
 type Texture = "crack" | "crunch" | "rip" | "thunk" | "needle" | "fizz" | "purr" | "breath" | "paper";
 
+/** The shared audio context, or null while sound is off. For the theme engine's sound packs. */
+export function soundContext() {
+  return ctxNow();
+}
+
 function ctxNow() {
   if (typeof window === "undefined" || !soundOn()) return null;
   try {
