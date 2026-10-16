@@ -120,7 +120,6 @@ function note(
   };
 }
 
-const inDays = (d: number) => new Date(Date.now() + d * 86400000).toISOString();
 /** A local time a few days from now, for countdowns that read naturally ("Sat, 7:00 pm"). */
 const atLocal = (days: number, hour: number) => {
   const d = new Date();
@@ -128,6 +127,8 @@ const atLocal = (days: number, hour: number) => {
   d.setHours(hour, 0, 0, 0);
   return d.toISOString();
 };
+/** Days from now at a round 7:00 pm, so example dates never read "4:08 AM". */
+const inDays = (d: number) => atLocal(d, 19);
 
 /* ---------- Ana's 30th ---------- */
 

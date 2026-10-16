@@ -3,6 +3,21 @@
 Updated 16 Oct 2026 (sessions 6 to 8), so a new session, on any Claude account, can carry on without
 missing anything. Start with `HANDOFF.md` section 0.
 
+## Session 9d: quick fixes outside the editor (branch `outside-fixes`, follow-up brief section C)
+
+- Friend page: the sample letter line matches the occasion (`ModuleExample kind`, `LETTER_LINE`).
+  Note types already came only from sections the organiser turned on (`openModules`); checked, no change.
+  "Here's the gift so far": other friends' notes come from `fetchSealedContributions` (name and section only) unless
+  the organiser turned on "Let friends read each other's notes"; checked, no change.
+- My gifts: every card says "Me and friends" or "Just me" (badge moved to the top corner so titles aren't cut).
+  A "..." menu deletes a gift after a confirmation. `deleteSite` refuses gifts with a paid order, because orders
+  cascade with the gift and the payment record would go too. **Decision for Janelle:** should paid gifts be
+  deletable (soft delete, or keep orders with `site_id` set null)?
+- Footer shows "My gifts" instead of "Sign in" when signed in.
+- Birthday "Make a wish" waits until the opening has gone (`jb:opening-done` event from the opening shell). The
+  reveal opens a hole in the middle of the opening, so the gift's button showed through inside the cake.
+- Example dates use a round 7:00 pm (`inDays` in demoGifts.ts).
+
 ## Session 9c: who the gift is for (branch `recipient-name`, follow-up brief section B)
 
 - /create step 2 is "Who's it for?" (required). The title is made from it and the occasion:

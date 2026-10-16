@@ -100,7 +100,11 @@ export function OpeningShell({
     // Dev only: hold the last moment to inspect it (/dev/openings?stay=1).
     if (import.meta.env.DEV && (window as unknown as { __jbStay?: boolean }).__jbStay) return;
     setOpening(true);
-    window.setTimeout(onDone, reduced ? 300 : 1050);
+    window.setTimeout(() => {
+      onDone();
+      // The gift page waits for this before showing things that would sit under the opening's object.
+      window.dispatchEvent(new Event("jb:opening-done"));
+    }, reduced ? 300 : 1050);
   }
 
   // The reveal: a hole opens from the object outwards and the gift is

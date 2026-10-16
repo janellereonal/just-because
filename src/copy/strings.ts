@@ -266,6 +266,7 @@ export const LANDING_MORE = {
     themes: "Themes",
     plans: "Plans",
     signIn: "Sign in",
+    myGifts: "My gifts",
     line: "Made for the people you love.",
   },
 } as const;
