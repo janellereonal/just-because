@@ -3,6 +3,16 @@
 Updated 16 Oct 2026 (sessions 6 to 8), so a new session, on any Claude account, can carry on without
 missing anything. Start with `HANDOFF.md` section 0.
 
+## Session 12a: the character library (branch `characters-library`, on top of `new-themes`)
+
+- 36 new clay characters (18 animals, 18 little friends), all modelled in three.js like the first cast, so they
+  share one look, one size and one floor line: `src/lib/clay/animals.ts`, `objects.ts`, with the shared kit in
+  `shapes.ts`. Faces stay live SVG. Full list with tags in `docs/characters.md`.
+- Janelle's reference sheets were used as a style guide only: one has a stock watermark and one is a stock
+  preview, so nothing was cut out of them.
+- `clayCast.ts` holds their names, face maps and tags; they have no drawn body, so they keep their own colors.
+- `ONLY=fox,owl node clay.js ...` re-renders just a few.
+
 ## Session 11: Handwritten, Game Night and Pixel, plus the wanderer (branch `new-themes`, on top of `themes-batch`)
 
 - **Three new themes**, in the "Any occasion" group (seeded with 3 palettes each, all pass 3:1):

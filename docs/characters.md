@@ -102,3 +102,71 @@ pictures, with a physics choice: float, fall, drift, burst). Every particle in
 an opening and on the gift page (falling background bits, tap bursts, the
 birthday wish) comes from the gift's set. Never hardcode a particle shape in a
 theme; call `burstSet()` or render `<SprinkleField>` / `<IconGlyph>`.
+
+## The library (Oct 2026)
+
+Every character lives in the same 120 box and sits on the floor at y = 112, so sizes and baselines match.
+Clay stills are in `public/clay/<id>.webp` (512) and `<id>@256.webp`, rendered by `tools/screens/clay.js` from the
+recipes in `src/lib/clay/` (`scene.ts` for the first cast, `animals.ts`, `objects.ts`). Re-render after changing a recipe:
+
+```bash
+cd tools/screens && ONLY=fox,owl node clay.js ../op/clay/png 640 && python3 clay_webp.py ../op/clay/png ../../public/clay
+```
+
+The face (eyes, blush, mouth) is live SVG drawn on top, from each entry's `clay` face map. Clay-only characters
+(`src/themes/_shared/cast/clayCast.ts`) have no drawn body, so they always keep their own colors.
+Tags are theme kinds plus plain words: the picker suggests characters whose tags include the gift's theme kind,
+and search matches names and tags.
+
+| id | Name | Category | Tags |
+|---|---|---|---|
+| `mascot` | Bo | Mascot | gift, bo |
+| `dog` | Dog | Animals | pets, puppy |
+| `tzu-mal` | Shih Tzu x Maltese | Animals | pets, puppy, fluffy |
+| `tzu-pom` | Shih Tzu x Pomeranian | Animals | pets, puppy, fluffy |
+| `cat` | Cat | Animals | pets, kitten |
+| `bunny` | Bunny | Animals | baby, valentine, wedding, pets, easter |
+| `bear` | Bear | Animals | valentine, anniversary, baby, teddy |
+| `duck` | Duckling | Animals | baby, bath |
+| `frog` | Frog | Animals | game, pond |
+| `person` | Little you | Little people | people, you |
+| `cup` | Coffee cup | Objects | handwritten, cozy, coffee, morning |
+| `plant` | Plant | Objects | garden, cozy, home |
+| `cloud` | Cloud | Objects | baby, sleepy, sky |
+| `moon` | Moon | Objects | night, baby, sleepy |
+| `snail` | Snail | Animals | garden, slow, handwritten |
+| `octopus` | Octopus | Animals | sea, ocean, voyage |
+| `bee` | Bee | Animals | garden, honey, birthday |
+| `chick` | Chick | Animals | farm, baby, easter |
+| `elephant` | Elephant | Animals | safari, baby |
+| `turtle` | Turtle | Animals | sea, slow, voyage |
+| `pig` | Pig | Animals | farm |
+| `penguin` | Penguin | Animals | snow, christmas, winter |
+| `giraffe` | Giraffe | Animals | safari, tall |
+| `dino` | Dino | Animals | birthday, game, rawr |
+| `koala` | Koala | Animals | sleepy, cuddle |
+| `hedgehog` | Hedgehog | Animals | garden, autumn |
+| `sheep` | Sheep | Animals | farm, sleepy, baby |
+| `panda` | Panda | Animals | cuddle, bamboo |
+| `fox` | Fox | Animals | autumn, forest |
+| `mouse` | Mouse | Animals | cheese, little |
+| `owl` | Owl | Animals | night, wise, graduation, handwritten |
+| `whale` | Whale | Animals | sea, ocean, voyage |
+| `robot` | Robot | Objects | game, pixel, tech, future |
+| `star` | Star | Objects | night, pixel, newyear, wish |
+| `candle` | Candle | Objects | birthday, christmas, wish, cozy |
+| `pencil` | Pencil | Objects | school, handwritten, teacher, graduation |
+| `camera` | Camera | Objects | voyage, photo, trip |
+| `backpack` | Backpack | Objects | voyage, school, trip |
+| `drop` | Raindrop | Objects | rain, calm |
+| `planet` | Planet | Objects | space, night, pixel, voyage |
+| `bulb` | Light bulb | Objects | idea, game, graduation |
+| `bubble` | Speech bubble | Objects | chat, handwritten, notes |
+| `heart` | Heart | Objects | valentine, anniversary, wedding, bridal, love |
+| `cake` | Cake | Objects | birthday, party, wedding, bridal |
+| `balloon` | Balloon | Objects | birthday, party, baby, newyear |
+| `letter` | Love letter | Objects | handwritten, valentine, anniversary, wedding, bridal, notes, love |
+| `snowman` | Snowman | Objects | christmas, snow, winter |
+| `ornament` | Ornament | Objects | christmas, newyear |
+| `suitcase` | Suitcase | Objects | voyage, trip |
+| `sun` | Sun | Objects | summer, voyage, morning |

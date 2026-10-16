@@ -5,6 +5,7 @@
  * in a 120x120 box.
  */
 import type { AccessoryId } from "@/themes/_shared/cast/types";
+import { CLAY_CAST } from "@/themes/_shared/cast/clayCast";
 
 export type Colors = { primary: string; secondary: string; skin: string };
 
@@ -13,8 +14,10 @@ export type CharacterSpec = {
   name: string;
   category: "Mascot" | "Animals" | "Little people" | "Objects";
   colors: Colors;
-  /** Everything except the eyes and mouth (the component animates those). */
-  body: (c: Colors) => React.ReactNode;
+  /** Everything except the eyes and mouth (the component animates those). Clay-only characters have none. */
+  body?: (c: Colors) => React.ReactNode;
+  /** Plain words and theme kinds, for the picker's search and theme suggestions. */
+  tags?: string[];
   eyes: { l: [number, number]; r: [number, number]; size: number };
   mouth: [number, number] | null;
   cheeks?: { l: [number, number]; r: [number, number] };
@@ -33,6 +36,8 @@ export type CharacterSpec = {
     cheeks?: { l: [number, number]; r: [number, number] };
     head: { x: number; y: number; w: number };
     neck: { x: number; y: number; w: number };
+    /** Eye and mouth color when the default ink would vanish (dark screens). */
+    ink?: string;
   };
 };
 
@@ -478,7 +483,27 @@ export const CHARACTERS: CharacterSpec[] = [
     neck: { x: 60, y: 106, w: 56 },
     clay: { eyes: { l: [41, 66], r: [54, 66], size: 3.4 }, mouth: [47, 76], cheeks: { l: [37, 72], r: [58, 72] }, head: { x: 53, y: 32, w: 40 }, neck: { x: 53, y: 104, w: 40 } },
   },
+  ...CLAY_CAST,
 ];
+
+/** Tags for the drawn cast (the clay-only ones carry their own, see clayCast.ts). */
+const DRAWN_TAGS: Record<string, string[]> = {
+  mascot: ["gift", "bo"],
+  dog: ["pets", "puppy"],
+  "tzu-mal": ["pets", "puppy", "fluffy"],
+  "tzu-pom": ["pets", "puppy", "fluffy"],
+  cat: ["pets", "kitten"],
+  bunny: ["baby", "valentine", "wedding", "pets", "easter"],
+  bear: ["valentine", "anniversary", "baby", "teddy"],
+  duck: ["baby", "bath"],
+  frog: ["game", "pond"],
+  person: ["people", "you"],
+  cup: ["handwritten", "cozy", "coffee", "morning"],
+  plant: ["garden", "cozy", "home"],
+  cloud: ["baby", "sleepy", "sky"],
+  moon: ["night", "baby", "sleepy"],
+};
+for (const c of CHARACTERS) if (!c.tags) c.tags = DRAWN_TAGS[c.id] ?? [];
 
 export const characterById = (id: string) => CHARACTERS.find((c) => c.id === id) ?? CHARACTERS[0]!;
 
