@@ -7,7 +7,7 @@ import { Metrics } from "@/components/admin/Metrics";
 import { ThemeMetrics } from "@/components/admin/ThemeMetrics";
 import { usePreviewUrl } from "@/components/ThemeCard";
 import { fetchThemes, type Theme } from "@/lib/themes";
-import { getPaymentsSetup, setThemePreview, setThemeStatus, setupPaymongoWebhook } from "@/lib/api";
+import { getPaymentsSetup, listPaymentLog, setThemePreview, setThemeStatus, setupPaymongoWebhook } from "@/lib/api";
 import { uploadFile } from "@/lib/upload";
 import { useAuth } from "@/hooks/useAuth";
 
@@ -83,6 +83,7 @@ function AdminPage() {
       <Metrics />
       <ThemeMetrics />
       <PaymentsSetup />
+      <PaymentLog />
       <section className="mx-auto max-w-6xl px-5 py-14">
         <p className="font-mono text-[11px] tracking-[0.18em] text-accent uppercase">Admin</p>
         <h1 className="mt-2 font-display text-3xl font-medium tracking-tight">Theme library</h1>
@@ -299,6 +300,40 @@ function PaymentsSetup() {
         <p className="mt-3 text-muted">
           Payment methods offered: {data.methods.join(", ")} · Paid orders: {data.paidOrders} · Waiting: {data.pendingOrders}
         </p>
+      </div>
+    </section>
+  );
+}
+
+/** The last 60 payment signals: webhooks, confirm-page and editor checks, the daily job. */
+function PaymentLog() {
+  const { data = [] } = useQuery({ queryKey: ["payment-log"], queryFn: () => listPaymentLog() });
+  if (!data.length) return null;
+  return (
+    <section className="mx-auto max-w-6xl px-5 pt-10">
+      <h2 className="font-display text-2xl font-medium tracking-tight">Payment log</h2>
+      <p className="mt-1 text-sm text-muted">Newest first. "Needs a refund" lines are payments for a gift that already had that plan, or was deleted.</p>
+      <div className="mt-4 overflow-x-auto rounded-2xl border border-line bg-cream">
+        <table className="w-full text-left text-xs">
+          <thead className="text-muted">
+            <tr>
+              <th className="px-3 py-2 font-medium">When</th>
+              <th className="px-3 py-2 font-medium">From</th>
+              <th className="px-3 py-2 font-medium">Event</th>
+              <th className="px-3 py-2 font-medium">What happened</th>
+            </tr>
+          </thead>
+          <tbody>
+            {data.map((r) => (
+              <tr key={r.id} className={`border-t border-line ${/refund/i.test(r.outcome) ? "bg-[#FDF3F0]" : ""}`}>
+                <td className="px-3 py-2 whitespace-nowrap">{new Date(r.at).toLocaleString()}</td>
+                <td className="px-3 py-2">{r.source}</td>
+                <td className="px-3 py-2 font-mono">{r.event}</td>
+                <td className="px-3 py-2">{r.outcome}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
       </div>
     </section>
   );
