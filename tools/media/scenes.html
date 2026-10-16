@@ -1,0 +1,364 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8" />
+<style>
+  body { margin: 0; background: #222; display: flex; flex-wrap: wrap; gap: 10px; font-family: "Fraunces", serif; }
+  .scene { width: 800px; height: 800px; position: relative; overflow: hidden; }
+  .scene svg { display: block; width: 800px; height: 800px; }
+</style>
+</head>
+<body>
+<script>
+// Seeded random so every render is the same.
+let s = 7;
+const rnd = () => ((s = (s * 16807) % 2147483647) / 2147483647);
+const seed = (n) => { s = n; };
+const NS = "http://www.w3.org/2000/svg";
+const DEFS = `
+  <filter id="grain" x="0" y="0" width="100%" height="100%">
+    <feTurbulence type="fractalNoise" baseFrequency=".9" numOctaves="2" stitchTiles="stitch" result="n"/>
+    <feColorMatrix type="saturate" values="0"/>
+    <feComponentTransfer><feFuncA type="table" tableValues="0 .09"/></feComponentTransfer>
+    <feComposite in2="SourceGraphic" operator="over"/>
+  </filter>
+  <filter id="b4"><feGaussianBlur stdDeviation="4"/></filter>
+  <filter id="b10"><feGaussianBlur stdDeviation="10"/></filter>
+  <filter id="b24"><feGaussianBlur stdDeviation="24"/></filter>
+  <filter id="b50"><feGaussianBlur stdDeviation="50"/></filter>
+  <filter id="glow"><feGaussianBlur stdDeviation="6" result="g"/><feMerge><feMergeNode in="g"/><feMergeNode in="g"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+  <radialGradient id="vig" cx="50%" cy="48%" r="72%"><stop offset=".6" stop-color="#000" stop-opacity="0"/><stop offset="1" stop-color="#000" stop-opacity=".38"/></radialGradient>
+`;
+function scene(id, body, w = 800, h = 800) {
+  const div = document.createElement("div");
+  div.className = "scene"; div.id = id; div.style.width = w + "px"; div.style.height = h + "px";
+  div.innerHTML = `<svg xmlns="${NS}" viewBox="0 0 ${w} ${h}" style="width:${w}px;height:${h}px"><defs>${DEFS}</defs>${body}
+    <rect width="${w}" height="${h}" fill="url(#vig)"/>
+    <rect width="${w}" height="${h}" fill="#fff" filter="url(#grain)" opacity=".28" style="mix-blend-mode:soft-light"/></svg>`;
+  document.body.appendChild(div);
+}
+const bokeh = (n, colors, ymax = 500, rmin = 10, rmax = 50, op = 0.35) =>
+  Array.from({ length: n }, () => `<circle cx="${rnd() * 800}" cy="${rnd() * ymax}" r="${rmin + rnd() * (rmax - rmin)}" fill="${colors[Math.floor(rnd() * colors.length)]}" opacity="${op * (0.4 + rnd() * 0.6)}" filter="url(#b10)"/>`).join("");
+
+/* The golden dog, front view, from the cast (120x120 box). */
+const DOG = (x, y, sc, mood = "awake") => `<g transform="translate(${x} ${y}) scale(${sc})">
+  <ellipse cx="60" cy="114" rx="34" ry="5" fill="#000" opacity=".18"/>
+  <path d="M80 98c10-2 18-10 20-22 1-5 6-4 6 1-1 15-11 26-24 27z" fill="#E2B07A"/>
+  <ellipse cx="60" cy="95" rx="26" ry="19" fill="#E2B07A"/>
+  <path d="M46 84c4 10 24 10 28 0 2 8-2 20-14 21-12-1-16-13-14-21z" fill="#FFF3E2"/>
+  <ellipse cx="49" cy="110" rx="8.5" ry="5.5" fill="#FFF3E2"/><ellipse cx="71" cy="110" rx="8.5" ry="5.5" fill="#FFF3E2"/>
+  <path d="M26 52c0-22 15-34 34-34s34 12 34 34c0 20-15 32-34 32S26 72 26 52z" fill="#E2B07A"/>
+  <ellipse cx="74" cy="48" rx="11" ry="10" fill="#C08A55" opacity=".55"/>
+  <path d="M30 30c-10 2-17 14-16 30 1 10 7 16 13 13 6-3 7-14 8-24 1-9-1-17-5-19z" fill="#8A5634"/>
+  <path d="M90 30c10 2 17 14 16 30-1 10-7 16-13 13-6-3-7-14-8-24-1-9 1-17 5-19z" fill="#8A5634"/>
+  <path d="M30 70q30 10 60 0l-2 8q-28 8-56 0z" fill="#C0582F"/>
+  <circle cx="60" cy="80" r="3.4" fill="#E5C26B"/>
+  <ellipse cx="60" cy="67" rx="16" ry="11.5" fill="#FFF3E2"/>
+  <path d="M54 61c0-3 3-4 6-4s6 1 6 4-3 5-6 5-6-2-6-5z" fill="#2B2522"/>
+  ${mood === "sleep"
+    ? `<path d="M42 50q5 4 10 0M68 50q5 4 10 0" stroke="#2B2522" stroke-width="2.6" fill="none" stroke-linecap="round"/>`
+    : `<ellipse cx="47" cy="50" rx="4.8" ry="5.4" fill="#2B2522"/><ellipse cx="73" cy="50" rx="4.8" ry="5.4" fill="#2B2522"/><circle cx="48.6" cy="48" r="1.6" fill="#fff"/><circle cx="74.6" cy="48" r="1.6" fill="#fff"/>`}
+  <path d="M55 71q5 ${mood === "happy" ? 8 : 4} 10 0" stroke="#2B2522" stroke-width="2.2" fill="${mood === "happy" ? "#E8576E" : "none"}" stroke-linecap="round"/>
+  <ellipse cx="38" cy="64" rx="6" ry="4" fill="#F27A93" opacity=".35"/><ellipse cx="82" cy="64" rx="6" ry="4" fill="#F27A93" opacity=".35"/>
+</g>`;
+
+/* 1. Cake, Ana's 30th */
+seed(3);
+scene("cake", `
+  <rect width="800" height="800" fill="#3B1F2B"/>
+  <radialGradient id="ck1" cx="50%" cy="38%" r="70%"><stop offset="0" stop-color="#FFB98A"/><stop offset=".55" stop-color="#C7546E"/><stop offset="1" stop-color="#3B1F2B"/></radialGradient>
+  <rect width="800" height="800" fill="url(#ck1)"/>
+  ${bokeh(26, ["#FFE3A3", "#FF9EB5", "#FFD27F", "#fff"], 520, 12, 46, 0.5)}
+  <rect y="560" width="800" height="240" fill="#6B3A2E"/>
+  <rect y="560" width="800" height="14" fill="#8A4E3C"/>
+  <ellipse cx="400" cy="600" rx="270" ry="40" fill="#000" opacity=".25" filter="url(#b10)"/>
+  <ellipse cx="400" cy="585" rx="250" ry="34" fill="#F6EFE6"/><ellipse cx="400" cy="578" rx="236" ry="28" fill="#fff"/>
+  <path d="M190 420h420v150q-210 30-420 0z" fill="#F7B6C4"/>
+  <path d="M190 420h420v34q-26 24-52 0-26 30-52 4-26 34-52 0-26 26-52-2-26 34-52 2-26 26-52 0-26 30-52 0-26 22-52 0z" fill="#FFF7EE"/>
+  <path d="M250 300h300v124H250z" fill="#F28FA8"/>
+  <path d="M250 300h300v30q-20 22-40 0-20 26-40 2-20 30-40 0-20 22-40-2-20 28-40 2-20 24-40-2-20 20-40 0z" fill="#FFF7EE"/>
+  <ellipse cx="400" cy="300" rx="150" ry="16" fill="#FFF7EE"/>
+  ${Array.from({ length: 40 }, () => `<rect x="${200 + rnd() * 400}" y="${440 + rnd() * 110}" width="10" height="3.5" rx="1.7" fill="${["#FFD166", "#6C8EF2", "#7ED7C1", "#fff"][Math.floor(rnd() * 4)]}" transform="rotate(${rnd() * 180} 400 500)" opacity=".9"/>`).join("")}
+  ${[310, 360, 410, 460].map((x, i) => `
+    <rect x="${x - 7}" y="${190 + (i % 2) * 14}" width="14" height="${112 - (i % 2) * 14}" rx="3" fill="${["#6C8EF2", "#FFD166", "#7ED7C1", "#FF9EB5"][i]}"/>
+    <path d="M${x - 7} ${210 + (i % 2) * 14}l14-8M${x - 7} ${236 + (i % 2) * 14}l14-8M${x - 7} ${262 + (i % 2) * 14}l14-8" stroke="#fff" stroke-width="4" opacity=".7"/>
+    <circle cx="${x}" cy="${170 + (i % 2) * 14}" r="40" fill="#FFC970" opacity=".35" filter="url(#b24)"/>
+    <path d="M${x} ${148 + (i % 2) * 14}c10 14 10 26 0 32-10-6-10-18 0-32z" fill="#FFB547"/>
+    <path d="M${x} ${160 + (i % 2) * 14}c5 8 5 14 0 18-5-4-5-10 0-18z" fill="#FFF3C4"/>`).join("")}
+  <g transform="translate(500 228) rotate(8)"><rect x="-4" y="0" width="5" height="80" fill="#C9A24A"/><text x="0" y="-6" font-family="Fraunces" font-weight="800" font-size="74" fill="#E5C26B" text-anchor="middle" stroke="#9C7A2C" stroke-width="2">30</text></g>
+`);
+
+/* 2. Karaoke night */
+seed(11);
+scene("karaoke", `
+  <linearGradient id="kk" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#1A0F2E"/><stop offset="1" stop-color="#3A1747"/></linearGradient>
+  <rect width="800" height="800" fill="url(#kk)"/>
+  ${[[-80, "#FF4FA3"], [180, "#6A5CFF"], [460, "#2FD3C4"]].map(([x, c]) => `<polygon points="${x + 120},0 ${x + 200},0 ${x + 360},800 ${x - 40},800" fill="${c}" opacity=".16" filter="url(#b10)"/>`).join("")}
+  <g filter="url(#glow)"><text x="400" y="230" text-anchor="middle" font-family="Fraunces" font-style="italic" font-weight="700" font-size="150" fill="none" stroke="#FF6FB7" stroke-width="7">sing</text></g>
+  <text x="400" y="230" text-anchor="middle" font-family="Fraunces" font-style="italic" font-weight="700" font-size="150" fill="none" stroke="#FFE1F0" stroke-width="2.5">sing</text>
+  <g transform="translate(640 120)">
+    <line x1="0" y1="-120" x2="0" y2="-40" stroke="#999" stroke-width="3"/>
+    <circle r="62" fill="#9AA0B5"/>
+    ${Array.from({ length: 70 }, (_, i) => { const a = rnd() * Math.PI * 2, r = rnd() * 56; return `<rect x="${Math.cos(a) * r - 6}" y="${Math.sin(a) * r - 6}" width="12" height="12" fill="${["#E6E9F5", "#B8BED3", "#7D839B", "#FFFFFF"][Math.floor(rnd() * 4)]}" opacity=".9"/>`; }).join("")}
+    <circle r="62" fill="none" stroke="#fff" stroke-opacity=".3" stroke-width="3"/>
+  </g>
+  ${Array.from({ length: 30 }, () => `<path d="M${rnd() * 800} ${300 + rnd() * 480}l3 -9 3 9 9 3 -9 3 -3 9 -3 -9 -9 -3z" fill="#fff" opacity="${0.3 + rnd() * 0.6}"/>`).join("")}
+  <g transform="translate(400 470)">
+    <rect x="-6" y="40" width="12" height="300" fill="#2A2233"/>
+    <rect x="-70" y="330" width="140" height="14" rx="7" fill="#2A2233"/>
+    <path d="M-26 40h52l-8 70h-36z" fill="#3D3446"/>
+    <ellipse cx="0" cy="0" rx="46" ry="58" fill="#4B4256"/>
+    ${Array.from({ length: 6 }, (_, i) => `<path d="M-44 ${-30 + i * 12}h88" stroke="#6E6480" stroke-width="3"/>`).join("")}
+    <ellipse cx="-16" cy="-24" rx="10" ry="20" fill="#fff" opacity=".25"/>
+  </g>
+  <ellipse cx="400" cy="820" rx="300" ry="60" fill="#FF4FA3" opacity=".3" filter="url(#b24)"/>
+`);
+
+/* 3. Sunrise hike */
+seed(5);
+scene("hike", `
+  <linearGradient id="sk" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#6C7BC9"/><stop offset=".45" stop-color="#F3A6A0"/><stop offset=".7" stop-color="#FFD39A"/></linearGradient>
+  <rect width="800" height="800" fill="url(#sk)"/>
+  <circle cx="520" cy="430" r="160" fill="#FFF1C9" opacity=".6" filter="url(#b50)"/>
+  <circle cx="520" cy="440" r="64" fill="#FFF6DD"/>
+  ${Array.from({ length: 5 }, () => `<ellipse cx="${rnd() * 800}" cy="${120 + rnd() * 200}" rx="${80 + rnd() * 90}" ry="${10 + rnd() * 10}" fill="#fff" opacity=".35" filter="url(#b4)"/>`).join("")}
+  <path d="M0 520L120 400l90 70 120-150 140 160 110-110 220 160V800H0z" fill="#B48AA8"/>
+  <path d="M0 600L160 470l110 80 150-140 120 120 100-70 160 120V800H0z" fill="#8C6A93"/>
+  <path d="M0 680l200-120 140 70 160-110 140 100 160-60V800H0z" fill="#5C4A73"/>
+  <path d="M0 740l260-90 180 50 360-80V800H0z" fill="#3C3157"/>
+  <g transform="translate(470 520)" fill="#2A2240">
+    <circle cx="0" cy="-34" r="6"/><path d="M-5-28h10l3 22-4 18h-4l-1-14-2 14h-4l1-18z"/><rect x="5" y="-26" width="9" height="16" rx="3"/>
+    <circle cx="28" cy="-30" r="5.5"/><path d="M23-25h10l2 20-3 17h-4l-1-13-2 13h-4l1-17z"/>
+  </g>
+  ${[[180, 230], [210, 210], [240, 238]].map(([x, y]) => `<path d="M${x} ${y}q8-8 16 0q8-8 16 0" stroke="#3C3157" stroke-width="3" fill="none" stroke-linecap="round"/>`).join("")}
+`);
+
+/* 4. Rainy tram street */
+seed(9);
+scene("tram", `
+  <linearGradient id="dk" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#3A4A6B"/><stop offset="1" stop-color="#C98F7B"/></linearGradient>
+  <rect width="800" height="800" fill="url(#dk)"/>
+  ${[0, 1, 2, 3, 4, 5].map((i) => { const x = i * 140 - 20, h = 330 + (i % 3) * 60, c = ["#E8D3B5", "#C9DCE4", "#F0C6B2", "#E3E0C9", "#BFD1C5", "#EBCFA8"][i]; return `<rect x="${x}" y="${600 - h}" width="140" height="${h}" fill="${c}"/>${Array.from({ length: 8 }, (_, k) => `<rect x="${x + 20 + (k % 3) * 38}" y="${600 - h + 30 + Math.floor(k / 3) * 70}" width="24" height="40" rx="12" fill="${rnd() > .4 ? "#FFD98A" : "#4A5470"}" opacity=".9"/>`).join("")}<rect x="${x}" y="${600 - h}" width="140" height="10" fill="#000" opacity=".12"/>`; }).join("")}
+  <rect y="600" width="800" height="200" fill="#5B5A6E"/>
+  ${Array.from({ length: 12 }, () => `<rect x="${rnd() * 800}" y="${620 + rnd() * 160}" width="${30 + rnd() * 60}" height="3" fill="#FFD98A" opacity=".35"/>`).join("")}
+  <path d="M0 640h800M0 700h800" stroke="#8C8AA0" stroke-width="5"/>
+  <g transform="translate(150 380)">
+    <line x1="210" y1="-200" x2="250" y2="0" stroke="#2C2C3A" stroke-width="3"/>
+    <rect x="0" y="0" width="460" height="230" rx="34" fill="#F5C33B"/>
+    <rect x="0" y="150" width="460" height="80" rx="10" fill="#F2F0EA"/>
+    ${[0, 1, 2, 3, 4].map((k) => `<rect x="${30 + k * 84}" y="34" width="66" height="90" rx="10" fill="#2E3A55"/><rect x="${36 + k * 84}" y="40" width="20" height="78" rx="8" fill="#fff" opacity=".18"/>`).join("")}
+    <circle cx="90" cy="236" r="22" fill="#2C2C3A"/><circle cx="370" cy="236" r="22" fill="#2C2C3A"/>
+    <circle cx="440" cy="170" r="10" fill="#FFF3C4"/><circle cx="440" cy="170" r="40" fill="#FFF3C4" opacity=".4" filter="url(#b24)"/>
+    <text x="230" y="-14" text-anchor="middle" font-family="Space Mono" font-size="22" font-weight="700" fill="#2C2C3A">28</text>
+  </g>
+  ${Array.from({ length: 160 }, () => { const x = rnd() * 820, y = rnd() * 800; return `<line x1="${x}" y1="${y}" x2="${x - 6}" y2="${y + 26}" stroke="#E6EEF7" stroke-width="1.6" opacity="${0.25 + rnd() * 0.35}"/>`; }).join("")}
+`);
+
+/* 5. Beach day */
+seed(2);
+scene("beach", `
+  <linearGradient id="bs" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#8FD3F2"/><stop offset="1" stop-color="#E9F7FC"/></linearGradient>
+  <rect width="800" height="800" fill="url(#bs)"/>
+  <circle cx="620" cy="150" r="70" fill="#FFF4C9"/><circle cx="620" cy="150" r="150" fill="#FFF4C9" opacity=".5" filter="url(#b50)"/>
+  <path d="M0 400h800v120H0z" fill="#2BA8C8"/>
+  <path d="M0 400h800v24H0z" fill="#1E8DB3"/>
+  ${Array.from({ length: 18 }, () => `<path d="M${rnd() * 800} ${410 + rnd() * 100}q12-6 24 0" stroke="#fff" stroke-width="3" fill="none" opacity=".6"/>`).join("")}
+  <path d="M0 500q200-30 400 0t400 0V800H0z" fill="#FFFFFF" opacity=".75"/>
+  <path d="M0 515q200-30 400 0t400 0V800H0z" fill="#F4DDB3"/>
+  ${Array.from({ length: 80 }, () => `<circle cx="${rnd() * 800}" cy="${540 + rnd() * 260}" r="${1 + rnd() * 2}" fill="#D9BC8A"/>`).join("")}
+  <g transform="translate(250 330)">
+    <line x1="0" y1="0" x2="20" y2="360" stroke="#7A5644" stroke-width="7"/>
+    <path d="M-200 60Q0-90 200 60z" fill="#F2652E"/>
+    <path d="M-200 60Q-130-40 -66 0zM66 0Q130-40 200 60z" fill="#FFF3E2"/>
+    <path d="M-66 0Q0-70 66 0" fill="#F2B233"/>
+  </g>
+  <rect x="300" y="610" width="200" height="90" rx="10" fill="#6C8EF2" transform="rotate(-6 400 650)"/>
+  <path d="M300 640h200M300 670h200" stroke="#fff" stroke-width="8" transform="rotate(-6 400 650)" opacity=".8"/>
+  <rect x="520" y="640" width="190" height="86" rx="10" fill="#FF9EB5" transform="rotate(5 600 680)"/>
+  <circle cx="200" cy="720" r="34" fill="#fff"/><path d="M168 712a34 34 0 0 1 64 0" fill="#F2652E"/><path d="M174 736a34 34 0 0 0 52 0" fill="#6C8EF2"/>
+`);
+
+/* 6. Picnic */
+seed(4);
+scene("picnic", `
+  <linearGradient id="ps" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#CDE8F6"/><stop offset=".5" stop-color="#E7F3D8"/></linearGradient>
+  <rect width="800" height="800" fill="url(#ps)"/>
+  <ellipse cx="160" cy="300" rx="150" ry="120" fill="#7DB37A"/><ellipse cx="660" cy="270" rx="180" ry="140" fill="#6FA86E"/><rect x="150" y="330" width="20" height="140" fill="#7A5644"/><rect x="650" y="300" width="22" height="160" fill="#7A5644"/>
+  <rect y="400" width="800" height="400" fill="#9CCB7C"/>
+  ${Array.from({ length: 120 }, () => { const x = rnd() * 800, y = 410 + rnd() * 390; return `<path d="M${x} ${y}l3-10 3 10" stroke="#7AB35F" stroke-width="2" fill="none"/>`; }).join("")}
+  <g transform="translate(400 600) skewX(-14) scale(1 .55)">
+    <rect x="-280" y="-280" width="560" height="560" fill="#F7F1E6"/>
+    ${Array.from({ length: 7 }, (_, i) => `<rect x="${-280 + i * 80}" y="-280" width="40" height="560" fill="#E8577E" opacity=".55"/><rect x="-280" y="${-280 + i * 80}" width="560" height="40" fill="#E8577E" opacity=".55"/>`).join("")}
+  </g>
+  <g transform="translate(300 520)">
+    <path d="M-70 0h140l-16 90h-108z" fill="#C9935C"/><path d="M-70 0h140" stroke="#9C6B3C" stroke-width="10"/>
+    ${[0, 1, 2, 3].map((k) => `<path d="M-60 ${20 + k * 18}h120" stroke="#9C6B3C" stroke-width="3" opacity=".6"/>`).join("")}
+    <path d="M-50 0q50-80 100 0" stroke="#9C6B3C" stroke-width="8" fill="none"/>
+    <circle cx="-30" cy="-6" r="16" fill="#E8463A"/><circle cx="0" cy="-10" r="14" fill="#F2B233"/>
+  </g>
+  ${[[470, 560, -8], [520, 570, 10]].map(([x, y, r]) => `<g transform="translate(${x} ${y}) rotate(${r})"><path d="M-18-60h36q0 40-18 48q-18-8-18-48z" fill="#fff" opacity=".7"/><path d="M-16-40h32q-2 26-16 30q-14-4-16-30z" fill="#E8577E" opacity=".8"/><rect x="-2" y="-12" width="4" height="40" fill="#fff" opacity=".8"/><ellipse cx="0" cy="30" rx="16" ry="4" fill="#fff" opacity=".8"/></g>`).join("")}
+  <g transform="translate(610 600)"><circle r="44" fill="#FFF7EE"/><circle r="36" fill="#F5C6A0"/>${Array.from({ length: 8 }, (_, k) => `<path d="M0 0L${Math.cos(k * .785) * 36} ${Math.sin(k * .785) * 36}" stroke="#FFF7EE" stroke-width="3"/>`).join("")}</g>
+`);
+
+/* 7. Sam's desk */
+seed(6);
+scene("desk", `
+  <rect width="800" height="800" fill="#EFE6D8"/>
+  <rect x="80" y="70" width="640" height="420" rx="10" fill="#BFE0F2"/>
+  <rect x="80" y="70" width="640" height="420" rx="10" fill="none" stroke="#FFFFFF" stroke-width="16"/>
+  <path d="M400 70v420M80 280h640" stroke="#fff" stroke-width="12"/>
+  <polygon points="120,90 360,90 210,470 0,470" fill="#fff" opacity=".35"/>
+  <ellipse cx="560" cy="260" rx="90" ry="40" fill="#fff" opacity=".7" filter="url(#b10)"/>
+  <rect y="520" width="800" height="280" fill="#C99B6D"/><rect y="520" width="800" height="14" fill="#B5855A"/>
+  <g transform="translate(370 520)">
+    <rect x="-150" y="-180" width="300" height="190" rx="12" fill="#2B2F3A"/><rect x="-138" y="-168" width="276" height="166" rx="6" fill="#3E7CA6"/>
+    <rect x="-120" y="-150" width="120" height="14" rx="7" fill="#fff" opacity=".7"/><rect x="-120" y="-126" width="200" height="10" rx="5" fill="#fff" opacity=".4"/><rect x="-120" y="-106" width="160" height="10" rx="5" fill="#fff" opacity=".4"/>
+    <circle cx="96" cy="-40" r="16" fill="#F2652E"/><path d="M-180 10h360l20 26h-400z" fill="#9FA4B0"/>
+  </g>
+  <g transform="translate(620 520)">
+    <path d="M-50 0h100l-12 90h-76z" fill="#E08A5F" transform="translate(0 -90)"/>
+    ${[[-70, -200, -40], [-10, -250, 0], [50, -210, 30], [-50, -150, -60], [40, -150, 55]].map(([x, y, r]) => `<g transform="translate(${x} ${y}) rotate(${r})"><path d="M0 0c40-10 70 20 60 60-40 10-70-20-60-60z" fill="#4F8F5A"/><path d="M8 8l44 44" stroke="#2F6B3C" stroke-width="3"/><path d="M30 14l-6 14M44 26l-10 10" stroke="#EFE6D8" stroke-width="5"/></g>`).join("")}
+  </g>
+  <g transform="translate(150 470)"><rect x="-34" y="-20" width="68" height="70" rx="10" fill="#F7F1E6"/><path d="M34 0q30 0 30 24t-30 24" stroke="#F7F1E6" stroke-width="10" fill="none"/><ellipse cx="0" cy="-20" rx="34" ry="8" fill="#6B3A2E"/><text x="0" y="28" text-anchor="middle" font-family="Fraunces" font-size="18" font-weight="700" fill="#F2652E">SAM</text></g>
+  <g transform="translate(250 600) rotate(-8)"><rect x="-60" y="-40" width="120" height="80" fill="#F6F0E4"/><rect x="-60" y="-40" width="120" height="16" fill="#F2652E"/><text x="0" y="16" text-anchor="middle" font-family="Space Mono" font-size="16" fill="#22303F">LIS</text></g>
+`);
+
+/* 8. Plane window */
+seed(8);
+scene("window", `
+  <rect width="800" height="800" fill="#D9D6CF"/>
+  <rect width="800" height="800" fill="#E7E3DB"/>
+  <rect x="190" y="110" width="420" height="580" rx="200" fill="#B9B4AB"/>
+  <rect x="215" y="135" width="370" height="530" rx="180" fill="#8E8880"/>
+  <clipPath id="win"><rect x="240" y="160" width="320" height="480" rx="160"/></clipPath>
+  <g clip-path="url(#win)">
+    <linearGradient id="ws" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#3D4F8F"/><stop offset=".5" stop-color="#F59B7A"/><stop offset=".72" stop-color="#FFD9A0"/></linearGradient>
+    <rect x="240" y="160" width="320" height="480" fill="url(#ws)"/>
+    <circle cx="470" cy="420" r="40" fill="#FFF0C9"/><circle cx="470" cy="420" r="110" fill="#FFF0C9" opacity=".6" filter="url(#b24)"/>
+    ${Array.from({ length: 14 }, () => `<ellipse cx="${240 + rnd() * 320}" cy="${470 + rnd() * 170}" rx="${60 + rnd() * 80}" ry="${18 + rnd() * 16}" fill="${["#FFE3D0", "#FBC9B5", "#fff"][Math.floor(rnd() * 3)]}" opacity=".9" filter="url(#b4)"/>`).join("")}
+    <path d="M240 600L560 520v40L240 640z" fill="#C9CED8"/><path d="M240 600L560 520v8L240 610z" fill="#fff" opacity=".7"/>
+    <rect x="240" y="160" width="320" height="480" fill="#fff" opacity=".08"/>
+    <path d="M300 180l-60 120" stroke="#fff" stroke-width="16" opacity=".15"/>
+  </g>
+  <rect x="380" y="120" width="40" height="14" rx="7" fill="#76716A"/>
+`);
+
+/* 9. Rooftop goodbye */
+seed(10);
+scene("rooftop", `
+  <linearGradient id="rn" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#1B2140"/><stop offset="1" stop-color="#4B3A6B"/></linearGradient>
+  <rect width="800" height="800" fill="url(#rn)"/>
+  ${Array.from({ length: 50 }, () => `<circle cx="${rnd() * 800}" cy="${rnd() * 300}" r="${0.8 + rnd() * 1.5}" fill="#fff" opacity="${0.4 + rnd() * 0.5}"/>`).join("")}
+  ${Array.from({ length: 16 }, (_, i) => { const x = i * 52, h = 120 + rnd() * 240; return `<rect x="${x}" y="${560 - h}" width="48" height="${h}" fill="#2A2650"/>${Array.from({ length: 10 }, () => rnd() > 0.5 ? `<rect x="${x + 6 + Math.floor(rnd() * 4) * 10}" y="${560 - h + 10 + Math.floor(rnd() * (h / 16)) * 14}" width="6" height="8" fill="#FFD98A" opacity=".8"/>` : "").join("")}`; }).join("")}
+  <path d="M0 120Q400 260 800 120" stroke="#2A2233" stroke-width="2" fill="none"/>
+  ${Array.from({ length: 14 }, (_, i) => { const t = (i + .5) / 14, x = t * 800, y = 120 + Math.sin(t * Math.PI) * 70; return `<circle cx="${x}" cy="${y + 8}" r="20" fill="#FFD98A" opacity=".4" filter="url(#b10)"/><circle cx="${x}" cy="${y + 8}" r="6" fill="#FFF3C4"/>`; }).join("")}
+  <rect y="560" width="800" height="240" fill="#2A2233"/><rect y="560" width="800" height="20" fill="#3A3047"/>
+  ${[[330, 520], [430, 526]].map(([x, y]) => `<g transform="translate(${x} ${y})"><path d="M-16-50h32q0 34-16 40q-16-6-16-40z" fill="#FFE5A8" opacity=".9"/><rect x="-2" y="-10" width="4" height="34" fill="#E8E8F0" opacity=".8"/><ellipse cx="0" cy="24" rx="14" ry="4" fill="#E8E8F0" opacity=".8"/></g>`).join("")}
+  <path d="M376 470l8-10 8 10M400 460l6-8 6 8" stroke="#FFF3C4" stroke-width="2" fill="none"/>
+`);
+
+/* 10. Dog park */
+seed(12);
+scene("dogpark", `
+  <linearGradient id="dp" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#BFE3F5"/><stop offset=".55" stop-color="#F3F0D8"/></linearGradient>
+  <rect width="800" height="800" fill="url(#dp)"/>
+  <circle cx="140" cy="140" r="60" fill="#FFF4C9"/>
+  <ellipse cx="620" cy="330" rx="200" ry="150" fill="#8CC17E"/><rect x="606" y="380" width="26" height="160" fill="#7A5644"/>
+  <ellipse cx="200" cy="380" rx="150" ry="110" fill="#9ACB86"/><rect x="190" y="420" width="20" height="120" fill="#7A5644"/>
+  <path d="M0 520q400-60 800 0V800H0z" fill="#A9D488"/>
+  <path d="M0 600q400-50 800 0V800H0z" fill="#93C673"/>
+  ${Array.from({ length: 150 }, () => { const x = rnd() * 800, y = 540 + rnd() * 260; return `<path d="M${x} ${y}l3-12 3 12" stroke="#78AE5B" stroke-width="2" fill="none"/>`; }).join("")}
+  ${Array.from({ length: 12 }, () => `<circle cx="${rnd() * 800}" cy="${560 + rnd() * 220}" r="5" fill="${rnd() > .5 ? "#fff" : "#FFD166"}"/>`).join("")}
+  ${DOG(170, 260, 4, "happy")}
+  <g transform="translate(610 690)"><circle r="40" fill="#D9E35A"/><path d="M-36-16q36 16 72 0M-36 16q36-16 72 0" stroke="#fff" stroke-width="6" fill="none"/><ellipse cx="-12" cy="-14" rx="10" ry="6" fill="#fff" opacity=".4"/></g>
+`);
+
+/* 11. Dog nap */
+seed(13);
+scene("dognap", `
+  <rect width="800" height="800" fill="#F3E3CF"/>
+  <rect y="0" width="800" height="560" fill="#EAD6BD"/>
+  ${Array.from({ length: 9 }, (_, i) => `<rect x="${i * 100}" y="0" width="4" height="560" fill="#DEC6A8"/>`).join("")}
+  <rect x="520" y="90" width="200" height="240" rx="8" fill="#BFE0F2" stroke="#fff" stroke-width="12"/><path d="M620 90v240M520 210h200" stroke="#fff" stroke-width="8"/>
+  <polygon points="520,330 720,330 560,800 300,800" fill="#FFF6DD" opacity=".45"/>
+  <ellipse cx="400" cy="640" rx="300" ry="90" fill="#C0582F"/><ellipse cx="400" cy="630" rx="250" ry="66" fill="#E5916C"/>
+  ${DOG(250, 360, 2.5, "sleep")}
+  <g font-family="Fraunces" font-weight="700" fill="#8A6A55"><text x="560" y="420" font-size="56">z</text><text x="610" y="370" font-size="44">z</text><text x="650" y="328" font-size="32">z</text></g>
+`);
+
+/* 12. Dog beach */
+seed(14);
+scene("dogbeach", `
+  <linearGradient id="db" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#FAD6B8"/><stop offset=".5" stop-color="#9BD3E6"/></linearGradient>
+  <rect width="800" height="800" fill="url(#db)"/>
+  <circle cx="400" cy="380" r="90" fill="#FFF1D2"/><circle cx="400" cy="380" r="200" fill="#FFE2B8" opacity=".5" filter="url(#b50)"/>
+  <rect y="400" width="800" height="140" fill="#3BA9C9"/>
+  ${Array.from({ length: 24 }, () => `<path d="M${rnd() * 800} ${410 + rnd() * 120}q14-7 28 0" stroke="#fff" stroke-width="3" fill="none" opacity=".55"/>`).join("")}
+  <path d="M0 540q200-24 400 0t400 0V800H0z" fill="#fff" opacity=".8"/><path d="M0 556q200-24 400 0t400 0V800H0z" fill="#F1D5A6"/>
+  <g transform="rotate(-8 400 560)">${DOG(220, 330, 3, "happy")}</g>
+  <g transform="translate(620 300) rotate(-20)"><ellipse rx="70" ry="18" fill="#F2652E"/><ellipse rx="50" ry="10" fill="#FF8A5B"/></g>
+  ${Array.from({ length: 10 }, () => `<circle cx="${180 + rnd() * 120}" cy="${700 + rnd() * 40}" r="${3 + rnd() * 5}" fill="#E6C690"/>`).join("")}
+`);
+
+/* 13. Wedding venue */
+seed(15);
+scene("venue", `
+  <linearGradient id="vn" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#2E3550"/><stop offset=".6" stop-color="#8C6A7E"/><stop offset="1" stop-color="#E9C9A9"/></linearGradient>
+  <rect width="800" height="800" fill="url(#vn)"/>
+  <ellipse cx="400" cy="420" rx="420" ry="160" fill="#4E6B4E"/>
+  ${[0, 1, 2].map((r) => `<path d="M-20 ${90 + r * 60}Q400 ${210 + r * 80} 820 ${90 + r * 60}" stroke="#1F2233" stroke-width="2" fill="none"/>` + Array.from({ length: 16 }, (_, i) => { const t = (i + .5) / 16, x = -20 + t * 840, y = 90 + r * 60 + Math.sin(t * Math.PI) * (120 + r * 20); return `<circle cx="${x}" cy="${y + 6}" r="${18 - r * 3}" fill="#FFD98A" opacity=".45" filter="url(#b10)"/><circle cx="${x}" cy="${y + 6}" r="${5 - r}" fill="#FFF5D6"/>`; }).join("")).join("")}
+  <path d="M120 800L300 520h200l180 280z" fill="#F7F1E6"/>
+  <path d="M300 520h200l12 18H288z" fill="#E7DDCC"/>
+  ${[0, 1, 2, 3].map((k) => { const t = k / 4, y = 540 + t * 240, w = 100 + t * 180; return `<g>${[-1, 1].map((sd) => `<rect x="${400 + sd * (w - 14) - 4}" y="${y - 40}" width="8" height="40" rx="3" fill="#FFF7EE"/><path d="M${400 + sd * (w - 14)} ${y - 54}c5 6 5 10 0 13-5-3-5-7 0-13z" fill="#FFB547"/><circle cx="${400 + sd * (w - 14)}" cy="${y - 48}" r="16" fill="#FFD98A" opacity=".5" filter="url(#b10)"/>`).join("")}<ellipse cx="400" cy="${y}" rx="${30 + t * 30}" ry="${10 + t * 6}" fill="#E8A3A8"/><circle cx="${390}" cy="${y - 4}" r="${7 + t * 6}" fill="#F2C6C2"/><circle cx="${408}" cy="${y - 2}" r="${6 + t * 5}" fill="#fff"/></g>`; }).join("")}
+`);
+
+/* 14. Rings */
+seed(16);
+scene("rings", `
+  <radialGradient id="rg" cx="50%" cy="45%" r="70%"><stop offset="0" stop-color="#F6E6DA"/><stop offset="1" stop-color="#C9A69A"/></radialGradient>
+  <rect width="800" height="800" fill="url(#rg)"/>
+  ${bokeh(16, ["#fff", "#FFE9C9"], 800, 14, 50, 0.45)}
+  <ellipse cx="400" cy="520" rx="240" ry="70" fill="#000" opacity=".2" filter="url(#b24)"/>
+  <ellipse cx="400" cy="500" rx="230" ry="70" fill="#7E8C77"/><ellipse cx="400" cy="490" rx="200" ry="56" fill="#93A28B"/>
+  ${Array.from({ length: 10 }, () => `<ellipse cx="${260 + rnd() * 280}" cy="${470 + rnd() * 40}" rx="14" ry="8" fill="#F2C6C2" transform="rotate(${rnd() * 180} 400 490)" opacity=".9"/>`).join("")}
+  <linearGradient id="gold" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#FFF0B8"/><stop offset=".4" stop-color="#E5C26B"/><stop offset=".7" stop-color="#A8843E"/><stop offset="1" stop-color="#F3DB95"/></linearGradient>
+  <g transform="translate(350 420) rotate(-14)"><ellipse rx="80" ry="64" fill="none" stroke="url(#gold)" stroke-width="20"/><ellipse rx="80" ry="64" fill="none" stroke="#fff" stroke-width="3" opacity=".5" transform="translate(-4 -4)"/></g>
+  <g transform="translate(460 440) rotate(18)"><ellipse rx="66" ry="52" fill="none" stroke="url(#gold)" stroke-width="16"/><path d="M-12-66l12-20 12 20-12 12z" fill="#E9F4FF" stroke="#C9D8E8" stroke-width="2"/><circle cy="-70" r="30" fill="#fff" opacity=".35" filter="url(#b10)"/></g>
+`);
+
+/* 15. First dance */
+seed(17);
+scene("dance", `
+  <radialGradient id="dn" cx="50%" cy="40%" r="65%"><stop offset="0" stop-color="#FFE3B3"/><stop offset=".45" stop-color="#C56F6F"/><stop offset="1" stop-color="#2B1A2E"/></radialGradient>
+  <rect width="800" height="800" fill="url(#dn)"/>
+  <polygon points="330,0 470,0 640,800 160,800" fill="#FFF3D6" opacity=".22" filter="url(#b10)"/>
+  ${bokeh(24, ["#FFE3A3", "#fff", "#FFB3B3"], 800, 6, 26, 0.6)}
+  <g fill="#2B1A2E">
+    <!-- Nora, in a long dress, leaning back -->
+    <circle cx="318" cy="292" r="30"/>
+    <path d="M300 318c-18 8-26 40-24 80 2 30 8 50 4 70-20 80-60 160-90 230h250c-30-80-60-160-74-230-4-20 4-40 6-70 2-40-10-72-30-80z"/>
+    <path d="M330 350c30 0 60 6 96 26" stroke="#2B1A2E" stroke-width="18" stroke-linecap="round" fill="none"/>
+    <!-- James, suit -->
+    <circle cx="470" cy="272" r="31"/>
+    <path d="M446 304c-26 6-38 46-38 100v300h36l18-220 18 220h36V404c0-54-12-94-38-100z"/>
+    <path d="M454 340c-20 30-50 56-90 64" stroke="#2B1A2E" stroke-width="18" stroke-linecap="round" fill="none"/>
+    <circle cx="372" cy="402" r="10"/>
+  </g>
+  <path d="M260 700q120-30 240 0" stroke="#FFE3B3" stroke-width="2" opacity=".4" fill="none"/>
+`);
+
+/* 16. Bouquet */
+seed(18);
+scene("bouquet", `
+  <linearGradient id="bq" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#FBF5EC"/><stop offset="1" stop-color="#EBDDCD"/></linearGradient>
+  <rect width="800" height="800" fill="url(#bq)"/>
+  <ellipse cx="420" cy="720" rx="220" ry="40" fill="#000" opacity=".12" filter="url(#b24)"/>
+  <path d="M360 460l-30 260h80l20-260z" fill="#8FA982"/>
+  ${Array.from({ length: 9 }, () => { const x = 300 + rnd() * 200; return `<path d="M400 600Q${x} 450 ${x} ${300 + rnd() * 80}" stroke="#6F8C62" stroke-width="5" fill="none"/>`; }).join("")}
+  ${Array.from({ length: 10 }, () => { const x = 250 + rnd() * 300, y = 260 + rnd() * 140, r = rnd() * 180; return `<path d="M${x} ${y}c30-20 70-10 80 20-30 20-70 10-80-20z" fill="#8FA982" transform="rotate(${r} ${x} ${y})"/>`; }).join("")}
+  ${Array.from({ length: 11 }, () => { const x = 270 + rnd() * 260, y = 220 + rnd() * 170, rr = 34 + rnd() * 22, c = ["#F2C6C2", "#FFFFFF", "#E8A3A8", "#F7E1C8"][Math.floor(rnd() * 4)]; return `<g transform="translate(${x} ${y})">${Array.from({ length: 7 }, (_, k) => `<ellipse cx="${Math.cos(k * .9) * rr * .45}" cy="${Math.sin(k * .9) * rr * .45}" rx="${rr * .55}" ry="${rr * .42}" fill="${c}" transform="rotate(${k * 51})" stroke="#000" stroke-opacity=".05"/>`).join("")}<circle r="${rr * .3}" fill="${c === "#FFFFFF" ? "#F4E3B5" : "#C9787F"}" opacity=".8"/></g>`; }).join("")}
+  <path d="M340 560q60 30 120 0l-10 40q-50 20-100 0z" fill="#F7F1E6"/><path d="M400 590l-50 90M400 590l40 100" stroke="#F2C6C2" stroke-width="8" stroke-linecap="round"/>
+`);
+</script>
+</body>
+</html>
