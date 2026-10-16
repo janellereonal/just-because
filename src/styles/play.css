@@ -81,6 +81,40 @@
 }
 @media (prefers-reduced-motion: reduce) { .jb-flame { animation: none; } }
 
+/* Dust drifting in a beam of light (openings). */
+.jb-mote { opacity: 0; animation: jb-mote 12s cubic-bezier(.37,0,.63,1) infinite; }
+@keyframes jb-mote {
+  0% { transform: translate3d(0, 0, 0); opacity: 0; }
+  20%, 75% { opacity: .85; }
+  100% { transform: translate3d(var(--dx), -60px, 0); opacity: 0; }
+}
+@media (prefers-reduced-motion: reduce) { .jb-mote { animation: none; opacity: .5; } }
+
+/* Candle light breathing on the cake and the room (opacity only). */
+.jb-candlelight { animation: jb-candlelight 1.3s cubic-bezier(.45,.05,.55,.95) infinite alternate; }
+@keyframes jb-candlelight { 0% { opacity: .82; } 40% { opacity: 1; } 70% { opacity: .9; } 100% { opacity: .97; } }
+@media (prefers-reduced-motion: reduce) { .jb-candlelight { animation: none; } }
+
+/* Windows in the New Year skyline flick on and off now and then. */
+.jb-window { animation: jb-window 7s steps(1, end) infinite; }
+@keyframes jb-window { 0%, 62% { opacity: 1; } 63%, 78% { opacity: .25; } 79%, 100% { opacity: 1; } }
+@media (prefers-reduced-motion: reduce) { .jb-window { animation: none; } }
+
+/* Clouds drift sideways, wrapping around (transform only). */
+.jb-cloud { animation: jb-cloud 40s linear infinite; }
+@keyframes jb-cloud { 0% { transform: translateX(-12cqi); } 50% { transform: translateX(12cqi); } 100% { transform: translateX(-12cqi); } }
+@media (prefers-reduced-motion: reduce) { .jb-cloud { animation: none; } }
+
+/* Light rays turning slowly behind an opened present. */
+.jb-rays { animation: jb-rays 24s linear infinite; }
+@keyframes jb-rays { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) { .jb-rays { animation: none; } }
+
+/* Stars twinkle at their own pace. */
+.jb-twinkle { animation: jb-twinkle 3.4s cubic-bezier(.45,.05,.55,.95) infinite alternate; }
+@keyframes jb-twinkle { 0% { opacity: .35; transform: scale(.8); } 100% { opacity: 1; transform: scale(1.1); } }
+@media (prefers-reduced-motion: reduce) { .jb-twinkle { animation: none; } }
+
 /* A soft "touch me" ring on grabbable parts. */
 .jb-pulse { animation: jb-pulse 1.9s cubic-bezier(.2,.7,.3,1) infinite; opacity: 0; }
 @keyframes jb-pulse { 0% { transform: translateX(-50%) scale(.5); opacity: .9; } 100% { transform: translateX(-50%) scale(1.5); opacity: 0; } }

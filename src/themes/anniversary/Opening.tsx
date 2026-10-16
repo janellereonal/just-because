@@ -14,6 +14,8 @@ import { Greeting, type OpeningProps } from "@/themes/_shared/opening";
 import type { ThemePalette } from "@/themes/_shared/design";
 import { FallbackButton, Layer, SPRING, useHaptics } from "@/themes/_shared/stage";
 import { burstSet } from "@/themes/_shared/Sprinkles";
+import { Extrude, FaceLight, FloorShadow, LightShaft, Object3D, TEXTURE, Texture, rim } from "@/themes/_shared/light";
+import { useTilt } from "@/themes/_shared/stage";
 import { foley, melody } from "@/lib/play";
 
 const WORDS = ["", "One", "Two", "Three", "Four", "Five", "Six", "Seven", "Eight", "Nine", "Ten", "Eleven", "Twelve"];
@@ -31,6 +33,8 @@ function yearsFrom(...texts: string[]) {
 
 const REST = 2;
 const PLAY = 27;
+/** The turntable lies back on its table by this much. */
+const POSE_X = 30;
 
 export function AnniversaryOpening(p: OpeningProps) {
   const c = p.design.palette;
@@ -126,7 +130,8 @@ export function AnniversaryOpening(p: OpeningProps) {
       if (!dragging.current) return;
       const r = pivotRef.current!.getBoundingClientRect();
       const dx = e.clientX - (r.left + r.width / 2);
-      const dy = e.clientY - (r.top + r.height / 2);
+      // The deck lies back, so its depth looks shorter on screen than it is.
+      const dy = (e.clientY - (r.top + r.height / 2)) / Math.cos((POSE_X * Math.PI) / 180);
       // Angle of the pointer from the pivot, measured from straight down, leftward positive.
       const deg = (Math.atan2(-dx, dy) * 180) / Math.PI;
       arm.set(Math.max(REST - 4, Math.min(PLAY + 6, deg)));
@@ -172,53 +177,87 @@ export function AnniversaryOpening(p: OpeningProps) {
         </AnimatePresence>
       </div>
 
-      <Layer depth={9} rotate={5} className="relative mt-5" style={{ width: "min(86cqi, 400px)", aspectRatio: "1.18" }}>
-        {/* Plinth */}
-        <div className="absolute inset-0 rounded-[18px]" style={{ background: `linear-gradient(160deg, #6B4430, ${c.walnut} 45%, #2E1C14)`, boxShadow: "0 40px 60px -30px rgba(0,0,0,.8), inset 0 1px 0 rgba(255,255,255,.12)" }}>
-          <div className="absolute inset-0 rounded-[18px] opacity-30" style={{ backgroundImage: "repeating-linear-gradient(95deg, rgba(255,255,255,.06) 0 2px, transparent 2px 9px)" }} />
-        </div>
-        {/* Platter + record */}
-        <div className="absolute top-[8%] left-[5%] aspect-square w-[74%]">
-          <div className="absolute inset-[-3%] rounded-full" style={{ background: "radial-gradient(circle, #1a1a1a 60%, #3a3a3a 62%, #111 70%)" }} />
-          <motion.div className="absolute inset-0 rounded-full" style={{ rotate: spin, background: "repeating-radial-gradient(circle at 50% 50%, #151212 0 1.6px, #221d1b 1.6px 3.2px)", boxShadow: "inset 0 0 0 2px #0c0a09" }}>
-            <div className="absolute inset-[33%] grid place-items-center rounded-full text-center" style={{ background: `radial-gradient(circle, ${c.champagne} 0 60%, #D9BF8C)`, color: c.espresso }}>
-              <span className="px-1 text-[clamp(7px,2.1cqi,11px)] leading-tight font-semibold tracking-[0.12em] uppercase [overflow-wrap:anywhere]" style={{ fontFamily: "var(--jb-text)" }}>
-                {label}
-              </span>
-              <span className="absolute size-[9%] rounded-full bg-[#1b1412]" />
+      <Layer depth={9} className="relative mt-5" style={{ width: "min(86cqi, 400px)", aspectRatio: "1.18" }}>
+        {/* Lamp light from the top left, coming up with the music */}
+        <motion.div className="pointer-events-none absolute -inset-[60%]" style={{ opacity: glow }}>
+          <LightShaft color="255,207,138" strength={0.9} motes={12} angle={32} />
+        </motion.div>
+
+        {/* The deck, lying back on a table */}
+        <Object3D pose={{ x: POSE_X, y: -5 }} strength={8} perspective={900} className="absolute inset-0">
+          <div className="absolute inset-0" style={{ transform: "translateZ(-30px)", transformStyle: "preserve-3d" }}>
+            <FloorShadow tint="0,0,0" strength={1.3} radius={22} depth={4} className="inset-[-2%_-3%_-6%_-1%]" />
+          </div>
+          {/* Plinth: walnut veneer, 22px thick */}
+          <Extrude depth={22} color="#2A1910" edge="#140C08" radius={18} slices={11} />
+          <div className="absolute inset-0 overflow-hidden rounded-[18px]" style={{ background: `linear-gradient(160deg, #7A4E36, ${c.walnut} 45%, #2E1C14)`, boxShadow: rim(0.8, "255,230,200") }}>
+            <Texture material="wood" opacity={0.85} />
+            <span aria-hidden="true" className="absolute inset-0 block" style={{ background: "linear-gradient(125deg, rgba(255,235,210,.22), transparent 40%, rgba(0,0,0,.25))" }} />
+            <FaceLight normal={[0, 0, 1]} max={0.35} ambient={0.55} />
+          </div>
+
+          {/* Platter: brushed aluminium rim, raised off the plinth */}
+          <div className="absolute top-[8%] left-[5%] aspect-square w-[74%]" style={{ transform: "translateZ(4px)", transformStyle: "preserve-3d" }}>
+            <span aria-hidden="true" className="absolute inset-[-4%] block rounded-full" style={{ background: "rgba(0,0,0,.55)", filter: "blur(5px)", transform: "translate(4%, 5%) translateZ(-3px)" }} />
+            <div className="absolute inset-[-3.5%] overflow-hidden rounded-full" style={{ background: "conic-gradient(from 200deg, #8d8780, #e6e1d9, #9a948c, #5d5853, #c8c2b9, #8d8780)", boxShadow: "inset 0 0 0 1px rgba(255,255,255,.25)" }}>
+              <Texture material="brushed" opacity={0.5} />
             </div>
-          </motion.div>
-          {/* A sheen that stays put while the grooves turn */}
-          <div className="pointer-events-none absolute inset-0 rounded-full" style={{ background: "conic-gradient(from 210deg, transparent 0 20deg, rgba(255,255,255,.14) 40deg, transparent 70deg 200deg, rgba(255,255,255,.1) 225deg, transparent 260deg)" }} />
-        </div>
-        {/* Tonearm */}
-        <div ref={pivotRef} className="absolute top-[10%] right-[8%] z-[3] grid size-[13%] place-items-center rounded-full" style={{ background: "radial-gradient(circle at 35% 30%, #d8d2c8, #8b847b)", boxShadow: "0 6px 10px -4px rgba(0,0,0,.6)" }}>
-          <motion.div
-            className="absolute top-1/2 left-1/2 origin-top touch-none"
-            style={{ rotate: arm, width: "18%", height: "520%", marginLeft: "-9%", cursor: dropped ? "default" : "grab" }}
-            {...armHandlers}
-            role="slider"
-            aria-label="Tonearm. Drag onto the record to play"
-            aria-valuemin={0}
-            aria-valuemax={1}
-            aria-valuenow={dropped ? 1 : 0}
-            tabIndex={dropped || !p.interactive ? -1 : 0}
-            onKeyDown={(e) => {
-              if (e.key === "Enter" || e.key === " " || e.key === "ArrowLeft") {
-                e.preventDefault();
-                drop();
-              }
-            }}
-          >
-            <span className="absolute inset-x-[30%] top-0 bottom-[14%] rounded-full" style={{ background: "linear-gradient(90deg,#9c968e,#e9e4dc,#9c968e)" }} />
-            <span className="absolute bottom-0 left-1/2 h-[18%] w-[260%] -translate-x-1/2 rounded-[3px]" style={{ background: "linear-gradient(180deg,#3a3634,#1c1a19)", transform: "translateX(-50%) rotate(-18deg)" }} />
-            {!dropped && p.interactive && !p.paused ? <span className="jb-pulse absolute -bottom-[14px] left-1/2 size-[30px] rounded-full" style={{ boxShadow: `0 0 0 2px ${c.champagne}` }} /> : null}
-          </motion.div>
-        </div>
-        {/* Knobs */}
-        {[0, 1].map((k) => (
-          <span key={k} className="absolute bottom-[9%] size-[7%] rounded-full" style={{ right: `${10 + k * 11}%`, background: "radial-gradient(circle at 35% 30%, #efe7da, #9a8f80)" }} />
-        ))}
+          </div>
+          <div className="absolute top-[8%] left-[5%] aspect-square w-[74%]" style={{ transform: "translateZ(7px)" }}>
+            <motion.div className="absolute inset-0 rounded-full" style={{ rotate: spin, background: "repeating-radial-gradient(circle at 50% 50%, #151212 0 1.6px, #221d1b 1.6px 3.2px)", boxShadow: "inset 0 0 0 2px #0c0a09, inset 0 0 18px rgba(0,0,0,.7)" }}>
+              <div className="absolute inset-[33%] grid place-items-center rounded-full text-center" style={{ background: `radial-gradient(circle, ${c.champagne} 0 60%, #D9BF8C)`, color: c.espresso, boxShadow: "inset 0 0 0 1px rgba(0,0,0,.25), inset 2px 3px 6px rgba(255,255,255,.35)" }}>
+                <span className="px-1 text-[clamp(7px,2.1cqi,11px)] leading-tight font-semibold tracking-[0.12em] uppercase [overflow-wrap:anywhere]" style={{ fontFamily: "var(--jb-text)" }}>
+                  {label}
+                </span>
+                <span className="absolute size-[9%] rounded-full" style={{ background: "radial-gradient(circle at 40% 35%, #f1ece4, #6d665f)" }} />
+              </div>
+            </motion.div>
+            <VinylSheen />
+          </div>
+
+          {/* The tonearm's shadow on the record, then the arm itself up above it */}
+          <div className="pointer-events-none absolute top-[10%] right-[8%] grid size-[13%] place-items-center" style={{ transform: "translate(5%, 9%) translateZ(8px)" }} aria-hidden="true">
+            <motion.div className="absolute top-1/2 left-1/2 origin-top" style={{ rotate: arm, width: "18%", height: "520%", marginLeft: "-9%", filter: "blur(2.5px)", opacity: 0.55 }}>
+              <span className="absolute inset-x-[30%] top-0 bottom-[14%] rounded-full bg-black" />
+              <span className="absolute bottom-0 left-1/2 h-[18%] w-[260%] -translate-x-1/2 rounded-[3px] bg-black" style={{ transform: "translateX(-50%) rotate(-18deg)" }} />
+            </motion.div>
+          </div>
+          <div ref={pivotRef} className="absolute top-[10%] right-[8%] grid size-[13%] place-items-center rounded-full" style={{ transform: "translateZ(18px)", background: "radial-gradient(circle at 35% 30%, #f2ede5, #a59e94 55%, #6b655e)", boxShadow: "0 6px 10px -4px rgba(0,0,0,.6), inset 0 0 0 1px rgba(255,255,255,.35)" }}>
+            <motion.div
+              className="absolute top-1/2 left-1/2 origin-top touch-none"
+              style={{ rotate: arm, width: "18%", height: "520%", marginLeft: "-9%", cursor: dropped ? "default" : "grab" }}
+              {...armHandlers}
+              role="slider"
+              aria-label="Tonearm. Drag onto the record to play"
+              aria-valuemin={0}
+              aria-valuemax={1}
+              aria-valuenow={dropped ? 1 : 0}
+              tabIndex={dropped || !p.interactive ? -1 : 0}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" || e.key === " " || e.key === "ArrowLeft") {
+                  e.preventDefault();
+                  drop();
+                }
+              }}
+            >
+              <span className="absolute inset-x-[30%] top-0 bottom-[14%] rounded-full" style={{ background: "linear-gradient(90deg,#8a847c,#f4f0ea 40%,#b3ada5 60%,#7c766f)" }} />
+              <span className="absolute bottom-0 left-1/2 h-[18%] w-[260%] -translate-x-1/2 rounded-[3px]" style={{ background: "linear-gradient(180deg,#4a4542,#1c1a19)", boxShadow: "inset 0 1px 0 rgba(255,255,255,.25)", transform: "translateX(-50%) rotate(-18deg)" }} />
+              {!dropped && p.interactive && !p.paused ? <span className="jb-pulse absolute -bottom-[14px] left-1/2 size-[30px] rounded-full" style={{ boxShadow: `0 0 0 2px ${c.champagne}` }} /> : null}
+            </motion.div>
+          </div>
+
+          {/* Knobs */}
+          {[0, 1].map((k) => (
+            <span
+              key={k}
+              className="absolute bottom-[9%] size-[7%] rounded-full"
+              style={{ right: `${10 + k * 11}%`, transform: "translateZ(5px)", background: "radial-gradient(circle at 35% 30%, #f6efe4, #a99d8d 60%, #6f6559)", boxShadow: "2px 4px 5px rgba(0,0,0,.5), inset 0 0 0 1px rgba(255,255,255,.3)" }}
+            />
+          ))}
+          {/* A tiny amber light that comes on when it plays */}
+          <motion.span className="absolute bottom-[11%] left-[7%] size-[2.2%] rounded-full" style={{ transform: "translateZ(1px)", background: c.glow, boxShadow: `0 0 8px 2px ${c.glow}`, opacity: glow }} />
+        </Object3D>
+
         {/* The character sways along */}
         <motion.div
           className="absolute -bottom-[6%] -left-[4%] z-[4] origin-bottom"
@@ -229,7 +268,7 @@ export function AnniversaryOpening(p: OpeningProps) {
         </motion.div>
       </Layer>
 
-      <div className="mt-[8cqi] h-11">
+      <div className="mt-[min(8cqi,36px)] h-11">
         <FallbackButton onClick={drop} color={c.champagne!} ink={c.champagne!} hidden={dropped || !p.interactive || p.paused}>
           {p.buttonText}
         </FallbackButton>
@@ -238,10 +277,36 @@ export function AnniversaryOpening(p: OpeningProps) {
   );
 }
 
+/**
+ * Vinyl catches light in two bright wedges either side of the spindle. They
+ * stay put while the record turns, and swing round as you tilt it.
+ */
+function VinylSheen() {
+  const { x, y } = useTilt();
+  const turn = useTransform(() => x.get() * 38 + y.get() * 12);
+  return (
+    <motion.div
+      aria-hidden="true"
+      className="pointer-events-none absolute inset-0 rounded-full"
+      style={{
+        rotate: turn,
+        background:
+          "conic-gradient(from 200deg, transparent 0 18deg, rgba(255,240,220,.2) 34deg, rgba(255,255,255,.05) 48deg, transparent 66deg 196deg, rgba(255,240,220,.16) 214deg, rgba(255,255,255,.04) 228deg, transparent 246deg)",
+        WebkitMaskImage: "radial-gradient(circle, transparent 32%, #000 34%)",
+        maskImage: "radial-gradient(circle, transparent 32%, #000 34%)",
+      }}
+    />
+  );
+}
+
 export const anniversaryBackground = (c: ThemePalette): React.CSSProperties => ({
   backgroundColor: c.espresso,
   backgroundImage: [
+    // A lamp somewhere up and to the left, a wall, and the table's edge.
+    `radial-gradient(60% 45% at 28% 18%, ${c.glow}26, transparent 70%)`,
     `radial-gradient(70% 60% at 50% 45%, ${c.plum}40, transparent 70%)`,
-    "radial-gradient(130% 100% at 50% 40%, transparent 50%, rgba(0,0,0,.55))",
+    "radial-gradient(130% 100% at 50% 40%, transparent 50%, rgba(0,0,0,.6))",
+    TEXTURE.grain,
   ].join(","),
+  backgroundSize: "auto, auto, auto, 160px 160px",
 });

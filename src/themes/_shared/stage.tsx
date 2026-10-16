@@ -31,35 +31,70 @@ export function Grain({ opacity = 0.16, blend = "multiply" }: { opacity?: number
 
 /* ---------- parallax ---------- */
 
-type Tilt = { x: MotionValue<number>; y: MotionValue<number> };
+/** `live`: something can move the tilt (pointer, phone tilt or drift). When it can't, layers skip will-change. */
+type Tilt = { x: MotionValue<number>; y: MotionValue<number>; live: boolean };
 const TiltContext = createContext<Tilt | null>(null);
 
 /**
  * Tracks the pointer inside `children` (desktop) and the phone's tilt (where it
  * needs no permission, or after the first tap on iOS). Values are -1..1, sprung.
+ * With `drift`, a slow idle sway takes over whenever nobody is moving, so the
+ * light keeps gliding over the objects on phones without tilt and in previews.
  */
-export function ParallaxRoot({ children, className = "", style, enabled = true }: { children: React.ReactNode; className?: string; style?: React.CSSProperties; enabled?: boolean }) {
+export function ParallaxRoot({
+  children,
+  className = "",
+  style,
+  enabled = true,
+  drift = false,
+}: {
+  children: React.ReactNode;
+  className?: string;
+  style?: React.CSSProperties;
+  enabled?: boolean;
+  drift?: boolean;
+}) {
   const ref = useRef<HTMLDivElement | null>(null);
   const rx = useMotionValue(0);
   const ry = useMotionValue(0);
   const x = useSpring(rx, { stiffness: 80, damping: 18, mass: 0.6 });
   const y = useSpring(ry, { stiffness: 80, damping: 18, mass: 0.6 });
+  const lastInput = useRef(0);
+
+  useEffect(() => {
+    if (!drift || reducedMotion()) return;
+    let raf = 0;
+    const t0 = performance.now();
+    const tick = (now: number) => {
+      if (now - lastInput.current > 1800) {
+        const t = (now - t0) / 1000;
+        rx.set(Math.sin(t * 0.42) * 0.34 + Math.sin(t * 0.17) * 0.12);
+        ry.set(Math.sin(t * 0.31 + 1.3) * 0.24);
+      }
+      raf = requestAnimationFrame(tick);
+    };
+    raf = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(raf);
+  }, [drift, rx, ry]);
 
   useEffect(() => {
     const el = ref.current;
     if (!el || !enabled || reducedMotion()) return;
     const onMove = (e: PointerEvent) => {
       if (e.pointerType !== "mouse") return;
+      lastInput.current = performance.now();
       const r = el.getBoundingClientRect();
       rx.set(Math.max(-1, Math.min(1, ((e.clientX - r.left) / r.width - 0.5) * 2)));
       ry.set(Math.max(-1, Math.min(1, ((e.clientY - r.top) / r.height - 0.5) * 2)));
     };
     const onLeave = () => {
+      lastInput.current = performance.now();
       rx.set(0);
       ry.set(0);
     };
     const onTilt = (e: DeviceOrientationEvent) => {
       if (e.gamma == null || e.beta == null) return;
+      lastInput.current = performance.now();
       rx.set(Math.max(-1, Math.min(1, e.gamma / 25)));
       ry.set(Math.max(-1, Math.min(1, (e.beta - 45) / 25)));
     };
@@ -86,7 +121,7 @@ export function ParallaxRoot({ children, className = "", style, enabled = true }
   }, [enabled, rx, ry]);
 
   return (
-    <TiltContext.Provider value={{ x, y }}>
+    <TiltContext.Provider value={{ x, y, live: enabled || drift }}>
       <div ref={ref} className={className} style={style}>
         {children}
       </div>
@@ -94,10 +129,10 @@ export function ParallaxRoot({ children, className = "", style, enabled = true }
   );
 }
 
-export function useTilt() {
+export function useTilt(): Tilt {
   const ctx = useContext(TiltContext);
   const zero = useMotionValue(0);
-  return ctx ?? { x: zero, y: zero };
+  return ctx ?? { x: zero, y: zero, live: false };
 }
 
 /** A layer that drifts with the tilt. Positive depth moves with it, negative against. */
@@ -114,13 +149,13 @@ export function Layer({
   style?: React.CSSProperties;
   children?: React.ReactNode;
 }) {
-  const { x, y } = useTilt();
+  const { x, y, live } = useTilt();
   const tx = useTransform(x, (v) => v * depth);
   const ty = useTransform(y, (v) => v * depth * 0.7);
   const rY = useTransform(x, (v) => v * rotate);
   const rX = useTransform(y, (v) => -v * rotate);
   return (
-    <motion.div className={className} style={{ ...(style as object), x: tx, y: ty, rotateY: rY, rotateX: rX }}>
+    <motion.div className={className} style={{ ...(style as object), x: tx, y: ty, rotateY: rY, rotateX: rX, willChange: live ? "transform" : undefined }}>
       {children}
     </motion.div>
   );

@@ -1,7 +1,59 @@
 # Next session: picking up Just Because
 
-Updated 16 Oct 2026 (sessions 6 and 7), so a new session, on any Claude account, can carry on without
+Updated 16 Oct 2026 (sessions 6 to 8), so a new session, on any Claude account, can carry on without
 missing anything. Start with `HANDOFF.md` section 0.
+
+## Session 8 (16 Oct 2026): light, material and depth on the openings (branch `openings-depth`)
+
+**The kit: `src/themes/_shared/light.tsx`.** One key light for every theme (up, left, a little in front),
+so shadows fall down-right and highlights sit on top-left edges. Everything follows the tilt.
+- `Object3D`: a real preserve-3d stage with a resting pose; the tilt turns it a few degrees more.
+  `settle` turns it square to the viewer (used when words appear, so text is drawn sharp again).
+- `FaceLight`: Lambert shading for one face of an `Object3D`, recomputed as the object turns.
+- `Extrude`: thickness for flat things (paper, plinths): thin slices behind the face.
+- `FloorShadow`, `ContactShadow`, `Sheen` (a specular band that glides with the tilt), `LightPool`,
+  `LightShaft` (window light with dust motes), `elevation()`, `rim()`, `pressed()` (letterpress).
+- `Texture` / `TEXTURE` / `TEXTURE_SOFT`: static SVG noise materials (paper, card, vellum, linen, felt,
+  wood, kraft, brushed metal, grain). Calibrated in a browser; the paper one is formation clouds, not fibers.
+- `LightDefs`: SVG lighting filters `jb-gloss` (wax, ribbon), `jb-puff` (felt), `jb-emboss`. Only used on SVG
+  content (Safari ignores url() filters on HTML). `IconGlyph` takes `material="felt"` (relief + stitches).
+- `ParallaxRoot` has an idle `drift`: when nobody moves for 1.8s the tilt sways slowly, so light keeps
+  moving on phones without tilt and in previews. Off under reduced motion and when paused.
+- Icon-set sprinkles now sit at three depths (far and soft, mid, a few big out-of-focus ones in front).
+
+**Per theme**
+- Valentine: envelope lying on linen in 3D, paper thickness, floor shadow, rose tissue liner with pressed
+  hearts inside the flap, glossy wax seal (`jb-gloss`), window light with dust. Settles flat when the letter rises.
+- Anniversary: the deck lies back in real perspective (walnut plinth 22px thick, raised brushed platter,
+  tonearm with its shadow on the record, vinyl sheen that swings with the tilt, an amber "on" light). The
+  lamp beam with dust comes up with the music. Drag math divides by cos(pose) for the foreshortening.
+- Birthday: tiers are cylinders seen from above (elliptical frosted tops, round shading, curved bottoms),
+  a porcelain plate with thickness, candlelight on the tops that breathes. The room is candlelit (amber)
+  until the candles are out, then the lights come up.
+- Wedding / Bridal: cotton card with letterpress border and greeting, foil monogram, vellum sleeve with
+  body and texture, woven belly band, light shaft. The card now comes forward to the middle and settles flat.
+- Christmas / default: a real 3D box (four sides, inside floor, a lid with its own sides, floor shadow),
+  each face lit by `FaceLight`. Untie: bands slip off, the lid flies, the sides fall open like petals around a
+  warm light with slow rays. The rope follows the knot on the lid wherever the box has turned, and draws
+  straight into the SVG (no React render per frame). Fixed: the default theme's greeting and button were
+  white on white.
+- Baby: felt shapes with plush relief and stitched edges, the mobile's shadow on the wall, moonlight with
+  dust, quilted mattress, wood rails, a skirting line.
+- New Year: stars at three depths that twinkle, a city skyline (two rows, lit windows, a few blinking),
+  each firework lights the sky around it and catches the rooftops, numbers cut from metal, engraved ring.
+- Bon Voyage: the pass held at an angle in 3D with card texture and sheen, sun glow, clouds at three
+  depths with one out-of-focus cloud drifting past in front.
+- Pets: a real floor in perspective (honey oak boards to a vanishing point), window light in four panes on
+  the floor and a beam with dust, braided rug with thickness, the pet's shadow stays on the floor when it
+  hops, glossy felt ball, gift box with a top.
+
+**Performance.** Nothing repaints per frame (checked with a trace: 0 Paint, ~1ms raster over 3s). Rules
+that got it there: blur the leaf, never a container whose children move; no blend modes in the kit
+(plain alpha looks the same here); will-change only while the tilt can move (`useTilt().live`).
+In the cloud browser (software GPU) the 3D themes run at 20 to 40fps; real GPUs are fine.
+
+**How to check:** dev-only `/dev/openings?kind=<theme>` (add `&auto=1` to play the gesture by itself),
+and `tools/screens/openings.js` for phone and desktop shots of every theme, at rest and late in the story.
 
 ## Sessions 6 and 7 (16 Oct 2026): PRs #7 and #8, both merged
 
@@ -57,8 +109,7 @@ missing anything. Start with `HANDOFF.md` section 0.
 - Memory map pin labels near an edge lean inwards so they aren't cut off on narrow screens.
 
 **Not done yet (ideas Janelle liked or asked about)**
-- A per-theme lighting / material / depth pass on the openings (richer shadows, rim light, paper and foil
-  textures). She asked for "3D rendering, transitions, graphics" to feel professional and hard to copy.
+- (Done in session 8: the per-theme lighting / material / depth pass on the openings.)
 - Theme preview images, real Rive characters, real-phone gesture check (iOS Safari).
 - Lots of older screens still have inline copy (move to `strings.ts` when touched).
 

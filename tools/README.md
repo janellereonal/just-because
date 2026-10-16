@@ -34,6 +34,8 @@ The dev server must be running on http://localhost:8080 (`bun run dev`, see docs
 | `node hole.js` | Logs the portal mask animation values over time |
 | `node trysec.js` / `node trym.js` | Theme page "Try the sections" (desktop / phone) |
 | `node cr.js` | Create page section previews (needs `../state.json`) |
+| `node openings.js <outdir> [kinds] [label]` | Every theme's opening at rest and late in its story, phone and desktop (`SIZES=phone`, `ONLY=rest` or `ONLY=open` to narrow). Uses the dev-only `/dev/openings` page |
+| `python3 sheet.py <out.png> <cols> <width> <imgs...>` | Contact sheet of screenshots, labelled |
 | `node render.js <html> <outdir>` | Renders every `.scene` element of an HTML file to webp |
 | `node frames.js <html> <scene> <secs> <outdir>` | Renders video frames via `window.render(name, t)` |
 

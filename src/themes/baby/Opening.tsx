@@ -15,6 +15,7 @@ import type { ThemePalette } from "@/themes/_shared/design";
 import { FallbackButton, Layer, SPRING, useBeats, useHaptics } from "@/themes/_shared/stage";
 import { IconGlyph } from "@/themes/_shared/Sprinkles";
 import { pick, type IconSet } from "@/themes/_shared/iconSets";
+import { ContactShadow, LightShaft, TEXTURE_SOFT, Texture } from "@/themes/_shared/light";
 import { foley, melody } from "@/lib/play";
 
 const N = 5;
@@ -76,12 +77,26 @@ export function BabyOpening(p: OpeningProps) {
 
   return (
     <div className="relative flex size-full flex-col items-center pt-[clamp(44px,11cqi,72px)] pb-[clamp(78px,20cqi,104px)]">
+      {/* Moonlight from the window, top left */}
+      <Layer depth={-14} className="pointer-events-none absolute -inset-[40%]">
+        <LightShaft color="236,242,255" strength={0.75} motes={10} angle={22} />
+      </Layer>
+      {/* The mobile's shadow on the wall behind, soft and a little further off */}
+      <Layer depth={-16} className="pointer-events-none absolute inset-x-0 top-[clamp(44px,11cqi,72px)] z-[1] flex justify-center" style={{ opacity: 0.18 }}>
+        <div className="relative" style={{ width: "min(84cqi, 380px)", height: "clamp(250px,68cqi,340px)", transform: "translate(7%, 9%) scale(1.06)" }}>
+          <div className="absolute top-[17%] left-1/2 h-[6%] w-[70%] -translate-x-1/2 rounded-[50%]" style={{ boxShadow: "inset 0 0 0 3px #1d2238", filter: "blur(3px)" }} />
+          {Array.from({ length: N }, (_, i) => (
+            <Hanger key={i} i={i} theta={theta} pulled={pulled} beat={beat} item={pick(p.iconSet.items, i)} felt="#1d2238" shadow />
+          ))}
+        </div>
+      </Layer>
+
       {/* The mobile hangs from the top */}
       <Layer depth={-6} className="relative z-[2] flex w-full justify-center">
         <div className="relative" style={{ width: "min(84cqi, 380px)", height: "clamp(250px,68cqi,340px)" }}>
           <span className="absolute -top-[30%] left-1/2 h-[47%] w-[2px] -translate-x-1/2" style={{ background: "#B9A98E" }} />
           {/* The ring */}
-          <div className="absolute top-[17%] left-1/2 h-[6%] w-[70%] -translate-x-1/2 rounded-[50%]" style={{ boxShadow: "inset 0 0 0 3px #D8C6A6, 0 2px 0 rgba(0,0,0,.05)" }} />
+          <div className="absolute top-[17%] left-1/2 h-[6%] w-[70%] -translate-x-1/2 rounded-[50%]" style={{ boxShadow: "inset 0 0 0 3.5px #CDB58E, inset 1px 1px 0 3.5px #F1E3C8, 1px 2px 2px rgba(60,40,20,.18)" }} />
           {Array.from({ length: N }, (_, i) => (
             <Hanger key={i} i={i} theta={theta} pulled={pulled} beat={beat} item={pick(p.iconSet.items, i)} felt={pick(plush, i)} />
           ))}
@@ -133,7 +148,24 @@ export function BabyOpening(p: OpeningProps) {
 
       {/* The crib, with the character tucked in */}
       <Layer depth={10} className="relative z-[4]" style={{ width: "min(88cqi, 410px)", height: "clamp(150px,40cqi,190px)" }}>
-        <div className="absolute inset-x-[4%] bottom-[22%] h-[30%] rounded-[16px]" style={{ background: `linear-gradient(180deg, #FFFFFF, ${c.oat})`, boxShadow: "inset 0 6px 10px -6px rgba(0,0,0,.18)" }} />
+        <ContactShadow tint="61,70,96" strength={0.7} className="-inset-x-[2%] -bottom-[8%] h-[22%]" style={{ transform: "translateX(4%)" }} />
+        {/* Mattress: quilted cotton */}
+        <div
+          className="absolute inset-x-[4%] bottom-[22%] h-[30%] overflow-hidden rounded-[16px]"
+          style={{
+            background: `linear-gradient(180deg, #FFFFFF, ${c.oat})`,
+            backgroundImage: [
+              "radial-gradient(circle at 50% 50%, rgba(61,70,96,.14) 0 1.2px, transparent 1.6px)",
+              "linear-gradient(45deg, transparent 47%, rgba(61,70,96,.06) 50%, transparent 53%)",
+              "linear-gradient(-45deg, transparent 47%, rgba(61,70,96,.06) 50%, transparent 53%)",
+              `linear-gradient(180deg, #FFFFFF, ${c.oat})`,
+            ].join(","),
+            backgroundSize: "18px 18px, 18px 18px, 18px 18px, auto",
+            boxShadow: "inset 0 6px 10px -6px rgba(0,0,0,.2), inset 2px 0 0 rgba(255,255,255,.8)",
+          }}
+        >
+          <Texture material="felt" opacity={0.25} />
+        </div>
         <div className="absolute bottom-[34%] left-[30%] z-[1]">
           <Character ref={cast} setting={p.character} accessory={p.accessory} size={104} sleepy={!pulled} live={!p.paused} showName={false} />
         </div>
@@ -154,11 +186,15 @@ export function BabyOpening(p: OpeningProps) {
         </div>
         {/* Crib rails */}
         <div className="absolute inset-x-0 bottom-0 z-[3] h-full">
-          <div className="absolute inset-x-0 top-[18%] h-[10%] rounded-full" style={{ background: "linear-gradient(180deg,#F8EFE1,#E3D1B5)" }} />
-          <div className="absolute inset-x-0 bottom-0 h-[22%] rounded-[10px]" style={{ background: "linear-gradient(180deg,#F3E7D3,#D9C4A2)", boxShadow: "0 18px 26px -18px rgba(0,0,0,.35)" }} />
+          <div className="absolute inset-x-0 top-[18%] h-[10%] overflow-hidden rounded-full" style={{ background: "linear-gradient(180deg,#FBF4E8,#E3D1B5 70%,#CDB794)", boxShadow: "0 3px 4px -1px rgba(80,60,30,.25)" }}>
+            <Texture material="wood" opacity={0.12} />
+          </div>
+          <div className="absolute inset-x-0 bottom-0 h-[22%] overflow-hidden rounded-[10px]" style={{ background: "linear-gradient(180deg,#F6EBD8,#D9C4A2)", boxShadow: "inset 0 2px 0 rgba(255,255,255,.7), 4px 18px 26px -18px rgba(0,0,0,.35)" }}>
+            <Texture material="wood" opacity={0.14} />
+          </div>
           <div className="absolute inset-x-[3%] top-[26%] bottom-[20%] flex justify-between">
             {Array.from({ length: 11 }, (_, i) => (
-              <span key={i} className="h-full w-[3%] rounded-full" style={{ background: "linear-gradient(90deg,#E9DAC1,#F8F0E3,#E2CFB0)" }} />
+              <span key={i} className="h-full w-[3%] rounded-full" style={{ background: "linear-gradient(90deg,#E3D0B2,#FBF5EA 35%,#E9DAC1 60%,#C9B28D)", boxShadow: "2px 0 2px rgba(80,60,30,.12)" }} />
             ))}
           </div>
         </div>
@@ -174,22 +210,23 @@ export function BabyOpening(p: OpeningProps) {
 }
 
 /** One hanging shape, placed on a turning circle (depth by sine). */
-function Hanger({ i, theta, pulled, beat, item, felt }: { i: number; theta: MotionValue<number>; pulled: boolean; beat: number; item: IconSet["items"][number]; felt: string }) {
+function Hanger({ i, theta, pulled, beat, item, felt, shadow = false }: { i: number; theta: MotionValue<number>; pulled: boolean; beat: number; item: IconSet["items"][number]; felt: string; shadow?: boolean }) {
   const a = (i / N) * Math.PI * 2;
-  const left = useTransform(theta, (t) => `${50 + Math.cos(t + a) * 40}%`);
+  // Around the ring by transform (not `left`), so nothing lays out or repaints as it turns.
+  const x = useTransform(theta, (t) => `calc(min(84cqi, 380px) * ${(Math.cos(t + a) * 0.4).toFixed(4)})`);
   const scale = useTransform(theta, (t) => 0.78 + (Math.sin(t + a) + 1) * 0.14);
   const z = useTransform(theta, (t) => Math.round((Math.sin(t + a) + 1) * 10));
   const len = 50 + ((i * 17) % 3) * 22;
   const dropped = beat >= 1;
   return (
-    <motion.div className="absolute top-[20%]" style={{ left, scale, zIndex: z, marginLeft: -26 }}>
-      <span className="absolute left-1/2 w-px -translate-x-1/2 bg-[#B9A98E]" style={{ height: len, opacity: dropped ? 0 : 1, transition: "opacity .3s" }} />
+    <motion.div className="absolute top-[20%] left-1/2" style={{ x, scale, zIndex: z, marginLeft: -26, willChange: "transform" }}>
+      <span className="absolute left-1/2 w-px -translate-x-1/2" style={{ height: len, opacity: dropped ? 0 : 1, transition: "opacity .3s", background: shadow ? felt : "#B9A98E" }} />
       <motion.div
         style={{ marginTop: len }}
         animate={dropped ? { opacity: 0, y: 260, transition: { delay: i * 0.22, duration: 0.6, ease: [0.4, 0, 1, 1] } } : { rotate: pulled ? [0, -14, 10, -6, 0] : [0, 4, -4, 0], y: 0, opacity: 1 }}
         transition={{ duration: pulled ? 1.4 : 4, repeat: pulled ? 0 : Infinity, ease: [0.45, 0, 0.55, 1] }}
       >
-        <Felt item={item} color={felt} size={52} />
+        {shadow ? <IconGlyph item={item} color={felt} size={52} style={{ filter: "blur(3px)" }} /> : <Felt item={item} color={felt} size={52} />}
       </motion.div>
     </motion.div>
   );
@@ -198,8 +235,8 @@ function Hanger({ i, theta, pulled, beat, item, felt }: { i: number; theta: Moti
 /** A felt-looking shape: the icon in a soft color with a stitched outline. */
 function Felt({ item, color, size }: { item: IconSet["items"][number]; color: string; size: number }) {
   return (
-    <span className="block" style={{ filter: "drop-shadow(0 3px 3px rgba(60,70,96,.25))" }}>
-      <IconGlyph item={item} color={color} size={size} style={{ filter: "drop-shadow(0 0 0.5px rgba(0,0,0,.3))" }} />
+    <span className="block" style={{ filter: "drop-shadow(2px 4px 3px rgba(60,70,96,.28))" }}>
+      <IconGlyph item={item} color={color} size={size} material="felt" />
     </span>
   );
 }
@@ -207,8 +244,12 @@ function Felt({ item, color, size }: { item: IconSet["items"][number]; color: st
 export const babyBackground = (c: ThemePalette): React.CSSProperties => ({
   backgroundColor: c.oat,
   backgroundImage: [
+    // Nursery wall, a skirting line and the floor.
+    `linear-gradient(180deg, transparent 0 79.6%, rgba(255,255,255,.7) 79.8%, rgba(61,70,96,.08) 80.4%, rgba(61,70,96,.05))`,
     `linear-gradient(180deg, ${c.blue}55, transparent 55%)`,
     `radial-gradient(60% 40% at 50% 30%, #FFFFFF99, transparent 70%)`,
-    "radial-gradient(130% 100% at 50% 45%, transparent 55%, rgba(61,70,96,.14))",
+    "radial-gradient(130% 100% at 50% 45%, transparent 55%, rgba(61,70,96,.16))",
+    TEXTURE_SOFT.paper,
   ].join(","),
+  backgroundSize: "auto, auto, auto, auto, 260px 260px",
 });

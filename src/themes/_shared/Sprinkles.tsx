@@ -9,17 +9,23 @@ export function IconGlyph({
   size = 18,
   className = "",
   style,
+  material,
 }: {
   item: IconItem;
   color: string;
   size?: number;
   className?: string;
   style?: React.CSSProperties;
+  /** Felt: plush relief and a stitched edge (needs LightDefs on the page). */
+  material?: "felt";
 }) {
   if (item.kind === "path")
     return (
-      <svg viewBox="0 0 24 24" width={size} height={size} className={className} style={style} aria-hidden="true">
-        <path d={item.d} fill={color} />
+      <svg viewBox="0 0 24 24" width={size} height={size} className={material ? `overflow-visible ${className}` : className} style={style} aria-hidden="true">
+        <path d={item.d} fill={color} filter={material === "felt" ? "url(#jb-puff)" : undefined} />
+        {material === "felt" ? (
+          <path d={item.d} fill="none" stroke="#fff" strokeOpacity=".6" strokeWidth=".5" strokeDasharray="1 1.1" strokeLinecap="round" transform="translate(12 12) scale(.82) translate(-12 -12)" />
+        ) : null}
       </svg>
     );
   if (item.kind === "image")
@@ -143,6 +149,8 @@ export function SprinkleField({
   colors: fallbackColors,
   className = "",
   opacity = 0.8,
+  size = [10, 26],
+  blur = 0,
 }: {
   set: IconSet;
   count?: number;
@@ -150,20 +158,25 @@ export function SprinkleField({
   colors?: string[];
   className?: string;
   opacity?: number;
+  /** Smallest and largest icon, px. */
+  size?: [number, number];
+  /** Depth of field: far and very near layers are a little out of focus. */
+  blur?: number;
 }) {
+  const [lo, hi] = size;
   const parts = useMemo(() => {
     const r = rng(seed * 131 + set.id.length);
     return Array.from({ length: count }, (_, i) => ({
       i,
       left: r() * 100,
       top: r() * 100,
-      size: 10 + r() * 16,
+      size: lo + r() * (hi - lo),
       delay: -r() * 16,
       dur: 10 + r() * 12,
       dx: (r() - 0.5) * 90,
       rot: (r() - 0.5) * 90,
     }));
-  }, [count, seed, set.id]);
+  }, [count, seed, set.id, lo, hi]);
   const colors = set.colors.length ? set.colors : (fallbackColors ?? ["#C2366B", "#FFD166", "#FFFFFF"]);
   return (
     <div className={`jb-sprinkles pointer-events-none absolute inset-0 overflow-hidden ${className}`} aria-hidden="true">
@@ -184,7 +197,8 @@ export function SprinkleField({
             } as React.CSSProperties
           }
         >
-          <IconGlyph item={pick(set.items, p.i)} color={pick(colors, p.i)} size={p.size} />
+          {/* Blur the glyph, not the moving span: it's baked in once and the span just slides. */}
+          <IconGlyph item={pick(set.items, p.i)} color={pick(colors, p.i)} size={p.size} style={blur ? { filter: `blur(${blur}px)`, display: "block" } : {}} />
         </span>
       ))}
     </div>

@@ -14,6 +14,7 @@ import type { ThemePalette } from "@/themes/_shared/design";
 import { FallbackButton, Layer, SPRING, useBeats, useHaptics, useTilt } from "@/themes/_shared/stage";
 import { burstSet } from "@/themes/_shared/Sprinkles";
 import { initialsOf } from "@/themes/_shared/iconSets";
+import { Extrude, FloorShadow, LightShaft, Object3D, Sheen, TEXTURE_SOFT, Texture, elevation, pressed, rim } from "@/themes/_shared/light";
 import { foley, melody } from "@/lib/play";
 
 export function WeddingOpening(p: OpeningProps) {
@@ -48,8 +49,8 @@ export function WeddingOpening(p: OpeningProps) {
     if (beat === 1) {
       melody([784, 988, 1175, 1568], 0.14, "sine", 0.05);
       const hgt = cardRef.current?.offsetHeight ?? 300;
-      void animate(y, -hgt * 0.12, SPRING.heavy);
-      void animate(scale, 1.06, SPRING.soft);
+      void animate(y, hgt * 0.02, SPRING.heavy);
+      void animate(scale, 1.07, SPRING.soft);
     }
     if (beat === 2) h.success();
     if (beat === 3) p.onOpen();
@@ -75,7 +76,21 @@ export function WeddingOpening(p: OpeningProps) {
 
   return (
     <div className="relative flex w-full flex-col items-center">
-      <Layer depth={10} rotate={7} className="relative" style={{ width: "min(70cqi, 320px)", aspectRatio: "0.72" }}>
+      <Layer depth={-12} className="pointer-events-none absolute -inset-[40%]">
+        <LightShaft strength={0.7} motes={8} angle={24} />
+      </Layer>
+      <Layer depth={10} className="relative" style={{ width: "min(70cqi, 320px)", aspectRatio: "0.72" }}>
+        <Object3D pose={{ x: 9, y: -7, z: 1 }} strength={10} settle={free && beat >= 1} className="absolute inset-0">
+        <div className="absolute inset-0" style={{ transform: "translateZ(-26px)", transformStyle: "preserve-3d" }}>
+          <motion.div className="absolute inset-x-0 bottom-0 h-[64%]" animate={{ opacity: free && beat >= 1 ? 0 : 1 }} transition={{ duration: 0.5 }}>
+            <FloorShadow tint="70,62,40" depth={4} radius={6} className="inset-0" />
+          </motion.div>
+        </div>
+        {/* The sleeve has a little body: front and back layers of vellum */}
+        <div className="absolute inset-x-0 bottom-0 h-[64%]" style={{ transformStyle: "preserve-3d", visibility: free && beat >= 1 ? "hidden" : "visible", transition: "visibility 0s .35s" }}>
+          <Extrude depth={5} color="rgb(236,230,216)" edge="rgb(214,206,190)" radius={4} slices={4} />
+        </div>
+        <div className="absolute inset-0">
         {/* The card */}
         <motion.div
           ref={cardRef}
@@ -117,11 +132,14 @@ export function WeddingOpening(p: OpeningProps) {
             style={{
               background: `linear-gradient(160deg, #FFFEFA, ${c.paper})`,
               color: c.ink,
-              boxShadow: "0 18px 34px -18px rgba(60,55,40,.45), inset 0 0 0 1px rgba(0,0,0,.04)",
+              boxShadow: `${rim(0.9)}, ${elevation(free ? 0.9 : 0.35, "70,62,40", 0.9)}`,
+              transition: "box-shadow .6s ease",
             }}
           >
-            {/* Deckled, embossed border */}
-            <span className="pointer-events-none absolute inset-[5%] rounded-[2px]" style={{ boxShadow: "inset 0 0 0 1px rgba(201,165,92,.55), inset 0 0 0 4px rgba(255,255,255,.7), inset 0 0 0 5px rgba(201,165,92,.25)" }} />
+            <Texture material="paper" opacity={0.42} />
+            <Sheen strength={0.7} angle={120} width={22} />
+            {/* Letterpress border: pressed into the cotton, so it's lit on its lower right inside edge */}
+            <span className="pointer-events-none absolute inset-[5%] rounded-[2px]" style={{ boxShadow: "inset 1px 1px 0 rgba(90,80,50,.18), inset -1px -1px 0 rgba(255,255,255,.95), 0 0 0 1px rgba(201,165,92,.55), inset 0 0 0 4px rgba(255,255,255,.55), inset 0 0 0 5px rgba(201,165,92,.25)" }} />
             <motion.span
               className="relative grid size-[clamp(64px,20cqi,96px)] place-items-center rounded-full text-[clamp(1.6rem,8cqi,2.6rem)] italic"
               style={{
@@ -132,15 +150,15 @@ export function WeddingOpening(p: OpeningProps) {
                 backgroundPosition: foil,
                 WebkitBackgroundClip: "text",
                 backgroundClip: "text",
-                boxShadow: `inset 0 0 0 1.5px ${c.gold}88`,
+                boxShadow: `inset 0 0 0 1.5px ${c.gold}88, inset 1px 1px 0 2px rgba(255,255,255,.7), inset -1px -1px 0 2px rgba(120,95,40,.18), 1px 1px 0 rgba(255,255,255,.8)`,
               }}
               animate={beat >= 2 ? { scale: [1, 1.08, 1] } : {}}
               transition={{ duration: 1.2, ease: [0.4, 0, 0.2, 1] }}
             >
               {monogram}
             </motion.span>
-            <span className="mt-[8%] text-[10px] tracking-[0.34em] uppercase opacity-70">{p.badge}</span>
-            <Greeting text={p.greeting} className="mt-2 text-[clamp(1.6rem,8.5cqi,2.6rem)]" style={{ fontStyle: "italic", fontWeight: 500 }} />
+            <span className="mt-[8%] text-[10px] tracking-[0.34em] uppercase opacity-70" style={{ textShadow: pressed(0.8) }}>{p.badge}</span>
+            <Greeting text={p.greeting} className="mt-2 text-[clamp(1.6rem,8.5cqi,2.6rem)]" style={{ fontStyle: "italic", fontWeight: 500, textShadow: pressed(1) }} />
             <span className="mt-[8%] block h-px w-1/3" style={{ background: `${c.gold}99` }} />
           </div>
         </motion.div>
@@ -149,16 +167,21 @@ export function WeddingOpening(p: OpeningProps) {
         <div
           className="pointer-events-none absolute inset-x-0 bottom-0 z-[3] h-[64%] rounded-[4px]"
           style={{
-            background: "linear-gradient(180deg, rgba(255,255,255,.52), rgba(250,246,238,.78))",
-            backdropFilter: "blur(5px) saturate(1.1)",
-            WebkitBackdropFilter: "blur(5px) saturate(1.1)",
-            boxShadow: "0 26px 40px -22px rgba(60,55,40,.45), inset 0 1px 0 rgba(255,255,255,.9)",
+            // Frosted by opacity, not backdrop-filter: a backdrop blur under a moving 3D
+            // stage would re-blur every frame.
+            background: "linear-gradient(180deg, rgba(255,255,255,.74), rgba(250,246,238,.9))",
+            boxShadow: "inset 0 1px 0 rgba(255,255,255,.95), inset 1px 0 0 rgba(255,255,255,.6), inset -1px -1px 0 rgba(120,110,80,.12)",
             opacity: free && beat >= 1 ? 0 : 1,
             transition: "opacity .5s ease",
           }}
         >
-          <div className="absolute inset-x-0 top-[40%] h-[16%]" style={{ background: `linear-gradient(180deg, ${c.sage}, #87A07A)` }} />
-          <div className="absolute top-[34%] left-1/2 grid size-[19%] -translate-x-1/2 place-items-center rounded-full" style={{ background: `radial-gradient(circle at 35% 30%, #F4E3B5, ${c.gold})`, boxShadow: "0 4px 8px -3px rgba(0,0,0,.35)" }}>
+          <Texture material="vellum" opacity={0.35} />
+          <Sheen strength={0.9} angle={110} width={18} travel={70} />
+          {/* Belly band: woven ribbon, sitting on the vellum with its own soft shadow */}
+          <div className="absolute inset-x-0 top-[40%] h-[16%]" style={{ background: `linear-gradient(180deg, color-mix(in srgb, ${c.sage} 85%, #fff), ${c.sage} 40%, color-mix(in srgb, ${c.sage} 80%, #000))`, boxShadow: "0 2px 3px rgba(60,55,40,.22), 0 6px 10px -4px rgba(60,55,40,.18)" }}>
+            <Texture material="linen" opacity={0.55} scale={0.6} />
+          </div>
+          <div className="absolute top-[34%] left-1/2 grid size-[19%] -translate-x-1/2 place-items-center rounded-full" style={{ background: `radial-gradient(circle at 35% 30%, #FFF4CF, ${c.gold} 55%, #8E6F31)`, boxShadow: "2px 4px 6px -2px rgba(0,0,0,.4), inset 0 0 0 1.5px rgba(255,255,255,.35), inset -2px -3px 4px rgba(90,60,20,.35)" }}>
             <span className="text-[clamp(10px,3cqi,14px)] italic" style={{ fontFamily: "var(--jb-display)", color: "#6E5422" }}>
               {monogram}
             </span>
@@ -166,12 +189,15 @@ export function WeddingOpening(p: OpeningProps) {
           <span className="absolute inset-x-0 top-0 h-[10%]" style={{ background: "linear-gradient(180deg, rgba(255,255,255,.9), transparent)" }} />
         </div>
 
+        </div>
+        </Object3D>
+
         <div className="absolute -right-[16%] bottom-[-6%] z-[4]">
           <Character ref={cast} setting={p.character} accessory={p.accessory} size={84} live={!p.paused} showName={false} />
         </div>
       </Layer>
 
-      <div className="mt-[9cqi] h-11">
+      <div className="mt-[min(9cqi,40.5px)] h-11">
         <FallbackButton onClick={release} color={c.ink!} ink={c.ink!} hidden={free || !p.interactive || p.paused}>
           {p.buttonText}
         </FallbackButton>
@@ -183,8 +209,9 @@ export function WeddingOpening(p: OpeningProps) {
 export const weddingBackground = (c: ThemePalette): React.CSSProperties => ({
   backgroundColor: c.ivory,
   backgroundImage: [
-    `radial-gradient(60% 50% at 50% 45%, #FFFFFF, transparent 75%)`,
-    `radial-gradient(120% 90% at 50% 40%, transparent 55%, ${c.sage}38)`,
-    "repeating-linear-gradient(45deg, rgba(0,0,0,.012) 0 2px, transparent 2px 6px)",
+    `radial-gradient(60% 50% at 46% 42%, #FFFFFF, transparent 75%)`,
+    `radial-gradient(120% 90% at 50% 40%, transparent 52%, ${c.sage}44)`,
+    TEXTURE_SOFT.paper,
   ].join(","),
+  backgroundSize: "auto, auto, 260px 260px",
 });
