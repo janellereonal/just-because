@@ -1,3 +1,4 @@
+import { useAuth } from "@/hooks/useAuth";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import {
@@ -125,6 +126,7 @@ const FAQ = [
 ];
 
 function Index() {
+  const { user } = useAuth();
   const navigate = useNavigate();
   const { data: themes = [] } = useQuery({
     queryKey: ["themes", "published"],
@@ -463,9 +465,15 @@ function Index() {
           <a href="#pricing" className="hover:text-ink">
             {LANDING_MORE.footer.plans}
           </a>
-          <Link to="/auth" className="hover:text-ink">
-            {LANDING_MORE.footer.signIn}
-          </Link>
+          {user ? (
+            <Link to="/dashboard" className="hover:text-ink">
+              {LANDING_MORE.footer.myGifts}
+            </Link>
+          ) : (
+            <Link to="/auth" className="hover:text-ink">
+              {LANDING_MORE.footer.signIn}
+            </Link>
+          )}
         </nav>
         <p>{LANDING_MORE.footer.line}</p>
       </footer>

@@ -1,9 +1,26 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useQuery } from "@tanstack/react-query";
+import { useState } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { ArrowUpRight, Link2, PencilLine, Plus } from "lucide-react";
+import { ArrowUpRight, Link2, MoreHorizontal, PencilLine, Plus, Trash2 } from "lucide-react";
 import { SiteHeader } from "@/components/SiteHeader";
-import { listMySites } from "@/lib/api";
+import { deleteSite, listMySites } from "@/lib/api";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { isGiftEnded, normalizeSite, resolvePalette, type GiftSite } from "@/lib/gift";
 import { getTier } from "@/config/pricing";
 import { formatInfo } from "@/lib/formats";
@@ -32,6 +49,11 @@ function status(site: GiftSite) {
 }
 
 function GiftCard({ site, index }: { site: GiftSite; index: number }) {
+  const queryClient = useQueryClient();
+  const [confirming, setConfirming] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  // Paid plans keep their gift (and its receipt). Legacy gifts never had an order.
+  const paid = !!site.tier && site.tier !== "legacy";
   const palette = resolvePalette(null, site.custom_colors);
   const s = status(site);
   const recipient = site.custom_text.recipient_name?.trim();
@@ -70,9 +92,9 @@ function GiftCard({ site, index }: { site: GiftSite; index: number }) {
               <span className="block text-sm text-white/90">For {recipient}</span>
             ) : null}
           </span>
-          <span className="shrink-0 rounded-full bg-white/85 px-2.5 py-1 text-[11px] font-medium text-ink backdrop-blur">
-            {site.solo ? "Just me · " : ""}{formatInfo(site.format).title}
-          </span>
+        </span>
+        <span className="absolute top-3 right-3 rounded-full bg-white/85 px-2.5 py-1 text-[11px] font-medium text-ink backdrop-blur">
+          {site.solo ? "Just me" : "Me and friends"} · {formatInfo(site.format).title}
         </span>
       </Link>
       <div className="flex flex-1 flex-col gap-4 p-5">
@@ -99,13 +121,13 @@ function GiftCard({ site, index }: { site: GiftSite; index: number }) {
               type="button"
               onClick={() => {
                 void navigator.clipboard.writeText(friendsLink).then(
-                  () => toast.success("Friends link copied"),
+                  () => toast.success("Invite link copied"),
                   () => toast.error("Couldn't copy the link."),
                 );
               }}
               className="squish inline-flex min-h-10 items-center gap-1.5 rounded-full bg-paper px-4 text-sm font-medium ring-1 ring-ink/10 hover:bg-pink/40"
             >
-              <Link2 className="size-4" /> Friends link
+              <Link2 className="size-4" /> Invite link
             </button>
           ) : null}
           {site.status === "published" ? (
@@ -116,8 +138,64 @@ function GiftCard({ site, index }: { site: GiftSite; index: number }) {
               <ArrowUpRight className="size-4" /> Open gift
             </a>
           ) : null}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <button
+                type="button"
+                aria-label={`More for ${site.title}`}
+                className="squish ml-auto grid size-10 place-items-center rounded-full text-muted ring-1 ring-ink/10 hover:bg-pink/40 hover:text-ink"
+              >
+                <MoreHorizontal className="size-4" />
+              </button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-56">
+              {paid ? (
+                <p className="px-2 py-1.5 text-xs text-muted">
+                  This gift has a paid plan, so it stays. You can unpublish it from the editor.
+                </p>
+              ) : (
+                <DropdownMenuItem className="text-[#B4322E] focus:text-[#B4322E]" onSelect={() => setConfirming(true)}>
+                  <Trash2 /> Delete gift
+                </DropdownMenuItem>
+              )}
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       </div>
+      <AlertDialog open={confirming} onOpenChange={(open) => !deleting && setConfirming(open)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete {site.title}?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Every note, photo and song in it goes too
+              {site.solo ? "" : ", and the invite link stops working"}. This can't be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={deleting}>Keep it</AlertDialogCancel>
+            <AlertDialogAction
+              disabled={deleting}
+              className="bg-[#B4322E] text-white hover:bg-[#9A2A27]"
+              onClick={(e) => {
+                e.preventDefault();
+                setDeleting(true);
+                deleteSite({ data: { id: site.id } })
+                  .then(async () => {
+                    toast.success("Gift deleted.");
+                    setConfirming(false);
+                    await queryClient.invalidateQueries({ queryKey: ["my-sites"] });
+                  })
+                  .catch((err: unknown) => {
+                    toast.error(err instanceof Error && err.message.length < 160 ? err.message : "Couldn't delete that gift.");
+                  })
+                  .finally(() => setDeleting(false));
+              }}
+            >
+              {deleting ? "Deleting…" : "Delete gift"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </article>
   );
 }
@@ -146,7 +224,7 @@ function Dashboard() {
             </h1>
             {!empty && !isLoading ? (
               <p className="mt-2 text-ink/65">
-                {sites.length} {sites.length === 1 ? "gift" : "gifts"}. Share the friends link to
+                {sites.length} {sites.length === 1 ? "gift" : "gifts"}. Share the invite link to
                 collect notes.
               </p>
             ) : null}
@@ -208,7 +286,7 @@ function Dashboard() {
             <ol className="grid gap-3">
               {[
                 ["Pick a theme", "Birthday, send-off, wedding, or just because."],
-                ["Share the friends link", "No sign-up for them. Notes wait for you."],
+                ["Share the invite link", "No sign-up for them. Notes wait for you."],
                 ["Wrap it up", "Approve the notes, pick a plan, send one link."],
               ].map(([t, b], i) => (
                 <li key={t} className="card-paper flex items-start gap-4 p-5">

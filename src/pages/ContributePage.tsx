@@ -25,6 +25,7 @@ import { readableInk, surfaceColor } from "@/lib/palettes";
 import { FormatView } from "@/components/formats/FormatView";
 import { DevicePreview, DeviceToggle, type PreviewDevice } from "@/components/DevicePreview";
 import { ModuleExample } from "@/components/ModuleExample";
+import { themeKindOf } from "@/lib/themeKind";
 import Bo from "@/components/Bo";
 import { Brush, CalendarDays, CircleHelp, Hourglass, Image as ImageIcon, Lock, Mail, MailOpen, MapPin, Mic, Music2, Sparkles, Ticket, Trophy, Type, Users, Video } from "lucide-react";
 import { SectionFields } from "@/components/sections/SectionFields";
@@ -595,6 +596,7 @@ function ContributePage() {
                   <p className="mb-2 text-xs opacity-70">It'll look something like this</p>
                   <ModuleExample
                     type={active}
+                    kind={themeKindOf(theme)}
                     tone={{ bg: palette.background, ink, accent: palette.accent }}
                   />
                 </div>

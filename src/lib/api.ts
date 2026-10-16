@@ -442,7 +442,15 @@ export const deleteSite = createServerFn({ method: "POST" })
   .inputValidator(z.object({ id }))
   .handler(async ({ data }) => {
     await requireSiteOwner(data.id);
-    await getDb().delete(schema.giftSites).where(eq(schema.giftSites.id, data.id));
+    const db = getDb();
+    // Orders cascade with the gift, so a paid gift would take its payment record with it.
+    const [paid] = await db
+      .select({ id: schema.orders.id })
+      .from(schema.orders)
+      .where(and(eq(schema.orders.siteId, data.id), eq(schema.orders.status, "paid")))
+      .limit(1);
+    if (paid) throw new Error("This gift has a paid plan, so it stays. You can unpublish it from the editor.");
+    await db.delete(schema.giftSites).where(eq(schema.giftSites.id, data.id));
     return { ok: true };
   });
 

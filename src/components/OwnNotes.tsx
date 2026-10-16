@@ -373,7 +373,7 @@ export function OwnNotes({
         </div>
         <p className="mt-2 text-xs text-muted">
           {solo
-            ? `You make every page for ${recipient || "them"}. There's no friends link.`
+            ? `You make every page for ${recipient || "them"}. There's no invite link.`
             : "Friends add theirs through the link. You can add yours here too."}
         </p>
       </div>

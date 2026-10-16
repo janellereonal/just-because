@@ -202,6 +202,25 @@ export function WishCandles({
 
   useEffect(() => () => stopMic.current?.(), []);
 
+  // While an opening is on screen its cake sits where this button is, and the reveal
+  // shows the gift through a hole in the middle. Wait until it has gone.
+  const [behindOpening, setBehindOpening] = useState(false);
+  useEffect(() => {
+    const covered = () => !!document.querySelector(".jb-opening");
+    setBehindOpening(covered());
+    const done = () => window.setTimeout(() => setBehindOpening(covered()), 120);
+    window.addEventListener("jb:opening-done", done);
+    // A replayed opening covers it again.
+    const mo = new MutationObserver(() => {
+      if (covered()) setBehindOpening(true);
+    });
+    mo.observe(document.body, { childList: true, subtree: true });
+    return () => {
+      window.removeEventListener("jb:opening-done", done);
+      mo.disconnect();
+    };
+  }, []);
+
   function blow() {
     stopMic.current?.();
     heroRef.current?.blowOut();
@@ -278,7 +297,11 @@ export function WishCandles({
     "inline-flex min-h-11 items-center gap-1.5 rounded-full px-4 text-sm font-semibold transition-transform active:scale-95";
 
   return (
-    <div className="mt-4 flex flex-col items-center gap-2" data-no-catch>
+    <div
+      className="mt-4 flex flex-col items-center gap-2 transition-opacity duration-500"
+      style={{ opacity: behindOpening ? 0 : 1, visibility: behindOpening ? "hidden" : "visible" }}
+      data-no-catch
+    >
       {step === "idle" ? (
         <button
           ref={btnRef}
