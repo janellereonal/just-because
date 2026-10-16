@@ -45,6 +45,9 @@ export const HERO_WORD: Record<ThemeKind, string> = {
   wedding: "cake",
   bridal: "teacup",
   baby: "mobile",
+  handwritten: "note",
+  game: "dice",
+  pixel: "console",
   default: "gift",
 };
 

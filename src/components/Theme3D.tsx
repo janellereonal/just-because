@@ -14,7 +14,7 @@ export const Live3DContext = createContext(true);
 export const Pause3DContext = createContext(false);
 
 /** Bump when the stills in public/themes3d are re-rendered, to bust caches. */
-const STILL_VERSION = "1";
+const STILL_VERSION = "2";
 export const themeStillUrl = (kind: ThemeKind) => `/themes3d/${kind}.webp?v=${STILL_VERSION}`;
 
 /**

@@ -16,5 +16,8 @@ export const PRESETS: Record<ThemeKind, ModuleType[]> = {
   newyear: ["letters", "capsule", "superlatives", "video", "photobooth"],
   voyage: ["letters", "openwhen", "map", "photobooth", "video"],
   pets: ["photobooth", "letters", "doodle", "superlatives", "video"],
+  handwritten: ["letters", "openwhen", "capsule", "photobooth", "voice"],
+  game: ["letters", "quiz", "superlatives", "coupons", "photobooth"],
+  pixel: ["letters", "quiz", "superlatives", "video", "photobooth"],
   default: ["letters", "photobooth", "songs", "voice", "wordcloud"],
 };

@@ -6,6 +6,7 @@ import { resolveIconSet } from "@/themes/_shared/iconSets";
 import { castFor } from "@/themes/_shared/design";
 import { GiftSiteView } from "@/components/GiftSiteView";
 import { PlaceholderNameContext } from "@/components/SampleMark";
+import { Roamer } from "@/components/Roamer";
 import { ComicIssueView } from "@/components/ComicIssueView";
 import {
   resolvePalette,
@@ -83,11 +84,19 @@ export function FormatView(props: Props) {
   const kind = themeKindOf(props.theme);
   useEffect(() => loadThemeFonts(kind), [kind]);
   const tiles = props.site.format !== "scrapbook" && props.site.format !== "comic";
+  const cast = castFor(kind, props.site.character ?? null, props.site.icon_set ?? null);
+  const palette = props.palette ?? resolvePalette(props.theme, props.site.custom_colors);
+  const roamIcons = useMemo(
+    () => (cast.roam >= 0 ? resolveIconSet(cast.iconSet, { recipient: props.site.custom_text.recipient_name ?? "", palette }) : null),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [cast.roam, JSON.stringify(cast.iconSet), props.site.custom_text.recipient_name, palette.primary, palette.accent],
+  );
   return (
     <PlaceholderNameContext.Provider value={!!props.placeholderName}>
       <div className="contents" style={themeFontVars(kind)}>
         <FormatBody {...props} />
         {tiles ? <TileExtras {...props} kind={kind} /> : null}
+        {roamIcons ? <Roamer icons={roamIcons} index={cast.roam} /> : null}
       </div>
     </PlaceholderNameContext.Provider>
   );

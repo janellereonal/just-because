@@ -32,6 +32,9 @@ const COUNTS: Record<ThemeKind, number> = {
   wedding: 16,
   bridal: 18,
   baby: 16,
+  handwritten: 12,
+  game: 22,
+  pixel: 26,
   default: 12,
 };
 

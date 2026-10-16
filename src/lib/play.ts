@@ -21,6 +21,9 @@ export const KIND_BURST: Record<ThemeKind, BurstShape> = {
   wedding: "petals",
   bridal: "petals",
   baby: "stars",
+  handwritten: "hearts",
+  game: "confetti",
+  pixel: "stars",
   default: "confetti",
 };
 

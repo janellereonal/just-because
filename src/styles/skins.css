@@ -506,6 +506,117 @@
 .skin-bridal .sb-tile { border-radius: 40% 40% 18px 18px; }
 
 /* ---------- reduced motion ---------- */
+
+/* ---------- Handwritten: lined paper, ink, washi tape ---------- */
+.skin-handwritten .sk-pattern {
+  background: repeating-linear-gradient(180deg, transparent 0 31px, var(--sk-p) 31px 32px);
+  opacity: 0.08;
+}
+.skin-handwritten .sk-pattern::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: max(16px, 6%);
+  width: 1px;
+  background: var(--sk-a);
+  opacity: 0.6;
+}
+.skin-handwritten .sb-hero { transform: rotate(-1.2deg); letter-spacing: -0.005em; }
+.skin-handwritten .sk-badge { background: none; padding: 0; letter-spacing: 0.16em; text-decoration: underline wavy color-mix(in oklab, var(--sk-a) 70%, transparent); text-underline-offset: 6px; }
+.skin-handwritten .sb-title { display: block; }
+.skin-handwritten .sb-title::after {
+  content: "";
+  display: block;
+  width: 150px;
+  height: 10px;
+  margin-top: 6px;
+  background: var(--sk-a);
+  -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 150 10'%3E%3Cpath d='M2 6c24-6 48 4 72-1s46-5 74 1' fill='none' stroke='black' stroke-width='2.4' stroke-linecap='round'/%3E%3C/svg%3E") center / contain no-repeat;
+  mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 150 10'%3E%3Cpath d='M2 6c24-6 48 4 72-1s46-5 74 1' fill='none' stroke='black' stroke-width='2.4' stroke-linecap='round'/%3E%3C/svg%3E") center / contain no-repeat;
+}
+.skin-handwritten .sb-letter {
+  border-radius: 2px;
+  background:
+    linear-gradient(90deg, transparent 0 30px, color-mix(in oklab, var(--sk-a) 45%, transparent) 30px 31px, transparent 31px),
+    repeating-linear-gradient(180deg, transparent 0 25px, color-mix(in oklab, var(--sk-p) 13%, transparent) 25px 26px) 0 14px,
+    var(--gift-surface);
+  padding-left: 2.6rem !important;
+}
+.skin-handwritten .sb-letters > :nth-child(odd) .sb-letter { transform: rotate(-0.8deg); }
+.skin-handwritten .sb-letters > :nth-child(even) .sb-letter { transform: rotate(0.9deg); }
+.skin-handwritten .sb-polaroid { position: relative; }
+.skin-handwritten .sb-polaroid::before {
+  content: "";
+  position: absolute;
+  top: -10px;
+  left: 50%;
+  width: 70px;
+  height: 20px;
+  transform: translateX(-50%) rotate(-3deg);
+  background: repeating-linear-gradient(90deg, color-mix(in oklab, var(--sk-a) 55%, transparent) 0 6px, color-mix(in oklab, var(--sk-a) 40%, transparent) 6px 12px);
+  z-index: 2;
+}
+
+/* ---------- Game Night: a board, chunky outlines, hard shadows ---------- */
+.skin-game .sk-pattern {
+  /* A board: soft squares in the ink colour, with a dotted track every few rows. */
+  background:
+    radial-gradient(circle, var(--sk-a) 2.2px, transparent 2.8px) 14px 14px / 56px 168px,
+    repeating-conic-gradient(var(--sk-ink) 0 25%, transparent 0 50%) 0 0 / 56px 56px;
+  opacity: 0.055;
+}
+.skin-game .sb-hero { text-shadow: 3px 3px 0 color-mix(in oklab, var(--sk-a) 55%, transparent); letter-spacing: 0.01em; }
+.skin-game .sk-badge {
+  background: color-mix(in oklab, var(--sk-a) 22%, var(--sk-bg));
+  box-shadow: inset 0 0 0 2px var(--sk-ink), 3px 3px 0 var(--sk-ink);
+  border-radius: 10px;
+}
+.skin-game .sb-title { display: block; }
+.skin-game .sb-title::after {
+  content: "";
+  display: block;
+  width: 132px;
+  height: 10px;
+  margin-top: 10px;
+  background:
+    radial-gradient(circle, var(--sk-a) 4px, transparent 4.5px) 0 50% / 22px 10px repeat-x;
+}
+.skin-game .sb-letter, .skin-game .sb-tile {
+  border-radius: 18px;
+  box-shadow: inset 0 0 0 3px var(--sk-ink), 6px 6px 0 color-mix(in oklab, var(--sk-a) 70%, transparent);
+}
+.skin-game .sb-polaroid { box-shadow: inset 0 0 0 3px var(--sk-ink), 6px 6px 0 color-mix(in oklab, var(--sk-p) 50%, transparent) !important; border-radius: 14px; }
+
+/* ---------- Pixel: a grid, square corners, stepped borders ---------- */
+.skin-pixel .sk-pattern {
+  background-image: linear-gradient(var(--sk-a) 1px, transparent 1px), linear-gradient(90deg, var(--sk-a) 1px, transparent 1px);
+  background-size: 24px 24px;
+  background-color: transparent;
+  opacity: 0.07;
+}
+.skin-pixel .sb-hero { letter-spacing: 0.02em; line-height: 1.25 !important; text-shadow: 4px 4px 0 color-mix(in oklab, var(--sk-a) 60%, transparent); font-size: clamp(1.4rem, 6cqi, 2.6rem) !important; }
+.skin-pixel .sk-badge {
+  border-radius: 0;
+  background: color-mix(in oklab, var(--sk-a) 16%, transparent);
+  box-shadow: 0 -3px 0 0 var(--sk-ink), 0 3px 0 0 var(--sk-ink), -3px 0 0 0 var(--sk-ink), 3px 0 0 0 var(--sk-ink);
+  letter-spacing: 0.1em;
+}
+.skin-pixel .sb-title { display: block; line-height: 1.3; }
+.skin-pixel .sb-title::before { content: "▶"; content: "▶" / ""; font-size: 0.55em; color: var(--sk-a); margin-right: 0.5em; vertical-align: 0.2em; }
+.skin-pixel .sb-title::after {
+  content: "";
+  display: block;
+  width: 128px;
+  height: 6px;
+  margin-top: 10px;
+  background: repeating-linear-gradient(90deg, var(--sk-a) 0 6px, transparent 6px 12px);
+}
+.skin-pixel .sb-letter, .skin-pixel .sb-tile, .skin-pixel .sb-polaroid {
+  border-radius: 0 !important;
+  box-shadow: 0 -4px 0 0 var(--sk-ink), 0 4px 0 0 var(--sk-ink), -4px 0 0 0 var(--sk-ink), 4px 0 0 0 var(--sk-ink), 8px 8px 0 4px color-mix(in oklab, var(--sk-a) 35%, transparent) !important;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .sk-p, .sk-bunting span, .sk-lights span, .sk-fireworks span, .skin-newyear .sb-hero { animation: none !important; }
   .sk-fireworks span { opacity: 0.5; transform: scale(0.9); }

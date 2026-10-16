@@ -3,6 +3,24 @@
 Updated 16 Oct 2026 (sessions 6 to 8), so a new session, on any Claude account, can carry on without
 missing anything. Start with `HANDOFF.md` section 0.
 
+## Session 11: Handwritten, Game Night and Pixel, plus the wanderer (branch `new-themes`, on top of `themes-batch`)
+
+- **Three new themes**, in the "Any occasion" group (seeded with 3 palettes each, all pass 3:1):
+  - **Handwritten**: a note folded in four that you unfold (two taps), ink on lined paper. Kalam / Patrick Hand,
+    "Love notes" sprinkles (ink drops, envelopes, hearts). Note cards are lined paper with washi tape.
+  - **Game Night**: a board with two dice you roll; a token hops to the star square. Bungee / Outfit, frog in a
+    party hat, "Game night" sprinkles (dice, meeples, tokens, spades). Note cards have chunky outlines.
+  - **Pixel**: a handheld console, PRESS START, a loading bar and a beating pixel heart. Press Start 2P /
+    Pixelify Sans, crown, "Pixels" sprinkles. Note cards are game dialog boxes.
+  - Each has its own 3D hero (`src/lib/theme3d/scene.ts`), still in `public/themes3d/`, skin in `skins.css`,
+    words in `themeKind.ts`, and starter sections in `presets.ts`.
+- **Wanderer.** One sprinkle from the gift's set strolls along the edges of the gift page (all formats) and hops
+  when tapped (`src/components/Roamer.tsx`). Picked in Look > Customize > Characters and sprinkles > Sprinkles
+  (Off or one of the set). Stored as `icon_set.roam` (-1 off, 0 to 7); the three new themes have it on by default,
+  older themes off. Still under reduced motion.
+- `tools/screens/stills.js` renders the theme 3D stills (see "Re-rendering the theme 3D stills").
+- Not checked: the theme fonts themselves (Google Fonts is blocked in the sandbox, so shots show fallbacks).
+
 ## Session 10: clay characters, clay icons, real gift covers, homepage showcase (branch `themes-batch`)
 
 - **Clay characters.** `src/lib/clay/scene.ts` builds each character in three.js (matte clay material, soft
@@ -21,7 +39,7 @@ missing anything. Start with `HANDOFF.md` section 0.
 - Homepage: the hero phone tours the example gifts on its own (Ana, Sam, Milo, Nora & James), switchable;
   Ana's 30th uses every section. Formats are a showroom (live phone + the nine formats) below plans.
   Theme pages show a sample gift with the sections that suit the occasion.
-- Still to do from this batch: Handwritten, Game and Pixel themes, and the roaming icon you pick in Characters.
+- Handwritten, Game and Pixel themes and the wanderer are session 11.
 
 ## Session 9f: end-to-end walk through on local (branch `e2e-fixes`, follow-up brief section E)
 
@@ -531,3 +549,5 @@ With the dev server running, in Playwright (Chromium with WebGL): open any page,
 `const m = await import('/src/lib/theme3d/scene.ts')`, make a 960x600 canvas, call
 `m.createThemeScene(canvas, kind, palette, { still: true }).snapshot()` and save the data URL to
 `public/themes3d/<kind>.webp`. Use each theme's first suggested palette. Bump `STILL_VERSION`.
+`tools/screens/stills.js` does this for you: `node stills.js <outdir> game:FFF6E5:22305E:D93A33`, then save
+the PNGs as WebP (quality 86).

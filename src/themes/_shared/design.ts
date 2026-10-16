@@ -48,6 +48,8 @@ export type ThemeDesign = {
   defaultIconSet: string;
   /** How long the gallery's silent preview loop runs, in ms. */
   previewLoop: number;
+  /** One of the sprinkles wanders around the gift by default. */
+  roam?: boolean;
 };
 
 const g = (family: string, query: string, fallback = "serif"): FontSpec => ({
@@ -197,6 +199,48 @@ export const THEME_DESIGNS: Record<ThemeKind, ThemeDesign> = {
     defaultIconSet: "paws",
     previewLoop: 3400,
   },
+  handwritten: {
+    id: "handwritten",
+    roam: true,
+    name: "Handwritten",
+    object: "A note folded in four, written in ink",
+    gesture: "Unfold the note",
+    display: g("Kalam", "Kalam:wght@300;400;700", "cursive"),
+    text: g("Patrick Hand", "Patrick+Hand", "cursive"),
+    palette: { paper: "#FBF6EA", ink: "#2A3A6B", kraft: "#C9A57A", rose: "#C2536B", linen: "#EFE6D2" },
+    accessory: null,
+    defaultCharacter: null,
+    defaultIconSet: "notes",
+    previewLoop: 3400,
+  },
+  game: {
+    id: "game",
+    roam: true,
+    name: "Game Night",
+    object: "Two dice on a game board",
+    gesture: "Roll the dice",
+    display: g("Bungee", "Bungee", "sans-serif"),
+    text: g("Outfit", "Outfit:wght@400..700", "sans-serif"),
+    palette: { navy: "#22305E", butter: "#FFD34E", cranberry: "#E2463F", mint: "#3BB98A", cream: "#FFF6E5", sky: "#57A7E8" },
+    accessory: "party-hat",
+    defaultCharacter: "frog",
+    defaultIconSet: "game",
+    previewLoop: 3400,
+  },
+  pixel: {
+    id: "pixel",
+    roam: true,
+    name: "Pixel",
+    object: "A little handheld game console",
+    gesture: "Press start",
+    display: g("Press Start 2P", "Press+Start+2P", "monospace"),
+    text: g("Pixelify Sans", "Pixelify+Sans:wght@400..700", "monospace"),
+    palette: { night: "#1B1640", violet: "#7A5CFF", mint: "#3DF2B0", bubblegum: "#FF5DA2", butter: "#FFE45C", snow: "#F4F1FF" },
+    accessory: "crown",
+    defaultCharacter: null,
+    defaultIconSet: "pixels",
+    previewLoop: 3400,
+  },
   default: {
     id: "default",
     name: "Just Because",
@@ -221,10 +265,13 @@ export function castFor(
   iconSet: IconSetSetting | null | undefined,
 ) {
   const d = designFor(kind);
+  const set = iconSet ?? ({ id: d.defaultIconSet } as IconSetSetting);
   return {
     character: character ?? ((d.defaultCharacter ? { type: "library", id: d.defaultCharacter, accessory: true } : { type: "none" }) as CharacterSetting),
-    iconSet: iconSet ?? ({ id: d.defaultIconSet } as IconSetSetting),
+    iconSet: set,
     accessory: d.accessory,
+    /** Which sprinkle wanders around the gift (-1: none). */
+    roam: typeof set.roam === "number" ? set.roam : d.roam ? 0 : -1,
   };
 }
 

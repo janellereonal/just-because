@@ -194,6 +194,60 @@ function materials(kind: ThemeKind): Material {
         ink: d.ink!,
         pad: "px-8",
       };
+    case "handwritten":
+      // Lined paper with a margin, a strip of washi tape, placed a little crooked.
+      return {
+        rest: (i) => tilt(i, 1.6),
+        shell: (i) => ({
+          className: "rounded-[2px]",
+          style: {
+            background: `linear-gradient(90deg, transparent 0 34px, ${d.rose}55 34px 35px, transparent 35px), repeating-linear-gradient(180deg, transparent 0 25px, ${d.ink}1c 25px 26px), ${i % 3 === 2 ? "#FFF8EE" : d.paper}`,
+            backgroundPosition: "0 0, 0 14px, 0 0",
+            color: d.ink!,
+            boxShadow: "0 1px 0 rgba(0,0,0,.04), 0 16px 26px -20px rgba(60,50,35,.5)",
+            fontFamily: "var(--jb-text)",
+          },
+        }),
+        decor: (i) => <Tape color={i % 2 ? d.rose! : d.kraft!} />,
+        from: (i) => ({ opacity: 0, y: 30, rotate: i % 2 ? 6 : -6 }),
+        transition: SPRING.soft,
+        ink: d.ink!,
+        pad: "pl-12 pr-7 pt-9",
+      };
+    case "game":
+      // A game card: thick outline, a hard offset shadow, a suit in the corner.
+      return {
+        rest: (i) => tilt(i, 1),
+        shell: (i) => ({
+          className: "rounded-[18px]",
+          style: {
+            background: d.cream,
+            color: d.navy!,
+            boxShadow: `inset 0 0 0 3px ${d.navy}, 6px 6px 0 ${[d.cranberry, d.mint, d.butter, d.sky][i % 4]}`,
+          },
+        }),
+        decor: (i) => <Suit color={[d.cranberry, d.mint, d.sky, d.navy][i % 4]!} index={i} />,
+        from: (i) => ({ opacity: 0, y: 40, rotate: i % 2 ? 12 : -12, scale: 0.9 }),
+        transition: SPRING.wobbly,
+        ink: d.navy!,
+      };
+    case "pixel":
+      // A dialog box from an old game: square, a stepped border, a blinking arrow.
+      return {
+        shell: () => ({
+          className: "rounded-none",
+          style: {
+            background: d.night,
+            color: d.snow!,
+            boxShadow: `0 -4px 0 0 ${d.snow}, 0 4px 0 0 ${d.snow}, -4px 0 0 0 ${d.snow}, 4px 0 0 0 ${d.snow}, 0 0 0 4px ${d.violet}, 8px 8px 0 4px rgba(0,0,0,.25)`,
+            fontFamily: "var(--jb-text)",
+          },
+        }),
+        decor: () => <PixelArrow color={d.mint!} />,
+        from: () => ({ opacity: 0, scaleY: 0.1 }),
+        transition: { type: "spring", stiffness: 520, damping: 30 },
+        ink: d.snow!,
+      };
     default:
       break;
   }
@@ -304,5 +358,33 @@ function Paw({ color }: { color: string }) {
     <svg className="absolute -top-3 -right-1 size-9 rotate-12" viewBox="0 0 24 24" aria-hidden="true">
       <path fill={color} d="M12 13c-3 0-6 3-6 5.5S8 22 12 21s6 .5 6-2.5S15 13 12 13zM5 8.5a2.3 2.8 0 1 0 0 .1zM9 4a2.3 2.8 0 1 0 0 .1zM15 4a2.3 2.8 0 1 0 0 .1zM19 8.5a2.3 2.8 0 1 0 0 .1z" />
     </svg>
+  );
+}
+
+/** A strip of washi tape across the top edge. */
+function Tape({ color }: { color: string }) {
+  return (
+    <span
+      aria-hidden="true"
+      className="pointer-events-none absolute -top-3 left-1/2 block h-6 w-20 -translate-x-1/2 -rotate-3"
+      style={{ background: `repeating-linear-gradient(90deg, ${color}aa 0 6px, ${color}88 6px 12px)`, boxShadow: "0 1px 2px rgba(0,0,0,.08)", clipPath: "polygon(3% 0, 97% 4%, 100% 50%, 96% 100%, 2% 96%, 0 50%)" }}
+    />
+  );
+}
+
+/** A card suit in the corner of a game card. */
+function Suit({ color, index }: { color: string; index: number }) {
+  const glyph = ["♠", "♥", "♣", "♦"][index % 4];
+  return (
+    <span aria-hidden="true" className="pointer-events-none absolute top-3 right-4 text-lg leading-none" style={{ color }}>
+      {glyph}
+    </span>
+  );
+}
+
+/** The "more text" arrow in the corner of a pixel dialog box. */
+function PixelArrow({ color }: { color: string }) {
+  return (
+    <span aria-hidden="true" className="pointer-events-none absolute right-4 bottom-3 block size-[10px] motion-safe:animate-pulse" style={{ background: color, clipPath: "polygon(0 0, 100% 0, 50% 100%)" }} />
   );
 }
