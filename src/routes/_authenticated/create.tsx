@@ -5,6 +5,7 @@ import { useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { SiteHeader } from "@/components/SiteHeader";
 import { createSite } from "@/lib/api";
+import { LIMITS } from "@/lib/limits";
 import { fetchThemes } from "@/lib/themes";
 import { usePalettes, suggestedPalettes } from "@/hooks/usePalettes";
 import { MODULES, type ModuleType } from "@/lib/gift";
@@ -137,12 +138,20 @@ function CreatePage() {
     setSelected((prev) => (prev.includes(type) ? prev.filter((t) => t !== type) : [...prev, type]));
   }
 
+  const creating = useRef(false);
   async function handleCreate(e: React.FormEvent) {
     e.preventDefault();
+    if (creating.current) return;
+    if (!recipient.trim()) {
+      toast.error("Add the name of who it's for.");
+      document.getElementById("gift-for")?.focus();
+      return;
+    }
     if ((solo ? selected.filter((t) => t !== "tree") : selected).length === 0) {
       toast.error(solo ? "Pick at least one thing you'll add." : "Pick at least one thing friends can add.");
       return;
     }
+    creating.current = true;
     setBusy(true);
     let data: { id: string };
     try {
@@ -168,11 +177,14 @@ function CreatePage() {
           ...(activeTheme ? { fontChoice: themeFont(activeTheme) } : {}),
         },
       });
-    } catch {
+    } catch (error) {
+      creating.current = false;
       setBusy(false);
-      toast.error("Couldn't create that gift. Please try again.");
+      const msg = error instanceof Error ? error.message : "";
+      toast.error(msg && msg.length < 160 && !/fetch|network/i.test(msg) ? msg : "Couldn't create that gift. Please try again.");
       return;
     }
+    creating.current = false;
     setBusy(false);
     markGiftCreated();
     navigate({ to: "/sites/$id", params: { id: data.id } });
@@ -283,7 +295,7 @@ function CreatePage() {
             <input
               id="gift-for"
               required
-              maxLength={80}
+              maxLength={LIMITS.recipientName}
               autoComplete="off"
               value={recipient}
               onChange={(e) => setRecipient(e.target.value)}

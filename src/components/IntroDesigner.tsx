@@ -1,4 +1,6 @@
 import { useRef, useState } from "react";
+import { CharCount } from "@/components/ui/CharCount";
+import { LIMITS } from "@/lib/limits";
 import { ImagePlus, Loader2, RotateCcw, Shuffle, X } from "lucide-react";
 import { toast } from "sonner";
 import { themeStillUrl } from "@/components/Theme3D";
@@ -186,10 +188,13 @@ export function IntroDesigner({
     <div className="space-y-4">
       <div className="space-y-2.5">
         <label className="block">
-          <span className="text-xs text-muted">Small line on top</span>
+          <span className="flex items-baseline justify-between gap-2">
+            <span className="text-xs text-muted">Small line on top</span>
+            <CharCount value={settings.badge_text} max={LIMITS.openingLine} />
+          </span>
           <input
             className={field}
-            maxLength={48}
+            maxLength={LIMITS.openingLine}
             placeholder={copy.badge}
             value={settings.badge_text ?? ""}
             onChange={(e) => set({ badge_text: e.target.value || undefined })}
@@ -197,10 +202,13 @@ export function IntroDesigner({
         </label>
         {greeting}
         <label className="block">
-          <span className="text-xs text-muted">Button</span>
+          <span className="flex items-baseline justify-between gap-2">
+            <span className="text-xs text-muted">Button</span>
+            <CharCount value={settings.button_text} max={LIMITS.button} />
+          </span>
           <input
             className={field}
-            maxLength={40}
+            maxLength={LIMITS.button}
             placeholder={copy.action}
             value={settings.button_text ?? ""}
             onChange={(e) => set({ button_text: e.target.value || undefined })}

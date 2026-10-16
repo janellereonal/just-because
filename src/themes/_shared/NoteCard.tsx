@@ -269,7 +269,7 @@ export function NoteCard({ kind, text, author, accent, index, muted = false }: P
       style={{ ...(shell.style as object), ...(m.ink ? { color: m.ink } : {}), opacity: muted ? 0.8 : undefined, transformPerspective: 900 }}
       initial={enter}
       whileInView={{ opacity: muted ? 0.8 : 1, x: 0, y: 0, rotateX: 0, scale: 1, rotate: m.rest?.(index) ?? 0 }}
-      viewport={{ once: true, amount: 0.35 }}
+      viewport={{ once: true, amount: "some", margin: "0px 0px -12% 0px" }}
       transition={{ ...(m.transition ?? SPRING.soft), delay: reduce ? 0 : (index % 2) * 0.08 }}
     >
       {m.decor?.(index)}

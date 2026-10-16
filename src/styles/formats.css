@@ -375,7 +375,9 @@ button.bento-tile:hover .bento-wave i:nth-child(odd) { transform: scaleY(1.25); 
 .zine-mono { font-family: "JetBrains Mono", ui-monospace, monospace; font-size: 11px; letter-spacing: .12em; text-transform: uppercase; }
 .zine-marker { font-family: var(--jb-display, "Fraunces", serif); line-height: 1.1; }
 .zine-masthead { border-top: 6px solid var(--z-ink); border-bottom: 2px solid var(--z-ink); padding: 14px 0 26px; }
-.zine-ransom { display: inline-flex; flex-wrap: wrap; gap: .06em .04em; }
+.zine-ransom { display: inline-flex; flex-wrap: wrap; gap: .1em .35em; }
+.zine-rword { display: inline-flex; flex-wrap: nowrap; gap: .04em; white-space: nowrap; }
+.zine-rword-long { flex-wrap: wrap; white-space: normal; }
 .zine-letter { display: inline-block; padding: 0 .08em; font-weight: 800; line-height: 1; transition: transform .25s var(--ease-bounce); }
 .zine-serif { font-family: "Playfair Display", Georgia, serif; font-style: italic; font-weight: 700; }
 .zine-ransom:hover .zine-letter:nth-child(odd) { transform: rotate(0) translateY(-4px) !important; }

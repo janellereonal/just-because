@@ -26,23 +26,31 @@ function Ransom({ text, accent }: { text: string; accent: string }) {
     { background: "#FFE45C", color: "#111" },
     { background: "transparent", color: "#111" },
   ];
+  // Letters stay together by word, so a name only ever wraps between words.
+  // Long names get smaller instead of breaking.
+  const n = [...text].length;
+  const scale = n <= 14 ? 1 : n <= 22 ? 0.8 : n <= 32 ? 0.66 : 0.56;
+  let i = 0;
   return (
-    <span className="zine-ransom" aria-label={text}>
-      {[...text].map((ch, i) => {
-        if (ch === " ") return <span key={i} className="inline-block w-[0.35em]" aria-hidden />;
-        const s = styles[Math.floor(seed(text + i) * styles.length)]!;
-        const r = (seed(i + text) - 0.5) * 14;
-        return (
-          <span
-            key={i}
-            aria-hidden
-            className={i % 3 === 0 ? "zine-letter zine-serif" : "zine-letter"}
-            style={{ ...s, transform: `rotate(${r.toFixed(1)}deg)` }}
-          >
-            {ch}
-          </span>
-        );
-      })}
+    <span className="zine-ransom" aria-label={text} style={{ fontSize: `${scale}em` }}>
+      {text.split(/\s+/).filter(Boolean).map((word, w) => (
+        <span key={w} className={[...word].length > 14 ? "zine-rword zine-rword-long" : "zine-rword"} aria-hidden>
+          {[...word].map((ch) => {
+            const k = (i += 1);
+            const st = styles[Math.floor(seed(text + k) * styles.length)]!;
+            const r = (seed(k + text) - 0.5) * 14;
+            return (
+              <span
+                key={k}
+                className={k % 3 === 0 ? "zine-letter zine-serif" : "zine-letter"}
+                style={{ ...st, transform: `rotate(${r.toFixed(1)}deg)` }}
+              >
+                {ch}
+              </span>
+            );
+          })}
+        </span>
+      ))}
     </span>
   );
 }

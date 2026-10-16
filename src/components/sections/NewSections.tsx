@@ -432,6 +432,7 @@ function OpenCapsule({ item, at, m }: { item: ViewContribution; at: string; m: M
       <span
         className="absolute -top-3 right-4 rounded-full px-2.5 py-1 text-[10px] font-semibold tracking-[0.16em] uppercase"
         style={{ background: m.accent2, color: m.dark ? m.paper : m.ink }}
+        suppressHydrationWarning
       >
         {SECTION_COPY.capsule.openedLine} {at ? formatDay(at) : ""}
       </span>

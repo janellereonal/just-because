@@ -24,6 +24,7 @@ import { Route as DevClayRouteImport } from './routes/dev.clay'
 import { Route as DevFormatRouteImport } from './routes/dev.format'
 import { Route as DevOpeningsRouteImport } from './routes/dev.openings'
 import { Route as DevPeopleRouteImport } from './routes/dev.people'
+import { Route as DevWorstCaseRouteImport } from './routes/dev.worst-case'
 import { Route as ExampleIdRouteImport } from './routes/example.$id'
 import { Route as GSlugRouteImport } from './routes/g.$slug'
 import { Route as ThemesIndexRouteImport } from './routes/themes.index'
@@ -108,6 +109,11 @@ const DevPeopleRoute = DevPeopleRouteImport.update({
   path: '/dev/people',
   getParentRoute: () => rootRouteImport,
 } as any)
+const DevWorstCaseRoute = DevWorstCaseRouteImport.update({
+  id: '/dev/worst-case',
+  path: '/dev/worst-case',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ExampleIdRoute = ExampleIdRouteImport.update({
   id: '/example/$id',
   path: '/example/$id',
@@ -170,6 +176,7 @@ export interface FileRoutesByFullPath {
   '/dev/format': typeof DevFormatRoute
   '/dev/openings': typeof DevOpeningsRoute
   '/dev/people': typeof DevPeopleRoute
+  '/dev/worst-case': typeof DevWorstCaseRoute
   '/example/$id': typeof ExampleIdRoute
   '/g/$slug': typeof GSlugRoute
   '/themes/$id': typeof ThemesIdRoute
@@ -195,6 +202,7 @@ export interface FileRoutesByTo {
   '/dev/format': typeof DevFormatRoute
   '/dev/openings': typeof DevOpeningsRoute
   '/dev/people': typeof DevPeopleRoute
+  '/dev/worst-case': typeof DevWorstCaseRoute
   '/example/$id': typeof ExampleIdRoute
   '/g/$slug': typeof GSlugRoute
   '/themes/$id': typeof ThemesIdRoute
@@ -222,6 +230,7 @@ export interface FileRoutesById {
   '/dev/format': typeof DevFormatRoute
   '/dev/openings': typeof DevOpeningsRoute
   '/dev/people': typeof DevPeopleRoute
+  '/dev/worst-case': typeof DevWorstCaseRoute
   '/example/$id': typeof ExampleIdRoute
   '/g/$slug': typeof GSlugRoute
   '/themes/$id': typeof ThemesIdRoute
@@ -249,6 +258,7 @@ export interface FileRouteTypes {
     | '/dev/format'
     | '/dev/openings'
     | '/dev/people'
+    | '/dev/worst-case'
     | '/example/$id'
     | '/g/$slug'
     | '/themes/$id'
@@ -274,6 +284,7 @@ export interface FileRouteTypes {
     | '/dev/format'
     | '/dev/openings'
     | '/dev/people'
+    | '/dev/worst-case'
     | '/example/$id'
     | '/g/$slug'
     | '/themes/$id'
@@ -300,6 +311,7 @@ export interface FileRouteTypes {
     | '/dev/format'
     | '/dev/openings'
     | '/dev/people'
+    | '/dev/worst-case'
     | '/example/$id'
     | '/g/$slug'
     | '/themes/$id'
@@ -325,6 +337,7 @@ export interface RootRouteChildren {
   DevFormatRoute: typeof DevFormatRoute
   DevOpeningsRoute: typeof DevOpeningsRoute
   DevPeopleRoute: typeof DevPeopleRoute
+  DevWorstCaseRoute: typeof DevWorstCaseRoute
   ExampleIdRoute: typeof ExampleIdRoute
   GSlugRoute: typeof GSlugRoute
   ThemesIdRoute: typeof ThemesIdRoute
@@ -441,6 +454,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DevPeopleRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/dev/worst-case': {
+      id: '/dev/worst-case'
+      path: '/dev/worst-case'
+      fullPath: '/dev/worst-case'
+      preLoaderRoute: typeof DevWorstCaseRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/example/$id': {
       id: '/example/$id'
       path: '/example/$id'
@@ -538,6 +558,7 @@ const rootRouteChildren: RootRouteChildren = {
   DevFormatRoute: DevFormatRoute,
   DevOpeningsRoute: DevOpeningsRoute,
   DevPeopleRoute: DevPeopleRoute,
+  DevWorstCaseRoute: DevWorstCaseRoute,
   ExampleIdRoute: ExampleIdRoute,
   GSlugRoute: GSlugRoute,
   ThemesIdRoute: ThemesIdRoute,

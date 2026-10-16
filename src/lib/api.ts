@@ -19,6 +19,7 @@
  */
 import { FORMAT_IDS } from "@/lib/formats";
 import { FONT_CHOICE_IDS } from "@/lib/fontChoices";
+import { FIELD_NAMES, LIMITS, customTextLimit, noteTextLimit, tooLong } from "@/lib/limits";
 import { normalizeIntroSettings } from "@/lib/intro";
 import { normalizeCharacter } from "@/themes/_shared/cast/types";
 import { normalizeIconSetting } from "@/themes/_shared/iconSets";
@@ -28,6 +29,7 @@ import { and, asc, desc, eq, inArray, ne, or, sql } from "drizzle-orm";
 import { z } from "zod";
 import { getDb, schema } from "@/server/db";
 import { notifyNewNote } from "@/server/notify";
+import { clientIp, rateLimit } from "@/server/rateLimit";
 import {
   checkRoom,
   expireStaleOrders,
@@ -213,9 +215,13 @@ async function canViewGift(siteId: string, opts: { allowSharedNotes?: boolean } 
   return !needsPassword(site) || isUnlocked(site);
 }
 
+/** Reads are cheap, but a flood of slug guesses isn't: generous per-visitor caps on public lookups. */
+const READ_LIMIT = "Lots of requests from here just now. Wait a minute and try again.";
+
 export const getSiteBySlug = createServerFn({ method: "GET" })
   .inputValidator(z.object({ slug: z.string().min(1).max(120) }))
   .handler(async ({ data }) => {
+    rateLimit(`slug:${clientIp()}`, 240, 60_000, READ_LIMIT);
     const [row] = await getDb().select().from(schema.giftSites).where(eq(schema.giftSites.slug, data.slug));
     if (!row) return null;
     return siteRow(row, { owner: isOwnerOf(await currentUser(), row) });
@@ -307,7 +313,7 @@ export const createSite = createServerFn({ method: "POST" })
     z.object({
       title: z.string().trim().min(1).max(200),
       /** Who it's for. The title is made from it, and it fills "for Ana" on the gift. */
-      recipientName: z.string().trim().min(1).max(80).optional(),
+      recipientName: z.string().trim().min(1, "Add the name of who it's for.").max(LIMITS.recipientName, tooLong("their name", LIMITS.recipientName)).optional(),
       themeId: id.nullable(),
       format: z.enum(FORMAT_IDS),
       paletteId: id.nullable(),
@@ -322,6 +328,22 @@ export const createSite = createServerFn({ method: "POST" })
   .handler(async ({ data }) => {
     const user = await requireUser();
     const db = getDb();
+    // A double tap on "Create" makes one gift, not two: the same title from the
+    // same person within a few seconds returns the gift that was just made.
+    const [recent] = await db
+      .select({ id: schema.giftSites.id })
+      .from(schema.giftSites)
+      .where(
+        and(
+          eq(schema.giftSites.creatorId, user.id),
+          eq(schema.giftSites.title, data.title),
+          sql`${schema.giftSites.createdAt} > now() - interval '15 seconds'`,
+        ),
+      )
+      .orderBy(desc(schema.giftSites.createdAt))
+      .limit(1);
+    if (recent) return { id: recent.id };
+    rateLimit(`create:${user.id}`, 30, 60 * 60_000, "That's a lot of new gifts in a short time. Take a breather and try again in a bit.");
     return db.transaction(async (tx) => {
       const [site] = await tx
         .insert(schema.giftSites)
@@ -361,7 +383,7 @@ export const updateSite = createServerFn({ method: "POST" })
         countdown_date: date,
         countdown_at: z.string().datetime({ offset: true }).nullable().optional(),
         calendar_locked: z.boolean(),
-        intro_text: z.string().max(2000).nullable(),
+        intro_text: z.string().trim().max(LIMITS.greeting, tooLong("the greeting", LIMITS.greeting)).nullable(),
         background_style: z.enum(["paper", "clean", "formal", "gradient"]),
         tree_reveal_date: date,
         palette_id: id.nullable(),
@@ -378,6 +400,16 @@ export const updateSite = createServerFn({ method: "POST" })
     const [site] = await getDb().select().from(schema.giftSites).where(eq(schema.giftSites.id, data.id));
     if (!site) throw new HttpError(404, "We couldn't find that gift.");
     const p = data.patch;
+    // Words: trimmed, with the same limits the editor's counters show.
+    const cleanText: Record<string, string> = {};
+    for (const [k, v] of Object.entries(p.custom_text)) {
+      if (typeof v !== "string") continue;
+      const t = v.trim();
+      const max = customTextLimit(k);
+      if ([...t].length > max) throw new HttpError(422, tooLong(FIELD_NAMES[k] ?? "that title", max));
+      if (t) cleanText[k] = t;
+    }
+    p.custom_text = cleanText;
     // Going live needs a paid plan. The first publish happens in the payment webhook;
     // this only re-opens a paid gift that the owner had taken offline.
     if (p.status === "published" && site.status !== "published") {
@@ -589,7 +621,7 @@ export const submitContribution = createServerFn({ method: "POST" })
       editToken: id,
       siteId: id,
       moduleType: z.enum(GUEST_TYPES),
-      authorName: z.string().trim().min(1).max(120),
+      authorName: z.string().trim().min(1, "Add your name so they know who it's from.").max(LIMITS.friendName, tooLong("your name", LIMITS.friendName)),
       textContent: shortText,
       mediaUrl,
       externalLink: link,
@@ -603,10 +635,21 @@ export const submitContribution = createServerFn({ method: "POST" })
   )
   .handler(async ({ data }) => {
     const db = getDb();
+    data.textContent = data.textContent?.trim() || null;
+    const textMax = noteTextLimit(data.moduleType);
+    if (data.textContent && [...data.textContent].length > textMax) throw new HttpError(422, tooLong(data.moduleType === "wordcloud" ? "your word" : "your note", textMax));
     const sectionData = sectionPayload(data.moduleType, data.data, data.textContent, data.mediaUrl);
     const [site] = await db.select().from(schema.giftSites).where(eq(schema.giftSites.id, data.siteId));
     if (!site) throw new HttpError(404, "We couldn't find that gift.");
     if (site.solo) throw new HttpError(403, "This gift is just from one person, so it isn't taking notes from friends.");
+    // The same note sent twice (fast taps, a retry after a dropped connection) is saved once.
+    const [already] = await db.select({ siteId: c.siteId, editToken: c.editToken }).from(c).where(eq(c.id, data.id));
+    if (already) {
+      if (already.siteId === data.siteId && already.editToken === data.editToken) return { ok: true as const, full: null };
+      throw new HttpError(409, "Something got mixed up. Refresh the page and try again.");
+    }
+    rateLimit(`note:ip:${clientIp()}`, 30, 10 * 60_000, "You're adding notes very quickly. Wait a few minutes and try again.");
+    rateLimit(`note:gift:${data.siteId}`, 200, 60 * 60_000, "This gift is getting a lot of notes right now. Try again in a little while.");
     // Paid plans have caps. Tell the friend kindly instead of failing.
     const deviceId = data.deviceId ?? null;
     const room = await checkRoom(site, data.authorName, data.moduleType, deviceId);
@@ -616,7 +659,7 @@ export const submitContribution = createServerFn({ method: "POST" })
       .from(schema.siteModules)
       .where(and(eq(schema.siteModules.siteId, data.siteId), eq(schema.siteModules.moduleType, data.moduleType)));
     if (!module?.enabled) throw new HttpError(400, "That section isn't open on this gift.");
-    await db.insert(c).values({
+    const inserted = await db.insert(c).values({
       id: data.id,
       siteId: data.siteId,
       moduleType: data.moduleType,
@@ -630,8 +673,9 @@ export const submitContribution = createServerFn({ method: "POST" })
       editToken: data.editToken,
       deviceId,
       data: sectionData,
-    });
-    await notifyNewNote(data.siteId, data.authorName).catch((e) => console.error("[notify]", e));
+    }).onConflictDoNothing({ target: c.id }).returning({ id: c.id });
+    // Two identical requests at the same moment: only the first one notifies.
+    if (inserted.length) await notifyNewNote(data.siteId, data.authorName).catch((e) => console.error("[notify]", e));
     return { ok: true as const, full: null };
   });
 
@@ -646,7 +690,7 @@ export const saveOwnerNote = createServerFn({ method: "POST" })
       id,
       siteId: id,
       moduleType: z.enum(OWNER_NOTE_TYPES),
-      authorName: z.string().trim().min(1).max(120),
+      authorName: z.string().trim().min(1, "Add your name so they know who it's from.").max(LIMITS.friendName, tooLong("your name", LIMITS.friendName)),
       textContent: shortText,
       mediaUrl,
       externalLink: link,
@@ -655,6 +699,9 @@ export const saveOwnerNote = createServerFn({ method: "POST" })
   )
   .handler(async ({ data }) => {
     await requireSiteOwner(data.siteId);
+    data.textContent = data.textContent?.trim() || null;
+    const textMax = noteTextLimit(data.moduleType);
+    if (data.textContent && [...data.textContent].length > textMax) throw new HttpError(422, tooLong(data.moduleType === "wordcloud" ? "the word" : "the note", textMax));
     const sectionData = sectionPayload(data.moduleType, data.data, data.textContent, data.mediaUrl);
     const db = getDb();
     const [existing] = await db
@@ -689,7 +736,7 @@ export const saveOwnerNote = createServerFn({ method: "POST" })
         target: [schema.siteModules.siteId, schema.siteModules.moduleType],
         set: { enabled: true },
       });
-    await db.insert(c).values({
+    const inserted = await db.insert(c).values({
       id: data.id,
       siteId: data.siteId,
       moduleType: data.moduleType,
@@ -709,6 +756,7 @@ export const saveOwnerNote = createServerFn({ method: "POST" })
 export const getGiftRoom = createServerFn({ method: "GET" })
   .inputValidator(z.object({ siteId: id }))
   .handler(async ({ data }) => {
+    rateLimit(`room:${clientIp()}`, 240, 60_000, READ_LIMIT);
     const [site] = await getDb().select().from(schema.giftSites).where(eq(schema.giftSites.id, data.siteId));
     if (!site) return { ended: false, contributorsFull: false, photosFull: false };
     const tier = getTier(site.tier);
@@ -1038,6 +1086,9 @@ export const updateOwnContribution = createServerFn({ method: "POST" })
   .handler(async ({ data }) => {
     const row = await ownDraftContribution(data.id, data.token);
     if (!row) return { ok: false };
+    data.textContent = data.textContent?.trim() || null;
+    const textMax = noteTextLimit(row.moduleType as never);
+    if (data.textContent && [...data.textContent].length > textMax) throw new HttpError(422, tooLong("your note", textMax));
     const sectionData = data.data !== undefined ? sectionPayload(row.moduleType, data.data, data.textContent, data.mediaUrl ?? "keep") : undefined;
     await getDb()
       .update(c)

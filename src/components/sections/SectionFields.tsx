@@ -6,6 +6,8 @@ import { useEffect, useRef, useState } from "react";
 import { SECTION_COPY } from "@/copy/strings";
 import { OPEN_WHEN_PROMPTS, SUPERLATIVE_PROMPTS, type NewSectionType } from "@/lib/sections";
 import { toLocalInput } from "@/lib/time";
+import { noteTextLimit } from "@/lib/limits";
+import { CharCount } from "@/components/ui/CharCount";
 
 type Props = {
   type: NewSectionType;
@@ -25,6 +27,8 @@ const input = "mt-2 w-full rounded-xl px-4 py-3 text-sm outline-none";
 
 export function SectionFields(p: Props) {
   const set = (k: string, v: unknown) => p.onData({ ...p.data, [k]: v });
+  const textMax = noteTextLimit(p.type);
+  const count = <CharCount value={p.text} max={textMax} className="mt-1 block text-right" />;
   const s = (k: string) => (typeof p.data[k] === "string" ? (p.data[k] as string) : "");
   const chips = (list: string[], key: string) => (
     <div className="mt-2 flex flex-wrap gap-1.5">
@@ -60,11 +64,13 @@ export function SectionFields(p: Props) {
           <textarea
             rows={5}
             value={p.text}
+            maxLength={textMax}
             onChange={(e) => p.onText(e.target.value)}
             placeholder={SECTION_COPY.openwhen.textPlaceholder}
             className={input}
             style={p.fieldStyle}
           />
+          {count}
         </>
       );
     case "capsule": {
@@ -109,11 +115,13 @@ export function SectionFields(p: Props) {
           <textarea
             rows={5}
             value={p.text}
+            maxLength={textMax}
             onChange={(e) => p.onText(e.target.value)}
             placeholder={SECTION_COPY.capsule.textPlaceholder}
             className={input}
             style={p.fieldStyle}
           />
+          {count}
           <FilePick
             accept="image/*"
             label="Add a photo (optional)"
@@ -141,11 +149,13 @@ export function SectionFields(p: Props) {
           <label className={label}>Why?</label>
           <input
             value={p.text}
+            maxLength={textMax}
             onChange={(e) => p.onText(e.target.value)}
             placeholder={SECTION_COPY.superlatives.reasonPlaceholder}
             className={input}
             style={p.fieldStyle}
           />
+          {count}
         </>
       );
     case "quiz": {
@@ -204,11 +214,13 @@ export function SectionFields(p: Props) {
           <textarea
             rows={4}
             value={p.text}
+            maxLength={textMax}
             onChange={(e) => p.onText(e.target.value)}
             placeholder={SECTION_COPY.map.textPlaceholder}
             className={input}
             style={p.fieldStyle}
           />
+          {count}
         </>
       );
     case "coupons":
@@ -249,11 +261,13 @@ export function SectionFields(p: Props) {
           <label className={label}>Caption</label>
           <input
             value={p.text}
+            maxLength={textMax}
             onChange={(e) => p.onText(e.target.value)}
             placeholder={SECTION_COPY.video.textPlaceholder}
             className={input}
             style={p.fieldStyle}
           />
+          {count}
         </>
       );
     case "doodle":
@@ -264,11 +278,13 @@ export function SectionFields(p: Props) {
           <label className={label}>Sign it</label>
           <input
             value={p.text}
+            maxLength={textMax}
             onChange={(e) => p.onText(e.target.value)}
             placeholder={SECTION_COPY.doodle.textPlaceholder}
             className={input}
             style={p.fieldStyle}
           />
+          {count}
         </>
       );
   }
