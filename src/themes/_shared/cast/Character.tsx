@@ -270,7 +270,7 @@ function Drawn({
     skin: colors?.skin ?? spec.colors.skin,
   };
   // The clay still is rendered in the character's own colors; recolored ones stay drawn.
-  const own = (["primary", "secondary", "skin"] as const).every((k) => c[k].toLowerCase() === spec.colors[k].toLowerCase());
+  const own = !spec.body || (["primary", "secondary", "skin"] as const).every((k) => c[k].toLowerCase() === spec.colors[k].toLowerCase());
   const clay = own ? spec.clay : undefined;
   const f = clay ?? spec;
   const px = useTransform(lx, (v) => v * f.eyes.size * 0.55);
@@ -282,7 +282,7 @@ function Drawn({
   const s = anchor.w / 80;
   const happy = mood === "celebrate";
   const lid = sleepy ? 0.45 : 1;
-  const ink = "#2B2522";
+  const ink = clay?.ink ?? "#2B2522";
   return (
     <svg viewBox="0 0 120 120" width="100%" height="100%" overflow="visible" aria-hidden="true">
       <defs>
@@ -305,7 +305,7 @@ function Drawn({
           preserveAspectRatio="xMidYMid meet"
         />
       ) : (
-        spec.body(c)
+        spec.body?.(c)
       )}
       <motion.g style={{ x: face, y: faceY }}>
         {f.cheeks ? (
