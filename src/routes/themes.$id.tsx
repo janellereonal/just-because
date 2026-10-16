@@ -15,7 +15,7 @@ import { SiteHeader } from "@/components/SiteHeader";
 import { PageError, PageLoading, PageNotFound } from "@/components/PageStates";
 import { themeFont } from "@/components/ThemeMiniPreview";
 import { FormatView } from "@/components/formats/FormatView";
-import { FORMATS, type GiftFormat } from "@/lib/formats";
+import { FORMATS, offeredFormats, type GiftFormat } from "@/lib/formats";
 import { GiftIntro } from "@/components/GiftIntro";
 import { backgroundFor, buildPreviewSite, previewModules, sampleFor } from "@/components/ThemeLivePreview";
 import { stageColorFor } from "@/components/ThemeCard";
@@ -262,7 +262,7 @@ function ThemeDetailPage() {
             <div className="card-paper p-5">
               <h2 className="font-display text-lg font-semibold">See it as</h2>
               <div className="mt-3 flex flex-wrap gap-2" role="radiogroup" aria-label="Format">
-                {FORMATS.map((f) => (
+                {offeredFormats().map((f) => (
                   <button
                     key={f.id}
                     type="button"
