@@ -22,8 +22,8 @@ work goes on autonomously. Her rules for this run:
 | 3 | Revenue PR 1: Theme engine and Theme Bible | **Merged** [#28](https://github.com/janellereonal/just-because/pull/28) |
 | 4 | Revenue PR 2: Christmas, global and Filipino-first themes | **Merged** [#29](https://github.com/janellereonal/just-because/pull/29). Themes are drafts: review, then publish in /admin |
 | 5 | Launch PR 3: Payments and gift lifecycle | [#31](https://github.com/janellereonal/just-because/pull/31), waits for Janelle (payments, schema, emails, privacy). Manual tests listed in the PR |
-| 6 | Launch PR 4: Editor and organiser fixes | Next |
-| 7 | Launch PR 5: Metrics | |
+| 6 | Launch PR 4: Editor and organiser fixes | [#33](https://github.com/janellereonal/just-because/pull/33), waits for Janelle (not flagged; small data-rule changes). Overlaps #31 in EditorPage |
+| 7 | Launch PR 5: Metrics | Next |
 | 8 | Revenue PR 3: Pricing, tiers, add-ons and payments | waits for #31 to merge |
 | 9 | Revenue PR 4: Reminders engine | waits for #31 to merge |
 | 10 | Revenue PR 6: Theme metrics | |
@@ -58,8 +58,26 @@ The three prompts are saved in `docs/prompts/` (launch.md, revenue.md, design.md
   a plan, and a friend could upload many large videos. Cap per file is already in place; want a per-gift total?
 - **#31 and #23** both add a migration numbered 0011. Whichever merges second needs `bun run db:generate` again
   (I'll do it, or ask in the next session).
+- **#33:** time capsule dates are picked by each friend, so the Dates group only explains that. Want an
+  organiser-wide "opens on" date instead?
+- **#33 and #31** overlap in `EditorPage.tsx`; the second to merge needs a small rebase.
 - Rate limits are in memory per server instance. Fine for launch; a shared store (Upstash or Postgres) would make
   them exact across instances. Worth it?
+
+### Launch PR 4 (#33, branch `launch-editor`, waiting for Janelle)
+- Note counts: `src/lib/noteCounts.ts` (`countNotes`, `noteSummary`, `friendsIn`), with tests. Use it anywhere a
+  count is shown. `listMySites` returns `note_counts`; `listSealedContributions` returns `by_owner`.
+- New `custom_text` keys for the 8 newer sections (`openwhen_title` ... `doodle_title`), passed to `NewSections`
+  as `titles`. Words has a Dates group.
+- Section toggles: last one can't go off (client and `setModuleEnabled`); one with notes asks first.
+- Friend page copy: `FRIEND_PAGE` and `friendAddLine()` in strings.ts. `TAB_LIMIT = 4` in ContributePage.
+- Rail checks: `touched` per gift in localStorage `jb:touched:<id>`; `railDone()` in EditorPage.
+- Moderation: `setStatus(ids, status)` shows Undo; `removeNote`; `ReviewCard` has Delete, Show more.
+- Phone sheet: `sheetH` (45 or 88, drag handle), a spacer shrinks the preview above it.
+- People: hair fixes in `src/lib/clay/person.ts`; `/dev/people?grid=hair`; `tools/screens/hairgrid.cjs`.
+  Re-render presets with `PEOPLE=1 ONLY=... node clay.js` after changing hair.
+- Samples: `SAMPLE_LETTERS` / `sampleLetter()` in strings.ts; `GiftKindContext` (giftPieces) set by FormatView;
+  `SAMPLE_BADGE` shown by FormatView on every format but the scrapbook.
 
 ### Launch PR 3 (#31, branch `launch-payments`, waiting for Janelle)
 - Payments (`src/server/billing.ts`):
