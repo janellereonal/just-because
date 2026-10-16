@@ -45,6 +45,11 @@ export function SiteHeader({ showMascot = true }: { showMascot?: boolean }) {
               My gifts
             </Link>
           )}
+          {user && (
+            <Link to="/account" className={link} activeProps={{ className: "bg-pink/70 text-ink" }}>
+              Account
+            </Link>
+          )}
           {isAdmin && (
             <Link to="/admin" className={link} activeProps={{ className: "bg-pink/70 text-ink" }}>
               Admin
