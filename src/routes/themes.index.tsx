@@ -32,6 +32,7 @@ const GROUPS: { id: string; label: string; match: (key: string) => boolean }[] =
   { id: "holiday", label: "Holidays", match: (k) => /christmas|new year|season/.test(k) },
   { id: "goodbye", label: "Send-offs", match: (k) => /voyage|farewell|despidida/.test(k) },
   { id: "pets", label: "Pets", match: (k) => /pet|companion/.test(k) },
+  { id: "style", label: "Any occasion", match: (k) => /handwritten|game|pixel|style/.test(k) },
 ];
 
 const keyOf = (t: Theme) => `${t.category} ${t.name}`.toLowerCase();

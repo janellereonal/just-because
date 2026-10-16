@@ -276,3 +276,10 @@ export const LANDING_MORE = {
     line: "Made for the people you love.",
   },
 } as const;
+
+/** Characters panel. */
+export const CAST_COPY = {
+  wanderer: "Wanderer",
+  wandererHint: "One of these strolls around the gift. Tap it for a little hop.",
+  wandererOff: "Off",
+} as const;

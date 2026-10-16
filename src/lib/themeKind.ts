@@ -14,6 +14,9 @@ export type ThemeKind =
   | "wedding"
   | "bridal"
   | "baby"
+  | "handwritten"
+  | "game"
+  | "pixel"
   | "default";
 
 export const THEME_KINDS: ThemeKind[] = [
@@ -27,6 +30,9 @@ export const THEME_KINDS: ThemeKind[] = [
   "wedding",
   "bridal",
   "baby",
+  "handwritten",
+  "game",
+  "pixel",
   "default",
 ];
 
@@ -34,6 +40,10 @@ export function themeKindOf(
   theme: { name?: string | null; category?: string | null } | null | undefined,
 ): ThemeKind {
   const key = `${theme?.category ?? ""} ${theme?.name ?? ""}`.toLowerCase();
+  // Style themes first: they can be used for any occasion, so their names win.
+  if (key.includes("handwritten") || key.includes("hand-written")) return "handwritten";
+  if (key.includes("pixel") || key.includes("8-bit") || key.includes("arcade")) return "pixel";
+  if (key.includes("game night") || key.includes("board game") || /\bgame\b/.test(key)) return "game";
   if (key.includes("valentine") || key.includes("romance")) return "valentine";
   if (key.includes("birthday")) return "birthday";
   if (key.includes("voyage") || key.includes("farewell") || key.includes("despidida"))
@@ -122,6 +132,27 @@ export const KIND_WORDS: Record<
     countdown: "Until we meet you",
     letters: "Notes for the new family",
     from: "With love,",
+  },
+  handwritten: {
+    badge: "Written by hand",
+    occasion: "A few words for you",
+    countdown: "Until we see you",
+    letters: "Letters",
+    from: "Yours,",
+  },
+  game: {
+    badge: "Your move",
+    occasion: "Game on",
+    countdown: "Game starts in",
+    letters: "Notes from the table",
+    from: "Good game,",
+  },
+  pixel: {
+    badge: "Player one",
+    occasion: "Level up",
+    countdown: "Next level in",
+    letters: "Messages unlocked",
+    from: "GG,",
   },
   default: {
     badge: "A gift for you",

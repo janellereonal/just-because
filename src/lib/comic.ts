@@ -47,6 +47,9 @@ const COVER_SUBTITLE: Record<string, string> = {
   wedding: "SPECIAL WEDDING ISSUE",
   bridal: "SPECIAL SHOWER ISSUE",
   baby: "SPECIAL BABY ISSUE",
+  handwritten: "SPECIAL HANDWRITTEN ISSUE",
+  game: "SPECIAL GAME NIGHT ISSUE",
+  pixel: "SPECIAL 8-BIT ISSUE",
   default: "SPECIAL COLLECTOR'S ISSUE",
 };
 
