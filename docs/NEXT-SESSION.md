@@ -3,6 +3,19 @@
 Updated 16 Oct 2026 (sessions 6 to 8), so a new session, on any Claude account, can carry on without
 missing anything. Start with `HANDOFF.md` section 0.
 
+## Session 9c: who the gift is for (branch `recipient-name`, follow-up brief section B)
+
+- /create step 2 is "Who's it for?" (required). The title is made from it and the occasion:
+  `occasionTitle(theme, name)` in `src/lib/themeKind.ts` ("Happy bridal shower, Bea"; pets get "For Milo, the best
+  pet ever"). `createSite` takes `recipientName` and saves it as `custom_text.recipient_name`, heading = title.
+- The friend page says "Add something for Bea", and never uses the gift's title as the name (it was often the
+  organiser's own name). Old gifts without a name: "Add something to the gift", "Only the recipient", etc.
+- The sample name "Ana" is now only an editor thing: `PlaceholderNameContext` (`src/components/SampleMark.tsx`),
+  turned on by `FormatView placeholderName` in the editor canvas. The friend page, the real gift and the full
+  preview never show it; a nameless gift says "you" or drops the name ("Lucky you", "Look up").
+  `usePieces` returns `named` and `nameIsSample`.
+- Old gifts with no name show the title alone, and the editor header shows "Who's it for? Add their name".
+
 ## Session 9b: editor in 4 steps (branch `editor-steps`, PR 2 of the editor brief, with the follow-up corrections)
 
 The 10-tab rail is now **Words, Look, Notes, Wrap it up** (numbered, green check when done) plus a small

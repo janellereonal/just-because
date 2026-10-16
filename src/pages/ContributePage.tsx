@@ -202,7 +202,10 @@ function ContributePage() {
   const onAccent = readableInk(palette.accent);
   const surface = surfaceColor(palette.background);
   const fonts = FONT_PAIRINGS[site.font_choice] ?? FONT_PAIRINGS.romantic;
-  const recipient = site.custom_text.recipient_name || site.title;
+  // Older gifts may have no recipient name; never fall back to the gift's name (often the organiser's own).
+  const named = site.custom_text.recipient_name?.trim() ?? "";
+  const recipient = named || "them";
+  const theirGift = named ? `${named}'s gift` : "This gift";
   const openModules = GUEST_MODULES.filter((m) =>
     modules.some((row) => row.module_type === m.type && row.enabled),
   );
@@ -242,8 +245,8 @@ function ContributePage() {
           </h1>
           <p className="mt-2 opacity-80 text-pretty">
             {giftEnded
-              ? `${recipient}'s gift isn't taking new notes any more. Thank you for wanting to add something.`
-              : `So many people wanted to add to ${recipient}'s gift that it ran out of room. If the organiser makes more room, this link will work again.`}
+              ? `${theirGift} isn't taking new notes any more. Thank you for wanting to add something.`
+              : `So many people wanted to add to ${named ? theirGift : "this gift"} that it ran out of room. If the organiser makes more room, this link will work again.`}
           </p>
         </div>
       </div>
@@ -526,10 +529,10 @@ function ContributePage() {
                 className="mt-3 text-center text-4xl leading-tight"
                 style={{ fontFamily: fonts.heading }}
               >
-                Add something for {recipient}
+                {named ? `Add something for ${named}` : "Add something to the gift"}
               </h1>
               <p className="mx-auto mt-3 max-w-sm text-center text-[15px] leading-relaxed opacity-80 text-pretty">
-                Friends are putting together a gift for {recipient}. Add a note, a photo or a song. It stays a surprise until they open it.
+                {named ? `Friends are putting together a gift for ${named}.` : "Friends are putting a gift together."} Add a note, a photo or a song. It stays a surprise until they open it.
               </p>
               <p className="mt-4 flex items-center justify-center gap-1.5 text-xs opacity-70">
                 <Users className="size-3.5" />
@@ -541,7 +544,7 @@ function ContributePage() {
           {done ? (
             <div className="rise mt-8 rounded-[28px] p-8 text-center shadow-[0_24px_60px_-34px_rgba(43,37,34,.55)]" style={{ backgroundColor: surface }}>
               <p className="text-[15px] opacity-85">
-                It's in. The organiser checks every note before the gift goes out, so {recipient} won't see it until then.
+                It's in. The organiser checks every note before the gift goes out, so {named || "they"} won't see it until then.
               </p>
               <button
                 onClick={() => {
@@ -792,7 +795,7 @@ function ContributePage() {
                           "Everyone who sees the gift"
                         ) : (
                           <span className="inline-flex items-center gap-1.5">
-                            <Lock className="size-3.5" /> Only {recipient}
+                            <Lock className="size-3.5" /> Only {named || "the recipient"}
                           </span>
                         )}
                       </label>

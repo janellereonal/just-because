@@ -11,16 +11,18 @@ const sparticuz = require('@sparticuz/chromium').default;
 (async () => {
   const plan = JSON.parse(fs.readFileSync(process.argv[2], 'utf8'));
   fs.mkdirSync(plan.outDir, { recursive: true });
-  const browser = await chromium.launch({
+  // A fresh browser per page: SwiftShader Chromium sometimes hangs when a context is reused.
+  const launch = async () => chromium.launch({
     executablePath: await sparticuz.executablePath(),
     args: [...sparticuz.args.filter(a => !a.startsWith('--use-gl') && !a.startsWith('--use-angle')), '--use-gl=angle', '--use-angle=swiftshader', '--enable-unsafe-swiftshader'],
     headless: true,
   });
-  let ctx = null, page = null, key = '';
+  let browser = null, ctx = null, page = null, key = '';
   for (const s of plan.shots) {
     const k = `${s.url}|${s.w}|${s.h}`;
     if (k !== key) {
-      if (ctx) await ctx.close();
+      if (browser) await Promise.race([browser.close(), new Promise(r => setTimeout(r, 5000))]);
+      browser = await launch();
       ctx = await browser.newContext({ viewport: { width: s.w, height: s.h }, deviceScaleFactor: 1, hasTouch: s.w < 700, storageState: plan.state || undefined });
       page = await ctx.newPage();
       page.on('pageerror', e => console.log(s.name, 'PAGEERROR', e.message.slice(0, 200)));
@@ -36,5 +38,6 @@ const sparticuz = require('@sparticuz/chromium').default;
     await page.screenshot({ path: path.join(plan.outDir, s.name + '.png'), fullPage: !!s.full });
     console.log('shot', s.name);
   }
-  await browser.close();
+  await Promise.race([browser?.close(), new Promise(r => setTimeout(r, 5000))]);
+  process.exit(0);
 })();

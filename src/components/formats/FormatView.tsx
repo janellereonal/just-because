@@ -5,6 +5,7 @@ import { readableInk } from "@/lib/palettes";
 import { resolveIconSet } from "@/themes/_shared/iconSets";
 import { castFor } from "@/themes/_shared/design";
 import { GiftSiteView } from "@/components/GiftSiteView";
+import { PlaceholderNameContext } from "@/components/SampleMark";
 import { ComicIssueView } from "@/components/ComicIssueView";
 import {
   resolvePalette,
@@ -70,6 +71,8 @@ type Props = Omit<FormatViewProps, "palette"> & {
   onReplayIntro?: (() => void) | undefined;
   highlightField?: keyof CustomText | null | undefined;
   onEditField?: ((field: keyof CustomText) => void) | undefined;
+  /** Editor only: show a faded sample name while the recipient name is empty. */
+  placeholderName?: boolean | undefined;
 };
 
 /**
@@ -81,10 +84,12 @@ export function FormatView(props: Props) {
   useEffect(() => loadThemeFonts(kind), [kind]);
   const tiles = props.site.format !== "scrapbook" && props.site.format !== "comic";
   return (
-    <div className="contents" style={themeFontVars(kind)}>
-      <FormatBody {...props} />
-      {tiles ? <TileExtras {...props} kind={kind} /> : null}
-    </div>
+    <PlaceholderNameContext.Provider value={!!props.placeholderName}>
+      <div className="contents" style={themeFontVars(kind)}>
+        <FormatBody {...props} />
+        {tiles ? <TileExtras {...props} kind={kind} /> : null}
+      </div>
+    </PlaceholderNameContext.Provider>
   );
 }
 

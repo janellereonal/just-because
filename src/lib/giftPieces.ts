@@ -6,6 +6,7 @@
 import { countdownTarget, formatDay, localToday, momentOf } from "@/lib/time";
 import { isNewSection, sectionAsText } from "@/lib/sections";
 import { useEffect, useMemo, useState } from "react";
+import { usePlaceholderName } from "@/components/SampleMark";
 import {
   defaultTitles,
   signedMediaUrl,
@@ -102,6 +103,7 @@ export function useReducedMotion() {
 }
 
 function samples(name: string, enabled: Set<ModuleType>, solo = false): Piece[] {
+  const toName = name ? `, ${name}` : "";
   const base = { media: null, link: null, sealed: false, mine: false, sample: true };
   const out: Piece[] = [];
   if (enabled.has("letters"))
@@ -111,7 +113,7 @@ function samples(name: string, enabled: Set<ModuleType>, solo = false): Piece[] 
         id: "s-l1",
         kind: "letter",
         author: "Sam",
-        text: `So lucky to know you, ${name}. Here's to the best year yet.`,
+        text: `So lucky to know you${toName}. Here's to the best year yet.`,
       },
       {
         ...base,
@@ -166,9 +168,14 @@ export function usePieces({
   calendarEntries?: CalendarEntry[] | undefined;
   sample?: boolean | undefined;
 }) {
+  const placeholder = usePlaceholderName();
   return useMemo(() => {
     const enabled = new Set(modules.filter((m) => m.enabled).map((m) => m.module_type));
-    const name = site.custom_text.recipient_name?.trim() || "Ana";
+    const real = site.custom_text.recipient_name?.trim() ?? "";
+    // "Ana" only as a labeled placeholder in the editor; anywhere else, no name at all.
+    const nameIsSample = !real && placeholder && !!sample;
+    const named = !!real || nameIsSample;
+    const name = real || (nameIsSample ? "Ana" : "you");
     // A note this viewer wrote shows unsealed; drop its sealed twin.
     const mineIds = new Set(contributions.filter((c) => c.mine && !c.sealed).map((c) => c.id));
     let pieces: Piece[] = contributions
@@ -206,7 +213,7 @@ export function usePieces({
           date: e.entry_date.slice(0, 10),
         })),
       );
-    if (!pieces.length && sample) pieces = samples(name, enabled, site.solo);
+    if (!pieces.length && sample) pieces = samples(named ? name : "", enabled, site.solo);
 
     // Interleave: notes, then a photo, then a song… so tiles feel varied.
     const buckets = new Map<PieceKind, Piece[]>();
@@ -242,7 +249,9 @@ export function usePieces({
     return {
       name,
       /** No recipient yet, so `name` is the sample "Ana" (shown faded with a "sample" tag). */
-      nameIsSample: !!sample && !site.custom_text.recipient_name?.trim(),
+      nameIsSample,
+      /** False when there's no name to show (old gifts): `name` is then "you". */
+      named,
       titles,
       countdownDate,
       notes: mixed.filter((p) => p.kind !== "word"),
@@ -250,7 +259,7 @@ export function usePieces({
       friends,
       isSample: pieces.some((p) => p.sample),
     };
-  }, [site, modules, contributions, calendarEntries, sample]);
+  }, [site, modules, contributions, calendarEntries, sample, placeholder]);
 }
 
 /** A soft mesh gradient from a gift palette, for backgrounds. */

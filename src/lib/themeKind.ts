@@ -142,3 +142,15 @@ export function giftHeading(
 ): string {
   return text?.heading?.trim() || KIND_WORDS[themeKindOf(theme)].occasion;
 }
+
+/** The gift's title from who it's for and the occasion: "Happy bridal shower, Ana". */
+export function occasionTitle(
+  theme: { name?: string | null; category?: string | null } | null | undefined,
+  name: string,
+): string {
+  const who = name.trim();
+  const kind = themeKindOf(theme);
+  if (!who) return KIND_WORDS[kind].occasion;
+  if (kind === "pets") return `For ${who}, the best pet ever`;
+  return `${KIND_WORDS[kind].occasion}, ${who}`;
+}

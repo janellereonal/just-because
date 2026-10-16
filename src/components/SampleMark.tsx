@@ -1,3 +1,12 @@
+import { createContext, useContext } from "react";
+
+/**
+ * True only in the organiser's editor: a gift with no recipient name yet shows the
+ * sample "Ana" (faded and tagged). Friend pages, the real gift and demos never do.
+ */
+export const PlaceholderNameContext = createContext(false);
+export const usePlaceholderName = () => useContext(PlaceholderNameContext);
+
 /**
  * Placeholder text in the editor preview: faded, with a small "sample" tag, so
  * nobody mistakes "Ana" for the real name. Off the editor it renders as plain text.

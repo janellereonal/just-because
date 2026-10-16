@@ -359,7 +359,7 @@ export function HuntView({
           </p>
           <p className="mt-2 text-2xl font-semibold" style={{ fontFamily: fonts.heading }}>
             {finished
-              ? `That's every gift, ${data.name}.`
+              ? `That's every gift${data.named ? `, ${data.name}` : ""}.`
               : `${Math.max(0, total - done)} more to find.`}
           </p>
           {finished && data.friends.length ? (

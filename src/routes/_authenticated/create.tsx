@@ -9,7 +9,7 @@ import { fetchThemes } from "@/lib/themes";
 import { usePalettes, suggestedPalettes } from "@/hooks/usePalettes";
 import { MODULES, type ModuleType } from "@/lib/gift";
 import { PRESETS } from "@/lib/presets";
-import { themeKindOf } from "@/lib/themeKind";
+import { occasionTitle, themeKindOf } from "@/lib/themeKind";
 import { ChipInSoon } from "@/components/sections/ChipInSoon";
 import { SectionPreview } from "@/components/SectionPreview";
 import { FormatPicker } from "@/components/FormatPicker";
@@ -62,7 +62,7 @@ function CreatePage() {
     queryFn: () => fetchThemes(false),
   });
 
-  const [title, setTitle] = useState("");
+  const [recipient, setRecipient] = useState("");
   const [solo, setSolo] = useState(fromUrl === "me");
   const [themeId, setThemeId] = useState<string | undefined>(themeFromUrl);
   const [format, setFormat] = useState<GiftFormat>(formatFromUrl ?? "scrapbook");
@@ -83,13 +83,13 @@ function CreatePage() {
   }, [accessory]);
   const nameSaid = useRef(false);
   useEffect(() => {
-    if (nameSaid.current || title.trim().length < 3) return;
+    if (nameSaid.current || recipient.trim().length < 2) return;
     const t = window.setTimeout(() => {
       nameSaid.current = true;
-      boSay("Ooh, cute name.", "love");
+      boSay(`${recipient.trim()} is so lucky.`, "love");
     }, 900);
     return () => window.clearTimeout(t);
-  }, [title]);
+  }, [recipient]);
   function pickTheme(id: string | undefined) {
     setThemeId(id);
     const acc = accessoryForTheme(themes.find((t) => t.id === id));
@@ -137,7 +137,8 @@ function CreatePage() {
     try {
       data = await createSite({
         data: {
-          title: title.trim(),
+          title: occasionTitle(activeTheme, recipient),
+          recipientName: recipient.trim(),
           themeId: themeId ?? themeFromUrl ?? null,
           format,
           paletteId: defaultPalette?.id ?? null,
@@ -264,18 +265,28 @@ function CreatePage() {
             >
               <span className="sticky top-[46vh] block h-px w-24" data-bo-perch data-bo-x="0.5" />
             </span>
-            {step(2, "Give it a name", "This is the big title they'll see first.")}
-            <label htmlFor="gift-name" className="sr-only">
-              Gift name
+            {step(2, "Who's it for?", "Their first name, or what you call them. Two names work too.")}
+            <label htmlFor="gift-for" className="sr-only">
+              Who's it for
             </label>
             <input
-              id="gift-name"
+              id="gift-for"
               required
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              placeholder={solo ? "Happy anniversary, love" : "Happy 30th, Ana"}
+              maxLength={80}
+              autoComplete="off"
+              value={recipient}
+              onChange={(e) => setRecipient(e.target.value)}
+              placeholder={solo ? "Sam" : "Ana"}
               className="mt-5 w-full rounded-2xl border border-line bg-paper px-5 py-4 font-display text-lg outline-none transition-colors focus:border-accent focus:bg-white"
             />
+            <p className="mt-3 text-sm text-muted">
+              The gift opens with{" "}
+              <span className="font-display text-base text-ink">
+                {occasionTitle(activeTheme, recipient.trim() || (solo ? "Sam" : "Ana"))}
+              </span>
+              {recipient.trim() ? null : <span className="ml-1.5 font-mono text-[10px] tracking-[0.12em] uppercase">(example)</span>}
+              . You can change it later.
+            </p>
           </div>
 
           <div className="card-paper relative p-5 sm:p-7">

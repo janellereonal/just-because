@@ -251,7 +251,7 @@ export function BentoView({
   const intro =
     site.custom_text.intro_message?.trim() ||
     site.intro_text ||
-    voice.intro(data.name);
+    voice.intro(data.named ? data.name : "");
   let i = 0;
 
   return (
@@ -325,7 +325,7 @@ export function BentoView({
               </p>
               <p className="text-sm opacity-75" suppressHydrationWarning>
                 {cd.done
-                  ? `Happy day, ${data.name}.`
+                  ? `Happy day${data.named ? `, ${data.name}` : ""}.`
                   : `${cd.days === 1 ? "day" : "days"} to go · ${String(cd.hours).padStart(2, "0")}:${String(cd.mins).padStart(2, "0")}:${String(cd.secs).padStart(2, "0")}`}
               </p>
             </div>
