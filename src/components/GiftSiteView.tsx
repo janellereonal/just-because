@@ -8,6 +8,7 @@ import { buzz, chime } from "@/lib/play";
 import { RotateCw } from "lucide-react";
 import { giftHeading, KIND_WORDS, themeKindOf } from "@/lib/themeKind";
 import { SampleText, usePlaceholderName } from "@/components/SampleMark";
+import { centerInScroller } from "@/lib/scroll";
 import { giftMoment } from "@/lib/giftPieces";
 import {
   FONT_PAIRINGS,
@@ -426,7 +427,7 @@ export function GiftSiteView({
   useEffect(() => {
     if (!highlightField || !rootRef.current) return;
     const el = rootRef.current.querySelector(`[data-field="${highlightField}"]`);
-    el?.scrollIntoView({ behavior: "smooth", block: "center" });
+    if (el) centerInScroller(el);
   }, [highlightField]);
 
   function fp(field: keyof CustomText, extra = "") {
@@ -871,8 +872,14 @@ export function GiftSiteView({
                           Listen to this song
                         </a>
                       )}
-                      <p className="mt-3 text-sm" style={{ color: accentText }}>
-                        {item.author_name}
+                      <p className="mt-3 flex items-center justify-between gap-3 text-sm" style={{ color: accentText }}>
+                        <span>{item.author_name}</span>
+                        {/* The player can be blocked (office or school wifi); the link always works. */}
+                        {embed && item.external_link ? (
+                          <a href={item.external_link} target="_blank" rel="noreferrer" className="text-xs underline opacity-80">
+                            Open in {/spotify/i.test(item.external_link) ? "Spotify" : "YouTube"}
+                          </a>
+                        ) : null}
                       </p>
                     </div>
                   );

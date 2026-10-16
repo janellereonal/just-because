@@ -23,6 +23,7 @@ import { countdownTarget, momentOf, toLocalInput, viewerZone } from "@/lib/time"
 import { OwnNotes } from "@/components/OwnNotes";
 import { useAuth } from "@/hooks/useAuth";
 import { useMinWidth } from "@/hooks/use-mobile";
+import { centerInScroller } from "@/lib/scroll";
 import { DevicePreview, DeviceToggle, type PreviewDevice } from "@/components/DevicePreview";
 import type { IntroSettings, IntroSticker } from "@/lib/intro";
 import { uploadFile } from "@/lib/upload";
@@ -384,7 +385,7 @@ function SiteDashboard() {
     const el = fieldRefs.current[focusField] as HTMLInputElement | null;
     if (el && document.activeElement !== el) {
       el.focus({ preventScroll: true });
-      el.scrollIntoView({ behavior: "smooth", block: "center" });
+      centerInScroller(el);
     }
   }, [focusField, section]);
 
@@ -649,7 +650,7 @@ function SiteDashboard() {
     if (typeof window !== "undefined" && window.innerWidth < 900) setSheetOpen(true);
     setTimeout(() => {
       const el = fieldRefs.current[field];
-      el?.scrollIntoView({ behavior: "smooth", block: "center" });
+      if (el) centerInScroller(el);
       (el as HTMLInputElement | null)?.focus?.();
     }, 220);
   }
