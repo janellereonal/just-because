@@ -18,7 +18,7 @@
 @keyframes jb-fade-in { from { opacity: 0; } to { opacity: 1; } }
 
 /* Inside a device preview, "full screen" means the preview's screen. */
-.jb-screen .min-h-screen, .jb-screen .comic-reader, .jb-screen .comic-cover { min-height: 100%; }
+.jb-screen .min-h-screen, .jb-screen .cx-root { min-height: 100%; }
 
 /* Parallax: the skin's background drifts with the pointer or the phone's tilt. */
 .gift-scrap .sk-pattern { transform: translate3d(calc(var(--mx, 0) * -10px), calc(var(--my, 0) * -8px), 0) scale(1.04); transition: transform .5s cubic-bezier(.2,.7,.3,1); }

@@ -13,7 +13,7 @@ export type ComicSettings = {
 };
 
 export const COMIC_CHAPTERS: Record<ModuleType, string> = {
-  countdown: "Next Issue Drops In…",
+  countdown: "Coming soon",
   photobooth: "Origin Story",
   letters: "The Ohana",
   songs: "Soundtrack",

@@ -1,5 +1,6 @@
 // usage: node shot.js <url> <out.png> [width] [height] [waitMs] [js-to-eval-before-shot] [fullPage]
 const { chromium } = require('playwright-core');
+const { useLocalFonts } = require('./fonts.cjs');
 const sparticuz = require('@sparticuz/chromium').default;
 (async () => {
   const [url, out, w = '390', h = '844', wait = '2500', evalJs = '', full = ''] = process.argv.slice(2);
@@ -9,6 +10,7 @@ const sparticuz = require('@sparticuz/chromium').default;
     headless: true,
   });
   const ctx = await browser.newContext({ viewport: { width: +w, height: +h }, deviceScaleFactor: 1, hasTouch: +w < 700, storageState: process.env.STATE || undefined });
+  await useLocalFonts(ctx);
   const page = await ctx.newPage();
   const errors = [];
   page.on('pageerror', e => errors.push('PAGEERROR ' + e.message));

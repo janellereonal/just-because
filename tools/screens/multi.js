@@ -7,6 +7,7 @@
 const fs = require('fs');
 const path = require('path');
 const { chromium } = require('playwright-core');
+const { useLocalFonts } = require('./fonts.cjs');
 const sparticuz = require('@sparticuz/chromium').default;
 (async () => {
   const plan = JSON.parse(fs.readFileSync(process.argv[2], 'utf8'));
@@ -24,6 +25,7 @@ const sparticuz = require('@sparticuz/chromium').default;
       if (browser) await Promise.race([browser.close(), new Promise(r => setTimeout(r, 5000))]);
       browser = await launch();
       ctx = await browser.newContext({ viewport: { width: s.w, height: s.h }, deviceScaleFactor: 1, hasTouch: s.w < 700, storageState: plan.state || undefined });
+      await useLocalFonts(ctx);
       page = await ctx.newPage();
       page.on('pageerror', e => console.log(s.name, 'PAGEERROR', e.message.slice(0, 200)));
       await page.addInitScript(() => { try { sessionStorage.setItem('jb-intro-seen', '1'); } catch {} });

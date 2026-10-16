@@ -1,3 +1,4 @@
+import { OrnamentIcon } from "@/components/GiftTree";
 import { useEffect, useMemo, useRef, useState } from "react";
 import {useParams} from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -619,13 +620,14 @@ function ContributePage() {
                         title={label}
                         aria-label={label}
                         onClick={() => setOrnament(key)}
-                        className="grid aspect-square place-items-center rounded-xl border text-2xl"
+                        className="squish grid aspect-square place-items-center rounded-2xl border p-1.5 transition-colors"
                         style={{
                           borderColor: ornament === key ? palette.accent : `${ink}22`,
                           backgroundColor: ornament === key ? `${palette.accent}22` : palette.background,
                         }}
                       >
-                        {glyph}
+                        <OrnamentIcon ornamentKey={key} className="size-full" />
+                        <span className="sr-only">{glyph}</span>
                       </button>
                     ))}
                   </div>
@@ -644,9 +646,7 @@ function ContributePage() {
                 <>
                   {active === "tree" ? (
                     <div className="mt-5 text-center">
-                      <span className="text-5xl">
-                        {ORNAMENTS.find(([key]) => key === ornament)?.[2]}
-                      </span>
+                      <OrnamentIcon ornamentKey={ornament} big className="mx-auto size-24" />
                       <p className="mt-2 text-sm font-medium">2. Leave a message</p>
                       <button
                         type="button"

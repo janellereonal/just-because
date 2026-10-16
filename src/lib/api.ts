@@ -18,6 +18,7 @@
  *    first; the password hash itself never leaves the server
  */
 import { FORMAT_IDS } from "@/lib/formats";
+import { FONT_CHOICE_IDS } from "@/lib/fontChoices";
 import { normalizeIntroSettings } from "@/lib/intro";
 import { normalizeCharacter } from "@/themes/_shared/cast/types";
 import { normalizeIconSetting } from "@/themes/_shared/iconSets";
@@ -313,7 +314,7 @@ export const createSite = createServerFn({ method: "POST" })
       customColors: paletteShape,
       treeRevealDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).nullable(),
       modules: z.array(z.enum(MODULE_TYPES)).min(1),
-      fontChoice: z.enum(["theme", "romantic", "playful", "modern", "handwritten"]).optional(),
+      fontChoice: z.enum(FONT_CHOICE_IDS).optional(),
       /** Just from the creator: no friends link, they add every note. */
       solo: z.boolean().optional(),
     }),
@@ -356,7 +357,7 @@ export const updateSite = createServerFn({ method: "POST" })
         title: z.string().trim().min(1).max(200),
         custom_text: jsonObject,
         custom_colors: paletteShape,
-        font_choice: z.enum(["theme", "romantic", "playful", "modern", "handwritten"]),
+        font_choice: z.enum(FONT_CHOICE_IDS),
         countdown_date: date,
         countdown_at: z.string().datetime({ offset: true }).nullable().optional(),
         calendar_locked: z.boolean(),

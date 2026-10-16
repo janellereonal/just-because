@@ -15,8 +15,19 @@ import { designFor, loadThemeFonts, themeFontVars } from "@/themes/_shared/desig
 import { SPRING } from "@/themes/_shared/stage";
 import { claimPreview, releasePreview, useIsPlaying } from "@/components/ThemeLivePreview";
 import { GiftPeek } from "@/components/GiftPeek";
+import { SampleGift } from "@/components/SampleGift";
+import { themePalettes, usePalettes } from "@/hooks/usePalettes";
+import { SHOWCASE_COPY } from "@/copy/strings";
 
 const FALLBACK: Palette = { background: "#FBF8F2", primary: "#2B2522", accent: "#B5623E" } as Palette;
+
+/** The theme's first curated palette (themes keep them in a separate table now). */
+function useThemePalette(theme: Theme | null): Palette {
+  const { data: all = [] } = usePalettes();
+  if (!theme) return FALLBACK;
+  const p = themePalettes(theme, all)[0];
+  return p ? { background: p.background, primary: p.primary, accent: p.accent } : (theme.palettes[0] ?? FALLBACK);
+}
 const STAGE_W = 390;
 const STAGE_H = 600;
 const SAMPLE_FRIENDS = ["Lia", "Jo", "Mika", "Sam", "Noor", "Theo"];
@@ -36,6 +47,7 @@ export function OpeningCard({
 }) {
   const kind = themeKindOf(theme);
   const design = designFor(kind);
+  const palette = useThemePalette(theme);
   const playing = useIsPlaying(theme.id);
   const [loop, setLoop] = useState(0);
   const [peek, setPeek] = useState(false);
@@ -108,12 +120,12 @@ export function OpeningCard({
           className="pointer-events-none absolute top-0 left-0 origin-top-left [container:gift/inline-size]"
           style={{ width: STAGE_W, height: STAGE_H, transform: `scale(${scale})` }}
         >
-          <GiftPeek kind={kind} palette={theme.palettes[0] ?? FALLBACK} live={peek} />
+          <GiftPeek kind={kind} palette={palette} live={peek} />
           {/* Remounting restarts the opening; the peek stays a beat so the loop feels deliberate. */}
           <TactileOpening
             key={`${loop}-${playing ? "on" : "off"}`}
             kind={kind}
-            palette={theme.palettes[0] ?? FALLBACK}
+            palette={palette}
             recipientName="Ana"
             character={character}
             contributors={SAMPLE_FRIENDS}
@@ -170,6 +182,7 @@ export function OpeningPreviewModal({
 }) {
   const [opened, setOpened] = useState(false);
   const [round, setRound] = useState(0);
+  const palette = useThemePalette(theme);
   useEffect(() => {
     if (!theme) return;
     setOpened(false);
@@ -199,11 +212,34 @@ export function OpeningPreviewModal({
           transition={SPRING.soft}
         >
           <div className="absolute inset-0 [container:gift/inline-size]">
-            <GiftPeek kind={themeKindOf(theme)} palette={theme.palettes[0] ?? FALLBACK} live={opened} />
+            <AnimatePresence>
+              {opened ? (
+                <motion.div
+                  key={`gift-${round}`}
+                  className="absolute inset-0 z-[85] overflow-x-hidden overflow-y-auto overscroll-contain bg-paper [container:gift/inline-size]"
+                  initial={{ opacity: 0, scale: 0.985, filter: "blur(6px)" }}
+                  animate={{ opacity: 1, scale: 1, filter: "blur(0px)" }}
+                  exit={{ opacity: 0, transition: { duration: 0.2 } }}
+                  transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
+                >
+                  <motion.span
+                    className="pointer-events-none sticky top-3 z-[2] mx-auto block w-fit rounded-full bg-ink/80 px-3 py-1 font-mono text-[10px] tracking-[0.16em] text-paper uppercase backdrop-blur"
+                    initial={{ opacity: 0, y: -8 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.8, duration: 0.4 }}
+                  >
+                    {SHOWCASE_COPY.chip}
+                  </motion.span>
+                  <div className="relative -mt-7 pb-28">
+                    <SampleGift theme={theme} palette={palette} />
+                  </div>
+                </motion.div>
+              ) : null}
+            </AnimatePresence>
             <TactileOpening
               key={round}
               kind={themeKindOf(theme)}
-              palette={theme.palettes[0] ?? FALLBACK}
+              palette={palette}
               recipientName="Ana"
               character={character}
               contributors={SAMPLE_FRIENDS}
@@ -223,21 +259,28 @@ export function OpeningPreviewModal({
           <AnimatePresence>
             {opened ? (
               <motion.div
-                className="absolute inset-x-0 bottom-0 z-[90] flex flex-col items-center gap-3 bg-gradient-to-t from-black/50 to-transparent px-4 pt-16 pb-8"
-                initial={{ opacity: 0, y: 30 }}
+                className="pointer-events-none absolute inset-x-0 bottom-0 z-[90] flex justify-center px-4 pb-5"
+                initial={{ opacity: 0, y: 40 }}
                 animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: 30 }}
-                transition={SPRING.soft}
+                exit={{ opacity: 0, y: 40 }}
+                transition={{ ...SPRING.soft, delay: 0.35 }}
               >
-                <button type="button" onClick={() => onUse(theme)} className="squish min-h-12 w-full max-w-xs rounded-full bg-accent px-6 text-base font-medium text-cream">
-                  Use this theme
-                </button>
-                <div className="flex gap-5 text-sm text-white">
-                  <button type="button" onClick={() => { setOpened(false); setRound((n) => n + 1); }} className="underline underline-offset-4">
-                    Open it again
+                <div className="pointer-events-auto flex w-full max-w-md items-center gap-1.5 rounded-full bg-white/90 p-1.5 shadow-[0_18px_40px_-16px_rgba(43,37,34,.45)] ring-1 ring-ink/5 backdrop-blur-md">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setOpened(false);
+                      setRound((n) => n + 1);
+                    }}
+                    className="min-h-11 shrink-0 rounded-full px-2.5 text-[12.5px] font-medium whitespace-nowrap text-ink/75 hover:bg-ink/5 hover:text-ink"
+                  >
+                    {SHOWCASE_COPY.again}
                   </button>
-                  <button type="button" onClick={() => onSample(theme)} className="underline underline-offset-4">
-                    See a whole gift
+                  <button type="button" onClick={() => onUse(theme)} className="squish min-h-11 flex-1 rounded-full bg-accent px-4 text-[15px] font-medium whitespace-nowrap text-cream">
+                    {SHOWCASE_COPY.use}
+                  </button>
+                  <button type="button" onClick={() => onSample(theme)} className="min-h-11 shrink-0 rounded-full px-2.5 text-[12.5px] font-medium whitespace-nowrap text-ink/75 hover:bg-ink/5 hover:text-ink">
+                    {SHOWCASE_COPY.details}
                   </button>
                 </div>
               </motion.div>
