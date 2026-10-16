@@ -154,3 +154,10 @@
   white-space: nowrap;
   -webkit-text-fill-color: currentColor;
 }
+
+/* A record turning while its song plays. */
+@keyframes jb-spin { to { transform: rotate(360deg); } }
+
+/* A bar that fills once over its animation-duration (auto-advancing pickers). */
+.jb-fill { animation: jb-fill linear forwards; transform: scaleX(0); }
+@keyframes jb-fill { to { transform: scaleX(1); } }

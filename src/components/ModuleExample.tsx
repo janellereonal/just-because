@@ -15,6 +15,9 @@ const LETTER_LINE: Record<ThemeKind, string> = {
   wedding: "So happy for you both.",
   bridal: "Can't wait to celebrate you.",
   baby: "That little one is so lucky.",
+  handwritten: "I wrote this one by hand, just for you.",
+  game: "You always win, and I don't even mind.",
+  pixel: "Achievement unlocked: best friend.",
   default: "Thinking of you, always.",
 };
 

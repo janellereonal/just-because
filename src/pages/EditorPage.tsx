@@ -943,7 +943,7 @@ function SiteDashboard() {
           <span className="min-w-0 flex-1">
             <span className="block text-sm font-medium">{customizeLook ? "Fewer options" : "Customize"}</span>
             {customizeLook ? null : (
-              <span className="block text-xs text-muted">Any color, more characters, your own picture, sprinkles</span>
+              <span className="block text-xs text-muted">Any color, more characters, your own picture, sprinkles, a wanderer</span>
             )}
           </span>
           <ChevronDown className={`size-4 shrink-0 transition-transform ${customizeLook ? "rotate-180" : ""}`} />

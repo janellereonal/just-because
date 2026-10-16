@@ -81,6 +81,12 @@ export function sectionMaterial(kind: ThemeKind): Material {
         accent2: d.tennis!,
         dark: false,
       };
+    case "handwritten":
+      return { paper: d.paper!, ink: d.ink!, accent: d.rose!, accent2: d.kraft!, dark: false };
+    case "game":
+      return { paper: d.cream!, ink: d.navy!, accent: d.cranberry!, accent2: d.mint!, dark: false };
+    case "pixel":
+      return { paper: d.night!, ink: d.snow!, accent: d.mint!, accent2: d.bubblegum!, dark: true };
     default:
       return {
         paper: "#FFFDF9",

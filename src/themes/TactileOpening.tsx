@@ -19,6 +19,9 @@ import { NewYearOpening, newYearBackground } from "@/themes/newyear/Opening";
 import { VoyageOpening, voyageBackground } from "@/themes/voyage/Opening";
 import { PetsOpening, petsBackground } from "@/themes/pets/Opening";
 import { ChristmasOpening, christmasBackground, defaultBackground } from "@/themes/christmas/Opening";
+import { HandwrittenOpening, handwrittenBackground } from "@/themes/handwritten/Opening";
+import { GameOpening, gameBackground } from "@/themes/game/Opening";
+import { PixelOpening, pixelBackground } from "@/themes/pixel/Opening";
 
 type Entry = {
   Component: OpeningComponent;
@@ -100,6 +103,28 @@ export const OPENINGS: Partial<Record<ThemeKind, Entry>> = {
     ink: (c) => c.ink!,
     button: "Pull the string",
     sprinkles: 0.3,
+  },
+  handwritten: {
+    Component: HandwrittenOpening,
+    background: handwrittenBackground,
+    ink: (c) => c.ink!,
+    button: "Unfold the note",
+    sprinkles: 0.3,
+  },
+  game: {
+    Component: GameOpening,
+    background: gameBackground,
+    ink: (c) => c.cream!,
+    button: "Roll the dice",
+    sprinkles: 0.35,
+  },
+  pixel: {
+    Component: PixelOpening,
+    background: pixelBackground,
+    ink: (c) => c.snow!,
+    button: "Press start",
+    grain: 0.06,
+    sprinkles: 0.4,
   },
   bridal: {
     Component: WeddingOpening,

@@ -1,21 +1,10 @@
-import { useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
-import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import {
-  CalendarDays,
   Check,
-  Clock3,
   EyeOff,
-  Heart,
-  Image as ImageIcon,
   Link2,
-  Mail,
-  Mic,
-  Music2,
-  Sparkles,
-  TreePine,
-  Type,
 } from "lucide-react";
 import { SiteHeader } from "@/components/SiteHeader";
 import { BENTO_COUNT, SectionsBento } from "@/components/landing/SectionsBento";
@@ -27,8 +16,8 @@ import Bo from "@/components/Bo";
 import { PricingCards } from "@/components/PricingCards";
 import { BoBuddy } from "@/components/BoBuddy";
 import { LandingIntro } from "@/components/landing/LandingIntro";
-import { FormatDemo } from "@/components/landing/FormatDemo";
-import { FORMATS } from "@/lib/formats";
+import { HeroShowcase } from "@/components/landing/HeroShowcase";
+import { FormatShowroom } from "@/components/landing/FormatShowroom";
 import { TIERS } from "@/config/pricing";
 
 export const Route = createFileRoute("/")({
@@ -129,8 +118,6 @@ const FAQ = [
 
 function Index() {
   const { user } = useAuth();
-  const [allFormats, setAllFormats] = useState(false);
-  const navigate = useNavigate();
   const { data: themes = [] } = useQuery({
     queryKey: ["themes", "published"],
     queryFn: () => fetchThemes(false),
@@ -190,19 +177,9 @@ function Index() {
                 {LANDING.hero.secondary}
               </a>
             </div>
-            <ul
-              className="jb-reveal mt-8 flex flex-wrap gap-x-5 gap-y-2 text-sm text-ink/70"
-              style={{ "--d": "340ms" } as React.CSSProperties}
-            >
-              {LANDING.hero.proof.map((t) => (
-                <li key={t} className="inline-flex items-center gap-1.5">
-                  <Check className="size-4 text-accent" /> {t}
-                </li>
-              ))}
-            </ul>
             <p
-              className="jb-reveal mt-4 text-sm text-ink/70"
-              style={{ "--d": "400ms" } as React.CSSProperties}
+              className="jb-reveal mt-8 text-sm text-ink/70"
+              style={{ "--d": "340ms" } as React.CSSProperties}
             >
               {LANDING.hero.soloLead}{" "}
               <Link
@@ -218,24 +195,7 @@ function Index() {
             className="jb-reveal relative mt-12 min-w-0 lg:mt-0"
             style={{ "--d": "220ms" } as React.CSSProperties}
           >
-            <div
-              aria-hidden="true"
-              className="float-note top-28 -left-14 hidden rotate-[-4deg] xl:block"
-              style={{ "--r": "-4deg" } as React.CSSProperties}
-            >
-              <span className="block font-semibold">Sofia added a letter</span>
-              <span className="text-ink/60">just now</span>
-            </div>
-            <div
-              aria-hidden="true"
-              className="float-note -right-8 bottom-40 hidden rotate-[5deg] xl:block"
-              style={{ "--r": "5deg", animationDelay: "1.4s" } as React.CSSProperties}
-            >
-              <span className="inline-flex items-center gap-1.5 font-semibold">
-                <Heart className="size-3.5 fill-accent text-accent" /> 12 friends joined
-              </span>
-            </div>
-            <FormatDemo />
+            <HeroShowcase />
           </div>
         </div>
       </section>
@@ -368,42 +328,7 @@ function Index() {
             </h2>
             <p className="mt-3 text-cream/70">{LANDING_MORE.formats.body}</p>
           </div>
-          <div className="relative mt-8 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-            {(allFormats ? FORMATS : FORMATS.slice(0, 4)).map((f) => (
-              <button
-                key={f.id}
-                type="button"
-                onClick={() => {
-                  window.dispatchEvent(new CustomEvent("jb:demo-format", { detail: f.id }));
-                  document
-                    .querySelector('[aria-label="Gift formats"]')
-                    ?.scrollIntoView({ behavior: "smooth", block: "center" });
-                }}
-                className="group rounded-[24px] bg-white/6 p-5 text-left ring-1 ring-white/10 transition-colors hover:bg-white/12"
-              >
-                <span className="flex items-center justify-between">
-                  <span className="font-display text-lg font-semibold">{f.title}</span>
-                  {f.isNew ? (
-                    <span className="rounded-full bg-pink px-2 py-0.5 text-[10px] font-semibold text-ink">
-                      {LANDING_MORE.formats.isNew}
-                    </span>
-                  ) : null}
-                </span>
-                <span className="mt-2 block text-sm leading-relaxed text-cream/70">{f.about}</span>
-                <span className="mt-4 inline-flex items-center gap-1 text-sm font-medium text-pink">
-                  <Sparkles className="size-3.5" /> {LANDING_MORE.formats.tryIt}
-                </span>
-              </button>
-            ))}
-          </div>
-          <button
-            type="button"
-            onClick={() => setAllFormats((v) => !v)}
-            aria-expanded={allFormats}
-            className="squish relative mt-5 inline-flex min-h-11 items-center rounded-full bg-white/10 px-5 text-sm font-medium ring-1 ring-white/15 hover:bg-white/15"
-          >
-            {allFormats ? LANDING_MORE.formats.seeFewer : LANDING_MORE.formats.seeAll(FORMATS.length)}
-          </button>
+          <FormatShowroom />
         </div>
       </section>
 

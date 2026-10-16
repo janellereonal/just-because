@@ -46,6 +46,16 @@ const palettes: [string, string, string, string, string][] = [
   ["Midnight Toast", "Dark", "#10152E", "#E5C26B", "#A99BF5"],
   ["Boarding Pass", "Soft", "#F6F0E4", "#3E8CCE", "#E2531F"],
   ["Tennis Ball", "Earthy", "#F4EBDD", "#D1662B", "#A8461F"],
+  // Style themes (Handwritten, Game Night, Pixel), Oct 2026. Appended so ids stay stable.
+  ["Fountain Pen", "Soft", "#FBF6EA", "#2A3A6B", "#B8485F"],
+  ["Love Note", "Romantic", "#FFF1EC", "#B8485F", "#2A3A6B"],
+  ["Kraft Paper", "Earthy", "#F3E7D3", "#7A5230", "#2A3A6B"],
+  ["Game Night", "Bright", "#FFF6E5", "#22305E", "#D93A33"],
+  ["Board Game", "Bright", "#EAF6EE", "#22305E", "#C9302A"],
+  ["Felt Table", "Dark", "#1E4D3B", "#FFD34E", "#FFF6E5"],
+  ["Pixel Night", "Dark", "#1B1640", "#3DF2B0", "#FF5DA2"],
+  ["Arcade", "Bright", "#FFF4D6", "#5B3FE0", "#D9336F"],
+  ["Handheld", "Soft", "#E3EDC9", "#306230", "#6A4BD8"],
 ];
 const ids = new Map(palettes.map(([name], i) => [name, P(i + 1)]));
 
@@ -60,6 +70,9 @@ const themes: [string, string, string, string[], string[]][] = [
   ["Weddings", "Wedding", "Ivory, sage and soft gold for the big day.", ["letters", "photobooth", "songs"], ["Ivory Gold", "Ivory Sage", "Blush Bloom", "Matcha"]],
   ["Bridal Shower", "Shower", "Blush, peach and sage for the bride-to-be and her people.", ["letters", "photobooth", "wordcloud", "countdown"], ["Blush Bloom", "Peach Fuzz", "Ivory Sage"]],
   ["Baby Shower", "Shower", "Powder blue, butter and blush for the little one on the way.", ["letters", "photobooth", "wordcloud", "countdown"], ["Nursery", "Sunny", "Sky"]],
+  ["Handwritten", "Any occasion", "Ink on paper, folded in four. For any occasion that needs a few real words.", ["letters", "openwhen", "capsule", "photobooth"], ["Fountain Pen", "Love Note", "Kraft Paper"]],
+  ["Game Night", "Any occasion", "Dice, tokens and a board, for the friend who always wins.", ["letters", "quiz", "superlatives", "photobooth"], ["Game Night", "Board Game", "Felt Table"]],
+  ["Pixel", "Any occasion", "Eight-bit hearts and coins on a little console. Press start.", ["letters", "quiz", "superlatives", "photobooth"], ["Pixel Night", "Arcade", "Handheld"]],
 ];
 
 await sql.begin(async (tx) => {

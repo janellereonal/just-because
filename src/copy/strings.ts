@@ -113,16 +113,21 @@ export const LANDING = {
   hero: {
     kicker: "Group gifts, made together",
     title: "One gift from everyone who loves them.",
-    body: "Make one gift and share the link. Friends add letters, photos, songs, videos and voice notes from their phones. Then they open it all at once,",
+    body: "Make one gift and share the link. Friends add letters, photos, songs, videos and voice notes from their phones, no account needed. You read every note first, then they open it all at once,",
     bodyAccent: "just because.",
     primary: "Make a gift",
     secondary: "See how it works",
-    proof: ["Friends don't need an account", "You read every note first"],
     soloLead: "Just from you?",
     soloLink: "Make a solo gift for someone you love",
-    demoLabel: "Ana's 30th. Try opening it.",
-    demoHint: "12 friends added something",
-    fullGift: "See the full gift",
+    examplesLabel: "Example gifts",
+    screenLabel: (name: string) => `${name}, an example gift`,
+    pauseTour: "Pause the tour",
+    playTour: "Play the tour",
+    closeAgain: "Close it again",
+    noteAdded: (who: string) => `${who} added a letter`,
+    noteWhen: "just now",
+    noteJoined: (n: number) => `${n} friends joined`,
+    fullGift: "Open it full screen",
   },
   occasions: [
     "Birthdays",
@@ -209,10 +214,9 @@ export const LANDING_MORE = {
     kicker: "Formats",
     title: "Nine ways to open the same gift.",
     body: "Switch any time. Nobody has to rewrite their note.",
-    tryIt: "Try it above",
     isNew: "New",
-    seeAll: (n: number) => `See all ${n}`,
-    seeFewer: "Show fewer",
+    pickLabel: "Formats",
+    screenLabel: (name: string) => `Ana's 30th as a ${name}`,
   },
   themes: { link: (n: number) => `See all ${n || ""} themes`.replace("  ", " ") },
   plans: {
@@ -271,4 +275,11 @@ export const LANDING_MORE = {
     myGifts: "My gifts",
     line: "Made for the people you love.",
   },
+} as const;
+
+/** Characters panel. */
+export const CAST_COPY = {
+  wanderer: "Wanderer",
+  wandererHint: "One of these strolls around the gift. Tap it for a little hop.",
+  wandererOff: "Off",
 } as const;

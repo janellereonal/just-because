@@ -3,6 +3,44 @@
 Updated 16 Oct 2026 (sessions 6 to 8), so a new session, on any Claude account, can carry on without
 missing anything. Start with `HANDOFF.md` section 0.
 
+## Session 11: Handwritten, Game Night and Pixel, plus the wanderer (branch `new-themes`, on top of `themes-batch`)
+
+- **Three new themes**, in the "Any occasion" group (seeded with 3 palettes each, all pass 3:1):
+  - **Handwritten**: a note folded in four that you unfold (two taps), ink on lined paper. Kalam / Patrick Hand,
+    "Love notes" sprinkles (ink drops, envelopes, hearts). Note cards are lined paper with washi tape.
+  - **Game Night**: a board with two dice you roll; a token hops to the star square. Bungee / Outfit, frog in a
+    party hat, "Game night" sprinkles (dice, meeples, tokens, spades). Note cards have chunky outlines.
+  - **Pixel**: a handheld console, PRESS START, a loading bar and a beating pixel heart. Press Start 2P /
+    Pixelify Sans, crown, "Pixels" sprinkles. Note cards are game dialog boxes.
+  - Each has its own 3D hero (`src/lib/theme3d/scene.ts`), still in `public/themes3d/`, skin in `skins.css`,
+    words in `themeKind.ts`, and starter sections in `presets.ts`.
+- **Wanderer.** One sprinkle from the gift's set strolls along the edges of the gift page (all formats) and hops
+  when tapped (`src/components/Roamer.tsx`). Picked in Look > Customize > Characters and sprinkles > Sprinkles
+  (Off or one of the set). Stored as `icon_set.roam` (-1 off, 0 to 7); the three new themes have it on by default,
+  older themes off. Still under reduced motion.
+- `tools/screens/stills.js` renders the theme 3D stills (see "Re-rendering the theme 3D stills").
+- Not checked: the theme fonts themselves (Google Fonts is blocked in the sandbox, so shots show fallbacks).
+
+## Session 10: clay characters, clay icons, real gift covers, homepage showcase (branch `themes-batch`)
+
+- **Clay characters.** `src/lib/clay/scene.ts` builds each character in three.js (matte clay material, soft
+  key light, contact shadow, orthographic camera on the 120 box). `/dev/clay` renders them; `tools/screens/clay.js`
+  saves PNGs and `clay_webp.py` writes `public/clay/<id>.webp` (512) and `<id>@256.webp`. `Character.tsx` draws
+  the still and keeps the live SVG eyes, blush and mouth on top (face map in `spec.clay`). Recolored characters
+  fall back to the drawn SVG. Re-run both scripts after changing a recipe. Bo stays the drawn/3D Bo.
+- New characters: Shih Tzu x Maltese (`tzu-mal`) and Shih Tzu x Pomeranian (`tzu-pom`).
+- Fixed: animals' eyes slid to the floor on blink (motion SVG origins; `transformBox: fill-box`).
+- **Clay icons.** Path icons (hearts, stars, paws, florals, confetti) get soft matte shading from a gradient and a
+  contact shadow, no SVG filter, so dozens can float on a phone. `IconGlyph material="clay"` is the default
+  (`"flat"` opts out, `"felt"` is the baby opening's); bursts use the same look (`iconElement`).
+- **Gift covers on My gifts.** `GiftCover` draws the gift itself: palette and background, the occasion's 3D still,
+  its character, a few of its sprinkles and the heading in its own font. Still and cheap, no 3D running.
+- `listMySites` now goes through `siteRow` (it was sending `password_hash` to the browser).
+- Homepage: the hero phone tours the example gifts on its own (Ana, Sam, Milo, Nora & James), switchable;
+  Ana's 30th uses every section. Formats are a showroom (live phone + the nine formats) below plans.
+  Theme pages show a sample gift with the sections that suit the occasion.
+- Handwritten, Game and Pixel themes and the wanderer are session 11.
+
 ## Session 9f: end-to-end walk through on local (branch `e2e-fixes`, follow-up brief section E)
 
 Script: `tools/op/e2e.cjs` (not committed, lives with the other local helpers). Run from tools/screens with
@@ -511,3 +549,5 @@ With the dev server running, in Playwright (Chromium with WebGL): open any page,
 `const m = await import('/src/lib/theme3d/scene.ts')`, make a 960x600 canvas, call
 `m.createThemeScene(canvas, kind, palette, { still: true }).snapshot()` and save the data URL to
 `public/themes3d/<kind>.webp`. Use each theme's first suggested palette. Bump `STILL_VERSION`.
+`tools/screens/stills.js` does this for you: `node stills.js <outdir> game:FFF6E5:22305E:D93A33`, then save
+the PNGs as WebP (quality 86).

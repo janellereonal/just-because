@@ -558,6 +558,173 @@ function envelope(paper: THREE.ColorRepresentation, seal: THREE.ColorRepresentat
   return g;
 }
 
+
+/* ---------- style themes: handwritten, game night, pixel ---------- */
+
+/** A letter folded once, open like a little tent, with lines of ink on it. */
+function foldedNote(paper: THREE.ColorRepresentation, ink: THREE.ColorRepresentation) {
+  const g = new THREE.Group();
+  const half = (side: 1 | -1) => {
+    const h = new THREE.Group();
+    const sheet = new THREE.Mesh(roundedBox(1.25, 1.75, 0.035, 0.015, 3), clay(paper, 0.75));
+    sheet.position.x = side * 0.62;
+    h.add(sheet);
+    for (let i = 0; i < 5; i++) {
+      const w = i === 4 ? 0.5 : 0.82 - (i % 2) * 0.12;
+      const line = new THREE.Mesh(roundedBox(w, 0.035, 0.01, 0.005, 1), clay(ink, 0.5));
+      line.position.set(side * 0.62 - 0.36 + w / 2 + (side < 0 ? 0.05 : 0), 0.52 - i * 0.24, 0.024);
+      h.add(line);
+    }
+    h.rotation.y = side * 0.32;
+    return h;
+  };
+  g.add(half(-1), half(1));
+  return g;
+}
+
+/** A round ink bottle with a little cap. */
+function inkBottle(ink: THREE.ColorRepresentation) {
+  const g = new THREE.Group();
+  const body = new THREE.Mesh(new THREE.SphereGeometry(0.42, 40, 28), gloss(ink));
+  body.scale.set(1, 0.85, 1);
+  const neck = new THREE.Mesh(new THREE.CylinderGeometry(0.16, 0.2, 0.22, 28), gloss(ink));
+  neck.position.y = 0.42;
+  const cap = new THREE.Mesh(new THREE.CylinderGeometry(0.2, 0.2, 0.18, 28), clay(0x2b2522, 0.4));
+  cap.position.y = 0.6;
+  g.add(body, neck, cap);
+  return g;
+}
+
+/** A die: rounded cube with dark pips on the three faces you can see. */
+function die(face: THREE.ColorRepresentation, pip: THREE.ColorRepresentation, size = 1) {
+  const g = new THREE.Group();
+  g.add(new THREE.Mesh(roundedBox(1, 1, 1, 0.2, 6), clay(face, 0.45)));
+  const dot = (x: number, y: number, z: number) => {
+    const m = new THREE.Mesh(new THREE.SphereGeometry(0.085, 18, 12), gloss(pip));
+    m.position.set(x, y, z);
+    m.scale.set(1, 1, 0.45);
+    return m;
+  };
+  const o = 0.5;
+  // front: 3, top: 1, right: 5
+  [[-0.25, 0.25], [0, 0], [0.25, -0.25]].forEach(([x, y]) => g.add(dot(x!, y!, o)));
+  const top = dot(0, o, 0);
+  top.rotation.x = Math.PI / 2;
+  g.add(top);
+  [[-0.25, 0.25], [0.25, 0.25], [0, 0], [-0.25, -0.25], [0.25, -0.25]].forEach(([z, y]) => {
+    const m = dot(o, y!, z!);
+    m.rotation.y = Math.PI / 2;
+    g.add(m);
+  });
+  // back: 4, bottom: 6, left: 2, so it reads as a die from every side.
+  [[-0.25, 0.25], [0.25, 0.25], [-0.25, -0.25], [0.25, -0.25]].forEach(([x, y]) => g.add(dot(x!, y!, -o)));
+  [[-0.25, -0.25], [-0.25, 0], [-0.25, 0.25], [0.25, -0.25], [0.25, 0], [0.25, 0.25]].forEach(([x, z]) => {
+    const m = dot(x!, -o, z!);
+    m.rotation.x = Math.PI / 2;
+    g.add(m);
+  });
+  [[0.25, 0.25], [-0.25, -0.25]].forEach(([z, y]) => {
+    const m = dot(-o, y!, z!);
+    m.rotation.y = Math.PI / 2;
+    g.add(m);
+  });
+  g.scale.setScalar(size);
+  return g;
+}
+
+function meeple(color: THREE.ColorRepresentation, size = 1) {
+  const s = new THREE.Shape();
+  s.moveTo(0, 1);
+  s.bezierCurveTo(0.32, 1, 0.42, 0.72, 0.36, 0.52);
+  s.bezierCurveTo(0.7, 0.42, 1, 0.32, 1, 0.1);
+  s.bezierCurveTo(1, -0.05, 0.75, -0.08, 0.55, -0.06);
+  s.lineTo(0.78, -0.95);
+  s.lineTo(0.18, -0.95);
+  s.lineTo(0, -0.45);
+  s.lineTo(-0.18, -0.95);
+  s.lineTo(-0.78, -0.95);
+  s.lineTo(-0.55, -0.06);
+  s.bezierCurveTo(-0.75, -0.08, -1, -0.05, -1, 0.1);
+  s.bezierCurveTo(-1, 0.32, -0.7, 0.42, -0.36, 0.52);
+  s.bezierCurveTo(-0.42, 0.72, -0.32, 1, 0, 1);
+  const m = new THREE.Mesh(extrude(s, 0.32, 0.12), clay(color, 0.5));
+  m.scale.setScalar(size);
+  return m;
+}
+
+function token(color: THREE.ColorRepresentation, size = 1) {
+  const g = new THREE.Group();
+  const disc = new THREE.Mesh(new THREE.CylinderGeometry(0.42, 0.42, 0.14, 40), gloss(color));
+  const rim = new THREE.Mesh(new THREE.TorusGeometry(0.3, 0.035, 12, 40), gloss(new THREE.Color(color).lerp(new THREE.Color(0xffffff), 0.35)));
+  rim.rotation.x = Math.PI / 2;
+  rim.position.y = 0.075;
+  g.add(disc, rim);
+  g.scale.setScalar(size);
+  return g;
+}
+
+/** A little handheld console with a lit screen, a d-pad and two buttons. */
+function consoleToy(body: THREE.ColorRepresentation, screen: THREE.ColorRepresentation, button: THREE.ColorRepresentation) {
+  const g = new THREE.Group();
+  g.add(new THREE.Mesh(roundedBox(1.55, 2.3, 0.36, 0.2, 6), clay(body, 0.5)));
+  const bezel = new THREE.Mesh(roundedBox(1.25, 1.0, 0.06, 0.06, 3), clay(0x2b2540, 0.6));
+  bezel.position.set(0, 0.45, 0.19);
+  const glass = new THREE.Mesh(
+    roundedBox(1.02, 0.78, 0.04, 0.03, 2),
+    new THREE.MeshStandardMaterial({ color: screen, emissive: screen, emissiveIntensity: 0.55, roughness: 0.3 }),
+  );
+  glass.position.set(0, 0.45, 0.22);
+  const heartPx = [[1, 0], [2, 0], [4, 0], [5, 0], [0, 1], [1, 1], [2, 1], [3, 1], [4, 1], [5, 1], [6, 1], [1, 2], [2, 2], [3, 2], [4, 2], [5, 2], [2, 3], [3, 3], [4, 3], [3, 4]];
+  for (const [x, y] of heartPx) {
+    const px = new THREE.Mesh(new THREE.BoxGeometry(0.075, 0.075, 0.02), clay(0xff5da2, 0.4));
+    px.position.set(-0.225 + x! * 0.075, 0.6 - y! * 0.075, 0.245);
+    g.add(px);
+  }
+  const padH = new THREE.Mesh(roundedBox(0.42, 0.13, 0.08, 0.03, 2), clay(0x2b2540, 0.5));
+  const padV = new THREE.Mesh(roundedBox(0.13, 0.42, 0.08, 0.03, 2), clay(0x2b2540, 0.5));
+  padH.position.set(-0.4, -0.45, 0.2);
+  padV.position.set(-0.4, -0.45, 0.2);
+  const a = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.12, 0.08, 28), gloss(button));
+  a.rotation.x = Math.PI / 2;
+  a.position.set(0.48, -0.36, 0.2);
+  const b = a.clone();
+  b.position.set(0.22, -0.56, 0.2);
+  // A cartridge poking out of the top and a sticker on the back, so it reads from the side too.
+  const cart = new THREE.Mesh(roundedBox(1.1, 0.34, 0.24, 0.05, 3), clay(0x7a5cff, 0.5));
+  cart.position.set(0, 1.2, -0.02);
+  const sticker = new THREE.Mesh(roundedBox(0.9, 0.5, 0.03, 0.06, 2), clay(button, 0.5));
+  sticker.position.set(0, 0.3, -0.19);
+  g.add(bezel, glass, padH, padV, a, b, cart, sticker);
+  return g;
+}
+
+/** A heart made of little cubes. */
+function pixelHeart(color: THREE.ColorRepresentation, size = 1) {
+  const g = new THREE.Group();
+  const rows = [".XX.XX.", "XXXXXXX", "XXXXXXX", ".XXXXX.", "..XXX..", "...X..."];
+  rows.forEach((row, y) =>
+    [...row].forEach((c, x) => {
+      if (c !== "X") return;
+      const m = new THREE.Mesh(roundedBox(0.2, 0.2, 0.2, 0.035, 2), gloss(color));
+      m.position.set((x - 3) * 0.21, (2.5 - y) * 0.21, 0);
+      g.add(m);
+    }),
+  );
+  g.scale.setScalar(size);
+  return g;
+}
+
+function coin(size = 1) {
+  const g = new THREE.Group();
+  const c = new THREE.Mesh(new THREE.CylinderGeometry(0.42, 0.42, 0.1, 40), metal(GOLD, 0.25));
+  c.rotation.x = Math.PI / 2;
+  const mark = new THREE.Mesh(roundedBox(0.1, 0.4, 0.04, 0.02, 2), metal(0xf6d77a, 0.2));
+  mark.position.z = 0.06;
+  g.add(c, mark);
+  g.scale.setScalar(size);
+  return g;
+}
+
 /* ---------- compositions ---------- */
 
 type Piece = {
@@ -734,6 +901,38 @@ function compose(kind: ThemeKind, colors: ThemeSceneColors): { pieces: Piece[]; 
           phase: i * 0.35,
         });
       }
+      return { pieces, radius: 3 };
+    }
+    case "handwritten": {
+      const note = at(foldedNote(0xfffaf0, 0x2a3a6b), 0, -0.05, 0, { spin: 0.18, bob: 0.06 });
+      note.rotation.set(-0.12, 0.3, 0.04);
+      at(inkBottle(0x2a3a6b), 2.0, -1.05, 0.5, { bob: 0.05 }).scale.setScalar(0.9);
+      const env = at(envelope(0xfbefe4, accent), -2.05, -0.95, 0.4, { bob: 0.08 });
+      env.rotation.set(-0.12, 0.4, 0.1);
+      at(heart(accent, 0.35), -1.7, 1.25, -0.4, { spin: 0.5 });
+      at(heart(new THREE.Color(0xffc2cf), 0.24), 1.9, 1.2, -0.5, { spin: -0.5 });
+      return { pieces, radius: 3 };
+    }
+    case "game": {
+      const d1 = at(die(WHITE, 0xe2463f, 1), -0.55, -0.2, 0.2, { spin: 0.4, bob: 0.12 });
+      d1.rotation.set(-0.35, 0.6, 0.12);
+      const d2 = at(die(0xffd34e, 0x22305e, 0.82), 0.75, 0.25, -0.2, { spin: -0.35, bob: 0.14, phase: 1.4 });
+      d2.rotation.set(0.25, -0.5, -0.2);
+      at(meeple(primary, 0.55), -2.15, -0.75, 0.3, { spin: 0.3 });
+      at(meeple(0x3bb98a, 0.42), 2.2, -1.0, 0.4, { spin: -0.3 });
+      const t1 = at(token(accent, 0.8), 2.0, 1.15, -0.5, { spin: 0.6 });
+      t1.rotation.x = 0.9;
+      at(star(0xffd34e, 0.22), -2.1, 1.2, -0.5, { spin: 0.8 });
+      return { pieces, radius: 3.1 };
+    }
+    case "pixel": {
+      const c = at(consoleToy(accent, 0x3df2b0, 0xffe45c), 0, -0.1, 0, { spin: 0, bob: 0.06 });
+      c.rotation.set(-0.08, 0.28, 0.04);
+      at(pixelHeart(0xff5da2, 0.75), -2.05, 0.85, -0.3, { spin: 0.5 });
+      at(coin(0.8), 2.05, 1.0, -0.4, { spin: 1.1 });
+      at(coin(0.6), 1.85, -1.1, 0.5, { spin: -1.0 });
+      const block = at(new THREE.Mesh(roundedBox(0.5, 0.5, 0.5, 0.06, 3), clay(0x7a5cff, 0.45)), -1.9, -1.1, 0.5, { spin: 0.4 });
+      block.rotation.set(0.4, 0.6, 0);
       return { pieces, radius: 3 };
     }
     default: {

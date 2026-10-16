@@ -14,6 +14,8 @@ export type IntroStyle =
 /** The intro style is curated per theme, never chosen by the creator. */
 export function introStyleForTheme(themeName: string | null | undefined): IntroStyle {
   const key = (themeName ?? "").toLowerCase();
+  if (key.includes("handwritten")) return "letter";
+  if (key.includes("game") || key.includes("pixel")) return "giftbox";
   if (key.includes("valentine")) return "envelope";
   if (key.includes("birthday")) return "giftbox";
   if (key.includes("despidida") || key.includes("farewell") || key.includes("voyage"))

@@ -16,6 +16,7 @@ import { castFor, designFor } from "@/themes/_shared/design";
 import { ICON_SETS, MAX_CUSTOM_ICONS, resolveIconSet, type IconSetSetting, type Physics } from "@/themes/_shared/iconSets";
 import { IconGlyph } from "@/themes/_shared/Sprinkles";
 import { SPRING } from "@/themes/_shared/stage";
+import { CAST_COPY } from "@/copy/strings";
 
 type Tab = "characters" | "customize" | "upload" | "sprinkles";
 const TABS: { key: Tab; label: string }[] = [
@@ -337,7 +338,7 @@ function SprinklesTab({
   kind,
   recipient,
   value,
-  onSet,
+  onSet: setRaw,
 }: {
   siteId: string;
   kind: ThemeKind;
@@ -345,7 +346,22 @@ function SprinklesTab({
   value: IconSetSetting | null;
   onSet: (v: IconSetSetting | null) => void;
 }) {
-  const current = castFor(kind, null, value).iconSet;
+  const own = castFor(kind, null, null);
+  const now = castFor(kind, null, value);
+  const roam = now.roam;
+  // Changing the set keeps the wanderer choice, unless it's the theme's own.
+  const onSet = (v: IconSetSetting | null) => {
+    if (roam === own.roam) return setRaw(v);
+    setRaw({ ...(v ?? own.iconSet), roam });
+  };
+  const setRoam = (r: number) => {
+    const base = value ?? own.iconSet;
+    if (r === own.roam && !value) return;
+    const { roam: _drop, ...rest } = base as IconSetSetting & { roam?: number };
+    setRaw(r === own.roam ? (rest as IconSetSetting) : { ...rest, roam: r });
+  };
+  const current = now.iconSet;
+  const shown = resolveIconSet(current, { recipient });
   const custom = current && "custom" in current ? current : null;
   const [draft, setDraft] = useState("");
   const [busy, setBusy] = useState(false);
@@ -456,8 +472,35 @@ function SprinklesTab({
           </div>
         ) : null}
       </div>
+      <div className="mt-5 rounded-2xl border border-line bg-cream p-3">
+        <p className="text-sm font-medium">{CAST_COPY.wanderer}</p>
+        <p className="mt-0.5 text-xs text-muted">{CAST_COPY.wandererHint}</p>
+        <div className="mt-2 flex flex-wrap items-center gap-1.5">
+          <button
+            type="button"
+            onClick={() => setRoam(-1)}
+            aria-pressed={roam < 0}
+            className={`h-10 rounded-xl border px-3 text-xs font-medium ${roam < 0 ? "border-accent bg-accent/8" : "border-line bg-paper"}`}
+          >
+            {CAST_COPY.wandererOff}
+          </button>
+          {shown.items.slice(0, 8).map((it, i) => (
+            <motion.button
+              key={i}
+              type="button"
+              whileTap={{ scale: 0.9 }}
+              onClick={() => setRoam(i)}
+              aria-pressed={roam === i}
+              aria-label={`${CAST_COPY.wanderer} ${i + 1}`}
+              className={`grid size-10 place-items-center rounded-xl border ${roam === i ? "border-accent bg-accent/8" : "border-line bg-paper"}`}
+            >
+              <IconGlyph item={it} color={shown.colors[i % Math.max(1, shown.colors.length)] ?? "#B5623E"} size={20} />
+            </motion.button>
+          ))}
+        </div>
+      </div>
       {value ? (
-        <button type="button" onClick={() => onSet(null)} className="mt-3 text-xs text-muted underline underline-offset-4">
+        <button type="button" onClick={() => setRaw(null)} className="mt-3 text-xs text-muted underline underline-offset-4">
           Back to the theme's own
         </button>
       ) : null}

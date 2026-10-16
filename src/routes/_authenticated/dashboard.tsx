@@ -21,10 +21,12 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { isGiftEnded, normalizeSite, resolvePalette, type GiftSite } from "@/lib/gift";
+import { isGiftEnded, normalizeSite, type GiftSite } from "@/lib/gift";
 import { getTier } from "@/config/pricing";
 import { formatInfo } from "@/lib/formats";
 import Bo from "@/components/Bo";
+import { GiftCover } from "@/components/GiftCover";
+import { fetchThemes, type Theme } from "@/lib/themes";
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
   head: () => ({
@@ -48,15 +50,13 @@ function status(site: GiftSite) {
   return { label: "Collecting notes", tone: "bg-pink text-ink" };
 }
 
-function GiftCard({ site, index }: { site: GiftSite; index: number }) {
+function GiftCard({ site, index, theme }: { site: GiftSite; index: number; theme: Theme | null }) {
   const queryClient = useQueryClient();
   const [confirming, setConfirming] = useState(false);
   const [deleting, setDeleting] = useState(false);
   // Paid plans keep their gift (and its receipt). Legacy gifts never had an order.
   const paid = !!site.tier && site.tier !== "legacy";
-  const palette = resolvePalette(null, site.custom_colors);
   const s = status(site);
-  const recipient = site.custom_text.recipient_name?.trim();
   const friendsLink =
     typeof window === "undefined"
       ? `/contribute/${site.slug}`
@@ -69,30 +69,10 @@ function GiftCard({ site, index }: { site: GiftSite; index: number }) {
       <Link
         to="/sites/$id"
         params={{ id: site.id }}
-        className="relative block h-36 overflow-hidden"
+        className="relative block h-44 overflow-hidden"
         aria-label={`Edit ${site.title}`}
       >
-        <span
-          className="absolute inset-0 transition-transform duration-500 group-hover:scale-[1.04]"
-          style={{
-            background: `radial-gradient(70% 90% at 15% 10%, ${palette.accent}cc, transparent 70%), radial-gradient(60% 80% at 90% 90%, ${palette.primary}aa, transparent 70%), ${palette.background}`,
-          }}
-          aria-hidden
-        />
-        <span
-          className="absolute inset-0 bg-gradient-to-t from-black/45 via-black/10 to-transparent"
-          aria-hidden
-        />
-        <span className="absolute inset-x-5 bottom-4 flex items-end justify-between gap-3">
-          <span className="min-w-0">
-            <span className="block truncate font-display text-2xl leading-tight font-semibold text-white drop-shadow-sm">
-              {site.title}
-            </span>
-            {recipient ? (
-              <span className="block text-sm text-white/90">For {recipient}</span>
-            ) : null}
-          </span>
-        </span>
+        <GiftCover site={site} theme={theme} className="absolute inset-0" />
         <span className="absolute top-3 right-3 rounded-full bg-white/85 px-2.5 py-1 text-[11px] font-medium text-ink backdrop-blur">
           {site.solo ? "Just me" : "Me and friends"} · {formatInfo(site.format).title}
         </span>
@@ -208,6 +188,7 @@ function Dashboard() {
       return data.map((row) => normalizeSite(row as Record<string, unknown>));
     },
   });
+  const { data: themes = [] } = useQuery({ queryKey: ["themes", "published"], queryFn: () => fetchThemes(false) });
   const empty = !isLoading && sites.length === 0;
 
   return (
@@ -304,7 +285,7 @@ function Dashboard() {
         ) : (
           <div className="mt-10 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
             {sites.map((site, i) => (
-              <GiftCard key={site.id} site={site} index={i} />
+              <GiftCard key={site.id} site={site} index={i} theme={themes.find((t) => t.id === site.theme_id) ?? null} />
             ))}
             <Link
               to="/create"

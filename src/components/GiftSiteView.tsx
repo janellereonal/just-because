@@ -122,6 +122,72 @@ function VoiceCard({ item, accent }: { item: Contribution; accent: string }) {
   );
 }
 
+/**
+ * A song from an audio file (not a Spotify or YouTube link): a little record
+ * that turns while it plays, with a progress groove you can tap to seek.
+ */
+function SongRecord({ item, accent }: { item: Contribution; accent: string }) {
+  const url = useMediaUrl(item.media_url);
+  const audio = useRef<HTMLAudioElement | null>(null);
+  const [playing, setPlaying] = useState(false);
+  const [t, setT] = useState(0);
+  const [dur, setDur] = useState(0);
+  return (
+    <div className="flex items-center gap-4">
+      <button
+        type="button"
+        disabled={!url}
+        onClick={() => {
+          const a = audio.current;
+          if (!a) return;
+          if (a.paused) void a.play().catch(() => {});
+          else a.pause();
+        }}
+        aria-label={playing ? `Pause the song from ${item.author_name}` : `Play the song from ${item.author_name}`}
+        className="relative grid size-[72px] shrink-0 place-items-center rounded-full outline-none focus-visible:ring-4"
+        style={{
+          background: "repeating-radial-gradient(circle, #1b1716 0 1.4px, #2b2523 1.4px 2.8px)",
+          boxShadow: "2px 5px 10px -3px rgba(0,0,0,.45), inset 0 0 0 1px rgba(255,255,255,.08)",
+          animation: playing ? "jb-spin 2.2s linear infinite" : undefined,
+        }}
+      >
+        <span className="absolute inset-0 rounded-full" style={{ background: "conic-gradient(from 210deg, transparent 0 20deg, rgba(255,255,255,.16) 40deg, transparent 70deg 200deg, rgba(255,255,255,.1) 225deg, transparent 260deg)" }} />
+        <span className="relative grid size-7 place-items-center rounded-full text-[11px]" style={{ background: accent, color: readableInk(accent) }} aria-hidden>
+          {playing ? "❚❚" : "▶"}
+        </span>
+      </button>
+      <div className="min-w-0 flex-1">
+        <p className="leading-snug">{item.text_content}</p>
+        <div
+          className="mt-2 h-1.5 cursor-pointer overflow-hidden rounded-full"
+          style={{ background: `${accent}26` }}
+          onClick={(e) => {
+            const a = audio.current;
+            if (!a || !dur) return;
+            const r = e.currentTarget.getBoundingClientRect();
+            a.currentTime = ((e.clientX - r.left) / r.width) * dur;
+          }}
+          aria-hidden="true"
+        >
+          <span className="block h-full rounded-full" style={{ width: `${dur ? (t / dur) * 100 : 0}%`, background: accent }} />
+        </div>
+      </div>
+      {url ? (
+        <audio
+          ref={audio}
+          src={url}
+          preload="metadata"
+          onPlay={() => setPlaying(true)}
+          onPause={() => setPlaying(false)}
+          onEnded={() => setPlaying(false)}
+          onTimeUpdate={(e) => setT(e.currentTarget.currentTime)}
+          onLoadedMetadata={(e) => setDur(e.currentTarget.duration || 0)}
+        />
+      ) : null}
+    </div>
+  );
+}
+
 function Countdown({ date, accent, heading, label }: { date: string; accent: string; heading: string; label?: string | undefined }) {
   const [now, setNow] = useState(() => Date.now());
   useEffect(() => {
@@ -850,10 +916,12 @@ export function GiftSiteView({
                       key={item.id}
                       className="rounded-2xl bg-[var(--gift-surface)] p-4 shadow-sm ring-1 ring-black/5"
                     >
-                      {item.text_content ? (
+                      {!embed && item.media_url ? (
+                        <SongRecord item={item} accent={accentText} />
+                      ) : item.text_content ? (
                         <p className="mb-3 leading-snug">{item.text_content}</p>
                       ) : null}
-                      {embed ? (
+                      {!embed && item.media_url ? null : embed ? (
                         <iframe
                           src={embed}
                           title={`Song from ${item.author_name}`}
