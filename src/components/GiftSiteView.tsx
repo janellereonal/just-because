@@ -1,5 +1,5 @@
 import { giftVoice } from "@/lib/giftVoice";
-import { trackEvent } from "@/lib/track";
+import { shareGift, trackEvent } from "@/lib/track";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { SkinDecor } from "@/components/SkinDecor";
 import { ScrollStory } from "@/components/ScrollStory";
@@ -565,12 +565,7 @@ export function GiftSiteView({
   }
 
   function share() {
-    const url = window.location.href;
-    if (navigator.share) {
-      void navigator.share({ title: site.title, url });
-    } else {
-      void navigator.clipboard.writeText(url);
-    }
+    shareGift(site);
   }
 
   const hasContent =
