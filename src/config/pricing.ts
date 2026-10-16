@@ -128,6 +128,23 @@ export const promo = {
   label: "Early-bird discount",
 };
 
+/**
+ * Concierge beta ("Want us to handle it?"): we chase the friends, tidy the photos and assemble the
+ * gift. Paid by hand for now (no checkout). The dollar price is set, not converted.
+ */
+export const concierge = {
+  /** In centavos. */
+  amount: 149900,
+  usd: 49,
+  badge: "Beta, limited spots",
+};
+
+/** "₱1,499 / $49" */
+export function conciergePrice(): string {
+  const usd = new Intl.NumberFormat(undefined, { style: "currency", currency: "USD", currencyDisplay: "narrowSymbol", maximumFractionDigits: 0 }).format(concierge.usd);
+  return `${formatPeso(concierge.amount)} / ${usd}`;
+}
+
 /** A gift published before paid plans existed. Stays open with no expiry and no caps. */
 export const LEGACY_TIER = "legacy" as const;
 export type SiteTier = TierId | typeof LEGACY_TIER;

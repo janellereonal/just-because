@@ -3,6 +3,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { SiteHeader } from "@/components/SiteHeader";
+import { ConciergeRequests } from "@/components/admin/ConciergeRequests";
 import { usePreviewUrl } from "@/components/ThemeCard";
 import { fetchThemes, type Theme } from "@/lib/themes";
 import { getPaymentsSetup, listPaymentLog, setThemePreview, setThemeStatus, setupPaymongoWebhook } from "@/lib/api";
@@ -78,6 +79,7 @@ function AdminPage() {
   return (
     <div className="min-h-screen bg-paper text-ink">
       <SiteHeader />
+      <ConciergeRequests />
       <PaymentsSetup />
       <PaymentLog />
       <section className="mx-auto max-w-6xl px-5 py-14">

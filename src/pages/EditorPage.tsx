@@ -1,4 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
+import { OCCASION_NAMES } from "@/copy/strings";
+import { ConciergeOffer } from "@/components/ConciergeOffer";
 import { ExportGift } from "@/components/ExportGift";
 import { isFlagOn } from "@/config/flags";
 import { engineThemeForName } from "@/themes/engine/registry";
@@ -1046,6 +1048,14 @@ function SiteDashboard() {
               </Button>
             </div>
           </StepGroup>
+        ) : null}
+        {!solo ? (
+          <ConciergeOffer
+            compact
+            siteId={id}
+            recipient={draft.custom_text.recipient_name?.trim() ?? ""}
+            occasion={OCCASION_NAMES[themeKindOf(theme)] ?? ""}
+          />
         ) : null}
         <StepGroup
           title={solo ? "Your notes" : "Add your own"}
