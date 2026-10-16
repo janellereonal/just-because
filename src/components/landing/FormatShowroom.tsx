@@ -10,7 +10,9 @@ import { Live3DContext } from "@/components/Theme3D";
 import { FormatView } from "@/components/formats/FormatView";
 import { DevicePreview } from "@/components/DevicePreview";
 import { FormatMini } from "@/components/FormatPicker";
-import { FORMATS, type GiftFormat } from "@/lib/formats";
+import { offeredFormats, type GiftFormat } from "@/lib/formats";
+
+const FORMATS = offeredFormats();
 import { DEMO_GIFTS } from "@/lib/demoGifts";
 import { LANDING_MORE } from "@/copy/strings";
 
