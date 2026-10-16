@@ -131,3 +131,10 @@
 @media (prefers-reduced-motion: reduce) { .jb-wag, .jb-steam { animation: none; } }
 /* The back of a polaroid never makes the card taller than its photo. */
 .sb-flip-card > .sb-flip-back { position: absolute; inset: 0; overflow: hidden; }
+
+/* A record turning while its song plays. */
+@keyframes jb-spin { to { transform: rotate(360deg); } }
+
+/* A bar that fills once over its animation-duration (auto-advancing pickers). */
+.jb-fill { animation: jb-fill linear forwards; transform: scaleX(0); }
+@keyframes jb-fill { to { transform: scaleX(1); } }

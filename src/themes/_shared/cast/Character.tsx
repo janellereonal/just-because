@@ -307,7 +307,10 @@ function Drawn({
                 rx={spec.eyes.size}
                 ry={spec.eyes.size * 1.12}
                 fill={ink}
-                style={{ x: px, y: py, originX: `${ex}px`, originY: `${ey}px` }}
+                // Squash around the eye's own centre. (Motion measures SVG origins from the
+                // shape's own box, so an origin in viewBox px put the pivot far below the
+                // face, and every blink slid the eyes down to the floor.)
+                style={{ x: px, y: py, originX: 0.5, originY: 0.5, transformBox: "fill-box" }}
                 animate={{ scaleY: closed ? 0.08 : lid }}
                 transition={{ type: "spring", stiffness: 700, damping: 30 }}
               />

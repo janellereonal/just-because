@@ -4,6 +4,7 @@ import { GiftSiteView } from "@/components/GiftSiteView";
 import { introStyleForTheme } from "@/lib/intro";
 import { GiftIntro } from "@/components/GiftIntro";
 import { themeKindOf } from "@/lib/themeKind";
+import { PRESETS } from "@/lib/presets";
 import { themeFont } from "@/components/ThemeMiniPreview";
 import { themeFontVars } from "@/themes/_shared/design";
 import {
@@ -130,9 +131,14 @@ export function buildPreviewSite(theme: Theme, palette: Palette | undefined): Gi
 }
 
 /** The sections a theme turns on by default, as preview modules. */
+/**
+ * The sections a preview shows: the occasion's own picks (the same ones a new
+ * gift starts with), so every theme shows off the sections that suit it.
+ */
 export function previewModules(theme: Theme, siteId: string): SiteModule[] {
+  const preset = PRESETS[themeKindOf(theme)];
   const types = (
-    theme.default_modules.length > 0 ? theme.default_modules : ["letters", "photobooth", "songs"]
+    preset?.length ? preset : theme.default_modules.length > 0 ? theme.default_modules : ["letters", "photobooth", "songs"]
   ) as ModuleType[];
   return types.map((type, i) => ({
     id: `${theme.id}-${i}`,

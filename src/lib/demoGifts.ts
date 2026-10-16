@@ -3,7 +3,7 @@
  * Four people, four occasions: Ana's 30th, Sam's send-off, Milo the dog and
  * Nora & James's wedding.
  */
-import type { GiftSite, ModuleType, SiteModule, ViewContribution } from "@/lib/gift";
+import type { CalendarEntry, GiftSite, ModuleType, OrnamentKey, SiteModule, ViewContribution } from "@/lib/gift";
 import type { Palette, Theme } from "@/lib/themes";
 import type { ThemeKind } from "@/lib/themeKind";
 
@@ -14,6 +14,8 @@ export type DemoGift = {
   kind: ThemeKind;
   /** Who it's for, as the card says it. */
   who: string;
+  /** A short name for switchers ("Ana's 30th"). */
+  short: string;
   occasion: string;
   line: string;
   theme: Theme;
@@ -22,6 +24,8 @@ export type DemoGift = {
   modules: SiteModule[];
   notes: ViewContribution[];
   friends: string[];
+  /** Surprises behind the calendar's doors (only gifts with a calendar). */
+  calendar?: CalendarEntry[];
 };
 
 function theme(name: string, category: string, palette: Palette): Theme {
@@ -101,7 +105,7 @@ function note(
   type: ModuleType,
   who: string,
   text: string | null,
-  extra: { media?: string; link?: string; data?: Record<string, unknown> } = {},
+  extra: { media?: string; link?: string; data?: Record<string, unknown>; ornament?: OrnamentKey } = {},
 ): ViewContribution {
   n += 1;
   return {
@@ -113,7 +117,7 @@ function note(
     media_url: extra.media ?? null,
     external_link: extra.link ?? null,
     status: "approved",
-    ornament_key: null,
+    ornament_key: extra.ornament ?? null,
     visibility: "public",
     data: extra.data ?? null,
     created_at: "",
@@ -121,6 +125,13 @@ function note(
 }
 
 const inDays = (d: number) => new Date(Date.now() + d * 86400000).toISOString();
+/** A calendar door, `days` from today (the calendar opens doors at the viewer's local midnight). */
+function door(gift: string, days: number, type: CalendarEntry["type"], text: string, media: string | null = null): CalendarEntry {
+  const d = new Date();
+  d.setDate(d.getDate() + days);
+  const date = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+  return { id: `${gift}-door-${days}`, site_id: `demo-${gift}`, entry_date: date, type, text_content: text, media_url: media, external_link: null };
+}
 /** A local time a few days from now, for countdowns that read naturally ("Sat, 7:00 pm"). */
 const atLocal = (days: number, hour: number) => {
   const d = new Date();
@@ -138,6 +149,7 @@ const ana: DemoGift = {
   id: "ana",
   kind: "birthday",
   who: "Ana",
+  short: "Ana's 30th",
   occasion: "Turning 30",
   line: "Twelve people, three countries, one very loud party",
   theme: theme("Happy Birthday", "Celebration", anaPalette),
@@ -152,12 +164,24 @@ const ana: DemoGift = {
       photobooth_title: "Thirty years, roughly in order",
       wordcloud_title: "You, in one word each",
       voice_title: "Press play",
+      songs_title: "Songs for the drive to the party",
+      tree_title: "The wishing tree",
+      calendar_title: "A surprise a day until the party",
       countdown_title: "the party at Sofia's",
       footer_note: "Saturday, 7pm, Sofia's place. Bring nothing but yourself.",
     },
   }),
-  modules: mods("ana", ["letters", "photobooth", "voice", "wordcloud", "countdown", "openwhen", "superlatives", "quiz", "map", "coupons", "video", "doodle", "capsule"]),
+  // Every section there is, so Ana's gift doubles as the full tour.
+  modules: mods("ana", ["letters", "photobooth", "songs", "voice", "wordcloud", "countdown", "calendar", "tree", "openwhen", "superlatives", "quiz", "map", "coupons", "video", "doodle", "capsule"]),
   friends: ANA_FRIENDS,
+  calendar: [
+    door("ana", -2, "message", "Day one: the group chat has been renamed in your honor. Brace yourself."),
+    door("ana", -1, "photo", "Found this. You're welcome.", "/demo/picnic.webp"),
+    door("ana", 0, "message", "Today's surprise: Mateo is cooking. Rice included, properly."),
+    door("ana", 1, "message", "Tomorrow: breakfast is on Chen. Wear something comfy."),
+    door("ana", 3, "photo", "The cake is in progress. No peeking.", "/demo/cake.webp"),
+    door("ana", 4, "message", "Party day. See you at seven."),
+  ],
   notes: [
     note("ana", "letters", "Sofia", "Twelve years ago you lent me a pen in a library and never asked for it back. Since then you've been my emergency contact, my second opinion and the person I call before anyone else. Thirty looks wonderful on you. Here's to the decade where you finally believe how good you are."),
     note("ana", "letters", "Mom", "My darling girl. I still remember the night you were born: it was raining, your dad got lost on the way to the hospital, and you arrived like you had somewhere to be. You still do. I am proud of you every single day."),
@@ -171,6 +195,13 @@ const ana: DemoGift = {
     note("ana", "photobooth", "Priya", "The picnic where the wind took the napkins", { media: "/demo/picnic.webp" }),
     note("ana", "photobooth", "Chen", "Tonight's cake, sneak preview", { media: "/demo/cake.webp" }),
     note("ana", "voice", "Mom", "Your mom, singing (badly) from the kitchen", { media: "/demo/voice-mom.mp3" }),
+    note("ana", "songs", "Chen", "The road trip opener. Hummed by all of us, because we couldn't agree on the real one.", { media: "/demo/voice-team.mp3" }),
+    note("ana", "songs", "Zara", "Your karaoke encore. We don't talk about it, but here it is.", { media: "/demo/voice-grandma.mp3" }),
+    note("ana", "tree", "Yuki", "A year with more sunrises than alarms.", { ornament: "star" }),
+    note("ana", "tree", "Omar", "That you finally take the trip to Japan.", { ornament: "gift" }),
+    note("ana", "tree", "Emma", "More picnics, fewer flying napkins.", { ornament: "heart" }),
+    note("ana", "tree", "Lucas", "A decade as loud as you are.", { ornament: "bell" }),
+    note("ana", "tree", "Priya", "That you never stop sending six-minute voice notes.", { ornament: "cookie" }),
     ...[["Sofia", "home"], ["Mateo", "kind"], ["Aisha", "brave"], ["Chen", "funny"], ["Priya", "loyal"], ["Noah", "golden"], ["Yuki", "calm"], ["Omar", "generous"], ["Emma", "bright"], ["Lucas", "loud"], ["Zara", "honest"]].map(([w, t]) => note("ana", "wordcloud", w!, t!)),
     note("ana", "openwhen", "Sofia", "Breathe. Put the kettle on. Call me, whatever the time is. You have done harder things than this, and I was there for most of them.", { data: { when: "you're having a bad day" } }),
     note("ana", "openwhen", "Lucas", "Remember the night the taxi took us to the wrong city and we ended up at the best noodle place of our lives? Getting lost is half the fun.", { data: { when: "you need a laugh" } }),
@@ -208,6 +239,7 @@ const sam: DemoGift = {
   id: "sam",
   kind: "voyage",
   who: "Sam",
+  short: "Sam's send-off",
   occasion: "Moving to Lisbon",
   line: "Letters for the first hard week, from the whole team",
   theme: theme("Bon Voyage", "Farewell", samPalette),
@@ -264,6 +296,7 @@ const milo: DemoGift = {
   id: "milo",
   kind: "pets",
   who: "Milo",
+  short: "Milo's gotcha day",
   occasion: "Three years home",
   line: "From everyone at the dog park, and one cat",
   theme: theme("Pets", "Pets", miloPalette),
@@ -309,6 +342,7 @@ const nora: DemoGift = {
   id: "nora-james",
   kind: "wedding",
   who: "Nora & James",
+  short: "Nora & James",
   occasion: "Their wedding",
   line: "A guestbook that won't get lost in a drawer",
   theme: theme("Weddings", "Wedding", weddingPalette),

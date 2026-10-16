@@ -22,6 +22,18 @@ export type CharacterSpec = {
   head: { x: number; y: number; w: number };
   /** Where scarves and bow ties sit. */
   neck: { x: number; y: number; w: number };
+  /**
+   * The clay version (public/clay/<id>.webp, see src/lib/clay/scene.ts): where
+   * its face and costume go. Used when the character has its own colors;
+   * custom colors fall back to the drawn version above.
+   */
+  clay?: {
+    eyes: { l: [number, number]; r: [number, number]; size: number };
+    mouth: [number, number] | null;
+    cheeks?: { l: [number, number]; r: [number, number] };
+    head: { x: number; y: number; w: number };
+    neck: { x: number; y: number; w: number };
+  };
 };
 
 const shade = (hex: string, amt: number) => {
@@ -35,6 +47,41 @@ export { shade };
 
 /** A soft floor shadow, shared. */
 const floor = <ellipse cx="60" cy="114" rx="30" ry="4.5" fill="rgba(0,0,0,.13)" />;
+
+/** Fluffy SVG fallback for the Shih Tzu mixes (the clay version is the main one). */
+const fluffy = (c: Colors, ears: "long" | "fox", face: string) => (
+  <>
+    {floor}
+    {ears === "long" ? (
+      <>
+        <ellipse cx="29" cy="80" rx="11" ry="24" fill={shade(c.primary, -10)} />
+        <ellipse cx="91" cy="80" rx="11" ry="24" fill={shade(c.primary, -10)} />
+      </>
+    ) : (
+      <>
+        <path d="M30 50 40 24 54 44z" fill={c.primary} />
+        <path d="M90 50 80 24 66 44z" fill={c.primary} />
+      </>
+    )}
+    {Array.from({ length: 14 }, (_, i) => {
+      const a = (i / 14) * Math.PI * 2;
+      return <circle key={i} cx={60 + Math.cos(a) * 33} cy={70 + Math.sin(a) * 31} r="11" fill={c.primary} />;
+    })}
+    <ellipse cx="60" cy="72" rx="34" ry="34" fill={c.primary} />
+    <ellipse cx="60" cy="78" rx="22" ry="18" fill={face} />
+    <ellipse cx="60" cy="80" rx="4.5" ry="3.4" fill="#2E2220" />
+    <ellipse cx="46" cy="108" rx="9" ry="5" fill={face} />
+    <ellipse cx="74" cy="108" rx="9" ry="5" fill={face} />
+    {ears === "long" ? (
+      <>
+        <circle cx="60" cy="33" r="8" fill={c.primary} />
+        <ellipse cx="53" cy="29" rx="6" ry="4.5" fill={c.secondary} />
+        <ellipse cx="67" cy="29" rx="6" ry="4.5" fill={c.secondary} />
+        <circle cx="60" cy="29" r="3" fill={shade(c.secondary, -20)} />
+      </>
+    ) : null}
+  </>
+);
 
 export const CHARACTERS: CharacterSpec[] = [
   {
@@ -106,6 +153,33 @@ export const CHARACTERS: CharacterSpec[] = [
     cheeks: { l: [38, 64], r: [82, 64] },
     head: { x: 60, y: 22, w: 62 },
     neck: { x: 60, y: 82, w: 48 },
+    clay: { eyes: { l: [47, 66], r: [73, 66], size: 4 }, mouth: [60, 87], cheeks: { l: [37, 76], r: [83, 76] }, head: { x: 60, y: 36, w: 50 }, neck: { x: 60, y: 94, w: 50 } },
+  },
+  {
+    id: "tzu-mal",
+    name: "Shih Tzu x Maltese",
+    category: "Animals",
+    colors: { primary: "#F8F3EC", secondary: "#F29AB2", skin: "#F8F3EC" },
+    body: (c) => fluffy(c, "long", shade(c.primary, 4)),
+    eyes: { l: [48, 70], r: [72, 70], size: 4.6 },
+    mouth: [60, 88],
+    cheeks: { l: [39, 80], r: [81, 80] },
+    head: { x: 60, y: 24, w: 36 },
+    neck: { x: 60, y: 100, w: 52 },
+    clay: { eyes: { l: [48, 70], r: [72, 70], size: 4.4 }, mouth: [60, 89], cheeks: { l: [39, 80], r: [81, 80] }, head: { x: 60, y: 24, w: 36 }, neck: { x: 60, y: 100, w: 52 } },
+  },
+  {
+    id: "tzu-pom",
+    name: "Shih Tzu x Pomeranian",
+    category: "Animals",
+    colors: { primary: "#E8A15E", secondary: "#B8692F", skin: "#FFEBD0" },
+    body: (c) => fluffy(c, "fox", c.skin),
+    eyes: { l: [48, 68], r: [72, 68], size: 4.4 },
+    mouth: [60, 87],
+    cheeks: { l: [39, 78], r: [81, 78] },
+    head: { x: 60, y: 34, w: 50 },
+    neck: { x: 60, y: 100, w: 54 },
+    clay: { eyes: { l: [48, 68], r: [72, 68], size: 4.2 }, mouth: [60, 87], cheeks: { l: [39, 78], r: [81, 78] }, head: { x: 60, y: 34, w: 50 }, neck: { x: 60, y: 100, w: 54 } },
   },
   {
     id: "cat",
@@ -145,6 +219,7 @@ export const CHARACTERS: CharacterSpec[] = [
     cheeks: { l: [36, 64], r: [84, 64] },
     head: { x: 60, y: 22, w: 64 },
     neck: { x: 60, y: 84, w: 44 },
+    clay: { eyes: { l: [47, 68], r: [73, 68], size: 4 }, mouth: [60, 88], cheeks: { l: [37, 78], r: [83, 78] }, head: { x: 60, y: 40, w: 48 }, neck: { x: 60, y: 97, w: 52 } },
   },
   {
     id: "bunny",
@@ -177,6 +252,7 @@ export const CHARACTERS: CharacterSpec[] = [
     cheeks: { l: [38, 66], r: [82, 66] },
     head: { x: 60, y: 30, w: 56 },
     neck: { x: 60, y: 84, w: 44 },
+    clay: { eyes: { l: [48, 72], r: [72, 72], size: 3.8 }, mouth: [60, 89], cheeks: { l: [39, 82], r: [81, 82] }, head: { x: 60, y: 44, w: 40 }, neck: { x: 60, y: 98, w: 50 } },
   },
   {
     id: "bear",
@@ -209,6 +285,7 @@ export const CHARACTERS: CharacterSpec[] = [
     cheeks: { l: [36, 64], r: [84, 64] },
     head: { x: 60, y: 24, w: 62 },
     neck: { x: 60, y: 84, w: 48 },
+    clay: { eyes: { l: [47, 66], r: [73, 66], size: 4 }, mouth: [60, 89], cheeks: { l: [37, 77], r: [83, 77] }, head: { x: 60, y: 38, w: 50 }, neck: { x: 60, y: 98, w: 52 } },
   },
   {
     id: "duck",
@@ -236,6 +313,7 @@ export const CHARACTERS: CharacterSpec[] = [
     cheeks: { l: [36, 60], r: [84, 60] },
     head: { x: 60, y: 22, w: 58 },
     neck: { x: 60, y: 80, w: 48 },
+    clay: { eyes: { l: [46, 62], r: [74, 62], size: 4 }, mouth: null, cheeks: { l: [36, 72], r: [84, 72] }, head: { x: 60, y: 36, w: 44 }, neck: { x: 60, y: 96, w: 52 } },
   },
   {
     id: "frog",
@@ -265,6 +343,7 @@ export const CHARACTERS: CharacterSpec[] = [
     cheeks: { l: [30, 64], r: [90, 64] },
     head: { x: 60, y: 20, w: 74 },
     neck: { x: 60, y: 84, w: 50 },
+    clay: { eyes: { l: [38, 40], r: [82, 40], size: 4.4 }, mouth: [60, 76], cheeks: { l: [33, 80], r: [87, 80] }, head: { x: 60, y: 28, w: 70 }, neck: { x: 60, y: 99, w: 58 } },
   },
   {
     id: "person",
@@ -292,6 +371,7 @@ export const CHARACTERS: CharacterSpec[] = [
     cheeks: { l: [41, 66], r: [79, 66] },
     head: { x: 60, y: 22, w: 58 },
     neck: { x: 60, y: 86, w: 44 },
+    clay: { eyes: { l: [49, 64], r: [71, 64], size: 3.8 }, mouth: [60, 75], cheeks: { l: [41, 71], r: [79, 71] }, head: { x: 60, y: 24, w: 60 }, neck: { x: 60, y: 86, w: 44 } },
   },
   {
     id: "cup",
@@ -317,6 +397,7 @@ export const CHARACTERS: CharacterSpec[] = [
     cheeks: { l: [38, 82], r: [78, 82] },
     head: { x: 58, y: 40, w: 64 },
     neck: { x: 58, y: 100, w: 52 },
+    clay: { eyes: { l: [47, 78], r: [69, 78], size: 3.8 }, mouth: [58, 88], cheeks: { l: [39, 84], r: [77, 84] }, head: { x: 58, y: 46, w: 62 }, neck: { x: 58, y: 106, w: 54 } },
   },
   {
     id: "plant",
@@ -339,6 +420,7 @@ export const CHARACTERS: CharacterSpec[] = [
     cheeks: { l: [40, 92], r: [80, 92] },
     head: { x: 60, y: 12, w: 40 },
     neck: { x: 60, y: 62, w: 70 },
+    clay: { eyes: { l: [49, 82], r: [71, 82], size: 3.8 }, mouth: [60, 92], cheeks: { l: [41, 88], r: [79, 88] }, head: { x: 60, y: 18, w: 40 }, neck: { x: 60, y: 62, w: 66 } },
   },
   {
     id: "cloud",
@@ -368,6 +450,7 @@ export const CHARACTERS: CharacterSpec[] = [
     cheeks: { l: [40, 84], r: [82, 84] },
     head: { x: 60, y: 38, w: 54 },
     neck: { x: 60, y: 100, w: 60 },
+    clay: { eyes: { l: [50, 76], r: [70, 76], size: 3.8 }, mouth: [60, 85], cheeks: { l: [41, 82], r: [79, 82] }, head: { x: 60, y: 44, w: 48 }, neck: { x: 60, y: 100, w: 60 } },
   },
   {
     id: "moon",
@@ -390,6 +473,7 @@ export const CHARACTERS: CharacterSpec[] = [
     cheeks: { l: [36, 78], r: [84, 78] },
     head: { x: 60, y: 26, w: 66 },
     neck: { x: 60, y: 106, w: 56 },
+    clay: { eyes: { l: [41, 66], r: [54, 66], size: 3.4 }, mouth: [47, 76], cheeks: { l: [37, 72], r: [58, 72] }, head: { x: 53, y: 32, w: 40 }, neck: { x: 53, y: 104, w: 40 } },
   },
 ];
 

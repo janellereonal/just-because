@@ -358,51 +358,53 @@ function LiveCountdown() {
   );
 }
 
+/** How many tiles show before "See all". */
+const FIRST = 6;
+
 export function SectionsBento() {
+  const [all, setAll] = useState(false);
+  const ref = useRef<HTMLDivElement | null>(null);
+  const tiles: { key: string; title: string; body: string; wide?: boolean; demo: React.ReactNode }[] = [
+    { key: "letters", ...T.letters, demo: <FanningLetters /> },
+    { key: "photos", ...T.photos, demo: <ShufflingPolaroids /> },
+    { key: "voice", ...T.voice, demo: <VoiceClip /> },
+    { key: "openwhen", ...T.openwhen, demo: <OpenWhenDemo /> },
+    { key: "quiz", ...T.quiz, demo: <QuizDemo /> },
+    { key: "map", ...T.map, demo: <MapDemo /> },
+    { key: "songs", ...T.songs, demo: <MiniPlayer /> },
+    { key: "words", ...T.words, demo: <WordCloud /> },
+    { key: "countdown", ...T.countdown, demo: <LiveCountdown /> },
+    { key: "capsule", ...T.capsule, demo: <CapsuleDemo /> },
+    { key: "awards", ...T.awards, demo: <AwardsDemo /> },
+    { key: "coupons", ...T.coupons, demo: <CouponDemo /> },
+    { key: "video", ...T.video, demo: <VideoDemo /> },
+    { key: "doodle", ...T.doodle, wide: true, demo: <DoodleDemo /> },
+  ];
+  const shown = all ? tiles : tiles.slice(0, FIRST);
   return (
-    <div className="mt-10 grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4 lg:grid-cols-3">
-      <Tile title={T.letters.title} body={T.letters.body}>
-        <FanningLetters />
-      </Tile>
-      <Tile title={T.photos.title} body={T.photos.body}>
-        <ShufflingPolaroids />
-      </Tile>
-      <Tile title={T.songs.title} body={T.songs.body}>
-        <MiniPlayer />
-      </Tile>
-      <Tile title={T.voice.title} body={T.voice.body}>
-        <VoiceClip />
-      </Tile>
-      <Tile title={T.words.title} body={T.words.body}>
-        <WordCloud />
-      </Tile>
-      <Tile title={T.countdown.title} body={T.countdown.body}>
-        <LiveCountdown />
-      </Tile>
-      <Tile title={T.openwhen.title} body={T.openwhen.body}>
-        <OpenWhenDemo />
-      </Tile>
-      <Tile title={T.capsule.title} body={T.capsule.body}>
-        <CapsuleDemo />
-      </Tile>
-      <Tile title={T.awards.title} body={T.awards.body}>
-        <AwardsDemo />
-      </Tile>
-      <Tile title={T.quiz.title} body={T.quiz.body}>
-        <QuizDemo />
-      </Tile>
-      <Tile title={T.map.title} body={T.map.body}>
-        <MapDemo />
-      </Tile>
-      <Tile title={T.coupons.title} body={T.coupons.body}>
-        <CouponDemo />
-      </Tile>
-      <Tile title={T.video.title} body={T.video.body}>
-        <VideoDemo />
-      </Tile>
-      <Tile title={T.doodle.title} body={T.doodle.body} className="sm:col-span-2 lg:col-span-2">
-        <DoodleDemo />
-      </Tile>
+    <div ref={ref}>
+      <div className="mt-10 grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4 lg:grid-cols-3">
+        {shown.map((t) => (
+          <Tile key={t.key} title={t.title} body={t.body} className={t.wide ? "sm:col-span-2 lg:col-span-2" : ""}>
+            {t.demo}
+          </Tile>
+        ))}
+      </div>
+      <div className="relative mt-5 flex justify-center">
+        {!all ? <span aria-hidden="true" className="pointer-events-none absolute -top-28 inset-x-0 h-24 bg-gradient-to-b from-transparent to-paper" /> : null}
+        <button
+          type="button"
+          aria-expanded={all}
+          onClick={() => {
+            setAll((a) => !a);
+            if (all) ref.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+          }}
+          className="squish relative inline-flex min-h-12 items-center gap-2 rounded-full bg-ink px-6 text-sm font-semibold text-cream hover:bg-ink/90"
+        >
+          {all ? LANDING.inside.seeFewer : LANDING.inside.seeAll(tiles.length)}
+          <span aria-hidden="true" className={`transition-transform ${all ? "rotate-180" : ""}`}>↓</span>
+        </button>
+      </div>
     </div>
   );
 }

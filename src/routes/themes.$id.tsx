@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { sampleNotes } from "@/lib/sampleSections";
+import { DEMO_GIFTS, DEMO_ORDER } from "@/lib/demoGifts";
 import type { ModuleType, SiteModule } from "@/lib/gift";
 import { Pause, Play } from "lucide-react";
 import { DevicePreview, DeviceToggle, type PreviewDevice } from "@/components/DevicePreview";
@@ -64,7 +65,22 @@ function ThemeDetailPage() {
     () => (site ? MODULES.filter((m) => on.includes(m.type)).map((m, i) => ({ id: `try-${i}-${m.type}`, site_id: site.id, module_type: m.type, price: 0, enabled: true })) : []),
     [site, on],
   );
-  const notes = useMemo(() => (theme && site ? sampleNotes(sampleFor(theme).name, site.id) : []), [theme, site]);
+  // Real content where we have an example gift for this occasion (Ana, Sam,
+  // Milo, Nora & James), topped up with samples for any section it lacks.
+  const notes = useMemo(() => {
+    if (!theme || !site) return [];
+    const base = sampleNotes(sampleFor(theme).name, site.id);
+    const kind = themeKindOf(theme);
+    const demo = DEMO_ORDER.map((d) => DEMO_GIFTS[d]).find((g) => g.kind === kind);
+    if (!demo) return base;
+    const have = new Set(demo.notes.map((n) => n.module_type));
+    return [...demo.notes, ...base.filter((n) => !have.has(n.module_type))];
+  }, [theme, site]);
+  const calendar = useMemo(() => {
+    if (!theme) return undefined;
+    const kind = themeKindOf(theme);
+    return DEMO_ORDER.map((d) => DEMO_GIFTS[d]).find((g) => g.kind === kind)?.calendar;
+  }, [theme]);
   // Glide the phone to a section the moment it's switched on.
   useEffect(() => {
     if (!justAdded) return;
@@ -197,7 +213,7 @@ function ThemeDetailPage() {
               >
                 {/* One live 3D scene at a time: the gift's waits behind the opening. */}
                 <Pause3DContext.Provider value={tour.phase !== "gift"}>
-                  <FormatView key={format} site={{ ...site, format }} theme={theme} palette={palette} modules={modules} contributions={notes} sample />
+                  <FormatView key={format} site={{ ...site, format }} theme={theme} palette={palette} modules={modules} contributions={notes} calendarEntries={calendar} sample />
                 </Pause3DContext.Provider>
               </DevicePreview>
             </div>
