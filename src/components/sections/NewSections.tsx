@@ -715,7 +715,8 @@ function MemoryMap(p: Common) {
           >
             <span
               className="mb-0.5 max-w-[120px] truncate rounded-full px-2 py-0.5 text-[10px] font-semibold shadow-sm"
-              style={{ background: active === it.id ? m.accent : m.paper, color: active === it.id ? (m.dark ? m.paper : "#fff") : m.ink }}
+              // Pins near an edge lean their label inwards so it never gets cut off on narrow screens.
+              style={{ transform: `translateX(${(50 - x) * 0.8}%)`, background: active === it.id ? m.accent : m.paper, color: active === it.id ? (m.dark ? m.paper : "#fff") : m.ink }}
             >
               {place}
             </span>
@@ -1008,7 +1009,7 @@ export function NewSections({
         if (!items.length) return null;
         const common: Common = { kind, items, icons, hostRef, sample: !real.length, recipient };
         return (
-          <section key={type} className="sb-section mt-16">
+          <section key={type} data-section={type} className="sb-section mt-16">
             <SectionTitle accent={accent} font={headingFont}>
               {SECTION_COPY[type].title}
             </SectionTitle>

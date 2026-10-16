@@ -11,7 +11,7 @@ import { MODULES, type ModuleType } from "@/lib/gift";
 import { PRESETS } from "@/lib/presets";
 import { themeKindOf } from "@/lib/themeKind";
 import { ChipInSoon } from "@/components/sections/ChipInSoon";
-import { ModuleExample } from "@/components/ModuleExample";
+import { SectionPreview } from "@/components/SectionPreview";
 import { FormatPicker } from "@/components/FormatPicker";
 import { stageColorFor } from "@/components/ThemeCard";
 import { formatInfo, isGiftFormat, type GiftFormat } from "@/lib/formats";
@@ -37,6 +37,8 @@ export const Route = createFileRoute("/_authenticated/create")({
     format: isGiftFormat(search["format"]) ? search["format"] : undefined,
     /** `from=me` starts on "Just me" (a gift from one person). */
     from: search["from"] === "me" ? ("me" as const) : undefined,
+    /** Sections tried on the theme page, comma separated. */
+    sections: typeof search["sections"] === "string" ? search["sections"] : undefined,
   }),
   head: () => ({
     meta: [
@@ -54,7 +56,7 @@ export const Route = createFileRoute("/_authenticated/create")({
 
 function CreatePage() {
   const navigate = useNavigate();
-  const { theme: themeFromUrl, format: formatFromUrl, from: fromUrl } = Route.useSearch();
+  const { theme: themeFromUrl, format: formatFromUrl, from: fromUrl, sections: sectionsFromUrl } = Route.useSearch();
   const { data: themes = [] } = useQuery({
     queryKey: ["themes", "published"],
     queryFn: () => fetchThemes(false),
@@ -64,8 +66,10 @@ function CreatePage() {
   const [solo, setSolo] = useState(fromUrl === "me");
   const [themeId, setThemeId] = useState<string | undefined>(themeFromUrl);
   const [format, setFormat] = useState<GiftFormat>(formatFromUrl ?? "scrapbook");
-  const [selected, setSelected] = useState<ModuleType[]>(["letters", "photobooth"]);
-  const [touched, setTouched] = useState(false);
+  // Sections tried on the theme page come along and count as the creator's own pick.
+  const fromThemePage = (sectionsFromUrl ?? "").split(",").filter((t): t is ModuleType => MODULES.some((m) => m.type === t));
+  const [selected, setSelected] = useState<ModuleType[]>(fromThemePage.length ? fromThemePage : ["letters", "photobooth"]);
+  const [touched, setTouched] = useState(fromThemePage.length > 0);
   const [previewed, setPreviewed] = useState<ModuleType>("letters");
   const [busy, setBusy] = useState(false);
 
@@ -382,7 +386,7 @@ function CreatePage() {
                 : "Turn on as many as you like.",
             )}
 
-            <div className="mt-5 grid gap-5 md:grid-cols-[1fr_250px] md:items-start">
+            <div className="mt-5 grid gap-5 md:grid-cols-[1fr_minmax(280px,340px)] md:items-start">
               <div className="space-y-2">
                 {listed.map((mod) => {
                   const on = selected.includes(mod.type);
@@ -427,7 +431,7 @@ function CreatePage() {
                       </div>
                       {active ? (
                         <div className="mt-2 md:hidden">
-                          <ModuleExample type={mod.type} />
+                          <SectionPreview type={mod.type} theme={activeTheme} palette={defaultPalette} />
                         </div>
                       ) : null}
                     </div>
@@ -456,10 +460,10 @@ function CreatePage() {
                   {MODULES.find((m) => m.type === previewed)?.label}
                 </p>
                 <div className="mt-3">
-                  <ModuleExample type={previewed} />
+                  <SectionPreview type={previewed} theme={activeTheme} palette={defaultPalette} />
                 </div>
                 <p className="mt-3 text-xs text-ink/55">
-                  This is how the section looks on the finished gift.
+                  {activeTheme ? `How it looks in ${activeTheme.name}, with sample notes. Try it, it works.` : "How it looks on the finished gift, with sample notes. Try it, it works."}
                 </p>
               </div>
             </div>

@@ -73,7 +73,7 @@ function ThemesPage() {
       return;
     }
     toast.success(`${name} it is. Now let's name your gift.`);
-    navigate({ to: "/create", search: { theme: id, format: undefined, from: undefined } });
+    navigate({ to: "/create", search: { theme: id, format: undefined, from: undefined, sections: undefined } });
   }
 
   return (
