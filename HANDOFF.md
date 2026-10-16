@@ -1,7 +1,74 @@
-# Handoff: where Just Because is (14 Oct 2026, early morning)
+# Handoff: where Just Because is (16 Oct 2026)
 
 Read this together with `CLAUDE.md` (how the code works). This file is about **status, accounts,
 and what's next**, so a fresh Claude session on any account can pick up without the old chat.
+
+## 0. Start here (16 Oct 2026, moving to a new Claude account)
+
+**Where things stand:** everything is merged into `main` and live on https://justbecause.site.
+No open PRs, no unmerged branches with work in them. Last merge: PR #8 (`1498b37`).
+
+**Links**
+- Live site: https://justbecause.site (backup URL https://just-because-snowy.vercel.app)
+- Repo: https://github.com/janellereonal/just-because
+- Vercel project: https://vercel.com/just-because1/just-because (team "Just Because", region sin1)
+- PR previews: Vercel comments a preview link on every PR, e.g.
+  `https://just-because-git-<branch>-just-because1.vercel.app` (sign in with a Just Because team account)
+- Example gifts: https://justbecause.site/example/ana, `/example/sam`, `/example/milo`, `/example/nora-james`
+  (add `?open=1` to skip the opening)
+- Themes gallery: https://justbecause.site/themes, each theme at `/themes/<id>`
+- PayMongo dashboard (test mode): https://dashboard.paymongo.com
+
+**What the new Claude account needs**
+1. GitHub access to `janellereonal/just-because` (connect GitHub in Claude settings, and make sure the
+   Claude GitHub app is allowed on this repo). Push access is needed to open PRs.
+2. Nothing else: the database, Vercel, Resend and PayMongo are reached by Janelle, not by Claude.
+   Claude tests on a local Postgres (setup in `docs/NEXT-SESSION.md`, "How to test") and never uses the
+   real `DATABASE_URL` without asking Janelle first.
+3. Optional: attach this project's docs. The repo docs are the source of truth:
+   `CLAUDE.md` → this file → `docs/NEXT-SESSION.md` → `tools/README.md`.
+
+**How work ships now (changed from earlier sessions)**
+- Never push to `main` (it deploys to production, and Claude's pushes to it are blocked anyway).
+- Branch off `main` (`git fetch origin main:refs/remotes/origin/main && git checkout -B <name> origin/main`),
+  push the branch, open a PR to `main` with `gh api repos/janellereonal/just-because/pulls -X POST ...`
+  (GraphQL / `gh pr create` is blocked through the proxy, REST works). Janelle merges it herself.
+- Before every push: `npx tsc --noEmit` and `NITRO_PRESET=node bun run build`.
+- The old `redesign` branch is finished and merged; don't use it.
+- GitHub collaborator API calls are blocked through the proxy. Teammates `chriiistineee` and `Viqqsss`
+  were to be added by Janelle by hand (repo Settings → Collaborators → Add people; invites expire after
+  7 days). Check with her whether they accepted.
+
+**Janelle's standing rules**
+- Short, casual updates. Few questions: make sensible calls and say what you chose.
+- Never touch PayMongo keys or set `PAYMONGO_ALLOW_LIVE`. Never paste or store secrets.
+- Ask before using the real `DATABASE_URL`. Test on local Postgres.
+- Copy: plain and friendly, say gift/note/friends/open, **no em dashes**, max one exclamation mark per
+  screen, global (not Philippines-specific) samples and copy. New copy goes in `src/copy/strings.ts`.
+- No hopping/talking Bo on `/g/` gift pages. Bo doesn't need to be on every gift (most themes default to
+  no character now).
+- She wants everything polished, playful, "never seen before" and hard to copy: real interaction,
+  motion while scrolling, considered fonts and backgrounds per theme.
+
+**PR history (all merged)**
+| PR | What |
+|---|---|
+| #1, #2 | Redesign live: toybox look, 3D Bo, phone fit, laptop previews, intro tours, formats, custom intros, playful themes |
+| #3 | "Just me" solo gifts |
+| #4 | Tactile openings per theme, Cast (characters + icon sets), themed notes, theme fonts |
+| #5 | Themes gallery where every card plays its opening |
+| #6 | Landing with Ana's 30th, example gifts, 8 new sections, viewer time zones, chip-in fund data model |
+| #7 | Redrawn characters + "No one", crisp icons, full example gifts with media, scroll motion (`ScrollStory`), portal reveal, hero guided tour, bento tiles for all sections |
+| #8 | Theme page "Try the sections", real themed section previews on /create, sample notes for every section |
+
+**Open work, roughly in order** (details in sections 3 to 5 and `docs/NEXT-SESSION.md`)
+1. Janelle's PayMongo test run (section 4) and theme preview images (Admin → Upload preview).
+2. Openings: a per-theme lighting / material / depth pass (the "3D feel" she asked for). Not started.
+3. Real-phone check of every gesture, especially iOS Safari (mic blow-out, tilt permission; haptics are Android only).
+4. Real Rive characters to replace the coded ones (`docs/characters.md`).
+5. Move older screens' inline copy into `src/copy/strings.ts`.
+6. Chip-in fund (data model only, shown as "Coming soon"), refunds, PayPal (notes in section 5), early-bird promo (off).
+7. Open questions in `docs/NEXT-SESSION.md` (still Bo on recipient pages, Sweet plan formats).
 
 ## 1. What's live and working
 
@@ -35,7 +102,7 @@ and what's next**, so a fresh Claude session on any account can pick up without 
 ## 1b. Redesign (live on justbecause.site since 15 Oct 2026)
 
 On 15 Oct Janelle asked to put the redesign live, so `redesign` was fast-forwarded into `main`.
-Keep designing on `redesign` (preview link) and fast-forward `main` when she's happy with a batch.
+(Superseded: work now goes on a fresh branch off `main` with a PR, see section 0.)
 
 Janelle wants the site colorful, playful, cute and 3D before launch, plus the mascot behaviors in
 her brief (Bo hops between sections as you scroll, reacts to fields, easter eggs). Work happens on
@@ -194,8 +261,9 @@ E. **PayPal for buyers abroad (not built, notes only).**
 - Janelle likes short, casual updates and few questions. Make sensible calls and say what you chose.
 - Before pushing: `npx tsc --noEmit`, and for bigger changes
   `NITRO_PRESET=node bun run build`. Pushing to `main` deploys to production.
-- Every deploy runs `db:migrate` and `db:seed` automatically. Migrations so far: 0000 to 0004
-  (0003 device_id, 0004 password_hash), all additive. The live database had 1 user and no gifts
+- Every deploy runs `db:migrate` and `db:seed` automatically. Migrations so far: 0000 to 0010
+  (0003 device_id, 0004 password_hash, 0005 intro_settings, 0007 cast, 0008 theme fonts, 0009 countdown_at,
+  0010 sections data + chip-in fund), all additive. The live database had 1 user and no gifts
   on 13 Oct.
 - Local testing: a Postgres on port 5433, a fake PayMongo server (POST/GET `/v1/checkout_sessions`)
   on `PAYMONGO_API_URL`, and webhooks signed with the local `PAYMONGO_WEBHOOK_SECRET`. Server
@@ -240,3 +308,9 @@ Theme system redesign (tactile openings, Cast, themed notes, theme fonts), a new
 landing page with example gifts, eight new sections, time-zone-aware countdowns and a chip-in fund data
 model (no payments). PRs #4, #5 and #6, merge after #3, in order. Migrations 0007 to 0010 run on deploy.
 Details: `docs/NEXT-SESSION.md`.
+
+
+## 1f. Sessions 6 and 7 (16 Oct 2026)
+
+PRs #7 and #8, both merged. Details and file map in `docs/NEXT-SESSION.md`. Screenshot and demo-media
+scripts are in `tools/` (`tools/README.md`).

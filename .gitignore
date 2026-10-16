@@ -38,3 +38,9 @@ dist-ssr
 
 # Local upload fallback
 .dev-uploads/
+
+# Screenshot and media tools (see tools/README.md)
+tools/op/
+tools/state.json
+tools/screens/node_modules/
+tools/vgen/

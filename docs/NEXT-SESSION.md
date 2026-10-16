@@ -1,20 +1,66 @@
-# Next session: picking up the Just Because redesign
+# Next session: picking up Just Because
 
-Updated 16 Oct 2026 (session 6), so a new session can carry on without missing anything.
+Updated 16 Oct 2026 (sessions 6 and 7), so a new session, on any Claude account, can carry on without
+missing anything. Start with `HANDOFF.md` section 0.
 
-## Session 6 (16 Oct 2026): PR #7 `polish-examples`
+## Sessions 6 and 7 (16 Oct 2026): PRs #7 and #8, both merged
 
-Branch off main after #3 to #6 merged. Redrawn characters plus a "No one" option (most themes default to
-none), path icons for pets/florals/snow, full example gifts with generated media in `public/demo/`,
-`ScrollStory` (per-theme motif that moves with scroll, `src/components/ScrollStory.tsx`), a portal reveal
-from opening to gift (`_shared/opening.tsx`; `GiftPage` keeps the gift mounted under the intro),
-`GiftPeek` behind gallery openings, a guided section tour in the hero phone (`FormatDemo`), and live
-bento tiles for the eight newer sections (`landing/MoreTiles.tsx`). Section grids now use container
-queries (`@xl:`) so phone-frame previews lay out like phones. Dev-only `/dev/cast` shows every character
-and icon set.
+**PR #7 `polish-examples`**
+- **Characters** (`src/themes/_shared/cast/library.tsx`) redrawn: dog (wagging tail, `.jb-wag` in
+  `src/styles/play.css`), cat, bunny, bear, duckling, frog, person, cup, plant, cloud, moon. New
+  `{ type: "none" }` character ("No one" in `CastPanel.tsx`). `THEME_DESIGNS.defaultCharacter` in
+  `_shared/design.ts` is now `string | null`: valentine, anniversary, wedding, bridal, christmas, newyear
+  and voyage default to none; birthday bear, baby duck, pets dog, default mascot.
+- **Icons** (`_shared/iconSets.ts`): real path glyphs PAW, BONE, FISH, FLOWER, DAISY, LEAF, TULIP, SNOW
+  (holes drawn counter-clockwise, nonzero fill). Dev-only page `/dev/cast` shows every character and set.
+- **Example gifts** (`src/lib/demoGifts.ts`): Ana (30th, birthday), Sam (Bon Voyage), Milo (pets),
+  Nora & James (wedding). Every section filled with details that agree with each other (quiz answers
+  match map pins, etc.). Media in `public/demo/`: illustrated photos (webp), doodles (png), short videos
+  (mp4), voice notes (mp3). How they were made: `tools/README.md`.
+- **Scroll motion** (`src/components/ScrollStory.tsx`, mounted in `GiftSiteView` after `SkinDecor`):
+  finds the nearest scrolling parent (or window), keeps a motif layer pinned to the viewport with JS
+  (CSS sticky can't work inside `.sk-decor`'s overflow hidden), and moves a per-theme motif with scroll
+  progress and speed: voyage plane + clouds, birthday balloons, pets paw-print trail, anniversary turning
+  record, everyone else the gift's own icons drifting at depths. Plus a thin reading thread on the right.
+  Off under reduced motion. Not shown in `sectionsOnly` previews.
+- **Portal reveal** (`src/themes/_shared/opening.tsx`): when an opening finishes, a radial mask hole grows
+  from the object (motion value `hole` → `maskImage`, ~1s) while the shell scales up, revealing the gift
+  underneath. `GiftPage.tsx` now keeps the gift mounted (inert, fixed) under the intro so there's no blank
+  flash. `onDone` fires at 1050ms.
+- **Gallery** (`OpeningCard.tsx` + new `GiftPeek.tsx`): each card's opening loop ends on a glimpse of a
+  finished gift (name + three notes in the theme's palette and fonts), also behind the full-screen preview.
+- **Landing hero** (`landing/FormatDemo.tsx`): no more format cycling. After the candles are blown it gives a
+  guided tour: glides to each `.sb-section`, lingers, shows a floating label with the section name, back to
+  the top, repeats. Any touch hands control to the visitor.
+- **Landing bento** (`landing/SectionsBento.tsx` + new `landing/MoreTiles.tsx`): 14 live tiles. New ones:
+  open-when envelopes, locked capsule with a real countdown, awards vote race, quiz, map drawing its route,
+  tear-off coupon, video clip, doodle pad you can draw on. Copy in `strings.ts` (`LANDING.inside.tiles`).
+- **Container queries**: section grids in `GiftSiteView` and `NewSections` use `@xl:` instead of `sm:`, so
+  gifts inside phone mockups lay out like phones (they were using the laptop's width before).
+- Smaller: polaroid backs no longer stretch the grid, video cards start at `#t=1.6` (no blank first frame),
+  memory map rebuilt (route draws through pins, place chips), `formatMoment` shows the year when it isn't
+  this year, `/example/$id?open=1` skips the opening.
 
-Still open: theme preview images, per-theme lighting pass on the openings, Rive characters.
+**PR #8 `section-previews`**
+- **Theme page** (`src/routes/themes.$id.tsx`): "Try the sections" card lists every section as a chip.
+  Turning one on adds it to the sample gift with sample notes and glides the phone to it (`data-section`
+  attributes on every section). "Turn them all on" and "Back to the theme's picks". The stage is sticky on
+  desktop; on phones the page scrolls back to the gift. The tried set goes to `/create` as
+  `?sections=a,b,c` (new search param; every `navigate`/`Link` to `/create` must pass `sections`).
+- **Create page** (`src/routes/_authenticated/create.tsx`): the step 5 preview is now `SectionPreview`
+  (`src/components/SectionPreview.tsx`): the real section, rendered by `GiftSiteView` with the new
+  `sectionsOnly` prop (no header, footer or scroll motif), in the chosen theme and its first suggested
+  palette, with sample notes, interactive. `ModuleExample.tsx` is no longer used on that page.
+- **Sample notes** for every section (`src/lib/sampleSections.ts`, `sampleNotes(recipient, siteId)`),
+  written to fit any occasion; songs, calendar, tree and countdown use the existing `sample` placeholders.
+  New neutral clip `public/demo/video-generic.mp4` ("From all of us, with love").
+- Memory map pin labels near an edge lean inwards so they aren't cut off on narrow screens.
 
+**Not done yet (ideas Janelle liked or asked about)**
+- A per-theme lighting / material / depth pass on the openings (richer shadows, rim light, paper and foil
+  textures). She asked for "3D rendering, transitions, graphics" to feel professional and hard to copy.
+- Theme preview images, real Rive characters, real-phone gesture check (iOS Safari).
+- Lots of older screens still have inline copy (move to `strings.ts` when touched).
 
 ## Session 5 is done (15 Oct 2026): theme system, gallery, landing, new sections
 
@@ -102,10 +148,10 @@ All six asks are in. What changed and where:
 Not done / worth a look next: re-render `public/themes3d/*.webp` if scenes change; real-phone check of
 mic blow-out on iOS Safari; Sweet plan maybe gets Storybook too (her call).
 
-## Session 4 brief (kept for reference)
+## Session 4 brief (kept for reference, the branch notes are out of date)
 
-The redesign is **live on justbecause.site** (PR #1 merged `redesign` into `main`). Work on `redesign`,
-check the preview, then open a PR `redesign` -> `main` for Janelle to merge. Claude's own pushes to
+The redesign is **live on justbecause.site** (PR #1 merged `redesign` into `main`). At the time work went on
+`redesign` with a PR to `main`; now use a fresh branch off `main` instead. Claude's own pushes to
 `main` get blocked as production deploys, so always go through a PR (use `gh api`, GraphQL is blocked).
 
 ### Janelle's asks for this session, in order
@@ -157,16 +203,16 @@ preview link and a short summary. She wants it finished and polished when she op
 
 ## Links
 
-- Repo: https://github.com/janellereonal/just-because (work on branch **`redesign`**)
-- Preview of the newest `redesign` push (always current): https://just-because-git-redesign-just-because1.vercel.app
-  (Vercel asks you to sign in with an account on the "Just Because" team)
-- Live site, `main` branch, do not touch: https://justbecause.site
+- Repo: https://github.com/janellereonal/just-because (branch off `main`, open a PR; `redesign` is retired)
+- PR previews: `https://just-because-git-<branch>-just-because1.vercel.app` (Vercel comments it on the PR;
+  sign in with an account on the "Just Because" team)
+- Live site, `main` branch: https://justbecause.site
 - Vercel project: https://vercel.com/just-because1/just-because
 
 ## Rules (from Janelle)
 
-- `main` is the live site (justbecause.site). Work on `redesign`, check the preview, then fast-forward
-  `main` only when Janelle says to put it live (she did on 15 Oct).
+- `main` is the live site (justbecause.site). Never push to it. Work on a branch off `main` and open a PR;
+  Janelle merges.
 - Run `npx tsc --noEmit` and `NITRO_PRESET=node bun run build` before every push.
 - Never touch PayMongo keys or set `PAYMONGO_ALLOW_LIVE`. Never paste secrets into chat or code.
 - Copy voice: plain and friendly, say gift/note/friends/open, no em dashes, max one exclamation mark per screen.
@@ -178,9 +224,10 @@ preview link and a short summary. She wants it finished and polished when she op
 ## Read first
 
 1. `CLAUDE.md` (stack, data rules, payments)
-2. `HANDOFF.md` section **1b** (the redesign, the mascot, tonight's work)
-3. `docs/mascot-brief.md` (the original behavior brief)
-4. `src/lib/mascot/controller.ts` header comment (perches and `data-bo-*` attributes)
+2. `HANDOFF.md` section **0** (links, how work ships, rules, open work), then **1b** (the mascot)
+3. The top of this file (sessions 6 and 7)
+4. `tools/README.md` (screenshots in a real browser, demo media)
+5. `docs/mascot-brief.md` and the header of `src/lib/mascot/controller.ts` when touching Bo
 
 ## Done in session 2 (14 Oct, overnight)
 
@@ -269,7 +316,7 @@ controller: read `__bo.state`, the `.bo-bubble` element and Bo's wrapper rect to
 
 ```bash
 git clone https://github.com/janellereonal/just-because.git   # or: git pull
-cd just-because && git checkout redesign
+cd just-because && git checkout main && git pull
 bun install
 ```
 
