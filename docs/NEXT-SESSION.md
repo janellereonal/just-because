@@ -21,11 +21,11 @@ work goes on autonomously. Her rules for this run:
 | 2 | Launch PR 2: Input hardening and reliability | 2a **merged** [#25](https://github.com/janellereonal/just-because/pull/25); 2b [#26](https://github.com/janellereonal/just-because/pull/26) waits for Janelle (privacy) |
 | 3 | Revenue PR 1: Theme engine and Theme Bible | **Merged** [#28](https://github.com/janellereonal/just-because/pull/28) |
 | 4 | Revenue PR 2: Christmas, global and Filipino-first themes | **Merged** [#29](https://github.com/janellereonal/just-because/pull/29). Themes are drafts: review, then publish in /admin |
-| 5 | Launch PR 3: Payments and gift lifecycle | Next |
-| 6 | Launch PR 4: Editor and organiser fixes | |
+| 5 | Launch PR 3: Payments and gift lifecycle | [#31](https://github.com/janellereonal/just-because/pull/31), waits for Janelle (payments, schema, emails, privacy). Manual tests listed in the PR |
+| 6 | Launch PR 4: Editor and organiser fixes | Next |
 | 7 | Launch PR 5: Metrics | |
-| 8 | Revenue PR 3: Pricing, tiers, add-ons and payments | waits for 5 |
-| 9 | Revenue PR 4: Reminders engine | waits for 5 |
+| 8 | Revenue PR 3: Pricing, tiers, add-ons and payments | waits for #31 to merge |
+| 9 | Revenue PR 4: Reminders engine | waits for #31 to merge |
 | 10 | Revenue PR 6: Theme metrics | |
 | 11 | Launch PR 6: Design foundation (/dev/design draft only) | |
 | 12 | Launch PR 7: Homepage, performance, accessibility | skipped until design OK |
@@ -50,8 +50,42 @@ The three prompts are saved in `docs/prompts/` (launch.md, revenue.md, design.md
 - Turn on the birthday age? Set `VITE_FLAGS=birthdayAge` in Vercel and redeploy.
 - Simbang Gabi gates notes in the browser, so someone technical could read ahead with dev tools. Fine for a
   surprise; say if you want it enforced on the server too (that touches the privacy rules in api.ts).
+- **#31:** add `CRON_SECRET` in Vercel (Production). Without it the daily job (14-day reminder, unpaid order
+  re-checks) refuses to run.
+- **#31:** deleting gifts 90 days after they end is not built yet. Today an ended gift is kept and its link
+  shows "This gift has been wrapped up". Build the deletion job once the legal pages (#23) are agreed?
+- **#31:** storage caps per gift, and plan limits for videos and voice notes. Today only photos count towards
+  a plan, and a friend could upload many large videos. Cap per file is already in place; want a per-gift total?
+- **#31 and #23** both add a migration numbered 0011. Whichever merges second needs `bun run db:generate` again
+  (I'll do it, or ask in the next session).
 - Rate limits are in memory per server instance. Fine for launch; a shared store (Upstash or Postgres) would make
   them exact across instances. Worth it?
+
+### Launch PR 3 (#31, branch `launch-payments`, waiting for Janelle)
+- Payments (`src/server/billing.ts`):
+  - `applyPaidEvent` locks the order row first, then records the event. A payment after a cancel or a timeout
+    still opens the gift. A second payment for the same plan logs "Needs a refund" and changes nothing.
+  - `reconcileOrder` asks PayMongo about one unpaid order (under 7 days old); used by the confirm page, the
+    billing panel (`reconcileSiteOrders`), the webhook hints and the cron.
+  - `payment_log` table, written by `logPayment()`, shown in /admin.
+  - Webhook: signatures older than 10 minutes and unsigned calls are hints, rate-limited 6 a minute per checkout.
+  - Receipt email (`notifyPaid`). `addMonths` in pricing.ts is UTC and clamps the day.
+- Lifecycle:
+  - `/api/cron/daily` (vercel.json cron, 01:00 UTC, `CRON_SECRET`): 14-day reminder (`sendExpiryReminders`,
+    once per end date via `gift_sites.expiry_reminded_at`), re-checks unpaid orders from the last 2 days,
+    expires unpaid orders after 24h.
+  - **Decision I made:** an ended gift shows "This gift has been wrapped up"; the organiser can extend or download
+    a copy. Nothing is deleted yet (the 90-day deletion is a question above).
+  - `ExportGift` (fflate, in the browser): zip with notes.html, notes.csv and media/. In the editor (Wrap it up,
+    Keep a copy) and on the wrapped-up page.
+- Privacy: `/account` with type-DELETE deletion (`deleteAccount`). Deleting a gift, note or account removes its
+  files (`deleteMedia`, `deleteGiftMedia` in `src/server/uploads.ts`). Orders stay, with `site_id`/`owner_id` null.
+- Limits: republishing checks the plan (`tierBlocker`); un-hiding a note checks there's room.
+- Tests: `bun test src` (59). `src/server/billing.test.ts` runs only against a localhost DATABASE_URL, with the fake
+  PayMongo in `tools/payments/fake-paymongo.ts` (also runnable on its own). Export test: `tools/screens/exp.cjs`.
+- Janelle to test by hand: PayMongo test mode on the preview (pay; cancel then pay), `CRON_SECRET`, Blob delete,
+  Resend emails.
+- PR screenshots live on the `pr-shots` branch (never merged), one folder per PR.
 
 ### Revenue PR 1 (#28, merged): the theme engine
 - `src/themes/engine/`:
