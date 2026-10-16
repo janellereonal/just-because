@@ -180,6 +180,7 @@ export function OwnNotes({
   contributions,
   recipient,
   defaultName,
+  showSolo = true,
 }: {
   siteId: string;
   solo: boolean;
@@ -187,6 +188,8 @@ export function OwnNotes({
   contributions: Contribution[];
   recipient: string;
   defaultName: string;
+  /** The "Just me / Me and friends" switch (the editor keeps it in Gift settings). */
+  showSolo?: boolean;
 }) {
   const queryClient = useQueryClient();
   const signKey = `jb-sign-${siteId}`;
@@ -200,6 +203,7 @@ export function OwnNotes({
   const [editing, setEditing] = useState<Contribution | null>(null);
   const [busy, setBusy] = useState(false);
   const [voiceMode, setVoiceMode] = useState<"record" | "upload">("record");
+  const [moreTypes, setMoreTypes] = useState(false);
   const fileRef = useRef<HTMLInputElement | null>(null);
   const prompt = PROMPTS[type][contributions.length % PROMPTS[type].length];
 
@@ -342,6 +346,7 @@ export function OwnNotes({
 
   return (
     <div className="space-y-5">
+      {showSolo ? (
       <div>
         <p className="text-xs text-muted">Who's it from?</p>
         <div
@@ -372,13 +377,16 @@ export function OwnNotes({
             : "Friends add theirs through the link. You can add yours here too."}
         </p>
       </div>
+      ) : null}
 
       <div className="rounded-2xl bg-pink/30 p-3.5 ring-1 ring-pink">
-        <p className="text-sm font-semibold">
-          {editing ? `Edit your ${label(editing.module_type).toLowerCase()}` : "Add something"}
-        </p>
-        <div className="mt-2.5 flex flex-wrap gap-1.5" role="radiogroup" aria-label="What to add">
-          {TYPES.map(({ type: t, label: l, icon: Icon }) => (
+        {editing || showSolo ? (
+          <p className="text-sm font-semibold">
+            {editing ? `Edit your ${label(editing.module_type).toLowerCase()}` : "Add something"}
+          </p>
+        ) : null}
+        <div className={`${editing || showSolo ? "mt-2.5" : ""} flex flex-wrap gap-1.5`} role="radiogroup" aria-label="What to add">
+          {TYPES.filter((x, i) => i < 4 || moreTypes || x.type === type).map(({ type: t, label: l, icon: Icon }) => (
             <button
               key={t}
               type="button"
@@ -395,6 +403,16 @@ export function OwnNotes({
               <Icon className="size-3.5" /> {l}
             </button>
           ))}
+          {!editing ? (
+            <button
+              type="button"
+              onClick={() => setMoreTypes((v) => !v)}
+              aria-expanded={moreTypes}
+              className="squish inline-flex items-center gap-1 rounded-full px-3 py-1.5 border border-dashed border-ink/25 text-xs font-medium text-muted hover:text-ink"
+            >
+              {moreTypes ? "Fewer" : `More (${TYPES.length - 4})`}
+            </button>
+          ) : null}
         </div>
 
         {type === "photobooth" ? (

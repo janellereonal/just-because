@@ -19,7 +19,6 @@ import {
 } from "@/lib/api";
 import { IntroDesigner } from "@/components/IntroDesigner";
 import { CastPanel, type Cast } from "@/components/CastPanel";
-import { ChipInSoon } from "@/components/sections/ChipInSoon";
 import { countdownTarget, momentOf, toLocalInput, viewerZone } from "@/lib/time";
 import { OwnNotes } from "@/components/OwnNotes";
 import { useAuth } from "@/hooks/useAuth";
@@ -65,7 +64,6 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import {
   ExtendDialog,
   GiftPasswordSetting,
@@ -78,31 +76,20 @@ import {
 } from "@/components/PlanControls";
 import { getTier } from "@/config/pricing";
 import {
-  CalendarDays,
-  CaseSensitive,
   Check,
   ChevronDown,
   ChevronLeft,
   Eye,
   Gift,
   Inbox,
-  LayoutGrid,
-  LayoutTemplate,
   Link as LinkIcon,
-  Mail,
   Maximize2,
   MessageCircle,
   MoreHorizontal,
-  PanelsTopLeft,
-  Palette as PaletteIcon,
+  Settings2,
   Pencil,
-  PenLine,
   Send,
-  Smile,
-  Type,
-  UserPlus,
   X,
-  type LucideIcon,
 } from "lucide-react";
 
 const FRIEND_TINTS = ["#F7D9C4", "#D8E4DC", "#E6DCF2", "#F5E3B3", "#D9E6F2"];
@@ -115,18 +102,27 @@ function initials(name: string) {
 
 
 
-type SectionKey =
-  | "notes"
-  | "words"
-  | "colors"
-  | "fonts"
-  | "background"
-  | "sections"
-  | "surprises"
-  | "cast"
-  | "intro"
-  | "comic"
-  | "review";
+/** The editor's four steps, plus Gift settings (format, sections, who it's from). */
+type SectionKey = "words" | "look" | "notes" | "wrap" | "settings";
+const STEPS = ["words", "look", "notes", "wrap"] as const;
+
+/** Older saved rail sections land on the step that holds them now. */
+const LEGACY_SECTION: Record<string, SectionKey> = {
+  words: "words",
+  intro: "words",
+  colors: "look",
+  fonts: "look",
+  background: "look",
+  cast: "look",
+  notes: "notes",
+  review: "notes",
+  surprises: "notes",
+  sections: "settings",
+  comic: "settings",
+  look: "look",
+  wrap: "wrap",
+  settings: "settings",
+};
 
 const MODULE_TITLE_FIELD: Record<ModuleType, keyof CustomText | null> = {
   letters: "letters_title",
@@ -147,48 +143,44 @@ const MODULE_TITLE_FIELD: Record<ModuleType, keyof CustomText | null> = {
   doodle: null,
 };
 
-const FIELD_GROUP: Record<string, SectionKey> = {
-  heading: "words",
-  recipient_name: "words",
-  intro_message: "words",
-  footer_note: "words",
-  letters_title: "sections",
-  photobooth_title: "sections",
-  songs_title: "sections",
-  wordcloud_title: "sections",
-  voice_title: "sections",
-  countdown_title: "sections",
-  calendar_title: "sections",
-  tree_title: "sections",
-};
-
 const SECTION_TITLES: Record<SectionKey, string> = {
-  notes: "Your notes",
   words: "Words",
-  colors: "Colors",
-  fonts: "Fonts",
-  background: "Background",
-  sections: "Sections",
-  surprises: "Surprises",
-  cast: "Cast",
-  intro: "Intro",
-  comic: "Format",
-  review: "Review",
+  look: "Look",
+  notes: "Notes",
+  wrap: "Wrap it up",
+  settings: "Gift settings",
 };
 
-const SECTION_ICONS: Record<SectionKey, LucideIcon> = {
-  notes: PenLine,
-  words: Type,
-  colors: PaletteIcon,
-  fonts: CaseSensitive,
-  background: LayoutTemplate,
-  sections: LayoutGrid,
-  surprises: CalendarDays,
-  cast: Smile,
-  intro: Mail,
-  comic: PanelsTopLeft,
-  review: Inbox,
-};
+
+/** A titled group inside a step. Touching it can switch what the preview shows. */
+function StepGroup({
+  title,
+  hint,
+  aside,
+  onActivate,
+  children,
+}: {
+  title: string;
+  hint?: string;
+  aside?: React.ReactNode;
+  onActivate?: () => void;
+  children: React.ReactNode;
+}) {
+  return (
+    <section
+      className="border-t border-line pt-4 first:border-t-0 first:pt-0"
+      onFocusCapture={onActivate}
+      onPointerDownCapture={onActivate}
+    >
+      <div className="flex items-baseline justify-between gap-2">
+        <h3 className="text-sm font-semibold">{title}</h3>
+        {aside}
+      </div>
+      {hint ? <p className="mt-0.5 text-xs text-muted">{hint}</p> : null}
+      <div className="mt-3">{children}</div>
+    </section>
+  );
+}
 
 function SiteDashboard() {
   const { id } = useParams({ from: "/_authenticated/sites/$id" });
@@ -220,6 +212,10 @@ function SiteDashboard() {
   const [extendOpen, setExtendOpen] = useState(false);
   // The rail remembers the section this gift was last edited in.
   const [section, setSection] = useState<SectionKey>("words");
+  /** What the canvas shows while editing: the opening screen or the gift itself. */
+  const [canvasView, setCanvasView] = useState<"intro" | "gift">("intro");
+  const [customizeLook, setCustomizeLook] = useState(false);
+  const [formatAsk, setFormatAsk] = useState<GiftSite["format"] | null>(null);
   const [panelOpen, setPanelOpen] = useState(true);
   const [focusField, setFocusField] = useState<keyof CustomText | null>(null);
   const [device, setDevice] = useState<PreviewDevice>("phone");
@@ -284,9 +280,8 @@ function SiteDashboard() {
   useEffect(() => {
     if (typeof window === "undefined" || !site || sectionRestored.current) return;
     sectionRestored.current = true;
-    const saved = window.localStorage.getItem(`jb:editor-section:${id}`);
-    if (saved) setSection(saved as SectionKey);
-    else if (site.solo) setSection("notes");
+    const saved = LEGACY_SECTION[window.localStorage.getItem(`jb:editor-section:${id}`) ?? ""];
+    if (saved) setSection(saved);
   }, [id, site]);
 
   useEffect(() => {
@@ -631,24 +626,24 @@ function SiteDashboard() {
       if (f) openField(f);
     };
     if (field === "countdown_title") {
-      return [{ label: "Change date", run: go("sections") }];
+      return [{ label: "Change date", run: go("words", field) }];
     }
     if (field.endsWith("_title")) {
       return [
-        { label: "Rename", run: go("sections", field) },
-        { label: "Section settings", run: go("sections") },
+        { label: "Rename", run: go("words", field) },
+        { label: "Turn sections on or off", run: go("settings") },
       ];
     }
     return [
-      { label: "Edit text", run: go(FIELD_GROUP[field] ?? "words", field) },
-      { label: "Font", run: go("fonts") },
-      { label: "Color", run: go("colors") },
+      { label: "Edit text", run: go("words", field) },
+      { label: "Font", run: go("look") },
+      { label: "Color", run: go("look") },
     ];
   }
 
   function openField(field: keyof CustomText) {
-    const target = FIELD_GROUP[field] ?? "words";
-    setSection(target);
+    setSection("words");
+    setCanvasView("gift");
     setPanelOpen(true);
     setFocusField(field);
     if (typeof window !== "undefined" && window.innerWidth < 900) setSheetOpen(true);
@@ -712,19 +707,33 @@ function SiteDashboard() {
   }
 
   const solo = draft.solo;
-  const railSections: SectionKey[] = [
-    ...(solo ? (["notes"] as SectionKey[]) : []),
-    "words",
-    "colors",
-    "fonts",
-    "background",
-    "sections",
-    ...(enabledTypes.has("calendar") ? (["surprises"] as SectionKey[]) : []),
-    "cast",
-    "intro",
-    "comic",
-    ...(solo ? [] : (["notes", "review"] as SectionKey[])),
-  ];
+  const usesIntro = formatInfo(draft.format).usesIntro;
+  const isOn = (type: string) => modules.find((m) => m.module_type === type)?.enabled ?? false;
+  /** Notes the recipient will see (yours count too). */
+  const shownNotes = approved.length;
+  const stepDone: Record<SectionKey, boolean> = {
+    words: !!draft.custom_text.recipient_name?.trim(),
+    look: true,
+    notes: shownNotes > 0,
+    wrap: draft.status === "published",
+    settings: false,
+  };
+  const readyToWrap = stepDone.words && stepDone.notes;
+  const titledModules = MODULES.filter((mod) => isOn(mod.type) && MODULE_TITLE_FIELD[mod.type]);
+  const friendNotes = contributions.filter((c) => !c.by_owner);
+
+  function goTo(next: SectionKey) {
+    setSection(next);
+    if (next === "words") setCanvasView("intro");
+    if (next === "look" || next === "notes" || next === "wrap") setCanvasView("gift");
+    if (typeof window !== "undefined" && window.innerWidth < 900) setSheetOpen(true);
+    else setPanelOpen(true);
+  }
+
+  function chooseFormat(next: GiftSite["format"]) {
+    if (next === draft?.format) return;
+    setFormatAsk(next);
+  }
 
   const fieldInput = (
     key: keyof CustomText,
@@ -765,99 +774,59 @@ function SiteDashboard() {
 
   const sectionBody: Record<SectionKey, React.ReactNode> = {
     words: (
-      <div className="space-y-3">
-        {fieldInput("heading", "Heading", { placeholder: titles.heading })}
-        {fieldInput("recipient_name", "Recipient name", { placeholder: "Ana" })}
-        {fieldInput("intro_message", "Intro message", {
-          long: true,
-          placeholder: solo ? "I made this just for you. Take your time." : "We all got together to make you something.",
-        })}
-        {fieldInput("footer_note", "Footer note", {
-          long: true,
-          placeholder: solo ? "With love, always." : "With love, from all of us.",
-          hint: "A short sign-off at the very end of the gift, after the last note.",
-        })}
-      </div>
-    ),
-    colors: (
-      <PalettePicker
-        theme={theme}
-        value={{ palette_id: draft.palette_id, colors: paletteNow }}
-        onChange={(next) => patch({ palette_id: next.palette_id, custom_colors: next.colors })}
-        photoUrls={photoUrls}
-      />
-    ),
-    fonts: (
-      <div className="grid grid-cols-2 gap-2">
-        {(Object.keys(FONT_PAIRINGS) as FontChoice[]).map((fk) => (
-          <button
-            key={fk}
-            onClick={() => patch({ font_choice: fk })}
-            style={{ fontFamily: FONT_PAIRINGS[fk].heading }}
-            className={`rounded-xl border px-3 py-3 text-base transition-colors ${
-              draft.font_choice === fk ? "border-accent bg-accent/8" : "border-line bg-cream"
-            }`}
-          >
-            {FONT_PAIRINGS[fk].label}
-          </button>
-        ))}
-      </div>
-    ),
-    background: (
-      <div className="grid grid-cols-2 gap-2">
-        {(Object.keys(BACKGROUND_STYLES) as BackgroundStyle[]).map((bk) => (
-          <button
-            key={bk}
-            onClick={() => patch({ background_style: bk })}
-            className={`rounded-xl border p-2 text-left transition-colors ${
-              draft.background_style === bk ? "border-accent bg-accent/8" : "border-line bg-cream"
-            }`}
-          >
-            <span
-              className="block h-10 w-full rounded-lg ring-1 ring-ink/10"
-              style={backgroundCss(bk, paletteNow)}
+      <div className="space-y-5">
+        {usesIntro ? (
+          <StepGroup title="Opening screen" hint="The first thing they see." onActivate={() => setCanvasView("intro")}>
+            <IntroDesigner
+              siteId={id}
+              settings={draft.intro_settings}
+              onChange={patchIntro}
+              palette={paletteNow}
+              kind={themeKindOf(theme)}
+              introStyle={introStyleForTheme(theme?.name)}
+              greeting={
+                <label className="block">
+                  <span className="text-xs text-muted">Greeting</span>
+                  <textarea
+                    rows={2}
+                    value={draft.intro_text ?? ""}
+                    placeholder={
+                      solo
+                        ? `For ${draft.custom_text.recipient_name || "you"}, with love`
+                        : `For ${draft.custom_text.recipient_name || "you"}, from all of us`
+                    }
+                    onChange={(e) => patch({ intro_text: e.target.value })}
+                    className="mt-1 w-full rounded-xl border border-line bg-cream px-3 py-2.5 text-sm outline-none focus:border-accent"
+                  />
+                </label>
+              }
             />
-            <span className="mt-2 block text-xs font-medium">{BACKGROUND_STYLES[bk].label}</span>
-            <span className="block text-[11px] text-muted">{BACKGROUND_STYLES[bk].hint}</span>
-          </button>
-        ))}
-      </div>
-    ),
-    sections: (
-      <div className="space-y-3">
-        {[...MODULES]
-          .filter((mod) => moreSections || (modules.find((m) => m.module_type === mod.type)?.enabled ?? false))
-          .sort((a, b) => Number(modules.find((m) => m.module_type === b.type)?.enabled ?? false) - Number(modules.find((m) => m.module_type === a.type)?.enabled ?? false))
-          .map((mod) => {
-          const on = modules.find((m) => m.module_type === mod.type)?.enabled ?? false;
-          const titleField = MODULE_TITLE_FIELD[mod.type];
-          return (
-            <div
-              key={mod.type}
-              className={`rounded-xl border p-3 transition-colors ${
-                on ? "border-accent bg-accent/8" : "border-line bg-cream"
-              }`}
-            >
-              <div className="flex items-center justify-between gap-3">
-                <span className="text-sm font-medium">{mod.label}</span>
-                <button
-                  onClick={() => void toggleModule(mod.type, !on)}
-                  className={`rounded-full px-3 py-1.5 font-mono text-[10px] tracking-[0.12em] uppercase ${
-                    on ? "bg-ink text-cream" : "border border-line bg-paper text-muted"
-                  }`}
-                >
-                  {on ? "On" : "Add"}
-                </button>
-              </div>
-              {on && titleField ? (
-                <div className="mt-3 space-y-3">
-                  {fieldInput(
-                    titleField,
-                    mod.type === "countdown" ? "Counting down to" : "Section title",
-                    {
+          </StepGroup>
+        ) : null}
+        <StepGroup
+          title="Main page"
+          {...(usesIntro ? { hint: "Right after the opening." } : {})}
+          onActivate={() => setCanvasView("gift")}
+        >
+          <div className="space-y-3">
+            {fieldInput("heading", "Heading", { placeholder: titles.heading })}
+            {fieldInput("recipient_name", "Who it's for", { placeholder: "Their name" })}
+            {fieldInput("intro_message", "Message under the title", {
+              long: true,
+              placeholder: solo ? "I made this just for you. Take your time." : "We all got together to make you something.",
+            })}
+          </div>
+        </StepGroup>
+        {titledModules.length > 0 ? (
+          <StepGroup title="Section titles" onActivate={() => setCanvasView("gift")}>
+            <div className="space-y-3">
+              {titledModules.map((mod) => {
+                const titleField = MODULE_TITLE_FIELD[mod.type]!;
+                return (
+                  <div key={mod.type} className="space-y-3">
+                    {fieldInput(titleField, mod.type === "countdown" ? "Counting down to" : mod.label, {
                       placeholder: (titles as Record<string, string>)[titleField] ?? mod.label,
-                    },
-                  )}
+                    })}
                   {mod.type === "countdown" ? (
                     <label className="block">
                       <span className="text-xs text-muted">Date and time</span>
@@ -886,76 +855,252 @@ function SiteDashboard() {
                       />
                     </label>
                   ) : null}
-                </div>
-              ) : null}
+                  </div>
+                );
+              })}
             </div>
-          );
-        })}
-        <button
-          type="button"
-          onClick={() => setMoreSections((v) => !v)}
-          className="w-full rounded-xl border border-dashed border-line px-3 py-2.5 text-left text-sm font-medium hover:bg-cream"
-        >
-          {moreSections ? "Show only the ones that are on" : `Add more (${MODULES.filter((mod) => !(modules.find((m) => m.module_type === mod.type)?.enabled ?? false)).length})`}
-        </button>
-        <ChipInSoon />
-        <label className="flex items-start gap-3 rounded-xl border border-line bg-cream p-3">
-          <input
-            type="checkbox"
-            checked={draft.share_notes}
-            onChange={(e) => patch({ share_notes: e.target.checked })}
-            className="mt-0.5"
-          />
-          <span>
-            <span className="block text-sm font-medium">Let friends read each other's notes</span>
-            <span className="block text-xs text-muted">
-              Off by default. Notes marked "Only{" "}
-              {draft.custom_text.recipient_name || "the recipient"}" always stay sealed.
-            </span>
-          </span>
-        </label>
+          </StepGroup>
+        ) : null}
+        <StepGroup title="Footer" onActivate={() => setCanvasView("gift")}>
+          {fieldInput("footer_note", "Footer note", {
+            long: true,
+            placeholder: solo ? "With love, always." : "With love, from all of us.",
+            hint: "A short sign-off at the very end of the gift, after the last note.",
+          })}
+        </StepGroup>
       </div>
     ),
-    surprises: (
-      <CalendarEditor
-        siteId={id}
-        entries={calendarEntries}
-        locked={draft.calendar_locked}
-        onToggleLock={(v) => patch({ calendar_locked: v })}
-        onChanged={() => queryClient.invalidateQueries({ queryKey: ["calendar", id] })}
-      />
-    ),
-    cast: (
-      <CastPanel
-        siteId={id}
-        kind={themeKindOf(theme)}
-        recipient={draft.custom_text.recipient_name ?? ""}
-        value={{ character: draft.character ?? null, icon_set: draft.icon_set ?? null }}
-        onChange={patchCast}
-      />
-    ),
-    intro: (
-      <div>
-        <IntroDesigner
-          siteId={id}
-          settings={draft.intro_settings}
-          onChange={patchIntro}
-          palette={paletteNow}
-          kind={themeKindOf(theme)}
-          introStyle={introStyleForTheme(theme?.name)}
-          greeting={
-            <label className="block">
-              <span className="text-xs text-muted">Greeting</span>
-              <textarea
-                rows={2}
-                value={draft.intro_text ?? ""}
-                placeholder={`For ${draft.custom_text.recipient_name || "Ana"}, from everyone who loves her`}
-                onChange={(e) => patch({ intro_text: e.target.value })}
-                className="mt-1 w-full rounded-xl border border-line bg-cream px-3 py-2.5 text-sm outline-none focus:border-accent"
+    look: (
+      <div className="space-y-5">
+        <StepGroup title="Palette" onActivate={() => setCanvasView("gift")}>
+          <PalettePicker
+            theme={theme}
+            part="suggested"
+            value={{ palette_id: draft.palette_id, colors: paletteNow }}
+            onChange={(next) => patch({ palette_id: next.palette_id, custom_colors: next.colors })}
+          />
+        </StepGroup>
+        <StepGroup title="Background" onActivate={() => setCanvasView("gift")}>
+          <div className="grid grid-cols-4 gap-2">
+            {(Object.keys(BACKGROUND_STYLES) as BackgroundStyle[]).map((bk) => (
+              <button
+                key={bk}
+                type="button"
+                onClick={() => patch({ background_style: bk })}
+                aria-pressed={draft.background_style === bk}
+                title={BACKGROUND_STYLES[bk].hint}
+                className={`squish rounded-xl border p-1.5 text-center transition-colors ${
+                  draft.background_style === bk ? "border-accent bg-accent/8" : "border-line bg-cream"
+                }`}
+              >
+                <span className="block h-9 w-full rounded-lg ring-1 ring-ink/10" style={backgroundCss(bk, paletteNow)} />
+                <span className="mt-1.5 block truncate text-[11px] font-medium">{BACKGROUND_STYLES[bk].label}</span>
+              </button>
+            ))}
+          </div>
+        </StepGroup>
+        <StepGroup title="Font" onActivate={() => setCanvasView("gift")}>
+          <div className="grid grid-cols-3 gap-2">
+            {(Object.keys(FONT_PAIRINGS) as FontChoice[]).map((fk) => (
+              <button
+                key={fk}
+                type="button"
+                onClick={() => patch({ font_choice: fk })}
+                aria-pressed={draft.font_choice === fk}
+                style={{ fontFamily: FONT_PAIRINGS[fk].heading }}
+                className={`squish truncate rounded-xl border px-2 py-2.5 text-sm transition-colors ${
+                  draft.font_choice === fk ? "border-accent bg-accent/8" : "border-line bg-cream"
+                }`}
+              >
+                {FONT_PAIRINGS[fk].label}
+              </button>
+            ))}
+          </div>
+        </StepGroup>
+        <StepGroup
+          title="Characters"
+          hint="Who opens the gift with them."
+          onActivate={() => {
+            if (usesIntro) setCanvasView("intro");
+          }}
+        >
+          <CastPanel
+            simple
+            siteId={id}
+            kind={themeKindOf(theme)}
+            recipient={draft.custom_text.recipient_name ?? ""}
+            value={{ character: draft.character ?? null, icon_set: draft.icon_set ?? null }}
+            onChange={patchCast}
+          />
+        </StepGroup>
+        <button
+          type="button"
+          onClick={() => setCustomizeLook((v) => !v)}
+          aria-expanded={customizeLook}
+          className="flex w-full items-center gap-3 rounded-xl border border-dashed border-ink/20 px-3 py-2.5 text-left hover:bg-cream"
+        >
+          <span className="min-w-0 flex-1">
+            <span className="block text-sm font-medium">{customizeLook ? "Fewer options" : "Customize"}</span>
+            {customizeLook ? null : (
+              <span className="block text-xs text-muted">Any color, more characters, your own picture, sprinkles</span>
+            )}
+          </span>
+          <ChevronDown className={`size-4 shrink-0 transition-transform ${customizeLook ? "rotate-180" : ""}`} />
+        </button>
+        {customizeLook ? (
+          <>
+            <StepGroup title="Colors" onActivate={() => setCanvasView("gift")}>
+              <PalettePicker
+                theme={theme}
+                part="more"
+                value={{ palette_id: draft.palette_id, colors: paletteNow }}
+                onChange={(next) => patch({ palette_id: next.palette_id, custom_colors: next.colors })}
+                photoUrls={photoUrls}
               />
-            </label>
-          }
-        />
+            </StepGroup>
+            <StepGroup
+              title="Characters and sprinkles"
+              onActivate={() => {
+                if (usesIntro) setCanvasView("intro");
+              }}
+            >
+              <CastPanel
+                siteId={id}
+                kind={themeKindOf(theme)}
+                recipient={draft.custom_text.recipient_name ?? ""}
+                value={{ character: draft.character ?? null, icon_set: draft.icon_set ?? null }}
+                onChange={patchCast}
+              />
+            </StepGroup>
+          </>
+        ) : null}
+      </div>
+    ),
+    notes: (
+      <div className="space-y-5">
+        {!solo ? (
+          <StepGroup title="Invite friends" hint="Friends add their notes, photos and songs through this link. No account needed.">
+            <div className="flex items-center gap-2">
+              <input
+                readOnly
+                value={contributeUrl}
+                onFocus={(e) => e.currentTarget.select()}
+                aria-label="Invite link"
+                className="min-w-0 flex-1 rounded-lg border border-line bg-cream px-2 py-2 font-mono text-[11px]"
+              />
+              <Button size="sm" className="rounded-full" onClick={copyContributeLink}>
+                <LinkIcon />
+                Copy
+              </Button>
+            </div>
+            <div className="mt-2 flex gap-2">
+              <Button variant="outline" size="sm" className="flex-1 rounded-full" asChild>
+                <a href={messengerUrl} target="_blank" rel="noreferrer">
+                  <MessageCircle />
+                  Messenger
+                </a>
+              </Button>
+              <Button variant="outline" size="sm" className="flex-1 rounded-full" asChild>
+                <a href={whatsappUrl} target="_blank" rel="noreferrer">
+                  <Send />
+                  WhatsApp
+                </a>
+              </Button>
+            </div>
+          </StepGroup>
+        ) : null}
+        <StepGroup
+          title={solo ? "Your notes" : "Add your own"}
+          {...(solo ? { hint: "Every page is from you. Add as many as you like." } : {})}
+        >
+          <OwnNotes
+            siteId={id}
+            solo={draft.solo}
+            onSoloChange={(next) => patch({ solo: next })}
+            showSolo={false}
+            contributions={contributions}
+            recipient={draft.custom_text.recipient_name ?? ""}
+            defaultName={authUser?.name ?? ""}
+          />
+        </StepGroup>
+        {enabledTypes.has("calendar") ? (
+          <StepGroup title="Advent surprises" hint="Plan what opens on each day.">
+            <CalendarEditor
+              siteId={id}
+              entries={calendarEntries}
+              locked={draft.calendar_locked}
+              onToggleLock={(v) => patch({ calendar_locked: v })}
+              onChanged={() => queryClient.invalidateQueries({ queryKey: ["calendar", id] })}
+            />
+          </StepGroup>
+        ) : null}
+        {!solo ? (
+          <StepGroup
+            title="From friends"
+            hint="New notes wait here until you add them to the gift."
+            aside={
+              pending.length > 0 ? (
+                <span className="rounded-full bg-accent px-2 py-0.5 text-[11px] font-medium text-cream">{pending.length} waiting</span>
+              ) : null
+            }
+          >
+            <div className="space-y-3">
+              {friendNotes.length === 0 ? (
+                <div className="card-paper p-4 text-center text-sm text-muted">
+                  Nothing yet. Send the invite link above and their notes show up here.
+                </div>
+              ) : null}
+              {friendNotes.map((item) => (
+                <ReviewCard
+                  key={item.id}
+                  item={item}
+                  onApprove={() => void setStatus(item.id, "approved")}
+                  onHide={() => void setStatus(item.id, "hidden")}
+                />
+              ))}
+            </div>
+          </StepGroup>
+        ) : null}
+      </div>
+    ),
+    wrap: (
+      <div className="space-y-5">
+        <StepGroup title="Before you send it">
+          <ul className="space-y-2">
+            {[
+              {
+                key: "who",
+                done: stepDone.words,
+                label: draft.custom_text.recipient_name?.trim() ? `For ${draft.custom_text.recipient_name.trim()}` : "Who it's for",
+                fix: "Add their name",
+                run: () => openField("recipient_name"),
+              },
+              {
+                key: "notes",
+                done: stepDone.notes,
+                label: shownNotes > 0 ? `${shownNotes} ${shownNotes === 1 ? "note" : "notes"} in the gift` : "At least one note",
+                fix: pending.length > 0 ? `Check ${pending.length} waiting` : "Add a note",
+                run: () => goTo("notes"),
+              },
+            ].map((row) => (
+              <li key={row.key} className="flex items-center gap-3 rounded-xl border border-line bg-cream px-3 py-2.5">
+                <span
+                  className={`grid size-6 shrink-0 place-items-center rounded-full ${row.done ? "bg-[#4E8A62] text-cream" : "border border-dashed border-ink/30"}`}
+                  aria-hidden="true"
+                >
+                  {row.done ? <Check className="size-3.5" /> : null}
+                </span>
+                <span className="min-w-0 flex-1 truncate text-sm">{row.label}</span>
+                {row.done ? null : (
+                  <button type="button" onClick={row.run} className="shrink-0 text-xs font-medium text-accent underline underline-offset-2">
+                    {row.fix}
+                  </button>
+                )}
+              </li>
+            ))}
+          </ul>
+          <p className="mt-2 text-xs text-muted">Everything else is optional. Friends can keep adding notes after it's sent.</p>
+        </StepGroup>
         <GiftPasswordSetting
           siteId={id}
           tier={billing?.tier ?? null}
@@ -963,26 +1108,121 @@ function SiteDashboard() {
           canUpgrade={draft.status === "published" && !!billing && billing.upgrades.length > 0 && !billing.ended}
           onUpgrade={() => setPlanPicker("upgrade")}
         />
+        {draft.status === "published" ? (
+          <div className="rounded-2xl bg-[#4E8A62]/10 p-4 text-sm">
+            <p className="font-medium">It's sent.</p>
+            <div className="mt-3 flex gap-2">
+              <Button size="sm" className="rounded-full" onClick={copyLiveLink}>
+                <LinkIcon />
+                Copy gift link
+              </Button>
+              <Button size="sm" variant="outline" className="rounded-full" asChild>
+                <a href={liveUrl} target="_blank" rel="noreferrer">
+                  Open it
+                </a>
+              </Button>
+            </div>
+          </div>
+        ) : (
+          <div>
+            <Button
+              className="h-12 w-full rounded-full text-base"
+              disabled={saving || !billing || !readyToWrap}
+              onClick={() => {
+                if (hasPlan) void boWrap();
+                else boReact("cheer");
+                void publish();
+              }}
+            >
+              <Gift />
+              {hasPlan ? `Send it to ${draft.custom_text.recipient_name?.trim() || "them"}` : "Wrap it up"}
+            </Button>
+            <p className="mt-2 text-center text-xs text-muted">
+              {!readyToWrap
+                ? "Tick the two things above first."
+                : hasPlan
+                  ? `Already paid for (${planSummary(billing)}). You can unpublish any time.`
+                  : "Next you pick a plan. It opens for them once it's paid."}
+            </p>
+          </div>
+        )}
       </div>
     ),
-    comic: (
+    settings: (
       <div className="space-y-5">
-        <FormatPicker
-          value={draft.format}
-          onChange={(format) => patch({ format })}
-          isAllowed={(format) => !planTier || planTier.formats.includes(format)}
-          compact
-        />
-        {planTier && planTier.formats.length < FORMATS.length ? (
-          <p className="text-xs text-muted">
-            {planTier.name} includes {planTier.formats.map((f) => formatInfo(f).title).join(" and ")}.{" "}
-            {billing && billing.upgrades.length > 0 ? (
-              <button type="button" className="text-accent underline underline-offset-2" onClick={() => setPlanPicker("upgrade")}>
-                Upgrade for every format.
+        <StepGroup title="Who's it from?">
+          <div className="grid grid-cols-2 gap-1 rounded-full bg-cream p-1 ring-1 ring-line" role="radiogroup" aria-label="Who's it from">
+            {(
+              [
+                [false, "Me and friends"],
+                [true, "Just me"],
+              ] as const
+            ).map(([v, l]) => (
+              <button
+                key={l}
+                type="button"
+                role="radio"
+                aria-checked={solo === v}
+                onClick={() => {
+                  patch({ solo: v });
+                  boSay(v ? "Just from you. Sweet." : "Friends can join in now.", v ? "love" : "happy");
+                }}
+                className={`rounded-full py-2 text-xs font-semibold transition-colors ${solo === v ? "bg-ink text-cream" : "text-muted hover:text-ink"}`}
+              >
+                {l}
               </button>
-            ) : null}
+            ))}
+          </div>
+          <p className="mt-2 text-xs text-muted">
+            {solo ? "You make every page. There's no invite link." : "Friends add theirs through the invite link. You can add yours too."}
           </p>
-        ) : null}
+        </StepGroup>
+        <StepGroup title="How it opens" hint="Same notes, a different way to open them.">
+          {formatAsk ? (
+            <div className="sticky top-0 z-10 mb-3 rounded-xl border border-accent/40 bg-[#FBEDE6] p-3 shadow-sm" role="alertdialog" aria-label="Switch format">
+              <p className="text-sm font-medium">Switch to {formatInfo(formatAsk).title}?</p>
+              <p className="mt-1 text-xs text-muted">
+                Your notes, words and colors stay. Only the way it opens changes
+                {draft.format === "comic" ? ". The comic's cover and panel order are kept in case you switch back." : "."}
+              </p>
+              <div className="mt-3 flex gap-2">
+                <Button
+                  size="sm"
+                  className="rounded-full"
+                  onClick={() => {
+                    patch({ format: formatAsk });
+                    setFormatAsk(null);
+                    if (formatAsk === "comic") {
+                      boReact("bam");
+                      boSay("BAM.", "surprised");
+                    }
+                  }}
+                >
+                  Switch
+                </Button>
+                <Button size="sm" variant="outline" className="rounded-full" onClick={() => setFormatAsk(null)}>
+                  Keep {formatInfo(draft.format).title}
+                </Button>
+              </div>
+            </div>
+          ) : null}
+          <FormatPicker
+            value={draft.format}
+            onChange={chooseFormat}
+            isAllowed={(format) => !planTier || planTier.formats.includes(format)}
+            compact
+          />
+          {planTier && planTier.formats.length < FORMATS.length ? (
+            <p className="mt-3 text-xs text-muted">
+              {planTier.name} includes {planTier.formats.map((f) => formatInfo(f).title).join(" and ")}.{" "}
+              {billing && billing.upgrades.length > 0 ? (
+                <button type="button" className="text-accent underline underline-offset-2" onClick={() => setPlanPicker("upgrade")}>
+                  Upgrade for every format.
+                </button>
+              ) : null}
+            </p>
+          ) : null}
+          <div className="mt-4 space-y-4">
         {draft.format === "comic" ? (
           <>
             <label className="block"><span className="text-xs text-muted">Cover title</span><input value={normalizeComicSettings(draft.format_settings).cover_title ?? ""} onChange={(event) => patchComic({ cover_title: event.target.value })} placeholder={`THE AMAZING ${(draft.custom_text.recipient_name || "YOU").toUpperCase()}`} className="mt-1 w-full rounded-xl border border-line bg-cream px-3 py-2.5 text-sm outline-none focus:border-accent" /></label>
@@ -992,81 +1232,108 @@ function SiteDashboard() {
             <div><p className="text-sm font-medium">Panel organizer</p><p className="mt-1 text-xs text-muted">Reorder panels or move one into another chapter.</p><div className="mt-3 space-y-2">{orderedComicIds(contributions.map((item) => item.id), normalizeComicSettings(draft.format_settings).panel_order).map((itemId, index, orderedIds) => { const item = contributions.find((entry) => entry.id === itemId); if (!item) return null; const settings = normalizeComicSettings(draft.format_settings); const chapter = settings.chapter_overrides?.[item.id] ?? item.module_type; return <div key={item.id} className="rounded-xl border border-line bg-cream p-3"><div className="flex items-center gap-2"><span className="min-w-0 flex-1 truncate text-sm font-medium">{item.author_name}</span><Button type="button" size="icon" variant="ghost" disabled={index === 0} onClick={() => moveComicPanel(item.id, -1)} aria-label="Move panel up">↑</Button><Button type="button" size="icon" variant="ghost" disabled={index === orderedIds.length - 1} onClick={() => moveComicPanel(item.id, 1)} aria-label="Move panel down">↓</Button></div><select value={chapter} onChange={(event) => patchComic({ chapter_overrides: { ...settings.chapter_overrides, [item.id]: event.target.value } })} className="mt-2 w-full rounded-lg border border-line bg-paper px-2 py-2 text-xs">{MODULES.map((module) => <option key={module.type} value={module.type}>{module.label}</option>)}</select></div>; })}</div></div>
           </>
         ) : <p className="text-xs text-muted">{formatInfo(draft.format).about}</p>}
-      </div>
-    ),
-    notes: (
-      <OwnNotes
-        siteId={id}
-        solo={draft.solo}
-        onSoloChange={(next) => {
-          patch({ solo: next });
-          boSay(next ? "Just from you. Sweet." : "Friends can join in now.", next ? "love" : "happy");
-        }}
-        contributions={contributions}
-        recipient={draft.custom_text.recipient_name ?? ""}
-        defaultName={authUser?.name ?? ""}
-      />
-    ),
-    review: (
-      <div className="space-y-3">
-        {contributions.length === 0 ? (
-          <div className="card-paper p-5 text-center">
-            <p className="text-sm text-muted">Nothing yet. Share the invite link and friends' notes show up here for you to check first.</p>
-            <Button className="mt-4 rounded-full" onClick={copyContributeLink}>
-              <UserPlus />
-              Invite friends
-            </Button>
-            <p className="mt-2 truncate font-mono text-[11px] text-muted" title={contributeUrl}>{contributeUrl.replace(/^https?:\/\//, "")}</p>
           </div>
-        ) : null}
-        {contributions.map((item) => (
-          <ReviewCard
-            key={item.id}
-            item={item}
-            onApprove={() => void setStatus(item.id, "approved")}
-            onHide={() => void setStatus(item.id, "hidden")}
-          />
-        ))}
+        </StepGroup>
+        <StepGroup title="Sections" hint="What friends can add, and what the gift shows.">
+          <div className="space-y-2">
+            {[...MODULES]
+              .filter((mod) => moreSections || isOn(mod.type))
+              .sort((a, b) => Number(isOn(b.type)) - Number(isOn(a.type)))
+              .map((mod) => {
+                const on = isOn(mod.type);
+                return (
+                  <div
+                    key={mod.type}
+                    className={`flex items-center justify-between gap-3 rounded-xl border px-3 py-2.5 transition-colors ${
+                      on ? "border-accent bg-accent/8" : "border-line bg-cream"
+                    }`}
+                  >
+                    <span className="text-sm font-medium">{mod.label}</span>
+                    <button
+                      type="button"
+                      role="switch"
+                      aria-checked={on}
+                      aria-label={mod.label}
+                      onClick={() => void toggleModule(mod.type, !on)}
+                      className={`rounded-full px-3 py-1.5 font-mono text-[10px] tracking-[0.12em] uppercase ${
+                        on ? "bg-ink text-cream" : "border border-line bg-paper text-muted"
+                      }`}
+                    >
+                      {on ? "On" : "Add"}
+                    </button>
+                  </div>
+                );
+              })}
+            <button
+              type="button"
+              onClick={() => setMoreSections((v) => !v)}
+              className="w-full rounded-xl border border-dashed border-line px-3 py-2.5 text-left text-sm font-medium hover:bg-cream"
+            >
+              {moreSections ? "Show only the ones that are on" : `Add more (${MODULES.filter((mod) => !isOn(mod.type)).length})`}
+            </button>
+            <label className="flex items-start gap-3 rounded-xl border border-line bg-cream p-3">
+              <input
+                type="checkbox"
+                checked={draft.share_notes}
+                onChange={(e) => patch({ share_notes: e.target.checked })}
+                className="mt-0.5"
+              />
+              <span>
+                <span className="block text-sm font-medium">Let friends read each other's notes</span>
+                <span className="block text-xs text-muted">
+                  Off by default. Notes marked "Only {draft.custom_text.recipient_name || "the recipient"}" always stay sealed.
+                </span>
+              </span>
+            </label>
+          </div>
+        </StepGroup>
       </div>
     ),
   };
 
+  const stepIndex = (STEPS as readonly SectionKey[]).indexOf(section);
+  const nextStep = stepIndex >= 0 && stepIndex < STEPS.length - 1 ? STEPS[stepIndex + 1]! : null;
+
   const rail = (vertical: boolean) => (
     <nav
+      aria-label="Steps"
       className={
         vertical
-          ? "flex w-[72px] shrink-0 flex-col gap-1 overflow-y-auto border-r border-line bg-cream/70 py-3"
-          : "flex gap-1 overflow-x-auto border-t border-line bg-cream/90 px-2 py-2"
+          ? "flex w-[84px] shrink-0 flex-col gap-1 overflow-y-auto border-r border-line bg-cream/70 py-3"
+          : "flex items-stretch gap-1 border-t border-line bg-cream/90 px-2 py-2"
       }
     >
-      {railSections.map((key) => {
-        const Icon = SECTION_ICONS[key];
+      {STEPS.map((key, i) => {
         const active = section === key && (vertical ? panelOpen : sheetOpen);
+        const done = stepDone[key];
         return (
           <button
             key={key}
             type="button"
+            aria-current={section === key ? "step" : undefined}
             onClick={() => {
-              if (vertical) {
-                if (section === key && panelOpen) setPanelOpen(false);
-                else {
-                  setSection(key);
-                  setPanelOpen(true);
-                }
-              } else {
-                setSection(key);
-                setSheetOpen(true);
-              }
+              if (vertical && section === key && panelOpen) setPanelOpen(false);
+              else goTo(key);
             }}
-            className={`relative flex shrink-0 flex-col items-center gap-1 rounded-xl px-2 py-2 transition-colors ${
-              vertical ? "mx-2" : "min-w-[68px]"
+            className={`relative flex flex-col items-center gap-1 rounded-xl px-1.5 py-2 transition-colors ${
+              vertical ? "mx-2" : "min-w-0 flex-1"
             } ${active ? "bg-accent/15 text-ink" : "text-muted hover:bg-glass/70 hover:text-ink"}`}
           >
-            <Icon className="size-5" />
-            <span className={`text-[10px] ${active ? "font-semibold text-ink" : ""}`}>
+            <span
+              className={`grid size-7 place-items-center rounded-full text-[12px] font-semibold transition-colors ${
+                done
+                  ? "bg-[#4E8A62] text-cream"
+                  : section === key
+                    ? "bg-ink text-cream"
+                    : "border border-ink/20 bg-paper text-ink/70"
+              }`}
+            >
+              {done ? <Check className="size-4" aria-label="done" /> : i + 1}
+            </span>
+            <span className={`text-[11px] leading-tight whitespace-nowrap ${active ? "font-semibold text-ink" : ""}`}>
               {SECTION_TITLES[key]}
             </span>
-            {key === "review" && pending.length > 0 ? (
+            {key === "notes" && pending.length > 0 ? (
               <span className="absolute top-1 right-2 rounded-full bg-accent px-1.5 text-[10px] font-medium text-cream">
                 {pending.length}
               </span>
@@ -1074,13 +1341,46 @@ function SiteDashboard() {
           </button>
         );
       })}
+      <button
+        type="button"
+        onClick={() => {
+          if (vertical && section === "settings" && panelOpen) setPanelOpen(false);
+          else goTo("settings");
+        }}
+        className={`flex flex-col items-center gap-1 rounded-xl px-1.5 py-2 text-muted transition-colors hover:text-ink ${
+          vertical ? "mx-2 mt-auto" : "min-w-0 shrink-0"
+        } ${section === "settings" && (vertical ? panelOpen : sheetOpen) ? "bg-accent/15 text-ink" : ""}`}
+      >
+        <Settings2 className="size-5" />
+        <span className="text-[10px] leading-tight">{vertical ? "Gift settings" : "Settings"}</span>
+      </button>
     </nav>
   );
+
+  const stepHeader = (
+    <div className="min-w-0">
+      {stepIndex >= 0 ? (
+        <p className="font-mono text-[10px] tracking-[0.14em] text-muted uppercase">
+          Step {stepIndex + 1} of {STEPS.length}
+        </p>
+      ) : (
+        <p className="font-mono text-[10px] tracking-[0.14em] text-muted uppercase">Set up once</p>
+      )}
+      <span className="font-display text-lg">{SECTION_TITLES[section]}</span>
+    </div>
+  );
+  const nextButton = nextStep ? (
+    <div className="border-t border-line px-4 py-3">
+      <Button variant="outline" className="w-full rounded-full" onClick={() => goTo(nextStep)}>
+        Next: {SECTION_TITLES[nextStep]}
+      </Button>
+    </div>
+  ) : null;
 
   const panel = (
     <div className="flex h-full min-h-0 flex-col">
       <div className="flex items-center justify-between gap-2 border-b border-line px-4 py-3">
-        <span className="font-display text-lg">{SECTION_TITLES[section]}</span>
+        {stepHeader}
         <button
           type="button"
           aria-label="Close panel"
@@ -1089,16 +1389,11 @@ function SiteDashboard() {
         >
           <X className="size-4" />
         </button>
-        {section === "review" && pending.length > 0 ? (
-          <span className="rounded-full bg-accent px-2 py-0.5 text-[11px] font-medium text-cream">
-            {pending.length} waiting
-          </span>
-        ) : null}
       </div>
       <div className="min-h-0 flex-1 overflow-y-auto px-4 py-4">{sectionBody[section]}</div>
+      {nextButton}
     </div>
   );
-
 
   const fullScreenIntro = (
     <GiftIntro
@@ -1121,7 +1416,7 @@ function SiteDashboard() {
     <FormatView key={draft.format === "comic" ? (previewOpened ? "comic-reader" : "comic-cover") : draft.format} site={draft} theme={theme} palette={paletteNow} modules={modules} contributions={approved} calendarEntries={calendarEntries} showCover={!previewOpened} sample showShare />
   );
 
-  const showIntroInCanvas = (section === "intro" || section === "cast") && formatInfo(draft.format).usesIntro;
+  const showIntroInCanvas = canvasView === "intro" && (section === "words" || section === "look") && usesIntro;
   const canvasIntro = (
     <GiftIntro
       key={`canvas-intro-${introCanvasKey}`}
@@ -1306,20 +1601,6 @@ function SiteDashboard() {
         </div>
         </div>
         <div className="flex shrink-0 items-center gap-2">
-          {solo ? (
-            <Button
-              variant="outline"
-              className="hidden h-10 rounded-full min-[900px]:inline-flex"
-              onClick={() => {
-                setSection("notes");
-                setPanelOpen(true);
-              }}
-            >
-              <PenLine />
-              Add a note
-            </Button>
-          ) : (
-            <>
           <span
             role="status"
             aria-live="polite"
@@ -1344,46 +1625,6 @@ function SiteDashboard() {
             <span className="tabular-nums">{noteCount} {noteCount === 1 ? "note" : "notes"}</span>
           </span>
 
-          <Popover>
-            <PopoverTrigger asChild>
-              <Button variant="outline" className="hidden h-10 rounded-full min-[900px]:inline-flex" onClick={() => { boReact("wave"); boSay("The more friends, the better.", "happy"); }}>
-                <UserPlus />
-                Invite friends
-              </Button>
-            </PopoverTrigger>
-            <PopoverContent align="end" className="w-80 space-y-3">
-              <p className="text-sm text-muted">
-                Send this link so friends can add their notes, photos and songs.
-              </p>
-              <div className="flex items-center gap-2">
-                <input
-                  readOnly
-                  value={contributeUrl}
-                  onFocus={(e) => e.currentTarget.select()}
-                  className="min-w-0 flex-1 rounded-lg border border-line bg-cream px-2 py-1.5 font-mono text-[11px]"
-                />
-                <Button size="sm" onClick={copyContributeLink}>
-                  Copy
-                </Button>
-              </div>
-              <div className="flex gap-2">
-                <Button variant="outline" size="sm" className="flex-1" asChild>
-                  <a href={messengerUrl} target="_blank" rel="noreferrer">
-                    <MessageCircle />
-                    Messenger
-                  </a>
-                </Button>
-                <Button variant="outline" size="sm" className="flex-1" asChild>
-                  <a href={whatsappUrl} target="_blank" rel="noreferrer">
-                    <Send />
-                    WhatsApp
-                  </a>
-                </Button>
-              </div>
-            </PopoverContent>
-          </Popover>
-            </>
-          )}
 
           <Button
             variant="outline"
@@ -1409,33 +1650,14 @@ function SiteDashboard() {
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
-              {solo ? (
-                <DropdownMenuItem
-                  onSelect={() => {
-                    setSection("notes");
-                    setSheetOpen(true);
-                  }}
-                >
-                  <PenLine />
-                  Add a note
-                </DropdownMenuItem>
-              ) : (
-                <>
-                  <DropdownMenuItem
-                    onSelect={() => {
-                      setSection("review");
-                      setSheetOpen(true);
-                    }}
-                  >
-                    <Inbox />
-                    Friends' notes ({noteCount})
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onSelect={copyContributeLink}>
-                    <UserPlus />
-                    Invite friends
-                  </DropdownMenuItem>
-                </>
-              )}
+              <DropdownMenuItem onSelect={() => goTo("notes")}>
+                <Inbox />
+                Notes ({noteCount})
+              </DropdownMenuItem>
+              <DropdownMenuItem onSelect={() => goTo("settings")}>
+                <Settings2 />
+                Gift settings
+              </DropdownMenuItem>
               <DropdownMenuItem
                 onSelect={() => {
                   setPreviewOpened(false);
@@ -1487,46 +1709,11 @@ function SiteDashboard() {
                 ) : null}
               </DropdownMenuContent>
             </DropdownMenu>
-          ) : !hasPlan ? (
-            <Button
-              className="h-10 rounded-full"
-              disabled={saving || !billing}
-              onClick={() => {
-                boReact("cheer");
-                void publish();
-              }}
-            >
+          ) : (
+            <Button className="h-10 rounded-full" onClick={() => goTo("wrap")}>
               <Gift />
               Wrap it up
             </Button>
-          ) : (
-            <Popover>
-              <PopoverTrigger asChild>
-                <Button className="h-10 rounded-full" disabled={saving}>
-                  <Gift />
-                  Wrap it up
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent align="end" className="w-72 space-y-3">
-                <p className="font-display text-base">
-                  Ready to send this to {draft.custom_text.recipient_name || "them"}?
-                </p>
-                <p className="text-xs text-muted">
-                  It's already paid for ({planSummary(billing)}). Friends can still add notes, and you
-                  can unpublish any time.
-                </p>
-                <Button
-                  className="w-full"
-                  onClick={() => {
-                    void boWrap();
-                    void publish();
-                  }}
-                  disabled={saving}
-                >
-                  Yes, wrap it up
-                </Button>
-              </PopoverContent>
-            </Popover>
           )}
         </div>
 
@@ -1593,12 +1780,13 @@ function SiteDashboard() {
               <span className="h-1 w-10 rounded-full bg-line" />
             </div>
             <div className="flex items-center justify-between px-5 pt-2">
-              <span className="font-display text-lg">{SECTION_TITLES[section]}</span>
+              {stepHeader}
               <button onClick={() => setSheetOpen(false)} className="text-sm text-muted">
                 Done
               </button>
             </div>
             <div className="min-h-0 flex-1 overflow-y-auto px-4 py-4">{sectionBody[section]}</div>
+            {nextButton}
           </div>
         </div>
       ) : null}
