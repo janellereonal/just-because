@@ -17,8 +17,7 @@ import { ICON_SETS, MAX_CUSTOM_ICONS, resolveIconSet, type IconSetSetting, type 
 import { IconGlyph } from "@/themes/_shared/Sprinkles";
 import { SPRING } from "@/themes/_shared/stage";
 import { CAST_COPY } from "@/copy/strings";
-import { NEW_PERSON, PersonBuilder } from "@/components/PersonBuilder";
-import { PEOPLE, personFromLegacy } from "@/themes/_shared/cast/person";
+import { CharacterPicker } from "@/components/CharacterPicker";
 
 type Tab = "characters" | "customize" | "upload" | "sprinkles";
 const TABS: { key: Tab; label: string }[] = [
@@ -55,7 +54,6 @@ export function CastPanel({
   simple?: boolean;
 }) {
   const [tab, setTab] = useState<Tab>("characters");
-  const [building, setBuilding] = useState(false);
   const design = designFor(kind);
   const cast = castFor(kind, value.character, value.icon_set);
   const char = cast.character;
@@ -78,7 +76,7 @@ export function CastPanel({
   }
 
   function surprise() {
-    const pool = CHARACTERS.filter((c) => c.id !== (char.type === "library" ? char.id : ""));
+    const pool = CHARACTERS.filter((c) => c.id !== "person" && c.id !== (char.type === "library" ? char.id : ""));
     const next = pool[Math.floor(Math.random() * pool.length)]!;
     const set = ICON_SETS.filter((s) => s.id !== "emoji")[Math.floor(Math.random() * (ICON_SETS.length - 1))]!;
     const pickColor = () => SWATCHES[Math.floor(Math.random() * SWATCHES.length)]!;
@@ -88,41 +86,7 @@ export function CastPanel({
   }
 
   if (simple) {
-    // The picked one stays visible even when it isn't one of the four.
-    const ids = ["mascot", "dog", "cat", "bunny"];
-    if (char.type === "library" && !ids.includes(char.id)) ids[3] = char.id;
-    return (
-      <div className="grid grid-cols-5 gap-1.5">
-        {ids.map((cid) => {
-          const c = characterById(cid);
-          const on = char.type === "library" && char.id === cid;
-          return (
-            <motion.button
-              key={cid}
-              type="button"
-              whileTap={{ scale: 0.92 }}
-              onClick={() => setChar({ type: "library", id: cid, accessory: wearing, ...(char.name_tag ? { name_tag: char.name_tag } : {}) })}
-              aria-pressed={on}
-              title={c.name}
-              className={`grid place-items-center rounded-2xl border px-0.5 pt-1 pb-1.5 transition-colors ${on ? "border-accent bg-accent/8" : "border-line bg-cream hover:bg-glass/80"}`}
-            >
-              <Character setting={{ type: "library", id: cid, accessory: wearing }} accessory={accessory} size={48} live={false} follow={false} showName={false} />
-              <span className="text-[11px]">{c.name}</span>
-            </motion.button>
-          );
-        })}
-        <button
-          type="button"
-          onClick={() => setChar({ type: "none" })}
-          aria-pressed={char.type === "none"}
-          title="No one"
-          className={`grid place-items-center rounded-2xl border px-0.5 pt-1 pb-1.5 text-ink/50 transition-colors ${char.type === "none" ? "border-accent bg-accent/8" : "border-line bg-cream hover:bg-glass/80"}`}
-        >
-          <span className="grid size-12 place-items-center text-lg">∅</span>
-          <span className="text-[11px] text-ink">No one</span>
-        </button>
-      </div>
-    );
+    return <CharacterPicker siteId={siteId} kind={kind} char={char} accessory={accessory} onSet={setChar} />;
   }
 
   return (
@@ -157,97 +121,11 @@ export function CastPanel({
 
       <AnimatePresence mode="wait" initial={false}>
         <motion.div key={tab} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -6 }} transition={SPRING.soft} className="mt-4">
-          {tab === "characters" && building && char.type === "person" ? (
-            <PersonBuilder siteId={siteId} value={char} accessory={accessory} onChange={setChar} onBack={() => setBuilding(false)} />
-          ) : null}
-          {tab === "characters" && !(building && char.type === "person") ? (
+          {tab === "characters" ? (
             <div>
               <div className="mb-4">
-                <p className="font-mono text-[10px] tracking-[0.18em] text-muted uppercase">{CAST_COPY.people}</p>
-                <button
-                  type="button"
-                  onClick={() => {
-                    if (char.type !== "person") {
-                      const legacy = char.type === "library" && char.id === "person";
-                      setChar({ ...NEW_PERSON, person: legacy ? personFromLegacy(char.colors) : NEW_PERSON.person, accessory: wearing, ...(char.name_tag ? { name_tag: char.name_tag } : {}) });
-                    }
-                    setBuilding(true);
-                  }}
-                  className="mt-2 flex w-full items-center gap-3 rounded-2xl border border-dashed border-ink/25 bg-cream px-3 py-2.5 text-left text-sm hover:bg-glass/80"
-                >
-                  <span className="grid size-11 shrink-0 place-items-center overflow-hidden rounded-full bg-paper">
-                    {char.type === "person" ? (
-                      <Character setting={char} size={44} live={false} follow={false} showName={false} />
-                    ) : (
-                      <img src="/clay/people/bookworm@256.webp" alt="" width={44} height={44} />
-                    )}
-                  </span>
-                  <span>
-                    <span className="block font-medium">{char.type === "person" ? CAST_COPY.editPerson : CAST_COPY.makePerson}</span>
-                    <span className="block text-xs text-muted">{CAST_COPY.makePersonHint}</span>
-                  </span>
-                </button>
-                <div className="mt-2 grid grid-cols-4 gap-2">
-                  {PEOPLE.slice(0, 8).map((pp) => {
-                    const on = char.type === "person" && char.preset === pp.id;
-                    return (
-                      <motion.button
-                        key={pp.id}
-                        type="button"
-                        whileTap={{ scale: 0.92 }}
-                        onClick={() => setChar({ type: "person", person: pp.person, preset: pp.id, accessory: wearing, ...(char.name_tag ? { name_tag: char.name_tag } : {}) })}
-                        aria-pressed={on}
-                        className={`grid place-items-center rounded-2xl border p-1 transition-colors ${on ? "border-accent bg-accent/8" : "border-line bg-cream hover:bg-glass/80"}`}
-                        title={pp.name}
-                      >
-                        <Character setting={{ type: "person", person: pp.person, preset: pp.id, accessory: wearing }} accessory={accessory} size={58} live={false} follow={false} showName={false} />
-                        <span className="w-full truncate text-center text-[11px]">{pp.name}</span>
-                      </motion.button>
-                    );
-                  })}
-                </div>
+                <CharacterPicker siteId={siteId} kind={kind} char={char} accessory={accessory} onSet={setChar} start="all" />
               </div>
-              <button
-                type="button"
-                onClick={() => setChar({ type: "none" })}
-                aria-pressed={char.type === "none"}
-                className={`mb-4 flex w-full items-center gap-3 rounded-2xl border px-3 py-2.5 text-left text-sm transition-colors ${char.type === "none" ? "border-accent bg-accent/8" : "border-line bg-cream hover:bg-glass/80"}`}
-              >
-                <span className="grid size-9 place-items-center rounded-full border border-dashed border-ink/25 text-ink/50">∅</span>
-                <span>
-                  <span className="block font-medium">No one</span>
-                  <span className="block text-xs text-muted">Let the {design.object.toLowerCase().replace(/^an? /, "")} do the talking</span>
-                </span>
-              </button>
-              {(["Mascot", "Animals", "Little people", "Objects"] as const).map((cat) => {
-                // "Little you" is now the people builder; old gifts that use it keep working.
-                const list = CHARACTERS.filter((c) => c.category === cat && c.id !== "person");
-                if (!list.length) return null;
-                return (
-                  <div key={cat} className="mb-4">
-                    <p className="font-mono text-[10px] tracking-[0.18em] text-muted uppercase">{cat}</p>
-                    <div className="mt-2 grid grid-cols-4 gap-2">
-                      {list.map((c) => {
-                        const on = char.type === "library" && char.id === c.id;
-                        return (
-                          <motion.button
-                            key={c.id}
-                            type="button"
-                            whileTap={{ scale: 0.92 }}
-                            onClick={() => setChar({ type: "library", id: c.id, accessory: wearing, ...(char.name_tag ? { name_tag: char.name_tag } : {}) })}
-                            aria-pressed={on}
-                            className={`grid place-items-center rounded-2xl border p-1 transition-colors ${on ? "border-accent bg-accent/8" : "border-line bg-cream hover:bg-glass/80"}`}
-                            title={c.name}
-                          >
-                            <Character setting={{ type: "library", id: c.id, accessory: wearing }} accessory={accessory} size={58} live={false} follow={false} showName={false} />
-                            <span className="text-[11px]">{c.name}</span>
-                          </motion.button>
-                        );
-                      })}
-                    </div>
-                  </div>
-                );
-              })}
               {accessory ? (
                 <label className="flex items-center justify-between rounded-2xl border border-line bg-cream px-3 py-2.5 text-sm">
                   <span>Wear the {ACCESSORIES[accessory].name.toLowerCase()}</span>
