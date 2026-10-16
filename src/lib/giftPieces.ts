@@ -29,6 +29,8 @@ export type Piece = {
   /** Only the recipient can read it, and this viewer isn't them. */
   sealed: boolean;
   mine: boolean;
+  /** A photobooth photo with its frame and words drawn in: show it whole, never cropped. */
+  framed?: boolean;
   /** Calendar pieces: the day they unlock. */
   date?: string;
   sample?: boolean;
@@ -196,6 +198,7 @@ export function usePieces({
             link: c.external_link,
             sealed: !!c.sealed,
             mine: !!c.mine,
+            ...(c.module_type === "photobooth" && c.data?.["framed"] === true ? { framed: true } : {}),
           } satisfies Piece,
         ];
       });

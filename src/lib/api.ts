@@ -76,7 +76,10 @@ const GUEST_TYPES = ["letters", "photobooth", "songs", "wordcloud", "voice", "tr
 const OWNER_NOTE_TYPES = ["letters", "photobooth", "songs", "wordcloud", "voice", ...NEW_SECTION_TYPES] as const;
 
 /** Clean `data` for a section and check it has what it needs. Throws a friendly 400. */
-function sectionPayload(type: string, raw: unknown, text: string | null, media: string | null) {
+function sectionPayload(type: string, raw: unknown, text: string | null, media: string | null): Record<string, unknown> | null {
+  // A photo made in the photobooth has its frame and words drawn in, so gifts show it whole.
+  if (type === "photobooth")
+    return raw && typeof raw === "object" && (raw as Record<string, unknown>)["framed"] === true ? { framed: true } : null;
   if (!isNewSection(type)) return null;
   const clean = normalizeSectionData(type, raw);
   if (!clean) throw new HttpError(400, "Something's missing in that note. Check the fields and try again.");

@@ -250,7 +250,7 @@ function Card({
               {locked ? `Opens ${piece.date}` : "Only for the recipient"}
             </span>
           ) : piece.kind === "photo" && media ? (
-            <img src={media} alt={piece.text ?? ""} />
+            <img src={media} alt={piece.text ?? ""} data-framed={piece.framed || undefined} />
           ) : (
             <span className="scr-text">
               {piece.kind === "song" ? (

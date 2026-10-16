@@ -73,6 +73,7 @@ function Photo({ piece }: { piece: Piece }) {
   const url = useMediaUrl(piece.media);
   return url ? (
     <img
+      data-framed={piece.framed || undefined}
       src={url}
       alt={piece.text ?? `Photo from ${piece.author}`}
       loading="lazy"
