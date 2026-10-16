@@ -142,11 +142,14 @@ export function PalettePicker({
   value,
   onChange,
   photoUrls = [],
+  part = "all",
 }: {
   theme: Theme | null;
   value: Value;
   onChange: (next: Value) => void;
   photoUrls?: string[];
+  /** "suggested": the occasion's palettes as cards. "more": everything else (hex box, own colors, the rest). */
+  part?: "all" | "suggested" | "more";
 }) {
   const { data: all = [] } = usePalettes();
   const suggested = suggestedPalettes(theme, all);
@@ -210,6 +213,50 @@ export function PalettePicker({
     </button>
   );
 
+  const warning = (["primary", "accent"] as const).map((role) =>
+    tooCloseToBackground(value.colors[role], value.colors.background) ? (
+      <p key={role} className="mt-2 text-xs text-accent">
+        Your {role === "primary" ? "Main" : "Accent"} is hard to read on this background.{" "}
+        <button
+          type="button"
+          className="underline"
+          onClick={() => setColor(role, nudgeContrast(value.colors[role], value.colors.background, 3))}
+        >
+          Fix it
+        </button>
+      </p>
+    ) : null,
+  );
+
+  if (part === "suggested") {
+    const own = !suggested.some((p) => p.id === value.palette_id);
+    const cards = suggested.slice(0, 3);
+    const card = (key: string, name: string, colors: Palette, on: boolean, onClick: () => void) => (
+      <button
+        key={key}
+        type="button"
+        onClick={onClick}
+        aria-pressed={on}
+        className={`squish overflow-hidden rounded-2xl border text-left transition-colors ${on ? "border-accent ring-2 ring-accent/25" : "border-line hover:border-ink/25"}`}
+      >
+        <span className="relative block h-14" style={{ background: colors.background }}>
+          <span className="absolute bottom-2 left-2 size-5 rounded-full ring-1 ring-black/5" style={{ background: colors.primary }} />
+          <span className="absolute bottom-2 left-6 size-5 rounded-full ring-2 ring-white/70" style={{ background: colors.accent }} />
+        </span>
+        <span className="block truncate bg-cream px-2 py-1.5 text-[11px] font-medium">{name}</span>
+      </button>
+    );
+    return (
+      <div>
+        <div className={`grid gap-2 ${own ? "grid-cols-4" : "grid-cols-3"}`}>
+          {cards.map((p) => card(p.id, p.name, p, value.palette_id === p.id, () => pick(p)))}
+          {own ? card("own", "Your colors", value.colors, true, () => undefined) : null}
+        </div>
+        {warning}
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-5">
       <input
@@ -233,25 +280,10 @@ export function PalettePicker({
             />
           ))}
         </div>
-        {(["primary", "accent"] as const).map((role) =>
-          tooCloseToBackground(value.colors[role], value.colors.background) ? (
-            <p key={role} className="mt-2 text-xs text-accent">
-              Your {role === "primary" ? "Main" : "Accent"} is hard to read on this background.{" "}
-              <button
-                type="button"
-                className="underline"
-                onClick={() =>
-                  setColor(role, nudgeContrast(value.colors[role], value.colors.background, 3))
-                }
-              >
-                Fix it
-              </button>
-            </p>
-          ) : null,
-        )}
+        {part === "all" ? warning : null}
       </div>
 
-      {suggested.filter((p) => matches(query, p)).length > 0 ? (
+      {part === "all" && suggested.filter((p) => matches(query, p)).length > 0 ? (
         <div>
           <p className="text-[11px] tracking-wide text-muted uppercase">
             Suggested for {theme?.name ?? "this theme"}
@@ -264,7 +296,7 @@ export function PalettePicker({
 
       {shownRest.length > 0 ? (
         <div>
-          <p className="text-[11px] tracking-wide text-muted uppercase">More palettes</p>
+          <p className="text-[11px] tracking-wide text-muted uppercase">{part === "more" ? "Palettes" : "More palettes"}</p>
           <div className="mt-2 space-y-1.5">{shownRest.map(row)}</div>
           {!query && rest.length > 6 ? (
             <button

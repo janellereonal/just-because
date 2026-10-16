@@ -3,6 +3,30 @@
 Updated 16 Oct 2026 (sessions 6 to 8), so a new session, on any Claude account, can carry on without
 missing anything. Start with `HANDOFF.md` section 0.
 
+## Session 9b: editor in 4 steps (branch `editor-steps`, PR 2 of the editor brief, with the follow-up corrections)
+
+The 10-tab rail is now **Words, Look, Notes, Wrap it up** (numbered, green check when done) plus a small
+**Gift settings** link at the bottom of the rail (phone: "Settings" in the bottom bar).
+- Words, in the order they see it: Opening screen (small line, greeting, button, opening style and the classic
+  extras), Main page (heading, who it's for, "Message under the title"), section titles with the countdown date
+  and tree reveal date, footer. Greeting and the old "Intro message" stay separate (one is on the opening, one under
+  the title) and are labeled by where they show.
+- Look: 3 suggested palettes as cards, 4 backgrounds, the font presets, Bo + dog, cat, bunny (+ "No one").
+  "Customize" opens the hex box, all palettes, photo colors and the full Characters panel (custom colors, upload,
+  sprinkles). `PalettePicker part="suggested" | "more"`, `CastPanel simple`.
+- Notes: invite link with Copy, Messenger and WhatsApp; your own note (Letter, Photo, Song, Voice note, "More"
+  for the other 9, `OwnNotes showSolo={false}`); Advent surprises when the calendar is on; friends' notes to approve.
+- Wrap it up: checklist (who it's for, at least one approved note), password, then the old publish / plan flow.
+  The top bar's Wrap it up button opens this step.
+- Gift settings: Who's it from, How it opens (format, asks before switching; comic cover and panels live here),
+  Sections on/off, "let friends read each other's notes". Chip-in "coming soon" is gone from the editor.
+- The canvas shows the opening while you edit the opening's words or characters, and the gift otherwise
+  (`canvasView`, switched by touching a group). Saved rail sections from before map to the new steps.
+- Top bar: back, gift name, saved, notes chip, Preview, Wrap it up. The Invite friends popover is gone.
+- Inline editing (stretch goal): not done. Clicking text in the preview already selects it and offers
+  "Edit text", which jumps to the field. Real in-place editing needs contentEditable inside every format view;
+  worth a separate pass.
+
 ## Session 9 (16 Oct 2026): editor quick fixes (branch `editor-quick-fixes`, PR 1 of the editor brief)
 
 - Palettes: every Main and Accent in `scripts/seed.ts` now passes 3:1 on its background, so no suggested

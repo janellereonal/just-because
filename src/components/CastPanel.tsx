@@ -41,12 +41,15 @@ export function CastPanel({
   recipient,
   value,
   onChange,
+  simple = false,
 }: {
   siteId: string;
   kind: ThemeKind;
   recipient: string;
   value: Cast;
   onChange: (next: Cast) => void;
+  /** Just Bo and three animals (the Look step's default view). */
+  simple?: boolean;
 }) {
   const [tab, setTab] = useState<Tab>("characters");
   const design = designFor(kind);
@@ -78,6 +81,44 @@ export function CastPanel({
     const character: CharacterSetting = { type: "library", id: next.id, accessory: true, colors: { primary: next.colors.primary, secondary: pickColor() } };
     remember(character);
     onChange({ character, icon_set: { id: set.id } });
+  }
+
+  if (simple) {
+    // The picked one stays visible even when it isn't one of the four.
+    const ids = ["mascot", "dog", "cat", "bunny"];
+    if (char.type === "library" && !ids.includes(char.id)) ids[3] = char.id;
+    return (
+      <div className="grid grid-cols-5 gap-1.5">
+        {ids.map((cid) => {
+          const c = characterById(cid);
+          const on = char.type === "library" && char.id === cid;
+          return (
+            <motion.button
+              key={cid}
+              type="button"
+              whileTap={{ scale: 0.92 }}
+              onClick={() => setChar({ type: "library", id: cid, accessory: wearing, ...(char.name_tag ? { name_tag: char.name_tag } : {}) })}
+              aria-pressed={on}
+              title={c.name}
+              className={`grid place-items-center rounded-2xl border px-0.5 pt-1 pb-1.5 transition-colors ${on ? "border-accent bg-accent/8" : "border-line bg-cream hover:bg-glass/80"}`}
+            >
+              <Character setting={{ type: "library", id: cid, accessory: wearing }} accessory={accessory} size={48} live={false} follow={false} showName={false} />
+              <span className="text-[11px]">{c.name}</span>
+            </motion.button>
+          );
+        })}
+        <button
+          type="button"
+          onClick={() => setChar({ type: "none" })}
+          aria-pressed={char.type === "none"}
+          title="No one"
+          className={`grid place-items-center rounded-2xl border px-0.5 pt-1 pb-1.5 text-ink/50 transition-colors ${char.type === "none" ? "border-accent bg-accent/8" : "border-line bg-cream hover:bg-glass/80"}`}
+        >
+          <span className="grid size-12 place-items-center text-lg">∅</span>
+          <span className="text-[11px] text-ink">No one</span>
+        </button>
+      </div>
+    );
   }
 
   return (

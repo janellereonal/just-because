@@ -184,13 +184,31 @@ export function IntroDesigner({
 
   return (
     <div className="space-y-4">
-      <p className="text-xs text-muted">
-        The first screen they see. Change anything here and watch it in the preview. Drag stickers
-        there to place them.
-      </p>
-      {greeting}
+      <div className="space-y-2.5">
+        <label className="block">
+          <span className="text-xs text-muted">Small line on top</span>
+          <input
+            className={field}
+            maxLength={48}
+            placeholder={copy.badge}
+            value={settings.badge_text ?? ""}
+            onChange={(e) => set({ badge_text: e.target.value || undefined })}
+          />
+        </label>
+        {greeting}
+        <label className="block">
+          <span className="text-xs text-muted">Button</span>
+          <input
+            className={field}
+            maxLength={40}
+            placeholder={copy.action}
+            value={settings.button_text ?? ""}
+            onChange={(e) => set({ button_text: e.target.value || undefined })}
+          />
+        </label>
+      </div>
 
-      <Group title="Style">
+      <Group title="Opening style">
         <div className="flex flex-wrap gap-2">
           <button
             type="button"
@@ -211,8 +229,8 @@ export function IntroDesigner({
         </div>
         <p className="mt-2 text-xs text-muted">
           {classic
-            ? "The earlier opening: a 3D scene, stickers and a button."
-            : "The theme's own object, opened with a gesture. Pick who appears in it under Cast."}
+            ? "A 3D scene, stickers and a button. Drag stickers in the preview to place them."
+            : "The theme's own object, opened with a gesture."}
         </p>
       </Group>
 
@@ -522,28 +540,6 @@ export function IntroDesigner({
         </>
       ) : null}
 
-      <Group title="Words">
-        <label className="block">
-          <span className="text-xs text-muted">Small line on top</span>
-          <input
-            className={field}
-            maxLength={48}
-            placeholder={copy.badge}
-            value={settings.badge_text ?? ""}
-            onChange={(e) => set({ badge_text: e.target.value || undefined })}
-          />
-        </label>
-        <label className="mt-2.5 block">
-          <span className="text-xs text-muted">Button</span>
-          <input
-            className={field}
-            maxLength={40}
-            placeholder={copy.action}
-            value={settings.button_text ?? ""}
-            onChange={(e) => set({ button_text: e.target.value || undefined })}
-          />
-        </label>
-      </Group>
 
       {classic ? (
         <>
