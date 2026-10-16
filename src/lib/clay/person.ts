@@ -328,7 +328,9 @@ export function buildPerson(p: PersonConfig): O[] {
 
   /* ---------- head ---------- */
   out.push(limb([60, T.top - 3, -2], [60, T.top + 3, -2], 6, skin));
-  for (const s of [-1, 1]) out.push(blob([hx + s * H.w * 0.49, hy + 3, -1], [9, 13, 9], skin));
+  // Ears, unless long hair covers them (their tips used to poke out between the hair and the cheek).
+  const earsCovered = ["long", "wavy", "bangs", "bob", "locs", "longcurls"].includes(p.hair);
+  if (!earsCovered) for (const s of [-1, 1]) out.push(blob([hx + s * H.w * 0.49, hy + 3, -1], [9, 13, 9], skin));
   out.push(blob([hx, hy, 0], [H.w, H.h, H.d], skin));
   out.push(blob([hx, hy + 9, surf(9) - 1.2], [5, 4, 4], shade(skin, -12)));
 
@@ -387,7 +389,9 @@ function hair(p: PersonConfig, H: (typeof LAYOUT)["adult"]["head"], c: string, s
     blob([hx + w * 0.2, hy - h * 0.36, d * 0.38], [w * 0.62, h * 0.28, d * 0.28], c, [0, 0, -0.25]),
   ]);
   const blunt = () => tag([blob([hx, hy - h * 0.29, d * 0.36], [w * 0.86, h * 0.26, d * 0.3], c)])[0]!;
-  const panels = (len: number, wide = 0.22) => [-1, 1].map((s) => blob([hx + s * w * 0.47, hy + len * 0.32, d * 0.08], [w * wide, h * len * 0.012, d * 0.38], c));
+  // Side curtains of long hair, from the temples to below the chin. (They were a few pixels tall,
+  // which showed as a thin line beside the eyes.)
+  const panels = (len: number, wide = 0.22) => [-1, 1].map((s) => blob([hx + s * w * 0.48, hy + h * 0.26 * len, d * 0.02], [w * wide, h * 0.92 * len, d * 0.4], c));
   const longBack = (len = 1.15) => blob([hx, hy + h * 0.3 * len - 2, -d * 0.32], [w * 1.18, h * len, d * 0.56], c);
   const braid = (x0: number, y0: number, x1: number, y1: number, z: number, n = 5, r = 5.2) => {
     const parts: O[] = [];
@@ -416,7 +420,8 @@ function hair(p: PersonConfig, H: (typeof LAYOUT)["adult"]["head"], c: string, s
       front.push(cap(1.02), fluff([hx, hy - h * 0.18, -2], [w * 0.52, h * 0.42, d * 0.48], { count: 15, size: [12, 15], color: c, seed: 4, from: Math.PI * 0.95, to: Math.PI * 2.05, rows: 2, front: 0.25 }), ...burns());
       break;
     case "afro":
-      back.push(blob([hx, hy - h * 0.16, -6], [w * 1.52, h * 1.24, d * 1.24], c));
+      // Sits further back so it never pokes through the forehead (it used to cover the top of the eyes).
+      back.push(blob([hx, hy - h * 0.18, -d * 0.26], [w * 1.52, h * 1.22, d * 1.12], c));
       front.push(fluff([hx, hy - h * 0.16, -6], [w * 0.74, h * 0.6, d * 0.52], { count: 24, size: [13, 16], color: c, seed: 7, from: Math.PI * 0.8, to: Math.PI * 2.2, rows: 2, front: 0.15 }));
       break;
     case "buzz":

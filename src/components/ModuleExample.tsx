@@ -1,25 +1,8 @@
 import type { ModuleType } from "@/lib/gift";
-import { SECTION_COPY } from "@/copy/strings";
+import { SECTION_COPY, sampleLetter } from "@/copy/strings";
 import { isNewSection } from "@/lib/sections";
 import type { ThemeKind } from "@/lib/themeKind";
 
-/** The sample letter line, matched to the occasion. */
-const LETTER_LINE: Record<ThemeKind, string> = {
-  valentine: "Happy Valentine's Day, love.",
-  birthday: "Happy birthday, twin.",
-  voyage: "Send us a postcard from there.",
-  christmas: "Merry Christmas to my favourite person.",
-  pets: "Who's a good one? You are.",
-  newyear: "Here's to your best year yet.",
-  anniversary: "Here's to many more years together.",
-  wedding: "So happy for you both.",
-  bridal: "Can't wait to celebrate you.",
-  baby: "That little one is so lucky.",
-  handwritten: "I wrote this one by hand, just for you.",
-  game: "You always win, and I don't even mind.",
-  pixel: "Achievement unlocked: best friend.",
-  default: "Thinking of you, always.",
-};
 
 const NEW_EXAMPLE: Record<string, { glyph: string; line: string }> = {
   openwhen: { glyph: "✉", line: "Open when you can't sleep" },
@@ -60,7 +43,7 @@ export function ModuleExample({
   if (type === "letters") {
     return (
       <Frame tone={tone}>
-        <p className="italic">“{LETTER_LINE[kind]}”</p>
+        <p className="italic">“{sampleLetter(kind, 0)}”</p>
         <p className="mt-2" style={{ color: tone.accent }}>
           Sam
         </p>

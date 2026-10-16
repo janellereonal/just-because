@@ -3,9 +3,10 @@
  * Turns a gift's approved notes into one flat list of "pieces", adds friendly
  * samples for previews, and has the small hooks those views share.
  */
+import { sampleLetter } from "@/copy/strings";
 import { countdownTarget, formatDay, localToday, momentOf } from "@/lib/time";
 import { isNewSection, sectionAsText } from "@/lib/sections";
-import { useEffect, useMemo, useState } from "react";
+import { createContext, useContext, useEffect, useMemo, useState } from "react";
 import { usePlaceholderName } from "@/components/SampleMark";
 import {
   defaultTitles,
@@ -102,8 +103,7 @@ export function useReducedMotion() {
   return reduce;
 }
 
-function samples(name: string, enabled: Set<ModuleType>, solo = false): Piece[] {
-  const toName = name ? `, ${name}` : "";
+function samples(name: string, enabled: Set<ModuleType>, solo = false, kind = "default"): Piece[] {
   const base = { media: null, link: null, sealed: false, mine: false, sample: true };
   const out: Piece[] = [];
   if (enabled.has("letters"))
@@ -113,21 +113,21 @@ function samples(name: string, enabled: Set<ModuleType>, solo = false): Piece[] 
         id: "s-l1",
         kind: "letter",
         author: "Sam",
-        text: `So lucky to know you${toName}. Here's to the best year yet.`,
+        text: sampleLetter(kind, 0, name),
       },
       {
         ...base,
         id: "s-l2",
         kind: "letter",
         author: "Alex",
-        text: "You make every room warmer. Can't wait to celebrate with you.",
+        text: sampleLetter(kind, 1),
       },
       {
         ...base,
         id: "s-l3",
         kind: "letter",
         author: "Bea",
-        text: "Thank you for always showing up. We love you lots.",
+        text: sampleLetter(kind, 2),
       },
     );
   if (enabled.has("photobooth"))
@@ -169,6 +169,7 @@ export function usePieces({
   sample?: boolean | undefined;
 }) {
   const placeholder = usePlaceholderName();
+  const kind = useContext(GiftKindContext);
   return useMemo(() => {
     const enabled = new Set(modules.filter((m) => m.enabled).map((m) => m.module_type));
     const real = site.custom_text.recipient_name?.trim() ?? "";
@@ -213,7 +214,7 @@ export function usePieces({
           date: e.entry_date.slice(0, 10),
         })),
       );
-    if (!pieces.length && sample) pieces = samples(named ? name : "", enabled, site.solo);
+    if (!pieces.length && sample) pieces = samples(named ? name : "", enabled, site.solo, kind);
 
     // Interleave: notes, then a photo, then a song… so tiles feel varied.
     const buckets = new Map<PieceKind, Piece[]>();
@@ -259,7 +260,7 @@ export function usePieces({
       friends,
       isSample: pieces.some((p) => p.sample),
     };
-  }, [site, modules, contributions, calendarEntries, sample, placeholder]);
+  }, [site, modules, contributions, calendarEntries, sample, placeholder, kind]);
 }
 
 /** A soft mesh gradient from a gift palette, for backgrounds. */
@@ -272,3 +273,6 @@ export function meshGradient(primary: string, accent: string, background: string
     background,
   ].join(", ");
 }
+
+/** The occasion of the gift being shown, so sample notes can match it. Set by FormatView. */
+export const GiftKindContext = createContext<string>("default");
