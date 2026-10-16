@@ -17,6 +17,7 @@ import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as SectionsRouteImport } from './routes/sections'
 import { Route as AuthenticatedCreateRouteImport } from './routes/_authenticated/create'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
+import { Route as ApiClientErrorRouteImport } from './routes/api/client-error'
 import { Route as ApiUploadRouteImport } from './routes/api/upload'
 import { Route as ContributeSlugRouteImport } from './routes/contribute.$slug'
 import { Route as DevCastRouteImport } from './routes/dev.cast'
@@ -73,6 +74,11 @@ const AuthenticatedDashboardRoute = AuthenticatedDashboardRouteImport.update({
   id: '/dashboard',
   path: '/dashboard',
   getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const ApiClientErrorRoute = ApiClientErrorRouteImport.update({
+  id: '/api/client-error',
+  path: '/api/client-error',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const ApiUploadRoute = ApiUploadRouteImport.update({
   id: '/api/upload',
@@ -169,6 +175,7 @@ export interface FileRoutesByFullPath {
   '/sections': typeof SectionsRoute
   '/create': typeof AuthenticatedCreateRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
+  '/api/client-error': typeof ApiClientErrorRoute
   '/api/upload': typeof ApiUploadRoute
   '/contribute/$slug': typeof ContributeSlugRoute
   '/dev/cast': typeof DevCastRoute
@@ -195,6 +202,7 @@ export interface FileRoutesByTo {
   '/sections': typeof SectionsRoute
   '/create': typeof AuthenticatedCreateRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
+  '/api/client-error': typeof ApiClientErrorRoute
   '/api/upload': typeof ApiUploadRoute
   '/contribute/$slug': typeof ContributeSlugRoute
   '/dev/cast': typeof DevCastRoute
@@ -223,6 +231,7 @@ export interface FileRoutesById {
   '/sections': typeof SectionsRoute
   '/_authenticated/create': typeof AuthenticatedCreateRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
+  '/api/client-error': typeof ApiClientErrorRoute
   '/api/upload': typeof ApiUploadRoute
   '/contribute/$slug': typeof ContributeSlugRoute
   '/dev/cast': typeof DevCastRoute
@@ -251,6 +260,7 @@ export interface FileRouteTypes {
     | '/sections'
     | '/create'
     | '/dashboard'
+    | '/api/client-error'
     | '/api/upload'
     | '/contribute/$slug'
     | '/dev/cast'
@@ -277,6 +287,7 @@ export interface FileRouteTypes {
     | '/sections'
     | '/create'
     | '/dashboard'
+    | '/api/client-error'
     | '/api/upload'
     | '/contribute/$slug'
     | '/dev/cast'
@@ -304,6 +315,7 @@ export interface FileRouteTypes {
     | '/sections'
     | '/_authenticated/create'
     | '/_authenticated/dashboard'
+    | '/api/client-error'
     | '/api/upload'
     | '/contribute/$slug'
     | '/dev/cast'
@@ -330,6 +342,7 @@ export interface RootRouteChildren {
   AuthRoute: typeof AuthRoute
   ResetPasswordRoute: typeof ResetPasswordRoute
   SectionsRoute: typeof SectionsRoute
+  ApiClientErrorRoute: typeof ApiClientErrorRoute
   ApiUploadRoute: typeof ApiUploadRoute
   ContributeSlugRoute: typeof ContributeSlugRoute
   DevCastRoute: typeof DevCastRoute
@@ -404,6 +417,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/dashboard'
       preLoaderRoute: typeof AuthenticatedDashboardRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/api/client-error': {
+      id: '/api/client-error'
+      path: '/api/client-error'
+      fullPath: '/api/client-error'
+      preLoaderRoute: typeof ApiClientErrorRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/api/upload': {
       id: '/api/upload'
@@ -551,6 +571,7 @@ const rootRouteChildren: RootRouteChildren = {
   AuthRoute: AuthRoute,
   ResetPasswordRoute: ResetPasswordRoute,
   SectionsRoute: SectionsRoute,
+  ApiClientErrorRoute: ApiClientErrorRoute,
   ApiUploadRoute: ApiUploadRoute,
   ContributeSlugRoute: ContributeSlugRoute,
   DevCastRoute: DevCastRoute,
