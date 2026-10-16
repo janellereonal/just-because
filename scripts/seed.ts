@@ -56,10 +56,22 @@ const palettes: [string, string, string, string, string][] = [
   ["Pixel Night", "Dark", "#1B1640", "#3DF2B0", "#FF5DA2"],
   ["Arcade", "Bright", "#FFF4D6", "#5B3FE0", "#D9336F"],
   ["Handheld", "Soft", "#E3EDC9", "#306230", "#6A4BD8"],
+  // Engine themes (Winter Cabin, Care Package, Balikbayan Box, Parol, Debut), Oct 2026. Appended so ids stay stable.
+  ["Winter Cabin", "Earthy", "#F7F3EC", "#2F5D46", "#B5621E"],
+  ["Snowy Pine", "Soft", "#EEF3F5", "#2F5D46", "#A23A2C"],
+  ["Kraft Mail", "Earthy", "#F3E9DA", "#7A5230", "#2F5D86"],
+  ["Air Mail", "Soft", "#F1F5F8", "#2F5D86", "#C8452B"],
+  ["Balikbayan", "Earthy", "#F6EBDD", "#1F4E8C", "#B83A2E"],
+  ["Parol Night", "Dark", "#141B3A", "#E8B04B", "#F6EEDC"],
+  ["Capiz", "Soft", "#FBF6EA", "#A8432E", "#1F3A6E"],
+  ["Debut Rose", "Romantic", "#FBF5EF", "#A8566A", "#8A6A2E"],
+  ["Debut Night", "Dark", "#2A1A22", "#E9C9B6", "#D9B46A"],
 ];
 const ids = new Map(palettes.map(([name], i) => [name, P(i + 1)]));
 
-const themes: [string, string, string, string[], string[]][] = [
+// The sixth value is the status a NEW row starts with. Drafts are only visible to admins until
+// they're published in /admin (Theme library); an existing row's status is never changed here.
+const themes: [string, string, string, string[], string[], ("published" | "draft")?][] = [
   ["Valentine's", "Romance", "Soft blush and deep rose for the people you adore.", ["letters", "photobooth", "songs"], ["Wax Seal", "Blush", "Deep Romance", "Berry"]],
   ["Happy Birthday", "Celebration", "Confetti-bright layouts for another trip around the sun.", ["letters", "photobooth", "countdown"], ["Party Butter", "Confetti", "Pastel Party", "Citrus"]],
   ["Bon Voyage", "Farewell", "A warm send-off for someone moving on.", ["letters", "voice", "photobooth"], ["Boarding Pass", "Golden Hour", "Soft Goodbye", "Sky"]],
@@ -73,6 +85,12 @@ const themes: [string, string, string, string[], string[]][] = [
   ["Handwritten", "Any occasion", "Ink on paper, folded in four. For any occasion that needs a few real words.", ["letters", "openwhen", "capsule", "photobooth"], ["Fountain Pen", "Love Note", "Kraft Paper"]],
   ["Game Night", "Any occasion", "Dice, tokens and a board, for the friend who always wins.", ["letters", "quiz", "superlatives", "photobooth"], ["Game Night", "Board Game", "Felt Table"]],
   ["Pixel", "Any occasion", "Eight-bit hearts and coins on a little console. Press start.", ["letters", "quiz", "superlatives", "photobooth"], ["Pixel Night", "Arcade", "Handheld"]],
+  // Built on the theme engine (src/themes/engine). Drafts until an admin publishes them.
+  ["Winter Cabin Christmas", "Season", "Wipe the frost off a cabin window to find a warm room, a fire, and a tree hung with everyone's notes.", ["letters", "photobooth", "songs", "countdown"], ["Winter Cabin", "Snowy Pine", "Pine & Cranberry"], "draft"],
+  ["Care Package", "Family", "A parcel from far away. Peel the tape and the notes come out as things packed inside.", ["letters", "photobooth", "voice", "songs"], ["Kraft Mail", "Air Mail", "Kraft Paper"], "draft"],
+  ["Balikbayan Box", "Family", "A box from home, taped and marked, with pasalubong inside from everyone who misses them.", ["letters", "photobooth", "voice", "songs"], ["Balikbayan", "Kraft Mail", "Golden Hour"], "draft"],
+  ["Parol Christmas", "Season", "A capiz parol where every note lights part of the star. Turn on Simbang Gabi for one a night.", ["letters", "photobooth", "songs", "voice"], ["Parol Night", "Capiz", "Midnight Gold"], "draft"],
+  ["Debut", "Birthday", "A curtain, 18 candles and 18 roses. Each candle holds a wish for their eighteenth.", ["letters", "photobooth", "songs", "voice", "superlatives"], ["Debut Rose", "Debut Night", "Blush Bloom"], "draft"],
 ];
 
 await sql.begin(async (tx) => {
@@ -96,7 +114,7 @@ await sql.begin(async (tx) => {
     await tx`update themes set name = ${to} where name = ${from}
              and not exists (select 1 from themes where name = ${to})`;
   }
-  for (const [i, [name, category, description, modules, paletteNames]] of themes.entries()) {
+  for (const [i, [name, category, description, modules, paletteNames, status = "published"]] of themes.entries()) {
     const suggested = paletteNames.map((n) => ids.get(n)!);
     const [existing] = await tx`select id from themes where name = ${name}`;
     if (existing) {
@@ -105,7 +123,7 @@ await sql.begin(async (tx) => {
     }
     await tx`
       insert into themes (name, category, description, status, default_modules, suggested_palette_ids, created_at)
-      values (${name}, ${category}, ${description}, 'published', ${modules}::text[], ${suggested}::uuid[],
+      values (${name}, ${category}, ${description}, ${status}, ${modules}::text[], ${suggested}::uuid[],
               now() + make_interval(secs => ${i}))`;
   }
 });

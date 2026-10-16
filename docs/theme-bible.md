@@ -106,6 +106,30 @@ others) are built or reviewed with people from that culture before they ship.
   for visitors from the Philippines and Care Package for everyone else. Both stay in the gallery for everyone.
 - Before a cultural theme ships, note in its PR who reviewed it, and what changed because of their review.
 
+## Themes on the engine (Revenue PR 2, Oct 2026)
+
+All five are free for launch, seeded as **drafts**: only admins see them until they're published in /admin
+(Theme library). Each ships with its occasion template in its `theme.ts` (default format, sections, 3 to 5
+friend prompts, example heading and greeting); there's no separate occasion config file yet.
+
+| Theme | Object and gesture | Personal inside | Payoff | Notes inside the object |
+|---|---|---|---|---|
+| Winter Cabin Christmas | A frosted cabin window; wipe the frost (canvas, any pointer, Enter clears a band at a time) | Their name on the stocking, the gift's date on the mantel | Frost melts, the room warms, the tree and garland light, a bell | Up to 10 ornaments on the tree; tap one to read it |
+| Care Package | A taped parcel; peel the tape | To and From label, stamps for each country, postmark with the city and date | Flaps open, confetti, things come out | A folded letter, a photo in a frame, a little jar, something small |
+| Balikbayan Box | The same parcel, styled as a balikbayan box: tape everywhere, a printed band, "Para kay {name}" in marker, a door-to-door cargo label | As Care Package | As Care Package | As Care Package |
+| Parol Christmas | A capiz parol; tap each panel to light it | Their initials in the rosette | All lit: the parol glows, a bell rings, sparks | One note per panel (10). Simbang Gabi: one panel per night, 16 to 24 December |
+| Debut | A gilded arch with a velvet curtain; pull the cord | Their name and a gold 18, the date | Light all 18 candles: the roses bloom, petals and sparks, a short tune | 18 treasures: each candle holds a note, and its rose blooms |
+
+Checked for all five: real object, fitting gesture, personal details on the object, a payoff, sound off by
+default and haptics after the first tap, the same opening in every format that has one, 27 to 28 KB each
+(budget 400 KB), 60 fps under 4x CPU throttling, and the worst-case page (40-character name, 2000-character
+notes, no photos). Every gesture works by keyboard and has a plain button ("Light it all up", "Light all 18").
+
+**Cultural review still needed before these go live:** Balikbayan Box, Parol Christmas (and Simbang Gabi),
+and Debut were built from the traditions as written in the brief, with Tagalog lines kept short ("Para kay",
+"Maligayang Pasko", "Pasalubong", "Mula sa amin, para sa'yo"). Per the rule above, have them reviewed by people
+who grew up with these traditions, and note who reviewed them in the PR that publishes them.
+
 ## Audit of the current themes (16 Oct 2026, no changes made)
 
 Yes means it passes, Partly means it mostly does with a gap worth fixing, No means it doesn't yet.

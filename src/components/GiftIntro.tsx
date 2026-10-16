@@ -1,4 +1,7 @@
 import { useEffect, useRef, useState } from "react";
+import { engineThemeForName } from "@/themes/engine/registry";
+import type { EngineNote, ThemeOptions } from "@/themes/engine/define";
+import type { SlotInput } from "@/themes/engine/slots";
 import { Gift, Volume2, VolumeX } from "lucide-react";
 import { SkinDecor, SkinParticles } from "@/components/SkinDecor";
 import { Theme3D, type Theme3DHandle } from "@/components/Theme3D";
@@ -708,6 +711,13 @@ type GiftIntroProps = React.ComponentProps<typeof ClassicIntro> & {
   iconSet?: IconSetSetting | null | undefined;
   /** Friends' names, for stamps and sparks. */
   contributors?: string[] | undefined;
+  /** The theme row's name (themes built on the theme engine are found by it), and what they need. */
+  themeName?: string | null | undefined;
+  notes?: EngineNote[] | undefined;
+  slots?: SlotInput | undefined;
+  themeOptions?: ThemeOptions | undefined;
+  /** Birthday: the age they're turning (shown as candles). */
+  age?: number | null | undefined;
 };
 
 /**
@@ -715,10 +725,11 @@ type GiftIntroProps = React.ComponentProps<typeof ClassicIntro> & {
  * record, a cake…); "classic" in the intro settings keeps the earlier 3D one.
  */
 export function GiftIntro(props: GiftIntroProps) {
-  const { character, iconSet, contributors, ...rest } = props;
+  const { character, iconSet, contributors, themeName, notes, slots, themeOptions, age, ...rest } = props;
   const kind = props.kind ?? STYLE_KIND[props.style];
   const s = props.settings ?? {};
-  if (s.opening === "classic" || !hasTactileOpening(kind)) return <ClassicIntro {...rest} />;
+  const engine = !!engineThemeForName(themeName);
+  if (s.opening === "classic" || (!engine && !hasTactileOpening(kind))) return <ClassicIntro {...rest} />;
   return (
     <TactileOpening
       kind={kind}
@@ -736,6 +747,11 @@ export function GiftIntro(props: GiftIntroProps) {
       autoplay={props.autoOpenAfter !== undefined}
       onOpen={props.onOpen}
       onSkip={props.onSkip}
+      themeName={themeName}
+      notes={notes}
+      slots={slots}
+      options={themeOptions}
+      age={age}
     />
   );
 }

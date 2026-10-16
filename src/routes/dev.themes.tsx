@@ -14,6 +14,20 @@ import { GiftIntro } from "@/components/GiftIntro";
 import { THEME_KINDS, type ThemeKind } from "@/lib/themeKind";
 import { FONT_PAIRINGS } from "@/lib/gift";
 import { useSound } from "@/lib/play";
+import { sampleNotes } from "@/lib/sampleSections";
+import type { EngineNote } from "@/themes/engine/define";
+
+/** Sample notes as an opening sees them, or worst-case ones (long names, long text, no photos). */
+function playgroundNotes(name: string, worst: boolean): EngineNote[] {
+  const base = sampleNotes(name, "pg").filter((n) => n.module_type !== "tree");
+  return base.map((n, i) => ({
+    id: n.id,
+    author: worst ? "Anne-Marie O'Brien & Zoë 🎉 dela Cruz-Lim" : n.author_name,
+    text: worst ? "I keep thinking about the summer we drove to the coast with no plan & a full tank. ".repeat(18).slice(0, 2000) : n.text_content,
+    media: worst ? null : n.media_url,
+    kind: n.module_type,
+  })).slice(0, worst ? 20 : 24).filter((_, i) => i < 24);
+}
 
 /**
  * Dev only: the theme engine playground. Preview any theme (engine themes and
@@ -33,12 +47,19 @@ export const Route = createFileRoute("/dev/themes")({
     size: (s["size"] === "laptop" ? "laptop" : "phone") as "phone" | "laptop",
     worst: s["worst"] === 1 || s["worst"] === "1" || s["worst"] === true,
     autoplay: s["autoplay"] === 1 || s["autoplay"] === "1" || s["autoplay"] === true,
+    simbang: s["simbang"] === 1 || s["simbang"] === "1" || s["simbang"] === true,
+    /** How many notes the gift has (-1: all the samples). */
+    notes: typeof s["notes"] === "number" ? s["notes"] : -1,
+    /** Just the opening, full screen (for screenshots at exact sizes). */
+    bare: s["bare"] === 1 || s["bare"] === "1" || s["bare"] === true,
+    /** Pretend it's this day (YYYY-MM-DD), for Simbang Gabi. */
+    now: typeof s["now"] === "string" ? s["now"] : "",
   }),
   component: Playground,
 });
 
 type Tab = "themes" | "gestures" | "materials" | "particles" | "sounds";
-type Search = { theme: string; tab: Tab; size: "phone" | "laptop"; worst: boolean; autoplay: boolean };
+type Search = { theme: string; tab: Tab; size: "phone" | "laptop"; worst: boolean; autoplay: boolean; simbang: boolean; notes: number; bare: boolean; now: string };
 const TABS: { id: Tab; label: string }[] = [
   { id: "themes", label: t("playground.theme") },
   { id: "gestures", label: t("playground.gestures") },
@@ -53,6 +74,7 @@ function Playground() {
   const navigate = Route.useNavigate();
   const set = (patch: Partial<Search>) => void navigate({ search: { ...search, ...patch }, replace: true });
   const [sound, setSound] = useSound();
+  if (search.bare) return <BareStage search={search} />;
   return (
     <div className="min-h-dvh bg-paper text-ink">
       <header className="sticky top-0 z-20 flex flex-wrap items-center gap-3 border-b border-line bg-paper/95 px-4 py-3 backdrop-blur">
@@ -88,6 +110,7 @@ function ThemesTab({ search, set }: { search: Search; set: (p: Partial<Search>) 
   const [slots, setSlots] = useState<SlotInput>(SAMPLE_SLOTS);
   const [run, setRun] = useState(0);
   const input = search.worst ? WORST_SLOTS : slots;
+  const notes = useMemo(() => playgroundNotes(String(input.recipient ?? "you"), search.worst), [input.recipient, search.worst]);
   const engine = ENGINE_THEMES.find((x) => x.id === search.theme);
   const current = !engine && (THEME_KINDS as readonly string[]).includes(search.theme) ? (search.theme as ThemeKind) : null;
   const problems = engine ? validateTheme(engine) : [];
@@ -136,6 +159,19 @@ function ThemesTab({ search, set }: { search: Search; set: (p: Partial<Search>) 
           <label className="flex items-center gap-1.5 rounded-full bg-cream px-3 py-1.5">
             <input type="checkbox" checked={search.autoplay} onChange={(e) => set({ autoplay: e.target.checked })} /> Autoplay
           </label>
+          <label className="flex items-center gap-1.5 rounded-full bg-cream px-3 py-1.5">
+            <input type="checkbox" checked={search.simbang} onChange={(e) => set({ simbang: e.target.checked })} /> Simbang Gabi
+          </label>
+          <label className="flex items-center gap-1.5 rounded-full bg-cream px-3 py-1.5">
+            Notes
+            <select value={search.notes} onChange={(e) => set({ notes: Number(e.target.value) })} className="bg-transparent">
+              {[-1, 0, 1, 3, 9, 18].map((n) => (
+                <option key={n} value={n}>
+                  {n < 0 ? "all" : n}
+                </option>
+              ))}
+            </select>
+          </label>
           <button type="button" onClick={() => setRun((r) => r + 1)} className="rounded-full bg-accent px-3 py-1.5 text-cream">
             {t("playground.replay")}
           </button>
@@ -176,13 +212,15 @@ function ThemesTab({ search, set }: { search: Search; set: (p: Partial<Search>) 
           <div className="relative overflow-hidden [container:gift/inline-size]" style={{ width: size.w, height: size.h, transform: `scale(${scale})`, transformOrigin: "0 0" }} data-testid="stage">
             {engine ? (
               <EngineStage
-                key={`${engine.id}-${run}-${search.worst}-${search.autoplay}`}
+                key={`${engine.id}-${run}-${search.worst}-${search.autoplay}-${search.simbang}-${search.notes}`}
                 theme={engine}
                 slots={input}
                 greeting={`For ${input.recipient || "you"}, from all of us`}
                 contained
                 autoplay={search.autoplay}
                 contributors={["Jo", "Mika", "Sam"]}
+                notes={search.notes >= 0 ? notes.slice(0, search.notes) : notes}
+                options={{ simbang: search.simbang, ...(search.now ? { now: `${search.now}T08:00:00`, year: Number(search.now.slice(0, 4)) } : {}) }}
                 onOpen={() => window.setTimeout(() => setRun((r) => r + 1), 1500)}
                 onSkip={() => setRun((r) => r + 1)}
               />
@@ -214,6 +252,30 @@ function ThemesTab({ search, set }: { search: Search; set: (p: Partial<Search>) 
           {size.w}x{size.h} at {Math.round(scale * 100)}%
         </p>
       </div>
+    </div>
+  );
+}
+
+function BareStage({ search }: { search: Search }) {
+  const engine = ENGINE_THEMES.find((x) => x.id === search.theme);
+  const input = search.worst ? WORST_SLOTS : SAMPLE_SLOTS;
+  const notes = useMemo(() => playgroundNotes(String(input.recipient ?? "you"), search.worst), [input.recipient, search.worst]);
+  const [opened, setOpened] = useState(false);
+  if (!engine) return <p className="p-6">No engine theme called {search.theme}</p>;
+  if (opened) return <p className="grid min-h-dvh place-items-center bg-paper text-sm text-muted" data-opened>Opened: the gift would show here.</p>;
+  return (
+    <div className="relative h-dvh w-full overflow-hidden" data-testid="stage">
+      <EngineStage
+        theme={engine}
+        slots={input}
+        greeting={`For ${input.recipient || "you"}, from all of us`}
+        contained
+        autoplay={search.autoplay}
+        contributors={["Jo", "Mika", "Sam"]}
+        notes={search.notes >= 0 ? notes.slice(0, search.notes) : notes}
+        options={{ simbang: search.simbang, ...(search.now ? { now: `${search.now}T08:00:00`, year: Number(search.now.slice(0, 4)) } : {}) }}
+        onOpen={() => setOpened(true)}
+      />
     </div>
   );
 }

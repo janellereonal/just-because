@@ -137,6 +137,13 @@ function RolePicker({
   );
 }
 
+/**
+ * Palettes made for one engine theme (seeded with it). They show as that
+ * theme's suggestions, not in everyone's "more palettes" list, so a draft
+ * theme's colours don't appear before the theme does.
+ */
+const THEME_ONLY_PALETTES = new Set(["Winter Cabin", "Snowy Pine", "Kraft Mail", "Air Mail", "Balikbayan", "Parol Night", "Capiz", "Debut Rose", "Debut Night"]);
+
 export function PalettePicker({
   theme,
   value,
@@ -180,7 +187,7 @@ export function PalettePicker({
 
   const suggestedIds = new Set(suggested.map((p) => p.id));
   const rest = useMemo(
-    () => all.filter((p) => !suggestedIds.has(p.id) && matches(query, p)),
+    () => all.filter((p) => !suggestedIds.has(p.id) && !THEME_ONLY_PALETTES.has(p.name) && matches(query, p)),
     [all, query, suggested],
   );
   const shownRest = seeAll || query ? rest : rest.slice(0, 6);

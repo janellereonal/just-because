@@ -27,6 +27,8 @@ import { getMe, unlockGift } from "@/lib/api";
 import Bo from "@/components/Bo";
 import { ExtendDialog } from "@/components/PlanControls";
 import { clearIntroSkip, hasSkippedIntro, rememberIntroSkip } from "@/lib/introSkip";
+import { engineIntroProps, simbangVisible } from "@/lib/engineGift";
+import { t } from "@/i18n";
 
 
 function PublishedPage() {
@@ -113,6 +115,9 @@ function PublishedPage() {
     );
   }
   const previewing = !isGiftOpen(site);
+  // Simbang Gabi (Parol Christmas): only tonight's notes and earlier are open.
+  const simbang = simbangVisible(theme?.name, site, contributions);
+  const shown = simbang.notes;
 
   const palette = resolvePalette(theme, site.custom_colors);
   const fonts = FONT_PAIRINGS[site.font_choice] ?? FONT_PAIRINGS.romantic;
@@ -132,6 +137,13 @@ function PublishedPage() {
           </a>
         </div>
       ) : null}
+      {opened && simbang.night !== null && simbang.night < 9 ? (
+        <div className="pointer-events-none fixed inset-x-0 bottom-4 z-[55] flex justify-center px-4">
+          <p className="rounded-full bg-ink/85 px-4 py-2 text-center text-xs text-cream shadow-lg backdrop-blur">
+            {simbang.night === 0 ? t("theme.parol.before") : `${t("theme.parol.night", { n: simbang.night })}. ${t("theme.parol.next")}`}
+          </p>
+        </div>
+      ) : null}
       {!opened && formatInfo(site.format).usesIntro ? (
         <Suspense fallback={<PageLoading label="Opening your gift…" />}>
         {/* The gift waits underneath, so the opening can reveal it through the object. */}
@@ -141,7 +153,7 @@ function PublishedPage() {
             theme={theme}
             palette={palette}
             modules={modules}
-            contributions={[...contributions.filter((item) => item.module_type !== "tree"), ...treeOrnaments]}
+            contributions={[...shown.filter((item) => item.module_type !== "tree"), ...treeOrnaments]}
             calendarEntries={calendarEntries}
           />
         </div>
@@ -157,6 +169,7 @@ function PublishedPage() {
           character={site.character}
           iconSet={site.icon_set}
           contributors={[...new Set(contributions.map((c) => c.author_name.trim()).filter(Boolean))]}
+          {...engineIntroProps(theme?.name, site, contributions)}
           onOpen={() => setOpened(true)}
           onSkip={() => {
             rememberIntroSkip(site.id);
@@ -170,7 +183,7 @@ function PublishedPage() {
           theme={theme}
           palette={palette}
           modules={modules}
-          contributions={[...contributions.filter((item) => item.module_type !== "tree"), ...treeOrnaments]}
+          contributions={[...shown.filter((item) => item.module_type !== "tree"), ...treeOrnaments]}
           calendarEntries={calendarEntries}
           showShare
           showCover={!opened}
