@@ -1,0 +1,137 @@
+/*
+ * "Keepsake Modern" design tokens. DRAFT: only applied inside .kd (the /dev/design page),
+ * so nothing on the live site changes until Janelle approves the direction.
+ * Themes inside gifts keep their own palettes. See docs/brand.md.
+ */
+.kd {
+  /* Colour */
+  --kd-paper: #faf6f0;
+  --kd-surface: #ffffff;
+  --kd-ink: #2b2522;
+  --kd-ink-muted: #6b625c;
+  --kd-line: #eae3da;
+  --kd-raspberry: #c2366b;
+  --kd-raspberry-deep: #9e2455;
+  --kd-blush: #fbe3ea;
+  /* Occasion accents: tags and filters only, never text on paper. */
+  --kd-butter: #f6d77a;
+  --kd-sage: #a9c5a0;
+  --kd-sky: #a8c8ec;
+  --kd-lilac: #c9b8e8;
+
+  /* Type */
+  --kd-display: "Fraunces Variable", "Fraunces", Georgia, serif;
+  --kd-text: "DM Sans Variable", "DM Sans", system-ui, sans-serif;
+  --kd-soft: "SOFT" 100, "WONK" 0;
+
+  /* Shape */
+  --kd-r-sm: 8px;
+  --kd-r-md: 16px;
+  --kd-r-lg: 28px;
+  --kd-shadow-rest: 0 1px 2px rgb(43 37 34 / 0.05), 0 6px 18px -10px rgb(43 37 34 / 0.18);
+  --kd-shadow-lift: 0 2px 6px rgb(43 37 34 / 0.06), 0 24px 48px -20px rgb(43 37 34 / 0.32);
+
+  /* Motion */
+  --kd-ease: cubic-bezier(0.22, 0.61, 0.36, 1);
+  --kd-fast: 150ms;
+  --kd-base: 200ms;
+  --kd-slow: 250ms;
+
+  background-color: var(--kd-paper);
+  color: var(--kd-ink);
+  font-family: var(--kd-text);
+  font-size: 16px;
+  line-height: 1.55;
+}
+
+/* Paper grain: a 2.5% noise over the paper, one tiny inline SVG, no layout cost. */
+.kd-grain {
+  position: relative;
+  isolation: isolate;
+}
+.kd-grain::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  opacity: 0.025;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+/* Type scale: 64, 48, 36, 28, 22, 18, 16, 14, 12 */
+.kd .kd-d64, .kd .kd-d48, .kd .kd-d36, .kd .kd-d28, .kd .kd-d22 {
+  font-family: var(--kd-display);
+  font-variation-settings: var(--kd-soft);
+  font-optical-sizing: auto;
+  font-weight: 460;
+  letter-spacing: -0.015em;
+  line-height: 1.05;
+  text-wrap: balance;
+}
+.kd .kd-d64 { font-size: clamp(40px, 7vw, 64px); }
+.kd .kd-d48 { font-size: clamp(34px, 5.4vw, 48px); }
+.kd .kd-d36 { font-size: 36px; }
+.kd .kd-d28 { font-size: 28px; line-height: 1.1; }
+.kd .kd-d22 { font-size: 22px; line-height: 1.2; }
+.kd .kd-t18 { font-size: 18px; line-height: 1.55; }
+.kd .kd-t16 { font-size: 16px; line-height: 1.55; }
+.kd .kd-t14 { font-size: 14px; line-height: 1.5; }
+.kd .kd-t12 { font-size: 12px; line-height: 1.45; }
+.kd em.kd-warm { font-style: italic; font-variation-settings: "SOFT" 100, "WONK" 1; }
+
+/* Buttons: the only pills, with tags. */
+.kd .kd-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 44px;
+  padding: 0 20px;
+  border-radius: 999px;
+  font: 500 15px/1 var(--kd-text);
+  transition: background-color var(--kd-fast) var(--kd-ease), color var(--kd-fast) var(--kd-ease), box-shadow var(--kd-fast) var(--kd-ease);
+  outline: none;
+}
+.kd .kd-btn:focus-visible { box-shadow: 0 0 0 3px var(--kd-paper), 0 0 0 5px var(--kd-raspberry); }
+.kd .kd-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+.kd .kd-btn-primary { background: var(--kd-raspberry); color: #fff; }
+.kd .kd-btn-primary:hover:not(:disabled) { background: var(--kd-raspberry-deep); }
+.kd .kd-btn-secondary { background: var(--kd-surface); color: var(--kd-ink); box-shadow: inset 0 0 0 1px var(--kd-line); }
+.kd .kd-btn-secondary:hover:not(:disabled) { box-shadow: inset 0 0 0 1px #d8cfc4; }
+.kd .kd-btn-ghost { background: transparent; color: var(--kd-ink); }
+.kd .kd-btn-ghost:hover:not(:disabled) { background: rgb(43 37 34 / 0.05); }
+.kd .kd-btn-danger { background: #b4322e; color: #fff; }
+.kd .kd-btn-danger:hover:not(:disabled) { background: #952824; }
+
+/* Fields */
+.kd .kd-field {
+  width: 100%;
+  border-radius: var(--kd-r-sm);
+  border: 1px solid var(--kd-line);
+  background: var(--kd-surface);
+  padding: 10px 12px;
+  font: 400 16px/1.4 var(--kd-text);
+  color: var(--kd-ink);
+  transition: border-color var(--kd-fast) var(--kd-ease), box-shadow var(--kd-fast) var(--kd-ease);
+  outline: none;
+}
+.kd .kd-field::placeholder { color: #8a817a; }
+.kd .kd-field:focus { border-color: var(--kd-raspberry); box-shadow: 0 0 0 3px rgb(194 54 107 / 0.15); }
+
+.kd .kd-card { background: var(--kd-surface); border-radius: var(--kd-r-md); box-shadow: var(--kd-shadow-rest); }
+.kd .kd-lift { box-shadow: var(--kd-shadow-lift); }
+.kd .kd-tag { display: inline-flex; align-items: center; gap: 6px; border-radius: 999px; padding: 4px 10px; font: 500 12px/1.2 var(--kd-text); color: var(--kd-ink); }
+.kd .kd-chip { display: inline-flex; align-items: center; gap: 6px; border-radius: var(--kd-r-sm); padding: 6px 12px; font: 500 14px/1.2 var(--kd-text); border: 1px solid var(--kd-line); background: var(--kd-surface); color: var(--kd-ink); }
+.kd .kd-chip[aria-pressed="true"] { background: var(--kd-blush); border-color: transparent; }
+
+.kd .kd-skel {
+  border-radius: var(--kd-r-sm);
+  background: linear-gradient(100deg, #f1ebe3 30%, #f8f3ec 50%, #f1ebe3 70%) 0 0 / 220% 100%;
+  animation: kd-shimmer 1.4s var(--kd-ease) infinite;
+}
+@keyframes kd-shimmer { from { background-position: 120% 0; } to { background-position: -120% 0; } }
+
+@media (prefers-reduced-motion: reduce) {
+  .kd *, .kd *::before, .kd *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
+}
