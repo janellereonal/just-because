@@ -1,4 +1,6 @@
 import { giftVoice } from "@/lib/giftVoice";
+import { SampleText } from "@/components/SampleMark";
+import { giftHeading } from "@/lib/themeKind";
 import { useState } from "react";
 import { Lock, Mic, Play } from "lucide-react";
 import { readableInk } from "@/lib/palettes";
@@ -175,6 +177,7 @@ function Cutout({
 }
 
 export function ZineView({
+  theme,
   site,
   modules,
   contributions,
@@ -189,7 +192,7 @@ export function ZineView({
   const cd = useCountdown(data.countdownDate);
   const [sheet, setSheet] = useState<Piece | null>(null);
   const accent = palette.accent;
-  const heading = site.custom_text.heading?.trim() || site.title;
+  const heading = giftHeading(site.custom_text, theme);
   const issueDate = new Date()
     .toLocaleDateString(undefined, { month: "short", year: "numeric" })
     .toUpperCase();
@@ -208,7 +211,7 @@ export function ZineView({
             <span className="zine-mono">PRICELESS</span>
           </div>
           <h1 className="mt-6 text-[clamp(2.6rem,10cqi,6.5rem)] leading-[0.92]">
-            <Ransom text={data.name.toUpperCase()} accent={accent} />
+            <SampleText on={data.nameIsSample}><Ransom text={data.name.toUpperCase()} accent={accent} /></SampleText>
           </h1>
           <div className="mt-6 grid gap-6 @2xl:grid-cols-[1.4fr_1fr] @2xl:items-end">
             <div>

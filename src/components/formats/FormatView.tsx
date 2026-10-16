@@ -158,7 +158,7 @@ function FormatBody(props: Props) {
     case "zine":
       return (
         <Suspense fallback={fallback}>
-          <ZineView {...common} />
+          <ZineView {...common} theme={theme} />
         </Suspense>
       );
     case "storybook":

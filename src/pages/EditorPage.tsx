@@ -23,6 +23,7 @@ import { ChipInSoon } from "@/components/sections/ChipInSoon";
 import { countdownTarget, momentOf, toLocalInput, viewerZone } from "@/lib/time";
 import { OwnNotes } from "@/components/OwnNotes";
 import { useAuth } from "@/hooks/useAuth";
+import { useMinWidth } from "@/hooks/use-mobile";
 import { DevicePreview, DeviceToggle, type PreviewDevice } from "@/components/DevicePreview";
 import type { IntroSettings, IntroSticker } from "@/lib/intro";
 import { uploadFile } from "@/lib/upload";
@@ -235,6 +236,8 @@ function SiteDashboard() {
   const [previewOpened, setPreviewOpened] = useState(false);
   const [panelWidth, setPanelWidth] = useState(340);
   const [zoom, setZoom] = useState<number | null>(null); // null = Fit
+  // On phones the preview fills the screen, so Bo sits this one out instead of covering it.
+  const roomForBo = useMinWidth(900);
   const [selected, setSelected] = useState<{ field: keyof CustomText; top: number; left: number } | null>(
     null,
   );
@@ -362,6 +365,9 @@ function SiteDashboard() {
   }, [contributions]);
 
 
+  // Every note on the gift except the ones the creator hid.
+  const noteCount = contributions.filter((c) => c.status !== "hidden").length;
+
   const enabledTypes = useMemo(
     () => new Set(modules.filter((m) => m.enabled).map((m) => m.module_type)),
     [modules],
@@ -463,7 +469,7 @@ function SiteDashboard() {
 
   const contributeUrl = `${typeof window === "undefined" ? "" : window.location.origin}/contribute/${site.slug}`;
   const liveUrl = `${typeof window === "undefined" ? "" : window.location.origin}/g/${site.slug}`;
-  const titles = defaultTitles(draft.custom_text);
+  const titles = defaultTitles(draft.custom_text, themeKindOf(theme));
   const shareMessage = `Add something to ${draft.custom_text.recipient_name || "our"}'s gift: ${contributeUrl}`;
   const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(shareMessage)}`;
   const messengerUrl = `https://www.facebook.com/dialog/send?link=${encodeURIComponent(contributeUrl)}&redirect_uri=${encodeURIComponent(contributeUrl)}&app_id=291494419107518`;
@@ -570,9 +576,8 @@ function SiteDashboard() {
   function copyContributeLink() {
     boReact("wave");
     void navigator.clipboard.writeText(contributeUrl);
-    toast.success(
-      `Link copied. Send it to ${draft?.custom_text.recipient_name || "their"}'s friends!`,
-    );
+    const who = draft?.custom_text.recipient_name?.trim();
+    toast.success(who ? `Invite link copied. Send it to ${who}'s friends.` : "Invite link copied. Send it to friends.");
 
   }
 
@@ -724,7 +729,7 @@ function SiteDashboard() {
   const fieldInput = (
     key: keyof CustomText,
     label: string,
-    opts: { long?: boolean; placeholder?: string } = {},
+    opts: { long?: boolean; placeholder?: string; hint?: string } = {},
   ) => (
     <label className="block">
       <span className="text-xs text-muted">{label}</span>
@@ -754,6 +759,7 @@ function SiteDashboard() {
           className="mt-1 w-full rounded-xl border border-line bg-cream px-3 py-2.5 text-sm outline-none focus:border-accent"
         />
       )}
+      {opts.hint ? <span className="mt-1.5 block text-xs text-muted">{opts.hint}</span> : null}
     </label>
   );
 
@@ -762,8 +768,15 @@ function SiteDashboard() {
       <div className="space-y-3">
         {fieldInput("heading", "Heading", { placeholder: titles.heading })}
         {fieldInput("recipient_name", "Recipient name", { placeholder: "Ana" })}
-        {fieldInput("intro_message", "Intro message", { long: true })}
-        {fieldInput("footer_note", "Footer note", { long: true })}
+        {fieldInput("intro_message", "Intro message", {
+          long: true,
+          placeholder: solo ? "I made this just for you. Take your time." : "We all got together to make you something.",
+        })}
+        {fieldInput("footer_note", "Footer note", {
+          long: true,
+          placeholder: solo ? "With love, always." : "With love, from all of us.",
+          hint: "A short sign-off at the very end of the gift, after the last note.",
+        })}
       </div>
     ),
     colors: (
@@ -943,22 +956,6 @@ function SiteDashboard() {
             </label>
           }
         />
-        <div className="mt-4 grid grid-cols-2 gap-2">
-          <button
-            type="button"
-            onClick={() => setIntroCanvasKey((k) => k + 1)}
-            className="rounded-full border border-line bg-cream px-4 py-2.5 text-sm font-medium hover:bg-glass/80"
-          >
-            Play it again
-          </button>
-          <button
-            type="button"
-            onClick={() => setIntroPreview(true)}
-            className="rounded-full border border-line bg-cream px-4 py-2.5 text-sm font-medium hover:bg-glass/80"
-          >
-            Full screen
-          </button>
-        </div>
         <GiftPasswordSetting
           siteId={id}
           tier={billing?.tier ?? null}
@@ -1013,8 +1010,13 @@ function SiteDashboard() {
     review: (
       <div className="space-y-3">
         {contributions.length === 0 ? (
-          <div className="card-paper p-5 text-sm text-muted">
-            Nothing yet. Share the contribute link to get started.
+          <div className="card-paper p-5 text-center">
+            <p className="text-sm text-muted">Nothing yet. Share the invite link and friends' notes show up here for you to check first.</p>
+            <Button className="mt-4 rounded-full" onClick={copyContributeLink}>
+              <UserPlus />
+              Invite friends
+            </Button>
+            <p className="mt-2 truncate font-mono text-[11px] text-muted" title={contributeUrl}>{contributeUrl.replace(/^https?:\/\//, "")}</p>
           </div>
         ) : null}
         {contributions.map((item) => (
@@ -1155,16 +1157,17 @@ function SiteDashboard() {
           data-bo-perch
           data-bo-always
           data-bo-say="I'll wait right here."
-          className="pointer-events-none absolute right-10 bottom-5 h-px w-10"
+          className="pointer-events-none absolute right-6 bottom-5 h-px w-10"
         />
         {device === "laptop" ? (
-          <div className="flex h-full items-center justify-center">
+          // Side room so Bo stands next to the laptop, never on top of its frame.
+          <div className="flex h-full items-center justify-center min-[900px]:px-20">
             <DevicePreview device="laptop" fit="contain" overlay={showIntroInCanvas ? canvasIntro : null}>
               <FormatView site={draft} theme={theme} palette={paletteNow} modules={modules} contributions={approved} calendarEntries={calendarEntries} sample highlightField={focusField} onEditField={(field) => { openField(field); selectInPreview(field); }} />
             </DevicePreview>
           </div>
         ) : (
-          <div className="flex h-full justify-center">
+          <div className="flex h-full justify-center min-[900px]:px-20">
             <div
               className="relative h-full w-full max-w-[390px] overflow-hidden rounded-[28px] border border-line bg-cream shadow-xl"
               style={{
@@ -1205,7 +1208,7 @@ function SiteDashboard() {
           <DeviceToggle value={device} onChange={setDevice} size="sm" />
           <button
             type="button"
-            onClick={() => setIntroPreview(true)}
+            onClick={() => (showIntroInCanvas ? setIntroCanvasKey((k) => k + 1) : setIntroPreview(true))}
             className="rounded-full px-2.5 py-1 text-[11px] font-medium text-muted hover:text-ink"
           >
             Replay intro
@@ -1222,13 +1225,14 @@ function SiteDashboard() {
             onChange={(e) => setZoom(Number(e.target.value))}
             className="hidden w-28 accent-[#C2366B] min-[900px]:block"
           />
-          <span className="hidden w-10 text-[11px] text-muted min-[900px]:block">
-            {zoom ? `${zoom}%` : "Fit"}
-          </span>
+          {zoom ? <span className="hidden w-9 text-right text-[11px] text-muted tabular-nums min-[900px]:block">{zoom}%</span> : null}
           <button
             type="button"
             onClick={() => setZoom(null)}
-            className="hidden rounded-full border border-line px-2.5 py-1 text-[11px] font-medium text-muted hover:text-ink min-[900px]:block"
+            aria-pressed={!zoom}
+            className={`hidden rounded-full border px-2.5 py-1 text-[11px] font-medium transition-colors min-[900px]:block ${
+              zoom ? "border-line text-muted hover:text-ink" : "border-ink/20 bg-ink/5 text-ink"
+            }`}
           >
             Fit
           </button>
@@ -1252,7 +1256,7 @@ function SiteDashboard() {
 
   return (
     <div className="flex h-[100dvh] flex-col overflow-hidden bg-paper text-ink">
-      <BoBuddy followFocus celebrate intro={false} />
+      {roomForBo ? <BoBuddy followFocus celebrate intro={false} /> : null}
       <header data-bo-avoid className="flex h-16 shrink-0 items-center justify-between gap-3 border-b border-line bg-paper px-3 sm:px-4">
         <div className="flex min-w-0 flex-col justify-center gap-0.5">
         <div className="group flex min-w-0 items-center gap-2">
@@ -1316,34 +1320,29 @@ function SiteDashboard() {
             </Button>
           ) : (
             <>
-          <button
-            type="button"
-            onClick={() => {
-              setSection("review");
-              if (typeof window !== "undefined" && window.innerWidth < 900) setSheetOpen(true);
-              else setPanelOpen(true);
-            }}
-            className="hidden h-10 items-center gap-2 rounded-full border border-line bg-cream px-3 text-xs text-muted transition-colors hover:text-ink min-[900px]:flex"
+          <span
+            role="status"
+            aria-live="polite"
+            title={friends.length > 0 ? `From ${friends.join(", ")}` : "Friends' notes show up here"}
+            className="hidden h-7 items-center gap-1.5 rounded-full bg-ink/[.05] pr-2.5 pl-1.5 text-[11px] font-medium text-muted min-[900px]:flex"
           >
             {friends.length > 0 ? (
-              <span className="flex -space-x-2">
+              <span className="flex -space-x-1.5">
                 {friends.slice(0, 3).map((name, i) => (
                   <span
                     key={name}
-                    className="grid size-6 place-items-center rounded-full border border-cream text-[10px] font-semibold text-ink/80"
+                    className="grid size-5 place-items-center rounded-full border border-paper text-[9px] font-semibold text-ink/80"
                     style={{ background: FRIEND_TINTS[i % FRIEND_TINTS.length] }}
                   >
                     {initials(name)}
                   </span>
                 ))}
               </span>
-            ) : null}
-            <span>
-              {friends.length > 0
-                ? `${friends.length} friend${friends.length === 1 ? "" : "s"} added notes`
-                : "No notes yet"}
-            </span>
-          </button>
+            ) : (
+              <span className="size-1.5 rounded-full bg-muted/50" aria-hidden="true" />
+            )}
+            <span className="tabular-nums">{noteCount} {noteCount === 1 ? "note" : "notes"}</span>
+          </span>
 
           <Popover>
             <PopoverTrigger asChild>
@@ -1429,9 +1428,7 @@ function SiteDashboard() {
                     }}
                   >
                     <Inbox />
-                    {friends.length > 0
-                      ? `${friends.length} friend${friends.length === 1 ? "" : "s"} added notes`
-                      : "No notes yet"}
+                    Friends' notes ({noteCount})
                   </DropdownMenuItem>
                   <DropdownMenuItem onSelect={copyContributeLink}>
                     <UserPlus />

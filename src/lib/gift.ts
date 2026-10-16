@@ -17,6 +17,7 @@ import { normalizeIconSetting, type IconSetSetting } from "@/themes/_shared/icon
 import { isGiftFormat, type GiftFormat } from "@/lib/formats";
 import { NEW_SECTION_TYPES, type NewSectionType } from "@/lib/sections";
 import { SECTION_COPY } from "@/copy/strings";
+import { KIND_WORDS, type ThemeKind } from "@/lib/themeKind";
 
 export type ModuleType =
   | "letters"
@@ -119,7 +120,7 @@ export const FONT_PAIRINGS = {
   playful: { label: "Playful", heading: "'Fredoka', sans-serif", body: "'Nunito', sans-serif" },
   modern: { label: "Modern", heading: "'Poppins', sans-serif", body: "'Inter', sans-serif" },
   // Key kept for saved gifts; the old script face is gone.
-  handwritten: { label: "Storybook", heading: "'Fraunces', serif", body: "'Karla', sans-serif" },
+  handwritten: { label: "Fairytale", heading: "'Fraunces', serif", body: "'Karla', sans-serif" },
 } as const;
 
 export type FontChoice = keyof typeof FONT_PAIRINGS;
@@ -139,11 +140,11 @@ export type CustomText = {
   footer_note?: string;
 };
 
-/** Sensible pre-filled section titles, based on who the gift is for. */
-export function defaultTitles(text: CustomText) {
+/** Sensible pre-filled titles, based on the occasion and who the gift is for. */
+export function defaultTitles(text: CustomText, kind: ThemeKind = "default") {
   const name = text.recipient_name?.trim() || "you";
   return {
-    heading: `For ${name}`,
+    heading: KIND_WORDS[kind].occasion,
     letters_title: `Letters for ${name}`,
     photobooth_title: "Photobooth",
     songs_title: "Songs that remind us of you",

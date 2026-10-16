@@ -1,4 +1,6 @@
 import { giftVoice } from "@/lib/giftVoice";
+import { SampleText } from "@/components/SampleMark";
+import { giftHeading } from "@/lib/themeKind";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { FONT_PAIRINGS } from "@/lib/gift";
 import { usePieces, useReducedMotion, type Piece } from "@/lib/giftPieces";
@@ -38,6 +40,7 @@ function layout(pieces: Piece[]) {
  * stars make a heart. Drag the sky to look around.
  */
 export function ConstellationView({
+  theme,
   site,
   modules,
   contributions,
@@ -124,9 +127,9 @@ export function ConstellationView({
       style={{ "--cst-accent": palette.accent, fontFamily: fonts.body } as React.CSSProperties}
     >
       <div className="mx-auto max-w-3xl px-4 pt-10 pb-14 text-center">
-        <p className="cst-kicker">Look up, {data.name}</p>
+        <p className="cst-kicker">Look up, <SampleText on={data.nameIsSample}>{data.name}</SampleText></p>
         <h1 className="cst-title" style={{ fontFamily: fonts.heading }}>
-          {site.custom_text.heading?.trim() || site.title}
+          {giftHeading(site.custom_text, theme)}
         </h1>
         <p className="cst-intro">
           {site.custom_text.intro_message?.trim() ||
@@ -299,7 +302,7 @@ export function ConstellationView({
           <p className="mt-2 text-sm opacity-70">{site.custom_text.footer_note}</p>
         ) : null}
         {data.isSample ? (
-          <p className="mt-2 text-xs opacity-60">{voice.sample}</p>
+          <p className="mt-2 text-sm opacity-70">{voice.sample}</p>
         ) : null}
         {showShare && done ? (
           <button

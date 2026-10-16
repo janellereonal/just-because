@@ -131,3 +131,26 @@
 @media (prefers-reduced-motion: reduce) { .jb-wag, .jb-steam { animation: none; } }
 /* The back of a polaroid never makes the card taller than its photo. */
 .sb-flip-card > .sb-flip-back { position: absolute; inset: 0; overflow: hidden; }
+
+/* Editor placeholders (SampleMark.tsx): faded text plus a small "sample" tag. */
+.jb-sample-text {
+  opacity: 0.42;
+}
+.jb-sample-tag {
+  display: inline-block;
+  margin-inline-start: 0.45em;
+  padding: 0.18em 0.55em 0.14em;
+  border: 1px dashed currentColor;
+  border-radius: 999px;
+  font-family: "JetBrains Mono", ui-monospace, monospace;
+  font-size: 10px;
+  font-weight: 500;
+  font-style: normal;
+  letter-spacing: 0.12em;
+  line-height: 1.2;
+  text-transform: uppercase;
+  vertical-align: middle;
+  opacity: 0.6;
+  white-space: nowrap;
+  -webkit-text-fill-color: currentColor;
+}

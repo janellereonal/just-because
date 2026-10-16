@@ -1,4 +1,6 @@
 import { giftVoice } from "@/lib/giftVoice";
+import { SampleText } from "@/components/SampleMark";
+import { giftHeading } from "@/lib/themeKind";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Lock, Mic, Music2, Sparkles } from "lucide-react";
 import { FONT_PAIRINGS } from "@/lib/gift";
@@ -277,6 +279,7 @@ function Card({
  * finger (or press Reveal). Progress is remembered on this device.
  */
 export function ScratchView({
+  theme,
   site,
   modules,
   contributions,
@@ -328,9 +331,9 @@ export function ScratchView({
     >
       <div className="mx-auto max-w-4xl px-4 pt-10 pb-16">
         <header className="text-center">
-          <p className="scr-kicker">Lucky you, {data.name}</p>
+          <p className="scr-kicker">Lucky you, <SampleText on={data.nameIsSample}>{data.name}</SampleText></p>
           <h1 className="scr-title" style={{ fontFamily: fonts.heading }}>
-            {site.custom_text.heading?.trim() || site.title}
+            {giftHeading(site.custom_text, theme)}
           </h1>
           <p className="mx-auto mt-3 max-w-md text-[15px] leading-relaxed opacity-80">
             {site.custom_text.intro_message?.trim() ||

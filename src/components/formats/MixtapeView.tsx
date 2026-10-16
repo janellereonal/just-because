@@ -1,4 +1,6 @@
 import { giftVoice } from "@/lib/giftVoice";
+import { SampleText } from "@/components/SampleMark";
+import { giftHeading } from "@/lib/themeKind";
 import { useEffect, useRef, useState } from "react";
 import { Lock, Mic, Music2, Pause, Play, RotateCw, SkipBack, SkipForward } from "lucide-react";
 import { FONT_PAIRINGS, toEmbedUrl } from "@/lib/gift";
@@ -83,6 +85,7 @@ function Liner({ piece, accent }: { piece: Piece; accent: string }) {
  * reels turn, drag a reel to scrub between tracks, flip the tape for side B.
  */
 export function MixtapeView({
+  theme,
   site,
   modules,
   contributions,
@@ -188,7 +191,7 @@ export function MixtapeView({
     },
   };
 
-  const label = site.custom_text.heading?.trim() || `For ${data.name}`;
+  const label = giftHeading(site.custom_text, theme);
   const mm = String(Math.floor(counter / 10)).padStart(3, "0");
 
   return (
@@ -206,7 +209,7 @@ export function MixtapeView({
       }
     >
       <div className="mx-auto max-w-xl px-4 pt-10 pb-16">
-        <p className="mix-kicker">A mixtape for {data.name}</p>
+        <p className="mix-kicker">A mixtape for <SampleText on={data.nameIsSample}>{data.name}</SampleText></p>
         <h1 className="mix-title" style={{ fontFamily: fonts.heading }}>
           {label}
         </h1>

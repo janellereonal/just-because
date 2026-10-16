@@ -28,6 +28,7 @@ The dev server must be running on http://localhost:8080 (`bun run dev`, see docs
 |---|---|
 | `node scrolls.js "/example/ana?open=1" ana 390 844` | Scrolls a page, saves a contact sheet `op/ana-sheet.png` |
 | `node shot.js <url> <out.png> [w] [h] [waitMs] [js] [full]` | One screenshot. `STATE=../state.json` for a signed-in session |
+| `node multi.js plan.json` | Several screenshots in one browser. Plan: `{state, outDir, shots: [{name, url, w, h, wait, js, until, full}]}`; shots with the same url and size reuse the page, so `js` can click through an editor |
 | `node tour.js` | Landing hero: opens Ana's gift and captures the guided tour + bento tiles |
 | `node gal.js` | Themes gallery card loop and the full-screen opening |
 | `node portal.js /example/sam sam` | Frames of the opening-to-gift portal reveal |

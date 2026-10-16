@@ -85,20 +85,8 @@ export function ScrollStory({ kind, rootRef, icons, accent, ink }: Props) {
     <div className="pointer-events-none absolute inset-0 overflow-hidden" style={{ zIndex: -1 }} aria-hidden="true">
       <motion.div className="absolute inset-x-0 top-0" style={{ y: offset, height }}>
         <Motif kind={kind} p={smooth} vel={vel} icons={icons} accent={accent} ink={ink} />
-        <Thread p={smooth} accent={accent} />
       </motion.div>
     </div>
-  );
-}
-
-/** A thin thread down the right edge with a bead that tracks how far you've read. */
-function Thread({ p, accent }: { p: MotionValue<number>; accent: string }) {
-  const top = useTransform(p, (v) => `${8 + v * 84}%`);
-  return (
-    <>
-      <span className="absolute top-[8%] right-[6px] bottom-[8%] w-px opacity-25" style={{ background: accent }} />
-      <motion.span className="absolute right-[2px] size-[9px] -translate-y-1/2 rounded-full" style={{ top, background: accent, boxShadow: `0 0 0 3px ${accent}33` }} />
-    </>
   );
 }
 
