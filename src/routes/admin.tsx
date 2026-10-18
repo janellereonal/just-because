@@ -13,6 +13,7 @@ import { getPaymentsSetup, listPaymentLog, setThemePreview, setThemeStatus, setu
 import { uploadFile } from "@/lib/upload";
 import { useAuth } from "@/hooks/useAuth";
 import { AdminReports } from "@/components/admin/AdminReports";
+import { DiscountCodes } from "@/components/admin/DiscountCodes";
 
 export const Route = createFileRoute("/admin")({
   head: () => ({
@@ -88,6 +89,7 @@ function AdminPage() {
       <ThemeMetrics />
       <AdminReports />
       <PaymentsSetup />
+      <DiscountCodes />
       <PaymentLog />
       <section className="mx-auto max-w-6xl px-5 py-14">
         <p className="font-mono text-[11px] tracking-[0.18em] text-accent uppercase">Admin</p>

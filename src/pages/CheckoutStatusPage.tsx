@@ -81,7 +81,9 @@ function CheckoutStatusPage() {
               : "Your gift is ready to open"}
         </h1>
         <p className="mt-2 text-ink/70">
-          Payment received, {formatPeso(order.amount)}. A receipt is on its way to your email.
+          {order.amount === 0
+            ? "Your code covered it, so there was nothing to pay. A receipt is on its way to your email."
+            : `Payment received, ${formatPeso(order.amount)}. A receipt is on its way to your email.`}
         </p>
         {order.kind === "extend" && order.site?.expiresAt ? (
           <p className="mt-1 text-ink/70">

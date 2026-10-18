@@ -634,6 +634,18 @@ export const REPORT_COPY = {
   makeYourOwn: "Make your own gift",
 } as const;
 
+/** "Have a code?" in the plan picker. */
+export const CODE_COPY = {
+  ask: "Have a code?",
+  placeholder: "Enter code",
+  apply: "Apply",
+  checking: "Checking…",
+  remove: "Remove",
+  applied: (code: string, label: string, plans: string[], allPlans: boolean) =>
+    label === "Free" ? `${code} applied: ${plans.join(" and ")} is free.` : `${code} applied: ${label}${allPlans ? "" : ` ${plans.join(" and ")}`}.`,
+  free: (plan: string) => `Get ${plan} free`,
+};
+
 /** Prices and paying, for buyers in the Philippines and everywhere else. */
 export const PRICE_COPY = {
   approxSuffix: "(approx.)",

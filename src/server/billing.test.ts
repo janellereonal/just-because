@@ -57,6 +57,77 @@ afterAll(async () => {
   await g.delete(db.schema.orders).where(inArray(db.schema.orders.providerCheckoutId, checkouts));
   await g.delete(db.schema.paymentLog).where(inArray(db.schema.paymentLog.checkoutId, checkouts));
   await g.delete(db.schema.webhookEvents).where(like(db.schema.webhookEvents.id, `%${tag}%`));
+  await g.delete(db.schema.orders).where(like(db.schema.orders.discountCode, `${tag.toUpperCase()}%`));
+  await g.delete(db.schema.discountCodes).where(like(db.schema.discountCodes.code, `${tag.toUpperCase()}%`));
+});
+
+async function newCode(suffix: string, values: Partial<typeof import("./db").schema.discountCodes.$inferInsert> = {}) {
+  const [row] = await db
+    .getDb()
+    .insert(db.schema.discountCodes)
+    .values({ code: `${tag.toUpperCase()}${suffix}`, type: "percent", value: 20, ...values })
+    .returning();
+  return row!;
+}
+const codeOf = async (id: string) => (await db.getDb().select().from(db.schema.discountCodes).where(eq(db.schema.discountCodes.id, id)))[0]!;
+
+d("discount codes", () => {
+  test("a percent code lowers the quote, ignores case, and counts once only when paid", async () => {
+    const code = await newCode("PCT", { maxUses: 5 });
+    const site = await newGift();
+    const q = await billing.quote(site, "sweet", { code: code.code.toLowerCase(), userId });
+    expect(q.amount).toBe(23900);
+    expect(q.discount?.off).toBe(6000);
+    // Checkout started but not paid: no use counted.
+    const order = await newOrder(site.id, { tier: "sweet", amount: q.amount });
+    await db.getDb().update(db.schema.orders).set({ discountCodeId: code.id, discountCode: code.code, discountAmount: q.discount!.off }).where(eq(db.schema.orders.id, order.id));
+    expect((await codeOf(code.id)).usedCount).toBe(0);
+    fake.pay(order.providerCheckoutId!);
+    const paid = (await provider.checkPaid(order.providerCheckoutId!))!;
+    await billing.applyPaidEvent(paid, "paymongo", "webhook");
+    await billing.applyPaidEvent(paid, "paymongo", "confirm");
+    await billing.applyPaidEvent({ ...paid, eventId: "evt_again" }, "paymongo", "webhook");
+    expect((await codeOf(code.id)).usedCount).toBe(1);
+    // Max one per person by default.
+    const other = await newGift();
+    await expect(billing.quote(other, "sweet", { code: code.code, userId })).rejects.toThrow("already used");
+  });
+
+  test("codes that are off, ended, used up or for another plan are refused", async () => {
+    const site = await newGift();
+    const off = await newCode("OFF", { active: false });
+    const ended = await newCode("END", { expiresAt: new Date(Date.now() - 1000) });
+    const used = await newCode("USED", { maxUses: 1, usedCount: 1 });
+    const sweetOnly = await newCode("SWT", { type: "free", value: 0, plans: ["sweet"] });
+    await expect(billing.quote(site, "sweet", { code: off.code, userId })).rejects.toThrow("isn't working");
+    await expect(billing.quote(site, "sweet", { code: ended.code, userId })).rejects.toThrow("ended");
+    await expect(billing.quote(site, "sweet", { code: used.code, userId })).rejects.toThrow("used up");
+    await expect(billing.quote(site, "keepsake", { code: sweetOnly.code, userId })).rejects.toThrow("Sweet plan");
+    await expect(billing.quote(site, "sweet", { code: "NOPE-NOT-A-CODE", userId })).rejects.toThrow("don't know");
+    expect((await billing.quote(site, "sweet", { code: sweetOnly.code, userId })).amount).toBe(0);
+  });
+
+  test("a free code opens the gift without a payment, and its last use can't be taken twice", async () => {
+    const code = await newCode("FREE", { type: "free", value: 0, maxUses: 1, maxPerUser: null });
+    const open = async () => {
+      const site = await newGift();
+      const id = crypto.randomUUID();
+      const checkoutId = `free_${id}`;
+      checkouts.push(checkoutId);
+      await db.getDb().insert(db.schema.orders).values({ id, siteId: site.id, ownerId: userId, kind: "publish", tier: "sweet", amount: 0, provider: "free", providerCheckoutId: checkoutId, discountCodeId: code.id, discountCode: code.code, discountAmount: 29900 });
+      await billing.applyPaidEvent({ eventId: checkoutId, eventType: "free_code", checkoutId, orderId: id, paymentId: null, amountPaid: 0 }, "free", "confirm");
+      return { site: await siteOf(site.id), order: await orderOf(id) };
+    };
+    const [a, b] = await Promise.all([open(), open()]);
+    const winners = [a, b].filter((r) => r.order.status === "paid");
+    expect(winners.length).toBe(1);
+    expect(winners[0]!.site.status).toBe("published");
+    expect(winners[0]!.site.tier).toBe("sweet");
+    const loser = [a, b].find((r) => r.order.status !== "paid")!;
+    expect(loser.order.status).toBe("failed");
+    expect(loser.site.status).toBe("draft");
+    expect((await codeOf(code.id)).usedCount).toBe(1);
+  });
 });
 
 d("paying for a gift", () => {

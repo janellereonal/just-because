@@ -2,7 +2,8 @@ import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { boWrap } from "@/lib/mascot/bus";
-import { getBilling, setCustomSlug, setGiftPassword, startCheckout, startExtendCheckout } from "@/lib/api";
+import { getBilling, previewDiscountCode, setCustomSlug, setGiftPassword, startCheckout, startExtendCheckout } from "@/lib/api";
+import { CODE_COPY } from "@/copy/strings";
 import { PricingCards } from "@/components/PricingCards";
 import { PRICE_COPY } from "@/copy/strings";
 import { useViewerMoney } from "@/lib/viewerCurrency";
@@ -61,12 +62,36 @@ export function PlanPickerDialog({
 }) {
   const { data: billing } = useBilling(siteId);
   const [busyTier, setBusyTier] = useState<TierId | null>(null);
+  const [codeOpen, setCodeOpen] = useState(false);
+  const [codeText, setCodeText] = useState("");
+  const [checking, setChecking] = useState(false);
+  const [codeError, setCodeError] = useState<string | null>(null);
+  const [applied, setApplied] = useState<Extract<Awaited<ReturnType<typeof previewDiscountCode>>, { ok: true }> | null>(null);
+  const deal = new Map(applied?.plans.map((p) => [p.id, p]) ?? []);
+
+  async function applyCode() {
+    const code = codeText.trim();
+    if (!code) return;
+    setChecking(true);
+    setCodeError(null);
+    try {
+      const res = await previewDiscountCode({ data: { siteId, code } });
+      if (res.ok) setApplied(res);
+      else setCodeError(res.message);
+    } catch (error) {
+      setCodeError(errorMessage(error, "We couldn't check that code. Try again?"));
+    } finally {
+      setChecking(false);
+    }
+  }
 
   async function pick(tier: TierId) {
     setBusyTier(tier);
     try {
+      // The price is worked out again on the server; the code only goes along if it fits this plan.
+      const code = applied && deal.get(tier)?.applies ? applied.code : undefined;
       // Bo wraps himself up while the checkout loads (never more than ~1s).
-      const [{ checkoutUrl }] = await Promise.all([startCheckout({ data: { siteId, tier } }), boWrap()]);
+      const [{ checkoutUrl }] = await Promise.all([startCheckout({ data: { siteId, tier, ...(code ? { code } : {}) } }), boWrap()]);
       window.location.assign(checkoutUrl);
     } catch (error) {
       setBusyTier(null);
@@ -108,15 +133,85 @@ export function PlanPickerDialog({
             . Each plan says how many it holds; friends can keep adding until it's full.
           </p>
         ) : null}
+        {billing && mode === "publish" ? (
+          <div className="-mt-1 text-sm">
+            {applied ? (
+              <p className="flex flex-wrap items-center gap-x-3 gap-y-1 rounded-xl border border-accent/40 bg-accent/10 px-3 py-2">
+                <span>
+                  {CODE_COPY.applied(
+                    applied.code,
+                    applied.label,
+                    applied.plans.filter((p) => p.applies).map((p) => getTier(p.id)?.name ?? p.id),
+                    applied.plans.every((p) => p.applies),
+                  )}
+                </span>
+                <button
+                  type="button"
+                  className="text-muted underline underline-offset-2 hover:text-ink"
+                  onClick={() => {
+                    setApplied(null);
+                    setCodeText("");
+                  }}
+                >
+                  {CODE_COPY.remove}
+                </button>
+              </p>
+            ) : codeOpen ? (
+              <form
+                className="flex flex-wrap items-start gap-2"
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  void applyCode();
+                }}
+              >
+                <div className="min-w-0 flex-1">
+                  <label htmlFor="plan-code" className="sr-only">
+                    {CODE_COPY.placeholder}
+                  </label>
+                  <input
+                    id="plan-code"
+                    value={codeText}
+                    onChange={(e) => {
+                      setCodeText(e.target.value);
+                      setCodeError(null);
+                    }}
+                    placeholder={CODE_COPY.placeholder}
+                    autoCapitalize="characters"
+                    autoComplete="off"
+                    spellCheck={false}
+                    maxLength={40}
+                    autoFocus
+                    aria-invalid={!!codeError}
+                    aria-describedby={codeError ? "plan-code-error" : undefined}
+                    className="w-full rounded-full border border-line bg-paper px-4 py-2.5 font-mono text-sm tracking-wide uppercase outline-none focus:border-accent"
+                  />
+                  {codeError ? (
+                    <p id="plan-code-error" role="alert" className="mt-1.5 px-2 text-xs text-accent">
+                      {codeError}
+                    </p>
+                  ) : null}
+                </div>
+                <Button type="submit" variant="outline" className="rounded-full" disabled={checking || !codeText.trim()}>
+                  {checking ? CODE_COPY.checking : CODE_COPY.apply}
+                </Button>
+              </form>
+            ) : (
+              <button type="button" className="text-muted underline underline-offset-2 hover:text-ink" onClick={() => setCodeOpen(true)}>
+                {CODE_COPY.ask}
+              </button>
+            )}
+          </div>
+        ) : null}
         {billing ? (
           tiers.length > 0 ? (
             <PricingCards
               tiers={tiers}
-              priceFor={mode === "upgrade" ? (t) => upgradePrice.get(t.id) ?? t.amount : undefined}
+              wasFor={applied ? (t) => (deal.get(t.id)?.applies ? t.amount : null) : undefined}
+              priceFor={mode === "upgrade" ? (t) => upgradePrice.get(t.id) ?? t.amount : applied ? (t) => deal.get(t.id)?.amount ?? t.amount : undefined}
               priceNote={mode === "upgrade" ? "Pay the difference" : undefined}
               blockerFor={(t) => blockers.get(t.id) ?? null}
               action={{
-                label: (t) => (mode === "upgrade" ? `Upgrade to ${t.name}` : `Choose ${t.name}`),
+                label: (t) => (mode === "upgrade" ? `Upgrade to ${t.name}` : deal.get(t.id)?.free ? CODE_COPY.free(t.name) : `Choose ${t.name}`),
                 onPick: (t) => void pick(t),
                 busyTier,
                 disabled: !!busyTier,

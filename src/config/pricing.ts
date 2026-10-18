@@ -159,6 +159,48 @@ export const promo = {
 };
 
 /**
+ * Discount codes. The codes themselves live in the `discount_codes` table (made and turned off
+ * in /admin); the rules for what a code does to a price live here.
+ *
+ * - percent: `value` is the percent off (1 to 100).
+ * - fixed:   `value` is centavos off (₱100 off = 10000).
+ * - free:    the plan costs nothing; checkout is skipped and the gift opens straight away.
+ *
+ * PayMongo's own minimum is ₱1 for the methods we use, but its fees make tiny charges pointless,
+ * so a discounted price above zero never goes below `minCharge`. A code that takes the price to
+ * zero (100% off, or a fixed amount bigger than the price) makes it free.
+ */
+export type DiscountType = "percent" | "fixed" | "free";
+
+export const discountCodes = {
+  /** Smallest amount we'll send to PayMongo after a discount, in centavos (₱20). */
+  minCharge: 2000,
+  /** Made by `bun run db:seed` the first time it runs (never changed after that). */
+  starter: [
+    { code: "LAUNCH20", type: "percent", value: 20, plans: [], maxUses: 100, maxPerUser: 1, expiresInDays: 14, note: "Launch: 20% off any plan" },
+    { code: "FRIENDSFREE", type: "free", value: 0, plans: ["sweet"], maxUses: 10, maxPerUser: 1, expiresInDays: null, note: "Free Sweet plan for friends" },
+  ] as Array<{ code: string; type: DiscountType; value: number; plans: TierId[]; maxUses: number | null; maxPerUser: number | null; expiresInDays: number | null; note: string }>,
+};
+
+/** What a plan costs with a code. Never more than the full price, never below `minCharge` unless free. */
+export function discountedAmount(amount: number, code: { type: DiscountType | string; value: number }): number {
+  let next = amount;
+  if (code.type === "free") next = 0;
+  // Percent codes land on a whole peso (20% off ₱299 is ₱239, not ₱239.20).
+  else if (code.type === "percent") next = Math.round((amount * (100 - Math.min(100, Math.max(0, code.value)))) / 100 / 100) * 100;
+  else if (code.type === "fixed") next = amount - Math.max(0, code.value);
+  if (next <= 0) return 0;
+  return Math.min(amount, Math.max(next, discountCodes.minCharge));
+}
+
+/** "20% off", "₱100 off", "Free" */
+export function discountLabel(code: { type: DiscountType | string; value: number }): string {
+  if (code.type === "free") return "Free";
+  if (code.type === "percent") return `${code.value}% off`;
+  return `${formatPeso(code.value)} off`;
+}
+
+/**
  * Concierge beta ("Want us to handle it?"): we chase the friends, tidy the photos and assemble the
  * gift. Paid by hand for now (no checkout). The dollar price is set, not converted.
  */

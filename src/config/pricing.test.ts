@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { addMonths } from "./pricing";
+import { addMonths, discountCodes, discountedAmount } from "./pricing";
 
 describe("addMonths", () => {
   test("keeps the day when it exists", () => {
@@ -14,5 +14,30 @@ describe("addMonths", () => {
   });
   test("years", () => {
     expect(addMonths(new Date("2026-10-17T00:00:00Z"), 120).toISOString()).toBe("2036-10-17T00:00:00.000Z");
+  });
+});
+
+describe("discountedAmount", () => {
+  test("percent off lands on a whole peso", () => {
+    expect(discountedAmount(29900, { type: "percent", value: 20 })).toBe(23900);
+    expect(discountedAmount(59900, { type: "percent", value: 20 })).toBe(47900);
+    expect(discountedAmount(99900, { type: "percent", value: 15 })).toBe(84900);
+  });
+  test("fixed takes pesos off", () => {
+    expect(discountedAmount(29900, { type: "fixed", value: 10000 })).toBe(19900);
+  });
+  test("free and 100% are free", () => {
+    expect(discountedAmount(99900, { type: "free", value: 0 })).toBe(0);
+    expect(discountedAmount(99900, { type: "percent", value: 100 })).toBe(0);
+    expect(discountedAmount(29900, { type: "fixed", value: 50000 })).toBe(0);
+  });
+  test("a tiny leftover goes up to the minimum charge, never above the full price", () => {
+    expect(discountedAmount(29900, { type: "fixed", value: 29000 })).toBe(discountCodes.minCharge);
+    expect(discountedAmount(29900, { type: "percent", value: 99 })).toBe(discountCodes.minCharge);
+    expect(discountedAmount(1000, { type: "percent", value: 10 })).toBe(1000);
+  });
+  test("odd values can't make it cost more", () => {
+    expect(discountedAmount(29900, { type: "percent", value: -50 })).toBe(29900);
+    expect(discountedAmount(29900, { type: "fixed", value: -100 })).toBe(29900);
   });
 });
