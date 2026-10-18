@@ -30,6 +30,16 @@ function spiral(cx: number, cy: number, z: number, r0: number, r1: number, turns
 
 const INK = "#2E2220";
 
+/**
+ * A flat marking that the eyes sit in (panda patches, owl eye discs). It doesn't cast a
+ * shadow: with the key light up on the left, a shadow falls only to the right of each patch
+ * and makes the two sides of the face look different.
+ */
+function marking<T extends { castShadow: boolean }>(m: T): T {
+  m.castShadow = false;
+  return m;
+}
+
 export const ANIMALS: Record<string, ClayRecipe> = {
   snail: (c) => [
     blob([70, 66, -6], [62, 62, 36], c.primary),
@@ -235,8 +245,8 @@ export const ANIMALS: Record<string, ClayRecipe> = {
     blob([35, 42, -4], [22, 22, 14], c.secondary),
     blob([85, 42, -4], [22, 22, 14], c.secondary),
     egg([60, 74, 0], 74, 74, 60, c.primary),
-    blob([45, 70, 26], [17, 21, 6], "#5D585E", [0, 0, -0.55]),
-    blob([75, 70, 26], [17, 21, 6], "#5D585E", [0, 0, 0.55]),
+    marking(blob([45, 70, 26], [17, 21, 6], "#5D585E", [0, 0, -0.55])),
+    marking(blob([75, 70, 26], [17, 21, 6], "#5D585E", [0, 0, 0.55])),
     blob([60, 82, 32], [8, 6, 5], INK, [0, 0, 0], GLOSS),
     blob([27, 92, 8], [13, 18, 13], c.secondary, [0, 0, 0.4]),
     blob([93, 92, 8], [13, 18, 13], c.secondary, [0, 0, -0.4]),
@@ -292,8 +302,8 @@ export const ANIMALS: Record<string, ClayRecipe> = {
     blob([96, 82, 0], [14, 34, 14], shade(c.primary, -14), [0, 0, -0.3]),
     egg([60, 72, 0], 72, 78, 60, c.primary),
     blob([60, 96, 17], [40, 26, 20], c.skin),
-    blob([46, 64, 24], [28, 28, 10], c.skin),
-    blob([74, 64, 24], [28, 28, 10], c.skin),
+    marking(blob([46, 64, 24], [28, 28, 10], c.skin)),
+    marking(blob([74, 64, 24], [28, 28, 10], c.skin)),
     blob([60, 76, 31], [8, 10, 7], c.secondary, [0, 0, 0], { rough: 0.45, gloss: 0.2 }),
     ...feet(109, c.secondary, [50, 70], [12, 5, 10]),
   ],

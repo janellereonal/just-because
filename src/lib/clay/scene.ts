@@ -77,8 +77,8 @@ export const CLAY: Record<string, ClayRecipe> = {
     ...feet(107, c.secondary),
   ],
   duck: (c) => [
-    blob([56, 33, 4], [7, 12, 7], c.primary, [0, 0, -0.35]),
-    blob([64, 32, 4], [7, 13, 7], c.primary, [0, 0, 0.3]),
+    blob([56, 32.5, 4], [7, 12.5, 7], c.primary, [0, 0, -0.32]),
+    blob([64, 32.5, 4], [7, 12.5, 7], c.primary, [0, 0, 0.32]),
     egg([60, 74, 0], 72, 76, 62, c.primary, { bulge: 0.24 }),
     blob([25, 82, 2], [14, 26, 12], c.primary, [0, 0, 0.5]),
     blob([95, 82, 2], [14, 26, 12], c.primary, [0, 0, -0.5]),
@@ -172,9 +172,9 @@ export const CLAY: Record<string, ClayRecipe> = {
       [
         [38, 74, 30],
         [60, 64, 40],
-        [83, 74, 30],
+        [82, 74, 30],
         [49, 86, 30],
-        [72, 86, 30],
+        [71, 86, 30],
       ] as const
     ).map(([x, y, s]) => blob([x, y, 0], [s, s * 0.95, s * 0.85], c.primary)),
     blob([44, 106, 0], [6, 9, 6], c.secondary, [0, 0, 0], { rough: 0.3, gloss: 0.5 }),

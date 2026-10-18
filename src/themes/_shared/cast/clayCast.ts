@@ -9,6 +9,9 @@
  */
 import type { CharacterSpec } from "@/themes/_shared/cast/library";
 
+/** Blush that still reads as pink on green skin (the default pink turns brown there). */
+export const GREEN_BLUSH = { color: "#FF5A86" };
+
 type Face = NonNullable<CharacterSpec["clay"]>;
 type Entry = Omit<CharacterSpec, "body" | "eyes" | "mouth" | "cheeks" | "head" | "neck" | "clay"> & { face: Face };
 
@@ -20,7 +23,7 @@ function face(
   mouth: number | null,
   head: [number, number],
   neck: [number, number],
-  { x = 60, cheekY = 9, cheekX = 9, ink }: { x?: number; cheekY?: number; cheekX?: number; ink?: string } = {},
+  { x = 60, cheekY = 9, cheekX = 9, ink, blush }: { x?: number; cheekY?: number; cheekX?: number; ink?: string; blush?: Face["blush"] } = {},
 ): Face {
   return {
     eyes: { l: [x - gap / 2, y], r: [x + gap / 2, y], size },
@@ -29,35 +32,36 @@ function face(
     head: { x, y: head[0], w: head[1] },
     neck: { x, y: neck[0], w: neck[1] },
     ...(ink ? { ink } : {}),
+    ...(blush ? { blush } : {}),
   };
 }
 
 const ENTRIES: Entry[] = [
   // ---------- animals ----------
-  { id: "snail", name: "Snail", category: "Animals", tags: ["garden", "slow", "handwritten"], colors: { primary: "#F09A5B", secondary: "#F09A5B", skin: "#F3D49B" }, face: { ...face(29, 22, 3.2, 70, [14, 30], [92, 40]), eyes: { l: [21, 29], r: [43, 29], size: 3.2 }, mouth: [32, 70], cheeks: { l: [24, 66], r: [40, 66] }, head: { x: 32, y: 18, w: 28 }, neck: { x: 32, y: 92, w: 30 } } },
+  { id: "snail", name: "Snail", category: "Animals", tags: ["garden", "slow", "handwritten"], colors: { primary: "#F09A5B", secondary: "#F09A5B", skin: "#F3D49B" }, face: { ...face(29, 22, 3.2, 70, [14, 30], [92, 40]), eyes: { l: [21, 29], r: [43, 29], size: 3.2 }, mouth: [32, 70], cheeks: { l: [24, 66], r: [40, 66] }, blush: { size: 0.75 }, head: { x: 32, y: 18, w: 28 }, neck: { x: 32, y: 92, w: 30 } } },
   { id: "octopus", name: "Octopus", category: "Animals", tags: ["sea", "ocean", "voyage"], colors: { primary: "#F2A65A", secondary: "#F7C38E", skin: "#F7C38E" }, face: face(62, 26, 4, 74, [24, 54], [88, 56]) },
   { id: "bee", name: "Bee", category: "Animals", tags: ["garden", "honey", "birthday"], colors: { primary: "#FFD34E", secondary: "#5A3A22", skin: "#FFD34E" }, face: face(62, 26, 4, 72, [38, 46], [86, 60]) },
   { id: "chick", name: "Chick", category: "Animals", tags: ["farm", "baby", "easter"], colors: { primary: "#FFE27A", secondary: "#E8463C", skin: "#F59A3C" }, face: face(63, 26, 4, null, [32, 40], [94, 56]) },
   { id: "elephant", name: "Elephant", category: "Animals", tags: ["safari", "baby"], colors: { primary: "#B9BEC8", secondary: "#F4BFC8", skin: "#B9BEC8" }, face: face(63, 28, 3.8, null, [38, 46], [96, 56], { cheekX: 10, cheekY: 11 }) },
-  { id: "turtle", name: "Turtle", category: "Animals", tags: ["sea", "slow", "voyage"], colors: { primary: "#95D27C", secondary: "#4E8F4A", skin: "#95D27C" }, face: face(64, 26, 4, 76, [36, 46], [100, 56]) },
+  { id: "turtle", name: "Turtle", category: "Animals", tags: ["sea", "slow", "voyage"], colors: { primary: "#95D27C", secondary: "#4E8F4A", skin: "#95D27C" }, face: face(64, 26, 4, 76, [36, 46], [100, 56], { blush: GREEN_BLUSH }) },
   { id: "pig", name: "Pig", category: "Animals", tags: ["farm"], colors: { primary: "#F8B9AA", secondary: "#F09A8C", skin: "#F8B9AA" }, face: face(66, 30, 4, 96, [38, 50], [100, 56], { cheekX: 8, cheekY: 12 }) },
   { id: "penguin", name: "Penguin", category: "Animals", tags: ["snow", "christmas", "winter"], colors: { primary: "#34313B", secondary: "#FBF6EE", skin: "#F5A33C" }, face: face(63, 24, 4, null, [34, 44], [92, 56]) },
   { id: "giraffe", name: "Giraffe", category: "Animals", tags: ["safari", "tall"], colors: { primary: "#F4C350", secondary: "#B9772F", skin: "#FBE3A4" }, face: face(48, 24, 3.8, 67, [24, 44], [80, 34], { cheekY: 8, cheekX: 10 }) },
-  { id: "dino", name: "Dino", category: "Animals", tags: ["birthday", "game", "rawr"], colors: { primary: "#8FCB6E", secondary: "#F3B23C", skin: "#DDF1BE" }, face: face(62, 26, 4, 74, [36, 44], [94, 56]) },
+  { id: "dino", name: "Dino", category: "Animals", tags: ["birthday", "game", "rawr"], colors: { primary: "#8FCB6E", secondary: "#F3B23C", skin: "#DDF1BE" }, face: face(62, 26, 4, 74, [36, 44], [94, 56], { blush: GREEN_BLUSH }) },
   { id: "koala", name: "Koala", category: "Animals", tags: ["sleepy", "cuddle"], colors: { primary: "#A3A3AB", secondary: "#3A3540", skin: "#ECE8E4" }, face: face(66, 32, 3.8, 93, [38, 46], [100, 56], { cheekX: 6, cheekY: 12 }) },
   { id: "hedgehog", name: "Hedgehog", category: "Animals", tags: ["garden", "autumn"], colors: { primary: "#7E5638", secondary: "#7E5638", skin: "#F6DDB2" }, face: face(70, 20, 3.4, 88, [26, 56], [100, 50], { cheekX: 8, cheekY: 9 }) },
   { id: "sheep", name: "Sheep", category: "Animals", tags: ["farm", "sleepy", "baby"], colors: { primary: "#FBF6EC", secondary: "#F1D2B8", skin: "#F1D2B8" }, face: face(72, 18, 3.4, 84, [40, 40], [96, 50], { cheekX: 4, cheekY: 7 }) },
-  { id: "panda", name: "Panda", category: "Animals", tags: ["cuddle", "bamboo"], colors: { primary: "#FAF7F2", secondary: "#3A363C", skin: "#FAF7F2" }, face: face(69, 28, 3.6, 88, [38, 50], [98, 56], { cheekX: 10, cheekY: 11, ink: "#1A1418" }) },
+  { id: "panda", name: "Panda", category: "Animals", tags: ["cuddle", "bamboo"], colors: { primary: "#FAF7F2", secondary: "#3A363C", skin: "#FAF7F2" }, face: face(69, 30, 3.6, 88, [38, 50], [98, 56], { cheekX: 11, cheekY: 15, ink: "#1A1418" }) },
   { id: "fox", name: "Fox", category: "Animals", tags: ["autumn", "forest"], colors: { primary: "#EE8F45", secondary: "#4A3328", skin: "#FFF6EC" }, face: face(66, 26, 4, 88, [36, 48], [98, 56]) },
   { id: "mouse", name: "Mouse", category: "Animals", tags: ["cheese", "little"], colors: { primary: "#C9C3CF", secondary: "#F4A9B8", skin: "#C9C3CF" }, face: face(70, 24, 3.8, 89, [42, 44], [100, 52]) },
-  { id: "owl", name: "Owl", category: "Animals", tags: ["night", "wise", "graduation", "handwritten"], colors: { primary: "#A97B52", secondary: "#F5A33C", skin: "#F5E3C8" }, face: face(64, 28, 4.6, null, [36, 44], [96, 56], { cheekY: 13 }) },
+  { id: "owl", name: "Owl", category: "Animals", tags: ["night", "wise", "graduation", "handwritten"], colors: { primary: "#A97B52", secondary: "#F5A33C", skin: "#F5E3C8" }, face: face(64, 28, 4.6, null, [36, 44], [96, 56], { cheekY: 18, cheekX: 6 }) },
   { id: "whale", name: "Whale", category: "Animals", tags: ["sea", "ocean", "voyage"], colors: { primary: "#6FA8DC", secondary: "#BFE3F7", skin: "#EAF4FB" }, face: face(72, 24, 3.8, 84, [52, 50], [102, 60], { x: 48 }) },
 
   // ---------- little friends ----------
   { id: "robot", name: "Robot", category: "Objects", tags: ["game", "pixel", "tech", "future"], colors: { primary: "#9AD8C8", secondary: "#FFD166", skin: "#9AD8C8" }, face: face(55, 22, 3.6, 66, [16, 40], [84, 46], { ink: "#FFFFFF", cheekX: 4, cheekY: 9 }) },
   { id: "star", name: "Star", category: "Objects", tags: ["night", "pixel", "newyear", "wish"], colors: { primary: "#FFC94D", secondary: "#FFC94D", skin: "#FFC94D" }, face: face(66, 22, 3.8, 77, [22, 30], [96, 40]) },
   { id: "candle", name: "Candle", category: "Objects", tags: ["birthday", "christmas", "wish", "cozy"], colors: { primary: "#FBEFD8", secondary: "#F2B45A", skin: "#FBEFD8" }, face: face(82, 24, 3.6, 93, [48, 48], [104, 52]) },
-  { id: "pencil", name: "Pencil", category: "Objects", tags: ["school", "handwritten", "teacher", "graduation"], colors: { primary: "#FFD15C", secondary: "#F4A3A8", skin: "#F2D3A8" }, face: face(64, 16, 3.2, 74, [14, 26], [90, 34], { cheekX: 4, cheekY: 7 }) },
+  { id: "pencil", name: "Pencil", category: "Objects", tags: ["school", "handwritten", "teacher", "graduation"], colors: { primary: "#FFD15C", secondary: "#F4A3A8", skin: "#F2D3A8" }, face: face(64, 16, 3.2, 74, [14, 26], [90, 34], { cheekX: 3, cheekY: 7, blush: { size: 0.7 } }) },
   { id: "camera", name: "Camera", category: "Objects", tags: ["voyage", "photo", "trip"], colors: { primary: "#9CCFC4", secondary: "#9CCFC4", skin: "#FBF1E2" }, face: face(66, 28, 3.4, null, [44, 30], [106, 60], { cheekY: 0, cheekX: 10 }) },
   { id: "backpack", name: "Backpack", category: "Objects", tags: ["voyage", "school", "trip"], colors: { primary: "#D9B07A", secondary: "#D9B07A", skin: "#D9B07A" }, face: face(66, 24, 3.8, 76, [42, 50], [104, 56]) },
   { id: "drop", name: "Raindrop", category: "Objects", tags: ["rain", "calm"], colors: { primary: "#A8D3EE", secondary: "#A8D3EE", skin: "#A8D3EE" }, face: face(84, 24, 3.8, 94, [36, 22], [106, 50]) },
