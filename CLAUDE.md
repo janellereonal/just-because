@@ -190,6 +190,16 @@ verification is only required once `RESEND_API_KEY` and `EMAIL_FROM` are both se
   styles (Scrapbook, Storybook, Comic, Bento, Hunt, Zine, Mixtape, Scratch, Constellation) have their own in
   `src/themes/layouts/` (registry `LAYOUT_OPENINGS`, shared kit in `kit.tsx`), picked by `TactileOpening`'s `style`
   prop (`giftStyle` on `GiftIntro`). They take the gift's palette. Try one at `/dev/openings?style=mixtape&pal=berry`.
+- Every theme style also reads in a body of its own (flag `styleBodies`), so no two styles read alike: Love Letter is
+  a ribbon-tied bundle of envelopes, Cake a party table, Record Player a record crate, Invitation a reception, Countdown
+  a rooftop of fireworks, Boarding Pass a passport, Gift Box presents under a tree, Crib Mobile a nursery shelf of
+  blocks, Fetch a toy basket, Board Game a real board with dice, Arcade a game cabinet, Winter Window frosted panes,
+  Care Package an unpacked box (Balikbayan look too), Parol a street of lanterns, Debut a dance card. Code:
+  `src/components/bodies/<Name>Body.tsx`, CSS `src/styles/bodies/<name>.css`, words in `en.ts` (one block per body,
+  plus `style.<id>.aboutOwn` for the gallery). All share `src/components/bodies/kit.tsx` (pieces, opened-on-this-device,
+  the reader, footer). `registry.ts` maps style to body; `FormatView` uses it before the stored `format`, which stays
+  as it was, so flag off or a gift without a style reads exactly as before. Test: `registry.test.ts` (every theme style
+  has one, none shared). Try one at `/dev/bodies?style=cake` (`demo=sample`, `pal=night`, `look=balikbayan`).
 
 ## Themes, cast and sections
 
