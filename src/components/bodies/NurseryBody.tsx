@@ -57,7 +57,7 @@ export function NurseryBody(props: BodyProps) {
   const blocks = data.notes.filter((p) => p.kind !== "photo" || p.sealed);
   const photos = data.notes.filter((p) => p.kind === "photo" && !p.sealed);
   const shelves = useMemo(() => chunk(blocks, PER_SHELF), [blocks]);
-  const count = data.notes.filter((p) => opened.has(p.id)).length;
+  const count = blocks.filter((p) => opened.has(p.id)).length;
 
   function read(p: Piece, e: React.MouseEvent) {
     if (tumbling) return;
@@ -145,11 +145,13 @@ export function NurseryBody(props: BodyProps) {
         <p className="nu-progress" role="status" aria-live="polite">
           {data.notes.length === 0
             ? body.voice.empty(t("nursery.what"))
-            : count === 0
-              ? t("nursery.count", { n: data.notes.length })
-              : count === data.notes.length
-                ? t("nursery.allRead")
-                : t("nursery.progress", { n: count, total: data.notes.length })}
+            : blocks.length === 0
+              ? null
+              : count === 0
+                ? t("nursery.count", { n: blocks.length })
+                : count === blocks.length
+                  ? t("nursery.allRead")
+                  : t("nursery.progress", { n: count, total: blocks.length })}
         </p>
 
         {blocks.length || !photos.length ? (

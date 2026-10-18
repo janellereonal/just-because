@@ -255,6 +255,7 @@ export const en = {
   "rooftop.surprise": "A surprise",
   "rooftop.wordsTitle": "In a word, you are",
   "rooftop.for": "For {name}",
+  "rooftop.skyHint": "Every firework you light leaves a spark up here, with a name on it.",
 
   // boarding-pass body (PassportBody).
   "passport.pass": "Boarding pass",

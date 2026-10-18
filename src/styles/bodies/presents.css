@@ -38,7 +38,7 @@
 
 /* ---------- The tree ---------- */
 .pr-tree-wrap { position: relative; z-index: 1; margin: 18px auto -84px; width: min(82%, 330px); }
-@container gift (min-width: 720px) { .pr-tree-wrap { width: 440px; margin-top: 26px; margin-bottom: -112px; } .pr-floor { padding-top: 124px; } }
+@container gift (min-width: 720px) { .pr-tree-wrap { width: 440px; margin-top: 26px; margin-bottom: -112px; } .pr-floor { padding-top: 156px; } }
 .pr-tree { display: block; width: 100%; height: auto; overflow: visible; }
 .pr-tier { fill: url(#pr-pine); stroke: var(--pr-pine-deep); stroke-width: 1.5; stroke-linejoin: round; filter: drop-shadow(0 6px 4px rgba(0, 30, 20, .25)); }
 .pr-needle { fill: none; stroke: rgba(255,255,255,.18); stroke-width: 3; stroke-linecap: round; }

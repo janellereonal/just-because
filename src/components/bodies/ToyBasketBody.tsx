@@ -49,7 +49,6 @@ export function ToyBasketBody(props: BodyProps) {
   const photos = data.notes.filter((p) => p.kind === "photo" && !p.sealed);
   const inBasket = toys.filter((p) => !opened.has(p.id) || takenNow.has(p.id));
   const onRug = toys.filter((p) => opened.has(p.id));
-  const count = data.notes.filter((p) => opened.has(p.id)).length;
   const all = toys.length > 0 && onRug.length === toys.length;
 
   const tc = useMemo<Colors>(
@@ -227,11 +226,13 @@ export function ToyBasketBody(props: BodyProps) {
         <p className="tb-progress" role="status" aria-live="polite">
           {data.notes.length === 0
             ? body.voice.empty(t("toybasket.what"))
-            : count === 0
-              ? t("toybasket.count", { n: toys.length || data.notes.length })
-              : count === data.notes.length
-                ? t("toybasket.allRead")
-                : t("toybasket.progress", { n: onRug.length, total: toys.length })}
+            : toys.length === 0
+              ? null
+              : onRug.length === 0
+                ? t("toybasket.count", { n: toys.length })
+                : all
+                  ? t("toybasket.allRead")
+                  : t("toybasket.progress", { n: onRug.length, total: toys.length })}
         </p>
 
         {toys.length || !photos.length ? (

@@ -30,12 +30,14 @@
   justify-content: center;
   gap: 12px;
   margin-top: 20px;
-  font-size: 12px;
+  font-size: clamp(10.5px, 2.9cqi, 12px);
   font-weight: 600;
-  letter-spacing: .14em;
+  letter-spacing: .08em;
   text-transform: uppercase;
+  text-wrap: balance;
   color: color-mix(in srgb, var(--rx-gold-deep) 70%, var(--b-ink));
 }
+@container gift (min-width: 560px) { .rx-countdown { letter-spacing: .14em; } }
 .rx-countdown::before, .rx-countdown::after { content: ""; flex: none; width: 34px; height: 1px; background: var(--rx-gold); }
 
 .rx-section {

@@ -68,9 +68,9 @@
 }
 .rt-moon {
   position: absolute;
-  right: 9%;
-  top: 6%;
-  width: clamp(34px, 11cqi, 56px);
+  right: 5%;
+  top: 4px;
+  width: clamp(32px, 10cqi, 52px);
   aspect-ratio: 1;
   border-radius: 50%;
   background:
@@ -79,14 +79,43 @@
     radial-gradient(circle at 36% 34%, #FFFBEF, #ECE4CB 62%, #D6CCAE);
   box-shadow: 0 0 30px 6px rgba(255,248,225,.18), 0 0 80px 30px rgba(255,248,225,.06);
 }
-.rt-sky-field { position: relative; height: var(--rt-skyH); }
+.rt-sky-field { position: relative; height: var(--rt-skyH); transition: height .7s cubic-bezier(.3,1,.4,1); }
+.rt-sky-hint {
+  position: absolute;
+  left: 45%;
+  top: 60%;
+  width: min(68%, 270px);
+  translate: -50% -50%;
+  padding: 10px 16px;
+  border: 1px dashed color-mix(in srgb, var(--rt-gold) 35%, transparent);
+  border-radius: 999px;
+  font-size: 12.5px;
+  line-height: 1.45;
+  text-align: center;
+  color: color-mix(in srgb, var(--rt-gold) 55%, #FFFFFF);
+  opacity: .6;
+}
+.rt-sky-hint::before, .rt-sky-hint::after {
+  /* two faint sparks waiting either side */
+  content: "";
+  position: absolute;
+  top: 50%;
+  width: 10px;
+  height: 10px;
+  translate: 0 -50%;
+  border-radius: 50%;
+  background: radial-gradient(circle, #FFFFFF 0 15%, var(--rt-gold) 30%, transparent 70%);
+  animation: rt-shine 3s ease-in-out infinite;
+}
+.rt-sky-hint::before { left: -22px; }
+.rt-sky-hint::after { right: -22px; animation-delay: -1.5s; background: radial-gradient(circle, #FFFFFF 0 15%, var(--rt-violet) 30%, transparent 70%); }
 .rt-spark {
   position: absolute;
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 4px;
-  translate: -50% -50%;
+  translate: -50% 50%;
   animation: rt-pop .7s cubic-bezier(.2,1.6,.4,1) both;
   -webkit-tap-highlight-color: transparent;
 }
@@ -126,6 +155,16 @@
 .rt-roof { position: relative; background: var(--rt-city); }
 .rt-status { padding: 22px 0 6px; text-align: center; font-size: 12px; font-weight: 600; letter-spacing: .16em; text-transform: uppercase; opacity: .75; }
 .rt-ledge { position: relative; }
+/* Every other ledge is a higher terrace: inset ends, concrete instead of brick */
+.rt-ledge.is-odd .rt-coping { clip-path: inset(0 clamp(8px, 2.5cqi, 40px) round 3px 3px 0 0); }
+.rt-ledge.is-odd .rt-wall {
+  clip-path: inset(0 clamp(8px, 2.5cqi, 40px) round 0 0 4px 4px);
+  background-color: color-mix(in srgb, var(--rt-stone) 32%, var(--rt-city));
+  background-image:
+    linear-gradient(180deg, rgba(0,0,0,.3), transparent 30%, rgba(0,0,0,.25)),
+    repeating-linear-gradient(90deg, transparent 0 calc(25% - 1px), rgba(0,0,0,.3) calc(25% - 1px) 25%);
+}
+.rt-ledge.is-odd .rt-rockets { height: 104px; }
 .rt-rockets, .rt-tags { display: flex; justify-content: center; }
 .rt-rockets > li, .rt-tags > li { flex: 0 0 calc(100% / var(--per)); min-width: 0; padding: 0 2px; }
 .rt-rockets { position: relative; z-index: 1; height: 112px; }
@@ -237,6 +276,46 @@
 .rt-rocket.is-gone .rt-ship { opacity: 0; transform: translateY(-40px); pointer-events: none; }
 .rt-rocket.is-gone .rt-stick { background: linear-gradient(180deg, #1c120c 0 6px, #6E5034 6px); }
 .rt-rocket.is-quiet .rt-tube { filter: saturate(.5); }
+
+/* Fountains: a striped paper cone standing on the ledge */
+.rt-k-fountain .rt-ship { bottom: 0; width: 30px; height: calc(42px * var(--h)); rotate: 0deg; }
+.rt-k-fountain .rt-tube { top: 5px; border-radius: 2px 2px 3px 3px; clip-path: polygon(24% 0, 76% 0, 100% 100%, 0 100%); background: linear-gradient(90deg, rgba(0,0,0,.3), rgba(255,255,255,.3) 35%, rgba(255,255,255,0) 55%, rgba(0,0,0,.32)), repeating-linear-gradient(-28deg, var(--r1) 0 6px, var(--r2) 6px 9px); }
+.rt-k-fountain .rt-tube-icon { margin-top: 8px; }
+.rt-cap { position: absolute; left: 50%; top: 0; width: 15px; height: 7px; translate: -50% 0; border-radius: 50%; background: radial-gradient(circle at 50% 40%, #3a2a1e 0 30%, var(--r2) 34%); z-index: 1; }
+.rt-k-fountain .rt-fuse { left: auto; right: 2px; bottom: auto; top: -4px; rotate: 30deg; }
+
+/* Roman candles: tall thin tubes in a little base */
+.rt-k-candle .rt-ship { bottom: 0; width: 13px; height: calc(86px * var(--h)); }
+.rt-k-candle .rt-tube { top: 0; bottom: 7px; border-radius: 3px 3px 1px 1px; background: linear-gradient(90deg, rgba(0,0,0,.3), rgba(255,255,255,.3) 35%, rgba(255,255,255,0) 55%, rgba(0,0,0,.32)), radial-gradient(circle, var(--r2) 0 1.4px, transparent 1.8px) 0 0 / 6px 8px, var(--r1); }
+.rt-k-candle .rt-tube::before { content: ""; position: absolute; left: 0; right: 0; top: 0; height: 5px; border-radius: 3px 3px 0 0; background: #2a1d14; box-shadow: inset 0 -2px 0 var(--r2); }
+.rt-k-candle .rt-tube-icon { width: 10px; height: 10px; padding: 1px; }
+.rt-base { position: absolute; left: 50%; bottom: 0; width: 24px; height: 8px; translate: -50% 0; border-radius: 3px; background: linear-gradient(180deg, color-mix(in srgb, var(--rt-stone) 80%, #fff), color-mix(in srgb, var(--rt-stone) 60%, #000)); }
+.rt-k-candle .rt-fuse { bottom: auto; top: -6px; }
+
+/* Cakes: a box of tubes that fires one after another */
+.rt-k-cake .rt-ship { bottom: 0; width: 42px; height: calc(32px * var(--h)); rotate: 0deg; }
+.rt-k-cake .rt-tube { top: 9px; border-radius: 2px; background: linear-gradient(90deg, rgba(0,0,0,.28), rgba(255,255,255,.22) 30%, rgba(255,255,255,0) 50%, rgba(0,0,0,.3)), linear-gradient(180deg, transparent 32%, var(--r2) 32% 62%, transparent 62%), var(--r1); }
+.rt-cake-top {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  height: 11px;
+  border-radius: 2px 2px 0 0;
+  background:
+    radial-gradient(circle, #1E140E 0 2.2px, var(--r2) 2.6px 3.4px, transparent 3.8px) 1px 0 / 8px 11px,
+    color-mix(in srgb, var(--r1) 70%, #fff);
+  transform: perspective(60px) rotateX(28deg);
+  transform-origin: 50% 100%;
+}
+.rt-k-cake .rt-tube-icon { position: absolute; right: 4px; top: 50%; translate: 0 -50%; width: 10px; height: 10px; padding: 1px; }
+.rt-k-cake .rt-fuse { left: 4px; bottom: auto; top: 12px; rotate: -70deg; }
+
+/* Fountains, candles and cakes stay on the roof once they've gone off: burnt out, still smoking */
+.rt-rocket:not(.rt-k-rocket).is-gone .rt-ship { opacity: 1; transform: none; filter: grayscale(.6) brightness(.5); }
+.rt-rocket:not(.rt-k-rocket).is-gone .rt-wisp { bottom: calc(46px * var(--h)); }
+.rt-k-candle.is-gone .rt-wisp { bottom: calc(86px * var(--h)); }
+.rt-rocket:not(.rt-k-rocket).is-flying .rt-ship { transform: scale(1.08, .94); opacity: 1; transition: transform .2s; filter: brightness(1.3); }
 .rt-wisp {
   position: absolute;
   left: 50%;

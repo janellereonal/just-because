@@ -30,6 +30,13 @@ import {
 } from "@/components/bodies/kit";
 
 const FINALE = "rooftop-finale";
+/** The sky starts low and grows a little with each spark (sparks sit from the skyline up, so none ever move). */
+const SKY_BASE = 132;
+const SKY_STEP = 14;
+const SKY_MAX = 400;
+const skyFor = (n: number) => Math.min(SKY_MAX, SKY_BASE + n * SKY_STEP);
+type Kind = "rocket" | "fountain" | "candle" | "cake";
+const KINDS: Kind[] = ["rocket", "fountain", "rocket", "candle", "cake", "rocket", "candle", "fountain"];
 
 export function RooftopBody(props: BodyProps) {
   const body = useBody(props);
@@ -37,7 +44,11 @@ export function RooftopBody(props: BodyProps) {
   const { opened, open } = useOpened("rooftop", body.site.id, body.sample);
   const notes = data.notes;
   const total = notes.length;
-  const lit = notes.filter((p) => opened.has(p.id));
+  // Sparks in the order they went up, so a new one never moves the others.
+  const lit = useMemo(() => {
+    const byId = new Map(notes.map((p) => [p.id, p]));
+    return [...opened].map((id) => byId.get(id)).filter((p): p is Piece => !!p);
+  }, [notes, opened]);
   const [flying, setFlying] = useState<string | null>(null);
   const finaleDone = useRef(false);
   const sparks = [colors.primary, colors.accent, "#FFF4D6", colors.mix(colors.primary, colors.accent, 0.5)];
@@ -114,8 +125,7 @@ export function RooftopBody(props: BodyProps) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [allLit, body.reading, flying, opened]);
 
-  // Room in the sky for every spark, worked out from all the notes so sparks never move.
-  const skyH = Math.min(400, 170 + total * 5);
+  const skyH = skyFor(lit.length);
 
   return (
     <BodyRoot
@@ -156,17 +166,18 @@ export function RooftopBody(props: BodyProps) {
         <div className="rt-sky" aria-label={t("rooftop.progress", { n: lit.length, total })} role="group">
           <div className="rt-sky-field">
           <span className="rt-moon" aria-hidden="true" />
-          {lit.map((p) => {
+          {lit.length === 0 && total ? <p className="rt-sky-hint">{t("rooftop.skyHint")}</p> : null}
+          {lit.map((p, k) => {
             const i = notes.indexOf(p);
             const sx = 6 + seed(`${p.id}x`) * 88;
-            const sy = 8 + seed(`${p.id}y`) * 74;
+            const sy = 14 + seed(`${p.id}y`) * (skyFor(k + 1) - 66);
             return (
               <button
                 key={p.id}
                 type="button"
                 className="rt-spark"
                 tabIndex={-1}
-                style={{ left: `${sx}%`, top: `${sy}%`, "--sc": sparks[i % sparks.length], "--tw": `${(2.4 + seed(p.id) * 2.4).toFixed(2)}s`, "--td": `${(-seed(p.id) * 3).toFixed(2)}s` } as React.CSSProperties}
+                style={{ left: `${sx}%`, bottom: `${sy.toFixed(0)}px`, "--sc": sparks[i % sparks.length], "--tw": `${(2.4 + seed(p.id) * 2.4).toFixed(2)}s`, "--td": `${(-seed(p.id) * 3).toFixed(2)}s` } as React.CSSProperties}
                 onClick={() => body.read(p)}
                 aria-label={pieceLabel(p)}
               >
@@ -188,7 +199,7 @@ export function RooftopBody(props: BodyProps) {
           </p>
         </div>
         {(ledges.length ? ledges : [[]]).map((row, k) => (
-          <div key={k} className="rt-ledge" style={{ "--per": per } as React.CSSProperties}>
+          <div key={k} className={`rt-ledge ${k % 2 ? "is-odd" : ""}`} style={{ "--per": per } as React.CSSProperties}>
             <ul className="rt-rockets mx-auto max-w-[1080px] px-4">
               {row.map((p, i) => (
                 <li key={p.id}>
@@ -290,22 +301,31 @@ function Clock({ date, headingFont }: { date: string | null; headingFont: string
 function Rocket({ piece, index, gone, flying, onLaunch }: { piece: Piece; index: number; gone: boolean; flying: boolean; onLaunch: (e: React.MouseEvent<HTMLElement>) => void }) {
   const r = seed(piece.id);
   const locked = isLocked(piece);
+  // A roof full of different fireworks: rockets on sticks, fountains, roman candles, cakes of tubes.
+  const kind = KINDS[(index + Math.floor(seed(`${piece.id}k`) * KINDS.length)) % KINDS.length]!;
   const Icon = piece.sealed || locked ? Lock : piece.kind === "song" ? Music2 : piece.kind === "voice" ? Mic : piece.kind === "ornament" ? Star : null;
   return (
     <button
       type="button"
-      className={`rt-rocket is-c${index % 4} ${gone ? "is-gone" : ""} ${flying ? "is-flying" : ""} ${piece.sealed || locked ? "is-quiet" : ""}`}
-      style={{ "--h": `${(0.86 + r * 0.24).toFixed(2)}`, "--lean": `${((seed(`${piece.id}l`) - 0.5) * 6).toFixed(1)}deg` } as React.CSSProperties}
+      className={`rt-rocket rt-k-${kind} is-c${(index + (index >> 2)) % 4} ${gone ? "is-gone" : ""} ${flying ? "is-flying" : ""} ${piece.sealed || locked ? "is-quiet" : ""}`}
+      style={{ "--h": `${(0.82 + r * 0.3).toFixed(2)}`, "--lean": `${((seed(`${piece.id}l`) - 0.5) * 6).toFixed(1)}deg` } as React.CSSProperties}
       onClick={onLaunch}
       aria-label={`${pieceLabel(piece)}${locked ? `. ${t("body.opensOn", { day: formatDay(piece.date!) })}` : ""}`}
       title={pieceWhat(piece)}
     >
-      <span className="rt-stick" />
+      {kind === "rocket" ? <span className="rt-stick" /> : null}
       <span className="rt-ship">
-        <span className="rt-cone" />
+        {kind === "rocket" ? <span className="rt-cone" /> : null}
+        {kind === "cake" ? <span className="rt-cake-top" /> : null}
+        {kind === "fountain" ? <span className="rt-cap" /> : null}
         <span className="rt-tube">{Icon ? <Icon className="rt-tube-icon" /> : null}</span>
-        <span className="rt-fin is-l" />
-        <span className="rt-fin is-r" />
+        {kind === "rocket" ? (
+          <>
+            <span className="rt-fin is-l" />
+            <span className="rt-fin is-r" />
+          </>
+        ) : null}
+        {kind === "candle" ? <span className="rt-base" /> : null}
         <span className="rt-fuse" />
       </span>
       {gone ? <span className="rt-wisp" /> : null}
