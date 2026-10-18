@@ -9,7 +9,7 @@ import { Lock, Play } from "lucide-react";
 import { giftVoice } from "@/lib/giftVoice";
 import { SampleText } from "@/components/SampleMark";
 import { giftHeading } from "@/lib/themeKind";
-import { giftToday, useCountdown, useMediaUrl, usePieces, type Piece } from "@/lib/giftPieces";
+import { pieceLocked, useCountdown, useMediaUrl, usePieces, type Piece } from "@/lib/giftPieces";
 import type { FormatViewProps } from "@/components/formats/FormatView";
 import { PieceSheet, pieceLabel, seed } from "@/components/formats/PieceSheet";
 import { loadFont } from "@/themes/_shared/design";
@@ -109,7 +109,7 @@ function Note({
   const corner = CORNER[Math.floor(seed(`d:${piece.id}`) * CORNER.length)]!;
   const text = piece.text ?? "";
   const long = [...text].length > LONG;
-  const locked = piece.kind === "calendar" && !!piece.date && piece.date > giftToday();
+  const locked = pieceLocked(piece);
   const closed = piece.sealed || locked;
   return (
     <article

@@ -27,7 +27,9 @@ The browser never talks to the database. Every read/write is a server function i
 
 - Anyone can read a gift's settings, modules and calendar by slug.
 - Guests only see **approved** contributions. Tree ornaments marked "only the
-  recipient" never send their text to the browser.
+  recipient" only send their text to the finished gift (`listPublicTreeOrnaments`, /g/),
+  never to the friend page. Locked calendar doors and ornaments before `tree_reveal_date`
+  are sent without content until that day has started in UTC+14 (`dayStartedSomewhere`).
 - Guests add contributions (always `pending`) and can edit/delete their own with the
   `edit_token` stored on their device, only while the gift is a **draft**.
 - Only the creator (or an admin) can edit a gift, see pending items, approve/hide,

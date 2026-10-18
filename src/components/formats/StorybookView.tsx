@@ -7,7 +7,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { ChevronLeft, ChevronRight, Lock, Mic, Music2 } from "lucide-react";
 import { FONT_PAIRINGS, toEmbedUrl } from "@/lib/gift";
 import { readableInk } from "@/lib/palettes";
-import { giftToday, useMediaUrl, usePieces, useReducedMotion, type Piece } from "@/lib/giftPieces";
+import { pieceLocked, useMediaUrl, usePieces, useReducedMotion, type Piece } from "@/lib/giftPieces";
 import type { FormatViewProps } from "@/components/formats/FormatView";
 import { seed } from "@/components/formats/PieceSheet";
 import { burst, buzz, chime } from "@/lib/play";
@@ -23,7 +23,7 @@ type Page =
 function PieceBody({ piece, accent }: { piece: Piece; accent: string }) {
   const media = useMediaUrl(piece.media);
   const embed = piece.link ? toEmbedUrl(piece.link) : null;
-  const locked = piece.kind === "calendar" && !!piece.date && piece.date > giftToday();
+  const locked = pieceLocked(piece);
   if (piece.sealed || locked)
     return (
       <div className="sbk-sealed">

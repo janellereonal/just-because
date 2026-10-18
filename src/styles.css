@@ -189,6 +189,16 @@
   outline-color: #c2366b;
 }
 
+/*
+ * Gift pages: friends paste links and type long words. A word that doesn't fit its line
+ * breaks inside its card instead of pushing the card off a phone screen. `anywhere` (not
+ * `break-word`) so cards, flex items and grid tracks can also shrink below the longest word.
+ * Set on FormatView's root, so every layout inherits it.
+ */
+.jb-gift {
+  overflow-wrap: anywhere;
+}
+
 
 /* Bo's speech bubble (decorative; aria-hidden where used). */
 .bo-bubble {

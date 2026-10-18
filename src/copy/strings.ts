@@ -394,6 +394,8 @@ export const TREE_COPY = {
   sealedBody: (name: string) => `${name}'s message opens with the gift.`,
   private: "A private ornament",
   privateBody: "This message is only for the person the gift is for.",
+  /** Over an "only the recipient" ornament, on the finished gift. */
+  justForYou: "Just for you",
   opensOn: (day: string) => `Opens on ${day}`,
   wait: "Hang on, it's nearly time.",
   close: "Close",
@@ -659,6 +661,12 @@ export const FOOTER_COPY = {
   draft: "Draft: under review.",
   draftBody: "This page is being reviewed and may change before it's final.",
   updated: (date: string) => `Last updated ${date}`,
+} as const;
+
+/** The small links under a finished gift. */
+export const GIFT_FOOTER_COPY = {
+  /** Plays the opening again (every layout; Scrapbook also has it in its own footer). */
+  replayIntro: "Replay intro",
 } as const;
 
 /** Reporting a gift. */
