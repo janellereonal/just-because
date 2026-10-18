@@ -684,7 +684,8 @@ export const deleteSite = createServerFn({ method: "POST" })
       .from(schema.orders)
       .where(and(eq(schema.orders.siteId, data.id), eq(schema.orders.status, "paid")))
       .limit(1);
-    if (paid) throw new Error("This gift has a paid plan, so it stays. You can unpublish it from the editor.");
+    // A friendly 409, not a 500, when it was paid for in another tab after this page loaded.
+    if (paid) throw new HttpError(409, "This gift has a paid plan, so it stays. You can unpublish it from the editor.");
     await db.delete(schema.giftSites).where(eq(schema.giftSites.id, data.id));
     // Every photo, voice note and picture stored for it goes too.
     const { deleteGiftMedia } = await import("@/server/uploads");
@@ -1405,8 +1406,16 @@ export const setCustomSlug = createServerFn({ method: "POST" })
       .select({ id: schema.giftSites.id })
       .from(schema.giftSites)
       .where(eq(schema.giftSites.slug, data.slug));
-    if (taken) return { ok: false, slug: site.slug, error: "That link name is taken. Try another." };
-    await getDb().update(schema.giftSites).set({ slug: data.slug }).where(eq(schema.giftSites.id, site.id));
+    const takenError = { ok: false, slug: site.slug, error: "That link name is taken. Try another." };
+    if (taken) return takenError;
+    try {
+      await getDb().update(schema.giftSites).set({ slug: data.slug }).where(eq(schema.giftSites.id, site.id));
+    } catch (error) {
+      // Two gifts asking for the same name at the same moment: the second one loses, kindly.
+      const { isUniqueViolation } = await import("@/server/db/errors");
+      if (isUniqueViolation(error)) return takenError;
+      throw error;
+    }
     return { ok: true, slug: data.slug };
   });
 

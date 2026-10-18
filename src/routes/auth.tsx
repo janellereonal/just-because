@@ -8,13 +8,18 @@ import { getAuthOptions } from "@/lib/api";
 import { SiteHeader } from "@/components/SiteHeader";
 import Bo from "@/components/Bo";
 import { useAuth } from "@/hooks/useAuth";
-import { GUEST_COPY } from "@/copy/strings";
+import { AUTH_COPY, GUEST_COPY } from "@/copy/strings";
 
 /** Only same-site paths, so the link can't send anyone elsewhere after signing in. */
 function safeNext(value: unknown): string | undefined {
   return typeof value === "string" && value.startsWith("/") && !value.startsWith("//") && !value.startsWith("/\\")
     ? value
     : undefined;
+}
+
+/** Our own lockout message is already friendly; Better Auth's quick limit gets ours. */
+function tooMany(message: string | undefined) {
+  return message && !/^too many requests/i.test(message) ? message : AUTH_COPY.slowDown;
 }
 
 export const Route = createFileRoute("/auth")({
@@ -98,7 +103,7 @@ function AuthPage() {
       });
       setBusy(false);
       if (error) {
-        toast.error(error.message ?? "Couldn't create that account.");
+        toast.error(error.status === 429 ? tooMany(error.message) : (error.message ?? "Couldn't create that account."));
         return;
       }
       if (options?.email) {
@@ -118,7 +123,9 @@ function AuthPage() {
       toast.error(
         error.status === 401
           ? "That email and password don't match."
-          : (error.message ?? "Couldn't sign in."),
+          : error.status === 429
+            ? tooMany(error.message)
+            : (error.message ?? "Couldn't sign in."),
       );
       return;
     }

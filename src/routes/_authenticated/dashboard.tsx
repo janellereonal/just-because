@@ -268,7 +268,7 @@ function Dashboard() {
                   No gifts yet. Who's it for?
                 </h2>
                 <p className="mt-3 max-w-md text-ink/70">
-                  Pick a theme, share one link with friends, and watch the notes roll in.
+                  Pick a {isFlagOn("styles") ? "style" : "theme"}, share one link with friends, and watch the notes roll in.
                 </p>
                 <Link
                   to="/create"

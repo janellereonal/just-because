@@ -41,3 +41,18 @@ describe("discountedAmount", () => {
     expect(discountedAmount(29900, { type: "fixed", value: -100 })).toBe(29900);
   });
 });
+
+describe("plan cards count only the formats on offer", () => {
+  test("a format behind a flag that's off isn't counted", async () => {
+    const { TIERS, featureList } = await import("./pricing");
+    const { offeredFormats } = await import("@/lib/formats");
+    const offered = offeredFormats().length;
+    const keepsake = TIERS.find((t) => t.id === "keepsake")!;
+    expect(featureList(keepsake)).toContain(`All ${offered} formats, including Storybook and Mixtape`);
+    // The same number the homepage says ("Nine ways to open the same gift.").
+    const { LANDING_MORE } = await import("@/copy/strings");
+    expect(LANDING_MORE.formats.title(9)).toBe("Nine ways to open the same gift.");
+    expect(LANDING_MORE.formats.title(10)).toBe("Ten ways to open the same gift.");
+    expect(LANDING_MORE.formats.title(14)).toBe("14 ways to open the same gift.");
+  });
+});

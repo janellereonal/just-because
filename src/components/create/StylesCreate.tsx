@@ -26,7 +26,7 @@ import { usePalettes, suggestedPalettes } from "@/hooks/usePalettes";
 import { MODULES, normalizeSite, type ModuleType } from "@/lib/gift";
 import { PRESETS } from "@/lib/presets";
 import { occasionTitle, themeKindOf, type ThemeKind } from "@/lib/themeKind";
-import { occasionInfo, occasionName, type OccasionId } from "@/lib/occasions";
+import { occasionInfo, occasionInSentence, occasionName, type OccasionId } from "@/lib/occasions";
 import { STYLES, lookFor, styleForLegacy, styleInfo, styleTitle, type StyleId, type StyleInfo } from "@/lib/styles";
 import type { GiftFormat } from "@/lib/formats";
 import { accessoryForTheme } from "@/lib/bo3d/accessories";
@@ -373,7 +373,7 @@ export function StylesCreate({
               5,
               solo ? "What will you add?" : "What can friends add?",
               suggested.length > 0
-                ? `We picked a few${occasion ? ` for ${occasionName(occasion).toLowerCase()}` : ""}. Turn on anything else.`
+                ? `We picked a few${occasion ? ` for ${occasionInSentence(occasion)}` : ""}. Turn on anything else.`
                 : "Turn on as many as you like.",
             )}
             <div className="mt-5 grid gap-5 md:grid-cols-[1fr_minmax(280px,340px)] md:items-start">

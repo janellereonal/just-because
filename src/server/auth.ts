@@ -3,11 +3,16 @@ import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { tanstackStartCookies } from "better-auth/tanstack-start";
 import { anonymous } from "better-auth/plugins";
+import { APIError, createAuthMiddleware, isAPIError } from "better-auth/api";
 import { and, eq } from "drizzle-orm";
 import { getDb, schema } from "./db";
 import { emailEnabled, existingAccountEmail, resetPasswordEmail, siteUrl, verifyEmail } from "./email";
 import { claimGuestGifts, GUEST_EMAIL_DOMAIN } from "./guests";
 import { isFlagOn } from "@/config/flags";
+import { clearWrongPasswords, recordWrongPassword, requestIp, signInBlocked } from "./signInLimit";
+
+/** Shown when an email (or IP) has had too many wrong passwords. Matches the copy in /auth. */
+const TOO_MANY_TRIES = "Too many tries. Wait 15 minutes, or reset your password.";
 
 /**
  * BETTER_AUTH_SECRET signs session cookies. If it isn't set, derive a stable
@@ -67,6 +72,32 @@ function createAuth() {
       sendVerificationEmail: async ({ user, url }) => {
         await verifyEmail(user.email, user.name, url);
       },
+    },
+    // Better Auth's own limit (3 sign-in or sign-up tries per 10 seconds per IP) is only on when
+    // NODE_ENV is "production". Vercel sets it; say so outright so a server without it is covered too.
+    rateLimit: {
+      enabled: process.env["NODE_ENV"] === "production" || Boolean(process.env["VERCEL"]),
+    },
+    // Wrong passwords: a slower brake per email and per IP (src/server/signInLimit.ts).
+    hooks: {
+      before: createAuthMiddleware(async (ctx) => {
+        if (ctx.path !== "/sign-in/email") return;
+        const email = typeof ctx.body?.email === "string" ? ctx.body.email : "";
+        if (email && signInBlocked(email, requestIp(ctx.headers))) {
+          throw new APIError("TOO_MANY_REQUESTS", { message: TOO_MANY_TRIES });
+        }
+      }),
+      after: createAuthMiddleware(async (ctx) => {
+        if (ctx.path !== "/sign-in/email") return;
+        const email = typeof ctx.body?.email === "string" ? ctx.body.email : "";
+        if (!email) return;
+        const returned = ctx.context.returned;
+        if (isAPIError(returned)) {
+          if (returned.statusCode === 401) recordWrongPassword(email, requestIp(ctx.headers));
+        } else {
+          clearWrongPasswords(email);
+        }
+      }),
     },
     socialProviders:
       googleId && googleSecret

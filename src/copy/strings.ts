@@ -209,10 +209,17 @@ export const LANDING = {
   },
 } as const;
 
+const COUNT_WORDS = ["Zero", "One", "Two", "Three", "Four", "Five", "Six", "Seven", "Eight", "Nine", "Ten", "Eleven", "Twelve"];
+/** "Nine" for 9, "14" past twelve. Starts a sentence, so it's capitalised. */
+export function countWord(n: number): string {
+  return COUNT_WORDS[n] ?? String(n);
+}
+
 export const LANDING_MORE = {
   formats: {
     kicker: "Formats",
-    title: "Nine ways to open the same gift.",
+    /** Built from the formats on offer, so a format behind a flag isn't counted. */
+    title: (n: number) => `${countWord(n)} ways to open the same gift.`,
     body: "Switch any time. Nobody has to rewrite their note.",
     isNew: "New",
     pickLabel: "Formats",
@@ -693,6 +700,12 @@ export const CODE_LIMIT_COPY = {
   allHeld: "Every use of this code is waiting on a payment right now. If one isn't finished, it frees up within a day.",
 };
 
+/** Sign-in messages (src/routes/auth.tsx). */
+export const AUTH_COPY = {
+  /** Better Auth's quick limit: a few tries in a few seconds. */
+  slowDown: "That's a lot of tries in a row. Wait a few seconds and try again.",
+};
+
 /** Starting a gift without an account (flag guestStart). */
 export const GUEST_COPY = {
   keep: "Sign in so you don't lose your gift.",
@@ -710,6 +723,8 @@ export const GUEST_COPY = {
   authHeading: "Keep your gift",
   authBody: "Sign in or make an account. The gift you started moves over with everything in it.",
   starting: "Starting your gift…",
+  accountTitle: "Sign in to keep your gifts",
+  accountBody: "You're a guest for now, so your gifts live on this device. Sign in or make an account and they move over with everything in them.",
 };
 
 /** Words → Opening style: which opening plays (Oct 2026: "Classic" used to hide the style's own without saying so). */

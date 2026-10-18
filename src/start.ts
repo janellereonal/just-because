@@ -1,6 +1,7 @@
 import { createStart, createCsrfMiddleware, createMiddleware } from "@tanstack/react-start";
 
 import { renderErrorPage } from "./lib/error-page";
+import { httpErrorAdapter } from "./lib/httpErrorAdapter";
 
 const errorMiddleware = createMiddleware().server(async ({ next }) => {
   try {
@@ -68,4 +69,6 @@ const csrfMiddleware = createCsrfMiddleware({
 export const startInstance = createStart(() => ({
   requestMiddleware: [errorMiddleware, csrfMiddleware],
   functionMiddleware: [fnErrors],
+  // Errors keep their status in the browser, so 403/404 answers aren't retried.
+  serializationAdapters: [httpErrorAdapter],
 }));
