@@ -1,3 +1,4 @@
+import { shareGift } from "@/lib/track";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { NewSections } from "@/components/sections/NewSections";
 import { resolveIconSet } from "@/themes/_shared/iconSets";
@@ -202,7 +203,8 @@ export function HandwrittenView({ theme, site, modules, contributions, calendarE
   const signers = data.friends.length ? data.friends : data.isSample ? ["Sam", "Alex", "Bea", "Jo", "Mika"] : [];
 
   return (
-    <div className="hw-root" style={{ "--hw-accent": accent } as React.CSSProperties}>
+    // The desk takes the gift's background, so a Christmas notebook sits on a Christmas table.
+    <div className="hw-root" style={{ "--hw-accent": accent, "--hw-desk": palette.background } as React.CSSProperties}>
       <div className="hw-book">
         <div className="hw-rings" aria-hidden>
           {Array.from({ length: 14 }, (_, i) => (
@@ -214,7 +216,7 @@ export function HandwrittenView({ theme, site, modules, contributions, calendarE
           <Doodle name="sun" seedKey="cover" color={accent} size={70} className="hw-float hw-f1" instant />
           <Doodle name="sparkle" seedKey="cover" color="#262220" size={34} className="hw-float hw-f2" instant delay={0.4} />
           <Doodle name="heart" seedKey="cover-2" color={accent} size={44} className="hw-float hw-f3" instant delay={0.7} />
-          <Doodle name="star" seedKey="cover-3" color="#2A4B9B" size={40} className="hw-float hw-f4" instant delay={1} />
+          <Doodle name="star" seedKey="cover-3" color={palette.primary} size={40} className="hw-float hw-f4" instant delay={1} />
           <p className="hw-kicker">a little notebook for</p>
           <h1 className={`hw-name ${[...data.name].length > 16 ? "is-long" : ""}`}>
             {/* Short names get circled; long ones that wrap get underlined instead. */}
@@ -326,7 +328,7 @@ export function HandwrittenView({ theme, site, modules, contributions, calendarE
             <button
               type="button"
               className="hw-btn"
-              onClick={() => (navigator.share ? void navigator.share({ title: site.title, url: location.href }).catch(() => undefined) : void navigator.clipboard.writeText(location.href))}
+              onClick={() => shareGift(site)}
             >
               pass it on
             </button>

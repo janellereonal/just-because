@@ -335,7 +335,7 @@ export const COMIC_COPY = {
   next: "Next page",
   share: "Share this issue",
   close: "Close",
-  replay: "Replay cover",
+  replay: "See the cover",
   backToEdit: "Back to editing",
   meanwhile: "Meanwhile, in the other world…",
   mine: "You're in this issue",

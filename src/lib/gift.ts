@@ -124,7 +124,7 @@ export const FONT_PAIRINGS = {
   modern: { label: "Modern", heading: "'Poppins', sans-serif", body: "'Inter', sans-serif" },
   // Key kept for saved gifts; the old script face is gone.
   handwritten: { label: "Fairytale", heading: "'Fraunces', serif", body: "'Karla', sans-serif" },
-  storybook: { label: "Storybook", heading: "'Young Serif', serif", body: "'Nunito', sans-serif", google: "Young+Serif&family=Nunito:wght@400;600;700" },
+  storybook: { label: "Fable", heading: "'Young Serif', serif", body: "'Nunito', sans-serif", google: "Young+Serif&family=Nunito:wght@400;600;700" },
   elegant: { label: "Elegant", heading: "'Cormorant Garamond', serif", body: "'Lato', sans-serif", google: "Cormorant+Garamond:wght@500;600;700&family=Lato:wght@400;700" },
   bold: { label: "Bold", heading: "'Bricolage Grotesque', sans-serif", body: "'DM Sans', sans-serif", google: "Bricolage+Grotesque:opsz,wght@12..96,600..800&family=DM+Sans:wght@400;500;700" },
   bubbly: { label: "Bubbly", heading: "'Baloo 2', sans-serif", body: "'Nunito', sans-serif", google: "Baloo+2:wght@600;700;800&family=Nunito:wght@400;600;700" },
@@ -132,8 +132,8 @@ export const FONT_PAIRINGS = {
   typewriter: { label: "Typewriter", heading: "'Courier Prime', monospace", body: "'Karla', sans-serif", google: "Courier+Prime:wght@400;700&family=Karla:wght@400;600" },
   groovy: { label: "Groovy", heading: "'Shrikhand', serif", body: "'DM Sans', sans-serif", google: "Shrikhand&family=DM+Sans:wght@400;500;700" },
   retro: { label: "Retro", heading: "'Bungee', sans-serif", body: "'Outfit', sans-serif", google: "Bungee&family=Outfit:wght@400;500;700" },
-  comic: { label: "Comic", heading: "'Bangers', sans-serif", body: "'Comic Neue', sans-serif", google: "Bangers&family=Comic+Neue:wght@400;700" },
-  pixel: { label: "Pixel", heading: "'Pixelify Sans', sans-serif", body: "'Outfit', sans-serif", google: "Pixelify+Sans:wght@500;700&family=Outfit:wght@400;500;700" },
+  comic: { label: "Inked", heading: "'Bangers', sans-serif", body: "'Comic Neue', sans-serif", google: "Bangers&family=Comic+Neue:wght@400;700" },
+  pixel: { label: "8-bit", heading: "'Pixelify Sans', sans-serif", body: "'Outfit', sans-serif", google: "Pixelify+Sans:wght@500;700&family=Outfit:wght@400;500;700" },
 } as const;
 
 export const FONT_CHOICES: readonly FontChoiceId[] = FONT_CHOICE_IDS;
