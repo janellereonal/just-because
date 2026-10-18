@@ -136,6 +136,17 @@ verification is only required once `RESEND_API_KEY` and `EMAIL_FROM` are both se
   site, content, users, launch). Plain English in product copy. Max one exclamation mark
   per screen. No em dashes in copy.
 
+## Photos and uploads
+
+- Photos are shrunk in the browser before upload (`preparePhoto` in `src/lib/upload.ts`): longest side
+  1600 px, WebP 80%, turned upright, EXIF (GPS) dropped by redrawing. Booth photos also get a 400 px
+  copy in `data.thumb`, used through `photoProps()` (`src/lib/media.ts`) as a srcset. No library.
+- Size and length limits per kind are `MEDIA_LIMITS` in `src/lib/limits.ts`, checked in the browser and
+  again in `authorizeUpload`. Files are cached for a year (names are unique).
+- HEIC: Safari reads it and iPhones send JPEG anyway. Other browsers get a "save it as a JPG" message,
+  because a HEIC decoder needs WebAssembly, which our CSP doesn't allow.
+- Old uploads can be shrunk with `tools/media/compress-existing.ts` (dry run by default, never deletes).
+
 ## Known gotchas
 
 - Countdowns are a UTC moment (`countdown_at`) shown in each viewer's own time zone; calendar days open

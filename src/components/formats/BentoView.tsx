@@ -1,4 +1,5 @@
 import { giftVoice } from "@/lib/giftVoice";
+import { photoProps } from "@/lib/media";
 import { shareGift } from "@/lib/track";
 import { localDate } from "@/lib/time";
 import { useEffect, useRef, useState } from "react";
@@ -102,9 +103,10 @@ function PhotoFace({ piece, palette }: { piece: Piece; palette: Palette }) {
       {url ? (
         <img
           data-framed={piece.framed || undefined}
-          src={url}
+          {...photoProps(url, piece.thumb, "(max-width: 640px) 50vw, 360px")}
           alt={piece.text ?? `Photo from ${piece.author}`}
           loading="lazy"
+          decoding="async"
           className="absolute inset-0 size-full object-cover transition-transform duration-500 group-hover:scale-[1.04]"
         />
       ) : (

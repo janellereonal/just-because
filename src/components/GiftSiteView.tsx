@@ -1,4 +1,5 @@
 import { giftVoice } from "@/lib/giftVoice";
+import { photoProps, thumbOf } from "@/lib/media";
 import { shareGift, trackEvent } from "@/lib/track";
 import { sampleLetter } from "@/copy/strings";
 import { useEffect, useMemo, useRef, useState } from "react";
@@ -75,7 +76,7 @@ function PhotoCard({ item, accent }: { item: Contribution; accent: string }) {
             {/* Photobooth photos have their frame and words drawn in, so they keep their 4:5 shape. */}
             <span className={`block ${item.data?.["framed"] === true ? "aspect-[4/5]" : "aspect-square"} w-full overflow-hidden rounded-[3px] bg-black/5`}>
               {url ? (
-                <img src={url} alt={caption ?? "Contributed photo"} className="size-full object-cover" draggable={false} data-framed={item.data?.["framed"] === true || undefined} />
+                <img {...photoProps(url, thumbOf(item.data), "(max-width: 640px) 45vw, 280px")} alt={caption ?? "Contributed photo"} className="size-full object-cover" draggable={false} loading="lazy" decoding="async" data-framed={item.data?.["framed"] === true || undefined} />
               ) : null}
             </span>
             <span className="sb-flip-hint" aria-hidden="true">

@@ -1,4 +1,5 @@
 import { giftVoice } from "@/lib/giftVoice";
+import { photoProps } from "@/lib/media";
 import { shareGift } from "@/lib/track";
 import { SampleText } from "@/components/SampleMark";
 import { giftHeading } from "@/lib/themeKind";
@@ -47,7 +48,7 @@ function PieceBody({ piece, accent }: { piece: Piece; accent: string }) {
           style={{ transform: `rotate(${(seed(piece.id) - 0.5) * 6}deg)` }}
         >
           {media ? (
-            <img src={media} alt={piece.text ?? ""} draggable={false} data-framed={piece.framed || undefined} />
+            <img {...photoProps(media, piece.thumb, "(max-width: 640px) 80vw, 420px")} alt={piece.text ?? ""} draggable={false} loading="lazy" decoding="async" data-framed={piece.framed || undefined} />
           ) : (
             <span className="sbk-photo-empty" />
           )}

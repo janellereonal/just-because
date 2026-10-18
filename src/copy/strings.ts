@@ -634,6 +634,21 @@ export const REPORT_COPY = {
   makeYourOwn: "Make your own gift",
 } as const;
 
+/** Upload states and limits, shown on photo, voice note and video fields. */
+export const UPLOAD_COPY = {
+  preparing: "Preparing photo…",
+  heic: "This browser can't open HEIC photos. Send it from your iPhone, or save it as a JPG first.",
+  uploading: "Uploading…",
+  tooBig: (kind: "photo" | "voice" | "video") =>
+    kind === "video"
+      ? "That video is over 50 MB. Try a shorter clip, up to a minute."
+      : kind === "voice"
+        ? "That voice note is over 5 MB. Keep it under 2 minutes."
+        : "That photo is over 8 MB. Try a smaller one.",
+  tooLong: (kind: "photo" | "voice" | "video") =>
+    kind === "video" ? "Videos can be up to a minute long. Try a shorter clip." : "Voice notes can be up to 2 minutes long.",
+};
+
 /** "Have a code?" in the plan picker. */
 export const CODE_COPY = {
   ask: "Have a code?",

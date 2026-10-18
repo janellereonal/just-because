@@ -1,0 +1,8 @@
+{
+  "name": "jb-media-tools",
+  "private": true,
+  "description": "Helpers for gift media. Not part of the app or the build.",
+  "dependencies": {
+    "sharp": "0.34.4"
+  }
+}

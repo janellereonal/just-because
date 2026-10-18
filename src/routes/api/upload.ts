@@ -1,11 +1,12 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { handleUpload, type HandleUploadBody } from "@vercel/blob/client";
 import { z } from "zod";
-import { authorizeUpload, saveDevUpload, uploadPathname } from "@/server/uploads";
+import { UPLOAD_CACHE_SECONDS, authorizeUpload, saveDevUpload, uploadPathname } from "@/server/uploads";
 
 const payloadSchema = z.object({
   kind: z.enum(["contribution", "calendar", "theme", "intro"]),
   targetId: z.string().uuid(),
+  media: z.enum(["photo", "voice", "video"]).optional(),
 });
 
 /**
@@ -31,13 +32,14 @@ export const Route = createFileRoute("/api/upload")({
             request,
             onBeforeGenerateToken: async (pathname, clientPayload) => {
               const payload = payloadSchema.parse(JSON.parse(clientPayload ?? "{}"));
-              const rules = await authorizeUpload(payload.kind, payload.targetId);
+              const rules = await authorizeUpload(payload.kind, payload.targetId, payload.media ?? null);
               if (!pathname.startsWith(uploadPathname(payload.kind, payload.targetId, "")))
                 throw new Error("Bad upload path");
               return {
                 allowedContentTypes: rules.contentTypes,
                 maximumSizeInBytes: rules.maxBytes,
                 addRandomSuffix: true,
+                cacheControlMaxAge: UPLOAD_CACHE_SECONDS,
               };
             },
             onUploadCompleted: async () => {},

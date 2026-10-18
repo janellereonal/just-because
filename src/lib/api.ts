@@ -79,10 +79,25 @@ const GUEST_TYPES = ["letters", "photobooth", "songs", "wordcloud", "voice", "tr
 const OWNER_NOTE_TYPES = ["letters", "photobooth", "songs", "wordcloud", "voice", ...NEW_SECTION_TYPES] as const;
 
 /** Clean `data` for a section and check it has what it needs. Throws a friendly 400. */
-function sectionPayload(type: string, raw: unknown, text: string | null, media: string | null): Record<string, unknown> | null {
-  // A photo made in the photobooth has its frame and words drawn in, so gifts show it whole.
-  if (type === "photobooth")
-    return raw && typeof raw === "object" && (raw as Record<string, unknown>)["framed"] === true ? { framed: true } : null;
+/** A small copy of a photo we stored for this gift (Vercel Blob, or a local dev upload), or null. */
+function ownThumb(value: unknown, siteId: string): string | null {
+  if (typeof value !== "string" || value.length > 600) return null;
+  if (/^https:\/\/[\w.-]+\.public\.blob\.vercel-storage\.com\//.test(value) && value.includes(`/gifts/${siteId}/`)) return value;
+  if (/^\/api\/dev-uploads\/[\w.-]+$/.test(value) && value.includes(`gifts_${siteId}_`)) return value;
+  return null;
+}
+
+function sectionPayload(type: string, raw: unknown, text: string | null, media: string | null, siteId = ""): Record<string, unknown> | null {
+  // Photos: a booth photo has its frame and words drawn in (gifts show it whole), and most
+  // photos come with a small copy for grids and previews.
+  if (type === "photobooth") {
+    const v = raw && typeof raw === "object" ? (raw as Record<string, unknown>) : {};
+    const out: Record<string, unknown> = {};
+    if (v["framed"] === true) out["framed"] = true;
+    const thumb = ownThumb(v["thumb"], siteId);
+    if (thumb) out["thumb"] = thumb;
+    return Object.keys(out).length ? out : null;
+  }
   if (!isNewSection(type)) return null;
   const clean = normalizeSectionData(type, raw);
   if (!clean) throw new HttpError(400, "Something's missing in that note. Check the fields and try again.");
@@ -782,7 +797,7 @@ export const submitContribution = createServerFn({ method: "POST" })
     data.textContent = data.textContent?.trim() || null;
     const textMax = noteTextLimit(data.moduleType);
     if (data.textContent && [...data.textContent].length > textMax) throw new HttpError(422, tooLong(data.moduleType === "wordcloud" ? "your word" : "your note", textMax));
-    const sectionData = sectionPayload(data.moduleType, data.data, data.textContent, data.mediaUrl);
+    const sectionData = sectionPayload(data.moduleType, data.data, data.textContent, data.mediaUrl, data.siteId);
     const [site] = await db.select().from(schema.giftSites).where(eq(schema.giftSites.id, data.siteId));
     if (!site) throw new HttpError(404, "We couldn't find that gift.");
     if (site.disabledAt) throw new HttpError(403, "This gift has been paused, so it isn't taking notes right now.");
@@ -850,7 +865,7 @@ export const saveOwnerNote = createServerFn({ method: "POST" })
     data.textContent = data.textContent?.trim() || null;
     const textMax = noteTextLimit(data.moduleType);
     if (data.textContent && [...data.textContent].length > textMax) throw new HttpError(422, tooLong(data.moduleType === "wordcloud" ? "the word" : "the note", textMax));
-    const sectionData = sectionPayload(data.moduleType, data.data, data.textContent, data.mediaUrl);
+    const sectionData = sectionPayload(data.moduleType, data.data, data.textContent, data.mediaUrl, data.siteId);
     const db = getDb();
     const [existing] = await db
       .select({ siteId: c.siteId, byOwner: c.byOwner })
@@ -1368,7 +1383,7 @@ export const updateOwnContribution = createServerFn({ method: "POST" })
     data.textContent = data.textContent?.trim() || null;
     const textMax = noteTextLimit(row.moduleType as never);
     if (data.textContent && [...data.textContent].length > textMax) throw new HttpError(422, tooLong("your note", textMax));
-    const sectionData = data.data !== undefined ? sectionPayload(row.moduleType, data.data, data.textContent, data.mediaUrl ?? "keep") : undefined;
+    const sectionData = data.data !== undefined ? sectionPayload(row.moduleType, data.data, data.textContent, data.mediaUrl ?? "keep", row.siteId) : undefined;
     await getDb()
       .update(c)
       .set({
