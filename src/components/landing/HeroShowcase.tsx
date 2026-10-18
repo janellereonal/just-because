@@ -13,7 +13,7 @@ import { Heart, Pause, Play, RotateCcw } from "lucide-react";
 import { Live3DContext } from "@/components/Theme3D";
 import { FormatView } from "@/components/formats/FormatView";
 import { DevicePreview, DeviceToggle, type PreviewDevice } from "@/components/DevicePreview";
-import { DEMO_GIFTS, DEMO_ORDER } from "@/lib/demoGifts";
+import { DEMO_GIFTS, DEMO_ORDER, demoAge } from "@/lib/demoGifts";
 import { TactileOpening } from "@/themes/TactileOpening";
 import { loadThemeFonts } from "@/themes/_shared/design";
 import { LANDING } from "@/copy/strings";
@@ -157,6 +157,7 @@ export function HeroShowcase() {
         palette={g.palette}
         recipientName={g.who}
         contributors={g.friends}
+        age={demoAge(g)}
         contained
         autoplay={playing}
         onOpen={() => setOpened(true)}
