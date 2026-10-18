@@ -119,6 +119,17 @@ export function PlanPickerDialog({
         ) : (
           <p className="py-10 text-center text-sm text-muted">Loading plans…</p>
         )}
+        <p className="text-center text-xs text-muted">
+          By continuing you agree to the{" "}
+          <a href="/terms" target="_blank" rel="noreferrer" className="underline underline-offset-2 hover:text-ink">
+            Terms
+          </a>{" "}
+          and{" "}
+          <a href="/refunds" target="_blank" rel="noreferrer" className="underline underline-offset-2 hover:text-ink">
+            Refund policy
+          </a>
+          . Prices are in Philippine pesos.
+        </p>
       </DialogContent>
     </Dialog>
   );
@@ -175,7 +186,17 @@ export function ExtendDialog({
         <Button className="w-full rounded-full" disabled={busy} onClick={() => void extend()}>
           {busy ? "Opening payment…" : `Extend for ${formatPeso(billing.extend.amount)}`}
         </Button>
-        <p className="text-center text-xs text-muted">Pay with {paymentMethodsSentence()}.</p>
+        <p className="text-center text-xs text-muted">
+          Pay with {paymentMethodsSentence()}. By continuing you agree to the{" "}
+          <a href="/terms" target="_blank" rel="noreferrer" className="underline underline-offset-2">
+            Terms
+          </a>{" "}
+          and{" "}
+          <a href="/refunds" target="_blank" rel="noreferrer" className="underline underline-offset-2">
+            Refund policy
+          </a>
+          .
+        </p>
       </div>
     );
   }

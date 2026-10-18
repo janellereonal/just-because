@@ -13,6 +13,8 @@ export const FLAGS = {
   birthdayAge: "birthdayAge",
   /** The Handwritten format (a notebook of notes and doodles) in the format pickers. */
   handwrittenFormat: "handwrittenFormat",
+  /** "Want us to handle it?" concierge requests on /create and in the editor. */
+  concierge: "concierge",
 } as const;
 
 export type FlagName = keyof typeof FLAGS;

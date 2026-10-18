@@ -1,4 +1,6 @@
 import { lazy, Suspense, useEffect, useMemo, useRef } from "react";
+import { SAMPLE_BADGE } from "@/copy/strings";
+import { GiftKindContext } from "@/lib/giftPieces";
 import { NewSections } from "@/components/sections/NewSections";
 import { FONT_PAIRINGS, loadPairingFonts } from "@/lib/gift";
 import { readableInk } from "@/lib/palettes";
@@ -98,11 +100,21 @@ export function FormatView(props: Props) {
   );
   return (
     <PlaceholderNameContext.Provider value={!!props.placeholderName}>
+      <GiftKindContext.Provider value={kind}>
       <div className="contents" style={themeFontVars(kind)}>
+        {/* Every format says when it's showing samples. The scrapbook labels each section itself. */}
+        {props.sample && props.site.format !== "scrapbook" && props.contributions.length === 0 ? (
+          <div className="pointer-events-none sticky top-0 z-[60] flex h-0 items-start justify-center overflow-visible">
+            <span className="mt-3 rounded-full px-3 py-1 text-[11px] font-medium whitespace-nowrap shadow-sm" style={{ background: "rgba(43,37,34,.86)", color: "#FBF8F2" }}>
+              {props.site.solo ? SAMPLE_BADGE.solo : SAMPLE_BADGE.friends}
+            </span>
+          </div>
+        ) : null}
         <FormatBody {...props} />
         {tiles ? <TileExtras {...props} kind={kind} /> : null}
         {roamIcons ? <Roamer icons={roamIcons} index={cast.roam} /> : null}
       </div>
+      </GiftKindContext.Provider>
     </PlaceholderNameContext.Provider>
   );
 }
