@@ -20,12 +20,17 @@ import { BabyOpening, babyBackground } from "@/themes/baby/Opening";
 import { NewYearOpening, newYearBackground } from "@/themes/newyear/Opening";
 import { VoyageOpening, voyageBackground } from "@/themes/voyage/Opening";
 import { PetsOpening, petsBackground } from "@/themes/pets/Opening";
-import { ChristmasOpening, christmasBackground, defaultBackground } from "@/themes/christmas/Opening";
+import {
+  ChristmasOpening,
+  christmasBackground,
+  defaultBackground,
+} from "@/themes/christmas/Opening";
 import { HandwrittenOpening, handwrittenBackground } from "@/themes/handwritten/Opening";
 import { GameOpening, gameBackground } from "@/themes/game/Opening";
 import { PixelOpening, pixelBackground } from "@/themes/pixel/Opening";
 import { EngineStage } from "@/themes/engine/EngineStage";
 import { engineThemeForName } from "@/themes/engine/registry";
+import { layoutOpeningFor } from "@/themes/layouts";
 import type { EngineNote, ThemeOptions } from "@/themes/engine/define";
 import type { SlotInput } from "@/themes/engine/slots";
 
@@ -72,7 +77,7 @@ export const OPENINGS: Partial<Record<ThemeKind, Entry>> = {
   christmas: {
     Component: ChristmasOpening,
     background: christmasBackground,
-    ink: (c) => c.snow!,
+    ink: () => "#2B2522",
     button: "Untie the ribbon",
     sprinkles: 0.7,
   },
@@ -122,7 +127,7 @@ export const OPENINGS: Partial<Record<ThemeKind, Entry>> = {
   game: {
     Component: GameOpening,
     background: gameBackground,
-    ink: (c) => c.cream!,
+    ink: (c) => c.navy!,
     button: "Roll the dice",
     sprinkles: 0.35,
   },
@@ -176,9 +181,12 @@ export function TactileOpening({
   age,
   calm = false,
   letter,
+  style,
 }: {
   /** Love Letter: how the letter opens (intro_settings.letter). */
   letter?: string | undefined;
+  /** A layout style's id (scrapbook, mixtape...): plays that style's own opening. */
+  style?: string | null | undefined;
   age?: number | null | undefined;
   /** Calm occasions (Sympathy, Get well): no drifting particles. */
   calm?: boolean | undefined;
@@ -215,7 +223,6 @@ export function TactileOpening({
     [JSON.stringify(cast.iconSet), recipient, palette.primary, palette.accent],
   );
   const [hint, setHint] = useState("");
-  const letterOn = kind === "valentine" && isFlagOn("letterOpenings");
   if (engine) {
     return (
       <EngineStage
@@ -237,23 +244,29 @@ export function TactileOpening({
       />
     );
   }
-  const Component = letterOn ? LoveLetterOpening : entry.Component;
+  const layout = layoutOpeningFor(style);
+  const letterOn = !layout && kind === "valentine" && isFlagOn("letterOpenings");
+  const Component = layout?.Component ?? (letterOn ? LoveLetterOpening : entry.Component);
   const c = design.palette;
   return (
     <OpeningShell
       kind={kind}
-      background={entry.background(c)}
-      ink={entry.ink(c)}
+      background={layout ? layout.background() : entry.background(c)}
+      ink={layout ? layout.ink : entry.ink(c)}
       contained={contained}
       interactive={interactive}
       paused={paused}
       onDone={onOpen}
       onSkip={onSkip ?? onOpen}
       hint={interactive && !paused ? hint : ""}
-      badge={badgeText || design.name}
+      badge={badgeText || layout?.badge || design.name}
       reveal={letterOn ? "fade" : (entry.reveal ?? "portal")}
-      {...(entry.grain !== undefined ? { grain: entry.grain } : {})}
-      {...(entry.sprinkles !== 0 && !calm ? { sprinkles: set, sprinkleOpacity: entry.sprinkles ?? 0.4 } : {})}
+      {...((layout ? layout.grain : entry.grain) !== undefined
+        ? { grain: (layout ? layout.grain : entry.grain)! }
+        : {})}
+      {...(entry.sprinkles !== 0 && !calm
+        ? { sprinkles: set, sprinkleOpacity: entry.sprinkles ?? 0.4 }
+        : {})}
     >
       {({ hostRef, open, reduced }) => (
         <Component
@@ -262,8 +275,8 @@ export function TactileOpening({
           palette={palette}
           recipient={recipient}
           greeting={introText?.trim() || `For ${recipient}`}
-          badge={badgeText || design.name}
-          buttonText={buttonText || entry.button}
+          badge={badgeText || layout?.badge || design.name}
+          buttonText={buttonText || (layout ? layout.button : entry.button)}
           character={cast.character}
           accessory={cast.accessory}
           iconSet={set}

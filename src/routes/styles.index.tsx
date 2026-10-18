@@ -14,7 +14,7 @@ import { normalizeCharacter, type CharacterSetting } from "@/themes/_shared/cast
 import { fetchThemes, type Theme } from "@/lib/themes";
 import { useAuth } from "@/hooks/useAuth";
 import { isOccasionId, occasionInfo, occasionName, type OccasionId } from "@/lib/occasions";
-import { STYLES, isRecommended, lookFor, styleCopy, stylesForOccasion, styleTitle, type StyleInfo } from "@/lib/styles";
+import { STYLES, isRecommended, lookFor, splitForOccasion, styleCopy, styleTitle, type StyleInfo } from "@/lib/styles";
 
 export const Route = createFileRoute("/styles/")({
   validateSearch: (search: Record<string, unknown>): { occasion?: OccasionId | undefined } => ({
@@ -53,10 +53,14 @@ function StylesPage() {
   const byName = useMemo(() => new Map(themes.map((x) => [x.name, x])), [themes]);
 
   // Styles whose theme is still a draft stay hidden until it's published in /admin.
-  const shown = useMemo(
-    () => stylesForOccasion(occasion, STYLES.filter((s) => s.looks.length === 0 || s.looks.some((l) => byName.has(l.theme)))),
+  const split = useMemo(
+    () => splitForOccasion(occasion, STYLES.filter((s) => s.looks.length === 0 || s.looks.some((l) => byName.has(l.theme)))),
     [occasion, byName],
   );
+  // Picking what it's for shows only the styles for it; the rest stay one tap away.
+  const [showOthers, setShowOthers] = useState(false);
+  useEffect(() => setShowOthers(false), [occasion]);
+  const shown = showOthers ? [...split.fits, ...split.others] : split.fits;
 
   function pick(next: OccasionId | null) {
     setOccasion(next);
@@ -137,10 +141,17 @@ function StylesPage() {
             </AnimatePresence>
           </motion.div>
         )}
-        {occasion ? (
-          <p className="mt-6 text-sm text-muted">
-            Sorted for {occasionName(occasion).toLowerCase()}. Every style works for every occasion.
-          </p>
+        {occasion && split.others.length > 0 ? (
+          <div className="mt-6 flex flex-wrap items-center gap-3">
+            <button
+              type="button"
+              onClick={() => setShowOthers((v) => !v)}
+              className="rounded-full border border-dashed border-ink/25 px-5 py-2.5 text-sm font-medium hover:bg-cream"
+            >
+              {showOthers ? t("picker.style.hideOthers") : t("picker.style.showOthers", { n: split.others.length })}
+            </button>
+            <p className="text-sm text-muted">{t("gallery.filteredFor", { occasion: occasionName(occasion).toLowerCase() })}</p>
+          </div>
         ) : null}
       </section>
       <SiteFooter />

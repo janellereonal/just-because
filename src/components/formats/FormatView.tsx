@@ -91,7 +91,8 @@ export function FormatView(props: Props) {
   useEffect(() => loadThemeFonts(kind), [kind]);
   useEffect(() => loadPairingFonts(props.site.font_choice), [props.site.font_choice]);
   // Handwritten draws video and quiz inside its own notebook.
-  const tiles = props.site.format !== "scrapbook" && props.site.format !== "comic" && props.site.format !== "handwritten";
+  // Bento shows video and quiz inside its own board (see FormatBody), so it skips the block underneath.
+  const tiles = props.site.format !== "scrapbook" && props.site.format !== "comic" && props.site.format !== "handwritten" && props.site.format !== "bento";
   const cast = castFor(kind, props.site.character ?? null, props.site.icon_set ?? null);
   const palette = props.palette ?? resolvePalette(props.theme, props.site.custom_colors);
   const roamIcons = useMemo(
@@ -120,17 +121,30 @@ export function FormatView(props: Props) {
   );
 }
 
-/** Video and quiz don't fit a tile, so the tile formats show them underneath. */
-function TileExtras(props: Props & { kind: ReturnType<typeof themeKindOf> }) {
+/** Which of video and quiz this gift has something to show for. */
+function extraKeys(props: Props): ("quiz" | "video")[] {
+  const enabled = new Set(props.modules.filter((m) => m.enabled).map((m) => m.module_type as string));
+  return (["quiz", "video"] as const).filter((t) => enabled.has(t) && (props.sample || props.contributions.some((c) => c.module_type === t)));
+}
+
+/**
+ * Video and quiz don't fit a tile, so the tile formats show them underneath.
+ * `bare` drops the background and padding, for Bento, which frames them itself.
+ */
+function TileExtras(props: Props & { kind: ReturnType<typeof themeKindOf>; bare?: boolean }) {
   const host = useRef<HTMLDivElement | null>(null);
   const palette = props.palette ?? resolvePalette(props.theme, props.site.custom_colors);
   const enabled = new Set(props.modules.filter((m) => m.enabled).map((m) => m.module_type as string));
-  const has = ["video", "quiz"].some((t) => enabled.has(t) && (props.sample || props.contributions.some((c) => c.module_type === t)));
+  const has = extraKeys(props).length > 0;
   const icons = useMemo(() => resolveIconSet(castFor(props.kind, null, props.site.icon_set ?? null).iconSet, { recipient: props.site.custom_text.recipient_name ?? "", palette }), [props.kind, props.site.icon_set, props.site.custom_text.recipient_name, palette]);
   if (!has) return null;
   return (
-    <div ref={host} className="relative overflow-hidden px-5 pt-4 pb-16" style={{ background: palette.background, color: readableInk(palette.background) }}>
-      <div className="mx-auto max-w-3xl">
+    <div
+      ref={host}
+      className={props.bare ? "relative" : "relative overflow-hidden px-5 pt-4 pb-16"}
+      style={props.bare ? undefined : { background: palette.background, color: readableInk(palette.background) }}
+    >
+      <div className={props.bare ? "" : "mx-auto max-w-3xl"}>
         <NewSections
           kind={props.kind}
           enabled={enabled}
@@ -175,12 +189,18 @@ function FormatBody(props: Props) {
           })}
         />
       );
-    case "bento":
+    case "bento": {
+      const keys = extraKeys(props);
       return (
         <Suspense fallback={fallback}>
-          <BentoView {...common} theme={theme} />
+          <BentoView
+            {...common}
+            theme={theme}
+            extras={keys.length ? { keys, node: <TileExtras {...props} kind={themeKindOf(theme)} bare /> } : null}
+          />
         </Suspense>
       );
+    }
     case "hunt":
       return (
         <Suspense fallback={fallback}>

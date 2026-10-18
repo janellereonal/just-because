@@ -33,6 +33,9 @@ The dev server must be running on http://localhost:8080 (`bun run dev`, see docs
 | `node bocheck.cjs <url> <outDir> [w] [h] [step]` | Scrolls a page and reports every scroll position where Bo covers text, chips, buttons or fields (with a screenshot of each) |
 | `node ph-check.cjs <base> <path>...` | Visits pages on a build made with a test `VITE_POSTHOG_KEY` and prints what PostHog would send (answered locally, nothing leaves). Fails loudly if a gift link leaks. `CLICK=<selector>` clicks something on each page |
 | `node pricing-locales.cjs <base> <outDir>` | The landing plans as visitors from Manila, London, Dubai and New York (locale + time zone), phone and desktop. Prints the guide prices each one sees |
+| `node styles-audit.cjs <base> <outDir>` | Opens every style in /styles, plays its opening and reports whether an opening showed and pages followed |
+| `node openings-batch.cjs <base> <outDir> <w> <h> <pal> style,style` | Each layout style's opening from /dev/openings, at rest and after playing |
+| `node gift-flow.cjs <base> <slug> <outDir> "<button>"` | Opens a real gift link, presses the opening's button, screenshots before and after |
 | `node guide.cjs <base> <outDir> [w] [h]` | Signs up a fresh local test user and screenshots the new-user guide on /create step by step, then checks it doesn't come back after a reload (local servers only) |
 | `node signup.cjs <base> <email> ../state.json` | Signs up a local test organiser through Better Auth and saves `state.json` for `STATE=` (local servers only) |
 | `node booth.cjs <contribute-url> <outDir> [w] [h] [fake.y4m]` | Walks through the photobooth with Chrome's fake camera (a looping `.y4m`, e.g. made with ffmpeg from one of `public/clay/people`) and screenshots every frame. `SEND=1` also sends the photo and shows it in the gift |

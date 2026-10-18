@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Lock } from "lucide-react";
 import { t } from "@/i18n";
 import { FormatMini } from "@/components/FormatPicker";
@@ -12,6 +12,7 @@ import {
   isRecommended,
   lookFor,
   styleCopy,
+  splitForOccasion,
   stylesForOccasion,
   styleTitle,
   type StyleId,
@@ -74,10 +75,18 @@ export function StylePicker({
   /** An older gift's look, shown as "Current style" until a style is picked. */
   current?: { title: string; art: React.ReactNode } | null;
 }) {
-  const list = stylesForOccasion(occasion, STYLES.filter((s) => s.id === value || !available || available(s)));
+  const pool = STYLES.filter((s) => s.id === value || !available || available(s));
+  // With an occasion: only the styles for it (plus the one already picked), the rest one tap away.
+  // Without one: everything, the first few, then "Show all".
+  const { fits, others } = splitForOccasion(occasion, pool);
   const [all, setAll] = useState(false);
+  const [more, setMore] = useState(false);
+  useEffect(() => setMore(false), [occasion]);
+  const picked = value ? pool.find((s) => s.id === value) : undefined;
+  const filtered = occasion ? [...fits, ...(picked && !fits.includes(picked) ? [picked] : []), ...(more ? others.filter((s) => s !== picked) : [])] : stylesForOccasion(null, pool);
+  const list = filtered;
   const pickedAt = value ? list.findIndex((s) => s.id === value) : -1;
-  const shown = all || pickedAt >= first ? list : list.slice(0, first);
+  const shown = occasion || all || pickedAt >= first ? list : list.slice(0, first);
   return (
     <fieldset>
       <legend className="sr-only">{t("picker.style.label")}</legend>
@@ -119,7 +128,11 @@ export function StylePicker({
           );
         })}
       </div>
-      {list.length > first && pickedAt < first ? (
+      {occasion && others.length > 0 ? (
+        <button type="button" onClick={() => setMore((v) => !v)} className="mt-3 w-full rounded-2xl border border-dashed border-ink/20 px-4 py-3 text-sm font-medium hover:bg-paper">
+          {more ? t("picker.style.hideOthers") : t("picker.style.showOthers", { n: others.length })}
+        </button>
+      ) : !occasion && list.length > first && pickedAt < first ? (
         <button type="button" onClick={() => setAll((v) => !v)} className="mt-3 w-full rounded-2xl border border-dashed border-ink/20 px-4 py-3 text-sm font-medium hover:bg-paper">
           {all ? t("picker.style.showFewer") : t("picker.style.showAll", { n: list.length })}
         </button>

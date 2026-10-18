@@ -186,6 +186,10 @@ verification is only required once `RESEND_API_KEY` and `EMAIL_FROM` are both se
 - Gifts from before styles have both null and render exactly as before: theme opening + saved layout,
   theme words (`resolveStyle`, `giftWords`; tested for every theme × layout in `src/lib/styles.test.ts`).
 - Changing only the layout of a styled gift clears its style (it becomes a theme + layout gift).
+- Every style has an opening and a body. Theme styles use their theme's opening (`src/themes/<theme>`). Layout
+  styles (Scrapbook, Storybook, Comic, Bento, Hunt, Zine, Mixtape, Scratch, Constellation) have their own in
+  `src/themes/layouts/` (registry `LAYOUT_OPENINGS`, shared kit in `kit.tsx`), picked by `TactileOpening`'s `style`
+  prop (`giftStyle` on `GiftIntro`). They take the gift's palette. Try one at `/dev/openings?style=mixtape&pal=berry`.
 
 ## Themes, cast and sections
 
@@ -198,6 +202,11 @@ verification is only required once `RESEND_API_KEY` and `EMAIL_FROM` are both se
 - Theme fonts: `src/themes/_shared/design.ts`. Never use Caveat, Pacifico, Dancing Script, Lobster or Great Vibes.
 - Newer sections keep their extra fields in `contributions.data`; shape and cleaning in `src/lib/sections.ts`.
 - New landing and section copy goes in `src/copy/strings.ts`.
+- Constellation is a real 3D night sky: `src/lib/nightsky/scene.ts` (three.js: Milky Way painted once into a texture,
+  thousands of twinkling stars, a mountain ridge, the friends' stars fitted between the title and the ridge on any
+  screen), `src/components/formats/NightSky.tsx` (the tappable stars are real buttons over the canvas; lines run along
+  the heart's outline between found neighbours) and `src/lib/nightsky/sound.ts` (glass bells up a pentatonic scale,
+  line shimmer, night air, the finale chord). No WebGL falls back to the classic CSS sky in `ConstellationView`.
 - Photobooth camera (flag `photoboothCamera`): `src/components/photobooth/PhotoBooth.tsx`, frames drawn on a canvas in
   `src/lib/photobooth/frames.ts` (original shapes, gift palette, 1080x1350 JPEG). Booth photos are saved with
   `data.framed = true` and every layout shows them whole (`img[data-framed]`), never cropped.

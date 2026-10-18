@@ -443,6 +443,8 @@ export const en = {
   "picker.style.label": "Style",
   "picker.style.showAll": "Show all {n} styles",
   "picker.style.showFewer": "Show fewer",
+  "picker.style.showOthers": "Show {n} other styles",
+  "picker.style.hideOthers": "Hide the other styles",
   "picker.style.recommended": "Top pick",
   "picker.style.current": "Current style",
   "picker.style.currentHint": "This gift was made before styles. It keeps its look until you pick a style.",
@@ -476,6 +478,7 @@ export const en = {
   "gallery.more": "More styles",
   "gallery.seeAll": "See all {n} styles",
   "gallery.seeAllPlain": "See all the styles",
+  "gallery.filteredFor": "These are made for {occasion}. Any style can still be used.",
   "gallery.step": "Pick a style",
 } as const;
 

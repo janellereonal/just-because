@@ -190,9 +190,29 @@ export function stylesForOccasion(occasion: OccasionId | null | undefined, list:
   return [...list].sort((a, b) => score(a) - score(b));
 }
 
-/** Is this style recommended for the occasion (the "Best for birthdays" tag)? */
+/** Is this style one of the occasion's top picks (the "Top pick" tag)? The first three of its list. */
 export function isRecommended(style: StyleId, occasion: OccasionId | null | undefined): boolean {
-  return !!occasion && occasionInfo(occasion).styles.includes(style);
+  return !!occasion && occasionInfo(occasion).styles.slice(0, 3).includes(style);
+}
+
+/**
+ * Does this style belong under the occasion's chip? Styles made for it do. Plain layouts suit
+ * anything, except that calm occasions (Sympathy, Get well) only get the calm ones. Theme styles
+ * made for something else (a Christmas gift box under Sympathy, a wedding invitation under
+ * Birthday) don't.
+ */
+export function fitsOccasion(style: StyleInfo, occasion: OccasionId | null | undefined): boolean {
+  if (!occasion) return true;
+  const info = occasionInfo(occasion);
+  if (info.styles.includes(style.id)) return true;
+  if (style.origin !== "layout") return false;
+  return info.quiet ? style.mood === "calm" : true;
+}
+
+/** The styles for an occasion (sorted, best first), and the rest, for "Show other styles". */
+export function splitForOccasion(occasion: OccasionId | null | undefined, list: StyleInfo[] = STYLES) {
+  const sorted = stylesForOccasion(occasion, list);
+  return { fits: sorted.filter((s) => fitsOccasion(s, occasion)), others: sorted.filter((s) => !fitsOccasion(s, occasion)) };
 }
 
 type ThemeLike = { name?: string | null; category?: string | null } | null | undefined;

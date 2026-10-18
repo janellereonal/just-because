@@ -34,7 +34,8 @@ export function stageColorFor(theme: Pick<Theme, "name" | "category">) {
   if (key.includes("valentine") || key.includes("romance")) return "var(--pink)";
   if (key.includes("birthday")) return "var(--butter)";
   if (key.includes("voyage") || key.includes("farewell")) return "var(--sky)";
-  if (key.includes("christmas")) return "var(--mint)";
+  // A warm cream, not mint: the gift box's red ribbon looked harsh on green.
+  if (key.includes("christmas")) return "#F5ECE3";
   if (key.includes("pet")) return "var(--peach)";
   if (key.includes("new year")) return "var(--lilac)";
   if (key.includes("anniversar")) return "var(--peach)";

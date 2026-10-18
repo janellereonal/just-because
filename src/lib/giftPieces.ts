@@ -37,6 +37,10 @@ export type Piece = {
   /** Calendar pieces: the day they unlock. */
   date?: string;
   sample?: boolean;
+  /** The section it came from (letters, coupons, superlatives...), for layouts that group by section. */
+  section?: string;
+  /** The newer sections' own fields (award, place, coupon title...). Never set on sealed pieces. */
+  data?: Record<string, unknown>;
 };
 
 const KIND: Record<ModuleType, PieceKind | null> = {
@@ -201,6 +205,8 @@ export function usePieces({
             link: c.external_link,
             sealed: !!c.sealed,
             mine: !!c.mine,
+            section: c.module_type,
+            ...(!c.sealed && isNewSection(c.module_type) && c.data ? { data: c.data as Record<string, unknown> } : {}),
             ...(c.module_type === "photobooth" && c.data?.["framed"] === true ? { framed: true } : {}),
             ...(c.module_type === "photobooth" && !c.sealed && typeof c.data?.["thumb"] === "string" ? { thumb: c.data["thumb"] as string } : {}),
           } satisfies Piece,
@@ -218,6 +224,7 @@ export function usePieces({
           sealed: false,
           mine: false,
           date: e.entry_date.slice(0, 10),
+          section: "calendar",
         })),
       );
     if (!pieces.length && sample) pieces = samples(named ? name : "", enabled, site.solo, kind);

@@ -1,5 +1,13 @@
 # Next session: picking up Just Because
 
+## 18 Oct 2026, evening: Constellation rebuilt as a 3D sky
+
+Janelle's bar for every style: Zine, Boarding Pass and Invitation (openings and bodies), "down to the audio".
+Constellation now meets it: WebGL night sky with a Milky Way, mountains, a heart of friends' stars that draws its
+outline as neighbours are found (any tap order), its own synthesized sound (`src/lib/nightsky/sound.ts`), drag to look
+around, reduced motion = a still sky, no WebGL = the classic sky. Test tap-through: `tools/screens/skyplay.cjs`.
+Next: bring the other styles up to the same bar, one at a time, each with its own sound.
+
 ## Latest (18 Oct 2026): styles and occasions
 
 Janelle's restructure: **Style** becomes the one visual choice, **Occasion** an optional filter, and the word
@@ -11,7 +19,8 @@ Janelle's restructure: **Style** becomes the one visual choice, **Occasion** an 
    (`tier.formats` must let theme styles through). Port #43's fixes (no double openings, Zine and Notebook
    pick up the look, font and palette name clashes), then close #43.
 3. `/styles` gallery with occasion chips, nav and homepage links, `/themes` redirects.
-4. Openings for the 9 layout styles, Love Letter as the gold standard first (slow-motion recordings for Janelle).
+4. Openings for the 9 layout styles: done (18 Oct, branch `styles-complete`, `src/themes/layouts/`). Every style now
+   has an opening and a body, in the gallery and on real gifts. Next: slow-motion recordings and a real-phone pass.
 
 Status: 1 to 3 merged (#49, #61, #62, fixes #58). `styles` still has to be added to `VITE_FLAGS` in Vercel.
 PR 4 part 1 (`love-letter-directions`, flag `letterOpenings`): Janelle didn't want to pick between the three

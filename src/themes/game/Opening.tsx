@@ -170,7 +170,7 @@ export function GameOpening(p: OpeningProps) {
       </Layer>
 
       <div className="mt-[min(10cqi,44px)] h-11">
-        <FallbackButton onClick={roll} color={c.cream!} ink={c.cream!} hidden={rolled || !p.interactive || p.paused}>
+        <FallbackButton onClick={roll} color={c.navy!} ink={c.navy!} hidden={rolled || !p.interactive || p.paused}>
           {p.buttonText}
         </FallbackButton>
       </div>
@@ -269,13 +269,14 @@ function Die({
   );
 }
 
+/** A soft sage table (Oct 2026: was a dark green felt, which felt heavy next to the other styles). */
 export const gameBackground = (c: ThemePalette): React.CSSProperties => ({
-  backgroundColor: "#1E4D3B",
+  backgroundColor: "#DDEBE1",
   backgroundImage: [
-    `radial-gradient(60% 50% at 50% 45%, #2E7A5C, transparent 75%)`,
-    `radial-gradient(130% 100% at 50% 40%, transparent 50%, #0F2A20)`,
+    `radial-gradient(60% 50% at 50% 45%, #F1F7F2, transparent 75%)`,
+    `radial-gradient(130% 100% at 50% 40%, transparent 55%, rgba(60,104,84,.16))`,
     TEXTURE_SOFT.linen,
   ].join(","),
   backgroundSize: "auto, auto, 200px 200px",
-  color: c.cream,
+  color: c.navy,
 });
