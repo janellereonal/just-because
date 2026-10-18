@@ -1,4 +1,5 @@
 import { giftVoice } from "@/lib/giftVoice";
+import { material } from "@/lib/sound/material";
 import { photoProps } from "@/lib/media";
 import { shareGift } from "@/lib/track";
 import { mixHex } from "@/themes/_shared/iconSets";
@@ -8,13 +9,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { Lock, Mic, Music2, Sparkles } from "lucide-react";
 import { FONT_PAIRINGS } from "@/lib/gift";
 import { readableInk, surfaceColor } from "@/lib/palettes";
-import {
-  giftToday,
-  useMediaUrl,
-  usePieces,
-  useReducedMotion,
-  type Piece,
-} from "@/lib/giftPieces";
+import { giftToday, useMediaUrl, usePieces, useReducedMotion, type Piece } from "@/lib/giftPieces";
 import type { FormatViewProps } from "@/components/formats/FormatView";
 import { PieceSheet, seed } from "@/components/formats/PieceSheet";
 import { burst, buzz, chime } from "@/lib/play";
@@ -57,7 +52,11 @@ function foilFor(index: number, colors: string[]): [string, string, string] {
   const primary = hex(colors[1], accent);
   const bases = [accent, primary, mixHex(accent, primary, 0.5), mixHex(accent, "#C9A96E", 0.45)];
   const base = bases[index % bases.length]!;
-  return [mixHex(base, "#FFFFFF", 0.6), mixHex(base, "#FFFFFF", 0.38), mixHex(base, "#FFFFFF", 0.86)];
+  return [
+    mixHex(base, "#FFFFFF", 0.6),
+    mixHex(base, "#FFFFFF", 0.38),
+    mixHex(base, "#FFFFFF", 0.86),
+  ];
 }
 
 /** The silver foil, drawn on a canvas you can scratch away. */
@@ -156,6 +155,7 @@ function Foil({
     const now = performance.now();
     if (now - lastSound.current > 120) {
       lastSound.current = now;
+      material("scratch", { pan: (px / Math.max(1, canvasRef.current?.width ?? 1) - 0.5) * 1.2 });
       buzz(3);
     }
   }
@@ -252,7 +252,13 @@ function Card({
               {locked ? `Opens ${piece.date}` : "Only for the recipient"}
             </span>
           ) : piece.kind === "photo" && media ? (
-            <img {...photoProps(media, piece.thumb, "(max-width: 640px) 85vw, 380px")} alt={piece.text ?? ""} loading="lazy" decoding="async" data-framed={piece.framed || undefined} />
+            <img
+              {...photoProps(media, piece.thumb, "(max-width: 640px) 85vw, 380px")}
+              alt={piece.text ?? ""}
+              loading="lazy"
+              decoding="async"
+              data-framed={piece.framed || undefined}
+            />
           ) : (
             <span className="scr-text">
               {piece.kind === "song" ? (
@@ -337,7 +343,10 @@ export function ScratchView({
     >
       <div className="mx-auto max-w-4xl px-4 pt-10 pb-16">
         <header className="text-center">
-          <p className="scr-kicker">Lucky you{data.named ? ", " : ""}{data.named ? <SampleText on={data.nameIsSample}>{data.name}</SampleText> : null}</p>
+          <p className="scr-kicker">
+            Lucky you{data.named ? ", " : ""}
+            {data.named ? <SampleText on={data.nameIsSample}>{data.name}</SampleText> : null}
+          </p>
           <h1 className="scr-title" style={{ fontFamily: fonts.heading }}>
             {giftHeading(site.custom_text, theme, site.occasion)}
           </h1>
@@ -385,9 +394,7 @@ export function ScratchView({
           {site.custom_text.footer_note ? (
             <p className="mt-2">{site.custom_text.footer_note}</p>
           ) : null}
-          {data.isSample ? (
-            <p className="mt-2 opacity-70">{voice.sample}</p>
-          ) : null}
+          {data.isSample ? <p className="mt-2 opacity-70">{voice.sample}</p> : null}
           {showShare ? (
             <button
               type="button"
@@ -400,7 +407,9 @@ export function ScratchView({
           ) : null}
         </footer>
       </div>
-      {sheet ? <PieceSheet piece={sheet} palette={palette} onClose={() => setSheet(null)} /> : null}
+      {sheet ? (
+        <PieceSheet piece={sheet} palette={palette} onClose={() => setSheet(null)} sound="flip" />
+      ) : null}
     </div>
   );
 }

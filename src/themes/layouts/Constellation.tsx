@@ -8,8 +8,8 @@ import { useEffect, useRef, useState } from "react";
 import { motion } from "motion/react";
 import type { OpeningProps } from "@/themes/_shared/opening";
 import { FallbackButton, Layer, SPRING, useHaptics } from "@/themes/_shared/stage";
-import { melody } from "@/lib/play";
 import { seed } from "@/components/formats/PieceSheet";
+import { starFound } from "@/lib/nightsky/sound";
 import { giftColors, live, useAutoplay, useOpenSequence } from "./kit";
 
 /** A heart, drawn star to star (viewBox 0 0 100 100). */
@@ -32,7 +32,7 @@ export function ConstellationOpening(p: OpeningProps) {
   const skyRef = useRef<HTMLDivElement | null>(null);
   const [lit, setLit] = useState(1); // stars connected so far (the first one glows from the start)
   const done = lit > STARS.length;
-  const beat = useOpenSequence(p, done, skyRef, 2000);
+  const beat = useOpenSequence(p, done, skyRef, 2000, "stars");
   const timers = useRef<number[]>([]);
   useEffect(() => () => timers.current.forEach(window.clearTimeout), []);
 
@@ -40,7 +40,7 @@ export function ConstellationOpening(p: OpeningProps) {
     if (done || !live(p) || index !== lit % STARS.length) return;
     const next = lit + 1;
     setLit(next);
-    melody([523 + index * 40], 0.12, "sine", 0.04);
+    starFound(index, 0.5);
     if (next > STARS.length) h.success();
     else h.tick();
   }
@@ -52,7 +52,7 @@ export function ConstellationOpening(p: OpeningProps) {
         window.setTimeout(
           () => {
             setLit(i + 1);
-            melody([523 + i * 40], 0.1, "sine", 0.035);
+            starFound(i - 1, 0.5);
           },
           p.reduced ? 0 : (i - lit) * 130,
         ),

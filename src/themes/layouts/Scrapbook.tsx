@@ -16,9 +16,9 @@ import {
   Texture,
   elevation,
 } from "@/themes/_shared/light";
-import { foley } from "@/lib/play";
 import { seed } from "@/components/formats/PieceSheet";
-import { giftColors, live, pressable, signoff, useAutoplay, useOpenSequence } from "./kit";
+import { material } from "@/lib/sound/material";
+import { giftColors, live, pressable, signoff, soundAt, useAutoplay, useOpenSequence } from "./kit";
 
 export function ScrapbookOpening(p: OpeningProps) {
   const c = giftColors(p);
@@ -31,12 +31,19 @@ export function ScrapbookOpening(p: OpeningProps) {
   const shift = useTransform(angle, [0, -168], ["-25%", "0%"]);
   const leftPage = useTransform(angle, [0, -40], [0, 1]);
   const shadowLeft = useTransform(leftPage, [0, 1], ["50%", "0%"]);
-  useOpenSequence(p, open, pageRef, 1900);
+  useOpenSequence(p, open, pageRef, 1900, "scrapbook");
 
   function openCover() {
     if (open || !live(p)) return;
     setOpen(true);
-    foley("paper");
+    material("pageTurn", { strength: 1.2 });
+    soundAt(p, [
+      [420, () => material("coverThump", { pan: -0.4 })],
+      [600, () => material("slap", { pan: -0.3, strength: 0.7 })],
+      [780, () => material("slap", { pan: 0.25, strength: 0.6 })],
+      [960, () => material("slap", { pan: 0, strength: 0.65 })],
+      [1150, () => material("scribble", { strength: 0.8 })],
+    ]);
     h.thud();
     void animate(angle, -168, p.reduced ? { duration: 0 } : SPRING.heavy);
   }
@@ -218,12 +225,7 @@ export function ScrapbookOpening(p: OpeningProps) {
       </Layer>
 
       <div className="mt-[min(9cqi,40px)] h-11">
-        <FallbackButton
-          onClick={openCover}
-          color={c.accent}
-          ink={c.accent}
-          hidden={open || !live(p)}
-        >
+        <FallbackButton onClick={openCover} color="#ffffff" ink="#FFF6EA" hidden={open || !live(p)}>
           {p.buttonText}
         </FallbackButton>
       </div>

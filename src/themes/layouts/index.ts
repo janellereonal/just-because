@@ -32,7 +32,7 @@ export const LAYOUT_OPENINGS: Partial<Record<StyleId, LayoutOpeningEntry>> = {
   scrapbook: {
     Component: ScrapbookOpening,
     background: scrapbookBackground,
-    ink: "#3A2F28",
+    ink: "#F6EBDD",
     button: "Open the scrapbook",
     badge: "Scrapbook",
   },

@@ -7,16 +7,11 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { ChevronLeft, ChevronRight, Lock, Mic, Music2 } from "lucide-react";
 import { FONT_PAIRINGS, toEmbedUrl } from "@/lib/gift";
 import { readableInk } from "@/lib/palettes";
-import {
-  giftToday,
-  useMediaUrl,
-  usePieces,
-  useReducedMotion,
-  type Piece,
-} from "@/lib/giftPieces";
+import { giftToday, useMediaUrl, usePieces, useReducedMotion, type Piece } from "@/lib/giftPieces";
 import type { FormatViewProps } from "@/components/formats/FormatView";
 import { seed } from "@/components/formats/PieceSheet";
 import { burst, buzz, chime } from "@/lib/play";
+import { material } from "@/lib/sound/material";
 
 type Page =
   | { type: "cover" }
@@ -48,7 +43,14 @@ function PieceBody({ piece, accent }: { piece: Piece; accent: string }) {
           style={{ transform: `rotate(${(seed(piece.id) - 0.5) * 6}deg)` }}
         >
           {media ? (
-            <img {...photoProps(media, piece.thumb, "(max-width: 640px) 80vw, 420px")} alt={piece.text ?? ""} draggable={false} loading="lazy" decoding="async" data-framed={piece.framed || undefined} />
+            <img
+              {...photoProps(media, piece.thumb, "(max-width: 640px) 80vw, 420px")}
+              alt={piece.text ?? ""}
+              draggable={false}
+              loading="lazy"
+              decoding="async"
+              data-framed={piece.framed || undefined}
+            />
           ) : (
             <span className="sbk-photo-empty" />
           )}
@@ -142,7 +144,7 @@ export function StorybookView({
       const next = Math.max(0, Math.min(total - 1, to));
       if (next === at) return;
       setAt(next);
-      chime("whoosh");
+      material("pageTurn", { pan: next > at ? 0.25 : -0.25 });
       buzz(6);
       if (next === total - 1 && !reduce) {
         const r = bookRef.current?.getBoundingClientRect();
@@ -219,7 +221,9 @@ export function StorybookView({
           <div className="sbk-cover" style={{ background: palette.accent, color: coverInk }}>
             <span className="sbk-cover-frame" />
             <p className="sbk-cover-kicker">A storybook for</p>
-            <h1 style={{ fontFamily: fonts.heading }}><SampleText on={data.nameIsSample}>{data.name}</SampleText></h1>
+            <h1 style={{ fontFamily: fonts.heading }}>
+              <SampleText on={data.nameIsSample}>{data.name}</SampleText>
+            </h1>
             <p className="sbk-cover-sub">{heading}</p>
             <span className="sbk-cover-emblem" aria-hidden="true">
               ✦
@@ -238,14 +242,14 @@ export function StorybookView({
             </p>
             <p className="sbk-body">
               {site.custom_text.intro_message?.trim() ||
-                (voice.solo ? "Every page here is ours. Turn slowly." : "Everyone who loves you wrote a page. Turn slowly.")}
+                (voice.solo
+                  ? "Every page here is ours. Turn slowly."
+                  : "Everyone who loves you wrote a page. Turn slowly.")}
             </p>
             {data.friends.length ? (
               <p className="sbk-small">Written by {data.friends.join(", ")}</p>
             ) : null}
-            {data.isSample ? (
-              <p className="sbk-small opacity-60">{voice.sample}</p>
-            ) : null}
+            {data.isSample ? <p className="sbk-small opacity-60">{voice.sample}</p> : null}
           </div>
         );
       case "piece":
@@ -293,7 +297,9 @@ export function StorybookView({
             <p className="sbk-the-end" style={{ fontFamily: fonts.heading }}>
               The end
             </p>
-            <p className="sbk-body">(For now. There are more pages still to write{data.named ? `, ${data.name}` : ""}.)</p>
+            <p className="sbk-body">
+              (For now. There are more pages still to write{data.named ? `, ${data.name}` : ""}.)
+            </p>
             {site.custom_text.footer_note ? (
               <p className="sbk-small">{site.custom_text.footer_note}</p>
             ) : null}

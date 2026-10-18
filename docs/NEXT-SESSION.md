@@ -8,6 +8,9 @@ outline as neighbours are found (any tap order), its own synthesized sound (`src
 around, reduced motion = a still sky, no WebGL = the classic sky. Test tap-through: `tools/screens/skyplay.cjs`.
 Next: bring the other styles up to the same bar, one at a time, each with its own sound.
 
+**19 Oct, round 1 (merged):** every layout opening got a real scene and its own sound story (scenes.tsx, sound/), every
+body got material sounds (page turns, cassette clicks, foil, lids), every note sheet opens with a sound.
+
 ## Latest (18 Oct 2026): styles and occasions
 
 Janelle's restructure: **Style** becomes the one visual choice, **Occasion** an optional filter, and the word

@@ -35,24 +35,31 @@ function Ransom({ text, accent }: { text: string; accent: string }) {
   let i = 0;
   return (
     <span className="zine-ransom" aria-label={text} style={{ fontSize: `${scale}em` }}>
-      {text.split(/\s+/).filter(Boolean).map((word, w) => (
-        <span key={w} className={[...word].length > 14 ? "zine-rword zine-rword-long" : "zine-rword"} aria-hidden>
-          {[...word].map((ch) => {
-            const k = (i += 1);
-            const st = styles[Math.floor(seed(text + k) * styles.length)]!;
-            const r = (seed(k + text) - 0.5) * 14;
-            return (
-              <span
-                key={k}
-                className={k % 3 === 0 ? "zine-letter zine-serif" : "zine-letter"}
-                style={{ ...st, transform: `rotate(${r.toFixed(1)}deg)` }}
-              >
-                {ch}
-              </span>
-            );
-          })}
-        </span>
-      ))}
+      {text
+        .split(/\s+/)
+        .filter(Boolean)
+        .map((word, w) => (
+          <span
+            key={w}
+            className={[...word].length > 14 ? "zine-rword zine-rword-long" : "zine-rword"}
+            aria-hidden
+          >
+            {[...word].map((ch) => {
+              const k = (i += 1);
+              const st = styles[Math.floor(seed(text + k) * styles.length)]!;
+              const r = (seed(k + text) - 0.5) * 14;
+              return (
+                <span
+                  key={k}
+                  className={k % 3 === 0 ? "zine-letter zine-serif" : "zine-letter"}
+                  style={{ ...st, transform: `rotate(${r.toFixed(1)}deg)` }}
+                >
+                  {ch}
+                </span>
+              );
+            })}
+          </span>
+        ))}
     </span>
   );
 }
@@ -216,7 +223,10 @@ export function ZineView({
 
   return (
     // The paper is tinted with the gift's background, so each occasion's zine has its own stock.
-    <div className="zine-root min-h-screen" style={{ "--z-accent": accent, "--z-theme": palette.background } as React.CSSProperties}>
+    <div
+      className="zine-root min-h-screen"
+      style={{ "--z-accent": accent, "--z-theme": palette.background } as React.CSSProperties}
+    >
       <div className="mx-auto max-w-5xl px-4 py-8 @2xl:px-8 @2xl:py-12">
         <header className="zine-masthead">
           <div className="flex items-center justify-between gap-3">
@@ -224,7 +234,9 @@ export function ZineView({
             <span className="zine-mono">PRICELESS</span>
           </div>
           <h1 className="mt-6 text-[clamp(2.6rem,10cqi,6.5rem)] leading-[0.92]">
-            <SampleText on={data.nameIsSample}><Ransom text={data.name.toUpperCase()} accent={accent} /></SampleText>
+            <SampleText on={data.nameIsSample}>
+              <Ransom text={data.name.toUpperCase()} accent={accent} />
+            </SampleText>
           </h1>
           <div className="mt-6 grid gap-6 @2xl:grid-cols-[1.4fr_1fr] @2xl:items-end">
             <div>
@@ -233,7 +245,9 @@ export function ZineView({
               <p className="mt-3 max-w-md text-[17px] leading-snug">
                 {site.custom_text.intro_message?.trim() ||
                   site.intro_text ||
-                  (voice.solo ? "A zine I made just for you. Cut, pasted and slightly unhinged." : "A zine made by everyone who loves you. Cut, pasted and slightly unhinged.")}
+                  (voice.solo
+                    ? "A zine I made just for you. Cut, pasted and slightly unhinged."
+                    : "A zine made by everyone who loves you. Cut, pasted and slightly unhinged.")}
               </p>
             </div>
             {cd ? (
@@ -307,7 +321,9 @@ export function ZineView({
 
         <footer className="zine-back mt-16">
           <span className="zine-mono">BACK PAGE</span>
-          <p className="zine-headline mt-2">That's the issue{data.named ? `, ${data.name}` : ""}.</p>
+          <p className="zine-headline mt-2">
+            That's the issue{data.named ? `, ${data.name}` : ""}.
+          </p>
           {data.friends.length ? (
             <p className="mt-3 text-[17px]">Made by {data.friends.join(", ")}.</p>
           ) : null}
@@ -315,11 +331,7 @@ export function ZineView({
             <p className="mt-2 text-[15px] opacity-80">{site.custom_text.footer_note}</p>
           ) : null}
           {showShare ? (
-            <button
-              type="button"
-              className="zine-btn mt-6"
-              onClick={() => shareGift(site)}
-            >
+            <button type="button" className="zine-btn mt-6" onClick={() => shareGift(site)}>
               Share the zine
             </button>
           ) : null}
@@ -330,6 +342,7 @@ export function ZineView({
           piece={sheet}
           palette={{ background: palette.background, primary: palette.primary, accent }}
           onClose={() => setSheet(null)}
+          sound="tape"
         />
       ) : null}
     </div>

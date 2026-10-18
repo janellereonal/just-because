@@ -9,7 +9,7 @@ import type { OpeningProps } from "@/themes/_shared/opening";
 import { readableInk } from "@/lib/palettes";
 import { useBeats, useHaptics } from "@/themes/_shared/stage";
 import { burstSet } from "@/themes/_shared/Sprinkles";
-import { melody } from "@/lib/play";
+import { PAYOFF, type PayoffStyle } from "@/lib/sound/instruments";
 
 /** The gift's own colors, plus readable ink on each. Layout styles take the gift's look. */
 export function giftColors(p: OpeningProps) {
@@ -33,13 +33,15 @@ export function useOpenSequence(
   open: boolean,
   burstFrom: React.RefObject<HTMLElement | null>,
   holdMs = 1500,
+  /** Whose payoff sound plays when the object is open (each style has its own instrument). */
+  style?: PayoffStyle,
 ) {
   const h = useHaptics();
   const beat = useBeats(open, [0, 700, holdMs]);
   const c = giftColors(p);
   useEffect(() => {
     if (beat === 1) {
-      melody([523, 659, 784, 1047], 0.12, "sine", 0.05);
+      if (style) PAYOFF[style]();
       const r = burstFrom.current?.getBoundingClientRect();
       if (r && !p.reduced)
         burstSet(p.hostRef.current, r.left + r.width / 2, r.top + r.height * 0.4, p.iconSet, {
@@ -55,6 +57,14 @@ export function useOpenSequence(
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [beat]);
   return beat;
+}
+
+/**
+ * Sounds that land with the motion (photos dropping, stickers slapping), each `ms` after
+ * the call. Reduced motion plays them together, since the motion happens all at once.
+ */
+export function soundAt(p: OpeningProps, steps: [number, () => void][]) {
+  for (const [ms, play] of steps) window.setTimeout(play, p.reduced ? 0 : ms);
 }
 
 /** Previews: run each step after its delay (ms from mount). */

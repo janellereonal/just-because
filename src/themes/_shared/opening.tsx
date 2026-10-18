@@ -4,7 +4,12 @@ import { Volume2, VolumeX } from "lucide-react";
 import type { Palette } from "@/lib/themes";
 import type { ThemeKind } from "@/lib/themeKind";
 import { reducedMotion, useSound } from "@/lib/play";
-import { designFor, loadThemeFonts, themeFontVars, type ThemeDesign } from "@/themes/_shared/design";
+import {
+  designFor,
+  loadThemeFonts,
+  themeFontVars,
+  type ThemeDesign,
+} from "@/themes/_shared/design";
 import { Grain, Layer, ParallaxRoot, SPRING } from "@/themes/_shared/stage";
 import type { AccessoryId, CharacterSetting } from "@/themes/_shared/cast/types";
 import type { IconSet } from "@/themes/_shared/iconSets";
@@ -72,6 +77,7 @@ export function OpeningShell({
   sprinkles,
   sprinkleOpacity = 0.4,
   reveal = "portal",
+  scene,
 }: {
   kind: ThemeKind;
   background: React.CSSProperties;
@@ -81,7 +87,12 @@ export function OpeningShell({
   paused: boolean;
   onDone: () => void;
   onSkip?: (() => void) | undefined;
-  children: (args: { hostRef: React.RefObject<HTMLDivElement | null>; open: () => void; opening: boolean; reduced: boolean }) => React.ReactNode;
+  children: (args: {
+    hostRef: React.RefObject<HTMLDivElement | null>;
+    open: () => void;
+    opening: boolean;
+    reduced: boolean;
+  }) => React.ReactNode;
   hint: string;
   badge?: string;
   hideChrome?: boolean;
@@ -94,6 +105,8 @@ export function OpeningShell({
    * objects that already fill the screen (a letter that becomes the first page).
    */
   reveal?: "portal" | "fade";
+  /** A place for the object (a table, a bedside, a shop), drawn behind it. Layout styles use it. */
+  scene?: (reduced: boolean) => React.ReactNode;
 }) {
   const design = designFor(kind);
   const hostRef = useRef<HTMLDivElement | null>(null);
@@ -110,18 +123,23 @@ export function OpeningShell({
     // Dev only: hold the last moment to inspect it (/dev/openings?stay=1).
     if (import.meta.env.DEV && (window as unknown as { __jbStay?: boolean }).__jbStay) return;
     setOpening(true);
-    window.setTimeout(() => {
-      onDone();
-      // The gift page waits for this before showing things that would sit under the opening's object.
-      window.dispatchEvent(new Event("jb:opening-done"));
-    }, reduced ? 300 : 1050);
+    window.setTimeout(
+      () => {
+        onDone();
+        // The gift page waits for this before showing things that would sit under the opening's object.
+        window.dispatchEvent(new Event("jb:opening-done"));
+      },
+      reduced ? 300 : 1050,
+    );
   }
 
   // The reveal: a hole opens from the object outwards and the gift is
   // already waiting underneath, so it feels like stepping through the box.
   const portal = opening && !reduced && reveal === "portal";
   const hole = useMotionValue(0);
-  const mask = useTransform(hole, (h) => (h <= 0 ? "none" : `radial-gradient(circle at 50% 50%, transparent ${h}%, #000 ${h + 14}%)`));
+  const mask = useTransform(hole, (h) =>
+    h <= 0 ? "none" : `radial-gradient(circle at 50% 50%, transparent ${h}%, #000 ${h + 14}%)`,
+  );
   useEffect(() => {
     if (!portal) return;
     const a = animate(hole, 120, { duration: 0.95, ease: [0.65, 0, 0.35, 1], delay: 0.08 });
@@ -133,40 +151,74 @@ export function OpeningShell({
       <motion.div
         ref={hostRef}
         className={`jb-opening ${contained ? "absolute" : "fixed"} inset-0 z-[60] overflow-hidden select-none [container:gift/inline-size] [-webkit-touch-callout:none]`}
-        style={{
-          ...(background as object),
-          ...(themeFontVars(kind) as object),
-          color: ink,
-          fontFamily: "var(--jb-text)",
-          maskImage: mask,
-          WebkitMaskImage: mask,
-        } as never}
+        style={
+          {
+            ...(background as object),
+            ...(themeFontVars(kind) as object),
+            color: ink,
+            fontFamily: "var(--jb-text)",
+            maskImage: mask,
+            WebkitMaskImage: mask,
+          } as never
+        }
         initial={false}
-        animate={portal ? { scale: 1.14, opacity: [1, 1, 0] } : { opacity: opening ? 0 : 1, scale: 1 }}
+        animate={
+          portal ? { scale: 1.14, opacity: [1, 1, 0] } : { opacity: opening ? 0 : 1, scale: 1 }
+        }
         transition={
           portal
-            ? { scale: { duration: 1, ease: [0.4, 0, 0.2, 1] }, opacity: { duration: 1, times: [0, 0.75, 1] } }
+            ? {
+                scale: { duration: 1, ease: [0.4, 0, 0.2, 1] },
+                opacity: { duration: 1, times: [0, 0.75, 1] },
+              }
             : { ...SPRING.soft, opacity: { duration: 0.3 } }
         }
         data-paused={paused ? "" : undefined}
       >
         <LightDefs />
-        <ParallaxRoot enabled={interactive && !paused} drift={!paused} className="absolute inset-0 grid place-items-center [perspective:1200px]">
+        <ParallaxRoot
+          enabled={interactive && !paused}
+          drift={!paused}
+          className="absolute inset-0 grid place-items-center [perspective:1200px]"
+        >
+          {scene ? (
+            <div className="pointer-events-none absolute inset-0">{scene(reduced)}</div>
+          ) : null}
           {/* The icon set at three depths: far and soft, mid and sharp, a few out-of-focus ones in front. */}
           {sprinkles ? (
             <>
               <Layer depth={-7} className="pointer-events-none absolute inset-0">
-                <SprinkleField set={sprinkles} count={8} opacity={sprinkleOpacity * 0.7} seed={kind.length} size={[7, 13]} blur={0.7} />
+                <SprinkleField
+                  set={sprinkles}
+                  count={8}
+                  opacity={sprinkleOpacity * 0.7}
+                  seed={kind.length}
+                  size={[7, 13]}
+                  blur={0.7}
+                />
               </Layer>
               <Layer depth={5} className="pointer-events-none absolute inset-0">
-                <SprinkleField set={sprinkles} count={6} opacity={sprinkleOpacity} seed={kind.length + 3} size={[13, 22]} />
+                <SprinkleField
+                  set={sprinkles}
+                  count={6}
+                  opacity={sprinkleOpacity}
+                  seed={kind.length + 3}
+                  size={[13, 22]}
+                />
               </Layer>
             </>
           ) : null}
           {children({ hostRef, open, opening, reduced })}
           {sprinkles ? (
             <Layer depth={24} className="pointer-events-none absolute inset-0 z-[30]">
-              <SprinkleField set={sprinkles} count={3} opacity={sprinkleOpacity * 0.75} seed={kind.length + 11} size={[30, 46]} blur={3.2} />
+              <SprinkleField
+                set={sprinkles}
+                count={3}
+                opacity={sprinkleOpacity * 0.75}
+                seed={kind.length + 11}
+                size={[30, 46]}
+                blur={3.2}
+              />
             </Layer>
           ) : null}
         </ParallaxRoot>
@@ -192,7 +244,11 @@ export function OpeningShell({
                 aria-label={sound ? "Sound is on" : "Sound is off"}
                 title={sound ? "Sound is on" : "Turn on sound"}
                 className="absolute top-3 right-3 z-[46] grid size-10 place-items-center rounded-full outline-none backdrop-blur-md transition-transform focus-visible:ring-4 focus-visible:ring-white/60 active:scale-90"
-                style={{ background: "rgba(255,255,255,.18)", boxShadow: `inset 0 0 0 1px ${ink}26`, color: ink }}
+                style={{
+                  background: "rgba(255,255,255,.18)",
+                  boxShadow: `inset 0 0 0 1px ${ink}26`,
+                  color: ink,
+                }}
               >
                 {sound ? <Volume2 className="size-[18px]" /> : <VolumeX className="size-[18px]" />}
               </button>
@@ -240,11 +296,23 @@ export function greetingScale(text: string): number {
   return 0.56;
 }
 
-export function Greeting({ text, className = "", style }: { text: string; className?: string; style?: React.CSSProperties }) {
+export function Greeting({
+  text,
+  className = "",
+  style,
+}: {
+  text: string;
+  className?: string;
+  style?: React.CSSProperties;
+}) {
   return (
     <span
       className={`block leading-[0.95] tracking-[-0.02em] [overflow-wrap:anywhere] ${className}`}
-      style={{ fontFamily: "var(--jb-display)", fontVariationSettings: '"opsz" 144, "SOFT" 100', ...style }}
+      style={{
+        fontFamily: "var(--jb-display)",
+        fontVariationSettings: '"opsz" 144, "SOFT" 100',
+        ...style,
+      }}
     >
       {/* Never more than five lines, whatever the length. */}
       <span

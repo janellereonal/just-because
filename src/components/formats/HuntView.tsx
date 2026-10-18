@@ -232,7 +232,8 @@ export function HuntView({
     if (finished)
       window.setTimeout(
         () =>
-          finaleRef.current && centerInScroller(finaleRef.current, null, reduce ? "auto" : "smooth"),
+          finaleRef.current &&
+          centerInScroller(finaleRef.current, null, reduce ? "auto" : "smooth"),
         120,
       );
   }
@@ -252,7 +253,13 @@ export function HuntView({
       <div className="mx-auto max-w-4xl px-4 py-10 @2xl:px-6 @2xl:py-14">
         <header className="text-center">
           {theme ? (
-            <Theme3D kind={themeKindOf(theme)} palette={palette} className="mx-auto mb-2 h-[clamp(160px,34cqi,260px)] w-full max-w-lg" interactive burstColors={[palette.accent, palette.primary, "#FFD166", "#FFFFFF"]} />
+            <Theme3D
+              kind={themeKindOf(theme)}
+              palette={palette}
+              className="mx-auto mb-2 h-[clamp(160px,34cqi,260px)] w-full max-w-lg"
+              interactive
+              burstColors={[palette.accent, palette.primary, "#FFD166", "#FFFFFF"]}
+            />
           ) : null}
           <p className="text-[11px] font-semibold tracking-[0.2em] uppercase opacity-70">
             A gift hunt for <SampleText on={data.nameIsSample}>{data.name}</SampleText>
@@ -329,9 +336,7 @@ export function HuntView({
         </div>
 
         {boxes.length === 0 ? (
-          <p className="mt-10 text-center opacity-70">
-            {voice.empty("little wrapped gifts")}
-          </p>
+          <p className="mt-10 text-center opacity-70">{voice.empty("little wrapped gifts")}</p>
         ) : null}
 
         {data.words.length ? (
@@ -397,7 +402,9 @@ export function HuntView({
           colors={[palette.accent, palette.primary, "#FFD66B", "#9EE3C8", "#B9D3FF"]}
         />
       ) : null}
-      {sheet ? <PieceSheet piece={sheet} palette={palette} onClose={closeSheet} /> : null}
+      {sheet ? (
+        <PieceSheet piece={sheet} palette={palette} onClose={closeSheet} sound="unroll" />
+      ) : null}
     </div>
   );
 }
