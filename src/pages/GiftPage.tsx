@@ -1,4 +1,5 @@
 import { Suspense, lazy, useEffect, useState } from "react";
+import { trackEvent } from "@/lib/track";
 import { ExportGift } from "@/components/ExportGift";
 import { themeKindOf } from "@/lib/themeKind";
 import {useParams} from "@tanstack/react-router";
@@ -79,6 +80,13 @@ function PublishedPage() {
     if (hasSkippedIntro(site.id)) setOpened(true);
     setSkipChecked(true);
   }, [site?.id]);
+
+  // Metrics: the recipient (or anyone but the organiser) opened the gift. The server ignores the owner.
+  useEffect(() => {
+    if (!site || locked || !meReady) return;
+    if (me && (me.id === site.creator_id || me.isAdmin)) return;
+    if (isGiftOpen(site)) trackEvent("gift_opened", site.id);
+  }, [site?.id, locked, meReady, me?.id]);
 
   if (isLoading || !meReady || (!!site && (!themeReady || !skipChecked))) {
     return <PageLoading label="Opening your gift…" />;
@@ -299,7 +307,11 @@ function GiftEndedPage({ isOwner, siteId, title }: { isOwner: boolean; siteId: s
             </a>
           </div>
         ) : (
-          <a href="/" className="mt-6 inline-block text-sm text-accent underline underline-offset-2">
+          <a
+            href="/"
+            onClick={() => trackEvent("make_your_own_clicked", siteId, { source: "ended_page" })}
+            className="mt-6 inline-block text-sm text-accent underline underline-offset-2"
+          >
             Make a gift of your own
           </a>
         )}

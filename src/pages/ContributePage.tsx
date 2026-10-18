@@ -1,4 +1,5 @@
 import { OrnamentIcon } from "@/components/GiftTree";
+import { trackEvent } from "@/lib/track";
 import { FRIEND_PAGE, friendAddLine } from "@/copy/strings";
 import { friendsIn } from "@/lib/noteCounts";
 import { engineThemeForName } from "@/themes/engine/registry";
@@ -153,6 +154,10 @@ function ContributePage() {
   const [mine, setMine] = useState<MineRecord[]>([]);
   useEffect(() => {
     if (siteId) setMine(readMine(siteId));
+  }, [siteId]);
+  // Metrics: a friend opened the invite link (once per tab session; the organiser isn't counted).
+  useEffect(() => {
+    if (siteId) trackEvent("friend_page_viewed", siteId);
   }, [siteId]);
 
   const [moduleType, setModuleType] = useState<ModuleType | null>(null);
@@ -620,6 +625,13 @@ function ContributePage() {
               >
                 Add something else
               </button>
+              <a
+                href="/"
+                onClick={() => siteId && trackEvent("make_your_own_clicked", siteId, { source: "friend_page" })}
+                className="mt-4 block text-xs underline underline-offset-2 opacity-75"
+              >
+                Make a gift like this for someone
+              </a>
             </div>
           ) : openModules.length === 0 ? (
             <p className="mt-10 text-center text-sm opacity-80">{FRIEND_PAGE.notReady}</p>
