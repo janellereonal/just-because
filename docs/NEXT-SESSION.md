@@ -18,7 +18,7 @@ PR 4 part 1 (`love-letter-directions`, flag `letterOpenings`): Janelle didn't wa
 Love Letter directions, so all three ship. Break the seal is the default; Peel the seal and Slide it out are
 choices under "How the letter opens" in the editor (`intro_settings.letter`). All three grow into the gift's
 first page. Code: `src/themes/valentine/LoveLetter.tsx`; dev page `/dev/love-letter?d=a|b|c`.
-Next: the 9 layout styles' openings at the same bar, then calm notebook wording for Sympathy.
+Layout styles' openings are in #73 (another session). Still open: calm notebook wording for Sympathy.
 
 Open: cultural review of the Lunar New Year, Eid, Diwali and Hanukkah words (`culturalReview` in occasions.ts).
 
