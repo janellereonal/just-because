@@ -72,6 +72,20 @@
   color: var(--ink);
   box-shadow: 0 1px 0 rgba(43, 37, 34, 0.08);
 }
+/* Style cards: a bit taller, so the opening's object reads on a phone. */
+.style-card .fmt-stage { height: 112px; }
+.style-card .fmt-stage img { transition: transform .5s var(--ease-bounce); }
+.style-card:hover .fmt-stage img, .style-card.is-active .fmt-stage img { transform: scale(1.06); }
+/* "Top pick" for the chosen occasion. */
+.fmt-rec {
+  display: inline-block;
+  border-radius: 999px;
+  padding: 1px 7px;
+  font-size: 10px;
+  font-weight: 600;
+  background: #FBEDE6;
+  color: #8E4628;
+}
 .fmt-mini { position: relative; display: block; width: 78%; height: 64px; }
 .fmt-mini i, .fmt-mini b { position: absolute; display: block; }
 .fmt-card:hover .fmt-mini, .fmt-card.is-active .fmt-mini { animation: none; }

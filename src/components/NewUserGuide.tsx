@@ -1,3 +1,5 @@
+import { isFlagOn } from "@/config/flags";
+import { t } from "@/i18n";
 /**
  * A short guide before a new organiser's first gift (flag newUserGuide): four steps, one at a
  * time, from theme to sending. Shown once on /create to people with no gifts yet, and any time
@@ -35,7 +37,8 @@ export function NewUserGuide({ onClose }: { onClose: () => void }) {
   const [at, setAt] = useState(0);
   const [dir, setDir] = useState(1);
   const nextRef = useRef<HTMLButtonElement | null>(null);
-  const steps = C.steps;
+  // With styles on, the first step talks about styles instead of themes.
+  const steps = isFlagOn("styles") ? C.steps.map((s, i) => (i === 0 ? { ...s, title: t("guide.style.title"), body: t("guide.style.body") } : s)) : C.steps;
   const step = steps[at]!;
   const last = at === steps.length - 1;
 

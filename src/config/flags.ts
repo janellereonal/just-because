@@ -19,6 +19,8 @@ export const FLAGS = {
   handwrittenFormat: "handwrittenFormat",
   /** "Want us to handle it?" concierge requests on /create and in the editor. */
   concierge: "concierge",
+  /** Styles and occasions: the new /create (from, for, occasion, style, sections) and Style in the editor. */
+  styles: "styles",
 } as const;
 
 export type FlagName = keyof typeof FLAGS;

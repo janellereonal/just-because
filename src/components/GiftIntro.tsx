@@ -709,6 +709,8 @@ function ClassicIntro({
 }
 
 type GiftIntroProps = React.ComponentProps<typeof ClassicIntro> & {
+  /** Calm occasions (Sympathy, Get well): no drifting particles in the opening. */
+  calm?: boolean | undefined;
   /** The gift's cast (character and sprinkles). Null = theme defaults. */
   character?: CharacterSetting | null | undefined;
   iconSet?: IconSetSetting | null | undefined;
@@ -728,7 +730,7 @@ type GiftIntroProps = React.ComponentProps<typeof ClassicIntro> & {
  * record, a cake…); "classic" in the intro settings keeps the earlier 3D one.
  */
 export function GiftIntro(props: GiftIntroProps) {
-  const { character, iconSet, contributors, themeName, notes, slots, themeOptions, age, ...rest } = props;
+  const { character, iconSet, contributors, themeName, notes, slots, themeOptions, age, calm, ...rest } = props;
   const kind = props.kind ?? STYLE_KIND[props.style];
   const s = props.settings ?? {};
   const engine = !!engineThemeForName(themeName);
@@ -740,6 +742,7 @@ export function GiftIntro(props: GiftIntroProps) {
       recipientName={props.recipientName}
       introText={props.introText}
       badgeText={s.badge_text || props.occasionBadge}
+      calm={calm}
       buttonText={s.button_text}
       character={character}
       iconSet={iconSet}

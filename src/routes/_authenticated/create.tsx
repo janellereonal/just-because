@@ -26,6 +26,9 @@ import { formatInfo, isGiftFormat, type GiftFormat } from "@/lib/formats";
 import { BoBuddy } from "@/components/BoBuddy";
 import { accessoryForTheme, type BoAccessory } from "@/lib/bo3d/accessories";
 import { boAccessory, boReact, boSay, markGiftCreated } from "@/lib/mascot/bus";
+import { StylesCreate } from "@/components/create/StylesCreate";
+import { isStyleId, type StyleId } from "@/lib/styles";
+import { isOccasionId, occasionInfo, type OccasionId } from "@/lib/occasions";
 
 /** What Bo says when he tries on each theme's accessory. */
 const THEME_LINES: Record<BoAccessory, string> = {
@@ -47,6 +50,8 @@ export const Route = createFileRoute("/_authenticated/create")({
     format?: GiftFormat | undefined;
     from?: "me" | undefined;
     sections?: string | undefined;
+    style?: StyleId | undefined;
+    occasion?: OccasionId | undefined;
   } => ({
     theme: typeof search["theme"] === "string" ? search["theme"] : undefined,
     format: isGiftFormat(search["format"]) ? search["format"] : undefined,
@@ -54,6 +59,9 @@ export const Route = createFileRoute("/_authenticated/create")({
     from: search["from"] === "me" ? ("me" as const) : undefined,
     /** Sections tried on the theme page, comma separated. */
     sections: typeof search["sections"] === "string" ? search["sections"] : undefined,
+    /** Styles (flag `styles`): ?style=cake&occasion=birthday from the gallery. */
+    style: isStyleId(search["style"]) ? search["style"] : undefined,
+    occasion: isOccasionId(search["occasion"]) && !occasionInfo(search["occasion"]).groupOnly ? search["occasion"] : undefined,
   }),
   head: () => ({
     meta: [
@@ -69,7 +77,25 @@ export const Route = createFileRoute("/_authenticated/create")({
   component: CreatePage,
 });
 
+/** With styles on, the new flow; otherwise the theme + format flow. */
 function CreatePage() {
+  const search = Route.useSearch();
+  if (isFlagOn("styles")) {
+    return (
+      <StylesCreate
+        fromUrl={search.from}
+        sectionsFromUrl={search.sections}
+        styleFromUrl={search.style}
+        occasionFromUrl={search.occasion}
+        themeFromUrl={search.theme}
+        formatFromUrl={search.format}
+      />
+    );
+  }
+  return <ThemeCreatePage />;
+}
+
+function ThemeCreatePage() {
   const navigate = useNavigate();
   const { theme: themeFromUrl, format: formatFromUrl, from: fromUrl, sections: sectionsFromUrl } = Route.useSearch();
   const { data: rawThemes = [] } = useQuery({

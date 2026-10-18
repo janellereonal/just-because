@@ -1,3 +1,5 @@
+import { t } from "@/i18n";
+import { isFlagOn } from "@/config/flags";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { trackEvent } from "@/lib/track";
 import { noteSummary, type NoteCounts } from "@/lib/noteCounts";
@@ -270,7 +272,7 @@ function Dashboard() {
             </div>
             <ol className="grid gap-3">
               {[
-                ["Pick a theme", "Birthday, send-off, wedding, or just because."],
+                isFlagOn("styles") ? [t("picker.occasion.title"), t("guide.style.dashboard")] : ["Pick a theme", "Birthday, send-off, wedding, or just because."],
                 ["Share the invite link", "No sign-up for them. Notes wait for you."],
                 ["Wrap it up", "Approve the notes, pick a plan, send one link."],
               ].map(([t, b], i) => (

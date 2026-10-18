@@ -44,7 +44,7 @@ import {
   tierBlocker,
   upgradeOptions,
 } from "@/server/billing";
-import { TIERS, LEGACY_TIER, discountLabel as discountLabelOf, getTier, hasFeature } from "@/config/pricing";
+import { TIERS, LEGACY_TIER, discountLabel as discountLabelOf, getTier, hasFeature, tierAllowsLook } from "@/config/pricing";
 import {
   clearTries,
   hashPassword,
@@ -539,7 +539,7 @@ export const updateSite = createServerFn({ method: "POST" })
       // While it was offline it could collect past its plan's limits; it has to fit again to reopen.
       const reopenTier = getTier(site.tier);
       if (reopenTier) {
-        const blocker = tierBlocker(reopenTier, await siteUsage(site.id), p.format);
+        const blocker = tierBlocker(reopenTier, await siteUsage(site.id), p.format, site.style);
         if (blocker) throw new HttpError(409, `${blocker} Upgrade, or hide a few, to reopen it.`);
       }
     }
@@ -560,7 +560,7 @@ export const updateSite = createServerFn({ method: "POST" })
       styleCols = { style: null };
     }
     const tier = getTier(site.tier);
-    if (tier && !tier.formats.includes(format)) {
+    if (tier && !tierAllowsLook(tier, format, styleCols.style !== undefined ? styleCols.style : site.style)) {
       throw new HttpError(400, `${tier.name} doesn't include that format. Upgrade to use it.`);
     }
     await getDb()
@@ -974,11 +974,11 @@ export const getBilling = createServerFn({ method: "GET" })
       usage,
       limits: tier ? { contributors: tier.contributors.cap, photos: tier.photos.cap } : null,
       /** Each tier and why it doesn't fit (null = fits). */
-      fit: TIERS.map((t) => ({ id: t.id, blocker: tierBlocker(t, usage, site.format) })),
+      fit: TIERS.map((t) => ({ id: t.id, blocker: tierBlocker(t, usage, site.format, site.style) })),
       upgrades: upgradeOptions(site.tier).map((t) => ({
         id: t.id,
         amount: t.amount - (tier?.amount ?? 0),
-        blocker: tierBlocker(t, usage, site.format),
+        blocker: tierBlocker(t, usage, site.format, site.style),
       })),
       latestOrder: latest ?? null,
       /** Price and length of one more stretch on the current plan (null for legacy or unpaid). */
