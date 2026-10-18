@@ -5,7 +5,7 @@
  * notes and kept to the margins. Works on the real page (window scroll) and
  * inside previews (any scrolling parent). Reduced motion: nothing moves.
  */
-import { useEffect, useMemo, useRef } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { motion, useMotionValue, useSpring, useTransform, useReducedMotion, type MotionValue } from "motion/react";
 import type { ThemeKind } from "@/lib/themeKind";
 import type { IconSet } from "@/themes/_shared/iconSets";
@@ -152,30 +152,92 @@ function Cloud({ p, y, speed, from }: { p: MotionValue<number>; y: number; speed
   );
 }
 
-/* Birthday: balloons rise past you, faster when you scroll faster. */
+/*
+ * Birthday: the balloons are released as you start reading. Each one floats up
+ * and away over the first part of the gift, fading near the top, and doesn't
+ * come back, so the rest of the page is calm. They sway with your scroll speed
+ * and bob a little on their own.
+ */
 function Balloons({ p, vel, accent }: MotifProps) {
-  const colors = ["#FF7EB6", "#FFD166", "#6C8EF2", "#7ED7C1", accent, "#B48AF2"];
+  // Phones have almost no margin, so fewer, smaller, softer balloons that don't sit on the text.
+  const narrow = useNarrow();
+  const colors = ["#FF7EB6", "#FFD166", "#6C8EF2", "#7ED7C1", accent, "#B48AF2"].slice(0, narrow ? 3 : 6);
   return (
     <>
       {colors.map((c, i) => (
-        <Balloon key={i} p={p} vel={vel} color={c} x={i % 2 ? 88 - (i % 3) * 5 : 3 + (i % 3) * 5} lag={i * 0.17} size={34 + (i % 3) * 8} />
+        <Balloon
+          soft={narrow}
+          key={i}
+          p={p}
+          vel={vel}
+          color={c}
+          x={i % 2 ? 88 - (i % 3) * 5 : 3 + (i % 3) * 5}
+          start={42 + ((i * 23) % 52)}
+          delay={i * 0.035}
+          span={0.32 + (i % 3) * 0.09}
+          bob={2.6 + (i % 3) * 0.7}
+          size={(narrow ? 26 : 34) + (i % 3) * 8}
+        />
       ))}
     </>
   );
 }
 
-function Balloon({ p, vel, color, x, lag, size }: { p: MotionValue<number>; vel: MotionValue<number>; color: string; x: number; lag: number; size: number }) {
-  // Each balloon loops bottom to top a few times over the whole gift.
-  const top = useTransform(p, (t) => `${110 - (((t * 2.4 + lag) % 1) * 130)}%`);
+function useNarrow() {
+  const [narrow, setNarrow] = useState(false);
+  useEffect(() => {
+    const mq = window.matchMedia("(max-width: 639px)");
+    const on = () => setNarrow(mq.matches);
+    on();
+    mq.addEventListener("change", on);
+    return () => mq.removeEventListener("change", on);
+  }, []);
+  return narrow;
+}
+
+function Balloon({
+  soft = false,
+  p,
+  vel,
+  color,
+  x,
+  start,
+  delay,
+  span,
+  bob,
+  size,
+}: {
+  soft?: boolean;
+  p: MotionValue<number>;
+  vel: MotionValue<number>;
+  color: string;
+  x: number;
+  /** Where it waits at the top of the gift, in % of the screen height. */
+  start: number;
+  /** When it lets go, and over how much of the gift it rises (0..1 of the scroll). */
+  delay: number;
+  span: number;
+  /** Seconds per idle bob. */
+  bob: number;
+  size: number;
+}) {
+  const rise = (t: number) => Math.min(1, Math.max(0, (t - delay) / span));
+  // Eased so it lifts off gently, then speeds up as it goes.
+  const topOf = (t: number) => start - (start + 40) * rise(t) ** 1.6;
+  const top = useTransform(p, (t) => `${topOf(t)}%`);
+  const peak = soft ? 0.55 : 1;
+  const opacity = useTransform(p, (t) => peak * Math.min(1, Math.max(0, (topOf(t) + 18) / 30)));
   const sway = useTransform(vel, (v) => v * 8);
   return (
-    <motion.div className="absolute" style={{ left: `${x}%`, top, rotate: sway }}>
-      <svg width={size} height={size * 2} viewBox="0 0 40 80">
-        <path d="M20 46q4 12-2 22t2 12" stroke="#2B2522" strokeOpacity=".25" fill="none" />
-        <ellipse cx="20" cy="22" rx="17" ry="21" fill={color} />
-        <ellipse cx="13" cy="14" rx="4" ry="7" fill="#fff" opacity=".4" />
-        <path d="M17 43h6l-3 4z" fill={color} />
-      </svg>
+    <motion.div className="absolute" style={{ left: `${x}%`, top, rotate: sway, opacity }}>
+      <motion.div animate={{ y: [0, -7, 0] }} transition={{ duration: bob, repeat: Infinity, ease: "easeInOut" }}>
+        <svg width={size} height={size * 2} viewBox="0 0 40 80">
+          <path d="M20 46q4 12-2 22t2 12" stroke="#2B2522" strokeOpacity=".25" fill="none" />
+          <ellipse cx="20" cy="22" rx="17" ry="21" fill={color} />
+          <ellipse cx="13" cy="14" rx="4" ry="7" fill="#fff" opacity=".4" />
+          <path d="M17 43h6l-3 4z" fill={color} />
+        </svg>
+      </motion.div>
     </motion.div>
   );
 }

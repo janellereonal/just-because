@@ -124,6 +124,10 @@ export const giftSites = pgTable(
     slug: text("slug").notNull().unique(),
     status: text("status").notNull().default("draft"),
     format: text("format").notNull().default("scrapbook"),
+    /** The gift's style (src/lib/styles.ts). Null on gifts made before styles: they keep their theme + layout. */
+    style: text("style"),
+    /** What the gift is for (src/lib/occasions.ts). Null = use the theme's own words, as before. */
+    occasion: text("occasion"),
     formatSettings: jsonb("format_settings").notNull().default(sql`'{}'::jsonb`),
     customText: jsonb("custom_text").notNull().default(sql`'{}'::jsonb`),
     customColors: jsonb("custom_colors").notNull().default(sql`'{}'::jsonb`),

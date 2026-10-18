@@ -17,7 +17,9 @@
  *  - a password-protected gift (paid feature) also needs the right password
  *    first; the password hash itself never leaves the server
  */
-import { FORMAT_IDS } from "@/lib/formats";
+import { FORMAT_IDS, type GiftFormat } from "@/lib/formats";
+import { STYLE_IDS, bodyFor, lookFor, styleInfo, type StyleInfo } from "@/lib/styles";
+import { OCCASION_IDS, occasionInfo, type OccasionId } from "@/lib/occasions";
 import { FONT_CHOICE_IDS } from "@/lib/fontChoices";
 import { FIELD_NAMES, LIMITS, customTextLimit, noteTextLimit, tooLong } from "@/lib/limits";
 import { normalizeIntroSettings } from "@/lib/intro";
@@ -371,6 +373,26 @@ async function uniqueSlug() {
   return randomSlug(16);
 }
 
+/** An occasion a gift can be saved with ("Holidays" is only a chip that opens up into the real ones). */
+const occasionField = z.enum(OCCASION_IDS).refine((o) => !occasionInfo(o).groupOnly, "Pick the holiday it's for.");
+
+/**
+ * The theme row a style wears (its opening, colors, fonts and cast), looked up on the
+ * server by name so the browser can't pick a mismatched one. Layout styles wear none.
+ * Draft themes (not published in /admin yet) are only for admins.
+ */
+async function themeForStyle(style: StyleInfo, occasion: OccasionId | null | undefined, lookId: string | null | undefined) {
+  const look = lookFor(style, occasion, lookId);
+  if (!look) return null;
+  const [row] = await getDb()
+    .select({ id: schema.themes.id, status: schema.themes.status })
+    .from(schema.themes)
+    .where(eq(schema.themes.name, look.theme));
+  if (!row) throw new HttpError(422, "That style isn't available right now.");
+  if (row.status !== "published" && !(await currentUser())?.isAdmin) throw new HttpError(422, "That style isn't available yet.");
+  return row.id;
+}
+
 const paletteShape = z
   .object({ background: z.string(), primary: z.string(), accent: z.string() })
   .partial();
@@ -383,6 +405,11 @@ export const createSite = createServerFn({ method: "POST" })
       recipientName: z.string().trim().min(1, "Add the name of who it's for.").max(LIMITS.recipientName, tooLong("their name", LIMITS.recipientName)).optional(),
       themeId: id.nullable(),
       format: z.enum(FORMAT_IDS),
+      /** The style. When set, the server picks the layout and the theme it wears. */
+      style: z.enum(STYLE_IDS).optional(),
+      /** Which look of the style (Invitation: ivory or blush). Default: the one for the occasion. */
+      styleLook: z.string().trim().max(40).optional(),
+      occasion: occasionField.nullable().optional(),
       paletteId: id.nullable(),
       customColors: paletteShape,
       treeRevealDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).nullable(),
@@ -411,6 +438,9 @@ export const createSite = createServerFn({ method: "POST" })
       .limit(1);
     if (recent) return { id: recent.id };
     rateLimit(`create:${user.id}`, 30, 60 * 60_000, "That's a lot of new gifts in a short time. Take a breather and try again in a bit.");
+    const style = data.style ? styleInfo(data.style) : null;
+    const themeId = style ? await themeForStyle(style, data.occasion, data.styleLook) : data.themeId;
+    const format: GiftFormat = style ? bodyFor(style) : data.format;
     const slug = await uniqueSlug();
     const made = await db.transaction(async (tx) => {
       const [site] = await tx
@@ -418,8 +448,10 @@ export const createSite = createServerFn({ method: "POST" })
         .values({
           creatorId: user.id,
           title: data.title,
-          themeId: data.themeId,
-          format: data.format,
+          themeId,
+          format,
+          ...(style ? { style: style.id } : {}),
+          ...(data.occasion ? { occasion: data.occasion } : {}),
           slug,
           customText: { heading: data.title, ...(data.recipientName ? { recipient_name: data.recipientName } : {}) },
           paletteId: data.paletteId,
@@ -460,6 +492,10 @@ export const updateSite = createServerFn({ method: "POST" })
         share_notes: z.boolean(),
         status: z.enum(["draft", "published"]).optional(),
         format: z.enum(FORMAT_IDS),
+        /** Change the style (null clears it). The server sets the layout and theme to match. */
+        style: z.enum(STYLE_IDS).nullable().optional(),
+        style_look: z.string().trim().max(40).nullable().optional(),
+        occasion: occasionField.nullable().optional(),
         format_settings: jsonObject,
         solo: z.boolean().optional(),
       }),
@@ -492,8 +528,24 @@ export const updateSite = createServerFn({ method: "POST" })
         if (blocker) throw new HttpError(409, `${blocker} Upgrade, or hide a few, to reopen it.`);
       }
     }
+    // Style: a new style brings its own layout and theme. Changing only the layout of a
+    // styled gift (from an older editor) turns it back into a theme + layout gift, which
+    // still plays the same opening.
+    let format: GiftFormat = p.format;
+    let styleCols: { style?: string | null; themeId?: string | null } = {};
+    const occasion = p.occasion !== undefined ? p.occasion : (site.occasion as OccasionId | null);
+    if (p.style) {
+      const style = styleInfo(p.style);
+      const keepBody = site.style === style.id && (site.format === style.body || site.format === style.fallbackBody);
+      format = keepBody ? (site.format as GiftFormat) : bodyFor(style);
+      styleCols = { style: style.id, themeId: await themeForStyle(style, occasion, p.style_look) };
+    } else if (p.style === null) {
+      styleCols = { style: null };
+    } else if (site.style && p.format !== site.format) {
+      styleCols = { style: null };
+    }
     const tier = getTier(site.tier);
-    if (tier && !tier.formats.includes(p.format)) {
+    if (tier && !tier.formats.includes(format)) {
       throw new HttpError(400, `${tier.name} doesn't include that format. Upgrade to use it.`);
     }
     await getDb()
@@ -512,7 +564,9 @@ export const updateSite = createServerFn({ method: "POST" })
         paletteId: p.palette_id,
         shareNotes: p.share_notes,
         ...(p.status ? { status: p.status } : {}),
-        format: p.format,
+        format,
+        ...styleCols,
+        ...(p.occasion !== undefined ? { occasion: p.occasion } : {}),
         formatSettings: p.format_settings,
         ...(p.solo !== undefined ? { solo: p.solo } : {}),
       })
@@ -1201,6 +1255,15 @@ export const getPaymentsSetup = createServerFn({ method: "GET" }).handler(async 
       pending: sql<number>`(count(*) filter (where ${schema.orders.status} = 'pending'))::int`,
     })
     .from(schema.orders);
+  // Card payments by where the card was issued (from plan_purchased events), to know when foreign buyers matter.
+  const [cards] = await getDb()
+    .select({
+      local: sql<number>`(count(*) filter (where ${schema.events.props}->>'card_origin' = 'local'))::int`,
+      foreign: sql<number>`(count(*) filter (where ${schema.events.props}->>'card_origin' = 'foreign'))::int`,
+      unknown: sql<number>`(count(*) filter (where ${schema.events.props}->>'card_origin' = 'unknown'))::int`,
+    })
+    .from(schema.events)
+    .where(eq(schema.events.name, "plan_purchased"));
   let webhooks: { url: string; events: string[]; status: string; livemode: boolean }[] | null = null;
   let webhooksError: string | null = null;
   if (mode === "test" || (mode === "live" && process.env["PAYMONGO_ALLOW_LIVE"] === "true")) {
@@ -1228,6 +1291,7 @@ export const getPaymentsSetup = createServerFn({ method: "GET" }).handler(async 
     methods: enabledPaymentMethods,
     paidOrders: counts?.paid ?? 0,
     pendingOrders: counts?.pending ?? 0,
+    cardPayments: { local: cards?.local ?? 0, foreign: cards?.foreign ?? 0, unknown: cards?.unknown ?? 0 },
   };
 });
 

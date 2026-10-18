@@ -4,11 +4,12 @@ import { sampleLetter } from "@/copy/strings";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { SkinDecor } from "@/components/SkinDecor";
 import { ScrollStory } from "@/components/ScrollStory";
+import { GiftProgress } from "@/components/GiftProgress";
 import { Theme3D, type Theme3DHandle } from "@/components/Theme3D";
 import { WishCandles, useSkinPlay } from "@/components/SkinPlay";
 import { buzz, chime } from "@/lib/play";
 import { RotateCw } from "lucide-react";
-import { giftHeading, KIND_WORDS, themeKindOf } from "@/lib/themeKind";
+import { giftHeading, giftWords, themeKindOf } from "@/lib/themeKind";
 import { SampleText, usePlaceholderName } from "@/components/SampleMark";
 import { centerInScroller } from "@/lib/scroll";
 import { giftMoment } from "@/lib/giftPieces";
@@ -478,10 +479,10 @@ export function GiftSiteView({
 
   const fonts = FONT_PAIRINGS[site.font_choice] ?? FONT_PAIRINGS.romantic;
   const kind = themeKindOf(theme);
-  const kindWords = KIND_WORDS[kind];
+  const kindWords = giftWords(theme, site.occasion);
   const placeholder = usePlaceholderName();
   const text: CustomText = site.custom_text ?? {};
-  const titles = defaultTitles(text, kind);
+  const titles = defaultTitles(text, kind, site.occasion);
   const enabled = new Set(modules.filter((m) => m.enabled).map((m) => m.module_type));
   const byType = (type: string) => contributions.filter((c) => c.module_type === type);
   const rootRef = useRef<HTMLDivElement | null>(null);
@@ -614,6 +615,7 @@ export function GiftSiteView({
     >
       <SkinDecor kind={kind} icons={icons} colors={playColors} />
       {sectionsOnly ? null : <ScrollStory kind={kind} rootRef={rootRef} icons={icons} accent={accentDeco} ink={palette.primary} />}
+      {sectionsOnly ? null : <GiftProgress rootRef={rootRef} accent={accentDeco} ink={readableInk(palette.background)} />}
       <div className={sectionsOnly ? "px-4 pt-12 pb-6" : "mx-auto max-w-3xl px-5 py-10 sm:py-14"}>
         {sectionsOnly ? null : (
         <header className="sk-hero text-center">
@@ -637,7 +639,7 @@ export function GiftSiteView({
             {...fp("heading", "sb-hero mt-3 text-[clamp(2.2rem,9cqi,4.2rem)] leading-[1.02] font-semibold text-balance")}
             style={{ fontFamily: fonts.heading }}
           >
-            {giftHeading(text, theme)}
+            {giftHeading(text, theme, site.occasion)}
           </h1>
           <p {...fp("recipient_name", "mt-2 text-lg")} style={{ color: accentText }}>
             {recipient ? (
@@ -682,7 +684,7 @@ export function GiftSiteView({
               date={countdownTarget(site) ?? new Date(Date.now() + 12 * 86400000).toISOString()}
               accent={accentText}
               heading={text.countdown_title || titles.countdown_title}
-              label={kind === "default" || text.countdown_title ? undefined : kindWords.countdown}
+              label={(kind === "default" && !site.occasion) || text.countdown_title ? undefined : kindWords.countdown}
             />
           </section>
         ) : null}

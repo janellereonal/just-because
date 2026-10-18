@@ -1,5 +1,5 @@
 {
-  "id": "8feb42a5-ec0f-4855-9165-fa9aee016305",
+  "id": "db33a7d9-0d7e-426d-8043-beb46385ea6f",
   "prevId": "ed406377-f9a0-4f4f-9cfb-ea9f192868cf",
   "version": "7",
   "dialect": "postgresql",
@@ -517,134 +517,6 @@
       "checkConstraints": {},
       "isRLSEnabled": false
     },
-    "public.discount_codes": {
-      "name": "discount_codes",
-      "schema": "",
-      "columns": {
-        "id": {
-          "name": "id",
-          "type": "uuid",
-          "primaryKey": true,
-          "notNull": true,
-          "default": "gen_random_uuid()"
-        },
-        "code": {
-          "name": "code",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "type": {
-          "name": "type",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "value": {
-          "name": "value",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true,
-          "default": 0
-        },
-        "plans": {
-          "name": "plans",
-          "type": "text[]",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "'{}'::text[]"
-        },
-        "max_uses": {
-          "name": "max_uses",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "max_per_user": {
-          "name": "max_per_user",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": false,
-          "default": 1
-        },
-        "expires_at": {
-          "name": "expires_at",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "active": {
-          "name": "active",
-          "type": "boolean",
-          "primaryKey": false,
-          "notNull": true,
-          "default": true
-        },
-        "used_count": {
-          "name": "used_count",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true,
-          "default": 0
-        },
-        "note": {
-          "name": "note",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "created_by": {
-          "name": "created_by",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "created_at": {
-          "name": "created_at",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "now()"
-        }
-      },
-      "indexes": {
-        "discount_codes_code_lower": {
-          "name": "discount_codes_code_lower",
-          "columns": [
-            {
-              "expression": "lower(\"code\")",
-              "asc": true,
-              "isExpression": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": true,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        }
-      },
-      "foreignKeys": {
-        "discount_codes_created_by_user_id_fk": {
-          "name": "discount_codes_created_by_user_id_fk",
-          "tableFrom": "discount_codes",
-          "tableTo": "user",
-          "columnsFrom": [
-            "created_by"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "set null",
-          "onUpdate": "no action"
-        }
-      },
-      "compositePrimaryKeys": {},
-      "uniqueConstraints": {},
-      "policies": {},
-      "checkConstraints": {},
-      "isRLSEnabled": false
-    },
     "public.events": {
       "name": "events",
       "schema": "",
@@ -1095,6 +967,18 @@
           "notNull": true,
           "default": "'scrapbook'"
         },
+        "style": {
+          "name": "style",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "occasion": {
+          "name": "occasion",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
         "format_settings": {
           "name": "format_settings",
           "type": "jsonb",
@@ -1390,25 +1274,6 @@
           "notNull": true,
           "default": false
         },
-        "discount_code_id": {
-          "name": "discount_code_id",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "discount_code": {
-          "name": "discount_code",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "discount_amount": {
-          "name": "discount_amount",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true,
-          "default": 0
-        },
         "status": {
           "name": "status",
           "type": "text",
@@ -1487,19 +1352,6 @@
           "tableTo": "user",
           "columnsFrom": [
             "owner_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "set null",
-          "onUpdate": "no action"
-        },
-        "orders_discount_code_id_discount_codes_id_fk": {
-          "name": "orders_discount_code_id_discount_codes_id_fk",
-          "tableFrom": "orders",
-          "tableTo": "discount_codes",
-          "columnsFrom": [
-            "discount_code_id"
           ],
           "columnsTo": [
             "id"

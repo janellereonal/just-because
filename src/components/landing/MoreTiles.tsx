@@ -8,6 +8,7 @@ import { useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion, useInView, useReducedMotion } from "motion/react";
 import { Lock, Pause, Play } from "lucide-react";
 import { SPRING } from "@/themes/_shared/stage";
+import { describeWait, formatMomentWithYear } from "@/lib/time";
 
 const card = "bg-white shadow-[0_12px_24px_-16px_rgba(43,37,34,.5)] ring-1 ring-ink/5";
 
@@ -66,19 +67,19 @@ export function OpenWhenDemo() {
   );
 }
 
-/* A locked box with a real countdown to a year from now. Tapping it just rattles. */
+/* A locked box that opens a year from today at 7pm. Tapping it just rattles. */
 export function CapsuleDemo() {
-  const [target] = useState(() => Date.now() + 364 * 86400000 + 5 * 3600000);
+  const [target] = useState(() => {
+    const d = new Date();
+    return new Date(d.getFullYear() + 1, d.getMonth(), d.getDate(), 19, 0).getTime();
+  });
   const [now, setNow] = useState(() => Date.now());
   const [shake, setShake] = useState(0);
   useEffect(() => {
     const t = window.setInterval(() => setNow(Date.now()), 1000);
     return () => window.clearInterval(t);
   }, []);
-  const s = Math.max(0, Math.floor((target - now) / 1000));
-  const d = Math.floor(s / 86400);
-  const h = Math.floor((s % 86400) / 3600);
-  const m = Math.floor((s % 3600) / 60);
+  const wait = describeWait(target, now);
   return (
     <div className="flex flex-col items-center">
       <motion.button
@@ -101,7 +102,10 @@ export function CapsuleDemo() {
         </span>
       </motion.button>
       <p className="mt-3 font-mono text-[11px] tracking-[.1em] text-ink/70 tabular-nums uppercase" suppressHydrationWarning>
-        Opens in {d}d {String(h).padStart(2, "0")}h {String(m).padStart(2, "0")}m
+        Opens {wait}
+      </p>
+      <p className="mt-1 text-[11px] text-ink/55" suppressHydrationWarning>
+        {formatMomentWithYear(target, now)}
       </p>
     </div>
   );

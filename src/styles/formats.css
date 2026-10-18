@@ -372,6 +372,9 @@ button.bento-tile:hover .bento-wave i:nth-child(odd) { transform: scaleY(1.25); 
   background-size: 7px 7px, 13px 13px;
   background-position: 0 0, 3px 5px;
 }
+@supports (background: color-mix(in srgb, red, blue)) {
+  .zine-root { --z-paper: color-mix(in srgb, var(--z-theme, #f4f1ea) 24%, #f4f1ea); }
+}
 .zine-mono { font-family: "JetBrains Mono", ui-monospace, monospace; font-size: 11px; letter-spacing: .12em; text-transform: uppercase; }
 .zine-marker { font-family: var(--jb-display, "Fraunces", serif); line-height: 1.1; }
 .zine-masthead { border-top: 6px solid var(--z-ink); border-bottom: 2px solid var(--z-ink); padding: 14px 0 26px; }
@@ -381,7 +384,7 @@ button.bento-tile:hover .bento-wave i:nth-child(odd) { transform: scaleY(1.25); 
 .zine-letter { display: inline-block; padding: 0 .08em; font-weight: 800; line-height: 1; transition: transform .25s var(--ease-bounce); }
 .zine-serif { font-family: "Playfair Display", Georgia, serif; font-style: italic; font-weight: 700; }
 .zine-ransom:hover .zine-letter:nth-child(odd) { transform: rotate(0) translateY(-4px) !important; }
-.zine-headline { font-size: clamp(1.6rem, 4cqi, 2.6rem); line-height: 1; font-weight: 800; letter-spacing: -.02em; font-variation-settings: "wdth" 85; }
+.zine-headline { font-family: var(--jb-display, inherit); font-size: clamp(1.6rem, 4cqi, 2.6rem); line-height: 1; font-weight: 800; letter-spacing: -.02em; font-variation-settings: "wdth" 85; }
 .zine-scribble { display: block; width: min(320px, 70%); height: 16px; margin-top: 6px; }
 .zine-box { border: 3px solid var(--z-ink); padding: 14px 16px; background: #fff; box-shadow: 6px 6px 0 var(--z-ink); }
 .zine-huge { font-size: clamp(3.5rem, 9cqi, 5.5rem); line-height: .9; font-weight: 800; }

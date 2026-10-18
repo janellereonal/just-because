@@ -249,7 +249,7 @@ export function BentoView({
   const cd = useCountdown(data.countdownDate);
   const [open, setOpen] = useState<Piece | null>(null);
   const ink = readableInk(palette.background);
-  const heading = giftHeading(site.custom_text, theme);
+  const heading = giftHeading(site.custom_text, theme, site.occasion);
   const intro =
     site.custom_text.intro_message?.trim() ||
     site.intro_text ||

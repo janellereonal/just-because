@@ -4,12 +4,25 @@
  * same two functions, picked in ./index.ts.
  */
 
+/**
+ * Currencies an order can be charged in. Only PHP is live: PayMongo's hosted
+ * checkout takes pesos only, and USD needs PayMongo to switch it on for our
+ * account plus a card page of our own (docs/payments-international.md).
+ */
+export type ChargeCurrency = "PHP" | "USD";
+
+/** How the buyer paid, as far as the provider tells us. Used for metrics only. */
+export type PayMethod = "card" | "gcash" | "paymaya" | "qrph" | "other";
+
+/** Whether a card was issued in the Philippines. Unknown when the provider doesn't say. */
+export type CardOrigin = "local" | "foreign" | "unknown";
+
 export type CheckoutOrder = {
   orderId: string;
   siteId: string;
-  /** Centavos. Always computed on our server from src/config/pricing.ts. */
+  /** Smallest unit of `currency` (centavos for PHP, cents for USD). Always computed on our server from src/config/pricing.ts. */
   amount: number;
-  currency: "PHP";
+  currency: ChargeCurrency;
   itemName: string;
   itemDescription: string;
   successUrl: string;
@@ -33,8 +46,13 @@ export type PaidEvent = {
   /** Our order id, as we sent it in the checkout's reference/metadata. */
   orderId: string | null;
   paymentId: string | null;
-  /** Total actually paid, in centavos. */
+  /** Total actually paid, in the smallest unit of `currency`. */
   amountPaid: number;
+  /** Currency of the payment as the provider reports it. Missing means the provider didn't say. */
+  currency?: string | null;
+  /** For metrics: what paid, and for cards whether they were foreign. Never used to decide anything. */
+  method?: PayMethod | null;
+  cardOrigin?: CardOrigin | null;
 };
 
 export type WebhookOutcome =

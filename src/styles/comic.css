@@ -321,6 +321,8 @@
 .cx-count b { font-family: "Bangers", sans-serif; font-weight: 400; font-size: 1.2rem; }
 .cx-replay, .cx-back-to-edit { position: absolute; z-index: 4; bottom: 14px; min-height: 36px; padding: 0 12px; border-radius: 999px; background: var(--cx-white); border: 2px solid var(--cx-ink); font-weight: 700; font-size: 12px; cursor: pointer; }
 .cx-replay { left: 12px; }
+/* Phones: the page-turn buttons fill the bottom row, so the cover button sits just above them. */
+@container comic (max-width: 559px) { .cx-replay, .cx-back-to-edit { bottom: 74px; } }
 .cx-back-to-edit { right: 12px; }
 .cx-wipe { position: absolute; inset: 0; z-index: 20; display: grid; place-items: center; background: radial-gradient(color-mix(in oklab, #fff 35%, transparent) 1.6px, transparent 2.2px) 0 0 / 10px 10px, var(--cx-accent); }
 .cx-menu-back { position: absolute; inset: 0; z-index: 30; background: color-mix(in oklab, var(--cx-ink) 60%, transparent); }

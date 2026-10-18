@@ -59,3 +59,51 @@ describe("handleWebhook", () => {
     }
   });
 });
+
+describe("what paid", () => {
+  const card = (extra: object) => ({ amount: 59900, status: "paid", ...extra });
+  test("wallets are wallets, with no card origin", () => {
+    expect(paymongo.describePayment(card({ source: { type: "gcash" } }))).toEqual({ method: "gcash", cardOrigin: null });
+    expect(paymongo.describePayment(card({ source: { type: "paymaya" } }))).toEqual({ method: "paymaya", cardOrigin: null });
+  });
+  test("the card's own country decides first", () => {
+    expect(paymongo.describePayment(card({ source: { type: "card", country: "PH" } })).cardOrigin).toBe("local");
+    expect(paymongo.describePayment(card({ source: { type: "card", country: "us" }, billing: { address: { country: "PH" } } })).cardOrigin).toBe("foreign");
+  });
+  test("then a foreign-card fee, then the billing country", () => {
+    expect(paymongo.describePayment(card({ source: { id: "card_1" }, foreign_fee: 599 })).cardOrigin).toBe("foreign");
+    expect(paymongo.describePayment(card({ source: { brand: "visa" }, billing: { address: { country: "PH" } } })).cardOrigin).toBe("local");
+  });
+  test("a card PayMongo says nothing about is unknown, and no source is other", () => {
+    expect(paymongo.describePayment(card({ source: { type: "card" } }))).toEqual({ method: "card", cardOrigin: "unknown" });
+    expect(paymongo.describePayment(card({}))).toEqual({ method: "other", cardOrigin: null });
+  });
+  test("checkPaid passes on the currency, method and card origin", async () => {
+    fake.add("cs_foreign1", 59900, "22222222-2222-4222-8222-222222222222");
+    fake.pay("cs_foreign1", undefined, { currency: "PHP", source: { type: "card", brand: "mastercard", country: "GB" } });
+    const event = await paymongo.paymongo.checkPaid("cs_foreign1");
+    expect(event?.currency).toBe("PHP");
+    expect(event?.method).toBe("card");
+    expect(event?.cardOrigin).toBe("foreign");
+  });
+  test("a payment with no currency counts as pesos", async () => {
+    const event = await paymongo.paymongo.checkPaid("cs_abc123");
+    expect(event?.currency).toBe("PHP");
+  });
+});
+
+describe("createCheckout", () => {
+  test("hosted checkout refuses anything but pesos", async () => {
+    const order = {
+      orderId: "33333333-3333-4333-8333-333333333333",
+      siteId: "44444444-4444-4444-8444-444444444444",
+      amount: 1200,
+      currency: "USD" as const,
+      itemName: "Celebration",
+      itemDescription: "Test",
+      successUrl: "http://localhost/ok",
+      cancelUrl: "http://localhost/no",
+    };
+    await expect(paymongo.paymongo.createCheckout(order)).rejects.toThrow("only takes PHP");
+  });
+});

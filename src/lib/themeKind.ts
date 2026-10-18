@@ -3,6 +3,7 @@
  * (styles/skins.css), the 3D hero object (lib/theme3d) and a few words.
  * Matched on the theme's name and category, like the intro styles.
  */
+import { isOccasionId, occasionGreeting, occasionWords, type OccasionWords } from "@/lib/occasions";
 export type ThemeKind =
   | "valentine"
   | "birthday"
@@ -164,21 +165,35 @@ export const KIND_WORDS: Record<
 };
 
 /**
+ * The small words on a gift. A gift with an occasion uses the occasion's words;
+ * an older gift (no occasion) keeps its theme's words, exactly as before.
+ */
+export function giftWords(
+  theme: { name?: string | null; category?: string | null } | null | undefined,
+  occasion?: string | null,
+): OccasionWords {
+  return isOccasionId(occasion) ? occasionWords(occasion) : KIND_WORDS[themeKindOf(theme)];
+}
+
+/**
  * The big title on the gift. The creator's own heading wins; until they write
  * one, it says something for the occasion ("Happy bridal shower").
  */
 export function giftHeading(
   text: { heading?: string | null | undefined } | null | undefined,
   theme: { name?: string | null; category?: string | null } | null | undefined,
+  occasion?: string | null,
 ): string {
-  return text?.heading?.trim() || KIND_WORDS[themeKindOf(theme)].occasion;
+  return text?.heading?.trim() || giftWords(theme, occasion).occasion;
 }
 
 /** The gift's title from who it's for and the occasion: "Happy bridal shower, Ana". */
 export function occasionTitle(
   theme: { name?: string | null; category?: string | null } | null | undefined,
   name: string,
+  occasion?: string | null,
 ): string {
+  if (isOccasionId(occasion)) return occasionGreeting(occasion, name);
   const who = name.trim();
   const kind = themeKindOf(theme);
   if (!who) return KIND_WORDS[kind].occasion;

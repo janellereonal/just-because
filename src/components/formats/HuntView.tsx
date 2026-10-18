@@ -261,7 +261,7 @@ export function HuntView({
             className="mx-auto mt-3 max-w-2xl text-[clamp(2.1rem,6cqi,3.75rem)] leading-[1] font-semibold tracking-tight"
             style={{ fontFamily: fonts.heading }}
           >
-            {giftHeading(site.custom_text, theme)}
+            {giftHeading(site.custom_text, theme, site.occasion)}
           </h1>
           <p className="mx-auto mt-4 max-w-md text-[15px] leading-relaxed opacity-80">
             {site.custom_text.intro_message?.trim() ||

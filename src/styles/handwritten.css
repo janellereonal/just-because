@@ -10,6 +10,13 @@
     radial-gradient(120% 80% at 20% 0%, rgb(255 255 255 / 0.5), transparent 60%),
     linear-gradient(#e9dfcd, #e2d6c1);
 }
+@supports (background: color-mix(in srgb, red, blue)) {
+  .hw-root {
+    background:
+      radial-gradient(120% 80% at 20% 0%, rgb(255 255 255 / 0.45), transparent 60%),
+      linear-gradient(color-mix(in srgb, var(--hw-desk, #e9dfcd) 55%, #e9dfcd), color-mix(in srgb, var(--hw-desk, #e2d6c1) 55%, #d9ccb4));
+  }
+}
 .hw-book {
   position: relative;
   max-width: 880px;

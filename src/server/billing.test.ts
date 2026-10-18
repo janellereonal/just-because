@@ -159,6 +159,28 @@ d("paying for a gift", () => {
     }
   });
 
+  test("a payment in another currency doesn't open it (₱599 is not $599)", async () => {
+    const site = await newGift();
+    const order = await newOrder(site.id);
+    fake.pay(order.providerCheckoutId!, undefined, { currency: "USD", source: { type: "card", country: "US" } });
+    const paid = (await provider.checkPaid(order.providerCheckoutId!))!;
+    expect(await billing.applyPaidEvent(paid, "paymongo", "webhook")).toContain("paid in USD, expected PHP");
+    expect((await siteOf(site.id)).status).toBe("draft");
+    expect((await orderOf(order.id)).status).toBe("pending");
+  });
+
+  test("a foreign card is recorded on the purchase event, for the admin numbers", async () => {
+    const site = await newGift();
+    const order = await newOrder(site.id);
+    fake.pay(order.providerCheckoutId!, undefined, { currency: "PHP", source: { type: "card", brand: "visa", country: "US" } });
+    const paid = (await provider.checkPaid(order.providerCheckoutId!))!;
+    expect(await billing.applyPaidEvent(paid, "paymongo", "webhook")).toContain("published");
+    const [ev] = await db.getDb().select().from(db.schema.events).where(eq(db.schema.events.siteId, site.id));
+    const props = ev?.props as Record<string, unknown> | undefined;
+    expect(props?.["method"]).toBe("card");
+    expect(props?.["card_origin"]).toBe("foreign");
+  });
+
   test("an underpayment doesn't open it, and doesn't block the real payment later", async () => {
     const site = await newGift();
     const order = await newOrder(site.id);

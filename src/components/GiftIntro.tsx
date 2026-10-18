@@ -358,6 +358,7 @@ function ClassicIntro({
   paused = false,
   interactive = true,
   onStickerMove,
+  occasionBadge,
 }: {
   style: IntroStyle;
   palette: Palette;
@@ -382,6 +383,8 @@ function ClassicIntro({
   interactive?: boolean;
   /** Editor: stickers can be dragged into place and saved. */
   onStickerMove?: ((s: IntroSticker) => void) | undefined;
+  /** The small label on top for a gift with an occasion ("Anniversary"). The creator's own words still win. */
+  occasionBadge?: string | undefined;
 }) {
   useIntroStyles();
   const rootRef = useRef<HTMLDivElement | null>(null);
@@ -583,7 +586,7 @@ function ClassicIntro({
           className="max-w-full font-mono text-[11px] tracking-[0.28em] uppercase [overflow-wrap:anywhere]"
           style={{ color: muted, opacity: stage >= 2 ? 1 : 0, transition: "opacity 600ms ease" }}
         >
-          {s.badge_text || copy.badge}
+          {s.badge_text || occasionBadge || copy.badge}
         </p>
 
         <div className="relative mt-3 min-h-[4.2rem] max-w-full">
@@ -736,7 +739,7 @@ export function GiftIntro(props: GiftIntroProps) {
       palette={props.palette}
       recipientName={props.recipientName}
       introText={props.introText}
-      badgeText={s.badge_text}
+      badgeText={s.badge_text || props.occasionBadge}
       buttonText={s.button_text}
       character={character}
       iconSet={iconSet}

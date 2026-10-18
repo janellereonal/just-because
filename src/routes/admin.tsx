@@ -307,6 +307,11 @@ function PaymentsSetup() {
         <p className="mt-3 text-muted">
           Payment methods offered: {data.methods.join(", ")} · Paid orders: {data.paidOrders} · Waiting: {data.pendingOrders}
         </p>
+        <p className="mt-1 text-muted">
+          Card payments: {data.cardPayments.local} from Philippine cards · {data.cardPayments.foreign} from foreign cards
+          {data.cardPayments.unknown ? ` · ${data.cardPayments.unknown} unknown` : ""}. When foreign cards pass about 20% of
+          paid gifts, it's time for dollar prices or a second provider (docs/payments-international.md).
+        </p>
       </div>
     </section>
   );

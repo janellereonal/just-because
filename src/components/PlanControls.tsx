@@ -5,6 +5,8 @@ import { boWrap } from "@/lib/mascot/bus";
 import { getBilling, previewDiscountCode, setCustomSlug, setGiftPassword, startCheckout, startExtendCheckout } from "@/lib/api";
 import { CODE_COPY } from "@/copy/strings";
 import { PricingCards } from "@/components/PricingCards";
+import { PRICE_COPY } from "@/copy/strings";
+import { useViewerMoney } from "@/lib/viewerCurrency";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -30,6 +32,13 @@ export function useBilling(siteId: string) {
     queryKey: ["billing", siteId],
     queryFn: () => getBilling({ data: { siteId } }),
   });
+}
+
+/** Only for visitors outside the Philippines: how to pay from abroad. */
+function AbroadPayNote() {
+  const money = useViewerMoney();
+  if (!money || money.local) return null;
+  return <p className="mx-auto max-w-md text-center text-xs text-muted">{PRICE_COPY.abroadPayNote}</p>;
 }
 
 function errorMessage(error: unknown, fallback: string) {
@@ -225,6 +234,7 @@ export function PlanPickerDialog({
           </a>
           . Prices are in Philippine pesos.
         </p>
+        <AbroadPayNote />
       </DialogContent>
     </Dialog>
   );
@@ -292,6 +302,7 @@ export function ExtendDialog({
           </a>
           .
         </p>
+        <AbroadPayNote />
       </div>
     );
   }

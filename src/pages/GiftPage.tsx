@@ -2,6 +2,8 @@ import { Suspense, lazy, useEffect, useState } from "react";
 import { trackEvent } from "@/lib/track";
 import { ExportGift } from "@/components/ExportGift";
 import { themeKindOf } from "@/lib/themeKind";
+import { resolveStyle } from "@/lib/styles";
+import { occasionName } from "@/lib/occasions";
 import {useParams} from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { FormatView } from "@/components/formats/FormatView";
@@ -181,7 +183,8 @@ function PublishedPage() {
         </div>
         <GiftIntro
           style={introStyleForTheme(theme?.name)}
-          kind={themeKindOf(theme)}
+          kind={resolveStyle(site, theme).introKind}
+          occasionBadge={site.occasion ? occasionName(site.occasion) : undefined}
           palette={palette}
           fonts={fonts}
           backgroundStyle={site.background_style ?? "paper"}

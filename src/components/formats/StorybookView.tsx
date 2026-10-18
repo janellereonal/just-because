@@ -116,7 +116,7 @@ export function StorybookView({
   const fonts = FONT_PAIRINGS[site.font_choice] ?? FONT_PAIRINGS.romantic;
   const ink = "#3b2f2a";
   const coverInk = readableInk(palette.accent);
-  const heading = giftHeading(site.custom_text, theme);
+  const heading = giftHeading(site.custom_text, theme, site.occasion);
 
   const pages: Page[] = [
     { type: "cover" },
@@ -128,7 +128,9 @@ export function StorybookView({
     { type: "end" },
   ];
   const total = pages.length;
-  const [at, setAt] = useState(0);
+  // The opening already opened the gift, so the book starts open on the first page
+  // (the cover is one page back). A layout never adds a second opening.
+  const [at, setAt] = useState(1);
   const [drag, setDrag] = useState<{ dir: 1 | -1; angle: number } | null>(null);
   const bookRef = useRef<HTMLDivElement | null>(null);
   const rootRef = useRef<HTMLDivElement | null>(null);

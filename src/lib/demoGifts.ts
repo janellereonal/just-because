@@ -6,6 +6,7 @@
 import type { CalendarEntry, GiftSite, ModuleType, OrnamentKey, SiteModule, ViewContribution } from "@/lib/gift";
 import type { Palette, Theme } from "@/lib/themes";
 import type { ThemeKind } from "@/lib/themeKind";
+import { isFlagOn } from "@/config/flags";
 
 export type DemoId = "ana" | "sam" | "milo" | "nora-james";
 
@@ -58,6 +59,8 @@ function site(
     slug: `demo-${id}`,
     status: "published",
     format: "scrapbook",
+    style: null,
+    occasion: null,
     format_settings: {},
     custom_text: {
       heading,
@@ -169,7 +172,9 @@ const ana: DemoGift = {
       tree_title: "The wishing tree",
       calendar_title: "A surprise a day until the party",
       countdown_title: "the party at Sofia's",
-      footer_note: "Saturday, 7pm, Sofia's place. Bring nothing but yourself.",
+      // The party date moves with today, so the footer names no weekday (it said "Saturday" before).
+      footer_note: "Party day, 7pm, Sofia's place. Bring nothing but yourself.",
+      turning: "30",
     },
   }),
   // Every section there is, so Ana's gift doubles as the full tour.
@@ -194,7 +199,7 @@ const ana: DemoGift = {
     note("ana", "photobooth", "Emma", "Sunrise hike. You said you'd never wake up that early again. You did, twice.", { media: "/demo/hike.webp" }),
     note("ana", "photobooth", "Zara", "Karaoke night. We still don't talk about the encore.", { media: "/demo/karaoke.webp" }),
     note("ana", "photobooth", "Priya", "The picnic where the wind took the napkins", { media: "/demo/picnic.webp" }),
-    note("ana", "photobooth", "Chen", "Tonight's cake, sneak preview", { media: "/demo/cake.webp" }),
+    note("ana", "photobooth", "Chen", "The cake, sneak preview", { media: "/demo/cake.webp" }),
     note("ana", "voice", "Mom", "Your mom, singing (badly) from the kitchen", { media: "/demo/voice-mom.mp3" }),
     note("ana", "songs", "Chen", "The road trip opener. Hummed by all of us, because we couldn't agree on the real one.", { media: "/demo/voice-team.mp3" }),
     note("ana", "songs", "Zara", "Your karaoke encore. We don't talk about it, but here it is.", { media: "/demo/voice-grandma.mp3" }),
@@ -396,3 +401,9 @@ const nora: DemoGift = {
 export const DEMO_GIFTS: Record<DemoId, DemoGift> = { ana, sam, milo, "nora-james": nora };
 export const DEMO_ORDER: DemoId[] = ["ana", "sam", "milo", "nora-james"];
 export const isDemoId = (v: string): v is DemoId => v in DEMO_GIFTS;
+/** The age on the example's opening (birthday candles), when the birthdayAge flag is on. */
+export const demoAge = (g: DemoGift): number | null => {
+  if (!isFlagOn("birthdayAge")) return null;
+  const n = Number.parseInt(String(g.site.custom_text.turning ?? ""), 10);
+  return Number.isFinite(n) && n > 0 ? n : null;
+};

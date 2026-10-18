@@ -5,7 +5,7 @@
  * in a 120x120 box.
  */
 import type { AccessoryId } from "@/themes/_shared/cast/types";
-import { CLAY_CAST } from "@/themes/_shared/cast/clayCast";
+import { CLAY_CAST, GREEN_BLUSH } from "@/themes/_shared/cast/clayCast";
 
 export type Colors = { primary: string; secondary: string; skin: string };
 
@@ -21,6 +21,8 @@ export type CharacterSpec = {
   eyes: { l: [number, number]; r: [number, number]; size: number };
   mouth: [number, number] | null;
   cheeks?: { l: [number, number]; r: [number, number] };
+  /** Blush color and size (1 = normal) when the default pink would vanish or overflow. */
+  blush?: { color?: string; size?: number };
   /** Where hats sit (top center) and how wide the head is there. */
   head: { x: number; y: number; w: number };
   /** Where scarves and bow ties sit. */
@@ -34,6 +36,7 @@ export type CharacterSpec = {
     eyes: { l: [number, number]; r: [number, number]; size: number };
     mouth: [number, number] | null;
     cheeks?: { l: [number, number]; r: [number, number] };
+    blush?: { color?: string; size?: number };
     head: { x: number; y: number; w: number };
     neck: { x: number; y: number; w: number };
     /** Eye and mouth color when the default ink would vanish (dark screens). */
@@ -353,9 +356,10 @@ export const CHARACTERS: CharacterSpec[] = [
     eyes: { l: [38, 37], r: [82, 37], size: 4.8 },
     mouth: [60, 70],
     cheeks: { l: [30, 64], r: [90, 64] },
+    blush: GREEN_BLUSH,
     head: { x: 60, y: 20, w: 74 },
     neck: { x: 60, y: 84, w: 50 },
-    clay: { eyes: { l: [38, 40], r: [82, 40], size: 4.4 }, mouth: [60, 76], cheeks: { l: [33, 80], r: [87, 80] }, head: { x: 60, y: 28, w: 70 }, neck: { x: 60, y: 99, w: 58 } },
+    clay: { eyes: { l: [38, 40], r: [82, 40], size: 4.4 }, mouth: [60, 76], cheeks: { l: [33, 80], r: [87, 80] }, blush: GREEN_BLUSH, head: { x: 60, y: 28, w: 70 }, neck: { x: 60, y: 99, w: 58 } },
   },
   {
     id: "person",
@@ -443,23 +447,23 @@ export const CHARACTERS: CharacterSpec[] = [
       <>
         {floor}
         <g fill={c.secondary} transform="translate(0 5)">
-          <circle cx="38" cy="78" r="19" />
+          <circle cx="37" cy="77" r="19" />
           <circle cx="60" cy="62" r="26" />
-          <circle cx="84" cy="76" r="19" />
-          <rect x="22" y="76" width="78" height="26" rx="13" />
+          <circle cx="83" cy="77" r="19" />
+          <rect x="21" y="76" width="78" height="26" rx="13" />
         </g>
         <g fill={c.primary}>
-          <circle cx="38" cy="78" r="19" />
+          <circle cx="37" cy="77" r="19" />
           <circle cx="60" cy="62" r="26" />
-          <circle cx="84" cy="76" r="19" />
-          <rect x="22" y="76" width="78" height="26" rx="13" />
+          <circle cx="83" cy="77" r="19" />
+          <rect x="21" y="76" width="78" height="26" rx="13" />
         </g>
         <ellipse cx="52" cy="52" rx="12" ry="7" fill="#fff" opacity=".8" />
       </>
     ),
-    eyes: { l: [50, 74], r: [72, 74], size: 4.5 },
-    mouth: [61, 86],
-    cheeks: { l: [40, 84], r: [82, 84] },
+    eyes: { l: [49, 74], r: [71, 74], size: 4.5 },
+    mouth: [60, 86],
+    cheeks: { l: [39, 84], r: [81, 84] },
     head: { x: 60, y: 38, w: 54 },
     neck: { x: 60, y: 100, w: 60 },
     clay: { eyes: { l: [50, 76], r: [70, 76], size: 3.8 }, mouth: [60, 85], cheeks: { l: [41, 82], r: [79, 82] }, head: { x: 60, y: 44, w: 48 }, neck: { x: 60, y: 100, w: 60 } },
@@ -485,7 +489,7 @@ export const CHARACTERS: CharacterSpec[] = [
     cheeks: { l: [36, 78], r: [84, 78] },
     head: { x: 60, y: 26, w: 66 },
     neck: { x: 60, y: 106, w: 56 },
-    clay: { eyes: { l: [41, 66], r: [54, 66], size: 3.4 }, mouth: [47, 76], cheeks: { l: [37, 72], r: [58, 72] }, head: { x: 53, y: 32, w: 40 }, neck: { x: 53, y: 104, w: 40 } },
+    clay: { eyes: { l: [33, 73], r: [47, 73], size: 3.4 }, mouth: [40, 82], cheeks: { l: [28, 82], r: [52, 82] }, blush: { size: 0.75 }, head: { x: 53, y: 32, w: 40 }, neck: { x: 53, y: 104, w: 40 } },
   },
   ...CLAY_CAST,
 ];
