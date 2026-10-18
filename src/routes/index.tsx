@@ -18,6 +18,7 @@ import { BoBuddy } from "@/components/BoBuddy";
 import { LandingIntro } from "@/components/landing/LandingIntro";
 import { HeroShowcase } from "@/components/landing/HeroShowcase";
 import { FormatShowroom } from "@/components/landing/FormatShowroom";
+import { offeredFormats } from "@/lib/formats";
 import { StepVisual } from "@/components/landing/StepVisual";
 import { TIERS } from "@/config/pricing";
 
@@ -262,7 +263,7 @@ function Index() {
               {LANDING_MORE.formats.kicker}
             </p>
             <h2 className="mt-2 font-display text-[clamp(2rem,4.5vw,3.2rem)] leading-[1.02] font-semibold tracking-tight text-balance">
-              {LANDING_MORE.formats.title}
+              {LANDING_MORE.formats.title(offeredFormats().length)}
             </h2>
             <p className="mt-3 text-cream/70">{LANDING_MORE.formats.body}</p>
           </div>

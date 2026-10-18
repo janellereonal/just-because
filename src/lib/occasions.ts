@@ -286,6 +286,15 @@ export function occasionName(id: OccasionId): string {
   return t(key(id, "name"));
 }
 
+/** Names of a day or festival keep their capitals mid-sentence ("for Eid", "for Valentine's Day"). */
+const PROPER_NAMES: ReadonlySet<OccasionId> = new Set(["valentines", "christmas", "new-year", "lunar-new-year", "eid", "diwali", "hanukkah"]);
+
+/** The occasion's name inside a sentence: "for Christmas", but "for bridal shower". */
+export function occasionInSentence(id: OccasionId): string {
+  const name = occasionName(id);
+  return PROPER_NAMES.has(id) ? name : name.toLowerCase();
+}
+
 export function occasionWords(id: OccasionId): OccasionWords {
   return {
     badge: t(key(id, "badge")),

@@ -14,7 +14,7 @@ import { normalizeCharacter, type CharacterSetting } from "@/themes/_shared/cast
 import { fetchThemes, type Theme } from "@/lib/themes";
 import { useAuth } from "@/hooks/useAuth";
 import { isFlagOn } from "@/config/flags";
-import { isOccasionId, occasionInfo, occasionName, type OccasionId } from "@/lib/occasions";
+import { isOccasionId, occasionInfo, occasionInSentence, type OccasionId } from "@/lib/occasions";
 import { STYLES, isRecommended, lookFor, splitForOccasion, styleCopy, styleTitle, type StyleInfo } from "@/lib/styles";
 
 export const Route = createFileRoute("/styles/")({
@@ -152,7 +152,7 @@ function StylesPage() {
             >
               {showOthers ? t("picker.style.hideOthers") : t("picker.style.showOthers", { n: split.others.length })}
             </button>
-            <p className="text-sm text-muted">{t("gallery.filteredFor", { occasion: occasionName(occasion).toLowerCase() })}</p>
+            <p className="text-sm text-muted">{t("gallery.filteredFor", { occasion: occasionInSentence(occasion) })}</p>
           </div>
         ) : null}
       </section>

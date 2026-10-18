@@ -10,6 +10,7 @@
 
 export type TierId = "sweet" | "celebration" | "keepsake";
 import { isStyleId, styleInfo, type StyleId } from "@/lib/styles";
+import { offeredFormats } from "@/lib/formats";
 export type GiftFormatId = import("@/lib/formats").GiftFormat;
 
 /**
@@ -268,12 +269,19 @@ export function paymentMethodsSentence(): string {
   return `${names.slice(0, -1).join(", ")}, or ${names[names.length - 1]}`;
 }
 
+/** How many of the formats people can pick right now this tier includes. */
+function offeredCount(tier: Tier): number {
+  const offered = new Set<string>(offeredFormats().map((f) => f.id));
+  return tier.formats.filter((f) => offered.has(f)).length;
+}
+
 /** The feature lines on a tier card, generated from the tier's settings. */
 export function featureList(tier: Tier): string[] {
   const lines = [
     tier.contributors.unlimited ? "Unlimited contributors" : `Up to ${tier.contributors.cap} contributors`,
     tier.photos.unlimited ? "Unlimited photos for normal use" : `Up to ${tier.photos.cap} photos`,
-    tier.formats.length >= 5 ? `All ${tier.formats.length} formats, including Storybook and Mixtape` : "Scrapbook and Bento formats",
+    // Count only the formats on offer: one behind a flag that's off (Handwritten) isn't counted.
+    offeredCount(tier) >= 5 ? `All ${offeredCount(tier)} formats, including Storybook and Mixtape` : "Scrapbook and Bento formats",
   ];
   if (tier.features.passwordProtection) lines.push("Password protection");
   if (tier.features.customLinkName) lines.push("Custom link name");
