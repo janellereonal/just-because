@@ -64,7 +64,17 @@ export type MascotOptions = {
   celebrate?: boolean;
   /** Say hi on the first hop. Default true. */
   intro?: boolean;
+  /**
+   * "follow": hops from perch to perch as you scroll. "moments": pops in at a perch when it
+   * comes into view and stays put (no hopping while scrolling). Phones and reduced motion
+   * always use moments. Override with ?bo=follow or ?bo=moments to compare.
+   */
+  mode?: BoMode;
 };
+
+export type BoMode = "follow" | "moments";
+/** What desktop gets by default. */
+export const DEFAULT_DESKTOP_MODE: BoMode = "moments";
 
 type Point = { x: number; y: number };
 
@@ -119,6 +129,13 @@ export class MascotController {
   private clipped = false;
   private dirty = true;
   private lastCheck = 0;
+  private readonly mode: BoMode;
+  /** Where along each perch's top edge he fits (0 to 1), once checked. */
+  private spots = new WeakMap<HTMLElement, number>();
+  /** The perch he'd like but there's no room on right now, so he waits out of sight. */
+  private noRoom: HTMLElement | null = null;
+  private blocked = false;
+  private lastRoomCheck = 0;
 
   /* moving */
   private hop: Hop | null = null;
@@ -171,6 +188,13 @@ export class MascotController {
     this.opts = { intro: true, ...opts };
     this.reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     this.mobile = window.matchMedia("(max-width: 640px), (pointer: coarse)").matches;
+    const asked = new URLSearchParams(window.location.search).get("bo");
+    this.mode =
+      this.reduce || this.mobile
+        ? "moments"
+        : asked === "follow" || asked === "moments"
+          ? asked
+          : (opts.mode ?? DEFAULT_DESKTOP_MODE);
     this.lastScrollY = window.scrollY;
     this.lastScrollT = performance.now();
     this.celebratePending = !!opts.celebrate && takeCelebration();
@@ -595,8 +619,76 @@ export class MascotController {
       const side = this.focusSide(el);
       if (side) return side;
     }
+    const fx = this.spots.get(el) ?? this.preferredX(el);
+    return { x: r.left + window.scrollX + r.width * fx, y: r.top + window.scrollY + 2 };
+  }
+
+  private preferredX(el: HTMLElement) {
     const fx = Number(el.dataset["boX"] ?? 0.5);
-    return { x: r.left + window.scrollX + r.width * (Number.isFinite(fx) ? fx : 0.5), y: r.top + window.scrollY + 2 };
+    return Number.isFinite(fx) ? fx : 0.5;
+  }
+
+  /* ---------- Room: he never stands on text, chips, buttons or fields ---------- */
+
+  /** Bo's body box on screen if his feet were at page point p (a little inside the canvas). */
+  private bodyBox(p: Point) {
+    const w = this.el.offsetWidth || 112;
+    const h = this.el.offsetHeight || 124;
+    const feet = this.scene?.feetPoint() ?? { x: 0.5, y: 0.82 };
+    const left = p.x - window.scrollX - w * feet.x;
+    const top = p.y - window.scrollY - h * feet.y;
+    // His art fills the middle of the canvas; the feet stop a few px above the perch's top edge.
+    return { x: left + w * 0.16, y: top + h * 0.1, w: w * 0.68, h: Math.max(10, h * feet.y - h * 0.1 - 6) };
+  }
+
+  /** Does this element hold something he shouldn't cover? */
+  private blocks(el: Element): boolean {
+    if (el === document.body || el === document.documentElement) return false;
+    // His own speech bubble, hitbox and confetti don't count.
+    if (this.layer.contains(el)) return false;
+    if (el.closest("[data-bo-avoid]") || el.closest(INTERACTIVE)) return true;
+    const tag = el.tagName;
+    if (tag === "IMG" || tag === "SVG" || tag === "svg" || tag === "VIDEO" || tag === "CANVAS" || tag === "PICTURE" || tag === "IFRAME") return true;
+    for (const n of el.childNodes) if (n.nodeType === 3 && n.textContent && n.textContent.trim()) return true;
+    return false;
+  }
+
+  /** True if he'd stand clear of everything at page point p (and fully inside the screen). */
+  private roomAt(p: Point): boolean {
+    const b = this.bodyBox(p);
+    const vw = document.documentElement.clientWidth;
+    const vh = window.innerHeight;
+    if (b.x < 4 || b.x + b.w > vw - 4) return false;
+    // Off screen we can't look; he's checked again as soon as it scrolls into view.
+    if (b.y + b.h < 0 || b.y > vh) return true;
+    for (const fy of [0.08, 0.5, 0.92]) {
+      for (const fx of [0.08, 0.5, 0.92]) {
+        const x = b.x + b.w * fx;
+        const y = b.y + b.h * fy;
+        if (y < 0 || y > vh) continue;
+        for (const hit of document.elementsFromPoint(x, y)) {
+          if (hit === document.body || hit === document.documentElement) break;
+          if (this.blocks(hit)) return false;
+        }
+      }
+    }
+    return true;
+  }
+
+  /** A spot on this perch with room for him (his preferred x first), or null if there's none. */
+  private spotFor(el: HTMLElement): Point | null {
+    if (el.dataset["boAlways"] !== undefined) return this.pointFor(el);
+    const r = el.getBoundingClientRect();
+    const want = this.preferredX(el);
+    const tries = [want, 0.96, 0.9, 0.04, 0.1, 0.75, 0.25, 0.5];
+    for (const fx of tries) {
+      const p = { x: r.left + window.scrollX + r.width * fx, y: r.top + window.scrollY + 2 };
+      if (this.roomAt(p)) {
+        this.spots.set(el, fx);
+        return p;
+      }
+    }
+    return null;
   }
 
   /**
@@ -659,15 +751,39 @@ export class MascotController {
     this.lastCheck = now;
 
     const target = this.canFollow(this.focusEl) ? this.focusEl : this.scrollPerch();
-    if (target === this.perchEl) return;
+    if (target === this.perchEl && !this.noRoom) return;
 
     if (!target) {
       if (this.visible) this.hide();
       this.perchEl = null;
+      this.noRoom = null;
       return;
     }
 
-    const to = this.pointFor(target);
+    // No room on that perch right now (text or chips above it): wait out of sight.
+    const spot = target === this.focusEl ? this.pointFor(target) : this.spotFor(target);
+    if (!spot) {
+      if (this.visible) this.hide();
+      this.perchEl = null;
+      this.noRoom = target;
+      return;
+    }
+    this.noRoom = null;
+    const to = spot;
+
+    // Moments: no hopping along with the scroll. He pops in at the new perch.
+    if (this.mode === "moments" && target !== this.focusEl) {
+      this.setPerch(target);
+      if (this.visible) this.hide();
+      this.pos = to;
+      window.setTimeout(() => {
+        if (this.perchEl !== target) return;
+        this.show();
+        this.place();
+        this.land(performance.now(), null);
+      }, this.reduce ? 120 : 260);
+      return;
+    }
 
     // First appearance: float down on a paper note from just above the screen.
     if (!this.visible) {
@@ -708,6 +824,7 @@ export class MascotController {
     this.perchEl = el;
     this.clipEl = this.findClip(el);
     // A new perch starts visible; updateClip fades him again if it's scrolled away.
+    this.blocked = false;
     if (this.clipped) {
       this.clipped = false;
       this.el.style.opacity = "1";
@@ -1017,6 +1134,11 @@ export class MascotController {
           pose.cheer = 0.5 * (1 - s);
           this.placeRaft(sway);
         } else {
+          // The perch may move while he's in the air (fonts, images, reveal animations): aim at where it is now.
+          if (!hop.chain && this.perchEl?.isConnected && !this.press) {
+            const live = this.pointFor(this.perchEl);
+            hop.to = { x: hop.to.x + (live.x - hop.to.x) * 0.25, y: hop.to.y + (live.y - hop.to.y) * 0.25 };
+          }
           const e = hop.scramble ? s : easeInOut(s) * 0.35 + s * 0.65;
           this.pos = { x: hop.from.x + (hop.to.x - hop.from.x) * e, y: hop.from.y + (hop.to.y - hop.from.y) * e };
           lift = 4 * hop.height * s * (1 - s);
@@ -1047,6 +1169,11 @@ export class MascotController {
       if (bob < 1 && !this.reduce) pose.squash = (pose.squash ?? 1) * (1 - 0.09 * Math.sin(Math.PI * bob));
       // Stay glued to the perch (inner scroll areas, layout shifts).
       if (this.perchEl?.isConnected && !this.press) this.pos = this.pointFor(this.perchEl);
+      // Something moved under him (a marquee, a reflow): find another spot, or step out of the way.
+      if (this.visible && !this.press && !this.fling && now - this.lastRoomCheck > 450) {
+        this.lastRoomCheck = now;
+        this.checkRoom();
+      }
       // Doze off after a while with nothing happening.
       if (!this.sleeping && !this.action && this.visible && now - this.lastInput > TUNING.sleepAfterMs) this.sleep(now);
       if (this.sleeping && !this.action) {
@@ -1120,9 +1247,39 @@ export class MascotController {
     }
     if (out === this.clipped) return;
     this.clipped = out;
+    this.applyOpacity();
+  }
+
+  private applyOpacity() {
+    const out = this.clipped || this.blocked;
+    this.el.style.transition = "opacity 220ms ease";
     this.el.style.opacity = out ? "0" : "1";
     this.hitbox.style.pointerEvents = out ? "none" : "auto";
     if (out) this.clearSpeech();
+  }
+
+  /** Re-check his spot while he stands still. Focused fields keep their own spot beside the form. */
+  private checkRoom() {
+    const perch = this.perchEl;
+    if (!perch || perch === this.focusEl || perch.dataset["boAlways"] !== undefined) {
+      if (this.blocked) {
+        this.blocked = false;
+        this.applyOpacity();
+      }
+      return;
+    }
+    let ok = this.roomAt(this.pos);
+    if (!ok) {
+      this.spots.delete(perch);
+      const spot = this.spotFor(perch);
+      if (spot) {
+        this.pos = spot;
+        ok = true;
+      }
+    }
+    if (ok === !this.blocked) return;
+    this.blocked = !ok;
+    this.applyOpacity();
   }
 
   /** Timed reactions layered onto the pose. Returns extra lift in px for hops in place. */
