@@ -120,6 +120,23 @@ cookie is an HMAC of the gift id and the current hash, so changing the password 
 out. A password only applies while the plan includes it (`needsPassword`); the owner never needs
 it. Wrong guesses are limited to 10 per 10 minutes per gift and IP (in memory, per instance).
 
+## Sign-in and guests
+
+- Google is the main sign-in button when `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET` are set; email
+  opens under "Use email instead". In Google Cloud (OAuth client, type Web) add the redirect URI
+  `https://justbecause.site/api/auth/callback/google` (and `http://localhost:8080/api/auth/callback/google`
+  for local work). Preview URLs change per branch, so Google sign-in is only expected on production.
+- Account linking: signing in with Google using an existing account's email adds Google to that account
+  (`account.accountLinking`, Google trusted). If that account's email was never confirmed, its password
+  and sessions are removed first (`databaseHooks.account.create.before` in `src/server/auth.ts`), so
+  someone who signed up with another person's email can't keep access.
+- Guests (flag `guestStart`): `/create` makes a guest session (Better Auth anonymous plugin,
+  `user.is_anonymous`, placeholder email at `guest.justbecause.invalid`, never mailed). Guests can make
+  up to 3 gifts and edit them. Sharing and paying ask them to sign in (`requireAccount()` /
+  `guestsSignInFirst` on the server). Signing in or up in the same browser runs `claimGuestGifts`
+  (`src/server/guests.ts`), which moves their gifts, orders, concierge requests and events to the real
+  account before the guest row is deleted. Never sign a guest out: the header shows "Sign in" instead.
+
 ## Emails
 
 Confirm-email on sign-up, password reset, new-note alert to the creator (max one per
@@ -198,3 +215,13 @@ events: `gift_created`, `note_added`, `gift_wrapped` (checkout started), `plan_p
 events go through `trackEvent()` in `src/lib/track.ts` (`invite_shared`, `friend_page_viewed`,
 `gift_opened`, `make_your_own_clicked`); the server drops the organiser's own views. Each event's
 allowed labels are in `EVENT_PROPS`; add new ones there.
+
+PostHog (optional, off unless `VITE_POSTHOG_KEY` is set; settings in `src/config/analytics.ts`):
+- Browser: `src/lib/analytics.ts`, loaded after first render from `AnalyticsBridge` in `__root.tsx`. Traffic
+  goes through our own `/ingest/*` route (`src/routes/ingest.$.ts`), so the CSP stays same-site.
+- No cookies (localStorage), Do Not Track respected, autocapture never sends page text, recordings mask all
+  text and inputs and block uploaded media. No recordings on `/g/`, `/contribute/`, `/checkout/`.
+- `redactUrl` cuts gift and order ids out of every URL-like property (`/g/:id`) and drops query strings
+  except `utm_*`. Never send note content, names or emails to PostHog. Organisers are identified by user id only.
+- Server events (not the browser ones) are copied from `track()` via `src/server/posthog.ts`.
+- The privacy policy (`src/copy/legal.ts`) switches its analytics lines on with the key. Keep them true.

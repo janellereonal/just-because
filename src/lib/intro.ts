@@ -91,6 +91,26 @@ export const LETTER_OPENINGS = ["seal", "peel", "slide"] as const;
 export type LetterOpening = (typeof LETTER_OPENINGS)[number];
 
 export const MAX_INTRO_STICKERS = 8;
+/** How small and big a sticker can go (1 = normal), and how far it turns either way, in degrees. */
+export const STICKER_SIZE = { min: 0.4, max: 2.6 } as const;
+export const STICKER_TURN = 180;
+
+/**
+ * A sticker's box on screen. Sizes 0.6 to 1.8 (all a gift could save before free resizing)
+ * come out exactly as they always did; only sizes past those go smaller or bigger.
+ */
+export function stickerBoxCss(s: number) {
+  const lo = 40 * Math.min(1, s / 0.6);
+  const hi = 110 * Math.max(1, s / 1.8);
+  return `clamp(${lo.toFixed(0)}px, ${(s * 15).toFixed(1)}cqi, ${hi.toFixed(0)}px)`;
+}
+
+/** An emoji sticker's font size, on the same rule as `stickerBoxCss`. */
+export function stickerFontCss(s: number) {
+  const lo = 30 * Math.min(1, s / 0.6);
+  const hi = 84 * Math.max(1, s / 1.8);
+  return `clamp(${lo.toFixed(0)}px, ${(s * 11).toFixed(1)}cqi, ${hi.toFixed(0)}px)`;
+}
 const HEX = /^#[0-9a-fA-F]{6}$/;
 /** Uploaded files: Vercel Blob (https) or local dev uploads. */
 export function isSafeMediaUrl(url: unknown): url is string {
@@ -168,8 +188,8 @@ export function normalizeIntroSettings(value: unknown): IntroSettings {
         ...(url ? { url } : { emoji: e! }),
         x: num(s["x"], 0, 1, 0.5),
         y: num(s["y"], 0, 1, 0.5),
-        r: num(s["r"], -40, 40, 0),
-        s: num(s["s"], 0.6, 1.8, 1),
+        r: num(s["r"], -STICKER_TURN, STICKER_TURN, 0),
+        s: num(s["s"], STICKER_SIZE.min, STICKER_SIZE.max, 1),
       });
     }
     if (stickers.length) out.stickers = stickers;

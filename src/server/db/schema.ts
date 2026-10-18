@@ -25,6 +25,11 @@ export const user = pgTable("user", {
   emailVerified: boolean("email_verified").notNull().default(false),
   image: text("image"),
   isAdmin: boolean("is_admin").notNull().default(false),
+  /**
+   * A guest who started a gift without an account (Better Auth's anonymous plugin, flag
+   * guestStart). Their gifts move to the real account when they sign in, then this row goes.
+   */
+  isAnonymous: boolean("is_anonymous").default(false),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
 });

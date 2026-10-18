@@ -3,7 +3,8 @@ import { useRef, useState } from "react";
 import { t } from "@/i18n";
 import { CharCount } from "@/components/ui/CharCount";
 import { LIMITS } from "@/lib/limits";
-import { ImagePlus, Loader2, RotateCcw, Shuffle, X } from "lucide-react";
+import { ImagePlus, Loader2, RotateCcw, Shuffle, Undo2, X } from "lucide-react";
+import { STICKER_COPY } from "@/copy/strings";
 import { toast } from "sonner";
 import { themeStillUrl } from "@/components/Theme3D";
 import { HERO_WORD } from "@/components/GiftIntro";
@@ -127,7 +128,10 @@ export function IntroDesigner({
   greeting,
   offers = [],
   badgeHint,
+  onUndoStickers,
 }: {
+  /** Undo the last sticker change (shown when there is one). */
+  onUndoStickers?: (() => void) | undefined;
   /** The label the opening shows when the line on top is empty (the occasion's name). */
   badgeHint?: string | undefined;
   /** Options the gift's theme offers (Simbang Gabi on Parol Christmas). */
@@ -252,7 +256,7 @@ export function IntroDesigner({
         </div>
         <p className="mt-2 text-xs text-muted">
           {classic
-            ? "A 3D scene, stickers and a button. Drag stickers in the preview to place them."
+            ? `A 3D scene, stickers and a button. ${STICKER_COPY.hint}`
             : isFlagOn("styles") ? t("picker.style.ownObject") : "The theme's own object, opened with a gesture."}
         </p>
       </Group>
@@ -371,7 +375,7 @@ export function IntroDesigner({
 
           <Group
             title="Stickers"
-            hint={`Up to ${MAX_INTRO_STICKERS}. They float, wobble and can be dragged around.`}
+            hint={`Up to ${MAX_INTRO_STICKERS}. ${STICKER_COPY.hint}`}
           >
             <div className="flex flex-wrap gap-1.5">
               {STICKER_EMOJIS.map((e) => (
@@ -437,7 +441,7 @@ export function IntroDesigner({
                 </div>
                 <div className="mt-2 flex flex-wrap items-center gap-3">
                   <label className="flex flex-1 items-center gap-2 text-xs text-muted">
-                    Size
+                    All sizes
                     <input
                       type="range"
                       min={0.6}
@@ -471,6 +475,11 @@ export function IntroDesigner({
                   >
                     <Shuffle className="size-3" /> Shuffle
                   </button>
+                  {onUndoStickers ? (
+                    <button type="button" onClick={onUndoStickers} className="inline-flex items-center gap-1 text-xs font-medium underline">
+                      <Undo2 className="size-3" /> {STICKER_COPY.undo}
+                    </button>
+                  ) : null}
                 </div>
               </div>
             ) : null}

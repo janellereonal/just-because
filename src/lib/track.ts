@@ -1,9 +1,10 @@
 /**
- * Report a product event from the browser (our own events table, no third-party tracker,
- * no cookies). Fire and forget: it never throws and never slows anything down.
- * Views and opens are sent once per gift per browser tab session.
+ * Report a product event from the browser: to our own events table, and to PostHog
+ * when it's switched on (src/lib/analytics.ts). Fire and forget: it never throws and
+ * never slows anything down. Views and opens are sent once per gift per browser tab session.
  */
 import { trackClientEvent } from "@/lib/api";
+import { captureEvent } from "@/lib/analytics";
 
 type ClientEvent =
   | "invite_shared"
@@ -30,6 +31,7 @@ export function trackEvent(name: ClientEvent, siteId: string, props?: Record<str
     }
   }
   void trackClientEvent({ data: { name, siteId, ...(props ? { props } : {}) } }).catch(() => undefined);
+  captureEvent(name, { site_id: siteId, ...props });
 }
 
 /** The gift page's Share button: the phone's share sheet, or copy the link. Counts as theme_shared. */

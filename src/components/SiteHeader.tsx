@@ -5,10 +5,11 @@ import { useAuth } from "@/hooks/useAuth";
 import { galleryLink } from "@/lib/gallery";
 import Bo from "@/components/Bo";
 import { LogOut, Plus } from "lucide-react";
+import { GUEST_COPY } from "@/copy/strings";
 
 /** A floating, rounded nav bar. Pastel redesign (Oct 2026). */
 export function SiteHeader({ showMascot = true }: { showMascot?: boolean }) {
-  const { user, isAdmin } = useAuth();
+  const { user, isAdmin, isGuest } = useAuth();
   const navigate = useNavigate();
   const gallery = galleryLink();
   const queryClient = useQueryClient();
@@ -47,7 +48,7 @@ export function SiteHeader({ showMascot = true }: { showMascot?: boolean }) {
               My gifts
             </Link>
           )}
-          {user && (
+          {user && !isGuest && (
             <Link to="/account" className={link} activeProps={{ className: "bg-pink/70 text-ink" }}>
               Account
             </Link>
@@ -71,6 +72,16 @@ export function SiteHeader({ showMascot = true }: { showMascot?: boolean }) {
               >
                 <Plus className="size-4" /> <span className="max-[400px]:sr-only">New gift</span>
               </Link>
+              {isGuest ? (
+                // A guest signing out would lose their gift, so they get "Sign in" instead.
+                <Link
+                  to="/auth"
+                  search={{ next: typeof window === "undefined" ? "/dashboard" : window.location.pathname }}
+                  className={link}
+                >
+                  {GUEST_COPY.signIn}
+                </Link>
+              ) : (
               <button
                 type="button"
                 onClick={() => void handleSignOut()}
@@ -80,6 +91,7 @@ export function SiteHeader({ showMascot = true }: { showMascot?: boolean }) {
               >
                 <LogOut className="size-[18px]" />
               </button>
+              )}
             </>
           ) : (
             <>

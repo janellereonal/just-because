@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite dev",
-    "build": "vite build",
+    "build": "vite build && node scripts/vercel-asset-cache.mjs",
     "build:dev": "vite build --mode development",
     "preview": "vite preview",
     "lint": "eslint .",
@@ -15,7 +15,7 @@
     "db:generate": "drizzle-kit generate",
     "db:migrate": "tsx scripts/migrate.ts",
     "db:seed": "tsx scripts/seed.ts",
-    "vercel-build": "bun run db:migrate && bun run db:seed && vite build"
+    "vercel-build": "bun run db:migrate && bun run db:seed && vite build && node scripts/vercel-asset-cache.mjs"
   },
   "overrides": {
     "rolldown": "1.2.1"
@@ -66,6 +66,7 @@
     "lucide-react": "^0.575.0",
     "motion": "12.23.12",
     "postgres": "^3.4.9",
+    "posthog-js": "^1.438.12",
     "react": "^19.2.0",
     "react-day-picker": "^9.14.0",
     "react-dom": "^19.2.0",
