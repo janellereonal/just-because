@@ -219,6 +219,19 @@ verification is only required once `RESEND_API_KEY` and `EMAIL_FROM` are both se
   `src/lib/photobooth/frames.ts` (original shapes, gift palette, 1080x1350 JPEG). Booth photos are saved with
   `data.framed = true` and every layout shows them whole (`img[data-framed]`), never cropped.
 
+## Friends arrive (flag friendsIntro)
+
+A short story before the gift's own opening, on `/g/` only: a box giggles, the recipient knocks twice, the
+friends tumble out (one clay character per friend who wrote a note, with their name; the last one is late),
+they whisper, then the recipient presses and holds to wind them up and they shout "Surprise!". Then the
+theme opening plays. `src/components/story/FriendsArrive.tsx`, cast and seats in `src/lib/story/cast.ts`,
+tonal sounds in `src/lib/story/sound.ts`, words `story.*` in `src/i18n/en.ts`. Owners can turn it off in the
+Intro panel (`intro_settings.friends = false`). Never on quiet occasions (Sympathy, Get well). Try it at
+`/dev/story?n=5&name=Mia` (`auto=1` plays itself).
+
+Feature flags are all on in Vercel preview deployments (`VITE_VERCEL_ENV=preview`), off in production
+unless listed in `VITE_FLAGS`.
+
 ## Open product work
 
 Refunds and PayPal (notes in HANDOFF.md section 5), theme preview images (needs images),
