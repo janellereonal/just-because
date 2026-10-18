@@ -476,3 +476,50 @@ export const SAMPLE_BADGE = {
   friends: "Sample notes. Friends' notes replace these.",
   solo: "Sample notes. Yours replace these.",
 };
+/** Footer and legal pages. */
+export const FOOTER_COPY = {
+  line: "Made for the people you love.",
+  madeIn: "Made in Manila",
+  product: "Product",
+  themes: "Themes",
+  sections: "Sections",
+  plans: "Plans",
+  myGifts: "My gifts",
+  signIn: "Sign in",
+  legal: "Legal",
+  privacy: "Privacy",
+  terms: "Terms",
+  refunds: "Refunds",
+  help: "Help",
+  contact: "Contact us",
+  onThisPage: "On this page",
+  inShort: "In short:",
+  draft: "Draft: under review.",
+  draftBody: "This page is being reviewed and may change before it's final.",
+  updated: (date: string) => `Last updated ${date}`,
+} as const;
+
+/** Reporting a gift. */
+export const REPORT_COPY = {
+  link: "Report",
+  title: "Report this gift",
+  intro: "Tell us what's wrong. We'll look at it, and we may pause the gift. The organiser won't see who reported it.",
+  reasons: [
+    ["harassment", "Bullying or harassment"],
+    ["private-info", "Shares someone's private information"],
+    ["sexual", "Sexual content"],
+    ["hate", "Hate or violence"],
+    ["spam", "Spam or a scam"],
+    ["other", "Something else"],
+  ] as const,
+  details: "Anything else we should know? (optional)",
+  send: "Send report",
+  sending: "Sending…",
+  thanks: "Thanks. We'll take a look.",
+  failed: "That didn't send. Try again in a moment, or email us.",
+  cancel: "Cancel",
+  close: "Close",
+  pausedTitle: "This gift has been paused",
+  pausedBody: "It's been taken down while we look into a report. If it's yours, check your email or contact us.",
+  makeYourOwn: "Make your own gift",
+} as const;

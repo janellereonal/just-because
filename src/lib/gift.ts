@@ -295,6 +295,8 @@ export type GiftSite = {
   password_set: boolean;
   /** The recipient link asks for a password (set, and included in the plan). */
   password_protected: boolean;
+  /** Paused by an admin after a report. */
+  disabled_at?: string | null | undefined;
   /** This visitor may see the gift's notes (owner, no password, or entered correctly). */
   unlocked: boolean;
 };
@@ -393,6 +395,7 @@ export function normalizeSite(row: Record<string, unknown>): GiftSite {
     created_at: String(row["created_at"]),
     password_set: Boolean(row["password_set"]),
     password_protected: Boolean(row["password_protected"]),
+    disabled_at: (row["disabled_at"] as string | null) ?? null,
     unlocked: row["unlocked"] !== false,
   };
 }

@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { NOINDEX } from "@/lib/seo";
 import { Character } from "@/themes/_shared/cast/Character";
 import { DEFAULT_PERSON, HAIRS, PEOPLE, SKIN_TONES, type PersonConfig } from "@/themes/_shared/cast/person";
 
@@ -10,6 +11,7 @@ import { DEFAULT_PERSON, HAIRS, PEOPLE, SKIN_TONES, type PersonConfig } from "@/
  *  &age=kid|teen|adult|senior and &hairColor=<id> change the grid's person.
  */
 export const Route = createFileRoute("/dev/people")({
+  head: () => ({ meta: [NOINDEX] }),
   validateSearch: (s: Record<string, unknown>) => ({
     grid: typeof s["grid"] === "string" ? s["grid"] : undefined,
     age: typeof s["age"] === "string" ? s["age"] : undefined,

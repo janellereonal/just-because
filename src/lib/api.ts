@@ -208,6 +208,7 @@ function siteRow(site: SiteRecord, opts: { owner: boolean }) {
 async function canViewGift(siteId: string, opts: { allowSharedNotes?: boolean } = {}) {
   const [site] = await getDb().select().from(schema.giftSites).where(eq(schema.giftSites.id, siteId));
   if (!site) return false;
+  if (site.disabledAt && !(await currentUser())?.isAdmin) return false;
   // Friends reading each other's notes while the gift is still being made (the contribute page).
   if (opts.allowSharedNotes && site.shareNotes && site.status === "draft") return true;
   if (isOwnerOf(await currentUser(), site)) return true;
@@ -344,15 +345,26 @@ export const listMySites = createServerFn({ method: "GET" }).handler(async () =>
   return rows.map((row) => ({ ...siteRow(row, { owner: true }), note_counts: countsFor(row.id) }));
 });
 
-function slugify(value: string) {
-  const base = value
-    .toLowerCase()
-    .normalize("NFD")
-    .replace(/[̀-ͯ]/g, "")
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/(^-|-$)/g, "")
-    .slice(0, 40);
-  return `${base || "gift"}-${Math.random().toString(36).slice(2, 7)}`;
+/**
+ * New gift links are random: 12 characters from an alphabet with no lookalikes
+ * (no 0/o, 1/l/i), so they're hard to guess and never carry a name. Old slugs
+ * with names in them keep working.
+ */
+const SLUG_ALPHABET = "abcdefghjkmnpqrstuvwxyz23456789";
+async function randomSlug(length = 12) {
+  const { randomBytes } = await import("node:crypto");
+  const bytes = randomBytes(length);
+  let out = "";
+  for (let i = 0; i < length; i++) out += SLUG_ALPHABET[bytes[i]! % SLUG_ALPHABET.length];
+  return out;
+}
+async function uniqueSlug() {
+  for (let i = 0; i < 5; i++) {
+    const slug = await randomSlug();
+    const [taken] = await getDb().select({ id: schema.giftSites.id }).from(schema.giftSites).where(eq(schema.giftSites.slug, slug));
+    if (!taken) return slug;
+  }
+  return randomSlug(16);
 }
 
 const paletteShape = z
@@ -395,6 +407,7 @@ export const createSite = createServerFn({ method: "POST" })
       .limit(1);
     if (recent) return { id: recent.id };
     rateLimit(`create:${user.id}`, 30, 60 * 60_000, "That's a lot of new gifts in a short time. Take a breather and try again in a bit.");
+    const slug = await uniqueSlug();
     return db.transaction(async (tx) => {
       const [site] = await tx
         .insert(schema.giftSites)
@@ -403,7 +416,7 @@ export const createSite = createServerFn({ method: "POST" })
           title: data.title,
           themeId: data.themeId,
           format: data.format,
-          slug: slugify(data.title),
+          slug,
           customText: { heading: data.title, ...(data.recipientName ? { recipient_name: data.recipientName } : {}) },
           paletteId: data.paletteId,
           customColors: data.customColors,
@@ -712,6 +725,7 @@ export const submitContribution = createServerFn({ method: "POST" })
     const sectionData = sectionPayload(data.moduleType, data.data, data.textContent, data.mediaUrl);
     const [site] = await db.select().from(schema.giftSites).where(eq(schema.giftSites.id, data.siteId));
     if (!site) throw new HttpError(404, "We couldn't find that gift.");
+    if (site.disabledAt) throw new HttpError(403, "This gift has been paused, so it isn't taking notes right now.");
     if (site.solo) throw new HttpError(403, "This gift is just from one person, so it isn't taking notes from friends.");
     // The same note sent twice (fast taps, a retry after a dropped connection) is saved once.
     const [already] = await db.select({ siteId: c.siteId, editToken: c.editToken }).from(c).where(eq(c.id, data.id));
