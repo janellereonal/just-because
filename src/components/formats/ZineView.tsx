@@ -204,6 +204,7 @@ export function ZineView({
   palette,
   sample,
   showShare,
+  extraSections: extras,
 }: FormatViewProps) {
   const reduce = useReducedMotion();
   const data = usePieces({ site, modules, contributions, calendarEntries, sample });
@@ -318,6 +319,8 @@ export function ZineView({
             </p>
           </section>
         ) : null}
+
+        {extras ? <div className="fmt-extras is-zine">{extras}</div> : null}
 
         <footer className="zine-back mt-16">
           <span className="zine-mono">BACK PAGE</span>

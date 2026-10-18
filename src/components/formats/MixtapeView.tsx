@@ -98,6 +98,7 @@ export function MixtapeView({
   palette,
   sample,
   showShare,
+  extraSections: extras,
 }: FormatViewProps) {
   const data = usePieces({ site, modules, contributions, calendarEntries, sample });
   const voice = giftVoice(site.solo);
@@ -382,6 +383,8 @@ export function MixtapeView({
               .join(" · ")}
           </p>
         ) : null}
+
+        {extras ? <div className="fmt-extras is-mixtape">{extras}</div> : null}
 
         <footer className="mix-foot">
           <p>

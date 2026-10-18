@@ -1,4 +1,5 @@
 import { giftVoice } from "@/lib/giftVoice";
+import { material, panAt } from "@/lib/sound/material";
 import { photoProps, thumbOf } from "@/lib/media";
 import { shareGift, trackEvent } from "@/lib/track";
 import { sampleLetter } from "@/copy/strings";
@@ -65,19 +66,33 @@ function PhotoCard({ item, accent }: { item: Contribution; accent: string }) {
         type="button"
         className={`sb-flip ${flipped ? "is-flipped" : ""}`}
         aria-pressed={flipped}
-        aria-label={flipped ? `Photo from ${item.author_name}. Flip it back.` : `Photo from ${item.author_name}. Flip it over for the note on the back.`}
+        aria-label={
+          flipped
+            ? `Photo from ${item.author_name}. Flip it back.`
+            : `Photo from ${item.author_name}. Flip it over for the note on the back.`
+        }
         onClick={() => {
           setFlipped((f) => !f);
-          chime("whoosh");
+          material("flip", { pan: panAt(document.activeElement) });
           buzz(6);
         }}
       >
         <span className="sb-flip-card">
           <span className="sb-flip-front relative block">
             {/* Photobooth photos have their frame and words drawn in, so they keep their 4:5 shape. */}
-            <span className={`block ${item.data?.["framed"] === true ? "aspect-[4/5]" : "aspect-square"} w-full overflow-hidden rounded-[3px] bg-black/5`}>
+            <span
+              className={`block ${item.data?.["framed"] === true ? "aspect-[4/5]" : "aspect-square"} w-full overflow-hidden rounded-[3px] bg-black/5`}
+            >
               {url ? (
-                <img {...photoProps(url, thumbOf(item.data), "(max-width: 640px) 45vw, 280px")} alt={caption ?? "Contributed photo"} className="size-full object-cover" draggable={false} loading="lazy" decoding="async" data-framed={item.data?.["framed"] === true || undefined} />
+                <img
+                  {...photoProps(url, thumbOf(item.data), "(max-width: 640px) 45vw, 280px")}
+                  alt={caption ?? "Contributed photo"}
+                  className="size-full object-cover"
+                  draggable={false}
+                  loading="lazy"
+                  decoding="async"
+                  data-framed={item.data?.["framed"] === true || undefined}
+                />
               ) : null}
             </span>
             <span className="sb-flip-hint" aria-hidden="true">
@@ -110,14 +125,20 @@ function VoiceCard({ item, accent }: { item: Contribution; accent: string }) {
   const url = useMediaUrl(item.media_url);
   return (
     <div className="flex items-start gap-4 rounded-2xl bg-[var(--gift-surface)] p-4 shadow-sm ring-1 ring-black/5">
-      <span className="grid size-11 shrink-0 place-items-center rounded-full text-lg" style={{ backgroundColor: `${accent}22`, color: accent }} aria-hidden>
+      <span
+        className="grid size-11 shrink-0 place-items-center rounded-full text-lg"
+        style={{ backgroundColor: `${accent}22`, color: accent }}
+        aria-hidden
+      >
         ♪
       </span>
       <div className="min-w-0 flex-1">
         <p className="sb-hand text-xl leading-none" style={{ color: accent }}>
           {item.author_name}
         </p>
-        {item.text_content ? <p className="mt-1.5 text-sm leading-snug opacity-85">{item.text_content}</p> : null}
+        {item.text_content ? (
+          <p className="mt-1.5 text-sm leading-snug opacity-85">{item.text_content}</p>
+        ) : null}
         {url ? (
           <audio controls src={url} className="mt-3 w-full" />
         ) : item.media_url ? (
@@ -149,7 +170,11 @@ function SongRecord({ item, accent }: { item: Contribution; accent: string }) {
           if (a.paused) void a.play().catch(() => {});
           else a.pause();
         }}
-        aria-label={playing ? `Pause the song from ${item.author_name}` : `Play the song from ${item.author_name}`}
+        aria-label={
+          playing
+            ? `Pause the song from ${item.author_name}`
+            : `Play the song from ${item.author_name}`
+        }
         className="relative grid size-[72px] shrink-0 place-items-center rounded-full outline-none focus-visible:ring-4"
         style={{
           background: "repeating-radial-gradient(circle, #1b1716 0 1.4px, #2b2523 1.4px 2.8px)",
@@ -157,8 +182,18 @@ function SongRecord({ item, accent }: { item: Contribution; accent: string }) {
           animation: playing ? "jb-spin 2.2s linear infinite" : undefined,
         }}
       >
-        <span className="absolute inset-0 rounded-full" style={{ background: "conic-gradient(from 210deg, transparent 0 20deg, rgba(255,255,255,.16) 40deg, transparent 70deg 200deg, rgba(255,255,255,.1) 225deg, transparent 260deg)" }} />
-        <span className="relative grid size-7 place-items-center rounded-full text-[11px]" style={{ background: accent, color: readableInk(accent) }} aria-hidden>
+        <span
+          className="absolute inset-0 rounded-full"
+          style={{
+            background:
+              "conic-gradient(from 210deg, transparent 0 20deg, rgba(255,255,255,.16) 40deg, transparent 70deg 200deg, rgba(255,255,255,.1) 225deg, transparent 260deg)",
+          }}
+        />
+        <span
+          className="relative grid size-7 place-items-center rounded-full text-[11px]"
+          style={{ background: accent, color: readableInk(accent) }}
+          aria-hidden
+        >
           {playing ? "❚❚" : "▶"}
         </span>
       </button>
@@ -175,7 +210,10 @@ function SongRecord({ item, accent }: { item: Contribution; accent: string }) {
           }}
           aria-hidden="true"
         >
-          <span className="block h-full rounded-full" style={{ width: `${dur ? (t / dur) * 100 : 0}%`, background: accent }} />
+          <span
+            className="block h-full rounded-full"
+            style={{ width: `${dur ? (t / dur) * 100 : 0}%`, background: accent }}
+          />
         </div>
       </div>
       {url ? (
@@ -194,7 +232,17 @@ function SongRecord({ item, accent }: { item: Contribution; accent: string }) {
   );
 }
 
-function Countdown({ date, accent, heading, label }: { date: string; accent: string; heading: string; label?: string | undefined }) {
+function Countdown({
+  date,
+  accent,
+  heading,
+  label,
+}: {
+  date: string;
+  accent: string;
+  heading: string;
+  label?: string | undefined;
+}) {
   const [now, setNow] = useState(() => Date.now());
   useEffect(() => {
     const t = setInterval(() => setNow(Date.now()), 1000);
@@ -220,11 +268,16 @@ function Countdown({ date, accent, heading, label }: { date: string; accent: str
         </p>
       ) : (
         <>
-          <p className="text-sm tracking-[0.18em] uppercase opacity-70">{label ?? `Counting down to ${heading}`}</p>
+          <p className="text-sm tracking-[0.18em] uppercase opacity-70">
+            {label ?? `Counting down to ${heading}`}
+          </p>
           <p className="mt-1 text-xs opacity-60" suppressHydrationWarning>
             {formatMoment(target)} your time
           </p>
-          <div className="mt-5 flex items-start justify-center gap-2 sm:gap-3" suppressHydrationWarning>
+          <div
+            className="mt-5 flex items-start justify-center gap-2 sm:gap-3"
+            suppressHydrationWarning
+          >
             {[
               [days, days === 1 ? "day" : "days"],
               [hours, "hrs"],
@@ -263,7 +316,13 @@ function CalendarEntryBody({ entry, accent }: { entry: CalendarEntry; accent: st
             className="h-[152px] w-full rounded-xl border-0"
           />
         ) : entry.external_link ? (
-          <a href={entry.external_link} target="_blank" rel="noreferrer" className="underline" style={{ color: accent }}>
+          <a
+            href={entry.external_link}
+            target="_blank"
+            rel="noreferrer"
+            className="underline"
+            style={{ color: accent }}
+          >
             Listen
           </a>
         ) : null
@@ -381,7 +440,10 @@ function SealedLetter({ item, palette }: { item: ViewContribution; palette: Pale
       <div className="flex items-center gap-3">
         <span
           className="grid h-12 w-16 shrink-0 place-items-center rounded-md"
-          style={{ backgroundColor: `${palette.accent}26`, border: `1px solid ${palette.accent}55` }}
+          style={{
+            backgroundColor: `${palette.accent}26`,
+            border: `1px solid ${palette.accent}55`,
+          }}
         >
           <span
             className="size-4 rounded-full"
@@ -489,9 +551,35 @@ export function GiftSiteView({
   const byType = (type: string) => contributions.filter((c) => c.module_type === type);
   const rootRef = useRef<HTMLDivElement | null>(null);
   const heroRef = useRef<Theme3DHandle | null>(null);
+  // Turning the album: each section makes a soft page sound as it comes into view.
+  useEffect(() => {
+    const root = rootRef.current;
+    if (!root || typeof IntersectionObserver === "undefined") return;
+    const heard = new Set<Element>();
+    let last = 0;
+    const io = new IntersectionObserver(
+      (entries) => {
+        for (const e of entries) {
+          if (!e.isIntersecting || heard.has(e.target)) continue;
+          heard.add(e.target);
+          const now = performance.now();
+          if (now - last < 350) continue;
+          last = now;
+          material("pageTurn", { strength: 0.55 });
+        }
+      },
+      { threshold: 0.35 },
+    );
+    root.querySelectorAll(".sb-section").forEach((s) => io.observe(s));
+    return () => io.disconnect();
+  }, []);
   const playColors = [palette.accent, palette.primary, "#FFD166", "#FFFFFF", "#7AD3B0"];
   const icons = useMemo(
-    () => resolveIconSet(castFor(kind, null, site.icon_set ?? null).iconSet, { recipient: text.recipient_name ?? "", palette }),
+    () =>
+      resolveIconSet(castFor(kind, null, site.icon_set ?? null).iconSet, {
+        recipient: text.recipient_name ?? "",
+        palette,
+      }),
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [JSON.stringify(site.icon_set), kind, text.recipient_name, palette.primary, palette.accent],
   );
@@ -540,7 +628,6 @@ export function GiftSiteView({
       size: 1 + (count / max) * 1.8,
     }));
   }, [words]);
-
 
   const sectionTitle = "sb-title text-[1.75rem] leading-tight font-semibold";
   const recipient = text.recipient_name?.trim();
@@ -616,68 +703,109 @@ export function GiftSiteView({
       className={`gift-scrap skin-${kind} ${sectionsOnly ? "jb-sections-only" : "min-h-screen"}`}
     >
       <SkinDecor kind={kind} icons={icons} colors={playColors} />
-      {sectionsOnly ? null : <ScrollStory kind={kind} rootRef={rootRef} icons={icons} accent={accentDeco} ink={palette.primary} />}
-      {sectionsOnly ? null : <GiftProgress rootRef={rootRef} accent={accentDeco} ink={readableInk(palette.background)} />}
+      {sectionsOnly ? null : (
+        <ScrollStory
+          kind={kind}
+          rootRef={rootRef}
+          icons={icons}
+          accent={accentDeco}
+          ink={palette.primary}
+        />
+      )}
+      {sectionsOnly ? null : (
+        <GiftProgress rootRef={rootRef} accent={accentDeco} ink={readableInk(palette.background)} />
+      )}
       <div className={sectionsOnly ? "px-4 pt-12 pb-6" : "mx-auto max-w-3xl px-5 py-10 sm:py-14"}>
         {sectionsOnly ? null : (
-        <header className="sk-hero text-center">
-          <Theme3D
-            kind={kind}
-            palette={palette}
-            className="sk-stage"
-            interactive
-            handleRef={heroRef}
-            onPoke={(x, y, hit) => {
-              burstSet(rootRef.current, x, y, icons, { colors: playColors, count: hit ? 16 : 10 });
-              chime(hit ? "pop" : "boop");
-              buzz(10);
-            }}
-          />
-          {kind === "birthday" ? (
-            <WishCandles heroRef={heroRef} hostRef={rootRef} colors={playColors} accent={accentDeco} icons={icons} />
-          ) : null}
-          <p className="sk-badge mt-6">{kindWords.badge}</p>
-          <h1
-            {...fp("heading", "sb-hero mt-3 text-[clamp(2.2rem,9cqi,4.2rem)] leading-[1.02] font-semibold text-balance")}
-            style={{ fontFamily: fonts.heading }}
-          >
-            {giftHeading(text, theme, site.occasion)}
-          </h1>
-          <p {...fp("recipient_name", "mt-2 text-lg")} style={{ color: accentText }}>
-            {recipient ? (
-              (text.heading ?? "").toLowerCase().includes(recipient.toLowerCase()) ? null : `for ${recipient}`
-            ) : nameIsSample ? (
-              <SampleText on>for {sampleName}</SampleText>
+          <header className="sk-hero text-center">
+            <Theme3D
+              kind={kind}
+              palette={palette}
+              className="sk-stage"
+              interactive
+              handleRef={heroRef}
+              onPoke={(x, y, hit) => {
+                burstSet(rootRef.current, x, y, icons, {
+                  colors: playColors,
+                  count: hit ? 16 : 10,
+                });
+                chime(hit ? "pop" : "boop");
+                buzz(10);
+              }}
+            />
+            {kind === "birthday" ? (
+              <WishCandles
+                heroRef={heroRef}
+                hostRef={rootRef}
+                colors={playColors}
+                accent={accentDeco}
+                icons={icons}
+              />
             ) : null}
-          </p>
-          {text.intro_message || sample ? (
-            <p {...fp("intro_message", "mx-auto mt-5 max-w-[46ch] leading-relaxed opacity-80 text-pretty")}>
-              {text.intro_message || (
-                <SampleText on>
-                  {voice.solo ? "I made this just for you. Take your time." : "Everyone who loves you put something in here. Take your time."}
-                </SampleText>
+            <p className="sk-badge mt-6">{kindWords.badge}</p>
+            <h1
+              {...fp(
+                "heading",
+                "sb-hero mt-3 text-[clamp(2.2rem,9cqi,4.2rem)] leading-[1.02] font-semibold text-balance",
               )}
+              style={{ fontFamily: fonts.heading }}
+            >
+              {giftHeading(text, theme, site.occasion)}
+            </h1>
+            <p {...fp("recipient_name", "mt-2 text-lg")} style={{ color: accentText }}>
+              {recipient ? (
+                (text.heading ?? "").toLowerCase().includes(recipient.toLowerCase()) ? null : (
+                  `for ${recipient}`
+                )
+              ) : nameIsSample ? (
+                <SampleText on>for {sampleName}</SampleText>
+              ) : null}
             </p>
-          ) : null}
-          {kind === "voyage" ? (
-            <div className="sk-pass" aria-label={`From ${voice.solo ? "me" : "everyone"}, to ${sampleName || "you"}`}>
-              <span>
-                <small>From</small>
-                <strong>{voice.solo ? "Me" : "Everyone"}</strong>
-              </span>
-              <span className="sk-pass-plane" aria-hidden="true">
-                ✈
-              </span>
-              <span className="text-right">
-                <small>To</small>
-                <strong>{recipient || (nameIsSample ? <SampleText on tag={false}>{sampleName}</SampleText> : "You")}</strong>
-              </span>
-            </div>
-          ) : null}
-          {sample && contributions.length === 0 ? (
-            <SampleNote>{voice.sample}</SampleNote>
-          ) : null}
-        </header>
+            {text.intro_message || sample ? (
+              <p
+                {...fp(
+                  "intro_message",
+                  "mx-auto mt-5 max-w-[46ch] leading-relaxed opacity-80 text-pretty",
+                )}
+              >
+                {text.intro_message || (
+                  <SampleText on>
+                    {voice.solo
+                      ? "I made this just for you. Take your time."
+                      : "Everyone who loves you put something in here. Take your time."}
+                  </SampleText>
+                )}
+              </p>
+            ) : null}
+            {kind === "voyage" ? (
+              <div
+                className="sk-pass"
+                aria-label={`From ${voice.solo ? "me" : "everyone"}, to ${sampleName || "you"}`}
+              >
+                <span>
+                  <small>From</small>
+                  <strong>{voice.solo ? "Me" : "Everyone"}</strong>
+                </span>
+                <span className="sk-pass-plane" aria-hidden="true">
+                  ✈
+                </span>
+                <span className="text-right">
+                  <small>To</small>
+                  <strong>
+                    {recipient ||
+                      (nameIsSample ? (
+                        <SampleText on tag={false}>
+                          {sampleName}
+                        </SampleText>
+                      ) : (
+                        "You"
+                      ))}
+                  </strong>
+                </span>
+              </div>
+            ) : null}
+            {sample && contributions.length === 0 ? <SampleNote>{voice.sample}</SampleNote> : null}
+          </header>
         )}
 
         {enabled.has("countdown") && (countdownTarget(site) || sample) ? (
@@ -686,7 +814,11 @@ export function GiftSiteView({
               date={countdownTarget(site) ?? new Date(Date.now() + 12 * 86400000).toISOString()}
               accent={accentText}
               heading={text.countdown_title || titles.countdown_title}
-              label={(kind === "default" && !site.occasion) || text.countdown_title ? undefined : kindWords.countdown}
+              label={
+                (kind === "default" && !site.occasion) || text.countdown_title
+                  ? undefined
+                  : kindWords.countdown
+              }
             />
           </section>
         ) : null}
@@ -745,7 +877,13 @@ export function GiftSiteView({
                       <SealedLetter key={item.id} item={item} palette={palette} />
                     ) : (
                       <Mine key={item.id} item={item}>
-                        <NoteCard kind={kind} index={li} text={item.text_content ?? ""} author={item.author_name} accent={accentText} />
+                        <NoteCard
+                          kind={kind}
+                          index={li}
+                          text={item.text_content ?? ""}
+                          author={item.author_name}
+                          accent={accentText}
+                        />
                       </Mine>
                     ),
                   )
@@ -753,12 +891,18 @@ export function GiftSiteView({
                     { t: sampleLetter(kind, 0, sampleName), a: "Sam" },
                     { t: sampleLetter(kind, 1), a: "Alex" },
                   ].map((s, li) => (
-                    <NoteCard key={s.a} kind={kind} index={li} text={s.t} author={s.a} accent={accentText} muted />
+                    <NoteCard
+                      key={s.a}
+                      kind={kind}
+                      index={li}
+                      text={s.t}
+                      author={s.a}
+                      accent={accentText}
+                      muted
+                    />
                   ))}
             </div>
-            {letters.length === 0 && sample ? (
-              <SampleNote>{voice.sample}</SampleNote>
-            ) : null}
+            {letters.length === 0 && sample ? <SampleNote>{voice.sample}</SampleNote> : null}
           </section>
         )}
 
@@ -793,9 +937,7 @@ export function GiftSiteView({
                     </figure>
                   ))}
             </div>
-            {photos.length === 0 && sample ? (
-              <SampleNote>{voice.sample}</SampleNote>
-            ) : null}
+            {photos.length === 0 && sample ? <SampleNote>{voice.sample}</SampleNote> : null}
           </section>
         )}
 
@@ -846,9 +988,7 @@ export function GiftSiteView({
                   />
                 ))}
             </div>
-            {cloud.length === 0 && sample ? (
-              <SampleNote>{voice.sample}</SampleNote>
-            ) : null}
+            {cloud.length === 0 && sample ? <SampleNote>{voice.sample}</SampleNote> : null}
           </section>
         )}
 
@@ -864,7 +1004,12 @@ export function GiftSiteView({
               {voices.length > 0 ? (
                 voices.map((item) =>
                   item.sealed ? (
-                    <SealedMedia key={item.id} item={item} palette={palette} recipient={sampleName || "the recipient"} />
+                    <SealedMedia
+                      key={item.id}
+                      item={item}
+                      palette={palette}
+                      recipient={sampleName || "the recipient"}
+                    />
                   ) : (
                     <Mine key={item.id} item={item}>
                       <VoiceCard item={item} accent={accentText} />
@@ -892,9 +1037,7 @@ export function GiftSiteView({
                 </div>
               )}
             </div>
-            {voices.length === 0 && sample ? (
-              <SampleNote>{voice.sample}</SampleNote>
-            ) : null}
+            {voices.length === 0 && sample ? <SampleNote>{voice.sample}</SampleNote> : null}
           </section>
         )}
 
@@ -911,7 +1054,12 @@ export function GiftSiteView({
                 songs.map((item) => {
                   if (item.sealed)
                     return (
-                      <SealedMedia key={item.id} item={item} palette={palette} recipient={sampleName || "the recipient"} />
+                      <SealedMedia
+                        key={item.id}
+                        item={item}
+                        palette={palette}
+                        recipient={sampleName || "the recipient"}
+                      />
                     );
                   const embed = toEmbedUrl(item.external_link ?? "");
                   return (
@@ -943,11 +1091,19 @@ export function GiftSiteView({
                           Listen to this song
                         </a>
                       )}
-                      <p className="mt-3 flex items-center justify-between gap-3 text-sm" style={{ color: accentText }}>
+                      <p
+                        className="mt-3 flex items-center justify-between gap-3 text-sm"
+                        style={{ color: accentText }}
+                      >
                         <span>{item.author_name}</span>
                         {/* The player can be blocked (office or school wifi); the link always works. */}
                         {embed && item.external_link ? (
-                          <a href={item.external_link} target="_blank" rel="noreferrer" className="text-xs underline opacity-80">
+                          <a
+                            href={item.external_link}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="text-xs underline opacity-80"
+                          >
                             Open in {/spotify/i.test(item.external_link) ? "Spotify" : "YouTube"}
                           </a>
                         ) : null}
@@ -976,9 +1132,7 @@ export function GiftSiteView({
                 </div>
               )}
             </div>
-            {songs.length === 0 && sample ? (
-              <SampleNote>{voice.sample}</SampleNote>
-            ) : null}
+            {songs.length === 0 && sample ? <SampleNote>{voice.sample}</SampleNote> : null}
           </section>
         )}
 
@@ -1013,52 +1167,55 @@ export function GiftSiteView({
         )}
 
         {sectionsOnly ? null : (
-        <footer className="mt-16 border-t pt-8 text-center" style={{ borderColor: `${palette.accent}33` }}>
-          {text.footer_note || sample ? (
-            <p {...fp("footer_note", "mb-3 opacity-80")}>
-              {text.footer_note || (
-                <SampleText on>{voice.signoff}</SampleText>
-              )}
-            </p>
-          ) : null}
-          <div className="flex items-center justify-center gap-2">
-            {isQuietOccasion(site.occasion) ? null : <Bo pose="idle" size={32} title="Bo" />}
-            <p className="text-sm">Made with Just Because</p>
-          </div>
-          <p className="mt-1 text-xs opacity-70">Tag us and use #justbecause</p>
-          {showShare && !sample ? (
-            <a
-              href="/"
-              onClick={() => trackEvent("make_your_own_clicked", site.id, { source: "gift_footer" })}
-              className="mt-2 inline-block text-xs underline underline-offset-2 opacity-80"
-              style={{ color: accentText }}
-            >
-              Make one for someone
-            </a>
-          ) : null}
-          {onReplayIntro ? (
-            <button
-              type="button"
-              onClick={onReplayIntro}
-              className="mt-4 block w-full text-xs underline"
-              style={{ color: accentText }}
-            >
-              Replay intro
-            </button>
-          ) : null}
-          {showShare ? (
-            <button
-              onClick={share}
-              className="mt-4 rounded-full px-5 py-2.5 text-sm font-medium"
-              style={{
-                backgroundColor: palette.accent,
-                color: readableInk(palette.accent),
-              }}
-            >
-              Share this page
-            </button>
-          ) : null}
-        </footer>
+          <footer
+            className="mt-16 border-t pt-8 text-center"
+            style={{ borderColor: `${palette.accent}33` }}
+          >
+            {text.footer_note || sample ? (
+              <p {...fp("footer_note", "mb-3 opacity-80")}>
+                {text.footer_note || <SampleText on>{voice.signoff}</SampleText>}
+              </p>
+            ) : null}
+            <div className="flex items-center justify-center gap-2">
+              {isQuietOccasion(site.occasion) ? null : <Bo pose="idle" size={32} title="Bo" />}
+              <p className="text-sm">Made with Just Because</p>
+            </div>
+            <p className="mt-1 text-xs opacity-70">Tag us and use #justbecause</p>
+            {showShare && !sample ? (
+              <a
+                href="/"
+                onClick={() =>
+                  trackEvent("make_your_own_clicked", site.id, { source: "gift_footer" })
+                }
+                className="mt-2 inline-block text-xs underline underline-offset-2 opacity-80"
+                style={{ color: accentText }}
+              >
+                Make one for someone
+              </a>
+            ) : null}
+            {onReplayIntro ? (
+              <button
+                type="button"
+                onClick={onReplayIntro}
+                className="mt-4 block w-full text-xs underline"
+                style={{ color: accentText }}
+              >
+                Replay intro
+              </button>
+            ) : null}
+            {showShare ? (
+              <button
+                onClick={share}
+                className="mt-4 rounded-full px-5 py-2.5 text-sm font-medium"
+                style={{
+                  backgroundColor: palette.accent,
+                  color: readableInk(palette.accent),
+                }}
+              >
+                Share this page
+              </button>
+            ) : null}
+          </footer>
         )}
       </div>
     </div>
