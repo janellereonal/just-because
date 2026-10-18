@@ -25,6 +25,8 @@ export const FLAGS = {
   guestStart: "guestStart",
   /** Love Letter: the new openings (break the seal, peel it, slide it out) that grow into the gift. */
   letterOpenings: "letterOpenings",
+  /** Every theme style reads in a body of its own (src/components/bodies), instead of a shared layout. */
+  styleBodies: "styleBodies",
 } as const;
 
 export type FlagName = keyof typeof FLAGS;

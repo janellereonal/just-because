@@ -1,0 +1,47 @@
+/* Style bodies: shared pieces (src/components/bodies/kit.tsx). Each body has its own file next to this one. */
+.body-reader-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 95;
+  display: grid;
+  place-items: end center;
+  padding: 12px;
+  background: rgba(20, 16, 14, .5);
+  backdrop-filter: blur(6px);
+  animation: body-fade .25s ease both;
+}
+@media (min-width: 640px) { .body-reader-backdrop { place-items: center; } }
+.body-reader {
+  position: relative;
+  width: min(560px, 100%);
+  max-height: min(88vh, 92%);
+  overflow-y: auto;
+  border-radius: 22px;
+  padding: 34px 26px 28px;
+  background: #FFFDF8;
+  color: #2B2522;
+  box-shadow: 0 30px 80px -30px rgba(0,0,0,.55);
+  animation: body-rise .45s cubic-bezier(.2,1.2,.3,1) both;
+}
+.body-reader-close {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  z-index: 3;
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 999px;
+  background: rgba(0,0,0,.06);
+  color: inherit;
+}
+.body-reader-close:hover { background: rgba(0,0,0,.11); }
+.body-reader-photo { margin-bottom: 18px; }
+.body-reader-text { font-size: 1.125rem; line-height: 1.7; white-space: pre-line; }
+.body-reader-from { margin-top: 18px; font-weight: 600; }
+@keyframes body-fade { from { opacity: 0; } }
+@keyframes body-rise { from { opacity: 0; transform: translateY(24px) scale(.96); } }
+@media (prefers-reduced-motion: reduce) {
+  .body-reader, .body-reader-backdrop { animation: none !important; }
+}

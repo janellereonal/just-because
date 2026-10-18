@@ -22,6 +22,7 @@ import type { Palette, Theme } from "@/lib/themes";
 import { themeKindOf } from "@/lib/themeKind";
 import { isQuietOccasion } from "@/lib/occasions";
 import { loadThemeFonts, themeFontVars } from "@/themes/_shared/design";
+import { ownBodyFor } from "@/components/bodies/registry";
 
 const BentoView = lazy(() =>
   import("@/components/formats/BentoView").then((m) => ({ default: m.BentoView })),
@@ -92,7 +93,8 @@ export function FormatView(props: Props) {
   useEffect(() => loadPairingFonts(props.site.font_choice), [props.site.font_choice]);
   // Handwritten draws video and quiz inside its own notebook.
   // Bento shows video and quiz inside its own board (see FormatBody), so it skips the block underneath.
-  const tiles = props.site.format !== "scrapbook" && props.site.format !== "comic" && props.site.format !== "handwritten" && props.site.format !== "bento";
+  const own = ownBodyFor(props.site.style);
+  const tiles = !!own || (props.site.format !== "scrapbook" && props.site.format !== "comic" && props.site.format !== "handwritten" && props.site.format !== "bento");
   const cast = castFor(kind, props.site.character ?? null, props.site.icon_set ?? null);
   const palette = props.palette ?? resolvePalette(props.theme, props.site.custom_colors);
   const roamIcons = useMemo(
@@ -105,7 +107,7 @@ export function FormatView(props: Props) {
       <GiftKindContext.Provider value={kind}>
       <div className="contents" style={themeFontVars(kind)}>
         {/* Every format says when it's showing samples. The scrapbook labels each section itself. */}
-        {props.sample && props.site.format !== "scrapbook" && props.contributions.length === 0 ? (
+        {props.sample && (own || props.site.format !== "scrapbook") && props.contributions.length === 0 ? (
           <div className="pointer-events-none sticky top-0 z-[60] flex h-0 items-start justify-center overflow-visible">
             <span className="mt-3 rounded-full px-3 py-1 text-[11px] font-medium whitespace-nowrap shadow-sm" style={{ background: "rgba(43,37,34,.86)", color: "#FBF8F2" }}>
               {props.site.solo ? SAMPLE_BADGE.solo : SAMPLE_BADGE.friends}
@@ -176,6 +178,14 @@ function FormatBody(props: Props) {
     showShare: props.showShare,
   });
   const fallback = <div className="min-h-[60vh]" style={{ background: palette.background }} />;
+  // A theme style's own body (Love Letter's envelopes, Cake's party table...), when it has one.
+  const Own = ownBodyFor(site.style);
+  if (Own)
+    return (
+      <Suspense fallback={fallback}>
+        <Own {...common} theme={theme} />
+      </Suspense>
+    );
   switch (site.format) {
     case "comic":
       return (

@@ -8,6 +8,22 @@
 @import "./styles/play.css";
 @import "./styles/comic.css";
 @import "./styles/handwritten.css";
+@import "./styles/bodies/kit.css";
+@import "./styles/bodies/letters.css";
+@import "./styles/bodies/party.css";
+@import "./styles/bodies/crate.css";
+@import "./styles/bodies/reception.css";
+@import "./styles/bodies/rooftop.css";
+@import "./styles/bodies/passport.css";
+@import "./styles/bodies/presents.css";
+@import "./styles/bodies/nursery.css";
+@import "./styles/bodies/toybasket.css";
+@import "./styles/bodies/gameboard.css";
+@import "./styles/bodies/cabinet.css";
+@import "./styles/bodies/frost.css";
+@import "./styles/bodies/unpack.css";
+@import "./styles/bodies/lanterns.css";
+@import "./styles/bodies/dancecard.css";
 
 /*
  * Just Because, "Pastel toybox" design system (Oct 2026 redesign).

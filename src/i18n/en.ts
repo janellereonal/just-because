@@ -155,6 +155,73 @@ export const en = {
   "letter.choice.slide": "Slide it out",
   "letter.choice.slideHint": "Pull the folded letter out of the envelope.",
 
+  // Style bodies: shared words (src/components/bodies/kit.tsx).
+  "body.what.letter": "A note",
+  "body.what.photo": "A photo",
+  "body.what.song": "A song",
+  "body.what.voice": "A voice note",
+  "body.what.word": "A word",
+  "body.what.ornament": "A wish",
+  "body.what.calendar": "A surprise",
+  "body.what.sealed": "A sealed note",
+  "body.from": "from {name}",
+  "body.sealed": "Only for the person this gift is for.",
+  "body.opensOn": "Opens {day}",
+  "body.lockedLong": "This one opens on {day}. No peeking.",
+  "body.songFallback": "A song for you",
+  "body.voiceFallback": "A little voice note",
+  "body.openSong": "Open the song",
+  "body.close": "Close",
+  "body.countdown.done": "It's time.",
+  "body.countdown.left": "{days} days, {hours} hours and {mins} minutes to go",
+  "body.withLove": "With love from {names}.",
+  "body.and": "and",
+  "body.andMore": "and {n} more",
+  "body.share": "Share the gift",
+
+  // Love Letter's body: a bundle of letters.
+  "letters.kicker": "A bundle of letters",
+  "letters.for": "For",
+  "letters.what": "letters in the bundle",
+  "letters.count": "{n} letters, tied with a ribbon",
+  "letters.untie": "Untie the ribbon",
+  "letters.untieAria": "Untie the ribbon around {n} letters",
+  "letters.progress": "{n} of {total} letters opened",
+  "letters.allRead": "Every letter opened",
+  "letters.to": "To {name}",
+  "letters.fromLine": "from {name}",
+  "letters.fromFriend": "from a friend",
+  "letters.dear": "Dear {name},",
+  "letters.wordsTitle": "In a word, you are",
+
+  // cake body (PartyBody).
+
+  // record-player body (CrateBody).
+
+  // invitation body (ReceptionBody).
+
+  // countdown body (RooftopBody).
+
+  // boarding-pass body (PassportBody).
+
+  // gift-box body (PresentsBody).
+
+  // crib-mobile body (NurseryBody).
+
+  // fetch body (ToyBasketBody).
+
+  // board-game body (GameBoardBody).
+
+  // arcade body (CabinetBody).
+
+  // winter-window body (FrostBody).
+
+  // care-package body (UnpackBody).
+
+  // parol body (LanternsBody).
+
+  // debut body (DanceCardBody).
+
   // The /dev/themes playground (dev only, still translatable).
   "playground.title": "Theme playground",
   "playground.theme": "Theme",
@@ -361,6 +428,7 @@ export const en = {
   "style.love-letter.title": "Love Letter",
   "style.love-letter.copy": "Press the wax seal",
   "style.love-letter.about": "A letter sealed in wax. They press the seal, the letter slides out and opens into a little book of notes.",
+  "style.love-letter.aboutOwn": "A letter sealed in wax. They break the seal, and inside is a bundle of envelopes tied with ribbon, one from every friend.",
   "style.boarding-pass.title": "Boarding Pass",
   "style.boarding-pass.copy": "Tear along the dotted line",
   "style.boarding-pass.about": "A boarding pass with their name on it. They tear the stub and every friend turns up as a stamp.",
