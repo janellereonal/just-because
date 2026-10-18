@@ -751,6 +751,7 @@ export function GiftIntro(props: GiftIntroProps) {
       slots={slots}
       options={themeOptions}
       age={age}
+      letter={s.letter}
       style={giftStyle}
     />
   );

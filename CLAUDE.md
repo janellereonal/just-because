@@ -195,6 +195,10 @@ verification is only required once `RESEND_API_KEY` and `EMAIL_FROM` are both se
 
 - Each theme's opening lives in `src/themes/<theme>/Opening.tsx`, registered in `src/themes/TactileOpening.tsx`.
   Springs only, sound off by default, a plain button for every gesture, particles from the gift's icon set.
+- Love Letter (flag `letterOpenings`): three openings in `src/themes/valentine/LoveLetter.tsx`, picked with
+  `intro_settings.letter` (empty = break the seal, `peel`, `slide`). They end by growing into the gift's first page:
+  the gift waits underneath in `[data-gift-underlay]`, and a layout marks its first page with `data-gift-page`
+  (Storybook does). Openings that do this pass `reveal="fade"` to `OpeningShell` instead of the portal reveal.
 - Theme fonts: `src/themes/_shared/design.ts`. Never use Caveat, Pacifico, Dancing Script, Lobster or Great Vibes.
 - Newer sections keep their extra fields in `contributions.data`; shape and cleaning in `src/lib/sections.ts`.
 - New landing and section copy goes in `src/copy/strings.ts`.

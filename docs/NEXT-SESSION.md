@@ -22,6 +22,13 @@ Janelle's restructure: **Style** becomes the one visual choice, **Occasion** an 
 4. Openings for the 9 layout styles: done (18 Oct, branch `styles-complete`, `src/themes/layouts/`). Every style now
    has an opening and a body, in the gallery and on real gifts. Next: slow-motion recordings and a real-phone pass.
 
+Status: 1 to 3 merged (#49, #61, #62, fixes #58). `styles` still has to be added to `VITE_FLAGS` in Vercel.
+PR 4 part 1 (`love-letter-directions`, flag `letterOpenings`): Janelle didn't want to pick between the three
+Love Letter directions, so all three ship. Break the seal is the default; Peel the seal and Slide it out are
+choices under "How the letter opens" in the editor (`intro_settings.letter`). All three grow into the gift's
+first page. Code: `src/themes/valentine/LoveLetter.tsx`; dev page `/dev/love-letter?d=a|b|c`.
+Layout styles' openings are in #73 (another session). Still open: calm notebook wording for Sympathy.
+
 Open: cultural review of the Lunar New Year, Eid, Diwali and Hanukkah words (`culturalReview` in occasions.ts).
 
 ## Earlier (17 Oct 2026, afternoon)

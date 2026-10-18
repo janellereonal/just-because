@@ -333,6 +333,8 @@ export function StorybookView({
       <div className="sbk-stage">
         <div
           ref={bookRef}
+          // Openings that hand off into the gift (the Love Letter's letter) grow into this page.
+          data-gift-page=""
           className={`sbk-book ${at === 0 ? "is-closed" : ""} ${reduce ? "is-still" : ""}`}
           onPointerDown={onDown}
           onPointerMove={onMove}

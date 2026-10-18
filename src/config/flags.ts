@@ -23,6 +23,8 @@ export const FLAGS = {
   styles: "styles",
   /** Start a gift without an account; sign in to share, pay or come back on another device. */
   guestStart: "guestStart",
+  /** Love Letter: the new openings (break the seal, peel it, slide it out) that grow into the gift. */
+  letterOpenings: "letterOpenings",
 } as const;
 
 export type FlagName = keyof typeof FLAGS;

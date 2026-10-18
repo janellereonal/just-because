@@ -40,6 +40,8 @@ export type OpeningProps = {
   hostRef: React.RefObject<HTMLDivElement | null>;
   /** Live hint text under the object. */
   setHint: (hint: string) => void;
+  /** Which version of the opening, for themes that offer more than one (Love Letter). */
+  variant?: string | undefined;
 };
 
 /** Every theme's object gets these props. */
@@ -69,6 +71,7 @@ export function OpeningShell({
   grain = 0.14,
   sprinkles,
   sprinkleOpacity = 0.4,
+  reveal = "portal",
 }: {
   kind: ThemeKind;
   background: React.CSSProperties;
@@ -86,6 +89,11 @@ export function OpeningShell({
   /** The gift's icon set, drifting in the background. */
   sprinkles?: IconSet;
   sprinkleOpacity?: number;
+  /**
+   * How the gift takes over: "portal" opens a hole from the object outwards; "fade" is for
+   * objects that already fill the screen (a letter that becomes the first page).
+   */
+  reveal?: "portal" | "fade";
 }) {
   const design = designFor(kind);
   const hostRef = useRef<HTMLDivElement | null>(null);
@@ -111,7 +119,7 @@ export function OpeningShell({
 
   // The reveal: a hole opens from the object outwards and the gift is
   // already waiting underneath, so it feels like stepping through the box.
-  const portal = opening && !reduced;
+  const portal = opening && !reduced && reveal === "portal";
   const hole = useMotionValue(0);
   const mask = useTransform(hole, (h) => (h <= 0 ? "none" : `radial-gradient(circle at 50% 50%, transparent ${h}%, #000 ${h + 14}%)`));
   useEffect(() => {

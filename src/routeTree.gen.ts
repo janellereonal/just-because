@@ -28,6 +28,7 @@ import { Route as ContributeSlugRouteImport } from './routes/contribute.$slug'
 import { Route as DevCastRouteImport } from './routes/dev.cast'
 import { Route as DevClayRouteImport } from './routes/dev.clay'
 import { Route as DevFormatRouteImport } from './routes/dev.format'
+import { Route as DevLoveLetterRouteImport } from './routes/dev.love-letter'
 import { Route as DevOgRouteImport } from './routes/dev.og'
 import { Route as DevOpeningsRouteImport } from './routes/dev.openings'
 import { Route as DevPeopleRouteImport } from './routes/dev.people'
@@ -140,6 +141,11 @@ const DevFormatRoute = DevFormatRouteImport.update({
   path: '/dev/format',
   getParentRoute: () => rootRouteImport,
 } as any)
+const DevLoveLetterRoute = DevLoveLetterRouteImport.update({
+  id: '/dev/love-letter',
+  path: '/dev/love-letter',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const DevOgRoute = DevOgRouteImport.update({
   id: '/dev/og',
   path: '/dev/og',
@@ -246,6 +252,7 @@ export interface FileRoutesByFullPath {
   '/dev/cast': typeof DevCastRoute
   '/dev/clay': typeof DevClayRoute
   '/dev/format': typeof DevFormatRoute
+  '/dev/love-letter': typeof DevLoveLetterRoute
   '/dev/og': typeof DevOgRoute
   '/dev/openings': typeof DevOpeningsRoute
   '/dev/people': typeof DevPeopleRoute
@@ -283,6 +290,7 @@ export interface FileRoutesByTo {
   '/dev/cast': typeof DevCastRoute
   '/dev/clay': typeof DevClayRoute
   '/dev/format': typeof DevFormatRoute
+  '/dev/love-letter': typeof DevLoveLetterRoute
   '/dev/og': typeof DevOgRoute
   '/dev/openings': typeof DevOpeningsRoute
   '/dev/people': typeof DevPeopleRoute
@@ -322,6 +330,7 @@ export interface FileRoutesById {
   '/dev/cast': typeof DevCastRoute
   '/dev/clay': typeof DevClayRoute
   '/dev/format': typeof DevFormatRoute
+  '/dev/love-letter': typeof DevLoveLetterRoute
   '/dev/og': typeof DevOgRoute
   '/dev/openings': typeof DevOpeningsRoute
   '/dev/people': typeof DevPeopleRoute
@@ -361,6 +370,7 @@ export interface FileRouteTypes {
     | '/dev/cast'
     | '/dev/clay'
     | '/dev/format'
+    | '/dev/love-letter'
     | '/dev/og'
     | '/dev/openings'
     | '/dev/people'
@@ -398,6 +408,7 @@ export interface FileRouteTypes {
     | '/dev/cast'
     | '/dev/clay'
     | '/dev/format'
+    | '/dev/love-letter'
     | '/dev/og'
     | '/dev/openings'
     | '/dev/people'
@@ -436,6 +447,7 @@ export interface FileRouteTypes {
     | '/dev/cast'
     | '/dev/clay'
     | '/dev/format'
+    | '/dev/love-letter'
     | '/dev/og'
     | '/dev/openings'
     | '/dev/people'
@@ -472,6 +484,7 @@ export interface RootRouteChildren {
   DevCastRoute: typeof DevCastRoute
   DevClayRoute: typeof DevClayRoute
   DevFormatRoute: typeof DevFormatRoute
+  DevLoveLetterRoute: typeof DevLoveLetterRoute
   DevOgRoute: typeof DevOgRoute
   DevOpeningsRoute: typeof DevOpeningsRoute
   DevPeopleRoute: typeof DevPeopleRoute
@@ -622,6 +635,13 @@ declare module '@tanstack/react-router' {
       path: '/dev/format'
       fullPath: '/dev/format'
       preLoaderRoute: typeof DevFormatRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/dev/love-letter': {
+      id: '/dev/love-letter'
+      path: '/dev/love-letter'
+      fullPath: '/dev/love-letter'
+      preLoaderRoute: typeof DevLoveLetterRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/dev/og': {
@@ -782,6 +802,7 @@ const rootRouteChildren: RootRouteChildren = {
   DevCastRoute: DevCastRoute,
   DevClayRoute: DevClayRoute,
   DevFormatRoute: DevFormatRoute,
+  DevLoveLetterRoute: DevLoveLetterRoute,
   DevOgRoute: DevOgRoute,
   DevOpeningsRoute: DevOpeningsRoute,
   DevPeopleRoute: DevPeopleRoute,

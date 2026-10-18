@@ -18,6 +18,7 @@ import {
   type IntroSettings,
   type IntroSticker,
   type IntroStyle,
+  LETTER_OPENINGS,
 } from "@/lib/intro";
 import type { Palette } from "@/lib/themes";
 
@@ -259,6 +260,28 @@ export function IntroDesigner({
             : isFlagOn("styles") ? t("picker.style.ownObject") : "The theme's own object, opened with a gesture."}
         </p>
       </Group>
+
+      {!classic && kind === "valentine" && isFlagOn("letterOpenings") ? (
+        <Group title={t("letter.choice.label")}>
+          <div className="flex flex-wrap gap-2">
+            {LETTER_OPENINGS.map((id) => {
+              const on = (settings.letter ?? "seal") === id;
+              return (
+                <button
+                  key={id}
+                  type="button"
+                  className={chip(on)}
+                  aria-pressed={on}
+                  onClick={() => set({ letter: id === "seal" ? undefined : id })}
+                >
+                  {t(`letter.choice.${id}`)}
+                </button>
+              );
+            })}
+          </div>
+          <p className="mt-2 text-xs text-muted">{t(`letter.choice.${settings.letter ?? "seal"}Hint`)}</p>
+        </Group>
+      ) : null}
 
       {classic ? (
         <>

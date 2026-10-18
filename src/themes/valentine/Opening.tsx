@@ -225,7 +225,7 @@ export function ValentineOpening(p: OpeningProps) {
 }
 
 /** Wax with an irregular rim, a pressed heart and a little gloss. */
-function WaxSeal({ color, dark }: { color: string; dark: string }) {
+export function WaxSeal({ color, dark }: { color: string; dark: string }) {
   return (
     <svg viewBox="0 0 100 100" className="size-full overflow-visible" aria-hidden="true" style={{ filter: "drop-shadow(2px 4px 3px rgba(60,10,20,.4)) drop-shadow(4px 10px 10px rgba(60,10,20,.25))" }}>
       <defs>
@@ -249,7 +249,7 @@ function WaxSeal({ color, dark }: { color: string; dark: string }) {
 }
 
 /** Tissue liner inside the envelope: deep rose with tiny pressed hearts. */
-function liner(c: ThemePalette): React.CSSProperties {
+export function liner(c: ThemePalette): React.CSSProperties {
   const heart = encodeURIComponent(
     `<svg xmlns='http://www.w3.org/2000/svg' width='22' height='22'><path d='M11 16s-5-3-5-6.5a2.6 2.6 0 0 1 5-1.3 2.6 2.6 0 0 1 5 1.3C16 13 11 16 11 16z' fill='${c.gold}' fill-opacity='.38'/></svg>`,
   );

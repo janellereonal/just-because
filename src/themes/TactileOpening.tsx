@@ -11,6 +11,8 @@ import { resolveIconSet, type IconSetSetting } from "@/themes/_shared/iconSets";
 import type { CharacterSetting } from "@/themes/_shared/cast/types";
 import { OpeningShell, type OpeningComponent } from "@/themes/_shared/opening";
 import { ValentineOpening, valentineBackground } from "@/themes/valentine/Opening";
+import { LoveLetterOpening } from "@/themes/valentine/LoveLetter";
+import { isFlagOn } from "@/config/flags";
 import { BirthdayOpening, birthdayBackground } from "@/themes/birthday/Opening";
 import { AnniversaryOpening, anniversaryBackground } from "@/themes/anniversary/Opening";
 import { WeddingOpening, weddingBackground } from "@/themes/wedding/Opening";
@@ -40,6 +42,8 @@ type Entry = {
   grain?: number;
   /** How strongly the icon set drifts in the background (0 hides it). */
   sprinkles?: number;
+  /** "fade": the object hands over to the gift itself (it grows into the first page). */
+  reveal?: "portal" | "fade";
 };
 
 export const OPENINGS: Partial<Record<ThemeKind, Entry>> = {
@@ -176,8 +180,11 @@ export function TactileOpening({
   options,
   age,
   calm = false,
+  letter,
   style,
 }: {
+  /** Love Letter: how the letter opens (intro_settings.letter). */
+  letter?: string | undefined;
   /** A layout style's id (scrapbook, mixtape...): plays that style's own opening. */
   style?: string | null | undefined;
   age?: number | null | undefined;
@@ -238,7 +245,8 @@ export function TactileOpening({
     );
   }
   const layout = layoutOpeningFor(style);
-  const Component = layout?.Component ?? entry.Component;
+  const letterOn = !layout && kind === "valentine" && isFlagOn("letterOpenings");
+  const Component = layout?.Component ?? (letterOn ? LoveLetterOpening : entry.Component);
   const c = design.palette;
   return (
     <OpeningShell
@@ -252,6 +260,7 @@ export function TactileOpening({
       onSkip={onSkip ?? onOpen}
       hint={interactive && !paused ? hint : ""}
       badge={badgeText || layout?.badge || design.name}
+      reveal={letterOn ? "fade" : (entry.reveal ?? "portal")}
       {...((layout ? layout.grain : entry.grain) !== undefined
         ? { grain: (layout ? layout.grain : entry.grain)! }
         : {})}
@@ -280,6 +289,7 @@ export function TactileOpening({
           onOpen={open}
           hostRef={hostRef}
           setHint={setHint}
+          variant={letter}
         />
       )}
     </OpeningShell>
