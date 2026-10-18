@@ -1,4 +1,5 @@
 import { Suspense, lazy, useEffect, useState } from "react";
+import { trackEvent } from "@/lib/track";
 import { ExportGift } from "@/components/ExportGift";
 import { themeKindOf } from "@/lib/themeKind";
 import {useParams} from "@tanstack/react-router";
@@ -7,6 +8,9 @@ import { FormatView } from "@/components/formats/FormatView";
 import { formatInfo } from "@/lib/formats";
 import { introStyleForTheme } from "@/lib/intro";
 import { PageError, PageLoading, PageNotFound } from "@/components/PageStates";
+import { REPORT_COPY } from "@/copy/strings";
+import { ReportGift } from "@/components/ReportGift";
+import { readableInk } from "@/lib/palettes";
 
 // The opening animation is only needed the first time a gift is viewed.
 const GiftIntro = lazy(() =>
@@ -77,6 +81,19 @@ function PublishedPage() {
     setSkipChecked(true);
   }, [site?.id]);
 
+  // Metrics: the recipient (or anyone but the organiser) opened the gift. The server ignores the owner.
+  useEffect(() => {
+    if (!site || locked || !meReady) return;
+    if (me && (me.id === site.creator_id || me.isAdmin)) return;
+    if (isGiftOpen(site)) trackEvent("gift_opened", site.id);
+  }, [site?.id, locked, meReady, me?.id]);
+  // Theme metrics: the opening started (it shows until it's opened or skipped).
+  useEffect(() => {
+    if (!site || locked || !meReady || opened || !skipChecked) return;
+    if (me && (me.id === site.creator_id || me.isAdmin)) return;
+    if (isGiftOpen(site) && formatInfo(site.format).usesIntro) trackEvent("theme_opening_started", site.id);
+  }, [site?.id, locked, meReady, opened, skipChecked, me?.id]);
+
   if (isLoading || !meReady || (!!site && (!themeReady || !skipChecked))) {
     return <PageLoading label="Opening your gift…" />;
   }
@@ -98,6 +115,9 @@ function PublishedPage() {
     );
   }
   const isOwner = !!me && (me.id === site.creator_id || me.isAdmin);
+  if (site.disabled_at && !me?.isAdmin) {
+    return <PageNotFound title={REPORT_COPY.pausedTitle} message={REPORT_COPY.pausedBody} actionLabel={REPORT_COPY.makeYourOwn} actionTo="/" showHeader={false} />;
+  }
   if (isGiftEnded(site) && site.status === "published") {
     return <GiftEndedPage isOwner={isOwner} siteId={site.id} title={site.title} />;
   }
@@ -124,6 +144,7 @@ function PublishedPage() {
   const fonts = FONT_PAIRINGS[site.font_choice] ?? FONT_PAIRINGS.romantic;
 
   function replayIntro() {
+    trackEvent("theme_replayed", site!.id);
     clearIntroSkip(site!.id);
     setOpened(false);
   }
@@ -171,7 +192,10 @@ function PublishedPage() {
           iconSet={site.icon_set}
           contributors={[...new Set(contributions.map((c) => c.author_name.trim()).filter(Boolean))]}
           {...engineIntroProps(theme?.name, site, contributions)}
-          onOpen={() => setOpened(true)}
+          onOpen={() => {
+            trackEvent("theme_opening_completed", site.id);
+            setOpened(true);
+          }}
           onSkip={() => {
             rememberIntroSkip(site.id);
             setOpened(true);
@@ -192,6 +216,11 @@ function PublishedPage() {
           onReplayIntro={replayIntro}
         />
       )}
+      {opened || !formatInfo(site.format).usesIntro ? (
+        <div style={{ background: palette.background }}>
+          <ReportGift slug={site.slug} page="gift" tone={readableInk(palette.background)} />
+        </div>
+      ) : null}
     </>
   );
 }
@@ -288,7 +317,11 @@ function GiftEndedPage({ isOwner, siteId, title }: { isOwner: boolean; siteId: s
             </a>
           </div>
         ) : (
-          <a href="/" className="mt-6 inline-block text-sm text-accent underline underline-offset-2">
+          <a
+            href="/"
+            onClick={() => trackEvent("make_your_own_clicked", siteId, { source: "ended_page" })}
+            className="mt-6 inline-block text-sm text-accent underline underline-offset-2"
+          >
             Make a gift of your own
           </a>
         )}

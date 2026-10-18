@@ -159,9 +159,32 @@ export const giftSites = pgTable(
      * itself, and never sent to the browser. Null = no password.
      */
     passwordHash: text("password_hash"),
+    /** Set by an admin after a report. A disabled gift doesn't open for anyone but the admin. */
+    disabledAt: timestamp("disabled_at", { withTimezone: true }),
+    disabledReason: text("disabled_reason"),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   },
   (t) => [index("gift_sites_creator_idx").on(t.creatorId)],
+);
+
+/** Reports from the "Report" link on gift and friend pages. */
+export const giftReports = pgTable(
+  "gift_reports",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    siteId: uuid("site_id").references(() => giftSites.id, { onDelete: "set null" }),
+    slug: text("slug").notNull(),
+    /** harassment | private-info | sexual | hate | spam | other */
+    reason: text("reason").notNull(),
+    details: text("details"),
+    /** Where it was reported from: gift | contribute */
+    page: text("page").notNull(),
+    /** A hash of the reporter's IP, to spot floods. Never the IP itself. */
+    reporterHash: text("reporter_hash"),
+    resolvedAt: timestamp("resolved_at", { withTimezone: true }),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [index("gift_reports_site_idx").on(t.siteId)],
 );
 
 /* ------------------------------------------------------------------ */
@@ -351,4 +374,21 @@ export const conciergeRequests = pgTable(
     updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
   },
   (t) => [index("concierge_status_idx").on(t.status, t.createdAt)],
+);
+
+/**
+ * Product events for the admin metrics page (src/server/events.ts). No note content, no IP,
+ * no cookies: just what happened, to which gift, by which signed-in user if any.
+ */
+export const events = pgTable(
+  "events",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    name: text("name").notNull(),
+    siteId: uuid("site_id").references(() => giftSites.id, { onDelete: "set null" }),
+    userId: text("user_id").references(() => user.id, { onDelete: "set null" }),
+    props: jsonb("props").$type<Record<string, string | number | boolean>>(),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [index("events_name_at_idx").on(t.name, t.createdAt), index("events_site_idx").on(t.siteId)],
 );

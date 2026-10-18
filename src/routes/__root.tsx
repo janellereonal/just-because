@@ -8,10 +8,12 @@ import {
   Scripts,
   type ErrorComponentProps,
 } from "@tanstack/react-router";
-import { type ReactNode } from "react";
+import { type ReactNode, useEffect } from "react";
+import { installClientErrorReporting, reportClientError } from "@/lib/clientErrors";
 import { Toaster } from "sonner";
 
 import appCss from "../styles.css?url";
+import { marketingShareTags } from "@/lib/share";
 
 function NotFoundComponent() {
   return (
@@ -38,6 +40,7 @@ function NotFoundComponent() {
 
 function ErrorComponent({ error, reset }: ErrorComponentProps) {
   console.error(error);
+  useEffect(() => reportClientError(error, "route"), [error]);
   const router = useRouter();
   return (
     <div className="flex min-h-screen items-center justify-center bg-background px-4">
@@ -75,19 +78,8 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "Just Because" },
-      {
-        name: "description",
-        content: "Collaborative gift websites made for the people you love.",
-      },
       { name: "author", content: "Just Because" },
-      { property: "og:title", content: "Just Because" },
-      {
-        property: "og:description",
-        content: "Collaborative gift websites made for the people you love.",
-      },
-      { property: "og:type", content: "website" },
-      { name: "twitter:card", content: "summary_large_image" },
+      ...marketingShareTags("Just Because | One gift from everyone who loves them", "Make one gift together. Friends add letters, photos, songs and voice notes from their phones, and they open it all at once."),
     ],
     links: [
       {
@@ -135,6 +127,7 @@ function RootShell({ children }: { children: ReactNode }) {
 
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
+  useEffect(() => installClientErrorReporting(), []);
 
   return (
     <QueryClientProvider client={queryClient}>

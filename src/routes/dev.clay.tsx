@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { NOINDEX } from "@/lib/seo";
 import { useEffect, useState } from "react";
 import { CHARACTERS } from "@/themes/_shared/cast/library";
 import { PEOPLE } from "@/themes/_shared/cast/person";
@@ -7,7 +8,8 @@ import { PEOPLE } from "@/themes/_shared/cast/person";
  * Dev only: renders every clay figure with three.js. tools/screens/clay.js
  * calls window.__clay(id, px) to save the stills into public/clay/.
  */
-export const Route = createFileRoute("/dev/clay")({ component: DevClay });
+export const Route = createFileRoute("/dev/clay")({
+  head: () => ({ meta: [NOINDEX] }), component: DevClay });
 
 function DevClay() {
   const [shots, setShots] = useState<{ id: string; url: string }[]>([]);

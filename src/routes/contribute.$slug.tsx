@@ -1,21 +1,10 @@
 import { createFileRoute, lazyRouteComponent } from "@tanstack/react-router";
+import { NOINDEX } from "@/lib/seo";
+import { contributeShareTags, getShareMeta } from "@/lib/share";
 
 export const Route = createFileRoute("/contribute/$slug")({
-  head: () => ({
-    meta: [
-      { title: "Add to the gift | Just Because" },
-      {
-        name: "description",
-        content: "Add a message, a photo or a song to a collaborative gift site. No account needed.",
-      },
-      { property: "og:title", content: "Add to the gift | Just Because" },
-      {
-        property: "og:description",
-        content: "Add a message, a photo or a song to a collaborative gift site.",
-      },
-      { property: "og:type", content: "website" },
-      { name: "twitter:card", content: "summary_large_image" },
-    ],
-  }),
+  // Runs on the server for the first load, so link previews get real tags.
+  loader: async ({ params }) => ({ share: await getShareMeta({ data: { slug: params.slug } }).catch(() => null) }),
+  head: ({ loaderData }) => ({ meta: [NOINDEX, ...contributeShareTags(loaderData?.share)] }),
   component: lazyRouteComponent(() => import("@/pages/ContributePage")),
 });

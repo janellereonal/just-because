@@ -28,6 +28,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { and, asc, desc, eq, inArray, ne, or, sql } from "drizzle-orm";
 import { z } from "zod";
 import { getDb, schema } from "@/server/db";
+import { CLIENT_EVENTS, track } from "@/server/events";
 import { notifyNewNote } from "@/server/notify";
 import { clientIp, rateLimit } from "@/server/rateLimit";
 import {
@@ -208,6 +209,7 @@ function siteRow(site: SiteRecord, opts: { owner: boolean }) {
 async function canViewGift(siteId: string, opts: { allowSharedNotes?: boolean } = {}) {
   const [site] = await getDb().select().from(schema.giftSites).where(eq(schema.giftSites.id, siteId));
   if (!site) return false;
+  if (site.disabledAt && !(await currentUser())?.isAdmin) return false;
   // Friends reading each other's notes while the gift is still being made (the contribute page).
   if (opts.allowSharedNotes && site.shareNotes && site.status === "draft") return true;
   if (isOwnerOf(await currentUser(), site)) return true;
@@ -321,19 +323,49 @@ export const listMySites = createServerFn({ method: "GET" }).handler(async () =>
     .from(schema.giftSites)
     .where(eq(schema.giftSites.creatorId, user.id))
     .orderBy(desc(schema.giftSites.createdAt));
+  // Note counts for each card, counted the same way as the editor (src/lib/noteCounts.ts).
+  const ids = rows.map((r) => r.id);
+  const tallies = ids.length
+    ? await getDb()
+        .select({ siteId: c.siteId, status: c.status, n: sql<number>`count(*)::int` })
+        .from(c)
+        .where(inArray(c.siteId, ids))
+        .groupBy(c.siteId, c.status)
+    : [];
+  const countsFor = (siteId: string) => {
+    const out = { inGift: 0, waiting: 0, hidden: 0 };
+    for (const t of tallies) {
+      if (t.siteId !== siteId) continue;
+      if (t.status === "approved") out.inGift += t.n;
+      else if (t.status === "pending") out.waiting += t.n;
+      else if (t.status === "hidden") out.hidden += t.n;
+    }
+    return out;
+  };
   // siteRow drops password_hash; plain toRow sent it to the browser.
-  return rows.map((row) => siteRow(row, { owner: true }));
+  return rows.map((row) => ({ ...siteRow(row, { owner: true }), note_counts: countsFor(row.id) }));
 });
 
-function slugify(value: string) {
-  const base = value
-    .toLowerCase()
-    .normalize("NFD")
-    .replace(/[̀-ͯ]/g, "")
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/(^-|-$)/g, "")
-    .slice(0, 40);
-  return `${base || "gift"}-${Math.random().toString(36).slice(2, 7)}`;
+/**
+ * New gift links are random: 12 characters from an alphabet with no lookalikes
+ * (no 0/o, 1/l/i), so they're hard to guess and never carry a name. Old slugs
+ * with names in them keep working.
+ */
+const SLUG_ALPHABET = "abcdefghjkmnpqrstuvwxyz23456789";
+async function randomSlug(length = 12) {
+  const { randomBytes } = await import("node:crypto");
+  const bytes = randomBytes(length);
+  let out = "";
+  for (let i = 0; i < length; i++) out += SLUG_ALPHABET[bytes[i]! % SLUG_ALPHABET.length];
+  return out;
+}
+async function uniqueSlug() {
+  for (let i = 0; i < 5; i++) {
+    const slug = await randomSlug();
+    const [taken] = await getDb().select({ id: schema.giftSites.id }).from(schema.giftSites).where(eq(schema.giftSites.slug, slug));
+    if (!taken) return slug;
+  }
+  return randomSlug(16);
 }
 
 const paletteShape = z
@@ -376,7 +408,8 @@ export const createSite = createServerFn({ method: "POST" })
       .limit(1);
     if (recent) return { id: recent.id };
     rateLimit(`create:${user.id}`, 30, 60 * 60_000, "That's a lot of new gifts in a short time. Take a breather and try again in a bit.");
-    return db.transaction(async (tx) => {
+    const slug = await uniqueSlug();
+    const made = await db.transaction(async (tx) => {
       const [site] = await tx
         .insert(schema.giftSites)
         .values({
@@ -384,7 +417,7 @@ export const createSite = createServerFn({ method: "POST" })
           title: data.title,
           themeId: data.themeId,
           format: data.format,
-          slug: slugify(data.title),
+          slug,
           customText: { heading: data.title, ...(data.recipientName ? { recipient_name: data.recipientName } : {}) },
           paletteId: data.paletteId,
           customColors: data.customColors,
@@ -399,6 +432,8 @@ export const createSite = createServerFn({ method: "POST" })
         .values(unique.map((type) => ({ siteId: site!.id, moduleType: type, price: "0" })));
       return { id: site!.id };
     });
+    await track("gift_created", { siteId: made.id, userId: user.id, props: { solo: data.solo ?? false } });
+    return made;
   });
 
 const date = z.string().regex(/^\d{4}-\d{2}-\d{2}$/).nullable();
@@ -547,6 +582,15 @@ export const setModuleEnabled = createServerFn({ method: "POST" })
   .inputValidator(z.object({ siteId: id, moduleType: z.enum(MODULE_TYPES), enabled: z.boolean() }))
   .handler(async ({ data }) => {
     await requireSiteOwner(data.siteId);
+    if (!data.enabled) {
+      // A gift always keeps at least one section, or friends have nothing to add to.
+      const on = await getDb()
+        .select({ type: schema.siteModules.moduleType })
+        .from(schema.siteModules)
+        .where(and(eq(schema.siteModules.siteId, data.siteId), eq(schema.siteModules.enabled, true)));
+      if (on.length <= 1 && on.some((m) => m.type === data.moduleType))
+        throw new HttpError(409, "A gift needs at least one section. Turn another one on first.");
+    }
     await getDb()
       .insert(schema.siteModules)
       .values({ siteId: data.siteId, moduleType: data.moduleType, enabled: data.enabled, price: "0" })
@@ -624,6 +668,8 @@ export const listSealedContributions = createServerFn({ method: "GET" })
         visibility: c.visibility,
         status: c.status,
         createdAt: c.createdAt,
+        // Lets the friend page count friends without the organiser.
+        byOwner: c.byOwner,
       })
       .from(c)
       .where(and(eq(c.siteId, data.siteId), inArray(c.status, ["pending", "approved"])))
@@ -682,6 +728,7 @@ export const submitContribution = createServerFn({ method: "POST" })
     const sectionData = sectionPayload(data.moduleType, data.data, data.textContent, data.mediaUrl);
     const [site] = await db.select().from(schema.giftSites).where(eq(schema.giftSites.id, data.siteId));
     if (!site) throw new HttpError(404, "We couldn't find that gift.");
+    if (site.disabledAt) throw new HttpError(403, "This gift has been paused, so it isn't taking notes right now.");
     if (site.solo) throw new HttpError(403, "This gift is just from one person, so it isn't taking notes from friends.");
     // The same note sent twice (fast taps, a retry after a dropped connection) is saved once.
     const [already] = await db.select({ siteId: c.siteId, editToken: c.editToken }).from(c).where(eq(c.id, data.id));
@@ -716,7 +763,10 @@ export const submitContribution = createServerFn({ method: "POST" })
       data: sectionData,
     }).onConflictDoNothing({ target: c.id }).returning({ id: c.id });
     // Two identical requests at the same moment: only the first one notifies.
-    if (inserted.length) await notifyNewNote(data.siteId, data.authorName).catch((e) => console.error("[notify]", e));
+    if (inserted.length) {
+      await notifyNewNote(data.siteId, data.authorName).catch((e) => console.error("[notify]", e));
+      await track("note_added", { siteId: data.siteId, props: { type: data.moduleType, by_owner: false } });
+    }
     return { ok: true as const, full: null };
   });
 
@@ -739,7 +789,7 @@ export const saveOwnerNote = createServerFn({ method: "POST" })
     }),
   )
   .handler(async ({ data }) => {
-    await requireSiteOwner(data.siteId);
+    const { user } = await requireSiteOwner(data.siteId);
     data.textContent = data.textContent?.trim() || null;
     const textMax = noteTextLimit(data.moduleType);
     if (data.textContent && [...data.textContent].length > textMax) throw new HttpError(422, tooLong(data.moduleType === "wordcloud" ? "the word" : "the note", textMax));
@@ -790,6 +840,7 @@ export const saveOwnerNote = createServerFn({ method: "POST" })
       byOwner: true,
       data: sectionData,
     });
+    await track("note_added", { siteId: data.siteId, userId: user.id, props: { type: data.moduleType, by_owner: true } });
     return { ok: true as const, full: null };
   });
 
@@ -886,6 +937,7 @@ async function openCheckout(
       provider: "paymongo",
     })
     .returning({ id: schema.orders.id });
+  if (q.kind === "publish") await track("gift_wrapped", { siteId: site.id, userId: user.id, props: { tier: q.tier.id } });
   const { getProvider } = await import("@/server/payments");
   const { siteUrl } = await import("@/server/email");
   const base = siteUrl();
@@ -1361,4 +1413,176 @@ export const setConciergeStatus = createServerFn({ method: "POST" })
       .set({ status: data.status, updatedAt: new Date() })
       .where(eq(schema.conciergeRequests.id, data.id));
     return { ok: true };
+  });
+/* Metrics (our own events table, see src/server/events.ts)            */
+/* ------------------------------------------------------------------ */
+
+/**
+ * Events the browser reports: a share, a friend page view, a recipient opening the gift,
+ * a "make your own" click. The organiser's own views don't count. Never throws.
+ */
+export const trackClientEvent = createServerFn({ method: "POST" })
+  .inputValidator(
+    z.object({
+      name: z.enum(CLIENT_EVENTS),
+      siteId: id,
+      props: z.record(z.string(), z.union([z.string().max(40), z.boolean()])).optional(),
+    }),
+  )
+  .handler(async ({ data }) => {
+    try {
+      rateLimit(`event:${clientIp()}`, 60, 60_000, "slow down");
+    } catch {
+      return { ok: false };
+    }
+    const [site] = await getDb()
+      .select({ id: schema.giftSites.id, creatorId: schema.giftSites.creatorId, status: schema.giftSites.status })
+      .from(schema.giftSites)
+      .where(eq(schema.giftSites.id, data.siteId));
+    if (!site) return { ok: false };
+    const me = await currentUser();
+    const isOwner = !!me && me.id === site.creatorId;
+    // Shares are the organiser's; views and opens only count when it isn't them looking.
+    if (data.name === "invite_shared" && !isOwner) return { ok: false };
+    if (data.name !== "invite_shared" && data.name !== "make_your_own_clicked" && isOwner) return { ok: false };
+    if (data.name === "gift_opened" && site.status !== "published") return { ok: false };
+    await track(data.name, { siteId: site.id, userId: me?.id ?? null, ...(data.props ? { props: data.props } : {}) });
+    return { ok: true };
+  });
+
+const median = (xs: number[]) => {
+  if (!xs.length) return null;
+  const s = [...xs].sort((a, b) => a - b);
+  const m = Math.floor(s.length / 2);
+  return s.length % 2 ? s[m]! : (s[m - 1]! + s[m]!) / 2;
+};
+
+/** The admin metrics page. Counts gifts and notes from the real tables, and the rest from events. */
+export const getMetrics = createServerFn({ method: "GET" })
+  .inputValidator(z.object({ days: z.number().int().min(1).max(365) }))
+  .handler(async ({ data }) => {
+    await requireAdmin();
+    const db = getDb();
+    const since = sql`now() - make_interval(days => ${data.days})`;
+    const ev = schema.events;
+    const gifts = await db
+      .select({
+        id: schema.giftSites.id,
+        notes: sql<number>`(select count(*)::int from contributions c where c.site_id = "gift_sites"."id" and c.status = 'approved')`,
+      })
+      .from(schema.giftSites)
+      .where(sql`${schema.giftSites.createdAt} > ${since}`);
+    const counts = await db
+      .select({ name: ev.name, n: sql<number>`count(*)::int`, sites: sql<number>`count(distinct ${ev.siteId})::int` })
+      .from(ev)
+      .where(sql`${ev.createdAt} > ${since}`)
+      .groupBy(ev.name);
+    const byName = Object.fromEntries(counts.map((r) => [r.name, r]));
+    const friendNotes = await db
+      .select({ n: sql<number>`count(*)::int` })
+      .from(ev)
+      .where(and(eq(ev.name, "note_added"), sql`${ev.createdAt} > ${since}`, sql`coalesce((${ev.props}->>'by_owner')::boolean, false) = false`));
+    // Wrapped gifts that were then paid for (the first plan, not upgrades).
+    const [wrapPay] = await db
+      .select({
+        wrapped: sql<number>`count(distinct w.site_id)::int`,
+        paid: sql<number>`count(distinct p.site_id)::int`,
+      })
+      .from(sql`events w left join events p on p.site_id = w.site_id and p.name = 'plan_purchased' and p.props->>'kind' = 'publish'`)
+      .where(sql`w.name = 'gift_wrapped' and w.created_at > ${since}`);
+    // Gifts published in the window that the recipient opened at least once.
+    const [opens] = await db
+      .select({
+        published: sql<number>`count(*)::int`,
+        opened: sql<number>`count(*) filter (where exists (select 1 from events e where e.site_id = gift_sites.id and e.name = 'gift_opened'))::int`,
+      })
+      .from(schema.giftSites)
+      .where(sql`${schema.giftSites.publishedAt} > ${since}`);
+    // Sign-up to first share, for people who signed up in the window.
+    const shares = await db.execute<{ hours: number }>(sql`
+      select extract(epoch from (min(e.created_at) - u.created_at)) / 3600 as hours
+      from "user" u join events e on e.user_id = u.id and e.name = 'invite_shared'
+      where u.created_at > ${since}
+      group by u.id, u.created_at`);
+    const hours = [...shares].map((r) => Number(r.hours)).filter((h) => Number.isFinite(h));
+    const pct = (a: number, b: number) => (b > 0 ? Math.round((a / b) * 1000) / 10 : null);
+    const views = byName["friend_page_viewed"]?.n ?? 0;
+    return {
+      days: data.days,
+      gifts: gifts.length,
+      giftsWith5: gifts.filter((g) => g.notes >= 5).length,
+      pctWith5: pct(gifts.filter((g) => g.notes >= 5).length, gifts.length),
+      friendViews: views,
+      friendNotes: friendNotes[0]?.n ?? 0,
+      viewToNote: pct(friendNotes[0]?.n ?? 0, views),
+      wrapped: wrapPay?.wrapped ?? 0,
+      paid: wrapPay?.paid ?? 0,
+      wrapToPay: pct(wrapPay?.paid ?? 0, wrapPay?.wrapped ?? 0),
+      published: opens?.published ?? 0,
+      opened: opens?.opened ?? 0,
+      openRate: pct(opens?.opened ?? 0, opens?.published ?? 0),
+      medianHoursToShare: median(hours),
+      sharers: hours.length,
+      events: counts.map((r) => ({ name: r.name, count: r.n, gifts: r.sites })).sort((a, b) => a.name.localeCompare(b.name)),
+    };
+  });
+
+/**
+ * Admin: how each theme does, from events. Region is the visitor's country (payments use the
+ * country the gift was made from). Sorted by paid conversion: this decides which themes to build more of.
+ */
+export const getThemeMetrics = createServerFn({ method: "GET" })
+  .inputValidator(z.object({ days: z.number().int().min(1).max(365), region: z.string().regex(/^[A-Z]{2}$/).nullable() }))
+  .handler(async ({ data }) => {
+    await requireAdmin();
+    const db = getDb();
+    const since = sql`now() - make_interval(days => ${data.days})`;
+    const rows = await db.execute<{
+      theme: string | null;
+      created: number;
+      opened: number;
+      started: number;
+      completed: number;
+      replayed: number;
+      shared: number;
+      paid: number;
+      myo: number;
+    }>(sql`
+      with ev as (
+        select e.name, e.site_id, e.props->>'kind' as kind,
+          coalesce(e.props->>'theme', s.theme_id::text) as theme,
+          coalesce(e.props->>'region', (select g.props->>'region' from events g where g.site_id = e.site_id and g.name = 'gift_created' limit 1)) as region
+        from events e left join gift_sites s on s.id = e.site_id
+        where e.created_at > ${since} and e.site_id is not null
+      )
+      select theme,
+        count(*) filter (where name = 'gift_created')::int as created,
+        count(*) filter (where name = 'gift_opened')::int as opened,
+        count(*) filter (where name = 'theme_opening_started')::int as started,
+        count(*) filter (where name = 'theme_opening_completed')::int as completed,
+        count(*) filter (where name = 'theme_replayed')::int as replayed,
+        count(*) filter (where name = 'theme_shared')::int as shared,
+        count(distinct site_id) filter (where name = 'plan_purchased' and kind = 'publish')::int as paid,
+        count(*) filter (where name = 'make_your_own_clicked')::int as myo
+      from ev
+      where ${data.region}::text is null or region = ${data.region}
+      group by theme`);
+    const regions = await db.execute<{ region: string }>(sql`
+      select distinct props->>'region' as region from events
+      where created_at > ${since} and props ? 'region' order by 1`);
+    const themes = await db.select({ id: schema.themes.id, name: schema.themes.name }).from(schema.themes);
+    const nameOf = new Map(themes.map((t) => [t.id, t.name]));
+    const rate = (a: number, b: number) => (b > 0 ? Math.round((a / b) * 1000) / 10 : null);
+    const list = [...rows].map((r) => ({
+      theme: r.theme ? (nameOf.get(r.theme) ?? "Removed theme") : "No theme",
+      created: r.created,
+      completion: rate(r.completed, r.started),
+      replay: rate(r.replayed, r.completed),
+      share: rate(r.shared, r.opened),
+      paid: rate(r.paid, r.created),
+      makeYourOwn: rate(r.myo, r.opened),
+      counts: { opened: r.opened, started: r.started, completed: r.completed, paid: r.paid },
+    }));
+    list.sort((a, b) => (b.paid ?? -1) - (a.paid ?? -1) || b.created - a.created);
+    return { rows: list, regions: [...regions].map((r) => r.region).filter(Boolean) };
   });
