@@ -31,6 +31,9 @@ import {
   type Piece,
 } from "@/components/bodies/kit";
 
+/** "Oct 20": short enough for a small card. */
+const SHORT_DAY: Intl.DateTimeFormatOptions = { day: "numeric", month: "short" };
+
 /** Most candles drawn on the cake; more notes than this share candles. */
 const MAX_CANDLES = 14;
 const CHEER = "party-cheer";
@@ -164,6 +167,9 @@ export function PartyBody(props: BodyProps) {
           "--pt-acc-soft": colors.mix(colors.accent, "#FFFFFF", 0.55),
           "--pt-pri-soft": colors.mix(colors.primary, "#FFFFFF", 0.55),
           "--pt-card": colors.mix("#FFFDF7", colors.primary, 0.03),
+          // The name is in the gift's own colour, pulled toward the page's ink until it reads on any background.
+          "--pt-name": colors.dark ? colors.mix(colors.ink, colors.primary, 0.22) : colors.mix(colors.primary, colors.ink, 0.38),
+          "--pt-name-shadow": colors.dark ? colors.mix(colors.primary, colors.bg, 0.3) : colors.mix(colors.accent, colors.bg, 0.7),
           "--pt-wall-dot": colors.dark ? "rgba(255,255,255,.05)" : colors.mix(colors.bg, colors.primary, 0.12),
         } as React.CSSProperties
       }
@@ -344,7 +350,7 @@ function Setting({ piece, open, flipping, onOpen }: { piece: Piece; open: boolea
   const locked = isLocked(piece);
   const favour = Math.floor(r * 3);
   const name = piece.author || t("party.surprise");
-  const sub = piece.sealed ? pieceWhat(piece) : locked ? t("body.opensOn", { day: formatDay(piece.date!) }) : pieceWhat(piece);
+  const sub = piece.sealed ? pieceWhat(piece) : locked ? t("body.opensOn", { day: formatDay(piece.date!, SHORT_DAY) }) : pieceWhat(piece);
   return (
     <button
       type="button"

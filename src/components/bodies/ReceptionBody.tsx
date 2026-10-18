@@ -30,6 +30,9 @@ import {
   type Piece,
 } from "@/components/bodies/kit";
 
+/** "Oct 20": short enough for a small card. */
+const SHORT_DAY: Intl.DateTimeFormatOptions = { day: "numeric", month: "short" };
+
 /** Shapes in pairs that share a row on a phone, and the frames each shape can wear. */
 const SHAPES = ["is-wide", "is-tall", "is-square", "is-square", "is-tall", "is-wide", "is-tall", "is-tall"] as const;
 const FRAMES = { "is-wide": ["is-ornate", "is-thin"], "is-square": ["is-thin", "is-ornate"], "is-tall": ["is-oval", "is-arch", "is-ornate"] } as const;
@@ -273,7 +276,7 @@ function PlaceCard({ piece, open, unfolding, onOpen, headingFont }: { piece: Pie
         <span className="rx-card-rule" />
         <span className="rx-card-what">
           {Icon ? <Icon className="size-2.5" /> : null}
-          {locked ? t("body.opensOn", { day: formatDay(piece.date!) }) : pieceWhat(piece)}
+          {locked ? t("body.opensOn", { day: formatDay(piece.date!, SHORT_DAY) }) : pieceWhat(piece)}
         </span>
         {open ? <span className="rx-card-foil" aria-hidden="true" /> : null}
       </span>

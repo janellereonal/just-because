@@ -32,6 +32,9 @@ import {
   type Piece,
 } from "@/components/bodies/kit";
 
+/** "Oct 20": short enough for a small card. */
+const SHORT_DAY: Intl.DateTimeFormatOptions = { day: "numeric", month: "short" };
+
 /** Records drawn behind the front one, and tipped forward in front of it. */
 const BEHIND = 5;
 const FRONT = 2;
@@ -246,7 +249,7 @@ export function CrateBody(props: BodyProps) {
                               <span className="rc-track-dots" />
                               <span className="rc-track-what">
                                 {p.sealed || isLocked(p) ? <Lock className="size-3" /> : null}
-                                {opened.has(p.id) ? t("crate.played") : isLocked(p) ? t("body.opensOn", { day: formatDay(p.date!) }) : pieceWhat(p)}
+                                {opened.has(p.id) ? t("crate.played") : isLocked(p) ? t("body.opensOn", { day: formatDay(p.date!, SHORT_DAY) }) : pieceWhat(p)}
                               </span>
                             </button>
                           </li>

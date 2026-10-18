@@ -32,8 +32,8 @@
   font-weight: 700;
   line-height: .95;
   letter-spacing: -0.02em;
-  color: color-mix(in srgb, var(--b-primary) 62%, var(--b-ink));
-  text-shadow: 0 4px 0 color-mix(in srgb, var(--b-accent) 30%, transparent);
+  color: var(--pt-name);
+  text-shadow: 0 4px 0 var(--pt-name-shadow);
   overflow-wrap: anywhere;
 }
 .pt-heading { margin-top: 12px; font-size: 16px; font-weight: 600; opacity: .8; }
