@@ -9,6 +9,9 @@ import { FONT_PAIRINGS, backgroundCss, resolvePalette, type GiftSite } from "@/l
 import { giftHeading, giftWords, themeKindOf } from "@/lib/themeKind";
 import { readableInk, readableOn } from "@/lib/palettes";
 import type { Theme } from "@/lib/themes";
+import { isStyleId, styleInfo } from "@/lib/styles";
+import { FormatMini } from "@/components/FormatPicker";
+import { LAYOUT_STAGE } from "@/components/styles/StylePicker";
 
 /** Where the few sprinkles sit on a cover, as % of its box: [x, y, size px, turn]. */
 const SPOTS: [number, number, number, number][] = [
@@ -37,6 +40,8 @@ export function GiftCover({ site, theme, className = "" }: { site: GiftSite; the
   const icons = useMemo(() => resolveIconSet(cast.iconSet, { recipient, palette }), [cast.iconSet, recipient, palette]);
   const tint = icons.colors.length ? icons.colors : [palette.accent, palette.primary];
   const showChar = cast.character.type !== "none";
+  // Layout styles (Mixtape, Constellation...) wear no theme: show their own little card instead of the plain box.
+  const layout = isStyleId(site.style) && styleInfo(site.style).origin === "layout" ? styleInfo(site.style) : null;
 
   return (
     <span
@@ -49,13 +54,20 @@ export function GiftCover({ site, theme, className = "" }: { site: GiftSite; the
           <IconGlyph item={pick(icons.items, i)} color={pick(tint, i)} size={size} />
         </span>
       ))}
-      <img
+      {layout ? (
+        <span
+          className="absolute right-3 bottom-4 grid h-[66%] w-[42%] rotate-[4deg] place-items-center overflow-hidden rounded-2xl shadow-[0_10px_18px_-8px_rgba(43,37,34,.35)] ring-1 ring-white/60 transition-transform duration-500 group-hover:rotate-1 group-hover:scale-[1.04]"
+          style={{ background: LAYOUT_STAGE[layout.body] ?? LAYOUT_STAGE["scrapbook"] }}
+        >
+          <FormatMini id={layout.body} />
+        </span>
+      ) : <img
         src={themeStillUrl(kind)}
         alt=""
         loading="lazy"
         draggable={false}
         className="absolute -right-2 bottom-1 h-[82%] w-auto max-w-[52%] object-contain drop-shadow-[0_10px_14px_rgba(43,37,34,.18)] transition-transform duration-500 group-hover:-rotate-2 group-hover:scale-[1.04]"
-      />
+      />}
       {showChar ? (
         <span className="absolute right-[17%] bottom-0">
           <Character setting={cast.character} size={58} live={false} follow={false} showName={false} />

@@ -680,6 +680,7 @@ export const GUEST_COPY = {
   google: "Continue with Google",
   email: "Use email instead",
   limit: "Sign in to make more gifts. Guests can start up to 3.",
+  limitBody: "Guests can start up to 3 gifts. Sign in and they move to your account, then you can make this one too.",
   shareTitle: "Sign in to share it",
   shareBody: "Your gift is saved on this device for now. Sign in and it moves to your account, so friends can add to it and it's safe if you switch phones.",
   payTitle: "Sign in to wrap it up",
@@ -688,6 +689,13 @@ export const GUEST_COPY = {
   authHeading: "Keep your gift",
   authBody: "Sign in or make an account. The gift you started moves over with everything in it.",
   starting: "Starting your gift…",
+};
+
+/** Words → Opening style: which opening plays (Oct 2026: "Classic" used to hide the style's own without saying so). */
+export const OPENING_CHOICE_COPY = {
+  styleChip: (style: string) => `${style} opening`,
+  styleOn: (style: string) => `They'll see the ${style} opening.`,
+  classicOn: (style: string) => `They'll see Classic instead of the ${style} opening. Switching style brings the style's own back.`,
 };
 
 /** Placing stickers on the opening, in the editor's preview. */

@@ -15,7 +15,9 @@ export const Pause3DContext = createContext(false);
 
 /** Bump when the stills in public/themes3d are re-rendered, to bust caches. */
 const STILL_VERSION = "2";
-export const themeStillUrl = (kind: ThemeKind) => `/themes3d/${kind}.webp?v=${STILL_VERSION}`;
+/** Kinds with a still in public/themes3d. Others (Baby Shower so far) use the default one instead of a 404. */
+const STILLS = new Set<ThemeKind>(["anniversary", "birthday", "bridal", "christmas", "default", "game", "handwritten", "newyear", "pets", "pixel", "valentine", "voyage", "wedding"]);
+export const themeStillUrl = (kind: ThemeKind) => `/themes3d/${STILLS.has(kind) ? kind : "default"}.webp?v=${STILL_VERSION}`;
 
 /**
  * The occasion's 3D hero object. Shows the pre-rendered still at once, then fades

@@ -198,6 +198,14 @@ verification is only required once `RESEND_API_KEY` and `EMAIL_FROM` are both se
 - Gifts from before styles have both null and render exactly as before: theme opening + saved layout,
   theme words (`resolveStyle`, `giftWords`; tested for every theme × layout in `src/lib/styles.test.ts`).
 - Changing only the layout of a styled gift clears its style (it becomes a theme + layout gift).
+- Style pickers (`StylePicker loading`) show placeholder cards until the themes have loaded, so cards never
+  reshuffle under a finger. /create keeps its picks in the address (`?style=&occasion=&from=`, history.replace).
+- Changing the occasion (or the style, on a gift without one) swaps words we filled in, like the heading
+  "Happy birthday, Ana", for the new ones; typed words stay (`followAutoWords`, `src/lib/autoWords.ts`). Switching
+  style also clears `intro_settings.opening` ("Classic"), so the new style's own opening plays.
+- Name a gift's look with `giftLookTitle` (its style, or its layout for older gifts), never `formatInfo(format).title`.
+- Gift box wears the Christmas theme, so only Christmas lists it. Handwritten falls back to Storybook while
+  `handwrittenFormat` is off (turning the flag on is the real fix).
 - Every style has an opening and a body. Theme styles use their theme's opening (`src/themes/<theme>`). Layout
   styles (Scrapbook, Storybook, Comic, Bento, Hunt, Zine, Mixtape, Scratch, Constellation) have their own in
   `src/themes/layouts/` (registry `LAYOUT_OPENINGS`, shared kit in `kit.tsx`), picked by `TactileOpening`'s `style`

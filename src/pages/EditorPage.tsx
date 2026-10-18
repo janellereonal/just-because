@@ -4,6 +4,7 @@ import { GUEST_COPY, OCCASION_NAMES, SAVE_COPY } from "@/copy/strings";
 import { useGiftSaver, type SaveState } from "@/hooks/useGiftSaver";
 import { bodyFor, lookFor, resolveStyle, styleForLegacy, styleInfo, styleTitle, type StyleId } from "@/lib/styles";
 import { isQuietOccasion, occasionName, type OccasionId } from "@/lib/occasions";
+import { followAutoWords } from "@/lib/autoWords";
 import { OccasionChips } from "@/components/styles/OccasionChips";
 import { StyleArt, StylePicker } from "@/components/styles/StylePicker";
 import { fetchThemes } from "@/lib/themes";
@@ -393,7 +394,7 @@ function SiteDashboard() {
   // Styles (flag `styles`): a style picked here shows its look straight away, before the save
   // brings back the new theme row. Older gifts (no style) keep their saved theme.
   const stylesOn = isFlagOn("styles");
-  const { data: publishedThemes = [] } = useQuery({ queryKey: ["themes", "published"], queryFn: () => fetchThemes(false), enabled: stylesOn });
+  const { data: publishedThemes = [], isPending: themesLoading } = useQuery({ queryKey: ["themes", "published"], queryFn: () => fetchThemes(false), enabled: stylesOn });
   const draftLook = stylesOn && draft?.style ? lookFor(styleInfo(draft.style), draft.occasion) : null;
   const theme =
     stylesOn && draft?.style
@@ -879,15 +880,36 @@ function SiteDashboard() {
     else setPanelOpen(true);
   }
 
-  /** Switching style: its own layout, and its colors when it brings a look. Notes and words stay. */
+  /** The theme a style wears for an occasion (null for layout styles); older gifts keep their saved one. */
+  function themeFor(styleId: StyleId | null, occasion: OccasionId | null) {
+    if (!styleId) return savedTheme;
+    const look = lookFor(styleInfo(styleId), occasion);
+    return look ? (publishedThemes.find((x) => x.name === look.theme) ?? { name: look.theme }) : null;
+  }
+
+  /** A new occasion. Words we filled in for the old one (the heading) follow; typed words stay. */
+  function switchOccasion(next: OccasionId | null) {
+    if (!draft) return;
+    patch({ occasion: next, ...followAutoWords(draft, { theme, occasion: draft.occasion }, { theme: themeFor(draft.style, next), occasion: next }) });
+  }
+
+  /**
+   * Switching style: its own layout, and its colors when it brings a look. Notes and words stay,
+   * except words we filled in for the old style. The opening goes back to the style's own
+   * (a "Classic" pick would hide it).
+   */
   function switchStyle(next: StyleId) {
+    if (!draft) return;
     const info = styleInfo(next);
-    const look = lookFor(info, draft?.occasion ?? null);
+    const look = lookFor(info, draft.occasion ?? null);
     const lookTheme = look ? publishedThemes.find((x) => x.name === look.theme) : undefined;
     const pal = lookTheme ? palettesQuery.data?.find((p) => p.id === lookTheme.suggested_palette_ids[0]) : undefined;
+    const { opening: _classic, ...intro } = draft.intro_settings;
     patch({
       style: next,
       format: bodyFor(info),
+      intro_settings: intro,
+      ...followAutoWords(draft, { theme, occasion: draft.occasion }, { theme: themeFor(next, draft.occasion), occasion: draft.occasion }),
       ...(pal ? { palette_id: pal.id, custom_colors: { background: pal.background, primary: pal.primary, accent: pal.accent } } : {}),
     });
     setStyleAsk(null);
@@ -957,6 +979,7 @@ function SiteDashboard() {
               introStyle={introStyleForTheme(theme?.name)}
               offers={engineTheme?.offers}
               badgeHint={draft.occasion ? occasionName(draft.occasion) : undefined}
+              styleName={stylesOn && draft.style ? styleTitle(draft.style) : undefined}
               greeting={
                 <label className="block">
                   <span className="flex items-baseline justify-between gap-2">
@@ -1420,7 +1443,7 @@ function SiteDashboard() {
                 <OccasionChips
                   value={draft.occasion}
                   onChange={(next) => {
-                    patch({ occasion: next });
+                    switchOccasion(next);
                     if (next) boSay(`${occasionName(next)}. I'll put the best styles first.`, "happy");
                   }}
                   {...(occasionRow !== undefined ? { open: occasionRow } : {})}
@@ -1450,6 +1473,7 @@ function SiteDashboard() {
                   }}
                   available={(s) => s.id === draft.style || s.looks.length === 0 || s.looks.some((l) => publishedThemes.some((x) => x.name === l.theme))}
                   isAllowed={(s) => !planTier || tierAllowsLook(planTier, bodyFor(s), s.id)}
+                  loading={themesLoading}
                   current={
                     draft.style
                       ? null
