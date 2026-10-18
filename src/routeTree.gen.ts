@@ -35,6 +35,7 @@ import { Route as DevThemesRouteImport } from './routes/dev.themes'
 import { Route as DevWorstCaseRouteImport } from './routes/dev.worst-case'
 import { Route as ExampleIdRouteImport } from './routes/example.$id'
 import { Route as GSlugRouteImport } from './routes/g.$slug'
+import { Route as StylesIndexRouteImport } from './routes/styles.index'
 import { Route as ThemesIndexRouteImport } from './routes/themes.index'
 import { Route as ThemesIdRouteImport } from './routes/themes.$id'
 import { Route as AuthenticatedCheckoutOrderIdRouteImport } from './routes/_authenticated/checkout.$orderId'
@@ -173,6 +174,11 @@ const GSlugRoute = GSlugRouteImport.update({
   path: '/g/$slug',
   getParentRoute: () => rootRouteImport,
 } as any)
+const StylesIndexRoute = StylesIndexRouteImport.update({
+  id: '/styles/',
+  path: '/styles/',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ThemesIndexRoute = ThemesIndexRouteImport.update({
   id: '/themes/',
   path: '/themes/',
@@ -242,6 +248,7 @@ export interface FileRoutesByFullPath {
   '/example/$id': typeof ExampleIdRoute
   '/g/$slug': typeof GSlugRoute
   '/themes/$id': typeof ThemesIdRoute
+  '/styles/': typeof StylesIndexRoute
   '/themes/': typeof ThemesIndexRoute
   '/checkout/$orderId': typeof AuthenticatedCheckoutOrderIdRoute
   '/sites/$id': typeof AuthenticatedSitesIdRoute
@@ -277,6 +284,7 @@ export interface FileRoutesByTo {
   '/example/$id': typeof ExampleIdRoute
   '/g/$slug': typeof GSlugRoute
   '/themes/$id': typeof ThemesIdRoute
+  '/styles': typeof StylesIndexRoute
   '/themes': typeof ThemesIndexRoute
   '/checkout/$orderId': typeof AuthenticatedCheckoutOrderIdRoute
   '/sites/$id': typeof AuthenticatedSitesIdRoute
@@ -314,6 +322,7 @@ export interface FileRoutesById {
   '/example/$id': typeof ExampleIdRoute
   '/g/$slug': typeof GSlugRoute
   '/themes/$id': typeof ThemesIdRoute
+  '/styles/': typeof StylesIndexRoute
   '/themes/': typeof ThemesIndexRoute
   '/_authenticated/checkout/$orderId': typeof AuthenticatedCheckoutOrderIdRoute
   '/_authenticated/sites/$id': typeof AuthenticatedSitesIdRoute
@@ -351,6 +360,7 @@ export interface FileRouteTypes {
     | '/example/$id'
     | '/g/$slug'
     | '/themes/$id'
+    | '/styles/'
     | '/themes/'
     | '/checkout/$orderId'
     | '/sites/$id'
@@ -386,6 +396,7 @@ export interface FileRouteTypes {
     | '/example/$id'
     | '/g/$slug'
     | '/themes/$id'
+    | '/styles'
     | '/themes'
     | '/checkout/$orderId'
     | '/sites/$id'
@@ -422,6 +433,7 @@ export interface FileRouteTypes {
     | '/example/$id'
     | '/g/$slug'
     | '/themes/$id'
+    | '/styles/'
     | '/themes/'
     | '/_authenticated/checkout/$orderId'
     | '/_authenticated/sites/$id'
@@ -456,6 +468,7 @@ export interface RootRouteChildren {
   ExampleIdRoute: typeof ExampleIdRoute
   GSlugRoute: typeof GSlugRoute
   ThemesIdRoute: typeof ThemesIdRoute
+  StylesIndexRoute: typeof StylesIndexRoute
   ThemesIndexRoute: typeof ThemesIndexRoute
   ApiAuthSplatRoute: typeof ApiAuthSplatRoute
   ApiCronDailyRoute: typeof ApiCronDailyRoute
@@ -647,6 +660,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof GSlugRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/styles/': {
+      id: '/styles/'
+      path: '/styles'
+      fullPath: '/styles/'
+      preLoaderRoute: typeof StylesIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/themes/': {
       id: '/themes/'
       path: '/themes'
@@ -750,6 +770,7 @@ const rootRouteChildren: RootRouteChildren = {
   ExampleIdRoute: ExampleIdRoute,
   GSlugRoute: GSlugRoute,
   ThemesIdRoute: ThemesIdRoute,
+  StylesIndexRoute: StylesIndexRoute,
   ThemesIndexRoute: ThemesIndexRoute,
   ApiAuthSplatRoute: ApiAuthSplatRoute,
   ApiCronDailyRoute: ApiCronDailyRoute,

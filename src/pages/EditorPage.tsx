@@ -116,6 +116,13 @@ import {
 
 const FRIEND_TINTS = ["#F7D9C4", "#D8E4DC", "#E6DCF2", "#F5E3B3", "#D9E6F2"];
 
+
+/** The opening's settings with a new sticker list (no list at all when it's empty). */
+function withStickers(settings: IntroSettings, stickers: IntroSticker[]): IntroSettings {
+  const { stickers: _old, ...rest } = settings;
+  return stickers.length ? { ...rest, stickers } : rest;
+}
+
 function initials(name: string) {
   const parts = name.trim().split(/\s+/).filter(Boolean);
   if (parts.length === 0) return "?";
@@ -483,6 +490,28 @@ function SiteDashboard() {
     }
   }, [focusField, section]);
 
+  // Sticker undo: every change to the opening's stickers (from the preview or the panel) is a
+  // step back. Compared by content, so a reload of the same gift isn't a step.
+  const stickersNow = draft?.intro_settings.stickers;
+  const stickerHistory = useRef<string[]>([]);
+  const lastStickers = useRef<string | null>(null);
+  const undoingStickers = useRef(false);
+  const [stickerSteps, setStickerSteps] = useState(0);
+  useEffect(() => {
+    if (!draft) return;
+    const now = JSON.stringify(stickersNow ?? []);
+    const before = lastStickers.current;
+    lastStickers.current = now;
+    if (before === null || before === now) return;
+    if (undoingStickers.current) {
+      undoingStickers.current = false;
+      return;
+    }
+    stickerHistory.current = [...stickerHistory.current, before].slice(-40);
+    setStickerSteps(stickerHistory.current.length);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [stickersNow, !draft]);
+
   useEffect(() => {
     if (!fullPreview) return;
     const close = (event: KeyboardEvent) => {
@@ -617,11 +646,17 @@ function SiteDashboard() {
     }, 600);
   }
 
-  function moveIntroSticker(moved: IntroSticker) {
-    patchIntro((current) => ({
-      ...current,
-      stickers: (current.stickers ?? []).map((st) => (st.id === moved.id ? { ...st, x: moved.x, y: moved.y } : st)),
-    }));
+  /** Sticker changes from the preview canvas (move, resize, turn, delete, bring to front). */
+  function changeIntroStickers(update: (prev: IntroSticker[]) => IntroSticker[]) {
+    patchIntro((current) => withStickers(current, update(current.stickers ?? [])));
+  }
+
+  function undoIntroStickers() {
+    const prev = stickerHistory.current.pop();
+    setStickerSteps(stickerHistory.current.length);
+    if (prev === undefined) return;
+    undoingStickers.current = true;
+    patchIntro((current) => withStickers(current, JSON.parse(prev) as IntroSticker[]));
   }
 
   function patchText(key: keyof CustomText, value: string) {
@@ -963,6 +998,7 @@ function SiteDashboard() {
               siteId={id}
               settings={draft.intro_settings}
               onChange={patchIntro}
+              onUndoStickers={stickerSteps > 0 ? undoIntroStickers : undefined}
               palette={paletteNow}
               kind={resolveStyle(draft, theme).introKind}
               introStyle={introStyleForTheme(theme?.name)}
@@ -1787,7 +1823,9 @@ function SiteDashboard() {
       iconSet={draft.icon_set}
       contributors={friends}
       {...engineIntroProps(theme?.name, draft, approved)}
-      onStickerMove={moveIntroSticker}
+      onStickersChange={changeIntroStickers}
+      onStickersUndo={undoIntroStickers}
+      canUndoStickers={stickerSteps > 0}
       onOpen={() => window.setTimeout(() => setIntroCanvasKey((k) => k + 1), 900)}
       // Skip shows the gift, like it does for the recipient. (It used to restart the opening.)
       onSkip={() => setCanvasView("gift")}

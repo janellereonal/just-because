@@ -1,3 +1,4 @@
+import { galleryLink } from "@/lib/gallery";
 /** The marketing footer: product links, legal pages, contact and socials. */
 import { Link } from "@tanstack/react-router";
 import Bo from "@/components/Bo";
@@ -24,7 +25,7 @@ export function SiteFooter({ bo = true }: { bo?: boolean }) {
         </div>
         <nav aria-label={FOOTER_COPY.product} className="flex flex-col gap-2">
           <p className="font-medium text-ink">{FOOTER_COPY.product}</p>
-          <Link to="/themes" className={link}>{FOOTER_COPY.themes}</Link>
+          <Link to={galleryLink().to} className={link}>{galleryLink().label}</Link>
           <Link to="/sections" className={link}>{FOOTER_COPY.sections}</Link>
           <Link to="/" hash="pricing" className={link}>{FOOTER_COPY.plans}</Link>
           {user ? <Link to="/dashboard" className={link}>{FOOTER_COPY.myGifts}</Link> : <Link to="/auth" className={link}>{FOOTER_COPY.signIn}</Link>}

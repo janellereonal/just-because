@@ -689,3 +689,22 @@ export const GUEST_COPY = {
   authBody: "Sign in or make an account. The gift you started moves over with everything in it.",
   starting: "Starting your gift…",
 };
+
+/** Placing stickers on the opening, in the editor's preview. */
+export const STICKER_COPY = {
+  label: (name: string, selected: boolean) => (selected ? `${name} sticker, selected` : `${name} sticker. Tap to move, resize or turn it.`),
+  picture: "Picture",
+  smaller: "Smaller",
+  bigger: "Bigger",
+  turnLeft: "Turn left",
+  turnRight: "Turn right",
+  front: "Bring to front",
+  undo: "Undo",
+  remove: "Delete",
+  done: "Done",
+  resize: "Drag to resize",
+  turn: "Drag to turn",
+  removed: "Sticker deleted. Undo brings it back.",
+  keys: "Arrow keys move it, plus and minus resize it, square brackets turn it, Delete removes it.",
+  hint: "Tap a sticker in the preview to move, resize, turn or delete it.",
+};

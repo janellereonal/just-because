@@ -2,6 +2,7 @@ import { Link, useNavigate } from "@tanstack/react-router";
 import { useQueryClient } from "@tanstack/react-query";
 import { authClient } from "@/lib/auth-client";
 import { useAuth } from "@/hooks/useAuth";
+import { galleryLink } from "@/lib/gallery";
 import Bo from "@/components/Bo";
 import { LogOut, Plus } from "lucide-react";
 import { GUEST_COPY } from "@/copy/strings";
@@ -10,6 +11,7 @@ import { GUEST_COPY } from "@/copy/strings";
 export function SiteHeader({ showMascot = true }: { showMascot?: boolean }) {
   const { user, isAdmin, isGuest } = useAuth();
   const navigate = useNavigate();
+  const gallery = galleryLink();
   const queryClient = useQueryClient();
 
   async function handleSignOut() {
@@ -32,8 +34,8 @@ export function SiteHeader({ showMascot = true }: { showMascot?: boolean }) {
           </span>
         </Link>
         <nav className="hidden items-center gap-1 sm:flex" aria-label="Main">
-          <Link to="/themes" className={link} activeProps={{ className: "bg-pink/70 text-ink" }}>
-            Themes
+          <Link to={gallery.to} className={link} activeProps={{ className: "bg-pink/70 text-ink" }}>
+            {gallery.label}
           </Link>
           <Link to="/sections" className={link} activeProps={{ className: "bg-pink/70 text-ink" }}>
             Sections
@@ -93,8 +95,8 @@ export function SiteHeader({ showMascot = true }: { showMascot?: boolean }) {
             </>
           ) : (
             <>
-              <Link to="/themes" className={`${link} sm:hidden`}>
-                Themes
+              <Link to={gallery.to} className={`${link} sm:hidden`}>
+                {gallery.label}
               </Link>
               <Link
                 to="/auth"

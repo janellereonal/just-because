@@ -1,3 +1,4 @@
+import { galleryLink } from "@/lib/gallery";
 import { Link } from "@tanstack/react-router";
 import Bo from "@/components/Bo";
 import { SiteHeader } from "@/components/SiteHeader";
@@ -28,8 +29,8 @@ type StateProps = {
 export function PageNotFound({
   title = "We couldn't find that one",
   message = "The link may be old, or the gift may have been removed.",
-  actionLabel = "Browse themes",
-  actionTo = "/themes",
+  actionLabel = galleryLink().browse,
+  actionTo = galleryLink().to,
   showHeader = true,
 }: StateProps) {
   return (
@@ -78,10 +79,10 @@ export function PageError({
               </button>
             ) : null}
             <Link
-              to="/themes"
+              to={galleryLink().to}
               className="rounded-full border border-line px-5 py-3 font-medium transition-colors hover:bg-glass/60"
             >
-              Browse themes
+              {galleryLink().browse}
             </Link>
           </div>
         </div>
