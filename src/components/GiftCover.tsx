@@ -66,7 +66,7 @@ export function GiftCover({ site, theme, className = "" }: { site: GiftSite; the
           {giftWords(theme, site.occasion).badge}
         </span>
         <span
-          className="mt-1 line-clamp-2 block text-[1.35rem] leading-[1.05] font-semibold text-balance"
+          className="mt-1 line-clamp-2 text-[1.35rem] leading-[1.05] font-semibold text-balance [overflow-wrap:anywhere]"
           style={{ fontFamily: fonts.heading }}
         >
           {heading}
