@@ -114,7 +114,8 @@ export function RooftopBody(props: BodyProps) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [allLit, body.reading, flying, opened]);
 
-  const skyH = Math.min(520, 190 + lit.length * 9);
+  // Room in the sky for every spark, worked out from all the notes so sparks never move.
+  const skyH = Math.min(400, 170 + total * 5);
 
   return (
     <BodyRoot
@@ -154,6 +155,7 @@ export function RooftopBody(props: BodyProps) {
         {/* The sky over the city: a spark for every note that went up */}
         <div className="rt-sky" aria-label={t("rooftop.progress", { n: lit.length, total })} role="group">
           <div className="rt-sky-field">
+          <span className="rt-moon" aria-hidden="true" />
           {lit.map((p) => {
             const i = notes.indexOf(p);
             const sx = 6 + seed(`${p.id}x`) * 88;
@@ -234,7 +236,7 @@ export function RooftopBody(props: BodyProps) {
           </span>
           {data.named && !body.reading.sealed && !isLocked(body.reading) ? (
             <p className="rt-reader-for" style={{ fontFamily: fonts.heading }}>
-              {data.name}
+              {t("rooftop.for", { name: data.name })}
             </p>
           ) : null}
         </Reader>
@@ -341,7 +343,7 @@ function Skyline() {
     const row = (base: number, hMin: number, hMax: number, wMin: number, wMax: number) => {
       const out: { x: number; w: number; h: number; spire: boolean }[] = [];
       let x = -10;
-      while (x < 610) {
+      while (x < 1210) {
         const w = wMin + r() * (wMax - wMin);
         out.push({ x, w, h: hMin + r() * (hMax - hMin), spire: r() > 0.86 });
         x += w + (r() > 0.7 ? 2 : 0);
@@ -359,7 +361,7 @@ function Skyline() {
   const shape = (b: { x: number; y: number; w: number; spire: boolean }) =>
     `M${b.x.toFixed(1)} 141V${b.y.toFixed(1)}h${b.w.toFixed(1)}V141z` + (b.spire ? `M${(b.x + b.w / 2 - 1).toFixed(1)} ${b.y.toFixed(1)}v-14h2v14z` : "");
   return (
-    <svg className="rt-skyline" viewBox="0 0 600 140" preserveAspectRatio="xMidYMax slice" aria-hidden="true">
+    <svg className="rt-skyline" viewBox="0 0 1200 140" preserveAspectRatio="xMidYMax slice" aria-hidden="true">
       <path d={city.back.map(shape).join("")} fill="var(--rt-city-far)" />
       <path d={city.front.map(shape).join("")} fill="var(--rt-city)" />
       {city.windows.map((w, i) => (

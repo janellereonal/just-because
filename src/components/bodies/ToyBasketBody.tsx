@@ -108,10 +108,25 @@ export function ToyBasketBody(props: BodyProps) {
     const spin = dx > 0 ? -1 : 1;
     const anim = el.animate(
       [
-        { transform: `translate(${dx}px, ${dy}px) rotate(0deg) scale(1)`, easing: "cubic-bezier(.3,.6,.5,1)" },
-        { transform: `translate(${dx * 0.5}px, ${Math.min(dy, 0) * 0.5 - lift}px) rotate(${spin * 200}deg) scale(1.12)`, offset: 0.42, easing: "cubic-bezier(.5,0,.8,.5)" },
-        { transform: `translate(0px, 0px) rotate(${spin * 360}deg) scale(1, .82)`, offset: 0.72, easing: "cubic-bezier(.2,.7,.4,1)" },
-        { transform: `translate(0px, -26px) rotate(${spin * 380}deg) scale(1)`, offset: 0.86, easing: "cubic-bezier(.5,0,.8,.5)" },
+        {
+          transform: `translate(${dx}px, ${dy}px) rotate(0deg) scale(1)`,
+          easing: "cubic-bezier(.3,.6,.5,1)",
+        },
+        {
+          transform: `translate(${dx * 0.5}px, ${Math.min(dy, 0) * 0.5 - lift}px) rotate(${spin * 200}deg) scale(1.12)`,
+          offset: 0.42,
+          easing: "cubic-bezier(.5,0,.8,.5)",
+        },
+        {
+          transform: `translate(0px, 0px) rotate(${spin * 360}deg) scale(1, .82)`,
+          offset: 0.72,
+          easing: "cubic-bezier(.2,.7,.4,1)",
+        },
+        {
+          transform: `translate(0px, -26px) rotate(${spin * 380}deg) scale(1)`,
+          offset: 0.86,
+          easing: "cubic-bezier(.5,0,.8,.5)",
+        },
         { transform: `translate(0px, 0px) rotate(${spin * 360}deg) scale(1)` },
       ],
       { duration: 1000 },
@@ -119,7 +134,13 @@ export function ToyBasketBody(props: BodyProps) {
     const thud = window.setTimeout(() => {
       foley("thunk");
       const r = el.getBoundingClientRect();
-      burst(body.hostRef.current, r.left + r.width / 2, r.top + r.height / 2, { shape: "paws", colors: [tc.primary, tc.accent], count: 7, spread: 0.7, up: true });
+      burst(body.hostRef.current, r.left + r.width / 2, r.top + r.height / 2, {
+        shape: "paws",
+        colors: [tc.primary, tc.accent],
+        count: 7,
+        spread: 0.7,
+        up: true,
+      });
     }, 720);
     const end = window.setTimeout(done, 1080);
     return () => {
@@ -127,7 +148,6 @@ export function ToyBasketBody(props: BodyProps) {
       window.clearTimeout(thud);
       window.clearTimeout(end);
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [landing]);
 
   const name = data.named ? data.name : "";
@@ -147,7 +167,9 @@ export function ToyBasketBody(props: BodyProps) {
           "--tb-rug2": colors.mix(colors.accent, "#FFFFFF", 0.7),
           "--tb-rug3": colors.mix("#F3E6CF", colors.primary, 0.06),
           "--tb-rug4": colors.mix(colors.primary, "#FFFFFF", 0.4),
-          "--tb-floor": colors.dark ? colors.mix(colors.bg, "#000000", 0.18) : colors.mix(colors.bg, "#8C6A48", 0.1),
+          "--tb-floor": colors.dark
+            ? colors.mix(colors.bg, "#000000", 0.18)
+            : colors.mix(colors.bg, "#8C6A48", 0.1),
         } as React.CSSProperties
       }
     >
@@ -172,13 +194,24 @@ export function ToyBasketBody(props: BodyProps) {
                 stroke="#A87A24"
                 strokeWidth="2.5"
               />
-              <path d="M70 34c-14 0-24 10-22 22" fill="none" stroke="#FFFBE8" strokeWidth="4" strokeLinecap="round" opacity=".7" />
+              <path
+                d="M70 34c-14 0-24 10-22 22"
+                fill="none"
+                stroke="#FFFBE8"
+                strokeWidth="4"
+                strokeLinecap="round"
+                opacity=".7"
+              />
               <circle cx="160" cy="34" r="6" fill="none" stroke="#A87A24" strokeWidth="2.5" />
             </svg>
             <div className="tb-tag-text">
               <p className="tb-tag-kicker">{data.named ? t("toybasket.tagFor") : ""}</p>
               <h1 className="tb-tag-name" style={{ fontFamily: fonts.heading }}>
-                {data.named ? <SampleText on={data.nameIsSample}>{data.name}</SampleText> : body.heading}
+                {data.named ? (
+                  <SampleText on={data.nameIsSample}>{data.name}</SampleText>
+                ) : (
+                  body.heading
+                )}
               </h1>
             </div>
           </div>
@@ -201,59 +234,72 @@ export function ToyBasketBody(props: BodyProps) {
                 : t("toybasket.progress", { n: onRug.length, total: toys.length })}
         </p>
 
-        <div className="tb-play">
-          {/* The basket */}
-          <section className="tb-basket" aria-label={t("toybasket.basketAria")}>
-            <span className="tb-handle is-left" aria-hidden="true" />
-            <span className="tb-handle is-right" aria-hidden="true" />
-            <div className="tb-basket-rim">
-              <div className="tb-basket-in">
-                {inBasket.length && !all ? (
-                  <ul className="tb-heap">
-                    {inBasket.map((p, i) => (
-                      <li
-                        key={p.id}
-                        style={
-                          {
-                            "--jx": `${((seed(`${p.id}-x`) - 0.5) * 18).toFixed(1)}px`,
-                            "--jy": `${((seed(`${p.id}-y`) - 0.5) * 22).toFixed(1)}px`,
-                          } as React.CSSProperties
-                        }
-                      >
-                        {takenNow.has(p.id) && opened.has(p.id) ? (
-                          <span className="tb-gap" aria-hidden="true" />
-                        ) : (
-                          <ToyButton piece={p} tc={tc} onPull={(e) => pull(p, e)} index={i} />
-                        )}
-                      </li>
-                    ))}
-                  </ul>
-                ) : (
-                  <p className="tb-basket-empty">{toys.length ? t("toybasket.basketEmpty") : body.voice.empty(t("toybasket.what"))}</p>
-                )}
+        {toys.length || !photos.length ? (
+          <div className="tb-play">
+            {/* The basket */}
+            <section className="tb-basket" aria-label={t("toybasket.basketAria")}>
+              <span className="tb-handle is-left" aria-hidden="true" />
+              <span className="tb-handle is-right" aria-hidden="true" />
+              <div className="tb-basket-rim">
+                <div className="tb-basket-in">
+                  {inBasket.length && !all ? (
+                    <ul className="tb-heap">
+                      {inBasket.map((p, i) => (
+                        <li
+                          key={p.id}
+                          style={
+                            {
+                              "--jx": `${((seed(`${p.id}-x`) - 0.5) * 18).toFixed(1)}px`,
+                              "--jy": `${((seed(`${p.id}-y`) - 0.5) * 22).toFixed(1)}px`,
+                            } as React.CSSProperties
+                          }
+                        >
+                          {takenNow.has(p.id) && opened.has(p.id) ? (
+                            <span className="tb-gap" aria-hidden="true" />
+                          ) : (
+                            <ToyButton piece={p} tc={tc} onPull={(e) => pull(p, e)} index={i} />
+                          )}
+                        </li>
+                      ))}
+                    </ul>
+                  ) : (
+                    <p className="tb-basket-empty">
+                      {toys.length
+                        ? t("toybasket.basketEmpty")
+                        : body.voice.empty(t("toybasket.what"))}
+                    </p>
+                  )}
+                </div>
               </div>
-            </div>
-            <div className="tb-basket-front" aria-hidden="true" />
-          </section>
+              <div className="tb-basket-front" aria-hidden="true" />
+            </section>
 
-          {/* The rug */}
-          <section className="tb-rug" aria-label={t("toybasket.rugAria")} ref={rugRef}>
-            {onRug.length ? (
-              <ul className="tb-rug-toys">
-                {onRug.map((p, i) => (
-                  <li key={p.id}>
-                    <ToyButton piece={p} tc={tc} onPull={(e) => pull(p, e)} index={i} onRug landing={landing?.id === p.id} />
-                  </li>
-                ))}
-              </ul>
-            ) : (
-              <p className="tb-rug-empty">
-                <PawPrint className="size-6" aria-hidden="true" />
-                {t("toybasket.rugEmpty")}
-              </p>
-            )}
-          </section>
-        </div>
+            {/* The rug */}
+            <section className="tb-rug" aria-label={t("toybasket.rugAria")} ref={rugRef}>
+              {onRug.length ? (
+                <ul className="tb-rug-toys">
+                  {onRug.map((p, i) => (
+                    <li key={p.id}>
+                      <ToyButton
+                        piece={p}
+                        tc={tc}
+                        onPull={(e) => pull(p, e)}
+                        index={i}
+                        onRug
+                        landing={landing?.id === p.id}
+                      />
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <p className="tb-rug-empty">
+                  <PawPrint className="size-6" aria-hidden="true" />
+                  {t("toybasket.rugEmpty")}
+                </p>
+              )}
+            </section>
+          </div>
+        ) : null}
 
         {photos.length ? (
           <section className="tb-wall" aria-label={t("toybasket.wallTitle")}>
@@ -263,9 +309,27 @@ export function ToyBasketBody(props: BodyProps) {
             <p className="tb-wall-note">{t("toybasket.wallNote")}</p>
             <ul className="tb-polaroids">
               {photos.map((p, i) => (
-                <li key={p.id} style={{ "--tilt": `${((seed(p.id) - 0.5) * 9).toFixed(1)}deg` } as React.CSSProperties}>
-                  <button type="button" className={`tb-polaroid ${opened.has(p.id) ? "is-seen" : ""}`} onClick={() => { open(p.id); foley("paper"); body.read(p); }} aria-label={pieceLabel(p)}>
-                    <span className="tb-tape" aria-hidden="true" style={{ rotate: `${(seed(`${p.id}t`) - 0.5) * 16}deg` }} />
+                <li
+                  key={p.id}
+                  style={
+                    { "--tilt": `${((seed(p.id) - 0.5) * 9).toFixed(1)}deg` } as React.CSSProperties
+                  }
+                >
+                  <button
+                    type="button"
+                    className={`tb-polaroid ${opened.has(p.id) ? "is-seen" : ""}`}
+                    onClick={() => {
+                      open(p.id);
+                      foley("paper");
+                      body.read(p);
+                    }}
+                    aria-label={pieceLabel(p)}
+                  >
+                    <span
+                      className="tb-tape"
+                      aria-hidden="true"
+                      style={{ rotate: `${(seed(`${p.id}t`) - 0.5) * 16}deg` }}
+                    />
                     <span className="tb-polaroid-pic">
                       <PhotoFace piece={p} tint={i % 2 ? tc.soft : tc.tennis} sizes="200px" />
                     </span>
@@ -279,9 +343,16 @@ export function ToyBasketBody(props: BodyProps) {
         ) : null}
 
         {data.words.length ? (
-          <section className="tb-treats" aria-label={data.named ? t("toybasket.wordsTitle", { name: data.name }) : t("toybasket.wordsAnon")}>
+          <section
+            className="tb-treats"
+            aria-label={
+              data.named ? t("toybasket.wordsTitle", { name: data.name }) : t("toybasket.wordsAnon")
+            }
+          >
             <p className="tb-wall-title" style={{ fontFamily: fonts.heading }}>
-              {data.named ? t("toybasket.wordsTitle", { name: data.name }) : t("toybasket.wordsAnon")}
+              {data.named
+                ? t("toybasket.wordsTitle", { name: data.name })
+                : t("toybasket.wordsAnon")}
             </p>
             <ul className="tb-biscuits">
               {data.words.map((w) => (
@@ -293,7 +364,11 @@ export function ToyBasketBody(props: BodyProps) {
           </section>
         ) : null}
 
-        <BodyFooter body={body} className="tb-footer" buttonStyle={{ background: colors.primary, color: colors.onPrimary }} />
+        <BodyFooter
+          body={body}
+          className="tb-footer"
+          buttonStyle={{ background: colors.primary, color: colors.onPrimary }}
+        />
       </div>
 
       {body.reading ? <TagReader body={body} piece={body.reading} /> : null}
@@ -311,7 +386,11 @@ function PawCountdown({ date }: { date: string | null }) {
   return (
     <p className="tb-count" role="timer">
       <PawPrint className="size-4 flex-none" aria-hidden="true" />
-      <span>{c.done ? t("toybasket.now") : `${t("body.countdown.left", { days: c.days, hours: c.hours, mins: c.mins })}`}</span>
+      <span>
+        {c.done
+          ? t("toybasket.now")
+          : `${t("body.countdown.left", { days: c.days, hours: c.hours, mins: c.mins })}`}
+      </span>
     </p>
   );
 }
@@ -341,14 +420,31 @@ function ToyButton({
   const toy = toyFor(piece);
   const r = seed(piece.id);
   const locked = piece.sealed || isLocked(piece);
-  const Icon = locked ? Lock : piece.kind === "song" ? Music2 : piece.kind === "voice" ? Mic : piece.kind === "ornament" ? Star : piece.kind === "calendar" ? CalendarDays : null;
+  const Icon = locked
+    ? Lock
+    : piece.kind === "song"
+      ? Music2
+      : piece.kind === "voice"
+        ? Mic
+        : piece.kind === "ornament"
+          ? Star
+          : piece.kind === "calendar"
+            ? CalendarDays
+            : null;
   const tilt = (r - 0.5) * (onRug ? 50 : 70);
   return (
     <button
       type="button"
       data-toy={piece.id}
       className={`tb-toy is-${toy} ${onRug ? "is-out" : ""} ${landing ? "is-landing" : ""}`}
-      style={{ "--tilt": `${tilt.toFixed(1)}deg`, "--i": index % 12, "--sc": (0.84 + seed(`${piece.id}-s`) * 0.3).toFixed(2), "--tr": `${((r - 0.5) * 18).toFixed(1)}deg` } as React.CSSProperties}
+      style={
+        {
+          "--tilt": `${tilt.toFixed(1)}deg`,
+          "--i": index % 12,
+          "--sc": (0.84 + seed(`${piece.id}-s`) * 0.3).toFixed(2),
+          "--tr": `${((r - 0.5) * 18).toFixed(1)}deg`,
+        } as React.CSSProperties
+      }
       onClick={onPull}
       aria-label={pieceLabel(piece)}
     >
@@ -365,12 +461,28 @@ function ToyButton({
 
 /** The toys, drawn small and soft in the gift's colors. */
 function ToyArt({ toy, tc, r }: { toy: Toy; tc: Colors; r: number }) {
-  const hi = <ellipse cx="38" cy="32" rx="12" ry="8" fill="#fff" opacity=".45" transform="rotate(-30 38 32)" />;
+  const hi = (
+    <ellipse
+      cx="38"
+      cy="32"
+      rx="12"
+      ry="8"
+      fill="#fff"
+      opacity=".45"
+      transform="rotate(-30 38 32)"
+    />
+  );
   if (toy === "tennis")
     return (
       <svg viewBox="0 0 100 100">
         <circle cx="50" cy="50" r="38" fill={tc.tennis} />
-        <path d="M20 26c16 10 18 38 0 50M80 24c-16 10-18 40 0 52" fill="none" stroke="#FFFDF2" strokeWidth="5" strokeLinecap="round" />
+        <path
+          d="M20 26c16 10 18 38 0 50M80 24c-16 10-18 40 0 52"
+          fill="none"
+          stroke="#FFFDF2"
+          strokeWidth="5"
+          strokeLinecap="round"
+        />
         <circle cx="50" cy="50" r="38" fill="none" stroke="rgba(0,0,0,.12)" strokeWidth="2" />
         {hi}
       </svg>
@@ -399,7 +511,14 @@ function ToyArt({ toy, tc, r }: { toy: Toy; tc: Colors; r: number }) {
         <g transform="rotate(-32 50 50)">
           <g transform="translate(0 3)">{shape("rgba(90,60,30,.28)")}</g>
           {shape(r > 0.5 ? tc.cream : tc.soft)}
-          <path d="M22 35a7 7 0 0 1 9-3M33 45h30" fill="none" stroke="#fff" strokeWidth="3" strokeLinecap="round" opacity=".75" />
+          <path
+            d="M22 35a7 7 0 0 1 9-3M33 45h30"
+            fill="none"
+            stroke="#fff"
+            strokeWidth="3"
+            strokeLinecap="round"
+            opacity=".75"
+          />
         </g>
       </svg>
     );
@@ -407,12 +526,35 @@ function ToyArt({ toy, tc, r }: { toy: Toy; tc: Colors; r: number }) {
   if (toy === "rope")
     return (
       <svg viewBox="0 0 100 100">
-        <path d="M22 70Q50 40 78 30" fill="none" stroke={tc.cream} strokeWidth="14" strokeLinecap="round" />
-        <path d="M22 70Q50 40 78 30" fill="none" stroke={r > 0.5 ? tc.primary : tc.accent} strokeWidth="14" strokeDasharray="7 7" />
-        <path d="M22 70Q50 40 78 30" fill="none" stroke="rgba(0,0,0,.12)" strokeWidth="14" strokeDasharray="1 6" />
+        <path
+          d="M22 70Q50 40 78 30"
+          fill="none"
+          stroke={tc.cream}
+          strokeWidth="14"
+          strokeLinecap="round"
+        />
+        <path
+          d="M22 70Q50 40 78 30"
+          fill="none"
+          stroke={r > 0.5 ? tc.primary : tc.accent}
+          strokeWidth="14"
+          strokeDasharray="7 7"
+        />
+        <path
+          d="M22 70Q50 40 78 30"
+          fill="none"
+          stroke="rgba(0,0,0,.12)"
+          strokeWidth="14"
+          strokeDasharray="1 6"
+        />
         <circle cx="20" cy="72" r="11" fill={tc.cream} stroke="rgba(90,60,30,.3)" strokeWidth="2" />
         <circle cx="80" cy="28" r="11" fill={tc.cream} stroke="rgba(90,60,30,.3)" strokeWidth="2" />
-        <path d="M12 82l-4 6M18 84l-1 7M26 82l3 6M88 18l4-6M82 16l1-7M74 18l-3-6" stroke={tc.cream} strokeWidth="3" strokeLinecap="round" />
+        <path
+          d="M12 82l-4 6M18 84l-1 7M26 82l3 6M88 18l4-6M82 16l1-7M74 18l-3-6"
+          stroke={tc.cream}
+          strokeWidth="3"
+          strokeLinecap="round"
+        />
       </svg>
     );
   if (toy === "donut")
@@ -423,17 +565,38 @@ function ToyArt({ toy, tc, r }: { toy: Toy; tc: Colors; r: number }) {
         <circle cx="50" cy="50" r="13" fill="var(--tb-hole, #6b4a2a)" />
         <circle cx="50" cy="50" r="13" fill="none" stroke="rgba(0,0,0,.18)" strokeWidth="2" />
         {[0, 1, 2, 3, 4, 5, 6, 7].map((k) => (
-          <rect key={k} x="48" y="23" width="4" height="9" rx="2" fill={[tc.primary, tc.tennis, "#fff", tc.accent][k % 4]} transform={`rotate(${k * 45 + 20} 50 50)`} />
+          <rect
+            key={k}
+            x="48"
+            y="23"
+            width="4"
+            height="9"
+            rx="2"
+            fill={[tc.primary, tc.tennis, "#fff", tc.accent][k % 4]}
+            transform={`rotate(${k * 45 + 20} 50 50)`}
+          />
         ))}
       </svg>
     );
   if (toy === "star")
     return (
       <svg viewBox="0 0 100 100">
-        <path d="M50 12 61 37 88 39 67 57 74 84 50 69 26 84 33 57 12 39 39 37Z" fill={tc.tennis} stroke="rgba(90,60,30,.3)" strokeWidth="3" strokeLinejoin="round" />
+        <path
+          d="M50 12 61 37 88 39 67 57 74 84 50 69 26 84 33 57 12 39 39 37Z"
+          fill={tc.tennis}
+          stroke="rgba(90,60,30,.3)"
+          strokeWidth="3"
+          strokeLinejoin="round"
+        />
         <circle cx="42" cy="48" r="3.5" fill="#3A2A22" />
         <circle cx="58" cy="48" r="3.5" fill="#3A2A22" />
-        <path d="M44 58q6 5 12 0" fill="none" stroke="#3A2A22" strokeWidth="3" strokeLinecap="round" />
+        <path
+          d="M44 58q6 5 12 0"
+          fill="none"
+          stroke="#3A2A22"
+          strokeWidth="3"
+          strokeLinecap="round"
+        />
       </svg>
     );
   // A squeaky bear: round body, little ears and a smile.
@@ -448,7 +611,13 @@ function ToyArt({ toy, tc, r }: { toy: Toy; tc: Colors; r: number }) {
       <circle cx="40" cy="50" r="3.5" fill="#2E2220" />
       <circle cx="60" cy="50" r="3.5" fill="#2E2220" />
       <ellipse cx="50" cy="60" rx="5" ry="3.5" fill="#2E2220" />
-      <path d="M44 67q6 4 12 0" fill="none" stroke="#2E2220" strokeWidth="2.5" strokeLinecap="round" />
+      <path
+        d="M44 67q6 4 12 0"
+        fill="none"
+        stroke="#2E2220"
+        strokeWidth="2.5"
+        strokeLinecap="round"
+      />
     </svg>
   );
 }
@@ -472,7 +641,12 @@ function colorMixLite(a: string, b: string) {
 function TagReader({ body, piece }: { body: Body; piece: Piece }) {
   const { colors, fonts } = body;
   return (
-    <Reader piece={piece} onClose={body.closeReader} accent={colors.dark ? colors.mix(colors.primary, "#000000", 0.15) : colors.primary} className="tb-reader">
+    <Reader
+      piece={piece}
+      onClose={body.closeReader}
+      accent={colors.dark ? colors.mix(colors.primary, "#000000", 0.15) : colors.primary}
+      className="tb-reader"
+    >
       <div className="tb-reader-head">
         <span className="tb-reader-ring" aria-hidden="true" />
         <span className="tb-reader-from" style={{ fontFamily: fonts.heading }}>

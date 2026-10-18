@@ -50,7 +50,11 @@ export function PassportBody(props: BodyProps) {
       const l = luma(c);
       return l > 0.42 ? colors.mix(c, "#1E1B2E", Math.min(0.62, (l - 0.3) * 1.25)) : c;
     };
-    return [deep(colors.primary), deep(colors.accent), colors.mix(deep(colors.primary), "#1B2440", 0.45)];
+    return [
+      deep(colors.primary),
+      deep(colors.accent),
+      colors.mix(deep(colors.primary), "#1B2440", 0.45),
+    ];
   }, [colors]);
   const paper = colors.mix("#FBF6EA", colors.primary, 0.035);
   const cover = colors.mix(deep2(colors.primary), "#0E1424", 0.45);
@@ -62,7 +66,9 @@ export function PassportBody(props: BodyProps) {
   // The day on the stamps: the trip's day (the countdown), else today. Set after mount (viewer's zone).
   const [stampDay, setStampDay] = useState("");
   useEffect(() => {
-    setStampDay(formatDay(data.countdownDate ?? Date.now(), { day: "2-digit", month: "short" }).toUpperCase());
+    setStampDay(
+      formatDay(data.countdownDate ?? Date.now(), { day: "2-digit", month: "short" }).toUpperCase(),
+    );
   }, [data.countdownDate]);
 
   // Pages thump their stamps down as they scroll into view.
@@ -127,7 +133,13 @@ export function PassportBody(props: BodyProps) {
       body.read(p);
       if (first && !p.sealed && !isLocked(p)) {
         chime("pop");
-        burst(body.hostRef.current, x, y, { shape: "stars", colors: [inks[0]!, inks[1]!, "#F2C14E"], count: 8, spread: 0.7, up: true });
+        burst(body.hostRef.current, x, y, {
+          shape: "stars",
+          colors: [inks[0]!, inks[1]!, "#F2C14E"],
+          count: 8,
+          spread: 0.7,
+          up: true,
+        });
       }
     }, 380);
   }
@@ -135,7 +147,9 @@ export function PassportBody(props: BodyProps) {
   function findFriend(name: string) {
     const first = notes.find((p) => p.author === name);
     if (!first) return;
-    const el = bookRef.current?.querySelector<HTMLElement>(`[data-piece="${CSS.escape(first.id)}"]`);
+    const el = bookRef.current?.querySelector<HTMLElement>(
+      `[data-piece="${CSS.escape(first.id)}"]`,
+    );
     const page = el?.closest<HTMLElement>(".pp-page");
     page?.removeAttribute("data-wait");
     page?.setAttribute("data-in", "");
@@ -145,7 +159,11 @@ export function PassportBody(props: BodyProps) {
     window.setTimeout(() => setFound((f) => (f === name ? null : f)), 2400);
   }
 
-  const code = (data.named ? data.name : t("passport.home")).replace(/[^\p{L}]/gu, "").slice(0, 3).toUpperCase() || "YOU";
+  const code =
+    (data.named ? data.name : t("passport.home"))
+      .replace(/[^\p{L}]/gu, "")
+      .slice(0, 3)
+      .toUpperCase() || "YOU";
 
   return (
     <BodyRoot
@@ -161,9 +179,12 @@ export function PassportBody(props: BodyProps) {
           "--pp-cover": cover,
           "--pp-band": colors.primary,
           "--pp-on-band": colors.onPrimary,
-          "--pp-sky": colors.dark ? colors.mix(colors.bg, colors.primary, 0.22) : colors.mix(colors.bg, colors.primary, 0.16),
+          "--pp-sky": colors.dark
+            ? colors.mix(colors.bg, colors.primary, 0.22)
+            : colors.mix(colors.bg, colors.primary, 0.16),
           "--pp-guilloche": guilloche(colors.mix(paper, inks[0]!, 0.16)),
           "--pp-text": "#2C2A33",
+          "--pp-cloud": colors.dark ? 0.16 : 0.75,
         } as React.CSSProperties
       }
     >
@@ -177,51 +198,57 @@ export function PassportBody(props: BodyProps) {
         {/* The boarding pass, stub torn off */}
         <article className="pp-pass" data-gift-page="">
           <div className="pp-pass-paper">
-          <header className="pp-pass-band">
-            <span>{t("passport.pass")}</span>
-            <Plane className="size-4" aria-hidden="true" />
-          </header>
-          <div className="pp-pass-body">
-            <div className="pp-route">
-              <div>
-                <p className="pp-label">{t("passport.from")}</p>
-                <p className="pp-code" style={{ fontFamily: fonts.heading }}>
-                  {t("passport.fromCode")}
-                </p>
-                <p className="pp-sub">{t("passport.fromName")}</p>
+            <header className="pp-pass-band">
+              <span>{t("passport.pass")}</span>
+              <Plane className="size-4" aria-hidden="true" />
+            </header>
+            <div className="pp-pass-body">
+              <div className="pp-route">
+                <div>
+                  <p className="pp-label">{t("passport.from")}</p>
+                  <p className="pp-code" style={{ fontFamily: fonts.heading }}>
+                    {t("passport.fromCode")}
+                  </p>
+                  <p className="pp-sub">{t("passport.fromName")}</p>
+                </div>
+                <div className="pp-route-line" aria-hidden="true">
+                  <Plane className="pp-route-plane" />
+                </div>
+                <div className="text-right">
+                  <p className="pp-label">{t("passport.to")}</p>
+                  <p className="pp-code" style={{ fontFamily: fonts.heading }}>
+                    {code}
+                  </p>
+                  <p className="pp-sub">{data.named ? data.name : t("passport.home")}</p>
+                </div>
               </div>
-              <div className="pp-route-line" aria-hidden="true">
-                <Plane className="pp-route-plane" />
-              </div>
-              <div className="text-right">
-                <p className="pp-label">{t("passport.to")}</p>
-                <p className="pp-code" style={{ fontFamily: fonts.heading }}>
-                  {code}
-                </p>
-                <p className="pp-sub">{data.named ? data.name : t("passport.home")}</p>
-              </div>
-            </div>
 
-            <p className="pp-label mt-5">{t("passport.passenger")}</p>
-            <h1 className="pp-name" style={{ fontFamily: fonts.heading }}>
-              {data.named ? <SampleText on={data.nameIsSample}>{data.name}</SampleText> : body.heading}
-            </h1>
-            {data.named ? (
-              <p className="pp-heading" style={{ fontFamily: fonts.heading }}>
-                {body.heading}
+              <p className="pp-label mt-5">{t("passport.passenger")}</p>
+              <h1 className="pp-name" style={{ fontFamily: fonts.heading }}>
+                {data.named ? (
+                  <SampleText on={data.nameIsSample}>{data.name}</SampleText>
+                ) : (
+                  body.heading
+                )}
+              </h1>
+              {data.named ? (
+                <p className="pp-heading" style={{ fontFamily: fonts.heading }}>
+                  {body.heading}
+                </p>
+              ) : null}
+              <p className="pp-intro">
+                {body.intro || body.voice.intro(data.named ? data.name : "")}
               </p>
-            ) : null}
-            <p className="pp-intro">{body.intro || body.voice.intro(data.named ? data.name : "")}</p>
 
-            <dl className="pp-fields">
-              <Field label={t("passport.seat")} value="1A" />
-              <Field label={t("passport.gate")} value="B4" />
-              <Field label={t("passport.class")} value={t("passport.classValue")} />
-              <Field label={t("passport.stamps")} value={String(notes.length)} />
-            </dl>
+              <dl className="pp-fields">
+                <Field label={t("passport.seat")} value="1A" />
+                <Field label={t("passport.gate")} value="B4" />
+                <Field label={t("passport.class")} value={t("passport.classValue")} />
+                <Field label={t("passport.stamps")} value={String(notes.length)} />
+              </dl>
 
-            <Departures date={data.countdownDate} />
-          </div>
+              <Departures date={data.countdownDate} />
+            </div>
           </div>
         </article>
 
@@ -270,7 +297,14 @@ export function PassportBody(props: BodyProps) {
                         {page.map((p, i) => (
                           <li key={p.id} style={{ "--i": i } as React.CSSProperties}>
                             {p.kind === "photo" && !p.sealed ? (
-                              <PhotoClip piece={p} read={opened.has(p.id)} lifting={lifting === p.id} found={found === p.author} onOpen={(e) => read(p, e)} day={stampDay} />
+                              <PhotoClip
+                                piece={p}
+                                read={opened.has(p.id)}
+                                lifting={lifting === p.id}
+                                found={found === p.author}
+                                onOpen={(e) => read(p, e)}
+                                day={stampDay}
+                              />
                             ) : (
                               <Stamp
                                 piece={p}
@@ -302,7 +336,9 @@ export function PassportBody(props: BodyProps) {
           <section className="pp-declare" aria-label={t("passport.declareTitle")}>
             <p className="pp-declare-title">{t("passport.declareTitle")}</p>
             <p className="pp-declare-line" style={{ fontFamily: fonts.heading }}>
-              {data.named ? t("passport.declareLine", { name: data.name }) : t("passport.declareAnon")}
+              {data.named
+                ? t("passport.declareLine", { name: data.name })
+                : t("passport.declareAnon")}
             </p>
             <ul className="pp-declare-list">
               {data.words.map((w) => (
@@ -319,7 +355,11 @@ export function PassportBody(props: BodyProps) {
           </section>
         ) : null}
 
-        <BodyFooter body={body} className="pp-footer" buttonStyle={{ background: colors.primary, color: colors.onPrimary }} />
+        <BodyFooter
+          body={body}
+          className="pp-footer"
+          buttonStyle={{ background: colors.primary, color: colors.onPrimary }}
+        />
       </div>
 
       {body.reading ? <Postcard body={body} piece={body.reading} code={code} /> : null}
@@ -359,7 +399,10 @@ function Departures({ date }: { date: string | null }) {
             ))}
         </p>
       ) : (
-        <p className="pp-board" aria-label={t("body.countdown.left", { days: c.days, hours: c.hours, mins: c.mins })}>
+        <p
+          className="pp-board"
+          aria-label={t("body.countdown.left", { days: c.days, hours: c.hours, mins: c.mins })}
+        >
           <Flaps value={c.days} unit={t("passport.days")} />
           <Flaps value={c.hours} unit={t("passport.hours")} />
           <Flaps value={c.mins} unit={t("passport.mins")} />
@@ -425,7 +468,12 @@ function RouteMap({
       const bend = (i % 2 ? 1 : -1) * (0.22 + r * 0.12);
       const cx = mx - dy * bend;
       const cy = my + dx * bend - 12;
-      out.push({ name, x, y, path: `M${x.toFixed(1)} ${y.toFixed(1)} Q${cx.toFixed(1)} ${cy.toFixed(1)} ${home.x} ${home.y}` });
+      out.push({
+        name,
+        x,
+        y,
+        path: `M${x.toFixed(1)} ${y.toFixed(1)} Q${cx.toFixed(1)} ${cy.toFixed(1)} ${home.x} ${home.y}`,
+      });
     });
     return out;
   }, [shown.join("|")]); // eslint-disable-line react-hooks/exhaustive-deps
@@ -439,7 +487,13 @@ function RouteMap({
         <svg viewBox={`0 0 ${W} ${H}`} className="pp-map-art" aria-hidden="true">
           <defs>
             <pattern id="pp-grid" width="30" height="30" patternUnits="userSpaceOnUse">
-              <path d="M30 0H0V30" fill="none" stroke="currentColor" strokeOpacity=".08" strokeWidth=".8" />
+              <path
+                d="M30 0H0V30"
+                fill="none"
+                stroke="currentColor"
+                strokeOpacity=".08"
+                strokeWidth=".8"
+              />
             </pattern>
           </defs>
           <rect width={W} height={H} fill="url(#pp-grid)" />
@@ -462,7 +516,9 @@ function RouteMap({
             <circle r="15" />
             <path d="M0-20 4-4 0 0-4-4zM0 20 4 4 0 0-4 4z" />
             <path d="M-20 0-4-4 0 0-4 4zM20 0 4-4 0 0 4 4z" opacity=".5" />
-            <text y="-24" textAnchor="middle">N</text>
+            <text y="-24" textAnchor="middle">
+              N
+            </text>
           </g>
           {pins.map((p, i) => (
             <path
@@ -474,17 +530,32 @@ function RouteMap({
             />
           ))}
           {!reduce
-            ? pins.slice(0, 3).map((p, i) => (
+            ? pins.slice(0, 2).map((p, i) => (
                 <g key={`plane-${p.name}`} className="pp-map-plane">
                   <path d="M-6-1.5 4-1.5 7 0 4 1.5-6 1.5ZM-1-1.5-4-6h2l4 4.5ZM-1 1.5-4 6h2l4-4.5ZM-6-1.5-7.5-4h1.5l2 2.5ZM-6 1.5-7.5 4h1.5l2-2.5Z" />
-                  <animateMotion dur={`${7 + i * 2.3}s`} begin={`${i * 1.7}s`} repeatCount="indefinite" rotate="auto" keyPoints="0;1" keyTimes="0;1" calcMode="linear">
+                  <animateMotion
+                    dur={`${7 + i * 2.3}s`}
+                    begin={`${i * 1.7}s`}
+                    repeatCount="indefinite"
+                    rotate="auto"
+                    keyPoints="0;1"
+                    keyTimes="0;1"
+                    calcMode="linear"
+                  >
                     <mpath href={`#pp-route-${i}`} />
                   </animateMotion>
                 </g>
               ))
             : null}
         </svg>
-        <span className="pp-home" style={{ left: `${(home.x / W) * 100}%`, top: `${(home.y / H) * 100}%` }} aria-hidden="true">
+        <span
+          className="pp-home"
+          style={{
+            left: `${((home.x / W) * 100).toFixed(2)}%`,
+            top: `${((home.y / H) * 100).toFixed(2)}%`,
+          }}
+          aria-hidden="true"
+        >
           <Heart className="size-4" fill="currentColor" />
           <span className="pp-home-code">{code}</span>
         </span>
@@ -493,7 +564,13 @@ function RouteMap({
             key={p.name}
             type="button"
             className={`pp-pin ${found === p.name ? "is-found" : ""}`}
-            style={{ left: `${(p.x / W) * 100}%`, top: `${(p.y / H) * 100}%`, "--pin": inks[i % 2] } as React.CSSProperties}
+            style={
+              {
+                left: `${((p.x / W) * 100).toFixed(2)}%`,
+                top: `${((p.y / H) * 100).toFixed(2)}%`,
+                "--pin": inks[i % 2],
+              } as React.CSSProperties
+            }
             onClick={() => onFind(p.name)}
             aria-label={t("passport.pinAria", { name: p.name })}
           >
@@ -518,7 +595,19 @@ function kindWord(p: Piece) {
 
 function KindIcon({ p, className }: { p: Piece; className?: string }) {
   const locked = p.sealed || isLocked(p);
-  const Icon = locked ? Lock : p.kind === "photo" ? Camera : p.kind === "song" ? Music2 : p.kind === "voice" ? Mic : p.kind === "ornament" ? Star : p.kind === "calendar" ? CalendarDays : Mail;
+  const Icon = locked
+    ? Lock
+    : p.kind === "photo"
+      ? Camera
+      : p.kind === "song"
+        ? Music2
+        : p.kind === "voice"
+          ? Mic
+          : p.kind === "ornament"
+            ? Star
+            : p.kind === "calendar"
+              ? CalendarDays
+              : Mail;
   return <Icon className={className} aria-hidden="true" />;
 }
 
@@ -549,17 +638,30 @@ function Stamp({
   const dy = (r2 - 0.5) * 14;
   const name = (piece.author || t("passport.withLove")).toUpperCase().slice(0, 16);
   // Long names squeeze to fit their stamp instead of running over the border.
-  const fit = (max: number, size: number) => (name.length * size * 0.66 > max ? { textLength: max, lengthAdjust: "spacingAndGlyphs" as const } : {});
+  const fit = (max: number, size: number) =>
+    name.length * size * 0.66 > max
+      ? { textLength: max, lengthAdjust: "spacingAndGlyphs" as const }
+      : {};
   const what = kindWord(piece).toUpperCase();
   const locked = isLocked(piece);
-  const when = locked && piece.date ? formatDay(piece.date, { day: "2-digit", month: "short" }).toUpperCase() : day;
+  const when =
+    locked && piece.date
+      ? formatDay(piece.date, { day: "2-digit", month: "short" }).toUpperCase()
+      : day;
   const uid = piece.id.replace(/[^a-zA-Z0-9_-]/g, "");
   return (
     <button
       type="button"
       data-piece={piece.id}
       className={`pp-stamp is-${shape} ${read ? "is-read" : ""} ${lifting ? "is-lifting" : ""} ${found ? "is-found" : ""}`}
-      style={{ "--tilt": `${tilt.toFixed(1)}deg`, "--dx": `${dx.toFixed(1)}px`, "--dy": `${dy.toFixed(1)}px`, "--ink": ink } as React.CSSProperties}
+      style={
+        {
+          "--tilt": `${tilt.toFixed(1)}deg`,
+          "--dx": `${dx.toFixed(1)}px`,
+          "--dy": `${dy.toFixed(1)}px`,
+          "--ink": ink,
+        } as React.CSSProperties
+      }
       onClick={onOpen}
       aria-label={pieceLabel(piece)}
     >
@@ -595,7 +697,14 @@ function Stamp({
             <text x="75" y="24" textAnchor="middle" className="pp-small">
               {`${t("passport.entry").toUpperCase()} · ${what}`}
             </text>
-            <text x="75" y="58" textAnchor="middle" className="pp-big" fontSize={name.length > 9 ? 13 : 17} {...fit(112, name.length > 9 ? 13 : 17)}>
+            <text
+              x="75"
+              y="58"
+              textAnchor="middle"
+              className="pp-big"
+              fontSize={name.length > 9 ? 13 : 17}
+              {...fit(112, name.length > 9 ? 13 : 17)}
+            >
               {name}
             </text>
             <text x="75" y="89" textAnchor="middle" className="pp-small" suppressHydrationWarning>
@@ -614,7 +723,14 @@ function Stamp({
                 {`${t("passport.arrived").toUpperCase()} · ${what}`}
               </textPath>
             </text>
-            <text x="80" y="62" textAnchor="middle" className="pp-big" fontSize={name.length > 9 ? 12 : 15} {...fit(104, name.length > 9 ? 12 : 15)}>
+            <text
+              x="80"
+              y="62"
+              textAnchor="middle"
+              className="pp-big"
+              fontSize={name.length > 9 ? 12 : 15}
+              {...fit(104, name.length > 9 ? 12 : 15)}
+            >
               {name}
             </text>
             <text x="80" y="80" textAnchor="middle" className="pp-small" suppressHydrationWarning>
@@ -628,10 +744,23 @@ function Stamp({
             <text x="60" y="34" textAnchor="middle" className="pp-small">
               {what}
             </text>
-            <text x="60" y="88" textAnchor="middle" className="pp-big" fontSize={name.length > 8 ? 10 : 13} {...fit(70, name.length > 8 ? 10 : 13)}>
+            <text
+              x="60"
+              y="88"
+              textAnchor="middle"
+              className="pp-big"
+              fontSize={name.length > 8 ? 10 : 13}
+              {...fit(70, name.length > 8 ? 10 : 13)}
+            >
               {name}
             </text>
-            <text x="60" y="100" textAnchor="middle" className="pp-small is-tiny" suppressHydrationWarning>
+            <text
+              x="60"
+              y="100"
+              textAnchor="middle"
+              className="pp-small is-tiny"
+              suppressHydrationWarning
+            >
               {when}
             </text>
           </svg>
@@ -711,10 +840,17 @@ function PhotoClip({
 function Postcard({ body, piece, code }: { body: Body; piece: Piece; code: string }) {
   const { colors, fonts } = body;
   return (
-    <Reader piece={piece} onClose={body.closeReader} accent={colors.mix(colors.primary, "#1E1B2E", luma(colors.primary) > 0.45 ? 0.45 : 0)} className="pp-reader">
+    <Reader
+      piece={piece}
+      onClose={body.closeReader}
+      accent={colors.mix(colors.primary, "#1E1B2E", luma(colors.primary) > 0.45 ? 0.45 : 0)}
+      className="pp-reader"
+    >
       <div className="pp-postcard-head">
         <p className="pp-postcard-from" style={{ fontFamily: fonts.heading }}>
-          {piece.author ? t("passport.postcardFrom", { name: piece.author }) : t("passport.postcardFriend")}
+          {piece.author
+            ? t("passport.postcardFrom", { name: piece.author })
+            : t("passport.postcardFriend")}
         </p>
         <span className="pp-postage" aria-hidden="true">
           <span className="pp-postage-art">
@@ -731,9 +867,15 @@ function Postcard({ body, piece, code }: { body: Body; piece: Piece; code: strin
 
 /** A machine-readable line at the foot of the last page, made from the name. */
 function mrz(name: string, n: number) {
-  const nm = (name || "FRIEND").toUpperCase().replace(/[^A-Z]/g, "").slice(0, 12) || "FRIEND";
+  const nm =
+    (name || "FRIEND")
+      .toUpperCase()
+      .replace(/[^A-Z]/g, "")
+      .slice(0, 12) || "FRIEND";
   const line1 = `P<JBX${nm}<<WITH<LOVE`.padEnd(40, "<").slice(0, 40);
-  const line2 = `${String(n).padStart(3, "0")}STAMPS<<<1A<<<FIRST<CLASS`.padEnd(40, "<").slice(0, 40);
+  const line2 = `${String(n).padStart(3, "0")}STAMPS<<<1A<<<FIRST<CLASS`
+    .padEnd(40, "<")
+    .slice(0, 40);
   return `${line1}\n${line2}`;
 }
 

@@ -197,7 +197,6 @@ export const en = {
   // cake body (PartyBody).
   "party.kicker": "A party for",
   "party.what": "place cards at the table",
-  "party.count": "{n} notes on the table",
   "party.left": "{n} notes left to open. The candles go out as you read.",
   "party.leftOne": "One note left. Open it to blow out the last candle.",
   "party.allOut": "Every candle is out. Make a wish.",
@@ -239,7 +238,6 @@ export const en = {
   "reception.wall": "On the wall",
   "reception.surprise": "A surprise",
   "reception.dear": "Dear {name},",
-  "reception.with": "With love,",
   "reception.wordsTitle": "In a word, you are",
 
   // countdown body (RooftopBody).
@@ -256,6 +254,7 @@ export const en = {
   "rooftop.until": "Until the big moment",
   "rooftop.surprise": "A surprise",
   "rooftop.wordsTitle": "In a word, you are",
+  "rooftop.for": "For {name}",
 
   // boarding-pass body (PassportBody).
   "passport.pass": "Boarding pass",

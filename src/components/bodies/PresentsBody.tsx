@@ -75,7 +75,13 @@ export function PresentsBody(props: BodyProps) {
       open(p.id);
       chime("pop");
       if (!p.sealed && !isLocked(p))
-        burst(body.hostRef.current, x, y - 30, { shape: "snow", colors: [gold, colors.accent, "#FFFFFF"], count: 12, spread: 0.9, up: true });
+        burst(body.hostRef.current, x, y - 30, {
+          shape: "snow",
+          colors: [gold, colors.accent, "#FFFFFF"],
+          count: 12,
+          spread: 0.9,
+          up: true,
+        });
     }, 260);
     window.setTimeout(() => {
       setUnwrapping(null);
@@ -94,7 +100,9 @@ export function PresentsBody(props: BodyProps) {
           "--pr-cream": cream,
           "--pr-pine": colors.mix("#2E6B4E", colors.accent, 0.18),
           "--pr-pine-deep": colors.mix("#1D4A36", colors.accent, 0.18),
-          "--pr-wall": colors.dark ? colors.mix(colors.bg, "#000000", 0.1) : colors.mix(colors.bg, colors.primary, 0.04),
+          "--pr-wall": colors.dark
+            ? colors.mix(colors.bg, "#000000", 0.1)
+            : colors.mix(colors.bg, colors.primary, 0.04),
           "--pr-floor": colors.mix("#DDC19E", colors.primary, 0.04),
           "--pr-floor-deep": colors.mix("#C9A276", colors.primary, 0.06),
           "--pr-skirt": colors.primary,
@@ -142,7 +150,15 @@ export function PresentsBody(props: BodyProps) {
           </p>
           <ul className="pr-pile">
             {notes.map((p, i) => (
-              <li key={p.id} style={{ zIndex: i + 1, "--lift": `${Math.round(seed(`${p.id}-lift`) * 16)}px` } as React.CSSProperties}>
+              <li
+                key={p.id}
+                style={
+                  {
+                    zIndex: i + 1,
+                    "--lift": `${Math.round(seed(`${p.id}-lift`) * 16)}px`,
+                  } as React.CSSProperties
+                }
+              >
                 <Present
                   piece={p}
                   paper={papers[Math.floor(seed(`${p.id}-paper`) * papers.length) % papers.length]!}
@@ -162,7 +178,15 @@ export function PresentsBody(props: BodyProps) {
               </p>
               <ul className="pr-garland">
                 {data.words.map((w, i) => (
-                  <li key={w.id} style={{ "--sw": `${((seed(w.id) - 0.5) * 10).toFixed(1)}deg`, "--d": `${(i % 7) * -0.4}s` } as React.CSSProperties}>
+                  <li
+                    key={w.id}
+                    style={
+                      {
+                        "--sw": `${((seed(w.id) - 0.5) * 10).toFixed(1)}deg`,
+                        "--d": `${(i % 7) * -0.4}s`,
+                      } as React.CSSProperties
+                    }
+                  >
                     <span className="pr-word">{w.text}</span>
                   </li>
                 ))}
@@ -170,7 +194,11 @@ export function PresentsBody(props: BodyProps) {
             </section>
           ) : null}
 
-          <BodyFooter body={body} className="pr-footer" buttonStyle={{ background: colors.primary, color: colors.onPrimary }} />
+          <BodyFooter
+            body={body}
+            className="pr-footer"
+            buttonStyle={{ background: colors.primary, color: colors.onPrimary }}
+          />
         </div>
       </section>
 
@@ -190,8 +218,14 @@ function CountdownTag({ date }: { date: string | null }) {
   return (
     <div className="pr-ctag" role="timer">
       <span className="pr-ctag-hole" aria-hidden="true" />
-      <span className="pr-ctag-label">{c.done ? t("presents.openNow") : t("presents.dontOpen")}</span>
-      {c.done ? null : <span className="pr-ctag-time">{t("body.countdown.left", { days: c.days, hours: c.hours, mins: c.mins })}</span>}
+      <span className="pr-ctag-label">
+        {c.done ? t("presents.openNow") : t("presents.dontOpen")}
+      </span>
+      {c.done ? null : (
+        <span className="pr-ctag-time">
+          {t("body.countdown.left", { days: c.days, hours: c.hours, mins: c.mins })}
+        </span>
+      )}
     </div>
   );
 }
@@ -199,12 +233,37 @@ function CountdownTag({ date }: { date: string | null }) {
 /** The tree: tiers of pine, a garland, baubles, twinkling lights and a star. */
 function Tree() {
   const lights = [
-    [150, 92], [128, 120], [176, 128], [110, 170], [150, 160], [196, 176], [92, 222], [136, 214], [182, 226], [214, 210],
-    [78, 272], [120, 264], [162, 276], [206, 262], [236, 280], [104, 314], [150, 318], [196, 312],
+    [150, 92],
+    [128, 120],
+    [176, 128],
+    [110, 170],
+    [150, 160],
+    [196, 176],
+    [92, 222],
+    [136, 214],
+    [182, 226],
+    [214, 210],
+    [78, 272],
+    [120, 264],
+    [162, 276],
+    [206, 262],
+    [236, 280],
+    [104, 314],
+    [150, 318],
+    [196, 312],
   ];
   const baubles: [number, number, number, number][] = [
-    [140, 140, 9, 0], [172, 104, 7, 1], [120, 196, 10, 2], [196, 200, 9, 0], [156, 240, 11, 1], [96, 250, 9, 0], [222, 246, 9, 2],
-    [130, 296, 11, 2], [184, 296, 10, 0], [72, 304, 8, 1], [236, 306, 8, 1],
+    [140, 140, 9, 0],
+    [172, 104, 7, 1],
+    [120, 196, 10, 2],
+    [196, 200, 9, 0],
+    [156, 240, 11, 1],
+    [96, 250, 9, 0],
+    [222, 246, 9, 2],
+    [130, 296, 11, 2],
+    [184, 296, 10, 0],
+    [72, 304, 8, 1],
+    [236, 306, 8, 1],
   ];
   return (
     <svg viewBox="0 0 300 400" className="pr-tree" aria-hidden="true">
@@ -230,9 +289,18 @@ function Tree() {
       <rect x="138" y="338" width="24" height="40" rx="4" fill="#7A5236" />
       <rect x="138" y="338" width="9" height="40" rx="3" fill="#94683F" />
       {/* tiers, back to front */}
-      <path className="pr-tier" d="M150 236 L262 346 Q236 360 206 350 Q178 364 150 352 Q122 364 94 350 Q64 360 38 346 Z" />
-      <path className="pr-tier" d="M150 150 L240 262 Q218 276 194 266 Q172 280 150 268 Q128 280 106 266 Q82 276 60 262 Z" />
-      <path className="pr-tier" d="M150 70 L214 178 Q196 190 176 182 Q162 192 150 184 Q138 192 124 182 Q104 190 86 178 Z" />
+      <path
+        className="pr-tier"
+        d="M150 236 L262 346 Q236 360 206 350 Q178 364 150 352 Q122 364 94 350 Q64 360 38 346 Z"
+      />
+      <path
+        className="pr-tier"
+        d="M150 150 L240 262 Q218 276 194 266 Q172 280 150 268 Q128 280 106 266 Q82 276 60 262 Z"
+      />
+      <path
+        className="pr-tier"
+        d="M150 70 L214 178 Q196 190 176 182 Q162 192 150 184 Q138 192 124 182 Q104 190 86 178 Z"
+      />
       {/* needles: light edges on the left of each tier */}
       <path d="M150 74 L96 172 M150 154 L70 256 M150 240 L50 340" className="pr-needle" />
       {/* garlands */}
@@ -247,17 +315,41 @@ function Tree() {
         </g>
       ))}
       {lights.map(([x, y], i) => (
-        <circle key={i} cx={x} cy={y} r="2.6" className="pr-light" style={{ animationDelay: `${(i * 0.37) % 2.2}s` }} />
+        <circle
+          key={i}
+          cx={x}
+          cy={y}
+          r="2.6"
+          className="pr-light"
+          style={{ animationDelay: `${(i * 0.37) % 2.2}s` }}
+        />
       ))}
       {/* star */}
       <g className="pr-star" transform="translate(150 62)">
         <circle r="26" fill="#FFE39A" opacity=".35" className="pr-star-glow" />
-        <path d="M0-22 6.5-7 22-6 10 4.5 13.5 20 0 11.5-13.5 20-10 4.5-22-6-6.5-7Z" fill="var(--pr-gold)" stroke="#B88A2E" strokeWidth="1.2" strokeLinejoin="round" />
+        <path
+          d="M0-22 6.5-7 22-6 10 4.5 13.5 20 0 11.5-13.5 20-10 4.5-22-6-6.5-7Z"
+          fill="var(--pr-gold)"
+          stroke="#B88A2E"
+          strokeWidth="1.2"
+          strokeLinejoin="round"
+        />
         <path d="M0-22 6.5-7 0 0Z M22-6 10 4.5 0 0Z" fill="#fff" opacity=".35" />
       </g>
       {/* tree skirt */}
       <ellipse cx="150" cy="380" rx="118" ry="17" fill="var(--pr-skirt)" />
-      <ellipse cx="150" cy="378" rx="118" ry="15" fill="none" stroke="#fff" strokeWidth="3" strokeDasharray="1 7" strokeLinecap="round" opacity=".8" />
+      <ellipse
+        cx="150"
+        cy="378"
+        rx="118"
+        ry="15"
+        fill="none"
+        stroke="#fff"
+        strokeWidth="3"
+        strokeDasharray="1 7"
+        strokeLinecap="round"
+        opacity=".8"
+      />
     </svg>
   );
 }
@@ -308,7 +400,20 @@ function Present({
   // The tag hangs off the front, left of the ribbon.
   const tx = Math.max(6, w * 0.08);
   const ty = d + lh + 6;
-  const KindIcon = piece.sealed || locked ? Lock : piece.kind === "photo" ? Camera : piece.kind === "song" ? Music2 : piece.kind === "voice" ? Mic : piece.kind === "ornament" ? Star : piece.kind === "calendar" ? CalendarDays : null;
+  const KindIcon =
+    piece.sealed || locked
+      ? Lock
+      : piece.kind === "photo"
+        ? Camera
+        : piece.kind === "song"
+          ? Music2
+          : piece.kind === "voice"
+            ? Mic
+            : piece.kind === "ornament"
+              ? Star
+              : piece.kind === "calendar"
+                ? CalendarDays
+                : null;
   const style = {
     "--w": `${w}px`,
     "--h": `${h}px`,
@@ -331,7 +436,11 @@ function Present({
     >
       <span className="pr-shadow" aria-hidden="true" />
       {/* the box */}
-      <span className="pr-inside" aria-hidden="true" style={{ clipPath: `polygon(0 ${d}px, ${d}px 0, 100% 0, ${w}px ${d}px)` }} />
+      <span
+        className="pr-inside"
+        aria-hidden="true"
+        style={{ clipPath: `polygon(0 ${d}px, ${d}px 0, 100% 0, ${w}px ${d}px)` }}
+      />
       <span className="pr-tissue" aria-hidden="true">
         <span style={{ left: "14%", rotate: "-16deg" }} />
         <span style={{ left: "38%", rotate: "6deg", height: "120%" }} />
@@ -340,9 +449,23 @@ function Present({
       <span className="pr-note" aria-hidden="true">
         <span>{initial(piece.author || "♡")}</span>
       </span>
-      <span className="pr-side pr-wrap" aria-hidden="true" style={{ clipPath: `polygon(${w}px ${d + lh}px, 100% ${lh}px, 100% ${h}px, ${w}px 100%)` }} />
-      <span className="pr-side-band" aria-hidden="true" style={{ clipPath: `polygon(${w + d / 2 - b * 0.7}px ${d / 2 + lh}px, ${w + d / 2 + b * 0.7}px ${d / 2 + lh - b * 0.7}px, ${w + d / 2 + b * 0.7}px ${h + d / 2 - b * 0.7}px, ${w + d / 2 - b * 0.7}px ${h + d / 2}px)` }} />
-      <span className="pr-front pr-wrap" aria-hidden="true" style={{ left: 0, top: d + lh, width: w, height: h - lh }}>
+      <span
+        className="pr-side pr-wrap"
+        aria-hidden="true"
+        style={{ clipPath: `polygon(${w}px ${d + lh}px, 100% ${lh}px, 100% ${h}px, ${w}px 100%)` }}
+      />
+      <span
+        className="pr-side-band"
+        aria-hidden="true"
+        style={{
+          clipPath: `polygon(${w + d / 2 - b * 0.7}px ${d / 2 + lh}px, ${w + d / 2 + b * 0.7}px ${d / 2 + lh - b * 0.7}px, ${w + d / 2 + b * 0.7}px ${h + d / 2 - b * 0.7}px, ${w + d / 2 - b * 0.7}px ${h + d / 2}px)`,
+        }}
+      />
+      <span
+        className="pr-front pr-wrap"
+        aria-hidden="true"
+        style={{ left: 0, top: d + lh, width: w, height: h - lh }}
+      >
         <span className="pr-band" style={{ left: cx - b, width: b * 2 }} />
         {piece.sealed || locked ? (
           <span className="pr-seal">
@@ -353,14 +476,39 @@ function Present({
 
       {/* the lid, with its ribbon and bow */}
       <span className="pr-lid" aria-hidden="true">
-        <span className="pr-lid-top pr-wrap" style={{ clipPath: `polygon(0 ${d}px, ${d}px 0, 100% 0, ${w}px ${d}px)` }} />
-        <span className="pr-lid-band" style={{ clipPath: `polygon(${cx - b}px ${d}px, ${cx + d - b}px 0, ${cx + d + b}px 0, ${cx + b}px ${d}px)` }} />
-        <span className="pr-lid-band" style={{ clipPath: `polygon(${d / 2 - b * 0.7}px ${d / 2 + b * 0.7}px, ${d / 2 + b * 0.7}px ${d / 2 - b * 0.7}px, ${w + d / 2 + b * 0.7}px ${d / 2 - b * 0.7}px, ${w + d / 2 - b * 0.7}px ${d / 2 + b * 0.7}px)` }} />
-        <span className="pr-lid-side pr-wrap" style={{ clipPath: `polygon(${w}px ${d}px, 100% 0, 100% ${lh}px, ${w}px ${d + lh}px)` }} />
+        <span
+          className="pr-lid-top pr-wrap"
+          style={{ clipPath: `polygon(0 ${d}px, ${d}px 0, 100% 0, ${w}px ${d}px)` }}
+        />
+        <span
+          className="pr-lid-band"
+          style={{
+            clipPath: `polygon(${cx - b}px ${d}px, ${cx + d - b}px 0, ${cx + d + b}px 0, ${cx + b}px ${d}px)`,
+          }}
+        />
+        <span
+          className="pr-lid-band"
+          style={{
+            clipPath: `polygon(${d / 2 - b * 0.7}px ${d / 2 + b * 0.7}px, ${d / 2 + b * 0.7}px ${d / 2 - b * 0.7}px, ${w + d / 2 + b * 0.7}px ${d / 2 - b * 0.7}px, ${w + d / 2 - b * 0.7}px ${d / 2 + b * 0.7}px)`,
+          }}
+        />
+        <span
+          className="pr-lid-side pr-wrap"
+          style={{ clipPath: `polygon(${w}px ${d}px, 100% 0, 100% ${lh}px, ${w}px ${d + lh}px)` }}
+        />
         <span className="pr-lid-front pr-wrap" style={{ left: 0, top: d, width: w, height: lh }}>
           <span className="pr-band" style={{ left: cx - b, width: b * 2 }} />
         </span>
-        <span className="pr-bow" style={{ left: bx, top: by, "--bs": (Math.min(w, 110) / 100).toFixed(2) } as React.CSSProperties}>
+        <span
+          className="pr-bow"
+          style={
+            {
+              left: bx,
+              top: by,
+              "--bs": (Math.min(w, 110) / 100).toFixed(2),
+            } as React.CSSProperties
+          }
+        >
           <span className="pr-bow-loop is-left" />
           <span className="pr-bow-loop is-right" />
           <span className="pr-bow-tail is-left" />
@@ -371,11 +519,16 @@ function Present({
 
       {/* the name tag on its string */}
       <svg className="pr-string" width={W} height={H} aria-hidden="true">
-        <path d={`M${bx} ${by + 2} Q${(bx + tx) / 2} ${Math.max(by, ty) + 14} ${tx + 9} ${ty + 6}`} />
+        <path
+          d={`M${bx} ${by + 2} Q${(bx + tx) / 2} ${Math.max(by, ty) + 14} ${tx + 9} ${ty + 6}`}
+        />
       </svg>
       <span className="pr-tag" style={{ left: tx, top: ty }}>
         <span className="pr-tag-hole" aria-hidden="true" />
-        <span className="pr-tag-name">{piece.author || (recipient ? t("presents.tagTo", { name: recipient }) : t("presents.tagFriend"))}</span>
+        <span className="pr-tag-name">
+          {piece.author ||
+            (recipient ? t("presents.tagTo", { name: recipient }) : t("presents.tagFriend"))}
+        </span>
         {KindIcon ? <KindIcon className="pr-tag-icon" aria-hidden="true" /> : null}
       </span>
     </button>
@@ -386,12 +539,19 @@ function Present({
 function Card({ body, piece }: { body: Body; piece: Piece }) {
   const { colors, fonts, data } = body;
   return (
-    <Reader piece={piece} onClose={body.closeReader} accent={colors.dark ? colors.mix(colors.primary, "#000000", 0.1) : colors.primary} className="pr-reader">
+    <Reader
+      piece={piece}
+      onClose={body.closeReader}
+      accent={colors.dark ? colors.mix(colors.primary, "#000000", 0.1) : colors.primary}
+      className="pr-reader"
+    >
       <span className="pr-reader-ribbon" aria-hidden="true" />
       <p className="pr-reader-to" style={{ fontFamily: fonts.heading }}>
         {data.named ? t("presents.tagTo", { name: data.name }) : t("presents.insideFriend")}
       </p>
-      <p className="pr-reader-from">{piece.author ? t("presents.tagFrom", { name: piece.author }) : t("presents.tagFriend")}</p>
+      <p className="pr-reader-from">
+        {piece.author ? t("presents.tagFrom", { name: piece.author }) : t("presents.tagFriend")}
+      </p>
     </Reader>
   );
 }

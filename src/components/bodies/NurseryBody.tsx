@@ -43,7 +43,14 @@ export function NurseryBody(props: BodyProps) {
   // Pastels from the opening (sky, butter, blush, mint), leaning toward the gift's palette.
   const pastels = useMemo(() => {
     const lean = (c: string, k = 0.22) => colors.mix(c, colors.primary, k);
-    return [lean("#AFCDEB"), lean("#FBE3A0", 0.12), colors.mix("#F4BFC8", colors.accent, 0.25), lean("#C9E6D5", 0.15), colors.mix("#D9CCF0", colors.accent, 0.15), colors.mix(colors.accent, "#FFFFFF", 0.55)];
+    return [
+      lean("#AFCDEB"),
+      lean("#FBE3A0", 0.12),
+      colors.mix("#F4BFC8", colors.accent, 0.25),
+      lean("#C9E6D5", 0.15),
+      colors.mix("#D9CCF0", colors.accent, 0.15),
+      colors.mix(colors.accent, "#FFFFFF", 0.55),
+    ];
   }, [colors]);
   const deep = colors.mix("#3D4660", colors.primary, 0.25);
 
@@ -74,7 +81,14 @@ export function NurseryBody(props: BodyProps) {
     window.setTimeout(() => {
       setTumbling(null);
       body.read(p);
-      if (!p.sealed && !isLocked(p)) burst(body.hostRef.current, x, y - 20, { shape: "stars", colors: [pastels[0]!, pastels[1]!, pastels[2]!], count: 8, spread: 0.6, up: true });
+      if (!p.sealed && !isLocked(p))
+        burst(body.hostRef.current, x, y - 20, {
+          shape: "stars",
+          colors: [pastels[0]!, pastels[1]!, pastels[2]!],
+          count: 8,
+          spread: 0.6,
+          up: true,
+        });
     }, 820);
   }
 
@@ -85,8 +99,12 @@ export function NurseryBody(props: BodyProps) {
       className="nu-root"
       style={
         {
-          "--nu-wall": colors.dark ? colors.mix(colors.bg, colors.primary, 0.12) : colors.mix(colors.bg, "#FFFFFF", 0.25),
-          "--nu-dot": colors.dark ? "rgba(255,255,255,.07)" : colors.mix(colors.bg, colors.primary, 0.16),
+          "--nu-wall": colors.dark
+            ? colors.mix(colors.bg, colors.primary, 0.12)
+            : colors.mix(colors.bg, "#FFFFFF", 0.25),
+          "--nu-dot": colors.dark
+            ? "rgba(255,255,255,.07)"
+            : colors.mix(colors.bg, colors.primary, 0.16),
           "--nu-wood": colors.mix("#E9CFA4", colors.primary, 0.05),
           "--nu-wood-deep": colors.mix("#C99E6A", colors.primary, 0.06),
           "--nu-deep": deep,
@@ -102,7 +120,11 @@ export function NurseryBody(props: BodyProps) {
       <div className="relative mx-auto max-w-6xl px-4 pt-[clamp(104px,14vh,128px)] pb-20">
         <header className="nu-head" data-gift-page="">
           <p className="nu-kicker">{data.named ? t("nursery.kicker") : ""}</p>
-          <h1 className="nu-name" style={{ fontFamily: fonts.heading }} aria-label={data.named ? data.name : body.heading}>
+          <h1
+            className="nu-name"
+            style={{ fontFamily: fonts.heading }}
+            aria-label={data.named ? data.name : body.heading}
+          >
             {data.named ? (
               <SampleText on={data.nameIsSample}>
                 <WallLetters text={data.name} pastels={pastels} />
@@ -130,38 +152,56 @@ export function NurseryBody(props: BodyProps) {
                 : t("nursery.progress", { n: count, total: data.notes.length })}
         </p>
 
-        <div className="nu-shelves">
-          {(shelves.length ? shelves : [[]]).map((shelf, s) => {
-            const bottom = shelf.slice(0, 4);
-            const top = shelf.slice(4);
-            return (
-              <div className="nu-shelf" key={s}>
-                <div className="nu-stack">
-                  <ul className="nu-row">
-                    {bottom.map((p, i) => (
-                      <li key={p.id}>
-                        <Block piece={p} index={s * PER_SHELF + i} pastels={pastels} turned={opened.has(p.id)} tumbling={tumbling === p.id} onOpen={(e) => read(p, e)} headingFont={fonts.heading} />
-                      </li>
-                    ))}
-                  </ul>
-                  {top.length ? (
-                    <ul className="nu-row is-top">
-                      {top.map((p, i) => (
+        {blocks.length || !photos.length ? (
+          <div className="nu-shelves">
+            {(shelves.length ? shelves : [[]]).map((shelf, s) => {
+              const bottom = shelf.slice(0, 4);
+              const top = shelf.slice(4);
+              return (
+                <div className="nu-shelf" key={s}>
+                  <div className="nu-stack">
+                    <ul className="nu-row">
+                      {bottom.map((p, i) => (
                         <li key={p.id}>
-                          <Block piece={p} index={s * PER_SHELF + 4 + i} pastels={pastels} turned={opened.has(p.id)} tumbling={tumbling === p.id} onOpen={(e) => read(p, e)} headingFont={fonts.heading} />
+                          <Block
+                            piece={p}
+                            index={s * PER_SHELF + i}
+                            pastels={pastels}
+                            turned={opened.has(p.id)}
+                            tumbling={tumbling === p.id}
+                            onOpen={(e) => read(p, e)}
+                            headingFont={fonts.heading}
+                          />
                         </li>
                       ))}
                     </ul>
-                  ) : null}
+                    {top.length ? (
+                      <ul className="nu-row is-top">
+                        {top.map((p, i) => (
+                          <li key={p.id}>
+                            <Block
+                              piece={p}
+                              index={s * PER_SHELF + 4 + i}
+                              pastels={pastels}
+                              turned={opened.has(p.id)}
+                              tumbling={tumbling === p.id}
+                              onOpen={(e) => read(p, e)}
+                              headingFont={fonts.heading}
+                            />
+                          </li>
+                        ))}
+                      </ul>
+                    ) : null}
+                  </div>
+                  <div className="nu-plank" aria-hidden="true">
+                    <span className="nu-bracket is-left" />
+                    <span className="nu-bracket is-right" />
+                  </div>
                 </div>
-                <div className="nu-plank" aria-hidden="true">
-                  <span className="nu-bracket is-left" />
-                  <span className="nu-bracket is-right" />
-                </div>
-              </div>
-            );
-          })}
-        </div>
+              );
+            })}
+          </div>
+        ) : null}
 
         {photos.length ? (
           <section className="nu-chart-wrap" aria-label={t("nursery.chartTitle")}>
@@ -175,15 +215,32 @@ export function NurseryBody(props: BodyProps) {
                   <Star className="size-4" fill="currentColor" />
                 </span>
                 {Array.from({ length: photos.length * 2 + 2 }, (_, i) => (
-                  <span key={i} className="nu-ruler-mark" style={{ top: `${(i / (photos.length * 2 + 2)) * 100}%` }}>
+                  <span
+                    key={i}
+                    className="nu-ruler-mark"
+                    style={{ top: `${((i / (photos.length * 2 + 2)) * 100).toFixed(2)}%` }}
+                  >
                     {i % 2 === 0 && i > 0 ? <span>{photos.length * 2 + 2 - i}</span> : null}
                   </span>
                 ))}
               </div>
               <ul className="nu-photos">
                 {photos.map((p, i) => (
-                  <li key={p.id} className={i % 2 ? "is-right" : "is-left"} style={{ "--tilt": `${((seed(p.id) - 0.5) * 10).toFixed(1)}deg` } as React.CSSProperties}>
-                    <button type="button" className={`nu-photo ${opened.has(p.id) ? "is-seen" : ""}`} onClick={(e) => read(p, e)} aria-label={pieceLabel(p)}>
+                  <li
+                    key={p.id}
+                    className={i % 2 ? "is-right" : "is-left"}
+                    style={
+                      {
+                        "--tilt": `${((seed(p.id) - 0.5) * 10).toFixed(1)}deg`,
+                      } as React.CSSProperties
+                    }
+                  >
+                    <button
+                      type="button"
+                      className={`nu-photo ${opened.has(p.id) ? "is-seen" : ""}`}
+                      onClick={(e) => read(p, e)}
+                      aria-label={pieceLabel(p)}
+                    >
                       <span className="nu-pin" aria-hidden="true" />
                       <span className="nu-photo-pic">
                         <PhotoFace piece={p} tint={pastels[i % pastels.length]!} sizes="180px" />
@@ -205,7 +262,15 @@ export function NurseryBody(props: BodyProps) {
             </p>
             <ul className="nu-clouds">
               {data.words.map((w, i) => (
-                <li key={w.id} style={{ "--d": `${((seed(w.id) * 5) % 5).toFixed(2)}s`, "--c": pastels[i % 4] } as React.CSSProperties}>
+                <li
+                  key={w.id}
+                  style={
+                    {
+                      "--d": `${((seed(w.id) * 5) % 5).toFixed(2)}s`,
+                      "--c": pastels[i % 4],
+                    } as React.CSSProperties
+                  }
+                >
                   <span className="nu-cloud">{w.text}</span>
                 </li>
               ))}
@@ -213,7 +278,11 @@ export function NurseryBody(props: BodyProps) {
           </section>
         ) : null}
 
-        <BodyFooter body={body} className="nu-footer" buttonStyle={{ background: deep, color: "#FFFFFF" }} />
+        <BodyFooter
+          body={body}
+          className="nu-footer"
+          buttonStyle={{ background: deep, color: "#FFFFFF" }}
+        />
       </div>
 
       {body.reading ? <StoryCard body={body} piece={body.reading} pastels={pastels} /> : null}
@@ -228,7 +297,17 @@ function WallLetters({ text, pastels }: { text: string; pastels: string[] }) {
       {text.split(" ").map((word, w) => (
         <span key={w} className="nu-word">
           {[...word].map((ch, i) => (
-            <span key={i} className="nu-letter" style={{ "--c": pastels[(w * 3 + i) % 4], "--cd": deepOf(pastels[(w * 3 + i) % 4]!), "--r": `${((seed(`${word}${i}`) - 0.5) * 12).toFixed(1)}deg` } as React.CSSProperties}>
+            <span
+              key={i}
+              className="nu-letter"
+              style={
+                {
+                  "--c": pastels[(w * 3 + i) % 4],
+                  "--cd": deepOf(pastels[(w * 3 + i) % 4]!),
+                  "--r": `${((seed(`${word}${i}`) - 0.5) * 12).toFixed(1)}deg`,
+                } as React.CSSProperties
+              }
+            >
               {ch}
             </span>
           ))}
@@ -250,7 +329,11 @@ function CloudCountdown({ date }: { date: string | null }) {
       <Moon className="nu-count-moon" aria-hidden="true" />
       <span>
         <span className="nu-count-label">{c.done ? t("nursery.now") : t("nursery.until")}</span>
-        {c.done ? null : <span className="nu-count-time">{t("body.countdown.left", { days: c.days, hours: c.hours, mins: c.mins })}</span>}
+        {c.done ? null : (
+          <span className="nu-count-time">
+            {t("body.countdown.left", { days: c.days, hours: c.hours, mins: c.mins })}
+          </span>
+        )}
       </span>
     </div>
   );
@@ -266,11 +349,24 @@ function Mobile({ pastels }: { pastels: string[] }) {
           <span key={i} className={`nu-mobile-drop is-${i}`}>
             <svg viewBox="0 0 40 40">
               {i === 0 ? (
-                <path d="M26 6a15 15 0 1 0 8 26A13 13 0 0 1 26 6Z" fill={pastels[1]} stroke="rgba(61,70,96,.25)" />
+                <path
+                  d="M26 6a15 15 0 1 0 8 26A13 13 0 0 1 26 6Z"
+                  fill={pastels[1]}
+                  stroke="rgba(61,70,96,.25)"
+                />
               ) : i === 1 ? (
-                <path d="M20 4 24.5 15 36 15.6 27 23 30 34.5 20 28 10 34.5 13 23 4 15.6 15.5 15Z" fill={pastels[2]} stroke="rgba(61,70,96,.25)" strokeLinejoin="round" />
+                <path
+                  d="M20 4 24.5 15 36 15.6 27 23 30 34.5 20 28 10 34.5 13 23 4 15.6 15.5 15Z"
+                  fill={pastels[2]}
+                  stroke="rgba(61,70,96,.25)"
+                  strokeLinejoin="round"
+                />
               ) : (
-                <path d="M10 30a7 7 0 0 1 1-14 9 9 0 0 1 17-2 7 7 0 0 1 3 16Z" fill={pastels[0]} stroke="rgba(61,70,96,.25)" />
+                <path
+                  d="M10 30a7 7 0 0 1 1-14 9 9 0 0 1 17-2 7 7 0 0 1 3 16Z"
+                  fill={pastels[0]}
+                  stroke="rgba(61,70,96,.25)"
+                />
               )}
             </svg>
           </span>
@@ -282,7 +378,19 @@ function Mobile({ pastels }: { pastels: string[] }) {
 
 function KindIcon({ p, className }: { p: Piece; className?: string }) {
   const locked = p.sealed || isLocked(p);
-  const Icon = locked ? Lock : p.kind === "photo" ? Camera : p.kind === "song" ? Music2 : p.kind === "voice" ? Mic : p.kind === "ornament" ? Star : p.kind === "calendar" ? CalendarDays : Mail;
+  const Icon = locked
+    ? Lock
+    : p.kind === "photo"
+      ? Camera
+      : p.kind === "song"
+        ? Music2
+        : p.kind === "voice"
+          ? Mic
+          : p.kind === "ornament"
+            ? Star
+            : p.kind === "calendar"
+              ? CalendarDays
+              : Mail;
   return <Icon className={className} aria-hidden="true" />;
 }
 
@@ -308,13 +416,17 @@ function Block({
   const c = (k: number) => pastels[(index + k) % pastels.length]!;
   const letter = initial(piece.author || "♡");
   const other = ABC[Math.floor(r * 26) % 26]!;
-  const other2 = ABC[(Math.floor(r * 26) + 7) % 26]!;
   const yaw = -24 + (r - 0.5) * 14;
   return (
     <button
       type="button"
       className={`nu-block ${turned ? "is-turned" : ""} ${tumbling ? "is-tumbling" : ""}`}
-      style={{ "--yaw": `${yaw.toFixed(1)}deg`, "--sit": `${((r - 0.5) * 6).toFixed(1)}px` } as React.CSSProperties}
+      style={
+        {
+          "--yaw": `${yaw.toFixed(1)}deg`,
+          "--sit": `${((r - 0.5) * 6).toFixed(1)}px`,
+        } as React.CSSProperties
+      }
       onClick={onOpen}
       aria-label={pieceLabel(piece)}
     >
@@ -339,16 +451,6 @@ function Block({
             </span>
           </span>
         </span>
-        <span className="nu-face is-back" style={{ "--c": c(3) } as React.CSSProperties}>
-          <span className="nu-panel">
-            <span className="nu-big" style={{ fontFamily: headingFont }}>
-              {other2}
-            </span>
-          </span>
-        </span>
-        <span className="nu-face is-left" style={{ "--c": c(4) } as React.CSSProperties}>
-          <span className="nu-panel" />
-        </span>
         {/* The note face: underneath until the block tumbles back onto it. */}
         <span className="nu-face is-bottom" style={{ "--c": c(5) } as React.CSSProperties}>
           <span className="nu-panel is-note">
@@ -368,12 +470,20 @@ function StoryCard({ body, piece, pastels }: { body: Body; piece: Piece; pastels
   const { colors, fonts } = body;
   const tint = pastels[Math.floor(seed(piece.id) * pastels.length) % pastels.length]!;
   return (
-    <Reader piece={piece} onClose={body.closeReader} accent={colors.mix("#3D4660", colors.primary, 0.3)} className="nu-reader" style={{ "--nu-tint": tint } as React.CSSProperties}>
+    <Reader
+      piece={piece}
+      onClose={body.closeReader}
+      accent={colors.mix("#3D4660", colors.primary, 0.3)}
+      className="nu-reader"
+      style={{ "--nu-tint": tint } as React.CSSProperties}
+    >
       <div className="nu-reader-head">
         <span className="nu-reader-block" style={{ fontFamily: fonts.heading }} aria-hidden="true">
           {initial(piece.author || "♡")}
         </span>
-        <span className="nu-reader-from">{piece.author ? t("nursery.from", { name: piece.author }) : t("nursery.friend")}</span>
+        <span className="nu-reader-from">
+          {piece.author ? t("nursery.from", { name: piece.author }) : t("nursery.friend")}
+        </span>
       </div>
     </Reader>
   );

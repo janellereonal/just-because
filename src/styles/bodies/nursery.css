@@ -77,7 +77,7 @@
 /* ---------- Shelves ---------- */
 .nu-shelves { margin: 18px auto 0; display: grid; gap: 30px 40px; max-width: 1120px; }
 @container gift (min-width: 720px) { .nu-shelves { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
-@container gift (min-width: 1100px) { .nu-shelves { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+@container gift (min-width: 1100px) { .nu-shelves { grid-template-columns: repeat(3, minmax(0, 1fr)); } .nu-root { --s: 66px; } .nu-plank { margin-inline: -16px; } }
 .nu-shelf { position: relative; padding-top: calc(var(--s) * .4); }
 .nu-stack { display: flex; flex-direction: column-reverse; align-items: center; }
 .nu-row { display: flex; justify-content: center; gap: calc(var(--s) * .2); }

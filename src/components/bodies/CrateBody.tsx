@@ -52,15 +52,12 @@ export function CrateBody(props: BodyProps) {
   const go = useCallback(
     (to: number) => {
       const next = Math.max(0, Math.min(total - 1, to));
-      setCur((c) => {
-        if (c !== next) {
-          foley("paper");
-          buzz(4);
-        }
-        return next;
-      });
+      if (next === cur) return;
+      foley("paper");
+      buzz(4);
+      setCur(next);
     },
-    [total],
+    [total, cur],
   );
 
   function pull(p: Piece, i: number) {

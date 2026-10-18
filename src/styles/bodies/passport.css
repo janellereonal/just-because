@@ -16,15 +16,14 @@
   position: absolute;
   aspect-ratio: 2.6;
   border-radius: 999px;
-  opacity: .75;
+  opacity: var(--pp-cloud, .75);
   background:
     radial-gradient(closest-side at 30% 62%, #fff 70%, transparent),
     radial-gradient(closest-side at 55% 42%, #fff 72%, transparent),
     radial-gradient(closest-side at 76% 64%, #fff 66%, transparent);
   filter: blur(1px);
 }
-.pp-cloud.is-far { opacity: .45; filter: blur(2px); }
-@media (prefers-color-scheme: dark) { .pp-cloud { opacity: .5; } }
+.pp-cloud.is-far { opacity: calc(var(--pp-cloud, .75) * .6); filter: blur(2px); }
 
 /* ---------- The boarding pass ---------- */
 .pp-pass {
@@ -135,12 +134,10 @@
   stroke-linecap: round;
   stroke-dasharray: 1 5;
   opacity: .75;
-  animation: pp-dash 2.4s linear infinite;
   transition: stroke-width .3s, opacity .3s;
 }
 .pp-path.is-found { stroke-width: 2.6; opacity: 1; }
 .pp-map-plane path { fill: var(--pp-ink2); stroke: var(--pp-paper); stroke-width: .6; }
-@keyframes pp-dash { to { stroke-dashoffset: -12; } }
 .pp-home {
   position: absolute;
   translate: -50% -50%;
@@ -152,10 +149,10 @@
   color: var(--pp-on-band);
   background: var(--pp-band);
   box-shadow: 0 0 0 5px color-mix(in srgb, var(--pp-band) 28%, transparent), 0 6px 12px -4px rgba(0,0,0,.35);
-  animation: pp-beacon 2.6s ease-in-out infinite;
 }
+.pp-home::after { content: ""; position: absolute; inset: -5px; border-radius: 50%; border: 2px solid var(--pp-band); opacity: 0; animation: pp-beacon 2.6s ease-out infinite; }
 .pp-home-code { position: absolute; top: 100%; margin-top: 7px; font-size: 10px; font-weight: 800; letter-spacing: .14em; color: var(--pp-text); background: color-mix(in srgb, var(--pp-paper) 85%, transparent); padding: 1px 6px; border-radius: 99px; }
-@keyframes pp-beacon { 50% { box-shadow: 0 0 0 11px color-mix(in srgb, var(--pp-band) 0%, transparent), 0 6px 12px -4px rgba(0,0,0,.35); } }
+@keyframes pp-beacon { 0% { opacity: .7; transform: scale(1); } 100% { opacity: 0; transform: scale(1.7); } }
 .pp-pin {
   position: absolute;
   translate: -50% -100%;
@@ -504,6 +501,6 @@
 .pp-reader .body-reader-photo img, .pp-reader .body-reader-photo > div { border-radius: 4px !important; outline: 7px solid #fff; box-shadow: 0 10px 20px -12px rgba(0,0,0,.5); }
 
 @media (prefers-reduced-motion: reduce) {
-  .pp-path, .pp-home, .pp-flap, .pp-page[data-in] .pp-stamp-ink, .pp-page[data-in] .pp-photo, .pp-stamp.is-found .pp-stamp-ink, .pp-photo.is-found { animation: none !important; }
+  .pp-home::after, .pp-flap, .pp-page[data-in] .pp-stamp-ink, .pp-page[data-in] .pp-photo, .pp-stamp.is-found .pp-stamp-ink, .pp-photo.is-found { animation: none !important; }
   .pp-stamp, .pp-stamp-ink, .pp-photo, .pp-stamp::before { transition: none !important; }
 }
