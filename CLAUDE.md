@@ -139,6 +139,9 @@ verification is only required once `RESEND_API_KEY` and `EMAIL_FROM` are both se
 - Theme fonts: `src/themes/_shared/design.ts`. Never use Caveat, Pacifico, Dancing Script, Lobster or Great Vibes.
 - Newer sections keep their extra fields in `contributions.data`; shape and cleaning in `src/lib/sections.ts`.
 - New landing and section copy goes in `src/copy/strings.ts`.
+- Photobooth camera (flag `photoboothCamera`): `src/components/photobooth/PhotoBooth.tsx`, frames drawn on a canvas in
+  `src/lib/photobooth/frames.ts` (original shapes, gift palette, 1080x1350 JPEG). Booth photos are saved with
+  `data.framed = true` and every layout shows them whole (`img[data-framed]`), never cropped.
 
 ## Open product work
 

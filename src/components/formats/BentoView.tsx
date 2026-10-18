@@ -101,6 +101,7 @@ function PhotoFace({ piece, palette }: { piece: Piece; palette: Palette }) {
     <>
       {url ? (
         <img
+          data-framed={piece.framed || undefined}
           src={url}
           alt={piece.text ?? `Photo from ${piece.author}`}
           loading="lazy"

@@ -6,7 +6,7 @@ import { engineThemeForName } from "@/themes/engine/registry";
 import { t } from "@/i18n";
 import { CharCount } from "@/components/ui/CharCount";
 import { LIMITS, noteTextLimit, tooLong } from "@/lib/limits";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { lazy, Suspense, useEffect, useMemo, useRef, useState } from "react";
 import {useParams} from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
@@ -36,10 +36,13 @@ import { ModuleExample } from "@/components/ModuleExample";
 import { centerInScroller } from "@/lib/scroll";
 import { themeKindOf } from "@/lib/themeKind";
 import Bo from "@/components/Bo";
-import { Brush, CalendarDays, CircleHelp, Hourglass, Image as ImageIcon, Lock, Mail, MailOpen, MapPin, Mic, MoreHorizontal, Music2, Sparkles, Ticket, Trophy, Type, Users, Video } from "lucide-react";
+import { Brush, CalendarDays, Camera, CircleHelp, Hourglass, Image as ImageIcon, Lock, Mail, MailOpen, MapPin, Mic, MoreHorizontal, Music2, Sparkles, Ticket, Trophy, Type, Users, Video } from "lucide-react";
 import { SectionFields } from "@/components/sections/SectionFields";
 import { SECTION_NEEDS, isNewSection, normalizeSectionData } from "@/lib/sections";
 import { meshGradient } from "@/lib/giftPieces";
+import { isFlagOn } from "@/config/flags";
+import { PHOTOBOOTH_COPY } from "@/copy/strings";
+import { AnimatePresence } from "motion/react";
 
 const MODULE_ICON: Partial<Record<ModuleType, typeof Mail>> = {
   letters: Mail, photobooth: ImageIcon, songs: Music2, wordcloud: Type, voice: Mic, tree: Sparkles, calendar: CalendarDays,
@@ -51,6 +54,9 @@ const SHORT: Partial<Record<ModuleType, string>> = { openwhen: "Open-when", caps
 import { PageError, PageLoading, PageNotFound } from "@/components/PageStates";
 import { REPORT_COPY } from "@/copy/strings";
 import { ReportGift } from "@/components/ReportGift";
+
+// The photobooth only loads when someone opens it.
+const PhotoBooth = lazy(() => import("@/components/photobooth/PhotoBooth").then((m) => ({ default: m.PhotoBooth })));
 
 
 /* ---- remembering this device's own contributions ---- */
@@ -167,6 +173,10 @@ function ContributePage() {
   const [text, setText] = useState("");
   const [link, setLink] = useState("");
   const [file, setFile] = useState<File | null>(null);
+  const [booth, setBooth] = useState(false);
+  /** The photo the booth made, so it's sent marked as framed (gifts then show it uncropped). */
+  const boothFile = useRef<File | null>(null);
+  const boothOn = isFlagOn("photoboothCamera");
   const [busy, setBusy] = useState(false);
   const sendingRef = useRef(false);
   /** The id for the note being written, kept across retries so a repeat send is the same note. */
@@ -395,6 +405,8 @@ function ContributePage() {
       }
       cleanData = clean as Record<string, unknown>;
     }
+    // A new photo says whether it came out of the photobooth; no new photo keeps what's saved.
+    if (active === "photobooth" && file) cleanData = file === boothFile.current ? { framed: true } : {};
     if (name.trim().length > LIMITS.friendName) {
       toast.error(tooLong("your name", LIMITS.friendName));
       return;
@@ -761,6 +773,20 @@ function ContributePage() {
               ) : active === "photobooth" ? (
                 <>
                   <label className="mt-4 block text-sm font-medium">Photo</label>
+                  {boothOn ? (
+                    <button
+                      type="button"
+                      onClick={() => setBooth(true)}
+                      className="squish mt-2 flex w-full items-center gap-3 rounded-2xl px-4 py-3.5 text-left"
+                      style={{ background: palette.accent, color: onAccent }}
+                    >
+                      <Camera className="size-5 shrink-0" aria-hidden />
+                      <span>
+                        <span className="block text-sm font-semibold">{PHOTOBOOTH_COPY.open}</span>
+                        <span className="block text-xs opacity-80">{PHOTOBOOTH_COPY.openHint}</span>
+                      </span>
+                    </button>
+                  ) : null}
                   {dropZone("photo")}
                   <label className="mt-4 block text-sm font-medium">Caption (optional)</label>
                   <input
@@ -990,6 +1016,22 @@ function ContributePage() {
           </div>
         </div>
       </div>
+      <AnimatePresence>
+        {booth ? (
+          <Suspense fallback={null}>
+            <PhotoBooth
+              palette={palette}
+              fontFamily={fonts.heading}
+              onClose={() => setBooth(false)}
+              onUse={(made) => {
+                boothFile.current = made;
+                setFile(made);
+                setBooth(false);
+              }}
+            />
+          </Suspense>
+        ) : null}
+      </AnimatePresence>
       <ReportGift slug={site.slug} page="contribute" tone={ink} />
     </div>
   );

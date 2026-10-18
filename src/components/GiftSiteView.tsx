@@ -71,9 +71,10 @@ function PhotoCard({ item, accent }: { item: Contribution; accent: string }) {
       >
         <span className="sb-flip-card">
           <span className="sb-flip-front relative block">
-            <span className="block aspect-square w-full overflow-hidden rounded-[3px] bg-black/5">
+            {/* Photobooth photos have their frame and words drawn in, so they keep their 4:5 shape. */}
+            <span className={`block ${item.data?.["framed"] === true ? "aspect-[4/5]" : "aspect-square"} w-full overflow-hidden rounded-[3px] bg-black/5`}>
               {url ? (
-                <img src={url} alt={caption ?? "Contributed photo"} className="size-full object-cover" draggable={false} />
+                <img src={url} alt={caption ?? "Contributed photo"} className="size-full object-cover" draggable={false} data-framed={item.data?.["framed"] === true || undefined} />
               ) : null}
             </span>
             <span className="sb-flip-hint" aria-hidden="true">

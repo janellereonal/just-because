@@ -409,6 +409,39 @@ export const SECTIONS_PAGE = {
   link: (n: number) => `See all ${n} sections`,
 } as const;
 
+/** The photobooth camera (flag photoboothCamera): take a photo, pick a frame, write on it. */
+export const PHOTOBOOTH_COPY = {
+  open: "Take one in the photobooth",
+  openHint: "Use your camera, pick a frame and write a little message on it.",
+  title: "Photobooth",
+  close: "Close the photobooth",
+  starting: "Turning on your camera…",
+  noCamera: "We couldn't use your camera. You can still pick a photo from your device and frame it.",
+  denied: "Camera access is off for this page. Turn it on in your browser, or pick a photo from your device.",
+  fromDevice: "Use a photo from your device",
+  one: "One photo",
+  four: "Four in a row",
+  shoot: "Take the photo",
+  shootFour: "Take four",
+  shooting: (n: number, of: number) => `Photo ${n} of ${of}`,
+  retake: "Retake",
+  startOver: "Pick another",
+  framesLabel: "Frame",
+  messageLabel: "Write on it (optional)",
+  messagePlaceholder: "Happy birthday, from all of us",
+  use: "Use this photo",
+  making: "Framing it…",
+  previewAlt: "Your framed photo",
+  postcardMark: "A LITTLE NOTE · JUST BECAUSE",
+  frames: {
+    polaroid: "Instant",
+    film: "Film",
+    confetti: "Party",
+    hearts: "Hearts",
+    postcard: "Postcard",
+    clean: "No frame",
+  },
+};
 /** Concierge beta: "Want us to handle it?" */
 export const CONCIERGE_COPY = {
   title: "Want us to handle it?",
