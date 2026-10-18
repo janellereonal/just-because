@@ -152,6 +152,9 @@ export function styleCopy(id: StyleId): string {
   return t(key(id, "copy"));
 }
 export function styleAbout(id: StyleId): string {
+  // With their own bodies on, styles that have one describe it (`style.<id>.aboutOwn`).
+  const own = key(id, "aboutOwn");
+  if (isFlagOn("styleBodies") && t(own) !== own) return t(own);
   return t(key(id, "about"));
 }
 

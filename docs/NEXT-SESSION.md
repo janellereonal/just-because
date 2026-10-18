@@ -36,6 +36,10 @@ Love Letter directions, so all three ship. Break the seal is the default; Peel t
 choices under "How the letter opens" in the editor (`intro_settings.letter`). All three grow into the gift's
 first page. Code: `src/themes/valentine/LoveLetter.tsx`; dev page `/dev/love-letter?d=a|b|c`.
 Layout styles' openings are in #73 (another session). Still open: calm notebook wording for Sympathy.
+19 Oct: every theme style got its own body (flag `styleBodies`, see CLAUDE.md "Styles and occasions"). Janelle's
+answers: switch styled gifts to the new body automatically, no mixing a style with another body, most-used first.
+Gifts from before styles (style null) keep their theme + layout. Demo gifts now carry a style (Ana cake, Sam boarding
+pass, Milo fetch, Nora & James invitation), so the homepage examples read in those bodies once the flag is on.
 
 Open: cultural review of the Lunar New Year, Eid, Diwali and Hanukkah words (`culturalReview` in occasions.ts).
 

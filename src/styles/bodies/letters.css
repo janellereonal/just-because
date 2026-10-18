@@ -1,0 +1,250 @@
+/* Love Letter's body: a bundle of letters (src/components/bodies/LettersBody.tsx). */
+.ll-root { --ll-shadow: 0 1px 0 rgba(255,255,255,.6) inset, 0 18px 30px -18px rgba(60, 30, 25, .45), 0 3px 8px -4px rgba(60, 30, 25, .25); }
+.ll-desk {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(120% 70% at 50% 0%, rgba(255,255,255,.45), transparent 60%),
+    repeating-linear-gradient(90deg, rgba(120, 80, 60, .025) 0 2px, transparent 2px 5px),
+    repeating-linear-gradient(0deg, rgba(120, 80, 60, .02) 0 1px, transparent 1px 4px);
+}
+
+/* The cover letter (the hand-off page). */
+.ll-cover {
+  position: relative;
+  width: min(86vw, 420px);
+  margin: 0 auto;
+  aspect-ratio: 0.74;
+  padding: clamp(30px, 9%, 46px) clamp(22px, 8%, 40px);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  color: #3A2420;
+  background:
+    linear-gradient(transparent 0 calc(100% - 1px), rgba(180, 51, 90, .07) 0) 0 0 / 100% 30px,
+    linear-gradient(180deg, rgba(255,255,255,.7), transparent 30%),
+    var(--ll-paper);
+  border-radius: 4px;
+  box-shadow: 0 30px 60px -30px rgba(60, 20, 30, .35), 0 2px 0 rgba(255,255,255,.8) inset;
+}
+.ll-cover::before {
+  /* the fold lines from the letter's thirds */
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, transparent 33.2%, rgba(90, 40, 40, .07) 33.3%, transparent 33.6%, transparent 66.4%, rgba(90, 40, 40, .07) 66.6%, transparent 66.9%);
+  pointer-events: none;
+}
+.ll-cover-kicker { font-size: 11px; letter-spacing: .3em; text-transform: uppercase; opacity: .55; }
+.ll-cover-name { margin-top: 14px; font-size: clamp(2.3rem, 11cqi, 3.3rem); font-style: italic; font-weight: 500; line-height: 1.02; color: var(--ll-wax-deep); }
+.ll-cover-heading { margin-top: 10px; font-size: 15px; opacity: .7; }
+.ll-cover-intro { margin-top: 18px; max-width: 30ch; font-size: 15px; line-height: 1.6; opacity: .85; }
+.ll-cover-countdown { margin-top: 14px; font-size: 13px; font-weight: 600; color: var(--ll-wax-deep); }
+.ll-cover-count { margin-top: 18px; font-size: 12px; letter-spacing: .12em; text-transform: uppercase; opacity: .6; }
+.ll-cover-seal {
+  position: absolute;
+  bottom: -20px;
+  left: 50%;
+  translate: -50% 0;
+  display: grid;
+  place-items: center;
+  width: 54px;
+  height: 54px;
+  border-radius: 50% 46% 52% 48%;
+  font-size: 24px;
+  font-style: italic;
+  color: rgba(255, 235, 230, .9);
+  background: radial-gradient(circle at 35% 30%, color-mix(in srgb, var(--ll-wax) 70%, #fff), var(--ll-wax) 45%, var(--ll-wax-deep));
+  box-shadow: 0 6px 14px -6px rgba(60, 10, 20, .6), inset 0 -3px 6px rgba(0,0,0,.2);
+}
+
+/* The bundle */
+.ll-bundle-wrap { margin-top: 64px; display: flex; flex-direction: column; align-items: center; gap: 34px; }
+.ll-bundle {
+  position: relative;
+  width: min(72vw, 300px);
+  aspect-ratio: 1.5;
+  cursor: pointer;
+  animation: ll-breathe 3.2s ease-in-out infinite;
+}
+.ll-bundle:focus-visible { outline: 3px solid var(--ll-wax); outline-offset: 10px; border-radius: 8px; }
+.ll-bundle-env {
+  position: absolute;
+  inset: 0;
+  border-radius: 6px;
+  background:
+    linear-gradient(to top right, transparent calc(50% - 1px), rgba(90, 50, 40, .12) 50%, transparent calc(50% + 1px)) left bottom / 50% 62% no-repeat,
+    linear-gradient(to top left, transparent calc(50% - 1px), rgba(90, 50, 40, .12) 50%, transparent calc(50% + 1px)) right bottom / 50% 62% no-repeat,
+    var(--ll-env);
+  box-shadow: var(--ll-shadow);
+  transform: translateY(var(--y)) rotate(var(--r));
+}
+.ll-ribbon-v, .ll-ribbon-h { position: absolute; background: linear-gradient(90deg, rgba(0,0,0,.12), transparent 30%, rgba(255,255,255,.25) 50%, transparent 70%, rgba(0,0,0,.12)), var(--ll-ribbon); box-shadow: 0 2px 4px rgba(0,0,0,.2); }
+.ll-ribbon-v { left: 50%; top: -6%; bottom: -10%; width: 16px; translate: -50% 0; }
+.ll-ribbon-h { top: 50%; left: -4%; right: -4%; height: 16px; translate: 0 -50%; background: linear-gradient(180deg, rgba(0,0,0,.12), transparent 30%, rgba(255,255,255,.25) 50%, transparent 70%, rgba(0,0,0,.12)), var(--ll-ribbon); }
+.ll-bow { position: absolute; left: 50%; top: 50%; width: 0; height: 0; }
+.ll-bow-loop {
+  position: absolute;
+  top: -22px;
+  width: 46px;
+  height: 34px;
+  border: 9px solid var(--ll-ribbon);
+  border-radius: 50%;
+  filter: drop-shadow(0 3px 3px rgba(0,0,0,.2));
+}
+.ll-bow-loop.is-left { right: 4px; transform: rotate(-18deg); border-radius: 60% 40% 40% 60%; }
+.ll-bow-loop.is-right { left: 4px; transform: rotate(18deg); border-radius: 40% 60% 60% 40%; }
+.ll-bow-tail { position: absolute; top: 4px; width: 12px; height: 42px; background: var(--ll-ribbon); clip-path: polygon(0 0, 100% 0, 100% 100%, 50% 82%, 0 100%); }
+.ll-bow-tail.is-left { right: 0; transform: rotate(24deg); transform-origin: top; }
+.ll-bow-tail.is-right { left: 0; transform: rotate(-24deg); transform-origin: top; }
+.ll-bow-knot { position: absolute; left: -11px; top: -11px; width: 22px; height: 22px; border-radius: 7px; background: radial-gradient(circle at 40% 35%, rgba(255,255,255,.35), transparent 60%), var(--ll-ribbon); box-shadow: 0 3px 5px rgba(0,0,0,.25); }
+.ll-bundle-hint { font-size: 14px; font-weight: 500; opacity: .75; }
+
+/* The desk of envelopes */
+.ll-progress { margin: 64px auto 0; width: fit-content; font-size: 12px; letter-spacing: .14em; text-transform: uppercase; opacity: .65; }
+.ll-spread {
+  margin-top: 22px;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: clamp(26px, 6cqi, 46px) clamp(14px, 4cqi, 30px);
+  padding-top: 26px;
+}
+@container gift (min-width: 640px) { .ll-spread { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+@container gift (min-width: 980px) { .ll-spread { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
+.ll-spread > li { animation: ll-deal .7s cubic-bezier(.2,1.1,.3,1) both; animation-delay: calc(var(--i) * 55ms); }
+
+.ll-env {
+  position: relative;
+  display: block;
+  width: 100%;
+  aspect-ratio: 1.5;
+  rotate: var(--tilt);
+  perspective: 700px;
+  cursor: pointer;
+  transition: translate .3s cubic-bezier(.2,1.2,.3,1), rotate .3s;
+  -webkit-tap-highlight-color: transparent;
+}
+.ll-env:hover { translate: 0 -4px; rotate: calc(var(--tilt) * .4); }
+.ll-env:focus-visible { outline: 3px solid var(--ll-wax); outline-offset: 6px; border-radius: 6px; }
+.ll-env-back { position: absolute; inset: 0; border-radius: 6px; background: var(--ll-env-deep); box-shadow: var(--ll-shadow); }
+.ll-env-letter {
+  position: absolute;
+  left: 7%;
+  right: 7%;
+  top: 7%;
+  height: 86%;
+  z-index: 1;
+  overflow: hidden;
+  padding: 10px 11px;
+  border-radius: 2px;
+  background: linear-gradient(transparent 0 calc(100% - 1px), rgba(180, 51, 90, .08) 0) 0 6px / 100% 15px, var(--ll-paper);
+  color: #3A2420;
+  font-size: 11px;
+  text-align: left;
+  box-shadow: 0 1px 3px rgba(0,0,0,.12);
+  transition: transform .6s cubic-bezier(.3,1.3,.4,1) .12s;
+}
+.ll-env-lines { display: block; opacity: .85; }
+.ll-env-photo { display: block; height: 100%; overflow: hidden; border-radius: 1px; outline: 5px solid #fff; outline-offset: -5px; }
+.ll-env.is-photo .ll-env-letter { padding: 0; background: #fff; }
+.ll-env-pocket {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  border-radius: 6px;
+  background:
+    linear-gradient(to top right, transparent calc(50% - .6px), rgba(90, 50, 40, .14) 50%, transparent calc(50% + .6px)) left bottom / 50% 64% no-repeat,
+    linear-gradient(to top left, transparent calc(50% - .6px), rgba(90, 50, 40, .14) 50%, transparent calc(50% + .6px)) right bottom / 50% 64% no-repeat,
+    linear-gradient(180deg, rgba(255,255,255,.35), transparent 40%),
+    var(--ll-env);
+  clip-path: polygon(0 0, 50% 52%, 100% 0, 100% 100%, 0 100%);
+}
+.ll-env-to { position: absolute; left: 10%; bottom: 30%; font-size: clamp(13px, 3.6cqi, 17px); font-style: italic; color: #4A2A28; opacity: .85; }
+.ll-env-from { position: absolute; left: 10%; bottom: 13%; font-size: 10.5px; letter-spacing: .12em; text-transform: uppercase; color: #4A2A28; opacity: .55; max-width: 62%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.ll-env-stamp {
+  position: absolute;
+  right: 8%;
+  bottom: 12%;
+  display: grid;
+  place-items: center;
+  width: 26px;
+  height: 30px;
+  color: var(--ll-wax-deep);
+  background: #fff8ef;
+  outline: 1.5px dashed color-mix(in srgb, var(--ll-wax) 45%, transparent);
+  outline-offset: -4px;
+  box-shadow: 0 1px 2px rgba(0,0,0,.15);
+  rotate: 4deg;
+}
+.ll-env-flap {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  height: 56%;
+  z-index: 3;
+  transform-origin: 50% 0;
+  transform-style: preserve-3d;
+  transition: transform .55s cubic-bezier(.5,0,.3,1), z-index 0s .28s;
+}
+.ll-env-flap::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  clip-path: polygon(0 0, 100% 0, 50% 100%);
+  background: linear-gradient(180deg, var(--ll-env-deep), var(--ll-env));
+  filter: drop-shadow(0 2px 1px rgba(0,0,0,.12));
+  border-radius: 6px 6px 0 0;
+}
+.ll-env-seal {
+  position: absolute;
+  left: 50%;
+  bottom: -14px;
+  translate: -50% 0;
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 50% 46% 52% 48%;
+  font-size: 15px;
+  font-style: italic;
+  color: rgba(255, 235, 230, .92);
+  background: radial-gradient(circle at 35% 30%, color-mix(in srgb, var(--ll-wax) 70%, #fff), var(--ll-wax) 45%, var(--ll-wax-deep));
+  box-shadow: 0 4px 8px -3px rgba(60, 10, 20, .6), inset 0 -2px 4px rgba(0,0,0,.2);
+  transition: opacity .2s;
+}
+.ll-env.is-open .ll-env-flap { transform: rotateX(180deg); z-index: 0; }
+.ll-env.is-open .ll-env-flap::before { background: var(--ll-env-deep); }
+.ll-env.is-open .ll-env-seal { opacity: 0; }
+.ll-env.is-open .ll-env-letter { transform: translateY(-42%); }
+
+/* Words, footer */
+.ll-words { margin: 72px auto 0; max-width: 560px; text-align: center; }
+.ll-words-title { font-size: 1.35rem; font-style: italic; }
+.ll-words-list { margin-top: 14px; display: flex; flex-wrap: wrap; justify-content: center; gap: 8px 18px; font-size: 1.15rem; }
+.ll-words-list > span { color: var(--ll-wax-deep); }
+.ll-root .ll-words-list > span { color: color-mix(in srgb, var(--b-ink) 55%, var(--ll-wax)); }
+.ll-footer { margin-top: 64px; opacity: .85; }
+
+/* The letter, read up close */
+.ll-reader {
+  border-radius: 3px !important;
+  color: #3A2420 !important;
+  background:
+    linear-gradient(transparent 0 calc(100% - 1px), rgba(180, 51, 90, .08) 0) 0 22px / 100% 30.6px,
+    var(--ll-paper, #FFFBF3) !important;
+  padding: 44px 30px 34px !important;
+}
+.ll-reader .body-reader-text { font-size: 1.12rem; line-height: 1.7; }
+.ll-reader .body-reader-from { text-align: right; font-style: italic; font-size: 1.25rem; font-family: var(--b-heading); }
+.ll-reader-dear { margin-bottom: 10px; font-size: 1.35rem; font-style: italic; }
+
+@keyframes ll-breathe { 50% { transform: translateY(-4px) rotate(-.6deg); } }
+@keyframes ll-deal { from { opacity: 0; transform: translateY(-80px) rotate(calc(var(--i) * 7deg - 20deg)) scale(.85); } }
+@media (prefers-reduced-motion: reduce) {
+  .ll-bundle, .ll-spread > li { animation: none !important; }
+  .ll-env-flap, .ll-env-letter, .ll-env { transition: none !important; }
+}

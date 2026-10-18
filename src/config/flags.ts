@@ -29,6 +29,8 @@ export const FLAGS = {
   letterOpenings: "letterOpenings",
   /** "Friends arrive": a short story before the gift opens (friends pop out of a box, then shout). */
   friendsIntro: "friendsIntro",
+  /** Every theme style reads in a body of its own (src/components/bodies), instead of a shared layout. */
+  styleBodies: "styleBodies",
 } as const;
 
 export type FlagName = keyof typeof FLAGS;

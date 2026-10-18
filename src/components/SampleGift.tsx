@@ -14,6 +14,7 @@ import { sampleNotes } from "@/lib/sampleSections";
 import { DEMO_GIFTS, DEMO_ORDER } from "@/lib/demoGifts";
 import { FormatView } from "@/components/formats/FormatView";
 import type { GiftFormat } from "@/lib/formats";
+import type { StyleId } from "@/lib/styles";
 import { buildPreviewSite, sampleFor } from "@/components/ThemeLivePreview";
 
 /** The sections worth showing off, in the order they read best. */
@@ -27,8 +28,24 @@ export function showcaseSections(theme: Theme): ModuleType[] {
   return all.filter((t, i) => all.indexOf(t) === i && MODULES.some((m) => m.type === t));
 }
 
-export function SampleGift({ theme, palette, format, showCover = false }: { theme: Theme; palette: Palette; format?: GiftFormat; showCover?: boolean }) {
-  const site = useMemo(() => ({ ...buildPreviewSite(theme, palette), ...(format ? { format } : {}) }), [theme, palette, format]);
+export function SampleGift({
+  theme,
+  palette,
+  format,
+  styleId,
+  showCover = false,
+}: {
+  theme: Theme;
+  palette: Palette;
+  format?: GiftFormat;
+  /** A style: with its own body (flag styleBodies), the sample reads in it. */
+  styleId?: StyleId;
+  showCover?: boolean;
+}) {
+  const site = useMemo(
+    () => ({ ...buildPreviewSite(theme, palette), ...(format ? { format } : {}), ...(styleId ? { style: styleId } : {}) }),
+    [theme, palette, format, styleId],
+  );
   const modules: SiteModule[] = useMemo(
     () => showcaseSections(theme).map((type, i) => ({ id: `show-${i}-${type}`, site_id: site.id, module_type: type, price: 0, enabled: true })),
     [theme, site.id],

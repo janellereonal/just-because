@@ -4,6 +4,7 @@
  * button. Hover (or scroll to it on a phone) to play; click anywhere on the
  * card for the full-screen version you can open with your own hands.
  */
+import type { StyleId } from "@/lib/styles";
 import { previewEngineProps } from "@/lib/engineGift";
 import { useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion, useMotionValue, useSpring, useTransform } from "motion/react";
@@ -198,7 +199,10 @@ export function OpeningPreviewModal({
   onSample,
   useLabel,
   format,
+  styleId,
 }: {
+  /** The style being previewed, so the sample gift reads in its own body. */
+  styleId?: StyleId | undefined;
   theme: Theme | null;
   character: CharacterSetting | null;
   onClose: () => void;
@@ -260,7 +264,7 @@ export function OpeningPreviewModal({
                     {SHOWCASE_COPY.chip}
                   </motion.span>
                   <div className="relative -mt-7 pb-28">
-                    <SampleGift theme={theme} palette={palette} {...(format ? { format } : {})} />
+                    <SampleGift theme={theme} palette={palette} {...(format ? { format } : {})} {...(styleId ? { styleId } : {})} />
                   </div>
                 </motion.div>
               ) : null}

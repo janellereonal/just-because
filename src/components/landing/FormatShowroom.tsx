@@ -28,7 +28,8 @@ export function FormatShowroom() {
   const [inView, setInView] = useState(false);
   const [tick, setTick] = useState(0);
   const ref = useRef<HTMLDivElement | null>(null);
-  const site = useMemo(() => ({ ...ANA.site, format }), [format]);
+  // No style: this shows Ana's notes in each layout, not in her own style's body.
+  const site = useMemo(() => ({ ...ANA.site, format, style: null }), [format]);
   const info = FORMATS.find((f) => f.id === format)!;
 
   useEffect(() => {
