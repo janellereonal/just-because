@@ -1,7 +1,9 @@
 import { createFileRoute, Outlet, redirect } from "@tanstack/react-router";
+import { NOINDEX } from "@/lib/seo";
 import { getMe } from "@/lib/api";
 
 export const Route = createFileRoute("/_authenticated")({
+  head: () => ({ meta: [NOINDEX] }),
   ssr: false,
   beforeLoad: async ({ location }) => {
     const user = await getMe();

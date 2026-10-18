@@ -1,4 +1,5 @@
 import { giftVoice } from "@/lib/giftVoice";
+import { shareGift } from "@/lib/track";
 import { SampleText } from "@/components/SampleMark";
 import { giftHeading } from "@/lib/themeKind";
 import { useState } from "react";
@@ -314,11 +315,7 @@ export function ZineView({
             <button
               type="button"
               className="zine-btn mt-6"
-              onClick={() =>
-                navigator.share
-                  ? void navigator.share({ title: site.title, url: location.href })
-                  : void navigator.clipboard.writeText(location.href)
-              }
+              onClick={() => shareGift(site)}
             >
               Share the zine
             </button>

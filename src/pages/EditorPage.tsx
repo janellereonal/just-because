@@ -1,4 +1,8 @@
 import { useEffect, useMemo, useRef, useState } from "react";
+import { OCCASION_NAMES } from "@/copy/strings";
+import { ConciergeOffer } from "@/components/ConciergeOffer";
+import { trackEvent } from "@/lib/track";
+import { countNotes, inGiftLabel, noteSummary, waitingLabel } from "@/lib/noteCounts";
 import { ExportGift } from "@/components/ExportGift";
 import { isFlagOn } from "@/config/flags";
 import { engineThemeForName } from "@/themes/engine/registry";
@@ -17,6 +21,7 @@ import { FormatView } from "@/components/formats/FormatView";
 import { FORMATS, formatInfo } from "@/lib/formats";
 import {
   deleteCalendarEntry,
+  deleteContributions,
   setContributionStatus,
   setModuleEnabled,
   updateIntroSettings,
@@ -97,6 +102,7 @@ import {
   MessageCircle,
   MoreHorizontal,
   Settings2,
+  Trash2,
   Pencil,
   Send,
   X,
@@ -143,14 +149,14 @@ const MODULE_TITLE_FIELD: Record<ModuleType, keyof CustomText | null> = {
   countdown: "countdown_title",
   calendar: "calendar_title",
   tree: "tree_title",
-  openwhen: null,
-  capsule: null,
-  superlatives: null,
-  quiz: null,
-  map: null,
-  coupons: null,
-  video: null,
-  doodle: null,
+  openwhen: "openwhen_title",
+  capsule: "capsule_title",
+  superlatives: "superlatives_title",
+  quiz: "quiz_title",
+  map: "map_title",
+  coupons: "coupons_title",
+  video: "video_title",
+  doodle: "doodle_title",
 };
 
 const SECTION_TITLES: Record<SectionKey, string> = {
@@ -222,10 +228,33 @@ function SiteDashboard() {
   const [extendOpen, setExtendOpen] = useState(false);
   // The rail remembers the section this gift was last edited in.
   const [section, setSection] = useState<SectionKey>("words");
+  /** Steps the organiser has worked on (changed something, or tapped Next). Only these get a check. */
+  const [touched, setTouched] = useState<ReadonlySet<SectionKey>>(() => new Set());
+  useEffect(() => {
+    try {
+      const saved = JSON.parse(window.localStorage.getItem(`jb:touched:${id}`) ?? "[]") as SectionKey[];
+      if (Array.isArray(saved) && saved.length) setTouched(new Set(saved));
+    } catch {
+      /* private mode: start fresh */
+    }
+  }, [id]);
+  const touch = (step: SectionKey) =>
+    setTouched((prev) => {
+      if (prev.has(step)) return prev;
+      const next = new Set(prev).add(step);
+      try {
+        window.localStorage.setItem(`jb:touched:${id}`, JSON.stringify([...next]));
+      } catch {
+        /* ignore */
+      }
+      return next;
+    });
   /** What the canvas shows while editing: the opening screen or the gift itself. */
   const [canvasView, setCanvasView] = useState<"intro" | "gift">("intro");
   const [customizeLook, setCustomizeLook] = useState(false);
   const [formatAsk, setFormatAsk] = useState<GiftSite["format"] | null>(null);
+  /** A section with notes in it that the organiser asked to turn off. */
+  const [offAsk, setOffAsk] = useState<string | null>(null);
   const [panelOpen, setPanelOpen] = useState(true);
   const [focusField, setFocusField] = useState<keyof CustomText | null>(null);
   const [device, setDevice] = useState<PreviewDevice>("phone");
@@ -237,6 +266,35 @@ function SiteDashboard() {
   const castLatest = useRef<Cast | null>(null);
   const introLatest = useRef<IntroSettings | null>(null);
   const [sheetOpen, setSheetOpen] = useState(false);
+  /** Phone sheet height in % of the screen. Opens at 45 so the preview stays in view; drag the handle for more. */
+  const [sheetH, setSheetH] = useState(45);
+  const [sheetDragging, setSheetDragging] = useState(false);
+  function dragSheet(e: React.PointerEvent) {
+    e.preventDefault();
+    const startY = e.clientY;
+    const startH = sheetH;
+    let h = startH;
+    setSheetDragging(true);
+    const move = (ev: PointerEvent) => {
+      h = Math.min(92, Math.max(20, startH + ((startY - ev.clientY) / window.innerHeight) * 100));
+      setSheetH(h);
+    };
+    const up = () => {
+      window.removeEventListener("pointermove", move);
+      window.removeEventListener("pointerup", up);
+      window.removeEventListener("pointercancel", up);
+      setSheetDragging(false);
+      // A tap on the handle toggles between half and tall; a drag snaps to the nearest.
+      if (Math.abs(h - startH) < 2) setSheetH(startH > 60 ? 45 : 88);
+      else if (h < 28) {
+        setSheetOpen(false);
+        setSheetH(45);
+      } else setSheetH(h > 66 ? 88 : 45);
+    };
+    window.addEventListener("pointermove", move);
+    window.addEventListener("pointerup", up);
+    window.addEventListener("pointercancel", up);
+  }
   const [renaming, setRenaming] = useState(false);
   const [fullPreview, setFullPreview] = useState(false);
   const [previewOpened, setPreviewOpened] = useState(false);
@@ -371,8 +429,15 @@ function SiteDashboard() {
   }, [contributions]);
 
 
-  // Every note on the gift except the ones the creator hid.
-  const noteCount = contributions.filter((c) => c.status !== "hidden").length;
+  // One set of numbers for the top bar, the Notes badge, Wrap it up and My gifts.
+  const counts = countNotes(contributions);
+  // Adding your own note in the Notes step counts as working on it.
+  const inGiftBefore = useRef<number | null>(null);
+  useEffect(() => {
+    if (inGiftBefore.current !== null && counts.inGift > inGiftBefore.current && section === "notes") touch("notes");
+    inGiftBefore.current = counts.inGift;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [counts.inGift]);
 
   const enabledTypes = useMemo(
     () => new Set(modules.filter((m) => m.enabled).map((m) => m.module_type)),
@@ -484,10 +549,12 @@ function SiteDashboard() {
   function patch(update: Partial<GiftSite>) {
     setDraft((prev) => (prev ? { ...prev, ...update } : prev));
     setDirty(true);
+    touch(section);
   }
 
   /** Intro designer changes: shown at once, saved on their own shortly after. */
   function patchIntro(update: (prev: IntroSettings) => IntroSettings) {
+    touch(section);
     setDraft((prev) => {
       if (!prev) return prev;
       const next = update(prev.intro_settings);
@@ -511,6 +578,7 @@ function SiteDashboard() {
 
   /** Cast changes: shown at once in the preview, saved shortly after. */
   function patchCast(next: Cast) {
+    touch(section);
     castLatest.current = next;
     setDraft((prev) => (prev ? { ...prev, character: next.character, icon_set: next.icon_set } : prev));
     if (castSaveTimer.current) window.clearTimeout(castSaveTimer.current);
@@ -536,9 +604,20 @@ function SiteDashboard() {
   }
 
   function patchText(key: keyof CustomText, value: string) {
-    setDraft((prev) =>
-      prev ? { ...prev, custom_text: { ...prev.custom_text, [key]: value } } : prev,
-    );
+    setDraft((prev) => {
+      if (!prev) return prev;
+      const next = { ...prev, custom_text: { ...prev.custom_text, [key]: value } };
+      // The heading is the gift's name: the top bar, My gifts and emails all follow it.
+      if (key === "heading" && value.trim()) next.title = value;
+      return next;
+    });
+    setDirty(true);
+    touch(section);
+  }
+
+  /** Renaming in the top bar changes the heading too, so there's one name. */
+  function rename(value: string) {
+    setDraft((prev) => (prev ? { ...prev, title: value, custom_text: { ...prev.custom_text, heading: value } } : prev));
     setDirty(true);
   }
 
@@ -581,6 +660,7 @@ function SiteDashboard() {
 
   function copyContributeLink() {
     boReact("wave");
+    trackEvent("invite_shared", id, { channel: "copy" });
     void navigator.clipboard.writeText(contributeUrl);
     const who = draft?.custom_text.recipient_name?.trim();
     toast.success(who ? `Invite link copied. Send it to ${who}'s friends.` : "Invite link copied. Send it to friends.");
@@ -592,21 +672,68 @@ function SiteDashboard() {
     toast.success("Live link copied.");
   }
 
-  async function setStatus(contributionId: string, status: Contribution["status"]) {
-    const ok = await setContributionStatus({ data: { ids: [contributionId], status } })
+  /**
+   * Approve or hide one or more notes. A toast offers Undo, which puts each note back where it was.
+   * `undoing` skips the toast for the undo itself.
+   */
+  async function setStatus(ids: string | string[], status: Contribution["status"], undoing = false) {
+    const list = Array.isArray(ids) ? ids : [ids];
+    const before = new Map(contributions.filter((c) => list.includes(c.id)).map((c) => [c.id, c.status]));
+    const ok = await setContributionStatus({ data: { ids: list, status } })
+      .then(() => true)
+      .catch((err: unknown) => {
+        toast.error(err instanceof Error && err.message.length < 160 ? err.message : "Couldn't update that note.");
+        return false;
+      });
+    if (!ok) return;
+    touch("notes");
+    await queryClient.invalidateQueries({ queryKey: ["contributions", id] });
+    if (undoing) return;
+    const what = list.length === 1 ? "Note" : `${list.length} notes`;
+    toast.success(status === "approved" ? `${what} added to the gift.` : status === "hidden" ? `${what} hidden.` : `${what} moved back.`, {
+      action: {
+        label: "Undo",
+        onClick: () => {
+          const groups = new Map<Contribution["status"], string[]>();
+          for (const [cid, prev] of before) groups.set(prev, [...(groups.get(prev) ?? []), cid]);
+          for (const [prev, gids] of groups) void setStatus(gids, prev, true);
+        },
+      },
+    });
+  }
+
+  async function removeNote(contributionId: string) {
+    const ok = await deleteContributions({ data: { ids: [contributionId] } })
       .then(() => true)
       .catch(() => false);
     if (!ok) {
-      toast.error("Couldn't update that contribution.");
+      toast.error("Couldn't delete that note.");
       return;
     }
-    queryClient.invalidateQueries({ queryKey: ["contributions", id] });
+    touch("notes");
+    toast.success("Note deleted.");
+    await queryClient.invalidateQueries({ queryKey: ["contributions", id] });
   }
 
-  async function toggleModule(moduleType: string, enabled: boolean) {
+  async function toggleModule(moduleType: string, enabled: boolean, confirmed = false) {
+    if (!enabled) {
+      const onCount = modules.filter((m) => m.enabled).length;
+      if (onCount <= 1) {
+        toast.error("A gift needs at least one section. Turn another one on first.");
+        return;
+      }
+      const inIt = contributions.filter((c) => c.module_type === moduleType && c.status !== "hidden").length;
+      if (inIt > 0 && !confirmed) {
+        setOffAsk(moduleType);
+        return;
+      }
+    }
+    setOffAsk(null);
     await setModuleEnabled({
       data: { siteId: id, moduleType: moduleType as ModuleType, enabled },
-    }).catch(() => toast.error("Couldn't update that section."));
+    }).catch((err: unknown) =>
+      toast.error(err instanceof Error && err.message.length < 160 ? err.message : "Couldn't update that section."),
+    );
     queryClient.invalidateQueries({ queryKey: ["modules", id] });
   }
 
@@ -721,7 +848,7 @@ function SiteDashboard() {
   const usesIntro = formatInfo(draft.format).usesIntro;
   const isOn = (type: string) => modules.find((m) => m.module_type === type)?.enabled ?? false;
   /** Notes the recipient will see (yours count too). */
-  const shownNotes = approved.length;
+  const shownNotes = counts.inGift;
   const stepDone: Record<SectionKey, boolean> = {
     words: !!draft.custom_text.recipient_name?.trim(),
     look: true,
@@ -730,6 +857,8 @@ function SiteDashboard() {
     settings: false,
   };
   const readyToWrap = stepDone.words && stepDone.notes;
+  /** The rail's checks: done, and the organiser has actually been there. A sent gift is done everywhere. */
+  const railDone = (key: SectionKey) => stepDone[key] && (draft.status === "published" || touched.has(key));
   const titledModules = MODULES.filter((mod) => isOn(mod.type) && MODULE_TITLE_FIELD[mod.type]);
   const friendNotes = contributions.filter((c) => !c.by_owner);
 
@@ -854,9 +983,18 @@ function SiteDashboard() {
                     {fieldInput(titleField, mod.type === "countdown" ? "Counting down to" : mod.label, {
                       placeholder: (titles as Record<string, string>)[titleField] ?? mod.label,
                     })}
-                  {mod.type === "countdown" ? (
+                  </div>
+                );
+              })}
+            </div>
+          </StepGroup>
+        ) : null}
+        {isOn("countdown") || isOn("tree") || isOn("capsule") ? (
+          <StepGroup title="Dates" onActivate={() => setCanvasView("gift")}>
+            <div className="space-y-3">
+                  {isOn("countdown") ? (
                     <label className="block">
-                      <span className="text-xs text-muted">Date and time</span>
+                      <span className="text-xs text-muted">Countdown: date and time</span>
                       <input
                         type="datetime-local"
                         value={toLocalInput(countdownTarget(draft))}
@@ -871,9 +1009,9 @@ function SiteDashboard() {
                       </span>
                     </label>
                   ) : null}
-                  {mod.type === "tree" ? (
+                  {isOn("tree") ? (
                     <label className="block">
-                      <span className="text-xs text-muted">Reveal date</span>
+                      <span className="text-xs text-muted">Tree: the day the ornaments open</span>
                       <input
                         type="date"
                         value={draft.tree_reveal_date ?? ""}
@@ -882,9 +1020,11 @@ function SiteDashboard() {
                       />
                     </label>
                   ) : null}
-                  </div>
-                );
-              })}
+                  {isOn("capsule") ? (
+                    <p className="rounded-xl bg-cream px-3 py-2.5 text-xs text-muted">
+                      Time capsule: each friend picks when their own note opens, from an hour to 25 years away.
+                    </p>
+                  ) : null}
             </div>
           </StepGroup>
         ) : null}
@@ -1033,19 +1173,27 @@ function SiteDashboard() {
             </div>
             <div className="mt-2 flex gap-2">
               <Button variant="outline" size="sm" className="flex-1 rounded-full" asChild>
-                <a href={messengerUrl} target="_blank" rel="noreferrer">
+                <a href={messengerUrl} target="_blank" rel="noreferrer" onClick={() => trackEvent("invite_shared", id, { channel: "messenger" })}>
                   <MessageCircle />
                   Messenger
                 </a>
               </Button>
               <Button variant="outline" size="sm" className="flex-1 rounded-full" asChild>
-                <a href={whatsappUrl} target="_blank" rel="noreferrer">
+                <a href={whatsappUrl} target="_blank" rel="noreferrer" onClick={() => trackEvent("invite_shared", id, { channel: "whatsapp" })}>
                   <Send />
                   WhatsApp
                 </a>
               </Button>
             </div>
           </StepGroup>
+        ) : null}
+        {!solo ? (
+          <ConciergeOffer
+            compact
+            siteId={id}
+            recipient={draft.custom_text.recipient_name?.trim() ?? ""}
+            occasion={OCCASION_NAMES[themeKindOf(theme)] ?? ""}
+          />
         ) : null}
         <StepGroup
           title={solo ? "Your notes" : "Add your own"}
@@ -1078,7 +1226,18 @@ function SiteDashboard() {
             hint="New notes wait here until you add them to the gift."
             aside={
               pending.length > 0 ? (
-                <span className="rounded-full bg-accent px-2 py-0.5 text-[11px] font-medium text-cream">{pending.length} waiting</span>
+                <span className="flex items-center gap-2">
+                  <span className="rounded-full bg-accent px-2 py-0.5 text-[11px] font-medium text-cream">{waitingLabel(counts.waiting)}</span>
+                  {pending.length > 1 ? (
+                    <button
+                      type="button"
+                      onClick={() => void setStatus(pending.map((p) => p.id), "approved")}
+                      className="rounded-full border border-line bg-paper px-2.5 py-0.5 text-[11px] font-medium hover:bg-cream"
+                    >
+                      Approve all
+                    </button>
+                  ) : null}
+                </span>
               ) : null
             }
           >
@@ -1094,6 +1253,7 @@ function SiteDashboard() {
                   item={item}
                   onApprove={() => void setStatus(item.id, "approved")}
                   onHide={() => void setStatus(item.id, "hidden")}
+                  onDelete={() => removeNote(item.id)}
                 />
               ))}
             </div>
@@ -1116,8 +1276,8 @@ function SiteDashboard() {
               {
                 key: "notes",
                 done: stepDone.notes,
-                label: shownNotes > 0 ? `${shownNotes} ${shownNotes === 1 ? "note" : "notes"} in the gift` : "At least one note",
-                fix: pending.length > 0 ? `Check ${pending.length} waiting` : "Add a note",
+                label: shownNotes > 0 ? inGiftLabel(shownNotes) : "At least one note",
+                fix: counts.waiting > 0 ? `Check ${waitingLabel(counts.waiting)}` : "Add a note",
                 run: () => goTo("notes"),
               },
             ].map((row) => (
@@ -1282,9 +1442,10 @@ function SiteDashboard() {
               .sort((a, b) => Number(isOn(b.type)) - Number(isOn(a.type)))
               .map((mod) => {
                 const on = isOn(mod.type);
+                const inIt = contributions.filter((c) => c.module_type === mod.type && c.status !== "hidden").length;
                 return (
+                  <div key={mod.type}>
                   <div
-                    key={mod.type}
                     className={`flex items-center justify-between gap-3 rounded-xl border px-3 py-2.5 transition-colors ${
                       on ? "border-accent bg-accent/8" : "border-line bg-cream"
                     }`}
@@ -1302,6 +1463,31 @@ function SiteDashboard() {
                     >
                       {on ? "On" : "Add"}
                     </button>
+                  </div>
+                  {offAsk === mod.type ? (
+                    <div role="alert" className="mt-1.5 rounded-xl border border-line bg-paper p-3">
+                      <p className="text-sm font-medium">
+                        Turn off {mod.label}? It has {inIt} {inIt === 1 ? "note" : "notes"}.
+                      </p>
+                      <p className="mt-1 text-xs text-muted">They're kept, just not shown. Turn it back on any time to bring them back.</p>
+                      <div className="mt-2 flex gap-2">
+                        <button
+                          type="button"
+                          onClick={() => void toggleModule(mod.type, false, true)}
+                          className="rounded-full bg-ink px-3.5 py-1.5 text-xs font-medium text-cream"
+                        >
+                          Turn it off
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setOffAsk(null)}
+                          className="rounded-full border border-line px-3.5 py-1.5 text-xs font-medium"
+                        >
+                          Keep it on
+                        </button>
+                      </div>
+                    </div>
+                  ) : null}
                   </div>
                 );
               })}
@@ -1346,7 +1532,7 @@ function SiteDashboard() {
     >
       {STEPS.map((key, i) => {
         const active = section === key && (vertical ? panelOpen : sheetOpen);
-        const done = stepDone[key];
+        const done = railDone(key);
         return (
           <button
             key={key}
@@ -1374,9 +1560,12 @@ function SiteDashboard() {
             <span className={`text-[11px] leading-tight whitespace-nowrap ${active ? "font-semibold text-ink" : ""}`}>
               {SECTION_TITLES[key]}
             </span>
-            {key === "notes" && pending.length > 0 ? (
-              <span className="absolute top-1 right-2 rounded-full bg-accent px-1.5 text-[10px] font-medium text-cream">
-                {pending.length}
+            {key === "notes" && counts.waiting > 0 ? (
+              <span
+                className="absolute top-1 right-2 rounded-full bg-accent px-1.5 text-[10px] font-medium text-cream"
+                aria-label={waitingLabel(counts.waiting)}
+              >
+                {counts.waiting}
               </span>
             ) : null}
           </button>
@@ -1412,7 +1601,14 @@ function SiteDashboard() {
   );
   const nextButton = nextStep ? (
     <div className="border-t border-line px-4 py-3">
-      <Button variant="outline" className="w-full rounded-full" onClick={() => goTo(nextStep)}>
+      <Button
+        variant="outline"
+        className="w-full rounded-full"
+        onClick={() => {
+          touch(section);
+          goTo(nextStep);
+        }}
+      >
         Next: {SECTION_TITLES[nextStep]}
       </Button>
     </div>
@@ -1477,6 +1673,8 @@ function SiteDashboard() {
       {...engineIntroProps(theme?.name, draft, approved)}
       onStickerMove={moveIntroSticker}
       onOpen={() => window.setTimeout(() => setIntroCanvasKey((k) => k + 1), 900)}
+      // Skip shows the gift, like it does for the recipient. (It used to restart the opening.)
+      onSkip={() => setCanvasView("gift")}
     />
   );
 
@@ -1546,7 +1744,12 @@ function SiteDashboard() {
           <DeviceToggle value={device} onChange={setDevice} size="sm" />
           <button
             type="button"
-            onClick={() => (showIntroInCanvas ? setIntroCanvasKey((k) => k + 1) : setIntroPreview(true))}
+            onClick={() => {
+              if (usesIntro && (section === "words" || section === "look")) {
+                setCanvasView("intro");
+                setIntroCanvasKey((k) => k + 1);
+              } else setIntroPreview(true);
+            }}
             className="rounded-full px-2.5 py-1 text-[11px] font-medium text-muted hover:text-ink"
           >
             Replay intro
@@ -1606,7 +1809,9 @@ function SiteDashboard() {
             <input
               autoFocus
               value={draft.title}
-              onChange={(e) => patch({ title: e.target.value })}
+              maxLength={LIMITS.heading}
+              aria-label="Gift name"
+              onChange={(e) => rename(e.target.value)}
               onBlur={() => setRenaming(false)}
               onKeyDown={(e) => {
                 if (e.key === "Enter" || e.key === "Escape") setRenaming(false);
@@ -1673,7 +1878,7 @@ function SiteDashboard() {
             ) : (
               <span className="size-1.5 rounded-full bg-muted/50" aria-hidden="true" />
             )}
-            <span className="tabular-nums">{noteCount} {noteCount === 1 ? "note" : "notes"}</span>
+            <span className="tabular-nums">{noteSummary(counts)}</span>
           </span>
 
 
@@ -1703,7 +1908,7 @@ function SiteDashboard() {
             <DropdownMenuContent align="end">
               <DropdownMenuItem onSelect={() => goTo("notes")}>
                 <Inbox />
-                Notes ({noteCount})
+                Notes ({noteSummary(counts)})
               </DropdownMenuItem>
               <DropdownMenuItem onSelect={() => goTo("settings")}>
                 <Settings2 />
@@ -1818,18 +2023,32 @@ function SiteDashboard() {
 
       {/* Small screens: canvas fills, rail becomes a bottom toolbar with a sheet */}
       <div className="min-[900px]:hidden">{rail(false)}</div>
+      {/* Room under the preview for the sheet, so the phone preview shrinks to fit above it. */}
       {sheetOpen ? (
-        <div
-          className="fixed inset-0 z-50 flex items-end bg-ink/40 min-[900px]:hidden"
-          onClick={() => setSheetOpen(false)}
-        >
+        <div aria-hidden="true" className="shrink-0 min-[900px]:hidden" style={{ height: `calc(${Math.min(sheetH, 60)}dvh - 64px)` }} />
+      ) : null}
+      {sheetOpen ? (
+        <div className="pointer-events-none fixed inset-x-0 bottom-0 z-50 flex items-end min-[900px]:hidden">
           <div
-            className="flex h-[70dvh] w-full flex-col overflow-hidden rounded-t-3xl bg-paper"
-            onClick={(e) => e.stopPropagation()}
+            role="dialog"
+            aria-label={SECTION_TITLES[section]}
+            className={`pointer-events-auto flex w-full flex-col overflow-hidden rounded-t-3xl border-t border-line bg-paper shadow-[0_-18px_40px_-24px_rgba(43,37,34,.45)] ${sheetDragging ? "" : "transition-[height] duration-200 ease-out"}`}
+            style={{ height: `${sheetH}dvh` }}
           >
-            <div className="flex justify-center pt-2">
-              <span className="h-1 w-10 rounded-full bg-line" />
-            </div>
+            <button
+              type="button"
+              aria-label={sheetH > 60 ? "Make the panel smaller" : "Make the panel bigger"}
+              onPointerDown={dragSheet}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" || e.key === " ") {
+                  e.preventDefault();
+                  setSheetH((h) => (h > 60 ? 45 : 88));
+                }
+              }}
+              className="flex w-full touch-none justify-center pt-2.5 pb-1.5"
+            >
+              <span className="h-1.5 w-12 rounded-full bg-ink/20" />
+            </button>
             <div className="flex items-center justify-between px-5 pt-2">
               {stepHeader}
               <button onClick={() => setSheetOpen(false)} className="text-sm text-muted">
@@ -1900,16 +2119,25 @@ function SiteDashboard() {
   );
 }
 
+const LONG_NOTE = 280;
+
 function ReviewCard({
   item,
   onApprove,
   onHide,
+  onDelete,
 }: {
   item: Contribution;
   onApprove: () => void;
   onHide: () => void;
+  onDelete: () => Promise<void>;
 }) {
   const [url, setUrl] = useState<string | null>(null);
+  const [expanded, setExpanded] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  const text = item.text_content ?? "";
+  const long = [...text].length > LONG_NOTE;
   useEffect(() => {
     let active = true;
     signedMediaUrl(item.media_url).then((u) => {
@@ -1933,8 +2161,17 @@ function ReviewCard({
       ) : url ? (
         <img src={url} alt="" className="mt-3 aspect-square w-full rounded-xl object-cover" />
       ) : null}
-      {item.text_content ? (
-        <p className="mt-3 text-sm leading-relaxed whitespace-pre-line">{item.text_content}</p>
+      {text ? (
+        <>
+          <p className="mt-3 text-sm leading-relaxed whitespace-pre-line [overflow-wrap:anywhere]">
+            {long && !expanded ? `${[...text].slice(0, LONG_NOTE).join("").trimEnd()}…` : text}
+          </p>
+          {long ? (
+            <button type="button" onClick={() => setExpanded((v) => !v)} className="mt-1 text-xs font-medium text-accent underline">
+              {expanded ? "Show less" : "Show more"}
+            </button>
+          ) : null}
+        </>
       ) : null}
       {item.module_type === "tree" ? (
         <p className="mt-2 text-xs text-muted">
@@ -1966,7 +2203,45 @@ function ReviewCard({
         >
           Hide
         </button>
+        <button
+          type="button"
+          onClick={() => setConfirmDelete(true)}
+          aria-label={`Delete the note from ${item.author_name}`}
+          className="grid size-8 shrink-0 place-items-center rounded-full border border-line bg-cream text-muted hover:text-[#B4322E]"
+        >
+          <Trash2 className="size-3.5" />
+        </button>
       </div>
+      {confirmDelete ? (
+        <div role="alert" className="mt-3 rounded-xl border border-line bg-paper p-3">
+          <p className="text-sm font-medium">Delete this note from {item.author_name}?</p>
+          <p className="mt-1 text-xs text-muted">It's gone for good, with any photo or voice note. Hide it instead if you might want it back.</p>
+          <div className="mt-2 flex gap-2">
+            <button
+              type="button"
+              disabled={deleting}
+              onClick={() => {
+                setDeleting(true);
+                void onDelete().finally(() => {
+                  setDeleting(false);
+                  setConfirmDelete(false);
+                });
+              }}
+              className="rounded-full bg-[#B4322E] px-3.5 py-1.5 text-xs font-medium text-white disabled:opacity-60"
+            >
+              {deleting ? "Deleting…" : "Delete"}
+            </button>
+            <button
+              type="button"
+              disabled={deleting}
+              onClick={() => setConfirmDelete(false)}
+              className="rounded-full border border-line px-3.5 py-1.5 text-xs font-medium"
+            >
+              Keep it
+            </button>
+          </div>
+        </div>
+      ) : null}
     </div>
   );
 }
