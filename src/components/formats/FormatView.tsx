@@ -58,6 +58,11 @@ export type FormatViewProps = {
   showShare?: boolean | undefined;
   /** The occasion, for its 3D object (Bento and Gift Hunt). */
   theme?: Theme | null | undefined;
+  /**
+   * Video and quiz, which don't fit the body's own shape. Each body shows them inside
+   * itself, so they share its paper, colours and type instead of starting a new page.
+   */
+  extraSections?: React.ReactNode;
 };
 
 /** Drop undefined keys (the comic and scrapbook views use exact optional props). */
@@ -92,11 +97,10 @@ export function FormatView(props: Props) {
   useEffect(() => loadPairingFonts(props.site.font_choice), [props.site.font_choice]);
   // Handwritten draws video and quiz inside its own notebook.
   // Bento shows video and quiz inside its own board (see FormatBody), so it skips the block underneath.
-  const tiles =
-    props.site.format !== "scrapbook" &&
-    props.site.format !== "comic" &&
-    props.site.format !== "handwritten" &&
-    props.site.format !== "bento";
+  // Every body with its own look shows video and quiz inside itself (see `extras`).
+  const tiles = !["scrapbook", "comic", "handwritten", "bento", ...INSIDE].includes(
+    props.site.format,
+  );
   const cast = castFor(kind, props.site.character ?? null, props.site.icon_set ?? null);
   const palette = props.palette ?? resolvePalette(props.theme, props.site.custom_colors);
   const roamIcons = useMemo(
@@ -141,6 +145,9 @@ export function FormatView(props: Props) {
     </PlaceholderNameContext.Provider>
   );
 }
+
+/** Bodies that show video and quiz inside themselves. */
+const INSIDE = ["hunt", "zine", "storybook", "mixtape", "scratch", "stars"] as const;
 
 /** Which of video and quiz this gift has something to show for. */
 function extraKeys(props: Props): ("quiz" | "video")[] {
@@ -204,6 +211,7 @@ function TileExtras(props: Props & { kind: ReturnType<typeof themeKindOf>; bare?
 function FormatBody(props: Props) {
   const { site, theme } = props;
   const palette = props.palette ?? resolvePalette(theme, site.custom_colors);
+  const inside = (INSIDE as readonly string[]).includes(site.format) && extraKeys(props).length > 0;
   const common = defined({
     site,
     modules: props.modules,
@@ -212,6 +220,7 @@ function FormatBody(props: Props) {
     palette,
     sample: props.sample,
     showShare: props.showShare,
+    extraSections: inside ? <TileExtras {...props} kind={themeKindOf(theme)} bare /> : undefined,
   });
   const fallback = <div className="min-h-[60vh]" style={{ background: palette.background }} />;
   switch (site.format) {

@@ -208,6 +208,12 @@
 .scr-head { display: flex; justify-content: space-between; gap: 8px; font: 600 11px/1.2 ui-monospace, "JetBrains Mono", monospace; letter-spacing: .08em; text-transform: uppercase; }
 .scr-no { color: var(--scr-accent); }
 .scr-from { opacity: .7; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+/* The game's name, printed like a ticket title. */
+.scr-game { margin: 6px 0 8px; font-family: var(--jb-display, "Fraunces", serif); font-size: clamp(1.15rem, 5cqi, 1.45rem); font-weight: 800; letter-spacing: -0.01em; line-height: 1; color: var(--scr-accent); text-shadow: 1px 1px 0 color-mix(in oklab, var(--scr-accent) 30%, #fff); }
+.scr-game[data-game="photo"] { color: var(--scr-primary); }
+.scr-game[data-game="song"] { font-style: italic; }
+.scr-game[data-game="voice"] { color: var(--scr-primary); font-style: italic; }
+.scr-game[data-game="default"] { color: #B8892A; text-shadow: 1px 1px 0 #FFF1C4; }
 .scr-window { position: relative; margin-top: 10px; aspect-ratio: 4 / 3; border-radius: 14px; overflow: hidden; background: color-mix(in oklab, var(--scr-accent) 8%, white); }
 .scr-prize { position: absolute; inset: 0; display: grid; place-items: center; padding: 14px; text-align: center; color: #2b2522; }
 .scr-prize img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
@@ -283,3 +289,28 @@
 .fmt-swatch[data-format="comic"] { background: #1f2440; }
 .fmt-swatch[data-format="mixtape"] { background: linear-gradient(140deg, #2e2838, #4a3d5c); }
 .fmt-swatch[data-format="stars"] { background: radial-gradient(120% 90% at 50% 0%, #3a2f6b, #120f2a); }
+
+/* ---------- Video and quiz inside each body (FormatView `extraSections`) ----------
+   They take the body's own paper, ink and type, so the gift reads as one piece. */
+.fmt-extras { position: relative; margin-top: 3.5rem; }
+.fmt-extras .sb-section:first-child { margin-top: 0; }
+.fmt-extras .sb-title { text-wrap: balance; }
+/* Zine: a black bar label and hard-shadow cards, like the rest of the issue. */
+.fmt-extras.is-zine .sb-title { color: #111 !important; font-family: "Bricolage Grotesque", var(--jb-display), sans-serif !important; font-weight: 900; text-transform: uppercase; letter-spacing: -0.01em; display: inline-block; background: #FFE45C; padding: 2px 10px; transform: rotate(-1.5deg); box-shadow: 3px 3px 0 #111; }
+.fmt-extras.is-zine .sb-section[data-section="quiz"] > div:not(.sb-title),
+.fmt-extras.is-zine .sb-section[data-section="video"] > div > * { border-radius: 4px !important; box-shadow: 4px 4px 0 #111 !important; outline: 2px solid #111; outline-offset: 0; }
+/* Mixtape: liner-notes labels. */
+.fmt-extras.is-mixtape { padding: 0 4px; }
+.fmt-extras.is-mixtape .sb-title { font-family: "JetBrains Mono", ui-monospace, monospace !important; font-size: 13px !important; font-weight: 600; letter-spacing: .22em; text-transform: uppercase; opacity: .85; }
+.fmt-extras.is-mixtape .sb-title::before { content: "Bonus track · "; opacity: .6; }
+/* Scratch Cards: a ticket-stub label. */
+.fmt-extras.is-scratch .sb-title { font-size: 1.4rem !important; display: inline-flex; align-items: center; gap: 10px; }
+.fmt-extras.is-scratch .sb-title::before { content: "★"; font-size: .8em; color: var(--scr-accent); }
+/* Gift Hunt: found on the map. */
+.fmt-extras.is-hunt .sb-title::after { content: ""; display: block; width: 72px; height: 3px; margin-top: 8px; border-radius: 3px; background: repeating-linear-gradient(90deg, currentColor 0 8px, transparent 8px 14px); opacity: .55; }
+/* Storybook: a chapter heading under the book. */
+.fmt-extras.is-storybook .sb-title { text-align: center; font-style: italic; }
+.fmt-extras.is-storybook .sb-title::before { content: "A little more"; display: block; margin-bottom: 6px; font-style: normal; font-size: 11px; font-weight: 600; letter-spacing: .24em; text-transform: uppercase; opacity: .6; }
+/* Constellation: gold on the night. */
+.fmt-extras.is-stars { color: #f4f0ff; }
+.fmt-extras.is-stars .sb-title { color: #ffe39a !important; text-shadow: 0 0 22px rgba(255, 220, 150, .35); text-align: center; }

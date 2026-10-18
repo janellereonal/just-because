@@ -653,5 +653,40 @@ button.bento-tile:hover .bento-wave i:nth-child(odd) { transform: scaleY(1.2); }
 .hunt-body, .hunt-lid { background: var(--paper, none), var(--tint); }
 .hunt-bow::before, .hunt-bow::after { border-width: 6px; }
 
+/* Gift Hunt: every present its own shape (data-shape), a little smaller or bigger, sitting on the
+   bottom of its cell so the row reads like a pile of real gifts. */
+.hunt-gift { position: relative; display: flex; flex-direction: column; justify-content: flex-end; aspect-ratio: 1 / 0.95; }
+.hunt-gift > .hunt-lid, .hunt-gift > .hunt-body { margin-inline: calc((1 - var(--size, 1)) * 50%); }
+.hunt-box .hunt-lid { position: relative; top: auto; left: auto; right: auto; margin-bottom: -12px; margin-inline: calc((1 - var(--size, 1)) * 50% - 5%); }
+.hunt-box .hunt-body { aspect-ratio: 1 / calc(0.8 * var(--size, 1)); }
+.hunt-box[data-shape="tall"] .hunt-body { aspect-ratio: 1 / 1.08; margin-inline: calc((1 - var(--size, 1)) * 50% + 9%); }
+.hunt-box[data-shape="tall"] .hunt-lid { margin-inline: calc((1 - var(--size, 1)) * 50% + 5%); }
+.hunt-box[data-shape="flat"] .hunt-body { aspect-ratio: 1 / 0.5; }
+.hunt-box[data-shape="flat"] .hunt-lid { height: 20px; }
+/* A round hatbox: an elliptical lid over a drum. */
+.hunt-box[data-shape="hatbox"] .hunt-body { aspect-ratio: 1 / 0.72; border-radius: 0 0 50% 50% / 0 0 22% 22%; margin-inline: calc((1 - var(--size, 1)) * 50% + 4%); }
+.hunt-box[data-shape="hatbox"] .hunt-lid { height: 30px; border-radius: 50%; margin-bottom: -15px; margin-inline: calc((1 - var(--size, 1)) * 50% + 1%); }
+.hunt-box[data-shape="hatbox"] .hunt-body::before { left: 0; right: 0; top: 34%; bottom: auto; width: auto; height: 14%; transform: none; }
+.hunt-box[data-shape="hatbox"] .hunt-lid::before { display: none; }
+/* A gift bag: tapered, folded top edge, rope handles, a bow on the side. */
+.hunt-box[data-shape="bag"] .hunt-lid { height: 12px; margin-bottom: -2px; border-radius: 3px; margin-inline: calc((1 - var(--size, 1)) * 50% + 9%); }
+.hunt-box[data-shape="bag"] .hunt-lid::before { display: none; }
+.hunt-box[data-shape="bag"] .hunt-body { aspect-ratio: 1 / 1.02; border-radius: 4px 4px 10px 10px; clip-path: polygon(9% 0, 91% 0, 100% 100%, 0 100%); margin-inline: calc((1 - var(--size, 1)) * 50% + 2%); }
+.hunt-box[data-shape="bag"] .hunt-body::before { display: none; }
+.hunt-box[data-shape="bag"] .hunt-bow { left: 74%; top: 8px; }
+.hunt-handles { position: absolute; z-index: 1; left: 50%; top: 0; width: 46%; height: 28%; transform: translate(-50%, -62%); border: 3px solid var(--ribbon); border-bottom: 0; border-radius: 50% 50% 0 0; opacity: .9; }
+.hunt-box[data-shape="bag"].is-open .hunt-lid { transform: none; opacity: 1; }
+.hunt-box[data-shape="bag"].is-open .hunt-body::after { inset: -14% 22% auto; transform: rotate(6deg); }
+.hunt-box[data-shape="hatbox"].is-open .hunt-lid { transform: translate(-14px, -30px) rotate(-18deg); }
+
+/* The map's trail carries on from the opening, winding behind the gifts. */
+.hunt-trail { position: relative; }
+.hunt-trail::before {
+  content: ""; position: absolute; inset: -10px -6px; z-index: 0; pointer-events: none; opacity: .38;
+  background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='520' viewBox='0 0 400 520'%3E%3Cpath d='M200 0 C 340 70, 360 150, 230 220 S 40 330, 120 420 S 330 470, 200 520' fill='none' stroke='%23000' stroke-opacity='.55' stroke-width='3' stroke-linecap='round' stroke-dasharray='2 12'/%3E%3C/svg%3E") center top / 100% 520px repeat-y;
+  mix-blend-mode: multiply;
+}
+.hunt-trail > * { position: relative; z-index: 1; }
+
 /* Photobooth photos have a frame and a message drawn in: every layout shows them whole. */
 img[data-framed] { object-fit: contain !important; }

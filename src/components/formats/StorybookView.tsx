@@ -112,6 +112,7 @@ export function StorybookView({
   palette,
   sample,
   showShare,
+  extraSections: extras,
 }: FormatViewProps) {
   const data = usePieces({ site, modules, contributions, calendarEntries, sample });
   const voice = giftVoice(site.solo);
@@ -402,6 +403,9 @@ export function StorybookView({
           </button>
         </nav>
       </div>
+      {extras ? (
+        <div className="fmt-extras is-storybook mx-auto max-w-3xl px-5 pb-20">{extras}</div>
+      ) : null}
     </div>
   );
 }
