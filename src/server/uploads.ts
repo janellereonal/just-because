@@ -3,8 +3,10 @@ import path from "node:path";
 import { eq } from "drizzle-orm";
 import { getDb, schema } from "./db";
 import { requireAdmin, requireSiteOwner } from "./guards";
+import { MEDIA_LIMITS } from "@/lib/limits";
 
 export type UploadKind = "contribution" | "calendar" | "theme" | "intro";
+export type MediaKind = "photo" | "voice" | "video";
 
 const IMAGE = ["image/jpeg", "image/png", "image/webp", "image/gif", "image/heic", "image/heif"];
 const VIDEO = ["video/mp4", "video/quicktime", "video/webm"];
@@ -16,8 +18,17 @@ export function uploadPathname(kind: UploadKind, targetId: string, filename: str
   return `${folder}/${targetId}/${kind === "calendar" ? "calendar-" : kind === "intro" ? "intro-" : ""}${clean}`;
 }
 
-/** Who may upload: friends to any existing gift, creators to their own calendar, admins to themes. */
-export async function authorizeUpload(kind: UploadKind, targetId: string) {
+const MB = 1024 * 1024;
+
+/** Stored files never change (each has a random suffix), so browsers and the CDN can keep them for a year. */
+export const UPLOAD_CACHE_SECONDS = 60 * 60 * 24 * 365;
+
+/**
+ * Who may upload: friends to any existing gift, creators to their own calendar, admins to themes.
+ * Friends' files get the limit of what they say they are (photo, voice note or video), and only
+ * those file types are accepted, so a "photo" can't be a 50 MB video.
+ */
+export async function authorizeUpload(kind: UploadKind, targetId: string, media: MediaKind | null = null) {
   if (kind === "theme") {
     await requireAdmin();
     return { contentTypes: IMAGE, maxBytes: 10 * 1024 * 1024 };
@@ -36,8 +47,10 @@ export async function authorizeUpload(kind: UploadKind, targetId: string) {
     .from(schema.giftSites)
     .where(eq(schema.giftSites.id, targetId));
   if (!site) throw new Error("We couldn't find that gift.");
-  // Video messages are the biggest thing a friend sends: about a minute on a phone.
-  return { contentTypes: [...IMAGE, ...AUDIO, ...VIDEO], maxBytes: 60 * 1024 * 1024 };
+  if (media === "photo") return { contentTypes: IMAGE, maxBytes: MEDIA_LIMITS.photo.mb * MB };
+  if (media === "voice") return { contentTypes: AUDIO, maxBytes: MEDIA_LIMITS.voice.mb * MB };
+  // Video messages are the biggest thing a friend sends: up to a minute on a phone.
+  return { contentTypes: [...IMAGE, ...AUDIO, ...VIDEO], maxBytes: MEDIA_LIMITS.video.mb * MB };
 }
 
 /* ---- local development only: no Vercel Blob token ---- */
@@ -49,9 +62,11 @@ export async function saveDevUpload(request: Request) {
   const file = form.get("file");
   const kind = String(form.get("kind")) as UploadKind;
   const targetId = String(form.get("targetId"));
+  const m = String(form.get("media") ?? "");
+  const media = m === "photo" || m === "voice" || m === "video" ? m : null;
   if (!(file instanceof File)) return Response.json({ error: "No file" }, { status: 400 });
   try {
-    const rules = await authorizeUpload(kind, targetId);
+    const rules = await authorizeUpload(kind, targetId, media);
     if (file.size > rules.maxBytes) throw new Error("File too large");
     if (!rules.contentTypes.includes(file.type)) throw new Error("File type not allowed");
   } catch (error) {

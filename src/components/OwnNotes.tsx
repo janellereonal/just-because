@@ -29,7 +29,8 @@ import {
   type NewSectionType,
 } from "@/lib/sections";
 import { deleteContributions, saveOwnerNote } from "@/lib/api";
-import { uploadFile } from "@/lib/upload";
+import { UploadError, uploadMedia } from "@/lib/upload";
+import { MEDIA_LIMITS } from "@/lib/limits";
 import { signedMediaUrl, type Contribution, type ModuleType } from "@/lib/gift";
 
 type NoteType = "letters" | "photobooth" | "songs" | "voice" | "wordcloud" | NewSectionType;
@@ -122,7 +123,7 @@ function Recorder({ onFile }: { onFile: (f: File | null) => void }) {
       setSecs(0);
       timer.current = window.setInterval(() => {
         setSecs((s) => {
-          if (s >= 179) {
+          if (s >= MEDIA_LIMITS.voice.seconds - 1) {
             r.stop();
             if (timer.current) window.clearInterval(timer.current);
           }
@@ -287,7 +288,12 @@ export function OwnNotes({
     setBusy(true);
     try {
       let media = editing?.media_url ?? null;
-      if (file) media = await uploadFile(file, "contribution", siteId);
+      if (file) {
+        // Photos get a small copy too, so grids and previews don't load the full photo.
+        const up = await uploadMedia(file, "contribution", siteId, { thumb: type === "photobooth" });
+        media = up.url;
+        if (type === "photobooth" && up.thumbUrl) clean = { ...(clean ?? {}), thumb: up.thumbUrl };
+      }
       const result = await saveOwnerNote({
         data: {
           id: editing?.id ?? crypto.randomUUID(),
@@ -324,8 +330,8 @@ export function OwnNotes({
         queryClient.invalidateQueries({ queryKey: ["contributions", siteId] }),
         queryClient.invalidateQueries({ queryKey: ["modules", siteId] }),
       ]);
-    } catch {
-      toast.error("That didn't save. Try again?");
+    } catch (error) {
+      toast.error(error instanceof UploadError ? error.message : "That didn't save. Try again?");
     } finally {
       setBusy(false);
     }

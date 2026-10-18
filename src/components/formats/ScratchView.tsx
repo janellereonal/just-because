@@ -1,4 +1,5 @@
 import { giftVoice } from "@/lib/giftVoice";
+import { photoProps } from "@/lib/media";
 import { shareGift } from "@/lib/track";
 import { mixHex } from "@/themes/_shared/iconSets";
 import { SampleText } from "@/components/SampleMark";
@@ -251,7 +252,7 @@ function Card({
               {locked ? `Opens ${piece.date}` : "Only for the recipient"}
             </span>
           ) : piece.kind === "photo" && media ? (
-            <img src={media} alt={piece.text ?? ""} data-framed={piece.framed || undefined} />
+            <img {...photoProps(media, piece.thumb, "(max-width: 640px) 85vw, 380px")} alt={piece.text ?? ""} loading="lazy" decoding="async" data-framed={piece.framed || undefined} />
           ) : (
             <span className="scr-text">
               {piece.kind === "song" ? (

@@ -1,4 +1,5 @@
 import { giftVoice } from "@/lib/giftVoice";
+import { photoProps } from "@/lib/media";
 import { shareGift } from "@/lib/track";
 import { SampleText } from "@/components/SampleMark";
 import { giftHeading } from "@/lib/themeKind";
@@ -75,9 +76,10 @@ function Photo({ piece }: { piece: Piece }) {
   return url ? (
     <img
       data-framed={piece.framed || undefined}
-      src={url}
+      {...photoProps(url, piece.thumb, "(max-width: 640px) 45vw, 300px")}
       alt={piece.text ?? `Photo from ${piece.author}`}
       loading="lazy"
+      decoding="async"
       className="zine-xerox size-full object-cover"
     />
   ) : (

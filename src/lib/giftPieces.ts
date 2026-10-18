@@ -32,6 +32,8 @@ export type Piece = {
   mine: boolean;
   /** A photobooth photo with its frame and words drawn in: show it whole, never cropped. */
   framed?: boolean;
+  /** A 400 px copy of a photo, for grids and previews. */
+  thumb?: string;
   /** Calendar pieces: the day they unlock. */
   date?: string;
   sample?: boolean;
@@ -200,6 +202,7 @@ export function usePieces({
             sealed: !!c.sealed,
             mine: !!c.mine,
             ...(c.module_type === "photobooth" && c.data?.["framed"] === true ? { framed: true } : {}),
+            ...(c.module_type === "photobooth" && !c.sealed && typeof c.data?.["thumb"] === "string" ? { thumb: c.data["thumb"] as string } : {}),
           } satisfies Piece,
         ];
       });

@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
+import { photoProps } from "@/lib/media";
 import { NewSections } from "@/components/sections/NewSections";
 import { resolveIconSet } from "@/themes/_shared/iconSets";
 import { castFor } from "@/themes/_shared/design";
@@ -121,7 +122,7 @@ function Photo({ piece, accent, onOpen }: { piece: Piece; accent: string; onOpen
       <span className="hw-tape hw-tape-photo" aria-hidden />
       <button type="button" onClick={onOpen} aria-label={pieceLabel(piece)} className="block w-full">
         <span className="hw-photo-frame">
-          {url ? <img src={url} alt={piece.text ?? `Photo from ${piece.author}`} loading="lazy" /> : <span className="hw-photo-empty" aria-hidden />}
+          {url ? <img {...photoProps(url, piece.thumb, "(max-width: 640px) 70vw, 320px")} alt={piece.text ?? `Photo from ${piece.author}`} loading="lazy" decoding="async" data-framed={piece.framed || undefined} /> : <span className="hw-photo-empty" aria-hidden />}
         </span>
       </button>
       <figcaption style={{ fontFamily: hand.family, fontSize: `${1.2 * hand.size}em` }}>

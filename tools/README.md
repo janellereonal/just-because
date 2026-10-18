@@ -33,6 +33,7 @@ The dev server must be running on http://localhost:8080 (`bun run dev`, see docs
 | `node bocheck.cjs <url> <outDir> [w] [h] [step]` | Scrolls a page and reports every scroll position where Bo covers text, chips, buttons or fields (with a screenshot of each) |
 | `node guide.cjs <base> <outDir> [w] [h]` | Signs up a fresh local test user and screenshots the new-user guide on /create step by step, then checks it doesn't come back after a reload (local servers only) |
 | `node booth.cjs <contribute-url> <outDir> [w] [h] [fake.y4m]` | Walks through the photobooth with Chrome's fake camera (a looping `.y4m`, e.g. made with ffmpeg from one of `public/clay/people`) and screenshots every frame. `SEND=1` also sends the photo and shows it in the gift |
+| `node upload.cjs <contribute-url> <photo> <outDir> [w] [h]` | Sends a photo through the friend page and prints what actually went over the wire (needs a build with `VITE_DEV_UPLOADS=1`) |
 | `node tour.js` | Landing hero: opens Ana's gift and captures the guided tour + bento tiles |
 | `node gal.js` | Themes gallery card loop and the full-screen opening |
 | `node portal.js /example/sam sam` | Frames of the opening-to-gift portal reveal |
@@ -73,3 +74,10 @@ headless Chrome).
 | `node tools/perf/theme-fps.cjs <base> <id[,id]>` | Frame times for a theme's opening with 4x CPU throttling and slow 4G at 390x844. Needs the `/dev/themes` playground (dev server, or a production build made with `VITE_DEV_TOOLS=1`). Fails if janky. Works for current openings too (`birthday`, `wedding`...) |
 
 `bun test` runs the engine's unit tests (gesture maths, slots, theme validation, strings).
+
+## Shrinking old photos (`tools/media`)
+
+`cd tools/media && npm install` (sharp, only for this script), then
+`DATABASE_URL=... bun compress-existing.ts` for a dry run. `--apply --yes` (plus `BLOB_READ_WRITE_TOKEN`
+for the real store) uploads smaller copies, repoints the rows and writes an undo list to `tools/op`.
+Originals are never deleted. Ask before running it against production.

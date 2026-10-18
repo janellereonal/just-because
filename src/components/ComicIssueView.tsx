@@ -8,6 +8,7 @@
  * Everything is sized with container queries, so it reads the same in a
  * phone preview on a laptop as on a real phone.
  */
+import { photoProps, thumbOf } from "@/lib/media";
 import { shareGift } from "@/lib/track";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { AnimatePresence, motion, useReducedMotion, type PanInfo } from "motion/react";
@@ -60,7 +61,7 @@ function Portrait({ item, size = "md" }: { item: ViewContribution; size?: "sm" |
   const url = useMedia(item.sealed ? null : item.media_url && item.module_type === "photobooth" ? item.media_url : null);
   return (
     <span className={`cx-portrait cx-portrait-${size}`} aria-hidden="true">
-      {url ? <img src={url} alt="" /> : <b>{item.author_name.trim().charAt(0).toUpperCase() || "?"}</b>}
+      {url ? <img {...photoProps(url, thumbOf(item.data), "120px")} alt="" loading="lazy" decoding="async" /> : <b>{item.author_name.trim().charAt(0).toUpperCase() || "?"}</b>}
     </span>
   );
 }
@@ -114,7 +115,7 @@ function Panel({ item, type, index }: { item: ViewContribution; type: ModuleType
   if (type === "photobooth")
     return (
       <article className="cx-panel cx-photo">
-        <div className="cx-photo-frame">{media ? <img src={media} alt={item.text_content ?? COMIC_COPY.photoAlt} data-framed={item.data?.["framed"] === true || undefined} /> : <div className="cx-photo-empty" aria-hidden="true" />}</div>
+        <div className="cx-photo-frame">{media ? <img {...photoProps(media, thumbOf(item.data), "(max-width: 640px) 80vw, 420px")} alt={item.text_content ?? COMIC_COPY.photoAlt} loading="lazy" decoding="async" data-framed={item.data?.["framed"] === true || undefined} /> : <div className="cx-photo-empty" aria-hidden="true" />}</div>
         <div className="cx-photo-cap">
           <Caption>{item.text_content || COMIC_COPY.legendary}</Caption>
         </div>

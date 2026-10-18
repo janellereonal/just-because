@@ -1,4 +1,5 @@
 import { giftVoice } from "@/lib/giftVoice";
+import { photoProps } from "@/lib/media";
 import { shareGift } from "@/lib/track";
 import { SampleText } from "@/components/SampleMark";
 import { giftHeading } from "@/lib/themeKind";
@@ -50,7 +51,7 @@ function Liner({ piece, accent }: { piece: Piece; accent: string }) {
   return (
     <div className="mix-liner-body">
       {piece.kind === "photo" && media ? (
-        <img src={media} alt={piece.text ?? ""} className="mix-liner-photo" data-framed={piece.framed || undefined} />
+        <img {...photoProps(media, piece.thumb, "(max-width: 640px) 70vw, 360px")} alt={piece.text ?? ""} className="mix-liner-photo" loading="lazy" decoding="async" data-framed={piece.framed || undefined} />
       ) : null}
       {piece.kind === "voice" && media ? <audio controls src={media} className="w-full" /> : null}
       {embed ? (

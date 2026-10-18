@@ -67,3 +67,14 @@ export const FIELD_NAMES: Record<string, string> = {
 };
 
 export const tooLong = (what: string, max: number) => `Keep ${what} under ${max} characters.`;
+
+/**
+ * Upload limits per kind of file. Photos are compressed in the browser first (to about
+ * 0.2 to 0.5 MB), so the photo limit only matters if compression fails. The server uses
+ * the same numbers (src/server/uploads.ts).
+ */
+export const MEDIA_LIMITS = {
+  photo: { mb: 8, seconds: 0 },
+  voice: { mb: 5, seconds: 120 },
+  video: { mb: 50, seconds: 60 },
+} as const;

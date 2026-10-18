@@ -77,7 +77,7 @@ export const TIERS: Tier[] = [
     audience: "Milestones like debuts and weddings",
     // "Unlimited" on the card, with a fair-use cap so one gift can't run away with storage.
     contributors: { cap: 500, unlimited: true },
-    photos: { cap: 1000, unlimited: true },
+    photos: { cap: 500, unlimited: true },
     formats: ["scrapbook", "comic", "bento", "hunt", "zine", "storybook", "mixtape", "scratch", "stars", "handwritten"],
     liveFor: { months: 36, label: "3 years" },
     extendAmount: 49900,
@@ -194,7 +194,7 @@ export function paymentMethodsSentence(): string {
 export function featureList(tier: Tier): string[] {
   const lines = [
     tier.contributors.unlimited ? "Unlimited contributors" : `Up to ${tier.contributors.cap} contributors`,
-    tier.photos.unlimited ? "Unlimited photos" : `Up to ${tier.photos.cap} photos`,
+    tier.photos.unlimited ? "Unlimited photos for normal use" : `Up to ${tier.photos.cap} photos`,
     tier.formats.length >= 5 ? `All ${tier.formats.length} formats, including Storybook and Mixtape` : "Scrapbook and Bento formats",
   ];
   if (tier.features.passwordProtection) lines.push("Password protection");

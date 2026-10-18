@@ -11,7 +11,8 @@ import {useParams} from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { deleteOwnContribution, getGiftRoom, submitContribution, updateOwnContribution } from "@/lib/api";
-import { UploadError, uploadFile } from "@/lib/upload";
+import { UploadError, uploadMedia, type UploadStage } from "@/lib/upload";
+import { UPLOAD_COPY } from "@/copy/strings";
 import { getDeviceId } from "@/lib/device";
 import {
   FONT_PAIRINGS,
@@ -178,6 +179,7 @@ function ContributePage() {
   const boothFile = useRef<File | null>(null);
   const boothOn = isFlagOn("photoboothCamera");
   const [busy, setBusy] = useState(false);
+  const [stage, setStage] = useState<UploadStage | null>(null);
   const sendingRef = useRef(false);
   /** The id for the note being written, kept across retries so a repeat send is the same note. */
   const pendingIds = useRef<{ id: string; editToken: string } | null>(null);
@@ -422,6 +424,7 @@ function ContributePage() {
     } finally {
       sendingRef.current = false;
       setBusy(false);
+      setStage(null);
     }
   }
 
@@ -430,8 +433,12 @@ function ContributePage() {
     let mediaPath: string | null = null;
     if (file) {
       try {
-        mediaPath = await uploadFile(file, "contribution", site.id);
+        // Photos get a small copy too, so grids and previews don't load the full photo.
+        const up = await uploadMedia(file, "contribution", site.id, { thumb: active === "photobooth", onStage: setStage });
+        mediaPath = up.url;
+        if (active === "photobooth" && up.thumbUrl) cleanData = { ...(cleanData ?? {}), thumb: up.thumbUrl };
       } catch (error) {
+        setStage(null);
         setBusy(false);
         toast.error(error instanceof UploadError ? error.message : "That file couldn't be uploaded. Please try again.");
         return;
@@ -952,7 +959,7 @@ function ContributePage() {
                   className="mt-6 w-full rounded-full px-5 py-3.5 font-medium disabled:opacity-60"
                   style={{ backgroundColor: palette.accent, color: onAccent }}
                 >
-                  {busy ? "Sending…" : editingId ? "Save changes" : "Send it"}
+                  {busy ? (stage === "preparing" ? UPLOAD_COPY.preparing : stage === "uploading" ? UPLOAD_COPY.uploading : "Sending…") : editingId ? "Save changes" : "Send it"}
                 </button>
               ) : null}
               <p className="mt-3 text-center text-xs opacity-70">
