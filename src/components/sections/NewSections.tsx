@@ -11,7 +11,7 @@ import type { ThemeKind } from "@/lib/themeKind";
 import type { ModuleType, ViewContribution } from "@/lib/gift";
 import { SECTION_COPY } from "@/copy/strings";
 import { capsuleLocked, hash01, tallySuperlatives, type NewSectionType } from "@/lib/sections";
-import { formatDay, formatMoment, momentOf } from "@/lib/time";
+import { describeWait, formatDay, formatMomentWithYear, momentOf, splitWait } from "@/lib/time";
 import { designFor } from "@/themes/_shared/design";
 import { burstSet } from "@/themes/_shared/Sprinkles";
 import type { IconSet } from "@/themes/_shared/iconSets";
@@ -374,10 +374,9 @@ function SealedCapsule({
   now: number;
   m: Material;
 }) {
-  const s = Math.max(0, Math.floor((momentOf(at) - now) / 1000));
-  const days = Math.floor(s / 86400);
-  const hrs = Math.floor((s % 86400) / 3600);
-  const mins = Math.floor((s % 3600) / 60);
+  const target = momentOf(at);
+  const wait = describeWait(target, now);
+  const { days, hours: hrs, minutes: mins } = splitWait(target, now);
   return (
     <motion.article
       initial={{ opacity: 0, scale: 0.96 }}
@@ -412,11 +411,17 @@ function SealedCapsule({
         style={display}
         suppressHydrationWarning
       >
-        {days > 0 ? `${days}d ` : ""}
-        {String(hrs).padStart(2, "0")}h {String(mins).padStart(2, "0")}m
+        {wait ? (
+          <span className="block first-letter:uppercase">{wait}</span>
+        ) : (
+          <>
+            {days > 0 ? `${days}d ` : ""}
+            {String(hrs).padStart(2, "0")}h {String(mins).padStart(2, "0")}m
+          </>
+        )}
       </p>
       <p className="mt-1 text-xs opacity-70" suppressHydrationWarning>
-        {SECTION_COPY.capsule.lockedLine} {formatMoment(at)}
+        {SECTION_COPY.capsule.lockedLine} {formatMomentWithYear(at, now)}
       </p>
     </motion.article>
   );
