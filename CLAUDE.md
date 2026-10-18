@@ -189,7 +189,9 @@ verification is only required once `RESEND_API_KEY` and `EMAIL_FROM` are both se
 - Every style has an opening and a body. Theme styles use their theme's opening (`src/themes/<theme>`). Layout
   styles (Scrapbook, Storybook, Comic, Bento, Hunt, Zine, Mixtape, Scratch, Constellation) have their own in
   `src/themes/layouts/` (registry `LAYOUT_OPENINGS`, shared kit in `kit.tsx`), picked by `TactileOpening`'s `style`
-  prop (`giftStyle` on `GiftIntro`). They take the gift's palette. Try one at `/dev/openings?style=mixtape&pal=berry`.
+  prop (`giftStyle` on `GiftIntro`). Each has its own designed pastel palette (like theme openings), drawn with the soft kit
+  in `src/themes/layouts/cute.tsx`: clay stickers from `public/clay`, sparkles, `pastelStage` backgrounds, colored soft
+  shadows, the gift's character as a buddy (never the house mascot). Try one at `/dev/openings?style=mixtape&char=bear`.
 
 ## Themes, cast and sections
 

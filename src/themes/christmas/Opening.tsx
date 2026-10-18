@@ -20,6 +20,25 @@ import { FaceLight, Object3D, Sheen, TEXTURE, Texture } from "@/themes/_shared/l
 import { foley, melody } from "@/lib/play";
 
 type Pt = { x: number; y: number; px: number; py: number };
+
+/**
+ * The box's own soft colors (Oct 2026: was cranberry paper with a gold ribbon):
+ * blush paper with white polka dots, a cream satin ribbon shaded in rose.
+ */
+const SOFT = {
+  paper: "#FFC9D6",
+  ribbon: "#FFF4EC",
+  ribbonLight: "#FFFFFF",
+  ribbonShade: "#E5A9B9",
+  ribbonDeep: "#D08EA2",
+  dot: "#FFFFFFD9",
+  fleck: "#FFE7A8B3",
+  glow: "#FFE2EA",
+  warm: "#FFE9B8",
+  shadow: "190,90,120",
+  /** Faces turned from the light go rosy, not grey. */
+  shade: "170,70,105",
+};
 const LINKS = 9;
 const SEG = 13;
 /** The SVG over the box is 240 units square. */
@@ -162,7 +181,7 @@ export function ChristmasOpening(p: OpeningProps) {
   useEffect(() => {
     if (beat === 4) {
       const r = boxRef.current?.getBoundingClientRect();
-      if (r) burstSet(p.hostRef.current, r.left + r.width / 2, r.top + r.height * 0.45, p.iconSet, { colors: [c.gold!, "#fff", c.cranberry!], count: 28, spread: 1.8, up: true });
+      if (r) burstSet(p.hostRef.current, r.left + r.width / 2, r.top + r.height * 0.45, p.iconSet, { colors: [SOFT.paper, "#fff", SOFT.warm, "#F49AB4"], count: 28, spread: 1.8, up: true });
       melody([659, 659, 659, 0, 659, 659, 659, 0, 659, 784, 523, 587, 659], 0.16, "sine", 0.05);
       h.success();
     }
@@ -236,9 +255,9 @@ export function ChristmasOpening(p: OpeningProps) {
   const lidOff = beat >= 2;
   const paperOpen = beat >= 3;
   const glow = beat >= 4;
-  const paper = c.paper!;
-  const ribbon = c.gold!;
-  const pattern = `radial-gradient(circle at 25% 25%, ${c.gold}AA 0 2px, transparent 2.5px) 0 0 / 18px 18px, radial-gradient(circle at 75% 75%, #ffffff55 0 1.5px, transparent 2px) 0 0 / 18px 18px, ${paper}`;
+  const paper = SOFT.paper;
+  const ribbon = SOFT.ribbon;
+  const pattern = `radial-gradient(circle at 25% 25%, ${SOFT.dot} 0 2.6px, transparent 3.1px) 0 0 / 18px 18px, radial-gradient(circle at 75% 75%, ${SOFT.fleck} 0 1.6px, transparent 2.1px) 0 0 / 18px 18px, linear-gradient(160deg, #FFDCE5, ${paper} 55%, #F7B5C6)`;
 
   // The four sides fall outwards, one after another.
   const fall = { stiffness: 170, damping: 11, mass: 0.8 };
@@ -272,7 +291,7 @@ export function ChristmasOpening(p: OpeningProps) {
             initial={false}
             animate={{ opacity: paperOpen ? 1 : 0, scale: glow ? 1.15 : 0.9 }}
             transition={SPRING.soft}
-            style={{ background: `radial-gradient(closest-side, #FFF2C2, ${c.gold}88 40%, transparent 75%)` }}
+            style={{ background: `radial-gradient(closest-side, #FFF6E6, ${SOFT.glow} 40%, transparent 75%)` }}
           />
           <motion.div
             aria-hidden="true"
@@ -281,7 +300,7 @@ export function ChristmasOpening(p: OpeningProps) {
             animate={{ opacity: glow ? 0.55 : 0 }}
             transition={{ duration: 0.8 }}
             style={{
-              background: `repeating-conic-gradient(from 0deg, #FFF2C2 0 6deg, transparent 6deg 18deg)`,
+              background: `repeating-conic-gradient(from 0deg, #FFF6EE 0 6deg, transparent 6deg 18deg)`,
               WebkitMaskImage: "radial-gradient(closest-side, #000 20%, transparent 75%)",
               maskImage: "radial-gradient(closest-side, #000 20%, transparent 75%)",
             }}
@@ -292,12 +311,12 @@ export function ChristmasOpening(p: OpeningProps) {
             <span
               aria-hidden="true"
               className="pointer-events-none absolute inset-[-14%] block rounded-[16%]"
-              style={{ transform: "rotateX(90deg) translateZ(calc(var(--s) / -2 - 1px)) translate(12%, -10%)", background: "rgba(0,0,0,.42)", filter: "blur(14px)" }}
+              style={{ transform: "rotateX(90deg) translateZ(calc(var(--s) / -2 - 1px)) translate(12%, -10%)", background: `rgba(${SOFT.shadow},.34)`, filter: "blur(14px)" }}
             />
             {/* The floor of the box, inside */}
-            <span aria-hidden="true" className="pointer-events-none absolute inset-0 block overflow-hidden" style={{ transform: "rotateX(90deg) translateZ(calc(var(--s) / -2))", background: "#F2E6D3" }}>
+            <span aria-hidden="true" className="pointer-events-none absolute inset-0 block overflow-hidden" style={{ transform: "rotateX(90deg) translateZ(calc(var(--s) / -2))", background: "#FFEFEA" }}>
               <Texture material="card" />
-              <motion.span className="absolute inset-0 block" initial={false} animate={{ opacity: paperOpen ? 1 : 0 }} style={{ background: `radial-gradient(closest-side, #FFF6D8, ${c.gold}66 60%, transparent)` }} />
+              <motion.span className="absolute inset-0 block" initial={false} animate={{ opacity: paperOpen ? 1 : 0 }} style={{ background: `radial-gradient(closest-side, #FFF6EE, ${SOFT.warm}88 60%, transparent)` }} />
             </span>
             {/* Light standing up out of the box */}
             <motion.span
@@ -324,29 +343,29 @@ export function ChristmasOpening(p: OpeningProps) {
               <motion.g initial={false} animate={bandsOff ? { scale: 0.2, opacity: 0, y: -40 } : { scale: 1, opacity: 1, y: 0 }} transition={SPRING.snappy} style={{ originX: "120px", originY: "44px" }}>
                 <defs>
                   <linearGradient id={`bow${uid}`} x1="0" y1="0" x2="0.4" y2="1">
-                    <stop offset="0" stopColor="#FBE7AE" />
+                    <stop offset="0" stopColor={SOFT.ribbonLight} />
                     <stop offset=".45" stopColor={ribbon} />
-                    <stop offset="1" stopColor="#9C7426" />
+                    <stop offset="1" stopColor={SOFT.ribbonShade} />
                   </linearGradient>
                   <radialGradient id={`knot${uid}`} cx=".35" cy=".3" r=".8">
-                    <stop offset="0" stopColor="#FFF0C2" />
-                    <stop offset=".5" stopColor="#C69A3B" />
-                    <stop offset="1" stopColor="#7E5D1C" />
+                    <stop offset="0" stopColor={SOFT.ribbonLight} />
+                    <stop offset=".55" stopColor={SOFT.ribbonShade} />
+                    <stop offset="1" stopColor={SOFT.ribbonDeep} />
                   </radialGradient>
                 </defs>
-                <path d="M120 44c-18-30-58-30-52-6 4 14 30 12 52 6zM120 44c18-30 58-30 52-6-4 14-30 12-52 6z" fill="rgba(0,0,0,.22)" transform="translate(2.5 4)" />
+                <path d="M120 44c-18-30-58-30-52-6 4 14 30 12 52 6zM120 44c18-30 58-30 52-6-4 14-30 12-52 6z" fill={`rgba(${SOFT.shadow},.28)`} transform="translate(2.5 4)" />
                 <path d="M120 44c-18-30-58-30-52-6 4 14 30 12 52 6zM120 44c18-30 58-30 52-6-4 14-30 12-52 6z" fill={`url(#bow${uid})`} />
-                <path d="M78 30c6-6 18-6 26 2M162 30c-6-6-18-6-26 2" fill="none" stroke="#FFF4CF" strokeOpacity=".7" strokeWidth="2" strokeLinecap="round" />
-                <path d="M120 44c-18-30-58-30-52-6 4 14 30 12 52 6zM120 44c18-30 58-30 52-6-4 14-30 12-52 6z" fill="none" stroke="#9C7426" strokeWidth="1.5" />
-                <path d="M120 44c-6 12-16 26-26 34M120 44c6 14 10 20 12 14" stroke="#9C7426" strokeWidth="2" fill="none" />
+                <path d="M78 30c6-6 18-6 26 2M162 30c-6-6-18-6-26 2" fill="none" stroke="#FFFFFF" strokeOpacity=".9" strokeWidth="2" strokeLinecap="round" />
+                <path d="M120 44c-18-30-58-30-52-6 4 14 30 12 52 6zM120 44c18-30 58-30 52-6-4 14-30 12-52 6z" fill="none" stroke={SOFT.ribbonShade} strokeWidth="1.5" />
+                <path d="M120 44c-6 12-16 26-26 34M120 44c6 14 10 20 12 14" stroke={SOFT.ribbonShade} strokeWidth="2" fill="none" />
                 <circle cx="120" cy="44" r="9" fill={`url(#knot${uid})`} />
               </motion.g>
             </g>
             {!untied ? (
               <>
-                <path ref={(el) => void (ropeRefs.current[0] = el)} stroke="rgba(0,0,0,.16)" strokeWidth="12" strokeLinecap="round" fill="none" transform="translate(3 5)" />
+                <path ref={(el) => void (ropeRefs.current[0] = el)} stroke={`rgba(${SOFT.shadow},.2)`} strokeWidth="12" strokeLinecap="round" fill="none" transform="translate(3 5)" />
                 <path ref={(el) => void (ropeRefs.current[1] = el)} stroke={ribbon} strokeWidth="9" strokeLinecap="round" fill="none" />
-                <path ref={(el) => void (ropeRefs.current[2] = el)} stroke="#F4D98F" strokeWidth="3" strokeLinecap="round" fill="none" opacity=".6" transform="translate(-1 -1.2)" />
+                <path ref={(el) => void (ropeRefs.current[2] = el)} stroke="#FFFFFF" strokeWidth="3" strokeLinecap="round" fill="none" opacity=".9" transform="translate(-1 -1.2)" />
                 <circle
                   ref={(el) => void (endRefs.current[0] = el)}
                   r="22"
@@ -384,7 +403,7 @@ export function ChristmasOpening(p: OpeningProps) {
 
 const HALF = "calc(var(--s) / 2)";
 const NEG_HALF = "calc(var(--s) / -2)";
-const BAND = (ribbon: string, dir: "90deg" | "180deg") => `linear-gradient(${dir}, #B98A2E, ${ribbon} 22%, #F4D98F 50%, ${ribbon} 78%, #B98A2E)`;
+const BAND = (ribbon: string, dir: "90deg" | "180deg") => `linear-gradient(${dir}, ${SOFT.ribbonShade}, ${ribbon} 22%, ${SOFT.ribbonLight} 50%, ${ribbon} 78%, ${SOFT.ribbonShade})`;
 
 /** World normal of a side before it falls: front faces the viewer. */
 function sideNormal(turn: number): [number, number, number] {
@@ -398,20 +417,20 @@ function Side({ turn, fold, pattern, ribbon, bandsOff }: { turn: number; fold: M
   return (
     <motion.div className="absolute inset-0" style={{ transform, transformStyle: "preserve-3d" }}>
       {/* Outside */}
-      <span className="absolute inset-0 block overflow-hidden" style={{ background: pattern, backfaceVisibility: "hidden", boxShadow: "inset 0 -14px 24px -16px rgba(0,0,0,.35)" }}>
+      <span className="absolute inset-0 block overflow-hidden" style={{ background: pattern, backfaceVisibility: "hidden", boxShadow: `inset 0 -14px 24px -16px rgba(${SOFT.shadow},.4)` }}>
         <Texture material="paper" opacity={0.35} />
         {/* Ribbon: across the middle, and down the middle on the front and back */}
-        <motion.span className="absolute inset-x-0 top-1/2 block h-[13%] -translate-y-1/2" style={{ background: BAND(ribbon, "180deg"), boxShadow: "0 2px 3px rgba(0,0,0,.25)" }} initial={false} animate={bandsOff ? { scaleX: 0, opacity: 0 } : { scaleX: 1, opacity: 1 }} transition={SPRING.snappy} />
+        <motion.span className="absolute inset-x-0 top-1/2 block h-[13%] -translate-y-1/2" style={{ background: BAND(ribbon, "180deg"), boxShadow: `0 2px 3px rgba(${SOFT.shadow},.3)` }} initial={false} animate={bandsOff ? { scaleX: 0, opacity: 0 } : { scaleX: 1, opacity: 1 }} transition={SPRING.snappy} />
         {turn === 0 || turn === 180 ? (
-          <motion.span className="absolute inset-y-0 left-1/2 block w-[13%] -translate-x-1/2" style={{ background: BAND(ribbon, "90deg"), boxShadow: "2px 0 3px rgba(0,0,0,.2)" }} initial={false} animate={bandsOff ? { scaleY: 0, opacity: 0 } : { scaleY: 1, opacity: 1 }} transition={SPRING.snappy} />
+          <motion.span className="absolute inset-y-0 left-1/2 block w-[13%] -translate-x-1/2" style={{ background: BAND(ribbon, "90deg"), boxShadow: `2px 0 3px rgba(${SOFT.shadow},.26)` }} initial={false} animate={bandsOff ? { scaleY: 0, opacity: 0 } : { scaleY: 1, opacity: 1 }} transition={SPRING.snappy} />
         ) : null}
         <Sheen strength={0.55} angle={105} width={20} travel={45} />
-        <FaceLight normal={sideNormal(turn)} max={0.6} ambient={0.32} />
+        <FaceLight normal={sideNormal(turn)} shade={SOFT.shade} max={0.42} ambient={0.4} />
       </span>
       {/* Inside */}
-      <span className="absolute inset-0 block overflow-hidden" style={{ background: "#F4EBDD", backfaceVisibility: "hidden", transform: "rotateY(180deg)" }}>
+      <span className="absolute inset-0 block overflow-hidden" style={{ background: "#FFF3EF", backfaceVisibility: "hidden", transform: "rotateY(180deg)" }}>
         <Texture material="card" />
-        <span className="absolute inset-0 block" style={{ background: "linear-gradient(0deg, rgba(120,80,30,.18), transparent 60%)" }} />
+        <span className="absolute inset-0 block" style={{ background: "linear-gradient(0deg, rgba(190,90,120,.16), transparent 60%)" }} />
         <FaceLight normal={[0, -1, 0]} max={0.4} ambient={0.5} />
       </span>
     </motion.div>
@@ -461,7 +480,7 @@ function Lid({
         {/* The knot sits in the middle: the bow and the rope follow it */}
         <span ref={knotRef} className="absolute top-1/2 left-1/2 block size-px" />
         <Sheen strength={0.7} angle={120} width={18} travel={40} />
-        <FaceLight normal={[0, -1, 0]} max={0.6} ambient={0.32} />
+        <FaceLight normal={[0, -1, 0]} shade={SOFT.shade} max={0.42} ambient={0.4} />
       </motion.span>
       {/* Sides of the lid */}
       {[0, 90, 180, -90].map((turn) => (
@@ -482,22 +501,22 @@ function Lid({
           animate={fade}
         >
           <motion.span className="absolute inset-y-0 left-1/2 block w-[12%] -translate-x-1/2" style={{ background: BAND(ribbon, "90deg") }} initial={false} animate={bandsOff ? { scaleY: 0, opacity: 0 } : { scaleY: 1, opacity: 1 }} transition={SPRING.snappy} />
-          <FaceLight normal={sideNormal(turn)} max={0.6} ambient={0.32} />
+          <FaceLight normal={sideNormal(turn)} shade={SOFT.shade} max={0.42} ambient={0.4} />
         </motion.span>
       ))}
     </motion.div>
   );
 }
 
-/** A warm cream room with a candle glow and a faint pine edge (Oct 2026: was a dark pine green). */
-export const christmasBackground = (c: ThemePalette): React.CSSProperties => ({
-  backgroundColor: "#F6F0E8",
+/** A soft blush-cream room with a pink glow and a faint sage edge (Oct 2026: was a dark pine green). */
+export const christmasBackground = (_c: ThemePalette): React.CSSProperties => ({
+  backgroundColor: "#FBEFEC",
   backgroundImage: [
     // Fairy-light glow behind, a soft lamp from the top left, then a whisper of pine at the edges.
-    `radial-gradient(55% 45% at 50% 56%, ${c.gold}55, transparent 70%)`,
+    "radial-gradient(55% 45% at 50% 56%, #FFD9E4AA, transparent 70%)",
     `radial-gradient(50% 35% at 22% 12%, rgba(255,255,255,.75), transparent 70%)`,
-    "radial-gradient(130% 100% at 50% 40%, transparent 55%, rgba(47,93,70,.14))",
-    "linear-gradient(180deg, #FAF6F0, #F1E8DD)",
+    "radial-gradient(130% 100% at 50% 40%, transparent 55%, rgba(110,170,140,.16))",
+    "linear-gradient(180deg, #FFF8F4, #F8E4E3)",
     TEXTURE.grain,
   ].join(","),
   backgroundSize: "auto, auto, auto, auto, 160px 160px",
@@ -506,9 +525,9 @@ export const christmasBackground = (c: ThemePalette): React.CSSProperties => ({
 export const defaultBackground = (c: ThemePalette): React.CSSProperties => ({
   backgroundColor: c.snow,
   backgroundImage: [
-    `radial-gradient(55% 45% at 50% 56%, ${c.gold}66, transparent 70%)`,
+    "radial-gradient(55% 45% at 50% 56%, #FFD9E4AA, transparent 70%)",
     `radial-gradient(50% 35% at 22% 12%, rgba(255,255,255,.7), transparent 70%)`,
-    "radial-gradient(130% 100% at 50% 40%, transparent 55%, rgba(43,37,34,.2))",
+    "radial-gradient(130% 100% at 50% 40%, transparent 55%, rgba(190,90,120,.14))",
     TEXTURE.grain,
   ].join(","),
   backgroundSize: "auto, auto, auto, 160px 160px",
