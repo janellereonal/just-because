@@ -6,7 +6,7 @@ import { KIND_WORDS, giftHeading, giftWords, occasionTitle, themeKindOf } from "
 import { MODULES } from "./gift";
 import { NEW_SECTION_TYPES } from "./sections";
 import { OCCASIONS, OCCASION_IDS, OCCASION_FOR_KIND, occasionGreeting, occasionInfo } from "./occasions";
-import { STYLES, STYLE_IDS, lookFor, resolveStyle, styleForLegacy, styleInfo, stylesForOccasion } from "./styles";
+import { STYLES, STYLE_IDS, lookFor, resolveStyle, splitForOccasion, styleForLegacy, styleInfo, stylesForOccasion } from "./styles";
 import { OPENINGS } from "@/themes/TactileOpening";
 import { engineThemeForName } from "@/themes/engine/registry";
 
@@ -119,8 +119,43 @@ describe("occasions", () => {
     expect(birthday[0]).toBe("cake");
     expect(birthday).toHaveLength(STYLES.length);
     const anniversary = stylesForOccasion("anniversary").map((s) => s.id);
-    expect(anniversary.slice(0, 4)).toEqual(["love-letter", "stars", "storybook", "mixtape"]);
+    expect(anniversary.slice(0, 4)).toEqual(["record-player", "love-letter", "stars", "storybook"]);
     expect(stylesForOccasion(null).map((s) => s.id)).toEqual(STYLES.map((s) => s.id));
+  });
+
+  test("an occasion's chip only shows styles made for it, plus plain layouts", () => {
+    const ids = (o: Parameters<typeof splitForOccasion>[0]) => splitForOccasion(o).fits.map((s) => s.id);
+    const birthday = ids("birthday");
+    expect(birthday).toContain("cake");
+    expect(birthday).not.toContain("invitation");
+    expect(birthday).not.toContain("crib-mobile");
+    expect(birthday).not.toContain("parol");
+    const wedding = ids("wedding");
+    expect(wedding[0]).toBe("invitation");
+    expect(wedding).not.toContain("cake");
+    expect(wedding).not.toContain("countdown");
+    const christmas = ids("christmas");
+    expect(christmas).toEqual(expect.arrayContaining(["gift-box", "parol", "winter-window"]));
+    expect(christmas).not.toContain("love-letter");
+    // Calm occasions: no party styles, no Christmas box, only calm layouts.
+    for (const o of ["sympathy", "get-well"] as const) {
+      const list = splitForOccasion(o).fits;
+      expect(list.some((s) => s.mood === "party")).toBe(false);
+      expect(list.map((s) => s.id)).not.toContain("gift-box");
+    }
+    // Plain layouts are under every lively occasion.
+    for (const o of ["birthday", "graduation", "pets"] as const) expect(ids(o)).toContain("scrapbook");
+    // Nothing is lost: fits + others is every style.
+    const all = splitForOccasion("pets");
+    expect(all.fits.length + all.others.length).toBe(STYLES.length);
+    expect(splitForOccasion(null).others).toHaveLength(0);
+  });
+
+  test("every occasion lists only real styles, with no repeats", () => {
+    for (const o of OCCASIONS) {
+      expect(new Set(o.styles).size).toBe(o.styles.length);
+      for (const id of o.styles) expect(STYLE_IDS).toContain(id);
+    }
   });
 
   test("old theme kinds map to occasions that exist", () => {
