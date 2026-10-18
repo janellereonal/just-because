@@ -14,7 +14,10 @@ export type FormatInfo = {
   copy: string;
   /** Longer line for the editor. */
   about: string;
-  /** Shows the gift opening animation first (comic has its own cover). */
+  /**
+   * Plays the gift's opening first. True for every layout: the opening opens the gift and
+   * the layout is how it's read, so a layout never adds a second opening of its own.
+   */
   usesIntro: boolean;
   isNew?: boolean;
   /** Only offered in pickers while this flag is on (src/config/flags.ts). Saved gifts always render. */
@@ -34,7 +37,7 @@ export const FORMATS: FormatInfo[] = [
     title: "Comic Issue",
     copy: "A cover and page-turn adventure",
     about: "A comic cover, then chapters they flip through.",
-    usesIntro: false,
+    usesIntro: true,
   },
   {
     id: "bento",
