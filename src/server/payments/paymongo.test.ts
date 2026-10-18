@@ -22,9 +22,36 @@ afterAll(() => fake.stop());
 
 const h = (sig?: string) => new Headers(sig ? { "paymongo-signature": sig } : {});
 
+describe("closing and reopening checkouts", () => {
+  test("an open checkout can be reopened, then expired, then neither", async () => {
+    fake.add("cs_open1", 29900, "22222222-2222-4222-8222-222222222222");
+    fake.sessions.get("cs_open1")!.checkoutUrl = "http://fake/pay/cs_open1";
+    expect(await paymongo.paymongo.reopenCheckout("cs_open1")).toBe("http://fake/pay/cs_open1");
+    expect(await paymongo.paymongo.expireCheckout("cs_open1")).toBe("closed");
+    expect(await paymongo.paymongo.reopenCheckout("cs_open1")).toBeNull();
+    // Expiring twice is fine.
+    expect(await paymongo.paymongo.expireCheckout("cs_open1")).toBe("closed");
+  });
+  test("a paid checkout can't be closed and says so", async () => {
+    expect(await paymongo.paymongo.expireCheckout("cs_abc123")).toBe("paid");
+    expect(await paymongo.paymongo.reopenCheckout("cs_abc123")).toBeNull();
+  });
+  test("a checkout with a payment under way stays open", async () => {
+    fake.add("cs_busy1", 29900, "33333333-3333-4333-8333-333333333333");
+    fake.sessions.get("cs_busy1")!.busy = true;
+    expect(await paymongo.paymongo.expireCheckout("cs_busy1")).toBe("open");
+  });
+});
+
 describe("handleWebhook", () => {
   test("junk is rejected", async () => {
     expect((await paymongo.paymongo.handleWebhook("not json", h())).kind).toBe("rejected");
+  });
+  test("a body of null, a number or a list is rejected as malformed (400), not a crash", async () => {
+    for (const body of ["null", "42", "[]", '"text"']) {
+      const r = await paymongo.paymongo.handleWebhook(body, h());
+      expect(r.kind === "rejected" && r.malformed).toBe(true);
+    }
   });
   test("other event types are ignored", async () => {
     const body = JSON.stringify({ data: { id: "evt_1", attributes: { type: "payment.failed", data: {} } } });

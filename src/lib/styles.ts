@@ -74,6 +74,8 @@ export type StyleInfo = {
   body: GiftFormat;
   /** Used for new gifts while `body` sits behind a flag that's off. */
   fallbackBody?: GiftFormat;
+  /** Layouts older gifts in this style were saved with (Handwritten was a zine before Oct 2026). */
+  oldBodies?: GiftFormat[];
   /** Party styles sink to the bottom for calm occasions (Sympathy, Get well). */
   mood: "party" | "calm" | "easy";
 };
@@ -104,7 +106,9 @@ export const STYLES: StyleInfo[] = [
     origin: "theme",
     looks: [{ id: "note", theme: "Handwritten" }],
     body: "handwritten",
-    fallbackBody: "zine",
+    // A calm style needs a calm way to read while the notebook is behind its flag (was zine).
+    fallbackBody: "storybook",
+    oldBodies: ["zine"],
     mood: "calm",
   },
   { id: "winter-window", origin: "theme", looks: [{ id: "cabin", theme: "Winter Cabin Christmas" }], body: "scrapbook", mood: "calm" },
@@ -246,6 +250,11 @@ export function styleForLegacy(theme: ThemeLike, format: GiftFormat): StyleInfo 
   const name = (theme?.name ?? "").trim().toLowerCase();
   if (!name) return STYLES.find((s) => s.origin === "layout" && s.body === format) ?? null;
   return (
-    STYLES.find((s) => s.origin === "theme" && s.looks.some((l) => l.theme.toLowerCase() === name) && (s.body === format || s.fallbackBody === format)) ?? null
+    STYLES.find((s) => s.origin === "theme" && s.looks.some((l) => l.theme.toLowerCase() === name) && (s.body === format || s.fallbackBody === format || !!s.oldBodies?.includes(format))) ?? null
   );
+}
+
+/** What to call a gift's look in lists (My gifts): its style, else its layout for gifts made before styles. */
+export function giftLookTitle(site: { style?: string | null; format: GiftFormat }): string {
+  return isStyleId(site.style) ? styleTitle(site.style) : formatInfo(site.format).title;
 }

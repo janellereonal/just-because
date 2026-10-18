@@ -30,7 +30,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { isGiftEnded, normalizeSite, type GiftSite } from "@/lib/gift";
 import { getTier } from "@/config/pricing";
-import { formatInfo } from "@/lib/formats";
+import { giftLookTitle } from "@/lib/styles";
 import Bo from "@/components/Bo";
 import { GiftCover } from "@/components/GiftCover";
 import { fetchThemes, type Theme } from "@/lib/themes";
@@ -83,7 +83,7 @@ function GiftCard({ site, index, theme, counts }: { site: GiftSite; index: numbe
       >
         <GiftCover site={site} theme={theme} className="absolute inset-0" />
         <span className="absolute top-3 right-3 rounded-full bg-white/85 px-2.5 py-1 text-[11px] font-medium text-ink backdrop-blur">
-          {site.solo ? "Just me" : "Me and friends"} · {formatInfo(site.format).title}
+          {site.solo ? "Just me" : "Me and friends"} · {giftLookTitle(site)}
         </span>
       </Link>
       <div className="flex flex-1 flex-col gap-4 p-5">

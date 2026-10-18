@@ -20,7 +20,7 @@ import {
 } from "@/lib/styles";
 
 /** Backdrops for layout styles, so each card reads as its own thing. */
-const LAYOUT_STAGE: Record<string, string> = {
+export const LAYOUT_STAGE: Record<string, string> = {
   scrapbook: "linear-gradient(140deg, var(--pink), var(--lilac) 55%, var(--sky))",
   storybook: "linear-gradient(140deg, var(--peach), var(--butter))",
   comic: "#1f2440",
@@ -62,7 +62,13 @@ export function StylePicker({
   isAllowed,
   first = 6,
   current,
+  loading = false,
 }: {
+  /**
+   * Still finding out which styles can be picked (the themes are loading). Shows placeholder
+   * cards in the same grid instead, so cards never jump around under someone's finger.
+   */
+  loading?: boolean;
   value: StyleId | null;
   onChange: (id: StyleId) => void;
   occasion: OccasionId | null;
@@ -87,6 +93,22 @@ export function StylePicker({
   const list = filtered;
   const pickedAt = value ? list.findIndex((s) => s.id === value) : -1;
   const shown = occasion || all || pickedAt >= first ? list : list.slice(0, first);
+  if (loading) {
+    return (
+      <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-3" aria-busy="true" aria-label={t("picker.style.label")}>
+        {Array.from({ length: first }, (_, i) => (
+          <div key={i} data-style-placeholder className="fmt-card style-card pointer-events-none" aria-hidden>
+            <span className="fmt-stage animate-pulse bg-ink/5" />
+            <span className="block px-3 pt-2.5 pb-3">
+              <span className="block h-3.5 w-2/3 rounded-full bg-ink/10" />
+              <span className="mt-2 block h-2.5 w-full rounded-full bg-ink/5" />
+              <span className="mt-1.5 block h-2.5 w-1/2 rounded-full bg-ink/5" />
+            </span>
+          </div>
+        ))}
+      </div>
+    );
+  }
   return (
     <fieldset>
       <legend className="sr-only">{t("picker.style.label")}</legend>

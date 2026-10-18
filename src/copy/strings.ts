@@ -672,6 +672,21 @@ export const PRICE_COPY = {
   abroadPayNote: "Paying from outside the Philippines? Use a Visa or Mastercard. It's charged in pesos, and some banks add a small fee for that.",
 } as const;
 
+/** Paying safely: paused gifts, paying in two tabs, refunds we owe. */
+export const PAY_SAFETY_COPY = {
+  paused: "This gift is paused, so it can't be paid for right now. Write to us if you think that's a mistake.",
+  pausedBanner: "This gift is paused, so its link doesn't open and it can't be paid for. Write to us if you think that's a mistake.",
+  pausedWrap: "Paused, so it can't be wrapped up right now.",
+  planChanged: "This gift's plan changed in another tab. Have a look at the plans again before paying.",
+  paidElsewhere: "A payment for this gift just went through in another tab, so we stopped here. Have a look before paying again.",
+  chargedTwiceTitle: "You were charged twice",
+  chargedTwice: (amount: string) => `This gift already had this plan, so nothing changed. We'll refund ${amount} within a few days.`,
+  deletedRefund: (amount: string) => `This gift was deleted before the payment came in. We'll refund ${amount} within a few days.`,
+  overpaid: (amount: string) => `You paid ${amount} more than this needed, so we'll refund ${amount} within a few days.`,
+  notFoundTitle: "We couldn't find that payment",
+  notFound: "It may belong to another account. Sign in with the account that paid, or head back to your gifts.",
+};
+
 /** Starting a gift without an account (flag guestStart). */
 export const GUEST_COPY = {
   keep: "Sign in so you don't lose your gift.",
@@ -680,6 +695,7 @@ export const GUEST_COPY = {
   google: "Continue with Google",
   email: "Use email instead",
   limit: "Sign in to make more gifts. Guests can start up to 3.",
+  limitBody: "Guests can start up to 3 gifts. Sign in and they move to your account, then you can make this one too.",
   shareTitle: "Sign in to share it",
   shareBody: "Your gift is saved on this device for now. Sign in and it moves to your account, so friends can add to it and it's safe if you switch phones.",
   payTitle: "Sign in to wrap it up",
@@ -688,6 +704,13 @@ export const GUEST_COPY = {
   authHeading: "Keep your gift",
   authBody: "Sign in or make an account. The gift you started moves over with everything in it.",
   starting: "Starting your gift…",
+};
+
+/** Words → Opening style: which opening plays (Oct 2026: "Classic" used to hide the style's own without saying so). */
+export const OPENING_CHOICE_COPY = {
+  styleChip: (style: string) => `${style} opening`,
+  styleOn: (style: string) => `They'll see the ${style} opening.`,
+  classicOn: (style: string) => `They'll see Classic instead of the ${style} opening. Switching style brings the style's own back.`,
 };
 
 /** Placing stickers on the opening, in the editor's preview. */
@@ -747,3 +770,22 @@ export const BENTO_COPY = {
     video: "Videos",
   },
 } as const;
+
+/** The editor's save state (top bar), and the notice when the gift changed in another tab or device. */
+export const SAVE_COPY = {
+  saving: "Saving…",
+  saved: "Saved",
+  retrying: "Not saved yet, retrying",
+  notSaved: "Not saved",
+  notSavedShort: "Not saved yet",
+  offline: "Offline. We'll save when you're back",
+  conflictTitle: "This gift was changed somewhere else",
+  conflictBody: "Maybe in another tab or on your phone. Load the latest version to keep editing. Your last change here wasn't saved.",
+  conflictButton: "Load the latest",
+  conflictLoading: "Loading…",
+  pulled: "Updated with changes made somewhere else.",
+  rejected: "We couldn't save that change.",
+  leaveUnsaved: "Your last changes aren't saved yet. Leave anyway?",
+  /** Server reply when a save would overwrite a newer change (status 409). */
+  serverConflict: "This gift was changed somewhere else. Load the latest version and try again.",
+};

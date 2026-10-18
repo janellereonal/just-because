@@ -173,6 +173,11 @@ export const giftSites = pgTable(
     disabledAt: timestamp("disabled_at", { withTimezone: true }),
     disabledReason: text("disabled_reason"),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    /**
+     * Last time anything in the row changed. A database trigger (migration 0019) sets it on
+     * every update, so no write can forget. The editor uses it to tell a newer copy from an older one.
+     */
+    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
   },
   (t) => [index("gift_sites_creator_idx").on(t.creatorId)],
 );
@@ -255,7 +260,7 @@ export const orders = pgTable(
     discountCode: text("discount_code"),
     /** Centavos taken off by the code (full price = amount + discountAmount). */
     discountAmount: integer("discount_amount").notNull().default(0),
-    /** pending | paid | failed | expired */
+    /** pending | paid | failed | expired | refund_pending (paid but bought nothing: owed back, see billing.ts) */
     status: text("status").notNull().default("pending"),
     provider: text("provider").notNull().default("paymongo"),
     providerCheckoutId: text("provider_checkout_id").unique(),

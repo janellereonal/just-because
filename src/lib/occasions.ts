@@ -58,6 +58,7 @@ export type OccasionInfo = {
    * The styles made for this occasion, best match first. Picking the occasion shows only these
    * plus the plain layouts (Scrapbook, Storybook...), which suit anything. Every other style is
    * one tap away under "Show other styles". The first three get the "Top pick" tag.
+   * Gift box wears the Christmas theme (colors, snow, words), so it's only listed for Christmas.
    */
   styles: StyleId[];
   /** The sections a new gift starts with. */
@@ -69,7 +70,7 @@ export type OccasionInfo = {
 export const OCCASIONS: OccasionInfo[] = [
   {
     id: "birthday",
-    styles: ["cake", "debut", "board-game", "gift-box", "arcade", "scrapbook", "bento", "zine", "scratch", "hunt"],
+    styles: ["cake", "debut", "board-game", "arcade", "scrapbook", "bento", "zine", "scratch", "hunt"],
     sections: ["letters", "photobooth", "wordcloud", "voice", "countdown", "superlatives"],
     bo: "birthday",
   },
@@ -173,7 +174,7 @@ export const OCCASIONS: OccasionInfo[] = [
   },
   {
     id: "thank-you",
-    styles: ["handwritten", "care-package", "gift-box", "scrapbook"],
+    styles: ["handwritten", "care-package", "scrapbook"],
     sections: ["letters", "photobooth", "voice", "doodle", "coupons"],
     bo: "default",
   },
@@ -202,7 +203,7 @@ export const OCCASIONS: OccasionInfo[] = [
     id: "lunar-new-year",
     parent: "holidays",
     culturalReview: true,
-    styles: ["gift-box", "countdown", "scrapbook"],
+    styles: ["countdown", "scrapbook"],
     sections: ["letters", "photobooth", "wordcloud", "voice", "video"],
     bo: "default",
   },
