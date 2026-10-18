@@ -1,4 +1,5 @@
 import { giftVoice } from "@/lib/giftVoice";
+import { GiftProgress } from "@/components/GiftProgress";
 import { shareGift, trackEvent } from "@/lib/track";
 import { sampleLetter } from "@/copy/strings";
 import { useEffect, useMemo, useRef, useState } from "react";
@@ -614,6 +615,7 @@ export function GiftSiteView({
     >
       <SkinDecor kind={kind} icons={icons} colors={playColors} />
       {sectionsOnly ? null : <ScrollStory kind={kind} rootRef={rootRef} icons={icons} accent={accentDeco} ink={palette.primary} />}
+      {sectionsOnly ? null : <GiftProgress rootRef={rootRef} accent={accentDeco} ink={readableInk(palette.background)} />}
       <div className={sectionsOnly ? "px-4 pt-12 pb-6" : "mx-auto max-w-3xl px-5 py-10 sm:py-14"}>
         {sectionsOnly ? null : (
         <header className="sk-hero text-center">
