@@ -58,6 +58,8 @@ function site(
     slug: `demo-${id}`,
     status: "published",
     format: "scrapbook",
+    style: null,
+    occasion: null,
     format_settings: {},
     custom_text: {
       heading,

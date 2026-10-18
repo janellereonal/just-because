@@ -103,6 +103,8 @@ export function buildPreviewSite(theme: Theme, palette: Palette | undefined): Gi
     slug: "preview",
     status: "published",
     format: "scrapbook",
+    style: null,
+    occasion: null,
     format_settings: {},
     custom_text: {
       heading: sample.heading,

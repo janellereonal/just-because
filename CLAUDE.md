@@ -132,6 +132,19 @@ verification is only required once `RESEND_API_KEY` and `EMAIL_FROM` are both se
   with known CVEs.
 - `bunfig.toml` refuses packages published less than 24h ago (supply-chain guard).
 
+## Styles and occasions (Oct 2026, replacing "theme + format" in the UI)
+
+- **Style** is the one visual choice (`src/lib/styles.ts`): its own opening, look and way of reading.
+  Styles made from themes (Cake, Love Letter...) borrow a theme row as their "look"; styles made
+  from layouts (Scrapbook, Mixtape...) wear none. **Occasion** (`src/lib/occasions.ts`) only sorts the
+  styles, picks the words, the starting sections and Bo's outfit. Words are full sentences in
+  `src/i18n/en.ts` (`occasion.<id>.*`, `style.<id>.*`).
+- Stored as `gift_sites.style` and `gift_sites.occasion` (migration 0016, both nullable). A style always
+  sets `format` to its layout and `theme_id` to its look, server side (`themeForStyle` in api.ts).
+- Gifts from before styles have both null and render exactly as before: theme opening + saved layout,
+  theme words (`resolveStyle`, `giftWords`; tested for every theme × layout in `src/lib/styles.test.ts`).
+- Changing only the layout of a styled gift clears its style (it becomes a theme + layout gift).
+
 ## Themes, cast and sections
 
 - Each theme's opening lives in `src/themes/<theme>/Opening.tsx`, registered in `src/themes/TactileOpening.tsx`.

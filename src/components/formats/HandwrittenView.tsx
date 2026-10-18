@@ -182,7 +182,7 @@ export function HandwrittenView({ theme, site, modules, contributions, calendarE
   const cd = useCountdown(data.countdownDate);
   const [sheet, setSheet] = useState<Piece | null>(null);
   const accent = palette.accent;
-  const heading = giftHeading(site.custom_text, theme);
+  const heading = giftHeading(site.custom_text, theme, site.occasion);
   useEffect(() => {
     for (const h of HANDS) loadFont({ family: h.family, source: "google", query: h.query }, "high");
   }, []);

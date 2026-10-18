@@ -116,7 +116,7 @@ export function StorybookView({
   const fonts = FONT_PAIRINGS[site.font_choice] ?? FONT_PAIRINGS.romantic;
   const ink = "#3b2f2a";
   const coverInk = readableInk(palette.accent);
-  const heading = giftHeading(site.custom_text, theme);
+  const heading = giftHeading(site.custom_text, theme, site.occasion);
 
   const pages: Page[] = [
     { type: "cover" },
