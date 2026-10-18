@@ -2,8 +2,12 @@ import { createHash } from "node:crypto";
 import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { tanstackStartCookies } from "better-auth/tanstack-start";
+import { anonymous } from "better-auth/plugins";
+import { and, eq } from "drizzle-orm";
 import { getDb, schema } from "./db";
 import { emailEnabled, existingAccountEmail, resetPasswordEmail, siteUrl, verifyEmail } from "./email";
+import { claimGuestGifts, GUEST_EMAIL_DOMAIN } from "./guests";
+import { isFlagOn } from "@/config/flags";
 
 /**
  * BETTER_AUTH_SECRET signs session cookies. If it isn't set, derive a stable
@@ -68,6 +72,33 @@ function createAuth() {
       googleId && googleSecret
         ? { google: { clientId: googleId, clientSecret: googleSecret, prompt: "select_account" } }
         : {},
+    account: {
+      // Signing in with Google using the email of an existing account adds Google to that
+      // account (one person, one account), instead of failing or making a second one.
+      accountLinking: { enabled: true, trustedProviders: ["google"] },
+    },
+    databaseHooks: {
+      account: {
+        create: {
+          before: async (account) => {
+            // Someone could sign up with an email that isn't theirs and never confirm it. If the
+            // real owner later signs in with Google, Google proves the email is theirs: drop the
+            // unconfirmed password and its sessions so the first person can't get back in.
+            if (account.providerId !== "google") return;
+            const db = getDb();
+            const [owner] = await db
+              .select({ verified: schema.user.emailVerified })
+              .from(schema.user)
+              .where(eq(schema.user.id, account.userId));
+            if (!owner || owner.verified) return;
+            await db
+              .delete(schema.account)
+              .where(and(eq(schema.account.userId, account.userId), eq(schema.account.providerId, "credential")));
+            await db.delete(schema.session).where(eq(schema.session.userId, account.userId));
+          },
+        },
+      },
+    },
     user: {
       additionalFields: {
         isAdmin: { type: "boolean", required: false, defaultValue: false, input: false },
@@ -77,7 +108,17 @@ function createAuth() {
       expiresIn: 60 * 60 * 24 * 30,
       cookieCache: { enabled: true, maxAge: 60 * 5 },
     },
-    plugins: [tanstackStartCookies()],
+    plugins: [
+      // Guests (flag guestStart): a real session before an account. Their gifts move over on sign-in.
+      ...(isFlagOn("guestStart") ? [anonymous({
+        emailDomainName: GUEST_EMAIL_DOMAIN,
+        generateName: () => "Guest",
+        onLinkAccount: async ({ anonymousUser, newUser }) => {
+          await claimGuestGifts(anonymousUser.user.id, newUser.user.id);
+        },
+      })] : []),
+      tanstackStartCookies(),
+    ],
   });
 }
 

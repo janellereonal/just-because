@@ -3,7 +3,8 @@ import { eq } from "drizzle-orm";
 import { getAuth } from "./auth";
 import { getDb, schema } from "./db";
 
-export type SessionUser = { id: string; email: string; name: string; isAdmin: boolean };
+/** `isGuest`: started a gift without an account yet (flag guestStart). */
+export type SessionUser = { id: string; email: string; name: string; isAdmin: boolean; isGuest: boolean };
 
 /** The signed-in person for this request, or null. */
 export async function currentUser(): Promise<SessionUser | null> {
@@ -13,7 +14,7 @@ export async function currentUser(): Promise<SessionUser | null> {
   if (!result?.user) return null;
   // Read is_admin fresh from the database so the session cookie cache can't go stale on it.
   const [row] = await getDb()
-    .select({ isAdmin: schema.user.isAdmin })
+    .select({ isAdmin: schema.user.isAdmin, isAnonymous: schema.user.isAnonymous })
     .from(schema.user)
     .where(eq(schema.user.id, result.user.id));
   return {
@@ -21,6 +22,7 @@ export async function currentUser(): Promise<SessionUser | null> {
     email: result.user.email,
     name: result.user.name,
     isAdmin: Boolean(row?.isAdmin),
+    isGuest: Boolean(row?.isAnonymous),
   };
 }
 
@@ -36,6 +38,13 @@ export class HttpError extends Error {
 export async function requireUser(): Promise<SessionUser> {
   const user = await currentUser();
   if (!user) throw new HttpError(401, "Please sign in again.");
+  return user;
+}
+
+/** Like requireUser, but guests are asked to sign in first (paying, and anything that needs a real email). */
+export async function requireAccount(): Promise<SessionUser> {
+  const user = await requireUser();
+  if (user.isGuest) throw new HttpError(401, "Sign in so you don't lose your gift.");
   return user;
 }
 

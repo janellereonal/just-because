@@ -671,3 +671,21 @@ export const PRICE_COPY = {
   /** Next to the pay button, for visitors outside the Philippines. */
   abroadPayNote: "Paying from outside the Philippines? Use a Visa or Mastercard. It's charged in pesos, and some banks add a small fee for that.",
 } as const;
+
+/** Starting a gift without an account (flag guestStart). */
+export const GUEST_COPY = {
+  keep: "Sign in so you don't lose your gift.",
+  bannerBody: "You're making this as a guest. Sign in to share it, pay for it or open it on another device.",
+  signIn: "Sign in",
+  google: "Continue with Google",
+  email: "Use email instead",
+  limit: "Sign in to make more gifts. Guests can start up to 3.",
+  shareTitle: "Sign in to share it",
+  shareBody: "Your gift is saved on this device for now. Sign in and it moves to your account, so friends can add to it and it's safe if you switch phones.",
+  payTitle: "Sign in to wrap it up",
+  payBody: "We'll send the receipt and the gift link to your email. Everything you made comes with you.",
+  later: "Not now",
+  authHeading: "Keep your gift",
+  authBody: "Sign in or make an account. The gift you started moves over with everything in it.",
+  starting: "Starting your gift…",
+};

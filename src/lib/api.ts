@@ -17,6 +17,7 @@
  *  - a password-protected gift (paid feature) also needs the right password
  *    first; the password hash itself never leaves the server
  */
+import { GUEST_COPY } from "@/copy/strings";
 import { FORMAT_IDS, type GiftFormat } from "@/lib/formats";
 import { STYLE_IDS, bodyFor, lookFor, styleInfo, type StyleInfo } from "@/lib/styles";
 import { OCCASION_IDS, occasionInfo, type OccasionId } from "@/lib/occasions";
@@ -436,6 +437,10 @@ export const createSite = createServerFn({ method: "POST" })
   )
   .handler(async ({ data }) => {
     const user = await requireUser();
+    if (user.isGuest) {
+      const { GUEST_GIFT_LIMIT, giftCount } = await import("@/server/guests");
+      if ((await giftCount(user.id)) >= GUEST_GIFT_LIMIT) throw new HttpError(401, GUEST_COPY.limit);
+    }
     const db = getDb();
     // A double tap on "Create" makes one gift, not two: the same title from the
     // same person within a few seconds returns the gift that was just made.
@@ -940,6 +945,11 @@ export const getGiftRoom = createServerFn({ method: "GET" })
 /* Plans & payments                                                   */
 /* ------------------------------------------------------------------ */
 
+/** Paying needs a real account (the receipt, the "it's live" email, coming back later). */
+function guestsSignInFirst(user: { isGuest: boolean }) {
+  if (user.isGuest) throw new HttpError(401, GUEST_COPY.keep);
+}
+
 async function ownedSite(siteId: string) {
   const { user } = await requireSiteOwner(siteId);
   const [site] = await getDb().select().from(schema.giftSites).where(eq(schema.giftSites.id, siteId));
@@ -1080,6 +1090,7 @@ export const startCheckout = createServerFn({ method: "POST" })
   .inputValidator(z.object({ siteId: id, tier: z.enum(["sweet", "celebration", "keepsake"]), code: z.string().max(40).optional() }))
   .handler(async ({ data }) => {
     const { user, site } = await ownedSite(data.siteId);
+    guestsSignInFirst(user);
     return openCheckout(user, site, await quote(site, data.tier, { code: data.code?.trim() || null, userId: user.id }));
   });
 
@@ -1091,6 +1102,7 @@ export const previewDiscountCode = createServerFn({ method: "POST" })
   .inputValidator(z.object({ siteId: id, code: z.string().min(1).max(40) }))
   .handler(async ({ data }) => {
     const { user, site } = await ownedSite(data.siteId);
+    guestsSignInFirst(user);
     const { codeProblem, findCode, priceWith, tooManyTries } = await import("@/server/discounts");
     if (tooManyTries(user.id)) return { ok: false as const, message: "That's a lot of codes. Try again in a few minutes." };
     if (getTier(site.tier)) return { ok: false as const, message: "Codes work when you first pick a plan." };
@@ -1112,6 +1124,7 @@ export const startExtendCheckout = createServerFn({ method: "POST" })
   .inputValidator(z.object({ siteId: id }))
   .handler(async ({ data }) => {
     const { user, site } = await ownedSite(data.siteId);
+    guestsSignInFirst(user);
     return openCheckout(user, site, quoteExtend(site));
   });
 

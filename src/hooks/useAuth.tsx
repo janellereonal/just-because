@@ -6,6 +6,8 @@ export type AuthUser = {
   name: string;
   image?: string | null;
   isAdmin?: boolean | null;
+  /** Started a gift without an account (flag guestStart). */
+  isAnonymous?: boolean | null;
 };
 
 /** The signed-in person (if any). `isAdmin` comes from the account row. */
@@ -17,5 +19,6 @@ export function useAuth() {
     user,
     loading: isPending,
     isAdmin: user?.isAdmin === true,
+    isGuest: user?.isAnonymous === true,
   };
 }
