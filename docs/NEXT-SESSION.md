@@ -8,6 +8,14 @@ outline as neighbours are found (any tap order), its own synthesized sound (`src
 around, reduced motion = a still sky, no WebGL = the classic sky. Test tap-through: `tools/screens/skyplay.cjs`.
 Next: bring the other styles up to the same bar, one at a time, each with its own sound.
 
+**19 Oct, round 1 (merged):** every layout opening got a real scene and its own sound story (scenes.tsx, sound/), every
+body got material sounds (page turns, cassette clicks, foil, lids), every note sheet opens with a sound.
+
+**19 Oct, round 2 (merged):** video and quiz now sit inside each body in its own look (`extraSections` in
+FormatView, styles `.fmt-extras.is-*`); Gift Hunt gifts come in five shapes on a map trail; every Scratch ticket is
+a game that hints at what's under it (Lucky Letter, Photo Finish, Top of the Charts, Say It Again, Golden Ticket);
+Scrapbook pages make a paper sound as they scroll in. Test every body with sound on: `tools/screens/body-play.cjs`.
+
 ## Latest (18 Oct 2026): styles and occasions
 
 Janelle's restructure: **Style** becomes the one visual choice, **Occasion** an optional filter, and the word

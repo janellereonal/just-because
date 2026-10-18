@@ -6,6 +6,8 @@ import type { Palette } from "@/lib/themes";
 import { giftToday, useMediaUrl, type Piece } from "@/lib/giftPieces";
 
 /** Deterministic 0..1 from an id, so layouts don't jump between renders. */
+import { material, type Material } from "@/lib/sound/material";
+
 export function seed(id: string) {
   let h = 2166136261;
   for (let i = 0; i < id.length; i++) h = Math.imul(h ^ id.charCodeAt(i), 16777619);
@@ -31,11 +33,22 @@ export function PieceSheet({
   piece,
   palette,
   onClose,
+  sound = "unfold",
 }: {
   piece: Piece;
   palette: Palette;
   onClose: () => void;
+  /** What opening this note sounds like in this style (a page, a card, a polaroid...). */
+  sound?: Material | null;
 }) {
+  // The note itself makes a sound when it opens, and a softer one when it's put down.
+  useEffect(() => {
+    if (sound) material(sound, { strength: 0.9 });
+    return () => {
+      if (sound) material("slide", { strength: 0.6 });
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [piece.id]);
   const media = useMediaUrl(piece.media);
   const embed = piece.link ? toEmbedUrl(piece.link) : null;
   const ink = readableInk(palette.background);

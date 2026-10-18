@@ -31,6 +31,8 @@ import { PixelOpening, pixelBackground } from "@/themes/pixel/Opening";
 import { EngineStage } from "@/themes/engine/EngineStage";
 import { engineThemeForName } from "@/themes/engine/registry";
 import { layoutOpeningFor } from "@/themes/layouts";
+import { SCENES } from "@/themes/layouts/scenes";
+import type { StyleId } from "@/lib/styles";
 import type { EngineNote, ThemeOptions } from "@/themes/engine/define";
 import type { SlotInput } from "@/themes/engine/slots";
 
@@ -247,6 +249,8 @@ export function TactileOpening({
   const layout = layoutOpeningFor(style);
   const letterOn = !layout && kind === "valentine" && isFlagOn("letterOpenings");
   const Component = layout?.Component ?? (letterOn ? LoveLetterOpening : entry.Component);
+  // Layout styles bring their own place (a craft table, a bedside...) instead of the theme's confetti.
+  const layoutScene = layout && style ? SCENES[style as StyleId] : undefined;
   const c = design.palette;
   return (
     <OpeningShell
@@ -264,9 +268,14 @@ export function TactileOpening({
       {...((layout ? layout.grain : entry.grain) !== undefined
         ? { grain: (layout ? layout.grain : entry.grain)! }
         : {})}
-      {...(entry.sprinkles !== 0 && !calm
-        ? { sprinkles: set, sprinkleOpacity: entry.sprinkles ?? 0.4 }
-        : {})}
+      {...(layoutScene
+        ? {
+            scene: (reduced: boolean) =>
+              layoutScene({ primary: palette.primary, accent: palette.accent, reduced }),
+          }
+        : entry.sprinkles !== 0 && !calm
+          ? { sprinkles: set, sprinkleOpacity: entry.sprinkles ?? 0.4 }
+          : {})}
     >
       {({ hostRef, open, reduced }) => (
         <Component

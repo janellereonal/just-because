@@ -17,8 +17,8 @@ import {
   Texture,
   elevation,
 } from "@/themes/_shared/light";
-import { foley } from "@/lib/play";
-import { giftColors, live, pressable, useAutoplay, useOpenSequence } from "./kit";
+import { material } from "@/lib/sound/material";
+import { giftColors, live, pressable, soundAt, useAutoplay, useOpenSequence } from "./kit";
 
 const CELLS = [
   { icon: Mail, area: "1 / 1 / 3 / 3", label: "Letters" },
@@ -37,12 +37,17 @@ export function BentoOpening(p: OpeningProps) {
   const lidX = useTransform(lift, [0, 0.5, 1], ["0%", "2%", "38%"]);
   const lidRot = useTransform(lift, [0, 1], [0, 14]);
   const lidOpacity = useTransform(lift, [0.75, 1], [1, 0]);
-  useOpenSequence(p, open, boxRef, 1900);
+  useOpenSequence(p, open, boxRef, 1900, "bento");
 
   function liftLid() {
     if (open || !live(p)) return;
     setOpen(true);
-    foley("thunk");
+    material("lid", { strength: 1.1 });
+    soundAt(p, [
+      [520, () => material("flip", { pan: -0.3, strength: 0.6 })],
+      [660, () => material("flip", { pan: 0.1, strength: 0.55 })],
+      [800, () => material("flip", { pan: 0.35, strength: 0.5 })],
+    ]);
     h.thud();
     void animate(lift, 1, p.reduced ? { duration: 0 } : SPRING.soft);
   }
@@ -194,7 +199,7 @@ export function BentoOpening(p: OpeningProps) {
       </Layer>
 
       <div className="mt-[min(9cqi,40px)] h-11">
-        <FallbackButton onClick={liftLid} color={c.accent} ink={c.accent} hidden={open || !live(p)}>
+        <FallbackButton onClick={liftLid} color="#2B2522" ink="#2B2522" hidden={open || !live(p)}>
           {p.buttonText}
         </FallbackButton>
       </div>

@@ -15,6 +15,9 @@ import { ReportGift } from "@/components/ReportGift";
 import { readableInk } from "@/lib/palettes";
 
 // The opening animation is only needed the first time a gift is viewed.
+const FriendsArrive = lazy(() =>
+  import("@/components/story/FriendsArrive").then((m) => ({ default: m.FriendsArrive })),
+);
 const GiftIntro = lazy(() =>
   import("@/components/GiftIntro").then((m) => ({ default: m.GiftIntro })),
 );
@@ -36,11 +39,14 @@ import { ExtendDialog } from "@/components/PlanControls";
 import { clearIntroSkip, hasSkippedIntro, rememberIntroSkip } from "@/lib/introSkip";
 import { engineIntroProps, simbangVisible } from "@/lib/engineGift";
 import { t } from "@/i18n";
+import { isFlagOn } from "@/config/flags";
 
 
 function PublishedPage() {
   const { slug } = useParams({ from: "/g/$slug" });
   const [opened, setOpened] = useState(false);
+  // "Friends arrive" (flag friendsIntro) plays first, then the gift's own opening.
+  const [storyDone, setStoryDone] = useState(false);
   // Don't show the reveal until we know this device didn't already skip it.
   const [skipChecked, setSkipChecked] = useState(false);
   const { data: site, isLoading, error, refetch } = useQuery({
@@ -143,11 +149,17 @@ function PublishedPage() {
   const shown = simbang.notes;
 
   const palette = resolvePalette(theme, site.custom_colors);
+  const showStory =
+    !storyDone &&
+    isFlagOn("friendsIntro") &&
+    site.intro_settings?.friends !== false &&
+    !isQuietOccasion(site.occasion);
   const fonts = FONT_PAIRINGS[site.font_choice] ?? FONT_PAIRINGS.romantic;
 
   function replayIntro() {
     trackEvent("theme_replayed", site!.id);
     clearIntroSkip(site!.id);
+    setStoryDone(false);
     setOpened(false);
   }
 
@@ -181,7 +193,17 @@ function PublishedPage() {
             calendarEntries={calendarEntries}
           />
         </div>
-        <GiftIntro
+{showStory ? (
+          <FriendsArrive
+            names={contributions.map((c) => c.author_name)}
+            recipient={site.custom_text.recipient_name}
+            palette={palette}
+            kind={resolveStyle(site, theme).introKind}
+            birthday={site.occasion === "birthday" || (!site.occasion && themeKindOf(theme) === "birthday")}
+            onDone={() => setStoryDone(true)}
+          />
+        ) : (
+                <GiftIntro
           style={introStyleForTheme(theme?.name)}
           kind={resolveStyle(site, theme).introKind}
           giftStyle={site.style}
@@ -206,6 +228,7 @@ function PublishedPage() {
             setOpened(true);
           }}
         />
+        )}
         </Suspense>
       ) : (
         <FormatView

@@ -16,7 +16,7 @@ import {
   Texture,
   elevation,
 } from "@/themes/_shared/light";
-import { foley } from "@/lib/play";
+import { material } from "@/lib/sound/material";
 import { giftColors, live, pressable, useAutoplay, useOpenSequence } from "./kit";
 
 const PARCHMENT = "#EFE0BD";
@@ -32,12 +32,13 @@ export function HuntOpening(p: OpeningProps) {
   const width = useTransform(unroll, (v) => `${v * 100}%`);
   const rollX = useTransform(unroll, (v) => `${v * 100}%`);
   const tie = useTransform(unroll, [0.03, 0.25], [1, 0]);
-  const beat = useOpenSequence(p, open, xRef, 2300);
+  const beat = useOpenSequence(p, open, xRef, 2300, "hunt");
 
   function unrollMap() {
     if (open || !live(p)) return;
     setOpen(true);
-    foley("paper");
+    material("tape", { strength: 0.5 });
+    material("unroll", { strength: 1.2 });
     h.thud();
     void animate(unroll, 1, p.reduced ? { duration: 0 } : { ...SPRING.heavy, stiffness: 80 });
   }

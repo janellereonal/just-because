@@ -83,6 +83,8 @@ function Confetti({ colors }: { colors: string[] }) {
   );
 }
 
+const SHAPES = ["box", "tall", "flat", "hatbox", "bag"] as const;
+
 function Box({
   piece,
   open,
@@ -104,6 +106,9 @@ function Box({
 }) {
   const [shaking, setShaking] = useState(false);
   const tilt = (seed(piece.id) - 0.5) * 6;
+  // Every gift its own shape, so the hunt looks like a pile of real presents.
+  const shape = SHAPES[Math.floor(seed(piece.id + "shape") * SHAPES.length)]!;
+  const size = 0.86 + seed(piece.id + "size") * 0.14;
   const icon =
     piece.kind === "song" ? (
       <Music2 className="size-4" />
@@ -132,8 +137,10 @@ function Box({
             : `Wrapped gift. Unwrap it.`
       }
       className={`hunt-box ${open ? "is-open" : ""} ${shaking ? "is-shaking" : ""} ${locked ? "is-locked" : ""}`}
+      data-shape={shape}
       style={
         {
+          "--size": size,
           "--tint": tint,
           "--ribbon": ribbon,
           "--tilt": `${tilt}deg`,
@@ -141,10 +148,13 @@ function Box({
         } as React.CSSProperties
       }
     >
-      <span className="hunt-lid" aria-hidden>
-        <span className="hunt-bow" />
+      <span className="hunt-gift" aria-hidden>
+        {shape === "bag" ? <span className="hunt-handles" /> : null}
+        <span className="hunt-lid">
+          <span className="hunt-bow" />
+        </span>
+        <span className="hunt-body" />
       </span>
-      <span className="hunt-body" aria-hidden />
       <span className="hunt-tag">
         {open ? (
           <>
@@ -177,6 +187,7 @@ export function HuntView({
   palette,
   sample,
   showShare,
+  extraSections: extras,
 }: FormatViewProps) {
   const reduce = useReducedMotion();
   const data = usePieces({ site, modules, contributions, calendarEntries, sample });
@@ -232,7 +243,8 @@ export function HuntView({
     if (finished)
       window.setTimeout(
         () =>
-          finaleRef.current && centerInScroller(finaleRef.current, null, reduce ? "auto" : "smooth"),
+          finaleRef.current &&
+          centerInScroller(finaleRef.current, null, reduce ? "auto" : "smooth"),
         120,
       );
   }
@@ -252,7 +264,13 @@ export function HuntView({
       <div className="mx-auto max-w-4xl px-4 py-10 @2xl:px-6 @2xl:py-14">
         <header className="text-center">
           {theme ? (
-            <Theme3D kind={themeKindOf(theme)} palette={palette} className="mx-auto mb-2 h-[clamp(160px,34cqi,260px)] w-full max-w-lg" interactive burstColors={[palette.accent, palette.primary, "#FFD166", "#FFFFFF"]} />
+            <Theme3D
+              kind={themeKindOf(theme)}
+              palette={palette}
+              className="mx-auto mb-2 h-[clamp(160px,34cqi,260px)] w-full max-w-lg"
+              interactive
+              burstColors={[palette.accent, palette.primary, "#FFD166", "#FFFFFF"]}
+            />
           ) : null}
           <p className="text-[11px] font-semibold tracking-[0.2em] uppercase opacity-70">
             A gift hunt for <SampleText on={data.nameIsSample}>{data.name}</SampleText>
@@ -312,7 +330,7 @@ export function HuntView({
           </div>
         </div>
 
-        <div className="hunt-grid mt-8">
+        <div className="hunt-grid hunt-trail mt-8">
           {boxes.map((p, n) => (
             <Box
               key={p.id}
@@ -329,10 +347,10 @@ export function HuntView({
         </div>
 
         {boxes.length === 0 ? (
-          <p className="mt-10 text-center opacity-70">
-            {voice.empty("little wrapped gifts")}
-          </p>
+          <p className="mt-10 text-center opacity-70">{voice.empty("little wrapped gifts")}</p>
         ) : null}
+
+        {extras ? <div className="fmt-extras is-hunt">{extras}</div> : null}
 
         {data.words.length ? (
           <div className="mt-10 flex flex-wrap items-center justify-center gap-2">
@@ -397,7 +415,9 @@ export function HuntView({
           colors={[palette.accent, palette.primary, "#FFD66B", "#9EE3C8", "#B9D3FF"]}
         />
       ) : null}
-      {sheet ? <PieceSheet piece={sheet} palette={palette} onClose={closeSheet} /> : null}
+      {sheet ? (
+        <PieceSheet piece={sheet} palette={palette} onClose={closeSheet} sound="unroll" />
+      ) : null}
     </div>
   );
 }

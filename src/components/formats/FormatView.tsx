@@ -59,6 +59,11 @@ export type FormatViewProps = {
   showShare?: boolean | undefined;
   /** The occasion, for its 3D object (Bento and Gift Hunt). */
   theme?: Theme | null | undefined;
+  /**
+   * Video and quiz, which don't fit the body's own shape. Each body shows them inside
+   * itself, so they share its paper, colours and type instead of starting a new page.
+   */
+  extraSections?: React.ReactNode;
 };
 
 /** Drop undefined keys (the comic and scrapbook views use exact optional props). */
@@ -94,39 +99,66 @@ export function FormatView(props: Props) {
   // Handwritten draws video and quiz inside its own notebook.
   // Bento shows video and quiz inside its own board (see FormatBody), so it skips the block underneath.
   const own = ownBodyFor(props.site.style);
-  const tiles = !!own || (props.site.format !== "scrapbook" && props.site.format !== "comic" && props.site.format !== "handwritten" && props.site.format !== "bento");
+  // Every body with its own look shows video and quiz inside itself (see `extras`). A theme
+  // style's own body (src/components/bodies) shows them underneath.
+  const tiles =
+    !!own || !["scrapbook", "comic", "handwritten", "bento", ...INSIDE].includes(props.site.format);
   const cast = castFor(kind, props.site.character ?? null, props.site.icon_set ?? null);
   const palette = props.palette ?? resolvePalette(props.theme, props.site.custom_colors);
   const roamIcons = useMemo(
-    () => (cast.roam >= 0 ? resolveIconSet(cast.iconSet, { recipient: props.site.custom_text.recipient_name ?? "", palette }) : null),
+    () =>
+      cast.roam >= 0
+        ? resolveIconSet(cast.iconSet, {
+            recipient: props.site.custom_text.recipient_name ?? "",
+            palette,
+          })
+        : null,
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [cast.roam, JSON.stringify(cast.iconSet), props.site.custom_text.recipient_name, palette.primary, palette.accent],
+    [
+      cast.roam,
+      JSON.stringify(cast.iconSet),
+      props.site.custom_text.recipient_name,
+      palette.primary,
+      palette.accent,
+    ],
   );
   return (
     <PlaceholderNameContext.Provider value={!!props.placeholderName}>
       <GiftKindContext.Provider value={kind}>
-      <div className="contents" style={themeFontVars(kind)}>
-        {/* Every format says when it's showing samples. The scrapbook labels each section itself. */}
-        {props.sample && (own || props.site.format !== "scrapbook") && props.contributions.length === 0 ? (
-          <div className="pointer-events-none sticky top-0 z-[60] flex h-0 items-start justify-center overflow-visible">
-            <span className="mt-3 rounded-full px-3 py-1 text-[11px] font-medium whitespace-nowrap shadow-sm" style={{ background: "rgba(43,37,34,.86)", color: "#FBF8F2" }}>
-              {props.site.solo ? SAMPLE_BADGE.solo : SAMPLE_BADGE.friends}
-            </span>
-          </div>
-        ) : null}
-        <FormatBody {...props} />
-        {tiles ? <TileExtras {...props} kind={kind} /> : null}
-        {roamIcons && !isQuietOccasion(props.site.occasion) ? <Roamer icons={roamIcons} index={cast.roam} /> : null}
-      </div>
+        <div className="contents" style={themeFontVars(kind)}>
+          {/* Every format says when it's showing samples. The scrapbook labels each section itself. */}
+          {props.sample && (own || props.site.format !== "scrapbook") && props.contributions.length === 0 ? (
+            <div className="pointer-events-none sticky top-0 z-[60] flex h-0 items-start justify-center overflow-visible">
+              <span
+                className="mt-3 rounded-full px-3 py-1 text-[11px] font-medium whitespace-nowrap shadow-sm"
+                style={{ background: "rgba(43,37,34,.86)", color: "#FBF8F2" }}
+              >
+                {props.site.solo ? SAMPLE_BADGE.solo : SAMPLE_BADGE.friends}
+              </span>
+            </div>
+          ) : null}
+          <FormatBody {...props} />
+          {tiles ? <TileExtras {...props} kind={kind} /> : null}
+          {roamIcons && !isQuietOccasion(props.site.occasion) ? (
+            <Roamer icons={roamIcons} index={cast.roam} />
+          ) : null}
+        </div>
       </GiftKindContext.Provider>
     </PlaceholderNameContext.Provider>
   );
 }
 
+/** Bodies that show video and quiz inside themselves. */
+const INSIDE = ["hunt", "zine", "storybook", "mixtape", "scratch", "stars"] as const;
+
 /** Which of video and quiz this gift has something to show for. */
 function extraKeys(props: Props): ("quiz" | "video")[] {
-  const enabled = new Set(props.modules.filter((m) => m.enabled).map((m) => m.module_type as string));
-  return (["quiz", "video"] as const).filter((t) => enabled.has(t) && (props.sample || props.contributions.some((c) => c.module_type === t)));
+  const enabled = new Set(
+    props.modules.filter((m) => m.enabled).map((m) => m.module_type as string),
+  );
+  return (["quiz", "video"] as const).filter(
+    (t) => enabled.has(t) && (props.sample || props.contributions.some((c) => c.module_type === t)),
+  );
 }
 
 /**
@@ -136,15 +168,28 @@ function extraKeys(props: Props): ("quiz" | "video")[] {
 function TileExtras(props: Props & { kind: ReturnType<typeof themeKindOf>; bare?: boolean }) {
   const host = useRef<HTMLDivElement | null>(null);
   const palette = props.palette ?? resolvePalette(props.theme, props.site.custom_colors);
-  const enabled = new Set(props.modules.filter((m) => m.enabled).map((m) => m.module_type as string));
+  const enabled = new Set(
+    props.modules.filter((m) => m.enabled).map((m) => m.module_type as string),
+  );
   const has = extraKeys(props).length > 0;
-  const icons = useMemo(() => resolveIconSet(castFor(props.kind, null, props.site.icon_set ?? null).iconSet, { recipient: props.site.custom_text.recipient_name ?? "", palette }), [props.kind, props.site.icon_set, props.site.custom_text.recipient_name, palette]);
+  const icons = useMemo(
+    () =>
+      resolveIconSet(castFor(props.kind, null, props.site.icon_set ?? null).iconSet, {
+        recipient: props.site.custom_text.recipient_name ?? "",
+        palette,
+      }),
+    [props.kind, props.site.icon_set, props.site.custom_text.recipient_name, palette],
+  );
   if (!has) return null;
   return (
     <div
       ref={host}
       className={props.bare ? "relative" : "relative overflow-hidden px-5 pt-4 pb-16"}
-      style={props.bare ? undefined : { background: palette.background, color: readableInk(palette.background) }}
+      style={
+        props.bare
+          ? undefined
+          : { background: palette.background, color: readableInk(palette.background) }
+      }
     >
       <div className={props.bare ? "" : "mx-auto max-w-3xl"}>
         <NewSections
@@ -168,6 +213,7 @@ function TileExtras(props: Props & { kind: ReturnType<typeof themeKindOf>; bare?
 function FormatBody(props: Props) {
   const { site, theme } = props;
   const palette = props.palette ?? resolvePalette(theme, site.custom_colors);
+  const inside = (INSIDE as readonly string[]).includes(site.format) && extraKeys(props).length > 0;
   const common = defined({
     site,
     modules: props.modules,
@@ -176,6 +222,7 @@ function FormatBody(props: Props) {
     palette,
     sample: props.sample,
     showShare: props.showShare,
+    extraSections: inside ? <TileExtras {...props} kind={themeKindOf(theme)} bare /> : undefined,
   });
   const fallback = <div className="min-h-[60vh]" style={{ background: palette.background }} />;
   // A theme style's own body (Love Letter's envelopes, Cake's party table...), when it has one.
@@ -206,7 +253,11 @@ function FormatBody(props: Props) {
           <BentoView
             {...common}
             theme={theme}
-            extras={keys.length ? { keys, node: <TileExtras {...props} kind={themeKindOf(theme)} bare /> } : null}
+            extras={
+              keys.length
+                ? { keys, node: <TileExtras {...props} kind={themeKindOf(theme)} bare /> }
+                : null
+            }
           />
         </Suspense>
       );

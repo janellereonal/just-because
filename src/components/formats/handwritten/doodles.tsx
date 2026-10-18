@@ -41,7 +41,15 @@ function wobble(stroke: Stroke, r: () => number, amount: number): Pt[] {
   return stroke.map(([x, y]) => [x + (r() - 0.5) * amount, y + (r() - 0.5) * amount]);
 }
 
-const ring = (cx: number, cy: number, rx: number, ry: number, n = 14, from = 0, turns = 1.08): Stroke =>
+const ring = (
+  cx: number,
+  cy: number,
+  rx: number,
+  ry: number,
+  n = 14,
+  from = 0,
+  turns = 1.08,
+): Stroke =>
   Array.from({ length: n + 1 }, (_, i) => {
     const a = from + (i / n) * Math.PI * 2 * turns;
     return [cx + Math.cos(a) * rx, cy + Math.sin(a) * ry] as Pt;
@@ -237,7 +245,10 @@ function useDrawn<T extends Element>(instant: boolean) {
   const [drawn, setDrawn] = useState(instant);
   useEffect(() => {
     if (drawn || !ref.current) return;
-    if (typeof IntersectionObserver === "undefined" || window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+    if (
+      typeof IntersectionObserver === "undefined" ||
+      window.matchMedia("(prefers-reduced-motion: reduce)").matches
+    ) {
       setDrawn(true);
       return;
     }
@@ -298,7 +309,12 @@ export function Doodle({
       {strokes.map((s, i) => (
         <g key={i} style={{ "--hw-d": `${(delay + i * per).toFixed(2)}s` } as React.CSSProperties}>
           <path d={s.main} pathLength={1} strokeWidth={width} className="hw-stroke" />
-          <path d={s.echo} pathLength={1} strokeWidth={width * 0.55} className="hw-stroke hw-echo" />
+          <path
+            d={s.echo}
+            pathLength={1}
+            strokeWidth={width * 0.55}
+            className="hw-stroke hw-echo"
+          />
         </g>
       ))}
     </svg>
@@ -306,25 +322,74 @@ export function Doodle({
 }
 
 /** A loose underline that draws in under a word or signature. */
-export function Underline({ color, seedKey = "", className = "" }: { color: string; seedKey?: string; className?: string }) {
+export function Underline({
+  color,
+  seedKey = "",
+  className = "",
+}: {
+  color: string;
+  seedKey?: string;
+  className?: string;
+}) {
   const { ref, drawn } = useDrawn<SVGSVGElement>(false);
   const r = rng(`u:${seedKey}`);
-  const pts: Pt[] = Array.from({ length: 7 }, (_, i) => [2 + i * 16, 8 + Math.sin(i * 1.4 + r() * 2) * 3]);
+  const pts: Pt[] = Array.from({ length: 7 }, (_, i) => [
+    2 + i * 16,
+    8 + Math.sin(i * 1.4 + r() * 2) * 3,
+  ]);
   return (
-    <svg ref={ref} viewBox="0 0 100 16" preserveAspectRatio="none" className={`hw-underline ${drawn ? "is-drawn" : ""} ${className}`} aria-hidden fill="none" stroke={color} strokeLinecap="round">
-      <path d={smooth(wobble(pts, r, 2))} pathLength={1} strokeWidth={2.6} className="hw-stroke" vectorEffect="non-scaling-stroke" />
+    <svg
+      ref={ref}
+      viewBox="0 0 100 16"
+      preserveAspectRatio="none"
+      className={`hw-underline ${drawn ? "is-drawn" : ""} ${className}`}
+      aria-hidden
+      fill="none"
+      stroke={color}
+      strokeLinecap="round"
+    >
+      <path
+        d={smooth(wobble(pts, r, 2))}
+        pathLength={1}
+        strokeWidth={2.6}
+        className="hw-stroke"
+        vectorEffect="non-scaling-stroke"
+      />
     </svg>
   );
 }
 
 /** A scribbled loop around something (a name, a big number). */
-export function CircleAround({ color, seedKey = "", className = "" }: { color: string; seedKey?: string; className?: string }) {
+export function CircleAround({
+  color,
+  seedKey = "",
+  className = "",
+}: {
+  color: string;
+  seedKey?: string;
+  className?: string;
+}) {
   const { ref, drawn } = useDrawn<SVGSVGElement>(false);
   const r = rng(`c:${seedKey}`);
   const pts = wobble(ring(50, 50, 47, 42, 18, -0.6, 1.12), r, 3);
   return (
-    <svg ref={ref} viewBox="0 0 100 100" preserveAspectRatio="none" className={`hw-circle ${drawn ? "is-drawn" : ""} ${className}`} aria-hidden fill="none" stroke={color} strokeLinecap="round">
-      <path d={smooth(pts)} pathLength={1} strokeWidth={2.4} className="hw-stroke" vectorEffect="non-scaling-stroke" />
+    <svg
+      ref={ref}
+      viewBox="0 0 100 100"
+      preserveAspectRatio="none"
+      className={`hw-circle ${drawn ? "is-drawn" : ""} ${className}`}
+      aria-hidden
+      fill="none"
+      stroke={color}
+      strokeLinecap="round"
+    >
+      <path
+        d={smooth(pts)}
+        pathLength={1}
+        strokeWidth={2.4}
+        className="hw-stroke"
+        vectorEffect="non-scaling-stroke"
+      />
     </svg>
   );
 }

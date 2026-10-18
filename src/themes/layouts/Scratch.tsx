@@ -17,6 +17,7 @@ import {
   elevation,
 } from "@/themes/_shared/light";
 import { foley } from "@/lib/play";
+import { material } from "@/lib/sound/material";
 import { giftColors, live, useAutoplay, useOpenSequence } from "./kit";
 
 const BRUSH = 22;
@@ -29,7 +30,7 @@ export function ScratchOpening(p: OpeningProps) {
   const last = useRef<{ x: number; y: number } | null>(null);
   const [done, setDone] = useState(false);
   const [started, setStarted] = useState(false);
-  useOpenSequence(p, done, panelRef, 1600);
+  useOpenSequence(p, done, panelRef, 1600, "scratch");
 
   // Paint the foil once the canvas has its size.
   useEffect(() => {
@@ -98,7 +99,7 @@ export function ScratchOpening(p: OpeningProps) {
   function finish() {
     if (done) return;
     setDone(true);
-    foley("crunch");
+    material("scratch", { strength: 1.4 });
     h.success();
   }
 

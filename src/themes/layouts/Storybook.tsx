@@ -18,8 +18,8 @@ import {
   Texture,
   elevation,
 } from "@/themes/_shared/light";
-import { foley } from "@/lib/play";
-import { giftColors, live, pressable, signoff, useAutoplay, useOpenSequence } from "./kit";
+import { material } from "@/lib/sound/material";
+import { giftColors, live, pressable, signoff, soundAt, useAutoplay, useOpenSequence } from "./kit";
 
 const GOLD = "linear-gradient(135deg, #8C6A2B, #F3D98B 35%, #B8913E 55%, #FBE7A6 75%, #8C6A2B)";
 
@@ -32,12 +32,16 @@ export function StorybookOpening(p: OpeningProps) {
   const shift = useTransform(angle, [0, -170], ["-25%", "0%"]);
   const shade = useTransform(angle, [0, -100, -170], [0, 0.4, 0.15]);
   const ribbon = useTransform(angle, [0, -20], [1, 0]);
-  useOpenSequence(p, open, pageRef, 2100);
+  useOpenSequence(p, open, pageRef, 2100, "storybook");
 
   function openCover() {
     if (open || !live(p)) return;
     setOpen(true);
-    foley("paper");
+    material("flip", { strength: 1.1 });
+    soundAt(p, [
+      [480, () => material("coverThump", { pan: -0.4, strength: 1.1 })],
+      [820, () => material("pageTurn", { pan: 0.2, strength: 0.8 })],
+    ]);
     h.thud();
     void animate(angle, -170, p.reduced ? { duration: 0 } : { ...SPRING.heavy, stiffness: 70 });
   }

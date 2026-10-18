@@ -217,9 +217,30 @@ verification is only required once `RESEND_API_KEY` and `EMAIL_FROM` are both se
   screen), `src/components/formats/NightSky.tsx` (the tappable stars are real buttons over the canvas; lines run along
   the heart's outline between found neighbours) and `src/lib/nightsky/sound.ts` (glass bells up a pentatonic scale,
   line shimmer, night air, the finale chord). No WebGL falls back to the classic CSS sky in `ConstellationView`.
+- Sound, beyond the openings' foley in `src/lib/play.ts`: `src/lib/sound/material.ts` (paper, card, tape, plastic and foil
+  for reading a gift: page turns, slaps, lids, cassettes, scratches; levels matched to the openings with
+  `tools/screens/sound-meter.cjs`) and `src/lib/sound/instruments.ts` (music box, celesta, marimba, kalimba, keys,
+  brass, coin, glass; `PAYOFF[style]` is each layout style's own ending). Every note sheet makes a sound when it opens
+  (`PieceSheet sound=`). All silent until the viewer turns sound on.
+- Layout styles' openings sit in a real place (`src/themes/layouts/scenes.tsx`: craft table, bedside, comic shop,
+  tablecloth, explorer's desk, copier glass, bedroom floor, shop counter), drawn by `OpeningShell scene=` instead of
+  the theme's confetti. Contact sheet of every style: `tools/screens/style-sheet.cjs`.
 - Photobooth camera (flag `photoboothCamera`): `src/components/photobooth/PhotoBooth.tsx`, frames drawn on a canvas in
   `src/lib/photobooth/frames.ts` (original shapes, gift palette, 1080x1350 JPEG). Booth photos are saved with
   `data.framed = true` and every layout shows them whole (`img[data-framed]`), never cropped.
+
+## Friends arrive (flag friendsIntro)
+
+A short story before the gift's own opening, on `/g/` only: a box giggles, the recipient knocks twice, the
+friends tumble out (one clay character per friend who wrote a note, with their name; the last one is late),
+they whisper, then the recipient presses and holds to wind them up and they shout "Surprise!". Then the
+theme opening plays. `src/components/story/FriendsArrive.tsx`, cast and seats in `src/lib/story/cast.ts`,
+tonal sounds in `src/lib/story/sound.ts`, words `story.*` in `src/i18n/en.ts`. Owners can turn it off in the
+Intro panel (`intro_settings.friends = false`). Never on quiet occasions (Sympathy, Get well). Try it at
+`/dev/story?n=5&name=Mia` (`auto=1` plays itself).
+
+Feature flags are all on in Vercel preview deployments (`VITE_VERCEL_ENV=preview`), off in production
+unless listed in `VITE_FLAGS`.
 
 ## Open product work
 

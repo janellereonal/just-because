@@ -13,7 +13,12 @@ import { giftToday, useCountdown, useMediaUrl, usePieces, type Piece } from "@/l
 import type { FormatViewProps } from "@/components/formats/FormatView";
 import { PieceSheet, pieceLabel, seed } from "@/components/formats/PieceSheet";
 import { loadFont } from "@/themes/_shared/design";
-import { CircleAround, Doodle, Underline, type DoodleName } from "@/components/formats/handwritten/doodles";
+import {
+  CircleAround,
+  Doodle,
+  Underline,
+  type DoodleName,
+} from "@/components/formats/handwritten/doodles";
 
 /**
  * Handwritten: the gift as a well-loved notebook. Every friend writes in their own hand
@@ -35,13 +40,35 @@ const HANDS = [
 /** Pen colours: ballpoint blue, felt-tip black, green and plum. The gift's accent joins in. */
 const INKS = ["#2A4B9B", "#262220", "#2D6A4F", "#6B2D5C"];
 
-const PAPERS = ["lined", "grid", "card", "sticky", "lined", "grid", "sticky-pink", "lined", "card", "sticky-mint"] as const;
+const PAPERS = [
+  "lined",
+  "grid",
+  "card",
+  "sticky",
+  "lined",
+  "grid",
+  "sticky-pink",
+  "lined",
+  "card",
+  "sticky-mint",
+] as const;
 type Paper = (typeof PAPERS)[number];
 
-const CORNER: DoodleName[] = ["heart", "star", "flower", "sun", "sparkle", "smiley", "swirl", "cloud", "bow"];
+const CORNER: DoodleName[] = [
+  "heart",
+  "star",
+  "flower",
+  "sun",
+  "sparkle",
+  "smiley",
+  "swirl",
+  "cloud",
+  "bow",
+];
 const FASTEN = ["tape", "tape", "pin", "clip", "tape-2"] as const;
 
-const handFor = (author: string) => HANDS[Math.floor(seed(`hand:${author.trim().toLowerCase()}`) * HANDS.length)]!;
+const handFor = (author: string) =>
+  HANDS[Math.floor(seed(`hand:${author.trim().toLowerCase()}`) * HANDS.length)]!;
 
 function inkFor(author: string, accent: string) {
   const s = seed(`ink:${author.trim().toLowerCase()}`);
@@ -62,7 +89,17 @@ function Fastener({ kind, accent }: { kind: (typeof FASTEN)[number]; accent: str
   return <span className={kind === "tape-2" ? "hw-tape hw-tape-dots" : "hw-tape"} aria-hidden />;
 }
 
-function Note({ piece, accent, name, onOpen }: { piece: Piece; accent: string; name: string; onOpen: () => void }) {
+function Note({
+  piece,
+  accent,
+  name,
+  onOpen,
+}: {
+  piece: Piece;
+  accent: string;
+  name: string;
+  onOpen: () => void;
+}) {
   const s = seed(piece.id);
   const paper: Paper = PAPERS[Math.floor(s * PAPERS.length)]!;
   const hand = handFor(piece.author || "friend");
@@ -77,7 +114,13 @@ function Note({ piece, accent, name, onOpen }: { piece: Piece; accent: string; n
   return (
     <article
       className={`hw-note hw-paper-${paper} ${piece.mine ? "is-mine" : ""}`}
-      style={{ "--rot": `${rot.toFixed(2)}deg`, "--ink": ink, fontFamily: hand.family } as React.CSSProperties}
+      style={
+        {
+          "--rot": `${rot.toFixed(2)}deg`,
+          "--ink": ink,
+          fontFamily: hand.family,
+        } as React.CSSProperties
+      }
     >
       <Fastener kind={fasten} accent={accent} />
       {closed ? (
@@ -94,7 +137,12 @@ function Note({ piece, accent, name, onOpen }: { piece: Piece; accent: string; n
             {long ? `${[...text].slice(0, LONG).join("").trimEnd()}…` : text}
           </p>
           {long ? (
-            <button type="button" className="hw-more" onClick={onOpen} aria-label={pieceLabel(piece)}>
+            <button
+              type="button"
+              className="hw-more"
+              onClick={onOpen}
+              aria-label={pieceLabel(piece)}
+            >
               keep reading →
             </button>
           ) : null}
@@ -102,7 +150,9 @@ function Note({ piece, accent, name, onOpen }: { piece: Piece; accent: string; n
             <p className="hw-sign" style={{ fontSize: `${1.25 * hand.size}em` }}>
               <span className="relative inline-block">
                 love, {piece.author}
-                {[...piece.author].length <= 18 ? <Underline color={ink} seedKey={piece.id} className="hw-sign-line" /> : null}
+                {[...piece.author].length <= 18 ? (
+                  <Underline color={ink} seedKey={piece.id} className="hw-sign-line" />
+                ) : null}
               </span>
             </p>
           ) : null}
@@ -119,15 +169,39 @@ function Photo({ piece, accent, onOpen }: { piece: Piece; accent: string; onOpen
   const s = seed(piece.id);
   const hand = handFor(piece.author || "friend");
   return (
-    <figure className="hw-photo" style={{ "--rot": `${((s - 0.5) * 6).toFixed(2)}deg` } as React.CSSProperties}>
+    <figure
+      className="hw-photo"
+      style={{ "--rot": `${((s - 0.5) * 6).toFixed(2)}deg` } as React.CSSProperties}
+    >
       <span className="hw-tape hw-tape-photo" aria-hidden />
-      <button type="button" onClick={onOpen} aria-label={pieceLabel(piece)} className="block w-full">
+      <button
+        type="button"
+        onClick={onOpen}
+        aria-label={pieceLabel(piece)}
+        className="block w-full"
+      >
         <span className="hw-photo-frame">
-          {url ? <img {...photoProps(url, piece.thumb, "(max-width: 640px) 70vw, 320px")} alt={piece.text ?? `Photo from ${piece.author}`} loading="lazy" decoding="async" data-framed={piece.framed || undefined} /> : <span className="hw-photo-empty" aria-hidden />}
+          {url ? (
+            <img
+              {...photoProps(url, piece.thumb, "(max-width: 640px) 70vw, 320px")}
+              alt={piece.text ?? `Photo from ${piece.author}`}
+              loading="lazy"
+              decoding="async"
+              data-framed={piece.framed || undefined}
+            />
+          ) : (
+            <span className="hw-photo-empty" aria-hidden />
+          )}
         </span>
       </button>
       <figcaption style={{ fontFamily: hand.family, fontSize: `${1.2 * hand.size}em` }}>
-        <Doodle name="arrow" seedKey={piece.id} color={accent} size={42} className="hw-photo-arrow" />
+        <Doodle
+          name="arrow"
+          seedKey={piece.id}
+          color={accent}
+          size={42}
+          className="hw-photo-arrow"
+        />
         {piece.text || "us"}
         <span className="hw-photo-by"> · {piece.author}</span>
       </figcaption>
@@ -138,17 +212,34 @@ function Photo({ piece, accent, onOpen }: { piece: Piece; accent: string; onOpen
 function Sticky({ piece, accent, onOpen }: { piece: Piece; accent: string; onOpen: () => void }) {
   const hand = handFor(piece.author || "friend");
   const s = seed(piece.id);
-  const label = piece.kind === "song" ? "a song for you" : piece.kind === "voice" ? "listen to this" : piece.kind === "ornament" ? "a wish" : "a surprise";
+  const label =
+    piece.kind === "song"
+      ? "a song for you"
+      : piece.kind === "voice"
+        ? "listen to this"
+        : piece.kind === "ornament"
+          ? "a wish"
+          : "a surprise";
   return (
     <button
       type="button"
       onClick={onOpen}
       aria-label={pieceLabel(piece)}
       className={`hw-sticky ${s > 0.5 ? "hw-sticky-pink" : ""}`}
-      style={{ "--rot": `${((s - 0.5) * 7).toFixed(2)}deg`, fontFamily: hand.family } as React.CSSProperties}
+      style={
+        {
+          "--rot": `${((s - 0.5) * 7).toFixed(2)}deg`,
+          fontFamily: hand.family,
+        } as React.CSSProperties
+      }
     >
       <span className="hw-sticky-top">
-        <Doodle name={piece.kind === "ornament" ? "star" : "music"} seedKey={piece.id} color="#262220" size={34} />
+        <Doodle
+          name={piece.kind === "ornament" ? "star" : "music"}
+          seedKey={piece.id}
+          color="#262220"
+          size={34}
+        />
         <span style={{ fontSize: `${1.25 * hand.size}em` }}>{label}</span>
       </span>
       {piece.text ? (
@@ -178,7 +269,16 @@ function MarginDoodles({ seedKey, accent }: { seedKey: string; accent: string })
   );
 }
 
-export function HandwrittenView({ theme, site, modules, contributions, calendarEntries, palette, sample, showShare }: FormatViewProps) {
+export function HandwrittenView({
+  theme,
+  site,
+  modules,
+  contributions,
+  calendarEntries,
+  palette,
+  sample,
+  showShare,
+}: FormatViewProps) {
   const data = usePieces({ site, modules, contributions, calendarEntries, sample });
   const voice = giftVoice(site.solo);
   const cd = useCountdown(data.countdownDate);
@@ -191,21 +291,39 @@ export function HandwrittenView({ theme, site, modules, contributions, calendarE
   const intro =
     site.custom_text.intro_message?.trim() ||
     site.intro_text ||
-    (voice.solo ? "I filled this little notebook just for you. Take your time." : "Everyone who loves you wrote in this little notebook. Take your time.");
+    (voice.solo
+      ? "I filled this little notebook just for you. Take your time."
+      : "Everyone who loves you wrote in this little notebook. Take your time.");
   // Videos and quizzes don't fit on a page, so they sit on their own spread before the end.
   const host = useRef<HTMLDivElement | null>(null);
   const kind = themeKindOf(theme ?? null);
-  const enabled = useMemo(() => new Set(modules.filter((m) => m.enabled).map((m) => m.module_type as string)), [modules]);
-  const hasExtras = ["video", "quiz"].some((t) => enabled.has(t) && (sample || contributions.some((c) => c.module_type === t)));
+  const enabled = useMemo(
+    () => new Set(modules.filter((m) => m.enabled).map((m) => m.module_type as string)),
+    [modules],
+  );
+  const hasExtras = ["video", "quiz"].some(
+    (t) => enabled.has(t) && (sample || contributions.some((c) => c.module_type === t)),
+  );
   const icons = useMemo(
-    () => resolveIconSet(castFor(kind, null, site.icon_set ?? null).iconSet, { recipient: site.custom_text.recipient_name ?? "", palette }),
+    () =>
+      resolveIconSet(castFor(kind, null, site.icon_set ?? null).iconSet, {
+        recipient: site.custom_text.recipient_name ?? "",
+        palette,
+      }),
     [kind, site.icon_set, site.custom_text.recipient_name, palette],
   );
-  const signers = data.friends.length ? data.friends : data.isSample ? ["Sam", "Alex", "Bea", "Jo", "Mika"] : [];
+  const signers = data.friends.length
+    ? data.friends
+    : data.isSample
+      ? ["Sam", "Alex", "Bea", "Jo", "Mika"]
+      : [];
 
   return (
     // The desk takes the gift's background, so a Christmas notebook sits on a Christmas table.
-    <div className="hw-root" style={{ "--hw-accent": accent, "--hw-desk": palette.background } as React.CSSProperties}>
+    <div
+      className="hw-root"
+      style={{ "--hw-accent": accent, "--hw-desk": palette.background } as React.CSSProperties}
+    >
       <div className="hw-book">
         <div className="hw-rings" aria-hidden>
           {Array.from({ length: 14 }, (_, i) => (
@@ -214,10 +332,41 @@ export function HandwrittenView({ theme, site, modules, contributions, calendarE
         </div>
 
         <header className="hw-cover">
-          <Doodle name="sun" seedKey="cover" color={accent} size={70} className="hw-float hw-f1" instant />
-          <Doodle name="sparkle" seedKey="cover" color="#262220" size={34} className="hw-float hw-f2" instant delay={0.4} />
-          <Doodle name="heart" seedKey="cover-2" color={accent} size={44} className="hw-float hw-f3" instant delay={0.7} />
-          <Doodle name="star" seedKey="cover-3" color={palette.primary} size={40} className="hw-float hw-f4" instant delay={1} />
+          <Doodle
+            name="sun"
+            seedKey="cover"
+            color={accent}
+            size={70}
+            className="hw-float hw-f1"
+            instant
+          />
+          <Doodle
+            name="sparkle"
+            seedKey="cover"
+            color="#262220"
+            size={34}
+            className="hw-float hw-f2"
+            instant
+            delay={0.4}
+          />
+          <Doodle
+            name="heart"
+            seedKey="cover-2"
+            color={accent}
+            size={44}
+            className="hw-float hw-f3"
+            instant
+            delay={0.7}
+          />
+          <Doodle
+            name="star"
+            seedKey="cover-3"
+            color={palette.primary}
+            size={40}
+            className="hw-float hw-f4"
+            instant
+            delay={1}
+          />
           <p className="hw-kicker">a little notebook for</p>
           <h1 className={`hw-name ${[...data.name].length > 16 ? "is-long" : ""}`}>
             {/* Short names get circled; long ones that wrap get underlined instead. */}
@@ -233,7 +382,10 @@ export function HandwrittenView({ theme, site, modules, contributions, calendarE
           <p className="hw-heading">{heading}</p>
           <p className="hw-intro">{intro}</p>
           {data.friends.length > 1 && !voice.solo ? (
-            <p className="hw-cover-sticky" aria-label={`${data.friends.length} friends wrote in here`}>
+            <p
+              className="hw-cover-sticky"
+              aria-label={`${data.friends.length} friends wrote in here`}
+            >
               {data.friends.length} friends
               <br />
               wrote in here
@@ -246,7 +398,11 @@ export function HandwrittenView({ theme, site, modules, contributions, calendarE
                 <CircleAround color={accent} seedKey="count" />
               </span>
               <span className="hw-count-label">
-                {cd.done ? `it's the day${data.named ? `, ${data.name}` : ""}` : cd.days === 1 ? "more sleep" : "more sleeps"}
+                {cd.done
+                  ? `it's the day${data.named ? `, ${data.name}` : ""}`
+                  : cd.days === 1
+                    ? "more sleep"
+                    : "more sleeps"}
               </span>
               <Doodle name="burst" seedKey="count" color={accent} size={40} />
             </div>
@@ -255,25 +411,43 @@ export function HandwrittenView({ theme, site, modules, contributions, calendarE
 
         <div className="hw-pages">
           {data.notes.flatMap((p, i) => [
-            ...(i > 0 && i % 5 === 0 ? [<MarginDoodles key={`m-${p.id}`} seedKey={p.id} accent={accent} />] : []),
+            ...(i > 0 && i % 5 === 0
+              ? [<MarginDoodles key={`m-${p.id}`} seedKey={p.id} accent={accent} />]
+              : []),
             p.kind === "photo" ? (
               <Photo key={p.id} piece={p} accent={accent} onOpen={() => setSheet(p)} />
             ) : p.kind === "song" || p.kind === "voice" || p.kind === "ornament" ? (
               <Sticky key={p.id} piece={p} accent={accent} onOpen={() => setSheet(p)} />
             ) : (
-              <Note key={p.id} piece={p} accent={accent} name={data.name} onOpen={() => setSheet(p)} />
+              <Note
+                key={p.id}
+                piece={p}
+                accent={accent}
+                name={data.name}
+                onOpen={() => setSheet(p)}
+              />
             ),
           ])}
         </div>
         {data.notes.length === 0 && !data.words.length ? (
-          <p className="hw-empty">{voice.solo ? "your notes get written in here" : "notes from friends get written in here"}</p>
+          <p className="hw-empty">
+            {voice.solo
+              ? "your notes get written in here"
+              : "notes from friends get written in here"}
+          </p>
         ) : null}
 
         {data.words.length ? (
           <section className="hw-words" aria-label={`Words for ${data.name}`}>
             <p className="hw-words-title">
               words for {data.name}
-              <Doodle name="heart" seedKey="words" color={accent} size={30} className="ml-1 inline-block align-middle" />
+              <Doodle
+                name="heart"
+                seedKey="words"
+                color={accent}
+                size={30}
+                className="ml-1 inline-block align-middle"
+              />
             </p>
             <ul>
               {data.words.map((w, n) => (
@@ -307,7 +481,13 @@ export function HandwrittenView({ theme, site, modules, contributions, calendarE
         <footer className="hw-end">
           <p className="hw-end-title">
             the end
-            <Doodle name="heart" seedKey="end" color={accent} size={40} className="ml-2 inline-block align-middle" />
+            <Doodle
+              name="heart"
+              seedKey="end"
+              color={accent}
+              size={40}
+              className="ml-2 inline-block align-middle"
+            />
           </p>
           {signers.length ? (
             <>
@@ -316,7 +496,13 @@ export function HandwrittenView({ theme, site, modules, contributions, calendarE
                 {signers.map((n) => (
                   <span
                     key={n}
-                    style={{ fontFamily: handFor(n).family, color: inkFor(n, accent), "--rot": `${((seed(n) - 0.5) * 12).toFixed(1)}deg` } as React.CSSProperties}
+                    style={
+                      {
+                        fontFamily: handFor(n).family,
+                        color: inkFor(n, accent),
+                        "--rot": `${((seed(n) - 0.5) * 12).toFixed(1)}deg`,
+                      } as React.CSSProperties
+                    }
                   >
                     {n}
                   </span>
@@ -324,19 +510,24 @@ export function HandwrittenView({ theme, site, modules, contributions, calendarE
               </div>
             </>
           ) : null}
-          {site.custom_text.footer_note ? <p className="hw-intro mt-4">{site.custom_text.footer_note}</p> : null}
+          {site.custom_text.footer_note ? (
+            <p className="hw-intro mt-4">{site.custom_text.footer_note}</p>
+          ) : null}
           {showShare ? (
-            <button
-              type="button"
-              className="hw-btn"
-              onClick={() => shareGift(site)}
-            >
+            <button type="button" className="hw-btn" onClick={() => shareGift(site)}>
               pass it on
             </button>
           ) : null}
         </footer>
       </div>
-      {sheet ? <PieceSheet piece={sheet} palette={{ background: "#FBF6EA", primary: "#262220", accent }} onClose={() => setSheet(null)} /> : null}
+      {sheet ? (
+        <PieceSheet
+          piece={sheet}
+          palette={{ background: "#FBF6EA", primary: "#262220", accent }}
+          onClose={() => setSheet(null)}
+          sound="pageTurn"
+        />
+      ) : null}
     </div>
   );
 }

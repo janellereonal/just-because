@@ -79,6 +79,7 @@ export function ConstellationView({
   palette,
   sample,
   showShare,
+  extraSections: extras,
 }: FormatViewProps) {
   const data = usePieces({ site, modules, contributions, calendarEntries, sample });
   const voice = giftVoice(site.solo);
@@ -387,11 +388,15 @@ export function ConstellationView({
           </button>
         ) : null}
       </div>
+      {extras ? (
+        <div className="fmt-extras is-stars mx-auto max-w-3xl px-5 pb-20">{extras}</div>
+      ) : null}
       {sheet ? (
         <PieceSheet
           piece={sheet}
           palette={{ ...palette, background: "#1d1b3a" }}
           onClose={() => setSheet(null)}
+          sound={null}
         />
       ) : null}
     </div>

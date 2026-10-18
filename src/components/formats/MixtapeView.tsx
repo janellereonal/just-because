@@ -1,4 +1,5 @@
 import { giftVoice } from "@/lib/giftVoice";
+import { material } from "@/lib/sound/material";
 import { photoProps } from "@/lib/media";
 import { shareGift } from "@/lib/track";
 import { SampleText } from "@/components/SampleMark";
@@ -8,13 +9,7 @@ import { useEffect, useRef, useState } from "react";
 import { Lock, Mic, Music2, Pause, Play, RotateCw, SkipBack, SkipForward } from "lucide-react";
 import { FONT_PAIRINGS, toEmbedUrl } from "@/lib/gift";
 import { readableInk } from "@/lib/palettes";
-import {
-  giftToday,
-  useMediaUrl,
-  usePieces,
-  useReducedMotion,
-  type Piece,
-} from "@/lib/giftPieces";
+import { giftToday, useMediaUrl, usePieces, useReducedMotion, type Piece } from "@/lib/giftPieces";
 import type { FormatViewProps } from "@/components/formats/FormatView";
 import { buzz, chime } from "@/lib/play";
 
@@ -51,7 +46,14 @@ function Liner({ piece, accent }: { piece: Piece; accent: string }) {
   return (
     <div className="mix-liner-body">
       {piece.kind === "photo" && media ? (
-        <img {...photoProps(media, piece.thumb, "(max-width: 640px) 70vw, 360px")} alt={piece.text ?? ""} className="mix-liner-photo" loading="lazy" decoding="async" data-framed={piece.framed || undefined} />
+        <img
+          {...photoProps(media, piece.thumb, "(max-width: 640px) 70vw, 360px")}
+          alt={piece.text ?? ""}
+          className="mix-liner-photo"
+          loading="lazy"
+          decoding="async"
+          data-framed={piece.framed || undefined}
+        />
       ) : null}
       {piece.kind === "voice" && media ? <audio controls src={media} className="w-full" /> : null}
       {embed ? (
@@ -96,6 +98,7 @@ export function MixtapeView({
   palette,
   sample,
   showShare,
+  extraSections: extras,
 }: FormatViewProps) {
   const data = usePieces({ site, modules, contributions, calendarEntries, sample });
   const voice = giftVoice(site.solo);
@@ -128,7 +131,8 @@ export function MixtapeView({
     const n = Math.max(0, Math.min(sideTracks.length - 1, i));
     setAt(n);
     setPlaying(true);
-    chime("boop");
+    material("cassette");
+    material("tapeHiss", { strength: 0.8 });
     buzz(8);
     if (scroll)
       window.setTimeout(
@@ -141,7 +145,8 @@ export function MixtapeView({
   function flip() {
     if (tracks.length <= 1) return;
     setFlipping(true);
-    chime("whoosh");
+    material("flip", { strength: 1.3 });
+    window.setTimeout(() => material("cassette"), reduce ? 0 : 520);
     buzz([6, 30, 6]);
     window.setTimeout(
       () => {
@@ -182,7 +187,7 @@ export function MixtapeView({
         const step = r.acc > 0 ? 1 : -1;
         r.acc = 0;
         setAt((i) => Math.max(0, Math.min(sideTracks.length - 1, i + step)));
-        chime("pop");
+        material("cassette", { strength: 0.5 });
         buzz(5);
       }
     },
@@ -209,13 +214,17 @@ export function MixtapeView({
       }
     >
       <div className="mx-auto max-w-xl px-4 pt-10 pb-16">
-        <p className="mix-kicker">A mixtape for <SampleText on={data.nameIsSample}>{data.name}</SampleText></p>
+        <p className="mix-kicker">
+          A mixtape for <SampleText on={data.nameIsSample}>{data.name}</SampleText>
+        </p>
         <h1 className="mix-title" style={{ fontFamily: fonts.heading }}>
           {label}
         </h1>
         <p className="mix-intro">
           {site.custom_text.intro_message?.trim() ||
-            (voice.solo ? `${tracks.length} tracks, picked just for you. Press play.` : `${tracks.length} tracks from the people who love you. Press play.`)}
+            (voice.solo
+              ? `${tracks.length} tracks, picked just for you. Press play.`
+              : `${tracks.length} tracks from the people who love you. Press play.`)}
         </p>
 
         <div className={`mix-deck ${flipping ? "is-flipping" : ""}`}>
@@ -375,6 +384,8 @@ export function MixtapeView({
           </p>
         ) : null}
 
+        {extras ? <div className="fmt-extras is-mixtape">{extras}</div> : null}
+
         <footer className="mix-foot">
           <p>
             Recorded with love by{" "}
@@ -383,9 +394,7 @@ export function MixtapeView({
           {site.custom_text.footer_note ? (
             <p className="mt-2 opacity-70">{site.custom_text.footer_note}</p>
           ) : null}
-          {data.isSample ? (
-            <p className="mt-2 opacity-60">{voice.sample}</p>
-          ) : null}
+          {data.isSample ? <p className="mt-2 opacity-60">{voice.sample}</p> : null}
           {showShare ? (
             <button
               type="button"
