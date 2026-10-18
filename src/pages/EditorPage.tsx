@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { OCCASION_NAMES } from "@/copy/strings";
 import { resolveStyle } from "@/lib/styles";
+import { occasionName } from "@/lib/occasions";
 import { ConciergeOffer } from "@/components/ConciergeOffer";
 import { trackEvent } from "@/lib/track";
 import { countNotes, inGiftLabel, noteSummary, waitingLabel } from "@/lib/noteCounts";
@@ -1638,6 +1639,7 @@ function SiteDashboard() {
       contained
       style={introStyleForTheme(theme?.name)}
       kind={resolveStyle(draft, theme).introKind}
+      occasionBadge={draft.occasion ? occasionName(draft.occasion) : undefined}
       palette={paletteNow}
       fonts={FONT_PAIRINGS[draft.font_choice] ?? FONT_PAIRINGS.romantic}
       backgroundStyle={draft.background_style}
@@ -1662,6 +1664,7 @@ function SiteDashboard() {
       contained
       style={introStyleForTheme(theme?.name)}
       kind={resolveStyle(draft, theme).introKind}
+      occasionBadge={draft.occasion ? occasionName(draft.occasion) : undefined}
       palette={paletteNow}
       fonts={FONT_PAIRINGS[draft.font_choice] ?? FONT_PAIRINGS.romantic}
       backgroundStyle={draft.background_style}
@@ -2069,6 +2072,7 @@ function SiteDashboard() {
         <GiftIntro
           style={introStyleForTheme(theme?.name)}
           kind={resolveStyle(draft, theme).introKind}
+          occasionBadge={draft.occasion ? occasionName(draft.occasion) : undefined}
           palette={paletteNow}
           fonts={FONT_PAIRINGS[draft.font_choice] ?? FONT_PAIRINGS.romantic}
           backgroundStyle={draft.background_style}
