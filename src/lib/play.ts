@@ -243,6 +243,46 @@ function ctxNow() {
   }
 }
 
+/**
+ * A candle going out: a soft, low "fff" that fades in and out instead of a hiss that starts at
+ * full volume. Low-passed air sliding down in pitch, quiet, a touch different each time so a row
+ * of candles doesn't sound like one sample repeating. `index` staggers the pitch a little.
+ */
+export function candlePuff(index = 0) {
+  const ctx = ctxNow();
+  if (!ctx) return;
+  try {
+    const now = ctx.currentTime;
+    const dur = 0.42 + Math.random() * 0.08;
+    const len = Math.ceil(ctx.sampleRate * dur);
+    const buf = ctx.createBuffer(1, len, ctx.sampleRate);
+    const data = buf.getChannelData(0);
+    let last = 0;
+    for (let i = 0; i < len; i++) {
+      const t = i / len;
+      // Quick soft rise (no click), then a long gentle tail.
+      const env = Math.min(1, t / 0.12) * (1 - t) ** 2;
+      // A little smoothing takes the hard edge off the noise before the filter.
+      last = last * 0.55 + (Math.random() * 2 - 1) * 0.45;
+      data[i] = last * env;
+    }
+    const src = ctx.createBufferSource();
+    src.buffer = buf;
+    const filter = ctx.createBiquadFilter();
+    filter.type = "lowpass";
+    filter.Q.value = 0.3;
+    const top = 760 - (index % 5) * 40 + Math.random() * 60;
+    filter.frequency.setValueAtTime(top, now);
+    filter.frequency.exponentialRampToValueAtTime(220, now + dur);
+    const gain = ctx.createGain();
+    gain.gain.value = 0.14;
+    src.connect(filter).connect(gain).connect(ctx.destination);
+    src.start(now);
+  } catch {
+    /* sound is a nicety */
+  }
+}
+
 /** Filtered noise for physical sounds: a seal cracking, paper tearing, a stamp landing. */
 export function foley(kind: Texture) {
   const ctx = ctxNow();
