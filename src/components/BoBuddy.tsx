@@ -42,7 +42,7 @@ export function BoBuddy({ followFocus = false, celebrate = false, intro = true }
   if (!mounted) return null;
   return createPortal(
     <div ref={layerRef} aria-hidden="true" className="pointer-events-none absolute top-0 left-0 z-30 h-0 w-0">
-      <div ref={wrapRef} className="absolute top-0 left-0 h-[124px] w-[112px] opacity-0 will-change-transform max-sm:h-[96px] max-sm:w-[88px]">
+      <div ref={wrapRef} className="absolute top-0 left-0 h-[124px] w-[112px] opacity-0 will-change-transform max-sm:h-[78px] max-sm:w-[70px]">
         <Bo3D
           className="absolute inset-0"
           framing="buddy"

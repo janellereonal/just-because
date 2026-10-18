@@ -30,6 +30,7 @@ The dev server must be running on http://localhost:8080 (`bun run dev`, see docs
 | `node shot.js <url> <out.png> [w] [h] [waitMs] [js] [full]` | One screenshot. `STATE=../state.json` for a signed-in session |
 | `node gestures.cjs [base]` | Performs all 13 engine gestures on `/dev/themes?tab=gestures` by mouse, then keyboard, and prints which completed |
 | `node multi.js plan.json` | Several screenshots in one browser. Plan: `{state, outDir, shots: [{name, url, w, h, wait, js, until, full}]}`; shots with the same url and size reuse the page, so `js` can click through an editor |
+| `node bocheck.cjs <url> <outDir> [w] [h] [step]` | Scrolls a page and reports every scroll position where Bo covers text, chips, buttons or fields (with a screenshot of each) |
 | `node guide.cjs <base> <outDir> [w] [h]` | Signs up a fresh local test user and screenshots the new-user guide on /create step by step, then checks it doesn't come back after a reload (local servers only) |
 | `node booth.cjs <contribute-url> <outDir> [w] [h] [fake.y4m]` | Walks through the photobooth with Chrome's fake camera (a looping `.y4m`, e.g. made with ffmpeg from one of `public/clay/people`) and screenshots every frame. `SEND=1` also sends the photo and shows it in the gift |
 | `node tour.js` | Landing hero: opens Ana's gift and captures the guided tour + bento tiles |
