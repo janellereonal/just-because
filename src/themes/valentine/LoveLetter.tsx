@@ -155,6 +155,8 @@ type Rect = { top: number; left: number; width: number; height: number };
 function useHandoff(p: OpeningProps, c: ThemePalette) {
   const [page, setPage] = useState<{ from: Rect; to: Rect; radius: number } | null>(null);
   function grow(from: Element | null) {
+    // Reduced motion: no growing, the stage just fades onto the gift.
+    if (p.reduced) return;
     const host = p.hostRef.current?.getBoundingClientRect();
     const r = from?.getBoundingClientRect();
     if (!host || !r) return;
