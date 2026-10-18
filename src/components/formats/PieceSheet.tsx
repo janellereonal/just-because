@@ -4,6 +4,7 @@ import { toEmbedUrl } from "@/lib/gift";
 import { readableInk, surfaceColor } from "@/lib/palettes";
 import type { Palette } from "@/lib/themes";
 import { giftToday, useMediaUrl, type Piece } from "@/lib/giftPieces";
+import { onPhotoError } from "@/lib/media";
 
 /** Deterministic 0..1 from an id, so layouts don't jump between renders. */
 import { material, type Material } from "@/lib/sound/material";
@@ -85,6 +86,7 @@ export function PieceSheet({
                 src={media}
                 alt={piece.text ?? ""}
                 className="mb-5 max-h-[60vh] w-full rounded-2xl object-contain"
+                onError={onPhotoError}
               />
             ) : null}
             {piece.kind === "voice" && media ? (

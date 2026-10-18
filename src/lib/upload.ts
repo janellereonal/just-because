@@ -1,6 +1,7 @@
 import { upload } from "@vercel/blob/client";
-import { UPLOAD_COPY } from "@/copy/strings";
+import { NOTE_RULES_COPY, UPLOAD_COPY } from "@/copy/strings";
 import { MEDIA_LIMITS } from "@/lib/limits";
+import { fileFits } from "@/lib/noteRules";
 
 export type UploadKind = "contribution" | "calendar" | "theme" | "intro";
 /** What's in the file, so the server can give it the right size limit. */
@@ -42,7 +43,8 @@ async function decode(file: File): Promise<ImageBitmap> {
     return await createImageBitmap(file, { imageOrientation: "from-image" });
   } catch {
     if (isHeic(file)) throw new UploadError(UPLOAD_COPY.heic);
-    throw new Error("Can't read this photo");
+    // Not a picture the browser can open (a broken file, or something renamed .jpg).
+    throw new UploadError(UPLOAD_COPY.cantOpen);
   }
 }
 
@@ -87,8 +89,19 @@ export type PreparedPhoto = { file: File; thumb: File | null; before: number; af
  */
 export async function preparePhoto(file: File): Promise<PreparedPhoto> {
   const same: PreparedPhoto = { file, thumb: null, before: file.size, after: file.size, compressed: false };
-  if (file.type === "image/gif" || typeof createImageBitmap === "undefined") return same;
+  if (typeof createImageBitmap === "undefined") return same;
+  // A .heic the system didn't even give a type to is one this browser can't open: say so now.
+  if (!file.type && isHeic(file)) throw new UploadError(UPLOAD_COPY.heic);
   if (!file.type.startsWith("image/") && !isHeic(file)) return same;
+  if (file.type === "image/gif") {
+    // GIFs go as they are (to keep the animation), but only if they open.
+    const bitmap = await within(decode(file), 10000).catch((error: unknown) => {
+      if (error instanceof UploadError) throw error;
+      return null;
+    });
+    bitmap?.close?.();
+    return same;
+  }
   try {
     return await within(shrink(file, same), 20000);
   } catch (error) {
@@ -165,7 +178,7 @@ async function send(file: File, kind: UploadKind, targetId: string, media: Media
     form.set("media", media);
     const res = await fetch("/api/upload", { method: "POST", body: form });
     const json = (await res.json().catch(() => ({}))) as { url?: string; error?: string };
-    if (!res.ok || !json.url) throw new UploadError(friendlyUploadError(json.error));
+    if (!res.ok || !json.url) throw new UploadError(friendlyUploadError(json.error, kind === "contribution" ? media : undefined));
     return json.url;
   }
   try {
@@ -177,7 +190,7 @@ async function send(file: File, kind: UploadKind, targetId: string, media: Media
     });
     return blob.url;
   } catch (error) {
-    throw new UploadError(friendlyUploadError(error instanceof Error ? error.message : ""));
+    throw new UploadError(friendlyUploadError(error instanceof Error ? error.message : "", kind === "contribution" ? media : undefined));
   }
 }
 
@@ -191,9 +204,12 @@ export async function uploadMedia(
   original: File,
   kind: UploadKind,
   targetId: string,
-  opts: { onStage?: (stage: UploadStage) => void; thumb?: boolean } = {},
+  opts: { onStage?: (stage: UploadStage) => void; thumb?: boolean; expect?: MediaKind | null } = {},
 ): Promise<{ url: string; thumbUrl: string | null }> {
-  const media = mediaKindOf(original);
+  // The section decides what the file should be: an image picked for a voice note is refused here
+  // (and again by the server), not stored as a voice note that can't play.
+  if (opts.expect && !fileFits(original, opts.expect)) throw new UploadError(NOTE_RULES_COPY.wrongFile(opts.expect));
+  const media = opts.expect ?? mediaKindOf(original);
   let file = original;
   let thumb: File | null = null;
   if (media === "photo") {
@@ -217,10 +233,11 @@ export async function uploadFile(original: File, kind: UploadKind, targetId: str
 }
 
 /** Turns what the upload service says into something a person can act on. */
-export function friendlyUploadError(raw: string | undefined): string {
+export function friendlyUploadError(raw: string | undefined, expected?: MediaKind): string {
   const m = (raw ?? "").toLowerCase();
   if (/too large|maximum|size/.test(m)) return "That file is too big. Try a smaller photo or a shorter clip.";
-  if (/type|content.?type|not allowed/.test(m)) return "That kind of file can't go in a gift. Photos (JPG, PNG, HEIC), voice notes and short videos work.";
+  if (expected && /type|not allowed/.test(m)) return NOTE_RULES_COPY.wrongFile(expected);
+  if (/type|content.?type|not allowed/.test(m)) return "That kind of file can't go in a gift. Photos (JPG or PNG), voice notes and short videos work.";
   if (/couldn't find|not found/.test(m)) return "We couldn't find this gift. The link may be old.";
   if (/network|fetch|failed to fetch|offline/.test(m)) return "The upload didn't go through. Check your connection and try again.";
   return "That file couldn't be uploaded. Please try again.";

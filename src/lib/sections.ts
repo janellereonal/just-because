@@ -165,6 +165,46 @@ export function hash01(s: string, salt = 0) {
   return ((h >>> 0) % 10000) / 10000;
 }
 
+export type SectionField = "when" | "award" | "question" | "answer" | "wrong" | "coupon" | "fine_print" | "place" | "unlock_at";
+
+/**
+ * Every extra field a newer section's note carries, in reading order, for the
+ * organiser to check before approving (the note's own words and file are shown
+ * separately). Labels live in REVIEW_COPY.
+ */
+export function sectionFields(type: string, data: unknown): { field: SectionField; value: string }[] {
+  const d = (data && typeof data === "object" ? data : {}) as Record<string, unknown>;
+  const s = (k: string) => (typeof d[k] === "string" ? (d[k] as string).trim() : "");
+  const out: { field: SectionField; value: string }[] = [];
+  const add = (field: SectionField, value: string) => {
+    if (value) out.push({ field, value });
+  };
+  switch (type) {
+    case "openwhen":
+      add("when", s("when"));
+      break;
+    case "capsule":
+      add("unlock_at", s("unlock_at"));
+      break;
+    case "superlatives":
+      add("award", s("award"));
+      break;
+    case "quiz":
+      add("question", s("question"));
+      add("answer", s("answer"));
+      add("wrong", (Array.isArray(d["wrong"]) ? d["wrong"] : []).filter((w): w is string => typeof w === "string" && !!w.trim()).join(", "));
+      break;
+    case "map":
+      add("place", s("place"));
+      break;
+    case "coupons":
+      add("coupon", s("title"));
+      add("fine_print", s("fine_print"));
+      break;
+  }
+  return out;
+}
+
 /**
  * A newer section as plain text, for formats that show everything as tiles
  * (Bento, Zine, Gift Hunt…). Video and quiz are shown in their own block

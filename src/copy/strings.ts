@@ -545,6 +545,51 @@ export const FRIEND_PAGE = {
   fewer: "Fewer",
 };
 
+/** What a note must look like. Checked on the friend page, in the editor and again on the server. */
+export const NOTE_RULES_COPY = {
+  songLink: "Paste a song link from Spotify, YouTube or Apple Music.",
+  badLink: "That link doesn't look right. Paste a link that starts with https://",
+  noWord: "Add at least one word with letters or numbers.",
+  wrongFile: (kind: "photo" | "voice" | "video") =>
+    kind === "voice"
+      ? "That's not a voice note. Pick an audio file, like one from your voice memos."
+      : kind === "video"
+        ? "That's not a video. Pick a short clip from your phone."
+        : "That's not a photo. Pick a JPG or PNG.",
+  noFileHere: "This kind of note doesn't take a file.",
+  notThisGift: "That file didn't come from this gift. Try adding it again.",
+};
+
+/** The organiser's review list in the editor. */
+export const REVIEW_COPY = {
+  /** Short names for each kind of note. */
+  kind: {
+    letters: "Letter",
+    photobooth: "Photo",
+    songs: "Song",
+    voice: "Voice note",
+    wordcloud: "Words",
+    tree: "Ornament",
+    openwhen: "Open-when",
+    capsule: "Time capsule",
+    superlatives: "Award",
+    quiz: "Quiz",
+    map: "Memory pin",
+    coupons: "Coupon",
+    video: "Video",
+    doodle: "Doodle",
+  } as Record<string, string>,
+  openWhen: "Open when",
+  award: "Award",
+  question: "Question",
+  answer: "Right answer",
+  wrong: "Other answers",
+  coupon: "Coupon",
+  finePrint: "Fine print",
+  place: "Place",
+  opensOn: "Opens on",
+};
+
 /** "Add a note, a photo or a song." built from the sections that are on. */
 export function friendAddLine(types: readonly string[]): string {
   const words = types.map((t) => FRIEND_PAGE.things[t]).filter((w): w is string => !!w);
@@ -647,6 +692,15 @@ export const UPLOAD_COPY = {
         : "That photo is over 8 MB. Try a smaller one.",
   tooLong: (kind: "photo" | "voice" | "video") =>
     kind === "video" ? "Videos can be up to a minute long. Try a shorter clip." : "Voice notes can be up to 2 minutes long.",
+  cantOpen: "We couldn't open that photo. Try another one, or take a screenshot of it and send that.",
+  /** Read out where a photo can't load on a gift. */
+  photoMissing: "This photo couldn't load",
+};
+
+/** The Share button at the end of a gift. */
+export const SHARE_COPY = {
+  copied: "Link copied",
+  copyFailed: "Couldn't copy the link. Copy it from the address bar instead.",
 };
 
 /** "Have a code?" in the plan picker. */

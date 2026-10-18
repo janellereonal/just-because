@@ -143,7 +143,22 @@ export function newNoteEmail(opts: {
   authorName: string;
   pendingCount: number;
   editorUrl: string;
+  /** A note that's already in the gift was changed by the friend who wrote it. */
+  edited?: boolean;
 }) {
+  if (opts.edited) {
+    return sendMail({
+      to: opts.to,
+      subject: `${opts.authorName} changed their note on ${opts.recipient}'s gift`,
+      heading: `${opts.authorName} changed their note`,
+      body: [
+        "You'd already added it to the gift, so the new version shows there now. Take a look, and hide it if anything's off.",
+        ...(opts.pendingCount > 0 ? [`You also have ${opts.pendingCount} ${opts.pendingCount === 1 ? "note" : "notes"} waiting for a look.`] : []),
+      ],
+      button: { label: "Review notes", url: opts.editorUrl },
+      footnote: "We send at most one of these every 30 minutes per gift, so your inbox stays calm.",
+    });
+  }
   const others = opts.pendingCount - 1;
   return sendMail({
     to: opts.to,

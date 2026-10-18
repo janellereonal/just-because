@@ -30,6 +30,8 @@ import {
 } from "@/lib/sections";
 import { deleteContributions, saveOwnerNote } from "@/lib/api";
 import { UploadError, uploadMedia } from "@/lib/upload";
+import { NOTE_RULES_COPY } from "@/copy/strings";
+import { hasWord, isSongLink, mediaKindFor } from "@/lib/noteRules";
 import { MEDIA_LIMITS } from "@/lib/limits";
 import { signedMediaUrl, type Contribution, type ModuleType } from "@/lib/gift";
 
@@ -256,12 +258,16 @@ export function OwnNotes({
         : type === "wordcloud" && !text.trim()
           ? "Add at least one word."
           : type === "songs" && !link.trim()
-            ? "Paste a Spotify or YouTube link."
+            ? NOTE_RULES_COPY.songLink
             : (type === "photobooth" || type === "voice") && !file && !editing?.media_url
               ? type === "photobooth"
                 ? "Pick a photo first."
                 : "Record or upload a voice note first."
-              : null;
+              : type === "songs" && !isSongLink(link)
+                ? NOTE_RULES_COPY.songLink
+                : type === "wordcloud" && !hasWord(text)
+                  ? NOTE_RULES_COPY.noWord
+                  : null;
     if (problem) {
       toast.error(problem);
       return;
@@ -290,7 +296,7 @@ export function OwnNotes({
       let media = editing?.media_url ?? null;
       if (file) {
         // Photos get a small copy too, so grids and previews don't load the full photo.
-        const up = await uploadMedia(file, "contribution", siteId, { thumb: type === "photobooth" });
+        const up = await uploadMedia(file, "contribution", siteId, { thumb: type === "photobooth", expect: mediaKindFor(type) });
         media = up.url;
         if (type === "photobooth" && up.thumbUrl) clean = { ...(clean ?? {}), thumb: up.thumbUrl };
       }

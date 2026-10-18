@@ -5,6 +5,8 @@
  */
 import { trackClientEvent } from "@/lib/api";
 import { captureEvent } from "@/lib/analytics";
+import { toast } from "sonner";
+import { SHARE_COPY } from "@/copy/strings";
 
 type ClientEvent =
   | "invite_shared"
@@ -34,14 +36,35 @@ export function trackEvent(name: ClientEvent, siteId: string, props?: Record<str
   captureEvent(name, { site_id: siteId, ...props });
 }
 
-/** The gift page's Share button: the phone's share sheet, or copy the link. Counts as theme_shared. */
-export function shareGift(site: { id: string; title: string }) {
-  const url = window.location.href;
+/** The gift's own link, clean: no ?utm_ tags or anything else from the address bar. */
+export function giftShareUrl(slug: string, origin: string) {
+  return `${origin}/g/${encodeURIComponent(slug)}`;
+}
+
+/**
+ * The gift page's Share button: the phone's share sheet, or copy the link (with a
+ * "Link copied" note). Always the clean /g/<slug> link. Counts as theme_shared.
+ */
+export function shareGift(site: { id: string; title: string; slug: string }) {
+  const url = giftShareUrl(site.slug, window.location.origin);
+  const copy = () => {
+    trackEvent("theme_shared", site.id, { channel: "copy" });
+    if (!navigator.clipboard) {
+      toast.error(SHARE_COPY.copyFailed);
+      return;
+    }
+    navigator.clipboard.writeText(url).then(
+      () => toast.success(SHARE_COPY.copied),
+      () => toast.error(SHARE_COPY.copyFailed),
+    );
+  };
   if (navigator.share) {
     trackEvent("theme_shared", site.id, { channel: "share" });
-    void navigator.share({ title: site.title, url }).catch(() => undefined);
+    navigator.share({ title: site.title, url }).catch((error: unknown) => {
+      // Closing the share sheet is fine. Anything else (no apps to share to): copy instead.
+      if (!(error instanceof DOMException && error.name === "AbortError")) copy();
+    });
   } else {
-    trackEvent("theme_shared", site.id, { channel: "copy" });
-    void navigator.clipboard.writeText(url).catch(() => undefined);
+    copy();
   }
 }

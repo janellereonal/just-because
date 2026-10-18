@@ -17,6 +17,7 @@ import { burstSet } from "@/themes/_shared/Sprinkles";
 import type { IconSet } from "@/themes/_shared/iconSets";
 import { SPRING } from "@/themes/_shared/stage";
 import { useMediaUrl } from "@/lib/giftPieces";
+import { onPhotoError } from "@/lib/media";
 import { buzz, chime } from "@/lib/play";
 
 /* ---------- materials ---------- */
@@ -446,7 +447,7 @@ function OpenCapsule({ item, at, m }: { item: ViewContribution; at: string; m: M
         {SECTION_COPY.capsule.openedLine} {at ? formatDay(at) : ""}
       </span>
       {media ? (
-        <img src={media} alt="" className="mb-3 aspect-[4/3] w-full rounded-xl object-cover" />
+        <img src={media} alt="" className="mb-3 aspect-[4/3] w-full rounded-xl object-cover" onError={onPhotoError} />
       ) : null}
       <p className="leading-relaxed whitespace-pre-line">{item.text_content}</p>
       <p className="sb-hand mt-3 text-lg" style={{ color: m.accent }}>
@@ -943,6 +944,7 @@ function DoodleCard({ item, m, k }: { item: ViewContribution; m: Material; k: nu
             src={url}
             alt={`A drawing by ${item.author_name}`}
             className="size-full object-contain"
+            onError={onPhotoError}
           />
         ) : (
           <SampleDoodle seed={item.id} color={m.accent} />
