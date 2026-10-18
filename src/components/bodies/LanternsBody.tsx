@@ -173,10 +173,13 @@ export function LanternsBody(props: BodyProps) {
             : colors.mix(colors.bg, "#FFD9A0", 0.35),
           "--pl-house": dark
             ? colors.mix(colors.bg, "#000000", 0.42)
-            : colors.mix(colors.ink, colors.bg, 0.55),
+            : colors.mix(colors.mix(colors.bg, colors.primary, 0.3), "#D9A27A", 0.4),
           "--pl-house-hi": dark
             ? colors.mix(colors.bg, colors.primary, 0.22)
-            : colors.mix(colors.ink, colors.primary, 0.45),
+            : colors.mix(colors.mix(colors.bg, colors.primary, 0.15), "#FFD9A0", 0.45),
+          "--pl-roof": dark
+            ? colors.mix(colors.bg, "#000000", 0.58)
+            : colors.mix(colors.primary, "#7A3E22", 0.55),
           "--pl-wire": dark
             ? colors.mix(colors.bg, "#FFFFFF", 0.32)
             : colors.mix(colors.bg, colors.ink, 0.55),
@@ -399,13 +402,16 @@ function Wire({
                       <Lock className="size-3" />
                     </span>
                   ) : null}
-                </span>
-                <span className="pl-who">
-                  {isLocked(p)
-                    ? t("body.opensOn", {
-                        day: formatDay(p.date!, { day: "numeric", month: "short" }),
-                      })
-                    : p.author || t("lanterns.surprise")}
+                  {/* A little paper tag on a thread, hanging between the tails */}
+                  <span className="pl-tag" style={{ "--tr": `${((r - 0.5) * 10).toFixed(1)}deg` } as React.CSSProperties}>
+                    <span className="pl-tag-text">
+                      {isLocked(p)
+                        ? t("body.opensOn", {
+                            day: formatDay(p.date!, { day: "numeric", month: "short" }),
+                          })
+                        : p.author || t("lanterns.surprise")}
+                    </span>
+                  </span>
                 </span>
               </button>
             </li>

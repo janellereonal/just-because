@@ -26,7 +26,7 @@ body("invitation", () => import("@/components/bodies/ReceptionBody").then((m) =>
 body("boarding-pass", () => import("@/components/bodies/PassportBody").then((m) => ({ default: m.PassportBody })));
 body("gift-box", () => import("@/components/bodies/PresentsBody").then((m) => ({ default: m.PresentsBody })));
 body("crib-mobile", () => import("@/components/bodies/NurseryBody").then((m) => ({ default: m.NurseryBody })));
-// body("fetch", () => import("@/components/bodies/ToyBasketBody").then((m) => ({ default: m.ToyBasketBody })));
+body("fetch", () => import("@/components/bodies/ToyBasketBody").then((m) => ({ default: m.ToyBasketBody })));
 body("board-game", () => import("@/components/bodies/GameBoardBody").then((m) => ({ default: m.GameBoardBody })));
 body("arcade", () => import("@/components/bodies/CabinetBody").then((m) => ({ default: m.CabinetBody })));
 body("winter-window", () => import("@/components/bodies/FrostBody").then((m) => ({ default: m.FrostBody })));

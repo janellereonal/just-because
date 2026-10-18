@@ -38,7 +38,7 @@ export function ReceptionBody(props: BodyProps) {
   const body = useBody(props);
   const { data, colors, fonts, reduce, site, theme } = body;
   const { opened, open } = useOpened("reception", site.id, body.sample);
-  const blush = site.occasion === "bridal-shower" || /bridal/i.test(theme?.name ?? "");
+  const blush = site.occasion === "bridal-shower" || /bridal/i.test(theme?.name ?? "") || (typeof window !== "undefined" && window.location.search.includes("look=blush")); // TEMP-LOOK
   const notes = data.notes;
   const photos = notes.filter((p) => p.kind === "photo" && !p.sealed);
   const cards = notes.filter((p) => !(p.kind === "photo" && !p.sealed));
@@ -100,9 +100,10 @@ export function ReceptionBody(props: BodyProps) {
           "--rx-ink": blush ? "#4A3A3A" : "#3B3A33",
           "--rx-gold": colors.mix("#C9A55C", colors.accent, 0.35),
           "--rx-gold-deep": colors.mix("#8E6F31", colors.accent, 0.3),
-          "--rx-leaf": colors.mix(blush ? "#9DB08F" : "#8FA587", colors.primary, 0.35),
-          "--rx-leaf-deep": colors.mix(blush ? "#6F8763" : "#5E7656", colors.primary, 0.3),
+          "--rx-leaf": colors.mix(blush ? "#A3B596" : "#8FA587", colors.primary, 0.15),
+          "--rx-leaf-deep": colors.mix(blush ? "#728A66" : "#5E7656", colors.primary, 0.12),
           "--rx-bloom": blush ? "#F2C6C2" : "#FFFFFF",
+          "--rx-swag": colors.mix(blush ? colors.mix("#E0A9A3", colors.primary, 0.25) : colors.mix("#9DB08F", colors.primary, 0.45), "#FFFFFF", 0.25),
           "--rx-bloom-deep": blush ? "#D9918B" : "#E6DCCB",
           "--rx-wall": colors.dark ? colors.mix(colors.bg, "#FFFFFF", 0.04) : colors.mix(colors.bg, colors.primary, 0.05),
           "--rx-wall-line": colors.dark ? "rgba(255,255,255,.07)" : colors.mix(colors.bg, colors.primary, 0.16),
@@ -222,7 +223,7 @@ function Table({
   headingFont: string;
 }) {
   // Candles between the cards, flowers along the back.
-  const candles = Math.max(2, Math.min(4, per - 1));
+  const candles = Math.max(2, Math.min(5, per - 1 - (index % 2)));
   return (
     <div className="rx-table" style={{ "--per": per } as React.CSSProperties}>
       <div className="rx-table-top" aria-hidden="true">
