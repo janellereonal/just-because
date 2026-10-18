@@ -1270,6 +1270,24 @@ export const listPaymentLog = createServerFn({ method: "GET" }).handler(async ()
   return rows.map((r) => ({ ...r, at: r.at.toISOString() }));
 });
 
+/** Admin checklist for sign-in. Reports what's set and the address Google must allow, never the values. */
+export const getSignInSetup = createServerFn({ method: "GET" }).handler(async () => {
+  await requireAdmin();
+  const { siteUrl } = await import("@/server/email");
+  const { googleEnabled } = await import("@/server/auth");
+  const id = process.env["GOOGLE_CLIENT_ID"] ?? "";
+  return {
+    googleId: Boolean(id),
+    /** Real client ids end like this; anything else is usually a pasted secret or a typo. */
+    googleIdLooksRight: id.trim().endsWith(".apps.googleusercontent.com"),
+    googleIdHasSpaces: id !== id.trim(),
+    googleSecret: Boolean(process.env["GOOGLE_CLIENT_SECRET"]),
+    googleOn: googleEnabled(),
+    redirectUri: `${siteUrl()}/api/auth/callback/google`,
+    deployment: process.env["VERCEL_DEPLOYMENT_ID"] ?? process.env["VERCEL_URL"] ?? "local",
+  };
+});
+
 /** Admin checklist for payments. Reports what's set, never the values. */
 export const getPaymentsSetup = createServerFn({ method: "GET" }).handler(async () => {
   await requireAdmin();
