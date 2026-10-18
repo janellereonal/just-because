@@ -1,4 +1,5 @@
 import { giftVoice } from "@/lib/giftVoice";
+import { VoicePlayer } from "@/components/VoicePlayer";
 import { shareGift, trackEvent } from "@/lib/track";
 import { sampleLetter } from "@/copy/strings";
 import { useEffect, useMemo, useRef, useState } from "react";
@@ -107,21 +108,16 @@ function PhotoCard({ item, accent }: { item: Contribution; accent: string }) {
 function VoiceCard({ item, accent }: { item: Contribution; accent: string }) {
   const url = useMediaUrl(item.media_url);
   return (
-    <div className="flex items-start gap-4 rounded-2xl bg-[var(--gift-surface)] p-4 shadow-sm ring-1 ring-black/5">
-      <span className="grid size-11 shrink-0 place-items-center rounded-full text-lg" style={{ backgroundColor: `${accent}22`, color: accent }} aria-hidden>
-        ♪
-      </span>
-      <div className="min-w-0 flex-1">
-        <p className="sb-hand text-xl leading-none" style={{ color: accent }}>
-          {item.author_name}
-        </p>
-        {item.text_content ? <p className="mt-1.5 text-sm leading-snug opacity-85">{item.text_content}</p> : null}
-        {url ? (
-          <audio controls src={url} className="mt-3 w-full" />
-        ) : item.media_url ? (
-          <p className="mt-2 text-sm opacity-60">Loading the voice note…</p>
-        ) : null}
-      </div>
+    <div className="rounded-2xl bg-[var(--gift-surface)] p-4 shadow-sm ring-1 ring-black/5">
+      <p className="sb-hand text-xl leading-none" style={{ color: accent }}>
+        {item.author_name}
+      </p>
+      {item.text_content ? <p className="mt-1.5 text-sm leading-snug opacity-85">{item.text_content}</p> : null}
+      {url ? (
+        <VoicePlayer src={url} seed={item.id} accent={accent} label={`the voice note from ${item.author_name}`} />
+      ) : item.media_url ? (
+        <p className="mt-2 text-sm opacity-60">Loading the voice note…</p>
+      ) : null}
     </div>
   );
 }
