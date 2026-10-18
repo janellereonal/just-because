@@ -37,12 +37,28 @@ import {
 /** The two looks' own type (the same faces their openings use). */
 const FONTS: Record<"care" | "bb", { display: FontSpec; text: FontSpec }> = {
   care: {
-    display: { family: '"Fraunces", Georgia, serif', source: "google", query: "Fraunces:ital,opsz,wght@0,9..144,500;0,9..144,700;1,9..144,500" },
-    text: { family: '"Space Mono", ui-monospace, monospace', source: "google", query: "Space+Mono:wght@400;700" },
+    display: {
+      family: '"Fraunces", Georgia, serif',
+      source: "google",
+      query: "Fraunces:ital,opsz,wght@0,9..144,500;0,9..144,700;1,9..144,500",
+    },
+    text: {
+      family: '"Space Mono", ui-monospace, monospace',
+      source: "google",
+      query: "Space+Mono:wght@400;700",
+    },
   },
   bb: {
-    display: { family: '"Permanent Marker", "Comic Sans MS", cursive', source: "google", query: "Permanent+Marker" },
-    text: { family: '"Archivo", system-ui, sans-serif', source: "google", query: "Archivo:wght@500;700;900" },
+    display: {
+      family: '"Permanent Marker", "Comic Sans MS", cursive',
+      source: "google",
+      query: "Permanent+Marker",
+    },
+    text: {
+      family: '"Archivo", system-ui, sans-serif',
+      source: "google",
+      query: "Archivo:wght@500;700;900",
+    },
   },
 };
 
@@ -78,9 +94,7 @@ const LAYER = 12;
 export function UnpackBody(props: BodyProps) {
   const body = useBody(props);
   const { data, colors, reduce } = body;
-  const [devBb, setDevBb] = useState(false); // DEVTEMP
-  useEffect(() => setDevBb(window.location.search.includes("look=bb")), []); // DEVTEMP
-  const bb = /balikbayan/i.test(body.theme?.name ?? "") || devBb; // DEVTEMP
+  const bb = /balikbayan/i.test(body.theme?.name ?? "");
   const look = FONTS[bb ? "bb" : "care"];
   useEffect(() => {
     loadFont(look.display, "high");
@@ -139,7 +153,12 @@ export function UnpackBody(props: BodyProps) {
       foley("paper");
       burst(body.hostRef.current, x, y, {
         shape: "confetti",
-        colors: [colors.mix("#C9A273", colors.primary, 0.1), colors.mix("#FFFFFF", colors.accent, 0.25), "#E9DCC2", colors.primary],
+        colors: [
+          colors.mix("#C9A273", colors.primary, 0.1),
+          colors.mix("#FFFFFF", colors.accent, 0.25),
+          "#E9DCC2",
+          colors.primary,
+        ],
         count: 12,
         spread: 0.8,
         up: true,
@@ -174,9 +193,13 @@ export function UnpackBody(props: BodyProps) {
           "--up-twine": colors.mix("#EFE3C8", colors.primary, 0.1),
           "--up-ribbon": colors.mix(colors.primary, "#B4423A", bb ? 0.6 : 0.15),
           "--up-ink": colors.mix("#2A2420", colors.primary, 0.25),
-          "--up-stamp": bb ? colors.mix("#C8352B", colors.primary, 0.15) : colors.mix("#C8452B", colors.primary, 0.2),
+          "--up-stamp": bb
+            ? colors.mix("#C8352B", colors.primary, 0.15)
+            : colors.mix("#C8452B", colors.primary, 0.2),
           "--up-band": colors.mix("#1F4E8C", colors.accent, 0.5),
-          "--up-table": colors.dark ? colors.mix(colors.bg, "#8A5A34", 0.32) : colors.mix(colors.bg, "#B07A48", 0.32),
+          "--up-table": colors.dark
+            ? colors.mix(colors.bg, "#8A5A34", 0.32)
+            : colors.mix(colors.bg, "#B07A48", 0.32),
         } as React.CSSProperties
       }
     >
@@ -187,7 +210,13 @@ export function UnpackBody(props: BodyProps) {
           <div className="up-label-card">
             <div className="up-label-top">
               <span>{bb ? t("unpack.bbKicker") : t("unpack.kicker")}</span>
-              {bb ? <span className="up-barcode" aria-hidden="true" /> : <span className="up-label-no">{t("unpack.labelNo", { n: Math.max(1, notes.length) })}</span>}
+              {bb ? (
+                <span className="up-barcode" aria-hidden="true" />
+              ) : (
+                <span className="up-label-no">
+                  {t("unpack.labelNo", { n: Math.max(1, notes.length) })}
+                </span>
+              )}
             </div>
             <p className="up-to-tag">{t("unpack.to")}</p>
             <h1 className="up-name">
@@ -198,10 +227,16 @@ export function UnpackBody(props: BodyProps) {
             <CountdownLine date={data.countdownDate} className="up-countdown" />
             {!bb ? (
               <span className="up-stamps" aria-hidden="true">
-                <span className="up-stamp" style={{ "--r": "5deg", "--c": "var(--up-band)" } as React.CSSProperties}>
+                <span
+                  className="up-stamp"
+                  style={{ "--r": "5deg", "--c": "var(--up-band)" } as React.CSSProperties}
+                >
                   ✈
                 </span>
-                <span className="up-stamp" style={{ "--r": "-4deg", "--c": "var(--up-stamp)" } as React.CSSProperties}>
+                <span
+                  className="up-stamp"
+                  style={{ "--r": "-4deg", "--c": "var(--up-stamp)" } as React.CSSProperties}
+                >
                   ♥
                 </span>
                 <span className="up-postmark">{t("unpack.postmark")}</span>
@@ -235,7 +270,9 @@ export function UnpackBody(props: BodyProps) {
             <span className="up-flap is-left" aria-hidden="true" />
             <span className="up-flap is-right" aria-hidden="true" />
             <span className="up-flap is-bottom" aria-hidden="true">
-              <span className="up-arrows">↑↑ {bb ? t("unpack.handle") : t("unpack.thisSideUp")}</span>
+              <span className="up-arrows">
+                ↑↑ {bb ? t("unpack.handle") : t("unpack.thisSideUp")}
+              </span>
             </span>
             <span className="up-tape is-a" aria-hidden="true" />
             <span className="up-tape is-b" aria-hidden="true" />
@@ -250,7 +287,9 @@ export function UnpackBody(props: BodyProps) {
               {notes.length ? (
                 <div className="up-slip">
                   <p className="up-slip-title">{t("unpack.slipTitle")}</p>
-                  <p className="up-slip-sub">{t("unpack.slipSub", { n: notes.length, name: name || t("unpack.slipYou") })}</p>
+                  <p className="up-slip-sub">
+                    {t("unpack.slipSub", { n: notes.length, name: name || t("unpack.slipYou") })}
+                  </p>
                   <ul className="up-slip-list">
                     {packers.map(([who, row]) => (
                       <li key={who} className={row.done === row.n ? "is-done" : ""}>
@@ -274,7 +313,9 @@ export function UnpackBody(props: BodyProps) {
                       <li key={p.id} className="up-cell">
                         <Thing
                           piece={p}
-                          state={unwrapping === p.id ? "unwrapping" : opened.has(p.id) ? "out" : "packed"}
+                          state={
+                            unwrapping === p.id ? "unwrapping" : opened.has(p.id) ? "out" : "packed"
+                          }
                           shaking={shaking === p.id}
                           onTap={(e) => tap(p, e)}
                         />
@@ -322,7 +363,12 @@ export function UnpackBody(props: BodyProps) {
             <p className="up-words-title">{t("unpack.wordsTitle")}</p>
             <p className="up-words-list">
               {data.words.map((w) => (
-                <span key={w.id} style={{ "--r": `${((seed(w.id) - 0.5) * 9).toFixed(1)}deg` } as React.CSSProperties}>
+                <span
+                  key={w.id}
+                  style={
+                    { "--r": `${((seed(w.id) - 0.5) * 9).toFixed(1)}deg` } as React.CSSProperties
+                  }
+                >
                   {w.text}
                 </span>
               ))}
@@ -330,11 +376,20 @@ export function UnpackBody(props: BodyProps) {
           </section>
         ) : null}
 
-        <BodyFooter body={body} className="up-footer" buttonStyle={{ background: colors.primary, color: colors.onPrimary }} />
+        <BodyFooter
+          body={body}
+          className="up-footer"
+          buttonStyle={{ background: colors.primary, color: colors.onPrimary }}
+        />
       </div>
 
       {body.reading ? (
-        <Reader piece={body.reading} onClose={body.closeReader} accent={colors.mix(colors.primary, "#2A2420", colors.dark ? 0 : 0.1)} className="up-reader">
+        <Reader
+          piece={body.reading}
+          onClose={body.closeReader}
+          accent={colors.mix(colors.primary, "#2A2420", colors.dark ? 0 : 0.1)}
+          className="up-reader"
+        >
           <span className="up-reader-tape" aria-hidden="true" />
           <p className="up-reader-kicker">{t(`unpack.thing.${wrapFor(body.reading).shape}`)}</p>
         </Reader>
@@ -358,12 +413,26 @@ function Thing({
   const { shape, paper } = wrapFor(piece);
   const r = seed(piece.id);
   const locked = isLocked(piece);
-  const Icon = piece.kind === "photo" ? Camera : piece.kind === "song" ? Music2 : piece.kind === "voice" ? Mic : piece.kind === "ornament" ? Sparkles : null;
+  const Icon =
+    piece.kind === "photo"
+      ? Camera
+      : piece.kind === "song"
+        ? Music2
+        : piece.kind === "voice"
+          ? Mic
+          : piece.kind === "ornament"
+            ? Sparkles
+            : null;
   return (
     <button
       type="button"
       className={`up-thing is-${shape} paper-${paper} is-${state} ${shaking ? "is-shake" : ""}`}
-      style={{ "--tilt": `${((r - 0.5) * 16).toFixed(1)}deg`, "--tag": `${((r * 7) % 1 - 0.5) * 20}deg` } as React.CSSProperties}
+      style={
+        {
+          "--tilt": `${((r - 0.5) * 16).toFixed(1)}deg`,
+          "--tag": `${(((r * 7) % 1) - 0.5) * 20}deg`,
+        } as React.CSSProperties
+      }
       onClick={onTap}
       aria-label={pieceLabel(piece)}
     >
@@ -374,7 +443,9 @@ function Thing({
           <span className="up-obj-paper" />
           {state === "unwrapping" ? (
             <>
-              <span className="up-reveal">{Icon ? <Icon className="size-4" /> : <Mail className="size-4" />}</span>
+              <span className="up-reveal">
+                {Icon ? <Icon className="size-4" /> : <Mail className="size-4" />}
+              </span>
               <span className="up-peel is-n" />
               <span className="up-peel is-e" />
               <span className="up-peel is-s" />
@@ -392,7 +463,11 @@ function Thing({
       )}
       <span className="up-tag" aria-hidden="true">
         {Icon && state !== "out" ? <Icon className="size-2.5 shrink-0" /> : null}
-        <span className="truncate">{locked ? t("body.opensOn", { day: formatDay(piece.date!) }) : piece.author || t("unpack.surpriseTag")}</span>
+        <span className="truncate">
+          {locked
+            ? t("body.opensOn", { day: formatDay(piece.date!, { day: "numeric", month: "short" }) })
+            : piece.author || t("unpack.surpriseTag")}
+        </span>
       </span>
     </button>
   );
@@ -404,7 +479,13 @@ function Unwrapped({ piece, onOpen }: { piece: Piece; onOpen: () => void }) {
   const tilt = `${((r - 0.5) * 10).toFixed(1)}deg`;
   if (piece.kind === "photo")
     return (
-      <button type="button" className="up-out is-photo" style={{ "--tilt": tilt } as React.CSSProperties} onClick={onOpen} aria-label={pieceLabel(piece)}>
+      <button
+        type="button"
+        className="up-out is-photo"
+        style={{ "--tilt": tilt } as React.CSSProperties}
+        onClick={onOpen}
+        aria-label={pieceLabel(piece)}
+      >
         <span className="up-out-pic">
           <PhotoFace piece={piece} tint="#C9A273" sizes="180px" />
         </span>
@@ -429,7 +510,13 @@ function Unwrapped({ piece, onOpen }: { piece: Piece; onOpen: () => void }) {
         <PieceContent
           piece={
             piece.kind === "song" || piece.kind === "voice"
-              ? { ...piece, kind: "letter", text: piece.text?.trim() || t(piece.kind === "song" ? "body.songFallback" : "body.voiceFallback") }
+              ? {
+                  ...piece,
+                  kind: "letter",
+                  text:
+                    piece.text?.trim() ||
+                    t(piece.kind === "song" ? "body.songFallback" : "body.voiceFallback"),
+                }
               : piece
           }
           accent="var(--up-ink)"

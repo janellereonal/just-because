@@ -13,6 +13,7 @@ import type { Palette, Theme } from "@/lib/themes";
  * /dev/bodies?style=cake&demo=sam               another demo gift (ana, sam, milo, nora-james)
  * /dev/bodies?style=cake&pal=night              another palette (default: the style's own)
  * /dev/bodies?style=cake&solo=1                 a gift made by one person
+ * /dev/bodies?style=care-package&look=balikbayan  another look of the style (invitation: ivory, blush)
  */
 export const Route = createFileRoute("/dev/bodies")({
   head: () => ({ meta: [NOINDEX] }),
@@ -22,6 +23,7 @@ export const Route = createFileRoute("/dev/bodies")({
     pal: typeof s["pal"] === "string" ? s["pal"] : "",
     solo: s["solo"] === true || s["solo"] === 1 || s["solo"] === "1",
     name: typeof s["name"] === "string" ? s["name"] : "",
+    look: typeof s["look"] === "string" ? s["look"] : "",
   }),
   component: DevBodies,
 });
@@ -45,6 +47,12 @@ const STYLE_PALETTES: Partial<Record<StyleId, Palette>> = {
   debut: { background: "#FBF5EF", primary: "#A8566A", accent: "#8A6A2E" },
 };
 
+/** Second looks have their own suggested palette. */
+const LOOK_PALETTES: Record<string, Palette> = {
+  balikbayan: { background: "#F6EBDD", primary: "#1F4E8C", accent: "#B83A2E" },
+  blush: { background: "#FCF1F0", primary: "#B97A74", accent: "#9C829B" },
+};
+
 const EXTRA: Record<string, Palette> = {
   cream: { background: "#FBF8F2", primary: "#B5623E", accent: "#E9C9B6" },
   berry: { background: "#FFF4F6", primary: "#7A5CFF", accent: "#C2366B" },
@@ -53,11 +61,11 @@ const EXTRA: Record<string, Palette> = {
 };
 
 function DevBodies() {
-  const { style, demo, pal, solo, name } = Route.useSearch();
+  const { style, demo, pal, solo, name, look: lookId } = Route.useSearch();
   const info = styleInfo(style);
-  const look = lookFor(info, null);
+  const look = lookFor(info, null, lookId || null);
   const gift = DEMO_GIFTS[isDemoId(demo) ? demo : "ana"];
-  const palette = EXTRA[pal] ?? STYLE_PALETTES[style] ?? gift.palette;
+  const palette = EXTRA[pal] ?? (lookId ? LOOK_PALETTES[lookId] : undefined) ?? STYLE_PALETTES[style] ?? gift.palette;
   const theme = useMemo<Theme | null>(
     () => (look ? { ...gift.theme, id: `dev-${look.id}`, name: look.theme, category: "", palettes: [palette] } : null),
     [gift.theme, look, palette],
