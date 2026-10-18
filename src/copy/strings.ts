@@ -633,3 +633,14 @@ export const REPORT_COPY = {
   pausedBody: "It's been taken down while we look into a report. If it's yours, check your email or contact us.",
   makeYourOwn: "Make your own gift",
 } as const;
+
+/** Prices and paying, for buyers in the Philippines and everywhere else. */
+export const PRICE_COPY = {
+  approxSuffix: "(approx.)",
+  /** Under the plan cards, for visitors in the Philippines. */
+  footerLocal: "Prices are in pesos.",
+  /** Under the plan cards, for everyone else. */
+  footerAbroad: "You pay in Philippine pesos, and cards from any country work. The amount in your currency is a guide. Your bank sets the exact rate.",
+  /** Next to the pay button, for visitors outside the Philippines. */
+  abroadPayNote: "Paying from outside the Philippines? Use a Visa or Mastercard. It's charged in pesos, and some banks add a small fee for that.",
+} as const;

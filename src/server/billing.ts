@@ -194,10 +194,12 @@ export async function logPayment(source: PaymentSource, event: string, outcome: 
  * The event id is only recorded once the order is actually applied, so an
  * early check that found nothing (or a mismatch) never blocks a later one.
  */
+type Purchased = { siteId: string; ownerId: string | null; plan: string; kind: string; method: string | null; cardOrigin: string | null };
+
 export async function applyPaidEvent(event: PaidEvent, provider: string, source: PaymentSource = "webhook"): Promise<string> {
   const db = getDb();
   /** Set once the payment is applied, for the metrics event after the transaction. */
-  let purchased: { siteId: string; ownerId: string | null; plan: string; kind: string } | null = null;
+  let purchased: Purchased | null = null;
   const result = await db.transaction(async (tx) => {
     const [order] = await tx
       .select()
@@ -208,6 +210,9 @@ export async function applyPaidEvent(event: PaidEvent, provider: string, source:
     if (event.orderId && event.orderId !== order.id)
       return { msg: `order mismatch: session says ${event.orderId}, we have ${order.id}`, orderId: order.id };
     if (order.status === "paid") return { msg: `order ${order.id} already paid`, orderId: order.id };
+    // Amounts are only comparable in the same currency (₱599 is not $599).
+    if (event.currency && event.currency.toUpperCase() !== order.currency.toUpperCase())
+      return { msg: `order ${order.id}: paid in ${event.currency}, expected ${order.currency}, not publishing`, orderId: order.id };
     if (event.amountPaid < order.amount)
       return { msg: `order ${order.id}: paid ${event.amountPaid} < expected ${order.amount}, not publishing`, orderId: order.id };
 
@@ -242,7 +247,7 @@ export async function applyPaidEvent(event: PaidEvent, provider: string, source:
     if (alreadyCovered) {
       return { msg: `order ${order.id}: duplicate payment${late}, gift ${site.id} already on ${site.tier}. Needs a refund.`, orderId: order.id };
     }
-    purchased = { siteId: site.id, ownerId: order.ownerId, plan: tier.id, kind: order.kind };
+    purchased = { siteId: site.id, ownerId: order.ownerId, plan: tier.id, kind: order.kind, method: event.method ?? null, cardOrigin: event.cardOrigin ?? null };
 
     if (order.kind === "extend") {
       const expiresAt = extendedExpiry(site.expiresAt, tier, now);
@@ -276,8 +281,13 @@ export async function applyPaidEvent(event: PaidEvent, provider: string, source:
     // One email per order: the receipt (with "it's live" for a first payment).
     await notifyPaid(result.paid).catch((e) => console.error("[notify]", e));
   }
-  const bought = purchased as { siteId: string; ownerId: string | null; plan: string; kind: string } | null;
-  if (bought) await track("plan_purchased", { siteId: bought.siteId, userId: bought.ownerId, props: { plan: bought.plan, kind: bought.kind } });
+  const bought = purchased as Purchased | null;
+  if (bought) {
+    const props: Record<string, string> = { plan: bought.plan, kind: bought.kind };
+    if (bought.method) props["method"] = bought.method;
+    if (bought.cardOrigin) props["card_origin"] = bought.cardOrigin;
+    await track("plan_purchased", { siteId: bought.siteId, userId: bought.ownerId, props });
+  }
   return result.msg;
 }
 
