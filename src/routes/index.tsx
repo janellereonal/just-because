@@ -1,3 +1,6 @@
+import { t } from "@/i18n";
+import { isFlagOn } from "@/config/flags";
+import { galleryLink } from "@/lib/gallery";
 import { useAuth } from "@/hooks/useAuth";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
@@ -30,7 +33,8 @@ export const Route = createFileRoute("/")({
   component: Index,
 });
 
-const STEPS = LANDING.how.steps;
+// With styles on, the first step is "Pick a style".
+const STEPS = isFlagOn("styles") ? LANDING.how.steps.map((s, i) => (i === 0 ? { ...s, title: t("gallery.step") } : s)) : LANDING.how.steps;
 
 const FAQ = [
   ...LANDING_MORE.faq.slice(0, 4),
@@ -181,10 +185,10 @@ function Index() {
             </h2>
           </div>
           <Link
-            to="/themes"
+            to={galleryLink().to}
             className="squish inline-flex min-h-12 items-center rounded-full bg-glass px-5 text-sm font-medium ring-1 ring-ink/12 hover:bg-pink/40"
           >
-            {LANDING_MORE.themes.link(themes.length)}
+            {isFlagOn("styles") ? t("gallery.seeAllPlain") : LANDING_MORE.themes.link(themes.length)}
           </Link>
         </div>
         <ExampleGifts />

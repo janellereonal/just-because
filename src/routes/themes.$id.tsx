@@ -8,7 +8,8 @@ import { DevicePreview, DeviceToggle, type PreviewDevice } from "@/components/De
 import { useGiftTour } from "@/hooks/useGiftTour";
 import { Pause3DContext } from "@/components/Theme3D";
 import { themeKindOf } from "@/lib/themeKind";
-import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, Link, redirect, useNavigate } from "@tanstack/react-router";
+import { isFlagOn } from "@/config/flags";
 import { useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { SiteHeader } from "@/components/SiteHeader";
@@ -26,6 +27,10 @@ import { usePalettes, themePalettes } from "@/hooks/usePalettes";
 import { FONT_PAIRINGS, MODULES } from "@/lib/gift";
 
 export const Route = createFileRoute("/themes/$id")({
+  // With styles on, theme pages go to the styles gallery.
+  beforeLoad: () => {
+    if (isFlagOn("styles")) throw redirect({ to: "/styles", search: { occasion: undefined }, statusCode: 301 });
+  },
   head: () => ({
     meta: [
       { title: "Theme preview | Just Because" },

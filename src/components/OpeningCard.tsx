@@ -21,6 +21,7 @@ import { GiftPeek } from "@/components/GiftPeek";
 import { SampleGift } from "@/components/SampleGift";
 import { themePalettes, usePalettes } from "@/hooks/usePalettes";
 import { SHOWCASE_COPY } from "@/copy/strings";
+import type { GiftFormat } from "@/lib/formats";
 
 const FALLBACK: Palette = { background: "#FBF8F2", primary: "#2B2522", accent: "#B5623E" } as Palette;
 
@@ -41,12 +42,22 @@ export function OpeningCard({
   character,
   onOpen,
   onUse,
+  title,
+  line,
+  useLabel,
+  tag,
 }: {
   theme: Theme;
   index: number;
   character: CharacterSetting | null;
   onOpen: () => void;
   onUse: () => void;
+  /** Styles gallery: the style's name and line instead of the theme's. */
+  title?: string | undefined;
+  line?: string | undefined;
+  useLabel?: string | undefined;
+  /** A small tag beside the name ("Top pick"). */
+  tag?: string | undefined;
 }) {
   const kind = themeKindOf(theme);
   const design = designFor(kind);
@@ -115,7 +126,7 @@ export function OpeningCard({
       onClick={onOpen}
       role="button"
       tabIndex={0}
-      aria-label={`Open the ${theme.name} theme full screen`}
+      aria-label={title ? `Open ${title} full screen` : `Open the ${theme.name} theme full screen`}
       onKeyDown={(e) => {
         if (e.key === "Enter" || e.key === " ") {
           e.preventDefault();
@@ -158,10 +169,11 @@ export function OpeningCard({
         </span>
       </div>
       <div className="flex flex-1 flex-col px-2 pt-3 pb-1" style={engine ? ({ ["--jb-display" as string]: engine.fonts.display.family } as React.CSSProperties) : themeFontVars(kind)}>
-        <h3 className="text-[1.6rem] leading-tight" style={{ fontFamily: "var(--jb-display)" }}>
-          {theme.name}
+        <h3 className="flex flex-wrap items-center gap-x-2 text-[1.6rem] leading-tight" style={{ fontFamily: "var(--jb-display)" }}>
+          {title ?? theme.name}
+          {tag ? <span className="fmt-rec font-sans" style={{ fontFamily: "var(--font-sans, inherit)" }}>{tag}</span> : null}
         </h3>
-        <p className="mt-0.5 text-sm text-muted">{objectLine}</p>
+        <p className="mt-0.5 text-sm text-muted">{line ?? objectLine}</p>
         <button
           type="button"
           onClick={(e) => {
@@ -170,7 +182,7 @@ export function OpeningCard({
           }}
           className="squish mt-4 min-h-11 rounded-full bg-accent px-4 text-sm font-medium text-cream hover:bg-accent/90"
         >
-          Use this theme
+          {useLabel ?? "Use this theme"}
         </button>
       </div>
     </motion.article>
@@ -184,12 +196,18 @@ export function OpeningPreviewModal({
   onClose,
   onUse,
   onSample,
+  useLabel,
+  format,
 }: {
   theme: Theme | null;
   character: CharacterSetting | null;
   onClose: () => void;
   onUse: (t: Theme) => void;
-  onSample: (t: Theme) => void;
+  /** "Theme details". Left out in the styles gallery. */
+  onSample?: ((t: Theme) => void) | undefined;
+  useLabel?: string | undefined;
+  /** The layout the sample gift reads in (a style's own). */
+  format?: GiftFormat | undefined;
 }) {
   const [opened, setOpened] = useState(false);
   const [round, setRound] = useState(0);
@@ -242,7 +260,7 @@ export function OpeningPreviewModal({
                     {SHOWCASE_COPY.chip}
                   </motion.span>
                   <div className="relative -mt-7 pb-28">
-                    <SampleGift theme={theme} palette={palette} />
+                    <SampleGift theme={theme} palette={palette} {...(format ? { format } : {})} />
                   </div>
                 </motion.div>
               ) : null}
@@ -289,11 +307,13 @@ export function OpeningPreviewModal({
                     {SHOWCASE_COPY.again}
                   </button>
                   <button type="button" onClick={() => onUse(theme)} className="squish min-h-11 flex-1 rounded-full bg-accent px-4 text-[15px] font-medium whitespace-nowrap text-cream">
-                    {SHOWCASE_COPY.use}
+                    {useLabel ?? SHOWCASE_COPY.use}
                   </button>
-                  <button type="button" onClick={() => onSample(theme)} className="min-h-11 shrink-0 rounded-full px-2.5 text-[12.5px] font-medium whitespace-nowrap text-ink/75 hover:bg-ink/5 hover:text-ink">
-                    {SHOWCASE_COPY.details}
-                  </button>
+                  {onSample ? (
+                    <button type="button" onClick={() => onSample(theme)} className="min-h-11 shrink-0 rounded-full px-2.5 text-[12.5px] font-medium whitespace-nowrap text-ink/75 hover:bg-ink/5 hover:text-ink">
+                      {SHOWCASE_COPY.details}
+                    </button>
+                  ) : null}
                 </div>
               </motion.div>
             ) : null}
