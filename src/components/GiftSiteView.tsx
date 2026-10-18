@@ -1,5 +1,4 @@
 import { giftVoice } from "@/lib/giftVoice";
-import { VoicePlayer } from "@/components/VoicePlayer";
 import { shareGift, trackEvent } from "@/lib/track";
 import { sampleLetter } from "@/copy/strings";
 import { useEffect, useMemo, useRef, useState } from "react";
@@ -9,6 +8,7 @@ import { GiftProgress } from "@/components/GiftProgress";
 import { Theme3D, type Theme3DHandle } from "@/components/Theme3D";
 import { WishCandles, useSkinPlay } from "@/components/SkinPlay";
 import { buzz, chime } from "@/lib/play";
+import { VoicePlayer } from "@/components/VoicePlayer";
 import { RotateCw } from "lucide-react";
 import { giftHeading, giftWords, themeKindOf } from "@/lib/themeKind";
 import { SampleText, usePlaceholderName } from "@/components/SampleMark";
