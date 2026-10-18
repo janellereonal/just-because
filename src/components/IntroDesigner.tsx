@@ -1,3 +1,4 @@
+import { isFlagOn } from "@/config/flags";
 import { useRef, useState } from "react";
 import { t } from "@/i18n";
 import { CharCount } from "@/components/ui/CharCount";
@@ -124,7 +125,10 @@ export function IntroDesigner({
   introStyle,
   greeting,
   offers = [],
+  badgeHint,
 }: {
+  /** The label the opening shows when the line on top is empty (the occasion's name). */
+  badgeHint?: string | undefined;
   /** Options the gift's theme offers (Simbang Gabi on Parol Christmas). */
   offers?: string[] | undefined;
   siteId: string;
@@ -199,7 +203,7 @@ export function IntroDesigner({
           <input
             className={field}
             maxLength={LIMITS.openingLine}
-            placeholder={copy.badge}
+            placeholder={badgeHint ?? copy.badge}
             value={settings.badge_text ?? ""}
             onChange={(e) => set({ badge_text: e.target.value || undefined })}
           />
@@ -248,7 +252,7 @@ export function IntroDesigner({
         <p className="mt-2 text-xs text-muted">
           {classic
             ? "A 3D scene, stickers and a button. Drag stickers in the preview to place them."
-            : "The theme's own object, opened with a gesture."}
+            : isFlagOn("styles") ? t("picker.style.ownObject") : "The theme's own object, opened with a gesture."}
         </p>
       </Group>
 
@@ -262,10 +266,10 @@ export function IntroDesigner({
                 aria-pressed={hero.type === "theme"}
                 className={`squish grid aspect-square place-items-center overflow-hidden rounded-2xl ring-2 ${hero.type === "theme" ? "ring-ink" : "ring-transparent"}`}
                 style={{ background: palette.background }}
-                title="From the theme"
+                title={isFlagOn("styles") ? t("picker.style.fromStyle") : "From the theme"}
               >
                 <img src={themeStillUrl(kind)} alt="" className="size-full object-contain" />
-                <span className="sr-only">From the theme</span>
+                <span className="sr-only">{isFlagOn("styles") ? t("picker.style.fromStyle") : "From the theme"}</span>
               </button>
               {THEME_KINDS.filter((k) => k !== kind && k !== "default").map((k) => (
                 <button

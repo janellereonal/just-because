@@ -248,6 +248,11 @@ export function occasionInfo(id: OccasionId): OccasionInfo {
   return OCCASIONS.find((o) => o.id === id)!;
 }
 
+/** Calm occasions (Sympathy, Get well): no drifting particles, no Bo, party styles last. */
+export function isQuietOccasion(id: string | null | undefined): boolean {
+  return isOccasionId(id) && !!occasionInfo(id).quiet;
+}
+
 /** The top row of chips: everything without a parent. */
 export function topOccasions(): OccasionInfo[] {
   return OCCASIONS.filter((o) => !o.parent);

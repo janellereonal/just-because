@@ -150,8 +150,11 @@ export function PalettePicker({
   onChange,
   photoUrls = [],
   part = "all",
+  suggestedLabel,
 }: {
   theme: Theme | null;
+  /** Heading over the suggested palettes (styles: "Suggested for Cake"). */
+  suggestedLabel?: string | undefined;
   value: Value;
   onChange: (next: Value) => void;
   photoUrls?: string[];
@@ -293,7 +296,7 @@ export function PalettePicker({
       {part === "all" && suggested.filter((p) => matches(query, p)).length > 0 ? (
         <div>
           <p className="text-[11px] tracking-wide text-muted uppercase">
-            Suggested for {theme?.name ?? "this theme"}
+            {suggestedLabel ?? `Suggested for ${theme?.name ?? "this theme"}`}
           </p>
           <div className="mt-2 space-y-1.5">
             {suggested.filter((p) => matches(query, p)).map(row)}

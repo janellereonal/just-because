@@ -167,3 +167,18 @@ describe("gifts made before styles look exactly the same", () => {
     expect(styleForLegacy(null, "mixtape")?.id).toBe("mixtape");
   });
 });
+
+describe("plans", () => {
+  test("styles made from themes come with every plan, layout styles keep their plan", async () => {
+    const { TIERS, tierAllowsLook, stylePlanTag } = await import("@/config/pricing");
+    const sweet = TIERS[0]!;
+    expect(tierAllowsLook(sweet, "storybook", "love-letter")).toBe(true);
+    expect(tierAllowsLook(sweet, "stars", "countdown")).toBe(true);
+    expect(tierAllowsLook(sweet, "storybook", "storybook")).toBe(sweet.formats.includes("storybook"));
+    expect(tierAllowsLook(sweet, "storybook", null)).toBe(sweet.formats.includes("storybook"));
+    expect(tierAllowsLook(sweet, "scrapbook", "scrapbook")).toBe(true);
+    expect(stylePlanTag("love-letter")).toBeNull();
+    expect(stylePlanTag("scrapbook")).toBeNull();
+    expect(stylePlanTag("mixtape")).toBe(`${TIERS[1]!.name} plan`);
+  });
+});

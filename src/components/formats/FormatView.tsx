@@ -20,6 +20,7 @@ import {
 } from "@/lib/gift";
 import type { Palette, Theme } from "@/lib/themes";
 import { themeKindOf } from "@/lib/themeKind";
+import { isQuietOccasion } from "@/lib/occasions";
 import { loadThemeFonts, themeFontVars } from "@/themes/_shared/design";
 
 const BentoView = lazy(() =>
@@ -112,7 +113,7 @@ export function FormatView(props: Props) {
         ) : null}
         <FormatBody {...props} />
         {tiles ? <TileExtras {...props} kind={kind} /> : null}
-        {roamIcons ? <Roamer icons={roamIcons} index={cast.roam} /> : null}
+        {roamIcons && !isQuietOccasion(props.site.occasion) ? <Roamer icons={roamIcons} index={cast.roam} /> : null}
       </div>
       </GiftKindContext.Provider>
     </PlaceholderNameContext.Provider>

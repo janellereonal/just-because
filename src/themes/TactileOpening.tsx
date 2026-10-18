@@ -170,8 +170,11 @@ export function TactileOpening({
   slots,
   options,
   age,
+  calm = false,
 }: {
   age?: number | null | undefined;
+  /** Calm occasions (Sympathy, Get well): no drifting particles. */
+  calm?: boolean | undefined;
   /** The theme row's name: themes built on the engine are found by it. */
   themeName?: string | null | undefined;
   /** Engine themes: friends' notes, extra personalisation and options. */
@@ -241,7 +244,7 @@ export function TactileOpening({
       hint={interactive && !paused ? hint : ""}
       badge={badgeText || design.name}
       {...(entry.grain !== undefined ? { grain: entry.grain } : {})}
-      {...(entry.sprinkles !== 0 ? { sprinkles: set, sprinkleOpacity: entry.sprinkles ?? 0.4 } : {})}
+      {...(entry.sprinkles !== 0 && !calm ? { sprinkles: set, sprinkleOpacity: entry.sprinkles ?? 0.4 } : {})}
     >
       {({ hostRef, open, reduced }) => (
         <Component

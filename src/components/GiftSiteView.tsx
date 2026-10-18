@@ -10,6 +10,7 @@ import { WishCandles, useSkinPlay } from "@/components/SkinPlay";
 import { buzz, chime } from "@/lib/play";
 import { RotateCw } from "lucide-react";
 import { giftHeading, giftWords, themeKindOf } from "@/lib/themeKind";
+import { isQuietOccasion } from "@/lib/occasions";
 import { SampleText, usePlaceholderName } from "@/components/SampleMark";
 import { centerInScroller } from "@/lib/scroll";
 import { giftMoment } from "@/lib/giftPieces";
@@ -1020,7 +1021,7 @@ export function GiftSiteView({
             </p>
           ) : null}
           <div className="flex items-center justify-center gap-2">
-            <Bo pose="idle" size={32} title="Bo" />
+            {isQuietOccasion(site.occasion) ? null : <Bo pose="idle" size={32} title="Bo" />}
             <p className="text-sm">Made with Just Because</p>
           </div>
           <p className="mt-1 text-xs opacity-70">Tag us and use #justbecause</p>

@@ -9,6 +9,7 @@
  */
 
 export type TierId = "sweet" | "celebration" | "keepsake";
+import { isStyleId, styleInfo, type StyleId } from "@/lib/styles";
 export type GiftFormatId = import("@/lib/formats").GiftFormat;
 
 /**
@@ -261,4 +262,21 @@ export function expiryFrom(publishedAt: Date, tier: Tier): Date {
 export function extendedExpiry(expiresAt: Date | null, tier: Tier, now = new Date()): Date {
   const base = expiresAt && expiresAt.getTime() > now.getTime() ? expiresAt : now;
   return addMonths(base, tier.liveFor.months);
+}
+
+/**
+ * Styles (src/lib/styles.ts). Styles made from themes come with every plan, like themes always did.
+ * Layout styles, and gifts from before styles, need a plan that includes their layout.
+ */
+export function tierAllowsLook(tier: { formats: readonly string[] }, format: string, style?: string | null): boolean {
+  if (isStyleId(style) && styleInfo(style).origin === "theme") return true;
+  return tier.formats.includes(format);
+}
+
+/** The plan badge on a style card ("Celebration plan"), or null when every plan has it. */
+export function stylePlanTag(style: StyleId): string | null {
+  const info = styleInfo(style);
+  if (info.origin === "theme") return null;
+  const tag = formatPlanTag(info.body);
+  return tag ? `${tag} plan` : null;
 }

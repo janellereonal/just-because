@@ -1,7 +1,10 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { OCCASION_NAMES } from "@/copy/strings";
-import { resolveStyle } from "@/lib/styles";
-import { occasionName } from "@/lib/occasions";
+import { bodyFor, lookFor, resolveStyle, styleForLegacy, styleInfo, styleTitle, type StyleId } from "@/lib/styles";
+import { isQuietOccasion, occasionName, type OccasionId } from "@/lib/occasions";
+import { OccasionChips } from "@/components/styles/OccasionChips";
+import { StyleArt, StylePicker } from "@/components/styles/StylePicker";
+import { fetchThemes } from "@/lib/themes";
 import { ConciergeOffer } from "@/components/ConciergeOffer";
 import { trackEvent } from "@/lib/track";
 import { countNotes, inGiftLabel, noteSummary, waitingLabel } from "@/lib/noteCounts";
@@ -91,7 +94,7 @@ import {
   planSummary,
   useBilling,
 } from "@/components/PlanControls";
-import { getTier } from "@/config/pricing";
+import { getTier, tierAllowsLook } from "@/config/pricing";
 import {
   Check,
   ChevronDown,
@@ -255,6 +258,8 @@ function SiteDashboard() {
   const [canvasView, setCanvasView] = useState<"intro" | "gift">("intro");
   const [customizeLook, setCustomizeLook] = useState(false);
   const [formatAsk, setFormatAsk] = useState<GiftSite["format"] | null>(null);
+  const [styleAsk, setStyleAsk] = useState<StyleId | null>(null);
+  const [occasionRow, setOccasionRow] = useState<OccasionId | null | undefined>(undefined);
   /** A section with notes in it that the organiser asked to turn off. */
   const [offAsk, setOffAsk] = useState<string | null>(null);
   const [panelOpen, setPanelOpen] = useState(true);
@@ -318,11 +323,22 @@ function SiteDashboard() {
     refetch: refetchSite,
   } = useQuery({ queryKey: ["site", id], queryFn: () => fetchSiteById(id) });
   const palettesQuery = usePalettes();
-  const { data: theme = null } = useQuery({
+  const { data: savedTheme = null } = useQuery({
     queryKey: ["theme", site?.theme_id],
     queryFn: () => fetchTheme(site?.theme_id ?? null),
     enabled: !!site,
   });
+  // Styles (flag `styles`): a style picked here shows its look straight away, before the save
+  // brings back the new theme row. Older gifts (no style) keep their saved theme.
+  const stylesOn = isFlagOn("styles");
+  const { data: publishedThemes = [] } = useQuery({ queryKey: ["themes", "published"], queryFn: () => fetchThemes(false), enabled: stylesOn });
+  const draftLook = stylesOn && draft?.style ? lookFor(styleInfo(draft.style), draft.occasion) : null;
+  const theme =
+    stylesOn && draft?.style
+      ? draftLook
+        ? (publishedThemes.find((x) => x.name === draftLook.theme) ?? (savedTheme?.name === draftLook.theme ? savedTheme : null))
+        : null
+      : savedTheme;
   const engineTheme = engineThemeForName(theme?.name);
   const { data: modules = [] } = useQuery({
     queryKey: ["modules", id],
@@ -499,6 +515,8 @@ function SiteDashboard() {
             ...(withStatus ? { status: next.status } : {}),
             solo: next.solo,
             format: next.format,
+            ...(stylesOn && next.style ? { style: next.style } : {}),
+            ...(stylesOn ? { occasion: next.occasion } : {}),
             format_settings: next.format_settings as unknown as Record<string, never>,
           },
         },
@@ -872,6 +890,21 @@ function SiteDashboard() {
     else setPanelOpen(true);
   }
 
+  /** Switching style: its own layout, and its colors when it brings a look. Notes and words stay. */
+  function switchStyle(next: StyleId) {
+    const info = styleInfo(next);
+    const look = lookFor(info, draft?.occasion ?? null);
+    const lookTheme = look ? publishedThemes.find((x) => x.name === look.theme) : undefined;
+    const pal = lookTheme ? palettesQuery.data?.find((p) => p.id === lookTheme.suggested_palette_ids[0]) : undefined;
+    patch({
+      style: next,
+      format: bodyFor(info),
+      ...(pal ? { palette_id: pal.id, custom_colors: { background: pal.background, primary: pal.primary, accent: pal.accent } } : {}),
+    });
+    setStyleAsk(null);
+    boSay(`${styleTitle(next)}. Lovely.`, "wink");
+  }
+
   function chooseFormat(next: GiftSite["format"]) {
     if (next === draft?.format) return;
     setFormatAsk(next);
@@ -933,6 +966,7 @@ function SiteDashboard() {
               kind={resolveStyle(draft, theme).introKind}
               introStyle={introStyleForTheme(theme?.name)}
               offers={engineTheme?.offers}
+              badgeHint={draft.occasion ? occasionName(draft.occasion) : undefined}
               greeting={
                 <label className="block">
                   <span className="flex items-baseline justify-between gap-2">
@@ -1043,6 +1077,7 @@ function SiteDashboard() {
       <div className="space-y-5">
         <StepGroup title="Palette" onActivate={() => setCanvasView("gift")}>
           <PalettePicker
+            {...(stylesOn ? { suggestedLabel: draft.style ? t("picker.style.paletteFor", { style: styleTitle(draft.style) }) : t("picker.style.paletteDefault") } : {})}
             theme={theme}
             part="suggested"
             value={{ palette_id: draft.palette_id, colors: paletteNow }}
@@ -1131,6 +1166,7 @@ function SiteDashboard() {
           <>
             <StepGroup title="Colors" onActivate={() => setCanvasView("gift")}>
               <PalettePicker
+                {...(stylesOn ? { suggestedLabel: draft.style ? t("picker.style.paletteFor", { style: styleTitle(draft.style) }) : t("picker.style.paletteDefault") } : {})}
                 theme={theme}
                 part="more"
                 value={{ palette_id: draft.palette_id, colors: paletteNow }}
@@ -1194,7 +1230,7 @@ function SiteDashboard() {
             compact
             siteId={id}
             recipient={draft.custom_text.recipient_name?.trim() ?? ""}
-            occasion={OCCASION_NAMES[themeKindOf(theme)] ?? ""}
+            occasion={stylesOn && draft.occasion ? occasionName(draft.occasion) : (OCCASION_NAMES[themeKindOf(theme)] ?? "")}
           />
         ) : null}
         <StepGroup
@@ -1380,7 +1416,72 @@ function SiteDashboard() {
             {solo ? "You make every page. There's no invite link." : "Friends add theirs through the invite link. You can add yours too."}
           </p>
         </StepGroup>
-        <StepGroup title="How it opens" hint="Same notes, a different way to open them.">
+        <StepGroup title={stylesOn ? t("picker.style.label") : "How it opens"} hint={stylesOn ? t("picker.style.hint") : "Same notes, a different way to open them."}>
+          {stylesOn ? (
+            <>
+              <p className="text-xs font-medium text-muted">{t("picker.occasion.title")}</p>
+              <div className="mt-2">
+                <OccasionChips
+                  value={draft.occasion}
+                  onChange={(next) => {
+                    patch({ occasion: next });
+                    if (next) boSay(`${occasionName(next)}. I'll put the best styles first.`, "happy");
+                  }}
+                  {...(occasionRow !== undefined ? { open: occasionRow } : {})}
+                  onOpen={setOccasionRow}
+                />
+              </div>
+              {styleAsk ? (
+                <div className="sticky top-0 z-10 mt-4 rounded-xl border border-accent/40 bg-[#FBEDE6] p-3 shadow-sm" role="alertdialog" aria-label={t("picker.style.label")}>
+                  <p className="text-sm font-medium">{t("picker.style.switchTitle", { style: styleTitle(styleAsk) })}</p>
+                  <p className="mt-1 text-xs text-muted">{t("picker.style.switchBody")}</p>
+                  <div className="mt-3 flex gap-2">
+                    <Button size="sm" className="rounded-full" onClick={() => switchStyle(styleAsk)}>
+                      {t("picker.style.switch")}
+                    </Button>
+                    <Button size="sm" variant="outline" className="rounded-full" onClick={() => setStyleAsk(null)}>
+                      {t("picker.style.keep")}
+                    </Button>
+                  </div>
+                </div>
+              ) : null}
+              <div className="mt-4">
+                <StylePicker
+                  value={draft.style}
+                  occasion={draft.occasion}
+                  onChange={(next) => {
+                    if (next !== draft.style) setStyleAsk(next);
+                  }}
+                  available={(s) => s.id === draft.style || s.looks.length === 0 || s.looks.some((l) => publishedThemes.some((x) => x.name === l.theme))}
+                  isAllowed={(s) => !planTier || tierAllowsLook(planTier, bodyFor(s), s.id)}
+                  current={
+                    draft.style
+                      ? null
+                      : (() => {
+                          const match = styleForLegacy(savedTheme, draft.format);
+                          const layout = styleInfo(draft.format === "handwritten" ? "handwritten" : draft.format);
+                          return {
+                            title: match ? styleTitle(match.id) : `${savedTheme?.name ? `${savedTheme.name} · ` : ""}${formatInfo(draft.format).title}`,
+                            art: <StyleArt style={match ?? layout} occasion={draft.occasion} />,
+                          };
+                        })()
+                  }
+                />
+              </div>
+              {draft.style ? null : <p className="mt-2 text-xs text-muted">{t("picker.style.currentHint")}</p>}
+              {planTier && planTier.formats.length < FORMATS.length ? (
+                <p className="mt-3 text-xs text-muted">
+                  {t("picker.style.planNote")}{" "}
+                  {billing && billing.upgrades.length > 0 ? (
+                    <button type="button" className="text-accent underline underline-offset-2" onClick={() => setPlanPicker("upgrade")}>
+                      {t("picker.style.upgrade")}
+                    </button>
+                  ) : null}
+                </p>
+              ) : null}
+            </>
+          ) : (
+            <>
           {formatAsk ? (
             <div className="sticky top-0 z-10 mb-3 rounded-xl border border-accent/40 bg-[#FBEDE6] p-3 shadow-sm" role="alertdialog" aria-label="Switch format">
               <p className="text-sm font-medium">Switch to {formatInfo(formatAsk).title}?</p>
@@ -1425,6 +1526,8 @@ function SiteDashboard() {
               ) : null}
             </p>
           ) : null}
+            </>
+          )}
           <div className="mt-4 space-y-4">
         {draft.format === "comic" ? (
           <>
@@ -1434,7 +1537,7 @@ function SiteDashboard() {
             {normalizeComicSettings(draft.format_settings).two_worlds ? <div className="grid gap-3"><label><span className="text-xs text-muted">First world</span><input value={normalizeComicSettings(draft.format_settings).world_one ?? ""} maxLength={LIMITS.sectionTitle} onChange={(event) => patchComic({ world_one: event.target.value })} placeholder="HERO WORLD" className="mt-1 w-full rounded-xl border border-line bg-cream px-3 py-2.5 text-sm" /></label><label><span className="text-xs text-muted">Second world</span><input value={normalizeComicSettings(draft.format_settings).world_two ?? ""} maxLength={LIMITS.sectionTitle} onChange={(event) => patchComic({ world_two: event.target.value })} placeholder="OHANA WORLD" className="mt-1 w-full rounded-xl border border-line bg-cream px-3 py-2.5 text-sm" /></label></div> : null}
             <div><p className="text-sm font-medium">Panel organizer</p><p className="mt-1 text-xs text-muted">Reorder panels or move one into another chapter.</p><div className="mt-3 space-y-2">{orderedComicIds(contributions.map((item) => item.id), normalizeComicSettings(draft.format_settings).panel_order).map((itemId, index, orderedIds) => { const item = contributions.find((entry) => entry.id === itemId); if (!item) return null; const settings = normalizeComicSettings(draft.format_settings); const chapter = settings.chapter_overrides?.[item.id] ?? item.module_type; return <div key={item.id} className="rounded-xl border border-line bg-cream p-3"><div className="flex items-center gap-2"><span className="min-w-0 flex-1 truncate text-sm font-medium">{item.author_name}</span><Button type="button" size="icon" variant="ghost" disabled={index === 0} onClick={() => moveComicPanel(item.id, -1)} aria-label="Move panel up">↑</Button><Button type="button" size="icon" variant="ghost" disabled={index === orderedIds.length - 1} onClick={() => moveComicPanel(item.id, 1)} aria-label="Move panel down">↓</Button></div><select value={chapter} onChange={(event) => patchComic({ chapter_overrides: { ...settings.chapter_overrides, [item.id]: event.target.value } })} className="mt-2 w-full rounded-lg border border-line bg-paper px-2 py-2 text-xs">{MODULES.map((module) => <option key={module.type} value={module.type}>{module.label}</option>)}</select></div>; })}</div></div>
           </>
-        ) : <p className="text-xs text-muted">{formatInfo(draft.format).about}</p>}
+        ) : stylesOn ? null : <p className="text-xs text-muted">{formatInfo(draft.format).about}</p>}
           </div>
         </StepGroup>
         <StepGroup title="Sections" hint="What friends can add, and what the gift shows.">
@@ -1640,6 +1743,7 @@ function SiteDashboard() {
       style={introStyleForTheme(theme?.name)}
       kind={resolveStyle(draft, theme).introKind}
       occasionBadge={draft.occasion ? occasionName(draft.occasion) : undefined}
+      calm={isQuietOccasion(draft.occasion)}
       palette={paletteNow}
       fonts={FONT_PAIRINGS[draft.font_choice] ?? FONT_PAIRINGS.romantic}
       backgroundStyle={draft.background_style}
@@ -1665,6 +1769,7 @@ function SiteDashboard() {
       style={introStyleForTheme(theme?.name)}
       kind={resolveStyle(draft, theme).introKind}
       occasionBadge={draft.occasion ? occasionName(draft.occasion) : undefined}
+      calm={isQuietOccasion(draft.occasion)}
       palette={paletteNow}
       fonts={FONT_PAIRINGS[draft.font_choice] ?? FONT_PAIRINGS.romantic}
       backgroundStyle={draft.background_style}
@@ -1838,7 +1943,13 @@ function SiteDashboard() {
           </span>
         </div>
         <div className="flex min-w-0 items-center gap-2 text-[11px] text-muted">
-          {theme?.name ? (
+          {stylesOn ? (
+            draft.style || draft.occasion ? (
+              <span className="shrink-0 rounded-full px-2 py-0.5 font-medium" style={{ background: paletteNow.accent + "33", color: "#2B2522" }}>
+                {draft.style ? styleTitle(draft.style) : occasionName(draft.occasion!)}
+              </span>
+            ) : null
+          ) : theme?.name ? (
             <span
               className="shrink-0 rounded-full px-2 py-0.5 font-medium"
               style={{ background: paletteNow.accent + "33", color: "#2B2522" }}
@@ -2073,6 +2184,7 @@ function SiteDashboard() {
           style={introStyleForTheme(theme?.name)}
           kind={resolveStyle(draft, theme).introKind}
           occasionBadge={draft.occasion ? occasionName(draft.occasion) : undefined}
+          calm={isQuietOccasion(draft.occasion)}
           palette={paletteNow}
           fonts={FONT_PAIRINGS[draft.font_choice] ?? FONT_PAIRINGS.romantic}
           backgroundStyle={draft.background_style}

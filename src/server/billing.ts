@@ -13,6 +13,7 @@ import {
   extendedExpiry,
   getTier,
   promo,
+  tierAllowsLook,
   tierRank,
   type Tier,
   type TierId,
@@ -65,12 +66,12 @@ export async function siteUsage(siteId: string) {
 export type Usage = Awaited<ReturnType<typeof siteUsage>>;
 
 /** Why a tier doesn't fit this gift right now, or null if it does. */
-export function tierBlocker(tier: Tier, usage: Usage, format: string): string | null {
+export function tierBlocker(tier: Tier, usage: Usage, format: string, style?: string | null): string | null {
   if (usage.contributors > tier.contributors.cap)
     return `This gift has ${usage.contributors} contributors. ${tier.name} fits ${tier.contributors.cap}.`;
   if (usage.photos > tier.photos.cap)
     return `This gift has ${usage.photos} photos. ${tier.name} fits ${tier.photos.cap}.`;
-  if (!tier.formats.includes(format as Tier["formats"][number]))
+  if (!tierAllowsLook(tier, format, style))
     return `${tier.name} doesn't include this format. Switch to ${tier.formats.map((f) => formatInfo(f).title).join(" or ")} to use it.`;
   return null;
 }
@@ -133,7 +134,7 @@ export async function quote(site: Site, tierId: string): Promise<Quote> {
   if (site.tier === LEGACY_TIER) throw new HttpError(400, "This gift is already open for good. No payment needed.");
 
   const usage = await siteUsage(site.id);
-  const blocker = tierBlocker(tier, usage, site.format);
+  const blocker = tierBlocker(tier, usage, site.format, site.style);
   if (blocker) throw new HttpError(400, blocker);
 
   const current = getTier(site.tier);
