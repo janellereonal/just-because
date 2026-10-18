@@ -113,6 +113,74 @@ export const TREE: Record<string, ClayRecipe> = {
     ];
   },
 
+  /**
+   * The everyday wishing tree: a round, leafy tree in the same pot, for every gift that
+   * isn't Christmas. No star, no snow, no garlands. Warm fairy lights sit at the same
+   * points as the Christmas tree's (GiftTree's LIGHTS), and the canopy covers the same
+   * branch points (GiftTree's HANGS), so ornaments hang in the same places on both.
+   */
+  wtree: () => {
+    const LEAF = "#6DB37A";
+    const leaf = (x: number, y: number, z: number, d: number, tone: number) =>
+      blob([x, y, z], [d, d * 0.92, d * 0.86], shade(LEAF, tone), [0, 0, 0], { rough: 0.62, gloss: 0.18 });
+    const lights: [number, number, number][] = [
+      [40, 92, 30],
+      [58, 96, 34],
+      [78, 92, 30],
+      [30, 98, 22],
+      [90, 98, 22],
+      [46, 68, 36],
+      [70, 70, 36],
+      [58, 46, 30],
+    ];
+    const blossoms: [number, number, number][] = [
+      [34, 52, 26],
+      [86, 56, 24],
+      [52, 30, 22],
+      [72, 84, 34],
+      [22, 78, 18],
+      [98, 80, 16],
+      [64, 62, 40],
+    ];
+    return [
+      // Pot (same as the Christmas tree)
+      lathe(CYL, [60, 104, 0], [16, 14, 14], "#8A5A3C"),
+      lathe(
+        [
+          [0, -0.5],
+          [0.4, -0.5],
+          [0.5, 0.42],
+          [0.52, 0.5],
+          [0, 0.5],
+        ],
+        [60, 109, 0],
+        [40, 14, 34],
+        "#D9775A",
+      ),
+      lathe(CYL, [60, 102.5, 0], [42, 4, 36], shade("#D9775A", 14)),
+      // Trunk with two little arms, showing between the lower clumps
+      ...tube([[60, 106, -2], [60, 90, 0], [59, 74, 2]], 6.5, 5, "#9A6A48"),
+      ...tube([[60, 88, 0], [50, 80, 4], [44, 74, 6]], 3.2, 2.2, "#9A6A48"),
+      ...tube([[60, 84, 0], [70, 77, 4], [76, 70, 6]], 3.2, 2.2, "#9A6A48"),
+      // A round, cloud-like canopy from overlapping leaf clumps: darker low and at the back
+      leaf(60, 54, -12, 86, -14),
+      leaf(30, 88, -2, 40, -12),
+      leaf(90, 88, -2, 40, -12),
+      leaf(24, 64, 0, 42, -6),
+      leaf(96, 64, 0, 42, -6),
+      leaf(40, 40, 2, 46, 2),
+      leaf(80, 40, 2, 46, 2),
+      leaf(60, 22, 0, 44, 12),
+      leaf(60, 52, 12, 54, 4),
+      leaf(42, 70, 12, 38, -2),
+      leaf(78, 70, 12, 38, -2),
+      // Little blossoms
+      ...blossoms.map(([x, y, z], i) => blob([x, y, z], [6, 6, 5], i % 2 ? "#FFD7E2" : WHITE, [0, 0, 0], { rough: 0.4, gloss: 0.4 })),
+      // Warm fairy lights
+      ...lights.map(([x, y, z]) => blob([x, y, z], [6, 6, 6], "#FFE3A3", [0, 0, 0], { rough: 0.2, gloss: 0.9, sheen: 1 })),
+    ];
+  },
+
   "orn-bauble": () => [...cap(), blob([60, 66, 0], [68, 68, 64], RED, [0, 0, 0], SHINY), lathe(CYL, [60, 66, 0], [69, 9, 65], WHITE), ...[-20, -8, 4, 16].map((x) => blob([60 + x, 66, 33 - Math.abs(x) * 0.5], [4, 4, 3], GOLD, [0, 0, 0], SHINY))],
   "orn-star": () => [torus([60, 18, 0], 4.6, 1.5, GOLD), pillow(starOutline(60, 62, 40, 0.5), 14, GOLD, 0, 6), ...face(60, 62, 15, 1.35)],
   "orn-stocking": () => [
