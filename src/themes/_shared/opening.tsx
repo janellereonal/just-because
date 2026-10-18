@@ -40,6 +40,8 @@ export type OpeningProps = {
   hostRef: React.RefObject<HTMLDivElement | null>;
   /** Live hint text under the object. */
   setHint: (hint: string) => void;
+  /** Which version of the opening, for themes that offer more than one (Love Letter). */
+  variant?: string | undefined;
 };
 
 /** Every theme's object gets these props. */

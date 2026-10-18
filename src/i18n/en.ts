@@ -137,6 +137,24 @@ export const en = {
   "opening.soundOn": "Sound is on",
   "opening.soundOff": "Sound is off",
 
+  // Love Letter openings: three ways the letter opens (intro_settings.letter).
+  "letter.seal.hint": "Press and hold the seal",
+  "letter.seal.holding": "Keep holding, the wax is warming",
+  "letter.seal.aria": "Press and hold the wax seal to open",
+  "letter.peel.hint": "Peel the seal up",
+  "letter.peel.aria": "Peel the wax seal up to open",
+  "letter.slide.hint": "Slide the letter out",
+  "letter.slide.aria": "Slide the letter out",
+  "letter.for": "For",
+  "letter.signoff": "with love, from all of us",
+  "letter.choice.label": "How the letter opens",
+  "letter.choice.seal": "Break the seal",
+  "letter.choice.sealHint": "Press and hold. The wax cracks through their initial.",
+  "letter.choice.peel": "Peel the seal",
+  "letter.choice.peelHint": "Drag the seal up and the flap lifts with it.",
+  "letter.choice.slide": "Slide it out",
+  "letter.choice.slideHint": "Pull the folded letter out of the envelope.",
+
   // The /dev/themes playground (dev only, still translatable).
   "playground.title": "Theme playground",
   "playground.theme": "Theme",

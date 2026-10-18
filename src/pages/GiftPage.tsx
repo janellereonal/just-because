@@ -171,7 +171,7 @@ function PublishedPage() {
       {!opened && formatInfo(site.format).usesIntro ? (
         <Suspense fallback={<PageLoading label="Opening your gift…" />}>
         {/* The gift waits underneath, so the opening can reveal it through the object. */}
-        <div aria-hidden="true" inert className="pointer-events-none fixed inset-0 overflow-hidden">
+        <div aria-hidden="true" inert data-gift-underlay="" className="pointer-events-none fixed inset-0 overflow-hidden">
           <FormatView
             site={site}
             theme={theme}

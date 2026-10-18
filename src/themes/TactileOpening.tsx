@@ -11,6 +11,8 @@ import { resolveIconSet, type IconSetSetting } from "@/themes/_shared/iconSets";
 import type { CharacterSetting } from "@/themes/_shared/cast/types";
 import { OpeningShell, type OpeningComponent } from "@/themes/_shared/opening";
 import { ValentineOpening, valentineBackground } from "@/themes/valentine/Opening";
+import { LoveLetterOpening } from "@/themes/valentine/LoveLetter";
+import { isFlagOn } from "@/config/flags";
 import { BirthdayOpening, birthdayBackground } from "@/themes/birthday/Opening";
 import { AnniversaryOpening, anniversaryBackground } from "@/themes/anniversary/Opening";
 import { WeddingOpening, weddingBackground } from "@/themes/wedding/Opening";
@@ -35,6 +37,8 @@ type Entry = {
   grain?: number;
   /** How strongly the icon set drifts in the background (0 hides it). */
   sprinkles?: number;
+  /** "fade": the object hands over to the gift itself (it grows into the first page). */
+  reveal?: "portal" | "fade";
 };
 
 export const OPENINGS: Partial<Record<ThemeKind, Entry>> = {
@@ -171,7 +175,10 @@ export function TactileOpening({
   options,
   age,
   calm = false,
+  letter,
 }: {
+  /** Love Letter: how the letter opens (intro_settings.letter). */
+  letter?: string | undefined;
   age?: number | null | undefined;
   /** Calm occasions (Sympathy, Get well): no drifting particles. */
   calm?: boolean | undefined;
@@ -208,6 +215,7 @@ export function TactileOpening({
     [JSON.stringify(cast.iconSet), recipient, palette.primary, palette.accent],
   );
   const [hint, setHint] = useState("");
+  const letterOn = kind === "valentine" && isFlagOn("letterOpenings");
   if (engine) {
     return (
       <EngineStage
@@ -229,7 +237,7 @@ export function TactileOpening({
       />
     );
   }
-  const Component = entry.Component;
+  const Component = letterOn ? LoveLetterOpening : entry.Component;
   const c = design.palette;
   return (
     <OpeningShell
@@ -243,6 +251,7 @@ export function TactileOpening({
       onSkip={onSkip ?? onOpen}
       hint={interactive && !paused ? hint : ""}
       badge={badgeText || design.name}
+      reveal={letterOn ? "fade" : (entry.reveal ?? "portal")}
       {...(entry.grain !== undefined ? { grain: entry.grain } : {})}
       {...(entry.sprinkles !== 0 && !calm ? { sprinkles: set, sprinkleOpacity: entry.sprinkles ?? 0.4 } : {})}
     >
@@ -267,6 +276,7 @@ export function TactileOpening({
           onOpen={open}
           hostRef={hostRef}
           setHint={setHint}
+          variant={letter}
         />
       )}
     </OpeningShell>

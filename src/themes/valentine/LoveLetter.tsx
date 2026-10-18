@@ -1,17 +1,20 @@
 /**
- * Love Letter: three directions for the gold-standard opening (dev only, /dev/love-letter).
- * Janelle picks one; it replaces the current opening and becomes the bar for every style.
+ * Love Letter openings (flag letterOpenings). The organiser picks one in the editor's opening
+ * section (intro_settings.letter); all three end the same way: the letter grows into the gift's
+ * first page (`[data-gift-underlay] [data-gift-page]`, or the whole screen), then the stage fades.
+ * Try them at /dev/love-letter?d=a|b|c. This is the bar for every style's opening.
  *
- *  A · Monogram seal  Press and hold. Their initial is pressed into the wax; it cracks along a
+ *  A · Break the seal (default, "seal")  Press and hold. Their initial is pressed into the wax; it cracks along a
  *                     line that's different for every gift, the flap curls open, the letter rises
  *                     and unfolds, then grows until it IS the first page (no cut).
- *  B · Peel the seal  Drag the seal up. The wax stretches and the flap lifts with your finger;
+ *  B · Peel the seal ("peel")  Drag the seal up. The wax stretches and the flap lifts with your finger;
  *                     let go past the point and the seal pops off, the flap flips, the letter
  *                     springs out.
- *  C · Slide it out   The flap is already open and the letter peeks out with their name on it.
+ *  C · Slide it out ("slide")  The flap is already open and the letter peeks out with their name on it.
  *                     Slide it up out of the pocket against a little resistance; it comes free,
  *                     the envelope drops away and the letter unfolds in thirds.
  */
+import { t } from "@/i18n";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { animate, motion, useMotionValue, useTransform, type MotionValue } from "motion/react";
@@ -140,6 +143,46 @@ function usePayoff(p: OpeningProps, c: ThemePalette) {
   };
 }
 
+/* ---------- the hand-off: the letter becomes the gift's first page ---------- */
+
+type Rect = { top: number; left: number; width: number; height: number };
+
+/**
+ * Grows a sheet of letter paper from the letter's spot to exactly where the gift's first page
+ * waits underneath ([data-gift-page], the Storybook), or the whole screen for layouts without
+ * one. The shell then fades (reveal "fade"), so there's no cut between opening and reading.
+ */
+function useHandoff(p: OpeningProps, c: ThemePalette) {
+  const [page, setPage] = useState<{ from: Rect; to: Rect; radius: number } | null>(null);
+  function grow(from: Element | null) {
+    const host = p.hostRef.current?.getBoundingClientRect();
+    const r = from?.getBoundingClientRect();
+    if (!host || !r) return;
+    const target = document.querySelector("[data-gift-underlay] [data-gift-page]")?.getBoundingClientRect();
+    const rel = (x: DOMRect): Rect => ({ top: x.top - host.top, left: x.left - host.left, width: x.width, height: x.height });
+    setPage({ from: rel(r), to: target && target.width > 0 ? rel(target) : { top: 0, left: 0, width: host.width, height: host.height }, radius: target ? 4 : 0 });
+  }
+  const node =
+    page && p.hostRef.current
+      ? createPortal(
+          <motion.div
+            className="pointer-events-none absolute z-[40] overflow-hidden"
+            initial={{ ...page.from, borderRadius: 3, boxShadow: "0 18px 40px -20px rgba(60,20,30,.5)" }}
+            animate={{ ...page.to, borderRadius: page.radius, boxShadow: "0 30px 60px -30px rgba(60,20,30,.35)" }}
+            transition={{ duration: 1, ease: [0.65, 0, 0.35, 1] }}
+          >
+            <LetterPaper c={c} shade={0}>
+              <motion.div initial={{ opacity: 1 }} animate={{ opacity: [1, 1, 0] }} transition={{ duration: 0.9, times: [0, 0.6, 1] }}>
+                <Greeting text={p.greeting} className="text-[clamp(1.9rem,10.5cqi,3.2rem)]" style={{ fontStyle: "italic", fontWeight: 500 }} />
+              </motion.div>
+            </LetterPaper>
+          </motion.div>,
+          p.hostRef.current,
+        )
+      : null;
+  return { grow, node, growing: !!page };
+}
+
 /* ---------- A · Monogram seal ---------- */
 
 export function LoveLetterMonogram(p: OpeningProps) {
@@ -169,8 +212,7 @@ export function LoveLetterMonogram(p: OpeningProps) {
   const [cracked, setCracked] = useState(false);
   const { h, hearts } = usePayoff(p, c);
   const beat = useBeats(cracked, [240, 760, 1350, 2250, 3350]);
-  type Rect = { top: number; left: number; width: number; height: number };
-  const [page, setPage] = useState<{ from: Rect; to: Rect; radius: number } | null>(null);
+  const handoff = useHandoff(p, c);
 
   function doCrack() {
     if (cracked) return;
@@ -189,22 +231,14 @@ export function LoveLetterMonogram(p: OpeningProps) {
       hearts(0.36);
     }
     if (beat === 4) {
-      // The letter becomes the gift's first page: grow it from where it is to exactly where that
-      // page waits underneath (or the whole screen, for layouts without one).
-      const host = p.hostRef.current?.getBoundingClientRect();
-      const r = letterRef.current?.getBoundingClientRect();
-      const target = document.querySelector("[data-gift-page]")?.getBoundingClientRect();
-      if (host && r) {
-        const rel = (x: DOMRect): Rect => ({ top: x.top - host.top, left: x.left - host.left, width: x.width, height: x.height });
-        setPage({ from: rel(r), to: target && target.width > 0 ? rel(target) : { top: 0, left: 0, width: host.width, height: host.height }, radius: target ? 4 : 0 });
-      }
+      handoff.grow(letterRef.current);
     }
     if (beat === 5) p.onOpen();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [beat]);
 
   useEffect(() => {
-    p.setHint(cracked ? "" : hold.progress > 0 ? "Keep holding, the wax is warming" : "Press and hold the seal");
+    p.setHint(cracked ? "" : hold.progress > 0 ? t("letter.seal.holding") : t("letter.seal.hint"));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [cracked, hold.progress > 0]);
   useEffect(() => {
@@ -293,7 +327,7 @@ export function LoveLetterMonogram(p: OpeningProps) {
                 {!cracked ? (
                   <motion.button
                     type="button"
-                    aria-label="Press and hold the wax seal to open"
+                    aria-label={t("letter.seal.aria")}
                     disabled={!p.interactive || p.paused}
                     className="relative grid size-full touch-none place-items-center rounded-full outline-none focus-visible:ring-4 focus-visible:ring-white/70"
                     {...hold.handlers}
@@ -345,24 +379,7 @@ export function LoveLetterMonogram(p: OpeningProps) {
         </FallbackButton>
       </div>
 
-      {/* The letter grows from where it is into the whole screen: the first page of the gift. */}
-      {page && p.hostRef.current
-        ? createPortal(
-            <motion.div
-              className="pointer-events-none absolute z-[40] overflow-hidden"
-              initial={{ ...page.from, borderRadius: 3, boxShadow: "0 18px 40px -20px rgba(60,20,30,.5)" }}
-              animate={{ ...page.to, borderRadius: page.radius, boxShadow: "0 30px 60px -30px rgba(60,20,30,.35)" }}
-              transition={{ duration: 1, ease: [0.65, 0, 0.35, 1] }}
-            >
-              <LetterPaper c={c} shade={0}>
-                <motion.div initial={{ opacity: 1 }} animate={{ opacity: [1, 1, 0] }} transition={{ duration: 0.9, times: [0, 0.6, 1] }}>
-                  <Greeting text={p.greeting} className="text-[clamp(1.9rem,10.5cqi,3.2rem)]" style={{ fontStyle: "italic", fontWeight: 500 }} />
-                </motion.div>
-              </LetterPaper>
-            </motion.div>,
-            p.hostRef.current,
-          )
-        : null}
+      {handoff.node}
     </div>
   );
 }
@@ -375,18 +392,20 @@ export function LoveLetterPeel(p: OpeningProps) {
   const pull = useMotionValue(0);
   const [free, setFree] = useState(false);
   const { h, hearts } = usePayoff(p, c);
-  const beat = useBeats(free, [380, 950, 2100, 2800]);
+  const beat = useBeats(free, [380, 950, 1700, 2500, 3600]);
+  const handoff = useHandoff(p, c);
+  const letterRef = useRef<HTMLDivElement | null>(null);
   const start = useRef<number | null>(null);
   const ticks = useRef(0);
   const sealBox = useRef<HTMLDivElement | null>(null);
   const [flying, setFlying] = useState<{ x: number; y: number; s: number } | null>(null);
 
   // The flap lifts with the seal, the wax stretches as it lets go.
-  const flapTurn = useTransform(pull, (v) => v * 52);
-  const sealY = useTransform(pull, (v) => -v * 26);
-  const sealStretch = useTransform(pull, (v) => 1 + v * 0.22);
-  const sealSquash = useTransform(pull, (v) => 1 - v * 0.08);
-  const strand = useTransform(pull, (v) => Math.max(0, v - 0.25) * 34);
+  const flapTurn = useTransform(pull, (v) => v * 84);
+  const sealY = useTransform(pull, (v) => -v * 46);
+  const sealStretch = useTransform(pull, (v) => 1 + v * 0.26);
+  const sealSquash = useTransform(pull, (v) => 1 - v * 0.1);
+  const strand = useTransform(pull, (v) => Math.max(0, v - 0.2) * 52);
 
   function release() {
     if (free) return;
@@ -434,12 +453,13 @@ export function LoveLetterPeel(p: OpeningProps) {
   useEffect(() => {
     if (beat === 1) chime("whoosh");
     if (beat === 2) melody([659, 784, 988, 1319], 0.16);
-    if (beat === 3) hearts();
-    if (beat === 4) p.onOpen();
+    if (beat === 3) hearts(0.36);
+    if (beat === 4) handoff.grow(letterRef.current);
+    if (beat === 5) p.onOpen();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [beat]);
   useEffect(() => {
-    p.setHint(free ? "" : "Peel the seal up");
+    p.setHint(free ? "" : t("letter.peel.hint"));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [free]);
   // Previews: a finger peels it by itself.
@@ -456,11 +476,13 @@ export function LoveLetterPeel(p: OpeningProps) {
   const open = free;
   const rise = beat >= 1;
   const unfold = beat >= 2;
+  const growing = beat >= 4;
 
   return (
     <div className="relative flex w-full flex-col items-center">
       <Room c={c} />
-      <Layer depth={10} className="relative" style={ENVELOPE_SIZE}>
+      <motion.div className="relative" style={ENVELOPE_SIZE} animate={{ opacity: growing ? 0 : 1, y: growing ? 40 : 0, scale: growing ? 0.94 : 1 }} transition={{ duration: 0.7, ease: [0.4, 0, 0.2, 1] }}>
+      <Layer depth={10} className="absolute inset-0">
         <Object3D pose={{ x: 13, y: -3, z: -1.5 }} strength={9} settle={rise} className="absolute inset-0">
           <div className="absolute inset-0" style={{ transform: "translateZ(-22px)", transformStyle: "preserve-3d" }}>
             <FloorShadow lift={rise ? 0.25 : 0} tint="70,32,30" depth={4} radius={8} className="inset-[2%_3%_1%_3%]" />
@@ -469,6 +491,7 @@ export function LoveLetterPeel(p: OpeningProps) {
           <div className="absolute inset-0" style={{ perspective: 900 }}>
             <EnvelopeBack c={c} />
             <motion.div
+              ref={letterRef}
               className="absolute inset-x-[7%] z-[2]"
               style={{ top: "8%", height: "84%", transformStyle: "preserve-3d" }}
               animate={{ y: rise ? "-62%" : "0%", scale: unfold ? 1.06 : 1, zIndex: rise ? 6 : 2, rotate: rise ? [0, -2.5, 1, 0] : 0 }}
@@ -501,7 +524,7 @@ export function LoveLetterPeel(p: OpeningProps) {
                 <motion.span aria-hidden="true" className="absolute top-[78%] left-1/2 block w-[14%] -translate-x-1/2 rounded-full" style={{ height: strand, background: `linear-gradient(${c.rose}, ${c.oxblood})`, opacity: 0.85 }} />
                 <button
                   type="button"
-                  aria-label="Peel the wax seal up to open"
+                  aria-label={t("letter.peel.aria")}
                   disabled={!p.interactive || p.paused}
                   className="relative grid size-full cursor-grab touch-none place-items-center rounded-full outline-none focus-visible:ring-4 focus-visible:ring-white/70 active:cursor-grabbing"
                   onKeyDown={(e) => {
@@ -519,6 +542,7 @@ export function LoveLetterPeel(p: OpeningProps) {
           </div>
         </Object3D>
       </Layer>
+      </motion.div>
       <div className="mt-[min(9cqi,40.5px)] h-11">
         <FallbackButton onClick={release} color={c.oxblood!} ink={c.oxblood!} hidden={free || !p.interactive || p.paused}>
           {p.buttonText}
@@ -531,14 +555,15 @@ export function LoveLetterPeel(p: OpeningProps) {
               className="pointer-events-none absolute z-[41]"
               style={{ left: flying.x, top: flying.y, width: flying.s, height: flying.s }}
               initial={{ y: 0, x: 0, rotate: 0, scale: 1, opacity: 1 }}
-              animate={{ y: [0, -120, 260], x: [0, 30, 70], rotate: [0, 160, 420], scale: [1, 1.08, 0.9], opacity: [1, 1, 0] }}
-              transition={{ duration: 1.3, times: [0, 0.35, 1], ease: ["easeOut", "easeIn"] }}
+              animate={{ y: [0, -150, -620], x: [0, 46, 170], rotate: [0, 210, 560], scale: [1, 1.12, 0.8], opacity: [1, 1, 0] }}
+              transition={{ duration: 1.15, times: [0, 0.3, 1], ease: ["easeOut", "easeIn"] }}
             >
               <MonogramSeal color={c.rose!} dark={c.oxblood!} letter={letter} />
             </motion.div>,
             p.hostRef.current,
           )
         : null}
+      {handoff.node}
     </div>
   );
 }
@@ -563,16 +588,34 @@ function FlapFollow({ c, turn, open }: { c: ThemePalette; turn: MotionValue<numb
 
 /* ---------- C · Slide it out ---------- */
 
+/** The outside of the folded letter: their name, as on the envelope it came in. */
+function PacketFace({ c, name }: { c: ThemePalette; name: string }) {
+  return (
+    <div className="absolute inset-0 overflow-hidden rounded-[3px]" style={{ background: "linear-gradient(180deg,#FFFDF8,#F4EADB)", boxShadow: rim(0.6) }}>
+      <Texture material="paper" opacity={0.45} />
+      <div className="flex h-full flex-col items-center justify-center text-center" style={{ color: c.oxblood }}>
+        <span className="block text-[10px] tracking-[0.3em] uppercase opacity-60">{t("letter.for")}</span>
+        <span className="block text-[clamp(1.5rem,8cqi,2.4rem)] leading-tight italic" style={{ fontFamily: "var(--jb-display)" }}>
+          {name}
+        </span>
+      </div>
+    </div>
+  );
+}
+
 export function LoveLetterSlide(p: OpeningProps) {
   const c = p.design.palette;
   const slide = useMotionValue(0);
   const [free, setFree] = useState(false);
   const { h, hearts } = usePayoff(p, c);
-  const beat = useBeats(free, [520, 1050, 1650, 2500, 3200]);
+  // 1 rises and turns to face them · 2 top third opens · 3 bottom third opens · 4 hearts · 5 grows into the page · 6 open
+  const beat = useBeats(free, [420, 1000, 1550, 2150, 2700, 3800]);
+  const handoff = useHandoff(p, c);
+  const letterRef = useRef<HTMLDivElement | null>(null);
   const start = useRef<number | null>(null);
   const ticks = useRef(0);
-  // Rubber band: the letter comes up a little slower than the finger, until it's free.
-  const letterY = useTransform(slide, (v) => `${-16 - v * 30}%`);
+  // Rubber band: the packet comes up slower than the finger, until it's free.
+  const packetY = useTransform(slide, (v) => `${-14 - v * 34}%`);
 
   function letGo() {
     if (free) return;
@@ -614,19 +657,23 @@ export function LoveLetterSlide(p: OpeningProps) {
 
   useEffect(() => {
     if (beat === 2) foley("paper");
-    if (beat === 3) melody([659, 784, 988, 1319], 0.16);
-    if (beat === 4) hearts(0.45);
-    if (beat === 5) p.onOpen();
+    if (beat === 3) {
+      foley("paper");
+      melody([659, 784, 988, 1319], 0.16);
+    }
+    if (beat === 4) hearts(0.4);
+    if (beat === 5) handoff.grow(letterRef.current);
+    if (beat === 6) p.onOpen();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [beat]);
   useEffect(() => {
-    p.setHint(free ? "" : "Slide the letter out");
+    p.setHint(free ? "" : t("letter.slide.hint"));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [free]);
   useEffect(() => {
     if (!p.autoplay || p.paused) return;
     const t = window.setTimeout(() => {
-      animate(slide, [0, 0.35, 0.3, 0.95], { duration: 1.5, times: [0, 0.45, 0.6, 1], ease: "easeInOut" }).then(letGo);
+      animate(slide, [0, 0.38, 0.3, 0.95], { duration: 1.5, times: [0, 0.45, 0.6, 1], ease: "easeInOut" }).then(letGo);
     }, 1000);
     return () => window.clearTimeout(t);
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -635,13 +682,15 @@ export function LoveLetterSlide(p: OpeningProps) {
   const out = beat >= 1;
   const topOpen = beat >= 2;
   const bottomOpen = beat >= 3;
+  const growing = beat >= 5;
+  const panel: React.CSSProperties = { background: "#FFFDF8", backgroundImage: PAPER_LINES, backfaceVisibility: "hidden" };
 
   return (
     <div className="relative flex w-full flex-col items-center">
       <Room c={c} />
       <div className="relative" style={ENVELOPE_SIZE}>
-        {/* The envelope, flap open, the letter peeking out. Once the letter is free it drops away. */}
-        <motion.div className="absolute inset-0" animate={{ y: free ? "130%" : "0%", opacity: free ? 0 : 1, rotate: free ? 4 : 0 }} transition={{ y: { type: "spring", stiffness: 60, damping: 14, mass: 1.4 }, opacity: { delay: 0.35, duration: 0.4 }, rotate: SPRING.heavy }}>
+        {/* The envelope, flap open, the folded letter peeking out. Once the letter is free it drops away. */}
+        <motion.div className="absolute inset-0" animate={{ y: free ? "150%" : "0%", opacity: free ? 0 : 1, rotate: free ? 5 : 0 }} transition={{ y: { type: "spring", stiffness: 55, damping: 14, mass: 1.4 }, opacity: { delay: 0.3, duration: 0.45 }, rotate: SPRING.heavy }}>
           <Layer depth={10} className="absolute inset-0">
             <Object3D pose={{ x: 13, y: -3, z: -1.5 }} strength={9} className="absolute inset-0">
               <div className="absolute inset-0" style={{ transform: "translateZ(-22px)", transformStyle: "preserve-3d" }}>
@@ -650,17 +699,14 @@ export function LoveLetterSlide(p: OpeningProps) {
               <Extrude depth={5} color="#D9C8AF" edge="#C9B596" radius={6} />
               <div className="absolute inset-0" style={{ perspective: 900 }}>
                 <EnvelopeBack c={c} />
-                {/* The open flap lies back, liner up */}
-                <div className="absolute inset-x-0 top-0 origin-top" style={{ height: "58%", transform: "rotateX(176deg)", transformStyle: "preserve-3d", zIndex: 1 }}>
-                  <div className="absolute inset-0" style={{ ...liner(c), clipPath: "polygon(0 0, 100% 0, 50% 100%)", transform: "rotateX(180deg)", backfaceVisibility: "hidden" }} />
-                </div>
-                {/* The letter in the pocket: it moves with the finger (outside the 3D card, see below) */}
+                {/* The opened flap, lying back against the envelope with its liner showing */}
+                <div className="absolute inset-x-0 top-0 h-[22%] overflow-hidden rounded-t-[6px]" style={{ ...liner(c), clipPath: "polygon(0 100%, 100% 100%, 92% 0, 8% 0)", transform: "translateY(-96%)" }} />
                 {!free ? (
                   <motion.div
                     className="absolute inset-x-[9%] z-[2] cursor-grab touch-none active:cursor-grabbing"
-                    style={{ top: "10%", height: "80%", y: letterY }}
+                    style={{ top: "14%", height: "64%", y: packetY }}
                     role="button"
-                    aria-label="Slide the letter out"
+                    aria-label={t("letter.slide.aria")}
                     tabIndex={p.interactive && !p.paused ? 0 : -1}
                     onKeyDown={(e) => {
                       if (e.key === "Enter" || e.key === " ") {
@@ -670,7 +716,7 @@ export function LoveLetterSlide(p: OpeningProps) {
                     }}
                     {...handlers}
                   >
-                    <FoldedLetter c={c} name={p.recipient} />
+                    <PacketFace c={c} name={p.recipient} />
                   </motion.div>
                 ) : null}
                 <Pocket c={c} />
@@ -679,16 +725,46 @@ export function LoveLetterSlide(p: OpeningProps) {
           </Layer>
         </motion.div>
 
-        {/* Free: the letter rises, turns to face them and unfolds in thirds. */}
+        {/* Free: three times as tall as the packet, folded so only its middle third shows. It rises,
+            turns to face them, and opens: the top third swings up, then the bottom third swings down. */}
         {free ? (
           <motion.div
+            ref={letterRef}
             className="absolute inset-x-[9%] z-[8]"
-            style={{ top: "10%", height: "80%", transformStyle: "preserve-3d", perspective: 1000 }}
-            initial={{ y: "-46%", rotateX: 13, scale: 1 }}
-            animate={{ y: out ? "-8%" : "-46%", rotateX: out ? 0 : 13, scale: out ? 1.18 : 1 }}
-            transition={{ type: "spring", stiffness: 80, damping: 15, mass: 1.3 }}
+            style={{ top: "-50%", height: "192%", transformStyle: "preserve-3d", perspective: 1100 }}
+            initial={{ y: "-24%", rotateX: 13, scale: 1 }}
+            animate={{ y: out ? "-4%" : "-24%", rotateX: out ? 0 : 13, scale: out ? 1.06 : 1, opacity: growing ? 0 : 1 }}
+            transition={{ type: "spring", stiffness: 80, damping: 15, mass: 1.3, opacity: { duration: 0.25 } }}
           >
-            <TriFold c={c} name={p.recipient} greeting={p.greeting} badge={p.badge} topOpen={topOpen} bottomOpen={bottomOpen} />
+            {/* Middle third: the greeting */}
+            <div className="absolute inset-x-0 top-1/3 h-1/3 overflow-hidden" style={{ ...panel, boxShadow: "0 14px 30px -18px rgba(60,20,30,.5)" }}>
+              <Texture material="paper" opacity={0.45} />
+              <div className="flex h-full flex-col items-center justify-center px-[6%] text-center" style={{ color: c.oxblood }}>
+                <Greeting text={p.greeting} className="text-[clamp(1.6rem,9cqi,2.8rem)]" style={{ fontStyle: "italic", fontWeight: 500 }} />
+              </div>
+            </div>
+            {/* Bottom third: hinged on its top edge; folded up under the top third */}
+            <motion.div className="absolute inset-x-0 bottom-0 h-1/3 origin-top" style={{ transformStyle: "preserve-3d", z: 0.8 }} initial={{ rotateX: 178 }} animate={{ rotateX: bottomOpen ? 0 : 178 }} transition={SPRING.heavy}>
+              <div className="absolute inset-0 overflow-hidden rounded-b-[3px]" style={panel}>
+                <Texture material="paper" opacity={0.45} />
+                <div className="flex h-full items-start justify-center pt-[10%] text-[14px] italic opacity-75" style={{ color: c.oxblood, fontFamily: "var(--jb-display)" }}>
+                  {t("letter.signoff")}
+                </div>
+              </div>
+              <div className="absolute inset-0 rounded-b-[3px]" style={{ background: "linear-gradient(0deg,#FBF4EA,#EFE2CF)", transform: "rotateX(180deg)", backfaceVisibility: "hidden" }} />
+            </motion.div>
+            {/* Top third: hinged on its bottom edge; folded down over everything, their name on the back */}
+            <motion.div className="absolute inset-x-0 top-0 h-1/3 origin-bottom" style={{ transformStyle: "preserve-3d", z: 1.6 }} initial={{ rotateX: -178 }} animate={{ rotateX: topOpen ? 0 : -178 }} transition={SPRING.heavy}>
+              <div className="absolute inset-0 overflow-hidden rounded-t-[3px]" style={panel}>
+                <Texture material="paper" opacity={0.45} />
+                <div className="flex h-full items-end justify-center pb-[10%] text-[12px] tracking-[0.2em] uppercase opacity-70" style={{ color: c.oxblood }}>
+                  {p.badge}
+                </div>
+              </div>
+              <div className="absolute inset-0" style={{ transform: "rotateX(180deg)", backfaceVisibility: "hidden" }}>
+                <PacketFace c={c} name={p.recipient} />
+              </div>
+            </motion.div>
           </motion.div>
         ) : null}
       </div>
@@ -697,72 +773,20 @@ export function LoveLetterSlide(p: OpeningProps) {
           {p.buttonText}
         </FallbackButton>
       </div>
-    </div>
-  );
-}
-
-/** The letter folded in thirds, their name on the outside. */
-function FoldedLetter({ c, name }: { c: ThemePalette; name: string }) {
-  return (
-    <div className="absolute inset-0 rounded-[3px]" style={{ background: "linear-gradient(180deg,#FFFDF8,#F7EEE2)", boxShadow: `${rim(0.6)}, 2px 8px 18px -10px rgba(60,20,30,.4)` }}>
-      <Texture material="paper" opacity={0.45} />
-      <div className="absolute inset-x-0 top-[6%] text-center" style={{ color: c.oxblood }}>
-        <span className="block text-[10px] tracking-[0.3em] uppercase opacity-60">For</span>
-        <span className="block text-[clamp(1.4rem,7cqi,2.2rem)] italic" style={{ fontFamily: "var(--jb-display)" }}>
-          {name}
-        </span>
-      </div>
-      {/* The two fold creases */}
-      <span aria-hidden="true" className="absolute inset-x-0 top-1/3 block h-px" style={{ background: "rgba(90,50,40,.18)", boxShadow: "0 1px 0 rgba(255,255,255,.7)" }} />
-      <span aria-hidden="true" className="absolute inset-x-0 top-2/3 block h-px" style={{ background: "rgba(90,50,40,.18)", boxShadow: "0 1px 0 rgba(255,255,255,.7)" }} />
-    </div>
-  );
-}
-
-/** Unfolding in thirds: the top third swings up, then the bottom third swings down. */
-function TriFold({ c, name, greeting, badge, topOpen, bottomOpen }: { c: ThemePalette; name: string; greeting: string; badge: string; topOpen: boolean; bottomOpen: boolean }) {
-  const panel: React.CSSProperties = { background: "#FFFDF8", backgroundImage: PAPER_LINES, backfaceVisibility: "hidden" };
-  return (
-    <div className="absolute inset-0" style={{ transformStyle: "preserve-3d" }}>
-      {/* Middle third: the greeting */}
-      <div className="absolute inset-x-0 top-1/3 h-1/3 overflow-hidden" style={{ ...panel, boxShadow: "0 14px 30px -18px rgba(60,20,30,.5)" }}>
-        <Texture material="paper" opacity={0.45} />
-        <motion.div className="flex h-full flex-col items-center justify-center px-[6%] text-center" style={{ color: c.oxblood }} animate={{ opacity: bottomOpen ? 1 : 0.25 }} transition={{ duration: 0.5 }}>
-          <Greeting text={greeting} className="text-[clamp(1.4rem,8cqi,2.4rem)]" style={{ fontStyle: "italic", fontWeight: 500 }} />
-        </motion.div>
-      </div>
-      {/* Top third: hinged on its bottom edge */}
-      <motion.div className="absolute inset-x-0 top-0 h-1/3 origin-bottom" style={{ transformStyle: "preserve-3d" }} initial={{ rotateX: -178 }} animate={{ rotateX: topOpen ? 0 : -178 }} transition={SPRING.heavy}>
-        <div className="absolute inset-0 overflow-hidden rounded-t-[3px]" style={panel}>
-          <Texture material="paper" opacity={0.45} />
-          <div className="flex h-full items-end justify-center pb-[8%] text-[12px] tracking-[0.2em] uppercase opacity-70" style={{ color: c.oxblood }}>
-            {badge}
-          </div>
-        </div>
-        <div className="absolute inset-0 rounded-t-[3px]" style={{ background: "linear-gradient(180deg,#FBF4EA,#EFE2CF)", transform: "rotateX(180deg)", backfaceVisibility: "hidden" }}>
-          <div className="flex h-full flex-col items-center justify-center" style={{ color: c.oxblood }}>
-            <span className="text-[clamp(1.2rem,6cqi,1.8rem)] italic" style={{ fontFamily: "var(--jb-display)" }}>
-              {name}
-            </span>
-          </div>
-        </div>
-      </motion.div>
-      {/* Bottom third: hinged on its top edge */}
-      <motion.div className="absolute inset-x-0 bottom-0 h-1/3 origin-top" style={{ transformStyle: "preserve-3d" }} initial={{ rotateX: 178 }} animate={{ rotateX: bottomOpen ? 0 : 178 }} transition={SPRING.heavy}>
-        <div className="absolute inset-0 overflow-hidden rounded-b-[3px]" style={panel}>
-          <Texture material="paper" opacity={0.45} />
-          <div className="flex h-full items-start justify-center pt-[8%] text-[13px] italic opacity-75" style={{ color: c.oxblood, fontFamily: "var(--jb-display)" }}>
-            with love, from all of us
-          </div>
-        </div>
-        <div className="absolute inset-0 rounded-b-[3px]" style={{ background: "linear-gradient(0deg,#FBF4EA,#EFE2CF)", transform: "rotateX(180deg)", backfaceVisibility: "hidden" }} />
-      </motion.div>
+      {handoff.node}
     </div>
   );
 }
 
 export const LOVE_LETTER_DIRECTIONS = {
   a: { Component: LoveLetterMonogram, label: "A · Monogram seal", reveal: "fade" as const },
-  b: { Component: LoveLetterPeel, label: "B · Peel the seal", reveal: "portal" as const },
-  c: { Component: LoveLetterSlide, label: "C · Slide it out", reveal: "portal" as const },
+  b: { Component: LoveLetterPeel, label: "B · Peel the seal", reveal: "fade" as const },
+  c: { Component: LoveLetterSlide, label: "C · Slide it out", reveal: "fade" as const },
 };
+
+/** The Love Letter opening the gift asked for (intro_settings.letter); breaking the seal by default. */
+export function LoveLetterOpening(p: OpeningProps) {
+  if (p.variant === "peel") return <LoveLetterPeel {...p} />;
+  if (p.variant === "slide") return <LoveLetterSlide {...p} />;
+  return <LoveLetterMonogram {...p} />;
+}

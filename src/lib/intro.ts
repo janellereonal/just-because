@@ -71,6 +71,8 @@ export type IntroBurst = "confetti" | "hearts" | "stars" | "bubbles" | "petals";
 export type IntroSettings = {
   /** "classic" = the earlier 3D opening. Default: the theme's signature object. */
   opening?: "classic";
+  /** Love Letter: how the letter opens. Empty = break the seal (flag: letterOpenings). */
+  letter?: LetterOpening;
   hero?: IntroHero;
   background?: IntroBackground;
   stickers?: IntroSticker[];
@@ -84,6 +86,9 @@ export type IntroSettings = {
   /** Parol Christmas: Simbang Gabi, one note a night from 16 to 24 December. */
   simbang?: boolean;
 };
+
+export const LETTER_OPENINGS = ["seal", "peel", "slide"] as const;
+export type LetterOpening = (typeof LETTER_OPENINGS)[number];
 
 export const MAX_INTRO_STICKERS = 8;
 const HEX = /^#[0-9a-fA-F]{6}$/;
@@ -128,6 +133,7 @@ export function normalizeIntroSettings(value: unknown): IntroSettings {
   const v = value as Record<string, unknown>;
   const out: IntroSettings = {};
   if (v["opening"] === "classic") out.opening = "classic";
+  if (v["letter"] === "peel" || v["letter"] === "slide") out.letter = v["letter"];
   const h = v["hero"] as Record<string, unknown> | undefined;
   if (h && typeof h === "object") {
     if (h["type"] === "object" && KINDS.includes(String(h["kind"])))
