@@ -671,3 +671,22 @@ export const PRICE_COPY = {
   /** Next to the pay button, for visitors outside the Philippines. */
   abroadPayNote: "Paying from outside the Philippines? Use a Visa or Mastercard. It's charged in pesos, and some banks add a small fee for that.",
 } as const;
+
+/** Placing stickers on the opening, in the editor's preview. */
+export const STICKER_COPY = {
+  label: (name: string, selected: boolean) => (selected ? `${name} sticker, selected` : `${name} sticker. Tap to move, resize or turn it.`),
+  picture: "Picture",
+  smaller: "Smaller",
+  bigger: "Bigger",
+  turnLeft: "Turn left",
+  turnRight: "Turn right",
+  front: "Bring to front",
+  undo: "Undo",
+  remove: "Delete",
+  done: "Done",
+  resize: "Drag to resize",
+  turn: "Drag to turn",
+  removed: "Sticker deleted. Undo brings it back.",
+  keys: "Arrow keys move it, plus and minus resize it, square brackets turn it, Delete removes it.",
+  hint: "Tap a sticker in the preview to move, resize, turn or delete it.",
+};

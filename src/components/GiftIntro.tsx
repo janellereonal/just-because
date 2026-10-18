@@ -12,7 +12,8 @@ import type { Palette } from "@/lib/themes";
 import { TactileOpening, hasTactileOpening } from "@/themes/TactileOpening";
 import type { CharacterSetting } from "@/themes/_shared/cast/types";
 import type { IconSetSetting } from "@/themes/_shared/iconSets";
-import { INTRO_COPY, type IntroSettings, type IntroSticker, type IntroStyle } from "@/lib/intro";
+import { INTRO_COPY, stickerBoxCss, stickerFontCss, type IntroSettings, type IntroSticker, type IntroStyle } from "@/lib/intro";
+import { StickerCanvas } from "@/components/StickerCanvas";
 import {
   KIND_BURST,
   burst,
@@ -96,20 +97,16 @@ function useIntroStyles() {
   }, []);
 }
 
-/** A sticker that floats, wobbles when tapped and can be dragged around. */
+/** A sticker on the recipient's opening: it floats, wobbles when tapped and can be nudged around. (The editor uses StickerCanvas.) */
 function Sticker({
   sticker,
   host,
   interactive,
-  editable,
-  onMove,
   colors,
 }: {
   sticker: IntroSticker;
   host: React.RefObject<HTMLDivElement | null>;
   interactive: boolean;
-  editable: boolean;
-  onMove?: ((s: IntroSticker) => void) | undefined;
   colors: string[];
 }) {
   const [pos, setPos] = useState({ x: sticker.x, y: sticker.y });
@@ -127,8 +124,8 @@ function Sticker({
     };
   }
 
-  const live = interactive || editable;
-  const box = `clamp(40px, ${(sticker.s * 15).toFixed(1)}cqi, 110px)`;
+  const live = interactive;
+  const box = stickerBoxCss(sticker.s);
   return (
     <span
       className={`absolute z-[3] select-none ${live ? "pointer-events-auto cursor-grab touch-none active:cursor-grabbing" : "pointer-events-none"}`}
@@ -139,9 +136,7 @@ function Sticker({
         height: box,
         transform: "translate(-50%,-50%)",
       }}
-      role={editable ? "button" : undefined}
-      aria-label={editable ? "Drag to move this sticker" : undefined}
-      aria-hidden={editable ? undefined : "true"}
+      aria-hidden="true"
       onPointerDown={(e) => {
         if (!live) return;
         e.stopPropagation();
@@ -165,9 +160,7 @@ function Sticker({
         if (!d) return;
         e.stopPropagation();
         if (d.moved) {
-          const p = toFrac(e.clientX, e.clientY);
-          setPos(p);
-          onMove?.({ ...sticker, ...p });
+          setPos(toFrac(e.clientX, e.clientY));
           chime("boop");
         } else {
           setJelly((j) => j + 1);
@@ -216,7 +209,7 @@ function Sticker({
               <span
                 className="leading-none"
                 style={{
-                  fontSize: `clamp(30px, ${(sticker.s * 11).toFixed(1)}cqi, 84px)`,
+                  fontSize: stickerFontCss(sticker.s),
                   filter: "drop-shadow(0 5px 6px rgba(0,0,0,.18))",
                 }}
               >
@@ -357,7 +350,9 @@ function ClassicIntro({
   quick = false,
   paused = false,
   interactive = true,
-  onStickerMove,
+  onStickersChange,
+  onStickersUndo,
+  canUndoStickers,
   occasionBadge,
 }: {
   style: IntroStyle;
@@ -381,8 +376,10 @@ function ClassicIntro({
   paused?: boolean;
   /** Taps, drags and sound. Off for small previews. */
   interactive?: boolean;
-  /** Editor: stickers can be dragged into place and saved. */
-  onStickerMove?: ((s: IntroSticker) => void) | undefined;
+  /** Editor: stickers can be selected, moved, resized, turned and deleted (see StickerCanvas). */
+  onStickersChange?: ((update: (prev: IntroSticker[]) => IntroSticker[]) => void) | undefined;
+  onStickersUndo?: (() => void) | undefined;
+  canUndoStickers?: boolean | undefined;
   /** The small label on top for a gift with an occasion ("Anniversary"). The creator's own words still win. */
   occasionBadge?: string | undefined;
 }) {
@@ -552,17 +549,11 @@ function ClassicIntro({
       ) : null}
       {bg.type === "theme" ? <SkinDecor kind={kind} /> : <SkinParticles kind={kind} />}
 
-      {(s.stickers ?? []).map((st) => (
-        <Sticker
-          key={st.id}
-          sticker={st}
-          host={rootRef}
-          interactive={playful}
-          editable={!!onStickerMove}
-          onMove={onStickerMove}
-          colors={colors}
-        />
-      ))}
+      {onStickersChange ? (
+        <StickerCanvas stickers={s.stickers ?? []} host={rootRef} onChange={onStickersChange} onUndo={onStickersUndo} canUndo={canUndoStickers} />
+      ) : (
+        (s.stickers ?? []).map((st) => <Sticker key={st.id} sticker={st} host={rootRef} interactive={playful} colors={colors} />)
+      )}
 
       {playful ? (
         <button
