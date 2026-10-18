@@ -10,6 +10,7 @@ import { readableInk } from "@/lib/palettes";
 import { useBeats, useHaptics } from "@/themes/_shared/stage";
 import { burstSet } from "@/themes/_shared/Sprinkles";
 import { melody } from "@/lib/play";
+import type { CharacterHandle } from "@/themes/_shared/cast/types";
 
 /** The gift's own colors, plus readable ink on each. Layout styles take the gift's look. */
 export function giftColors(p: OpeningProps) {
@@ -25,27 +26,37 @@ export function giftColors(p: OpeningProps) {
 }
 
 /**
- * After the object is open: a burst at `burstFrom`, a little chime, then hand over.
- * Beats: 0 burst · 700 success · `holdMs` open.
+ * After the object is open: a burst at `burstFrom`, a little chime, the buddy
+ * cheers, then hand over. Beats: 0 burst · 700 success · `hold` open.
  */
 export function useOpenSequence(
   p: OpeningProps,
   open: boolean,
   burstFrom: React.RefObject<HTMLElement | null>,
-  holdMs = 1500,
+  {
+    hold = 1500,
+    colors,
+    cast,
+  }: {
+    hold?: number;
+    /** The burst's colors (the style's own pastels). */
+    colors?: string[];
+    cast?: React.RefObject<CharacterHandle | null>;
+  } = {},
 ) {
   const h = useHaptics();
-  const beat = useBeats(open, [0, 700, holdMs]);
+  const beat = useBeats(open, [0, 700, hold]);
   const c = giftColors(p);
   useEffect(() => {
     if (beat === 1) {
       melody([523, 659, 784, 1047], 0.12, "sine", 0.05);
+      cast?.current?.celebrate();
       const r = burstFrom.current?.getBoundingClientRect();
       if (r && !p.reduced)
         burstSet(p.hostRef.current, r.left + r.width / 2, r.top + r.height * 0.4, p.iconSet, {
-          colors: [c.accent, c.primary, "#FFD166", "#FFFFFF"],
-          count: 16,
-          spread: 1.1,
+          colors: colors ?? [c.accent, c.primary, "#FFD166", "#FFFFFF"],
+          count: 18,
+          spread: 1.2,
           up: true,
           gravity: 0.6,
         });
@@ -94,4 +105,12 @@ export function signoff(names: string[], max = 3) {
   if (!names.length) return "everyone who loves you";
   const shown = names.slice(0, max);
   return `${shown.join(", ")}${names.length > max ? " and everyone" : ""}`;
+}
+
+/** The line under the stage while the gift is still closed. */
+export function useHint(p: OpeningProps, hint: string, done: boolean) {
+  useEffect(() => {
+    p.setHint(done ? "" : hint);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [done, hint]);
 }

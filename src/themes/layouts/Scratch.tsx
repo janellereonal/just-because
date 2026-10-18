@@ -1,37 +1,64 @@
 /**
- * SCRATCH CARDS: a lottery-style ticket with a silver foil panel.
- * Gesture: scratch the foil off with a finger or the mouse. Once most of it is
- * gone, the rest flakes away and the greeting underneath is revealed. The
- * button (and previews) scratch it in a few sweeping strokes.
+ * SCRATCH CARDS: a pastel lucky ticket with stamp-cut edges and a holographic
+ * foil panel. Gesture: scratch the foil off with a finger or the mouse. Once
+ * most of it is gone, the rest flakes away, the greeting underneath is
+ * revealed and little clay hearts pop up. The button (and previews) scratch it
+ * in a few sweeping strokes.
  */
 import { useEffect, useRef, useState } from "react";
 import { motion } from "motion/react";
+import type { CharacterHandle } from "@/themes/_shared/cast/types";
 import type { OpeningProps } from "@/themes/_shared/opening";
 import { FallbackButton, Layer, useHaptics } from "@/themes/_shared/stage";
-import {
-  FloorShadow,
-  Object3D,
-  Sheen,
-  TEXTURE_SOFT,
-  Texture,
-  elevation,
-} from "@/themes/_shared/light";
+import { FloorShadow, Object3D, Sheen } from "@/themes/_shared/light";
 import { foley } from "@/lib/play";
-import { giftColors, live, useAutoplay, useOpenSequence } from "./kit";
+import { live, useAutoplay, useHint, useOpenSequence } from "./kit";
+import {
+  Buddy,
+  Clay,
+  FONTS,
+  Gloss,
+  Sparkles,
+  display,
+  dotLayer,
+  dots,
+  pastelStage,
+  text,
+  useStyleFonts,
+} from "./cute";
 
-const BRUSH = 22;
+const BRUSH = 24;
+const C = {
+  ink: "#4A3A6B",
+  pink: "#F27BA3",
+  pinkInk: "#C2477A",
+  mint: "#A8E0CC",
+  lilac: "#D8CCFF",
+  butter: "#FFE38A",
+  tint: "60,130,110",
+};
+
+/** Stamp-cut edges: little half circles bitten out of the left and right sides. */
+const STAMP =
+  "radial-gradient(circle 6px at 0 50%, transparent 97%, #000 100%) left / 51% 16px repeat-y, radial-gradient(circle 6px at 100% 50%, transparent 97%, #000 100%) right / 51% 16px repeat-y";
 
 export function ScratchOpening(p: OpeningProps) {
-  const c = giftColors(p);
   const h = useHaptics();
+  const fonts = useStyleFonts(FONTS.round);
   const panelRef = useRef<HTMLDivElement | null>(null);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
+  const cast = useRef<CharacterHandle | null>(null);
   const last = useRef<{ x: number; y: number } | null>(null);
   const [done, setDone] = useState(false);
   const [started, setStarted] = useState(false);
-  useOpenSequence(p, done, panelRef, 1600);
+  useOpenSequence(p, done, panelRef, {
+    hold: 1800,
+    cast,
+    colors: [C.pink, C.butter, C.mint, C.lilac, "#FFFFFF"],
+  });
+  useHint(p, "Scratch the shiny foil to see what you won", done);
 
-  // Paint the foil once the canvas has its size.
+  // Paint the holographic foil once the canvas has its size.
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -43,23 +70,38 @@ export function ScratchOpening(p: OpeningProps) {
     if (!ctx) return;
     ctx.scale(dpr, dpr);
     const g = ctx.createLinearGradient(0, 0, r.width, r.height);
-    g.addColorStop(0, "#9da3ab");
-    g.addColorStop(0.35, "#e9edf1");
-    g.addColorStop(0.55, "#aeb4bb");
-    g.addColorStop(0.8, "#f2f4f6");
-    g.addColorStop(1, "#9aa0a7");
+    g.addColorStop(0, "#F9C6DA");
+    g.addColorStop(0.3, "#DCCFFF");
+    g.addColorStop(0.55, "#C4EEDF");
+    g.addColorStop(0.8, "#FFEFB8");
+    g.addColorStop(1, "#F9C6DA");
     ctx.fillStyle = g;
     ctx.fillRect(0, 0, r.width, r.height);
-    // Fine speckle so it reads as foil, and the "scratch here" print.
-    for (let i = 0; i < 900; i++) {
-      ctx.fillStyle = `rgba(255,255,255,${Math.random() * 0.35})`;
-      ctx.fillRect(Math.random() * r.width, Math.random() * r.height, 1, 1);
+    // Shimmer bands and sparkle speckles so it reads as foil.
+    ctx.globalAlpha = 0.35;
+    ctx.fillStyle = "#FFFFFF";
+    for (let k = -1; k < 5; k++) {
+      ctx.beginPath();
+      const x = (k / 4) * r.width;
+      ctx.moveTo(x, 0);
+      ctx.lineTo(x + r.width * 0.12, 0);
+      ctx.lineTo(x - r.width * 0.1, r.height);
+      ctx.lineTo(x - r.width * 0.2, r.height);
+      ctx.fill();
     }
-    ctx.fillStyle = "rgba(60,64,72,.55)";
-    ctx.font = `700 ${Math.max(12, r.width * 0.06)}px system-ui, sans-serif`;
+    ctx.globalAlpha = 1;
+    for (let i = 0; i < 260; i++) {
+      ctx.fillStyle = `rgba(255,255,255,${0.3 + Math.random() * 0.6})`;
+      const s = Math.random() < 0.1 ? 2 : 1;
+      ctx.fillRect(Math.random() * r.width, Math.random() * r.height, s, s);
+    }
+    ctx.fillStyle = "#FFFFFF";
+    ctx.shadowColor = "rgba(194,71,122,.45)";
+    ctx.shadowOffsetY = 1.5;
+    ctx.font = `700 ${Math.max(13, r.width * 0.07)}px Fredoka, system-ui, sans-serif`;
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
-    ctx.fillText("SCRATCH HERE", r.width / 2, r.height / 2);
+    ctx.fillText("♥  SCRATCH ME  ♥", r.width / 2, r.height / 2);
   }, []);
 
   function scratchAt(x: number, y: number) {
@@ -67,6 +109,7 @@ export function ScratchOpening(p: OpeningProps) {
     const ctx = canvas?.getContext("2d");
     if (!canvas || !ctx) return;
     ctx.globalCompositeOperation = "destination-out";
+    ctx.shadowColor = "transparent";
     ctx.lineCap = "round";
     ctx.lineJoin = "round";
     ctx.lineWidth = BRUSH;
@@ -125,73 +168,71 @@ export function ScratchOpening(p: OpeningProps) {
   useAutoplay(p, [[900, sweep]]);
 
   return (
-    <div className="relative flex w-full flex-col items-center">
+    <div className="relative flex w-full flex-col items-center" style={fonts}>
       <Layer
         depth={10}
         className="relative"
-        style={{ width: "min(84cqi, 380px)", aspectRatio: "1.6" }}
+        style={{ width: "min(86cqi, 390px)", aspectRatio: "1.55" }}
       >
+        <Sparkles
+          reduced={p.reduced}
+          spots={[
+            [2, -12, 18],
+            [98, -4, 14],
+            [104, 96, 18],
+            [-4, 100, 12],
+          ]}
+        />
+        <Buddy p={p} ref={cast} size={78} className="-bottom-[26%] -left-[2%]" />
         <Object3D
           pose={{ x: 18, y: -6, z: -2 }}
           strength={8}
           settle={started}
           className="absolute inset-0"
         >
-          <FloorShadow tint="40,30,30" depth={10} radius={14} className="inset-0" />
+          <FloorShadow tint={C.tint} depth={10} radius={18} className="inset-0" />
           <div
-            className="absolute inset-0 overflow-hidden rounded-[14px] p-[5%]"
+            className="absolute inset-0 overflow-hidden rounded-[18px] px-[7%] pt-[5%]"
             style={{
-              background: `linear-gradient(135deg, ${c.primary}, ${c.accent})`,
-              boxShadow: elevation(0.5, "40,30,30"),
+              background: `${dots("rgba(255,255,255,.45)", 1.5, 14)}, linear-gradient(135deg, #EADFFF, #FFD6E4 60%, #FFE9C9)`,
+              WebkitMask: STAMP,
+              mask: STAMP,
             }}
           >
-            <Texture material="card" opacity={0.3} blend="overlay" />
-            {/* Ticket edge perforations. */}
-            <span
-              className="absolute inset-y-0 left-0 w-[3%]"
-              style={{
-                background:
-                  "radial-gradient(circle at 0 50%, rgba(0,0,0,.25) 0 3px, transparent 3.5px) 0 0 / 100% 12px",
-              }}
-              aria-hidden
-            />
-            <div
-              className="relative flex items-center justify-between"
-              style={{ color: c.onPrimary }}
-            >
+            <div className="relative flex items-center justify-between" style={{ color: C.ink }}>
               <span
-                className="text-[clamp(10px,3cqi,12px)] font-bold tracking-[0.18em] uppercase"
-                style={{ fontFamily: "var(--jb-text)" }}
+                className="text-[clamp(10px,3cqi,12px)] tracking-[0.18em] uppercase"
+                style={text(700)}
               >
                 {p.badge}
               </span>
-              <span className="font-mono text-[clamp(10px,3cqi,12px)] opacity-80">
+              <span className="font-mono text-[clamp(10px,3cqi,12px)] opacity-70">
                 No. {String(p.recipient.length * 137 + 1000).slice(0, 4)}
               </span>
             </div>
             {/* What's under the foil. */}
             <div
               ref={panelRef}
-              className="relative mt-[4%] h-[66%] overflow-hidden rounded-[10px]"
-              style={{ background: "#FFFDF7" }}
+              className="relative mt-[4%] h-[64%] overflow-hidden rounded-[14px]"
+              style={{ background: "#FFFDF7", boxShadow: "inset 0 2px 6px rgba(120,80,150,.2)" }}
             >
               <div className="absolute inset-0 grid place-items-center px-[6%] text-center">
                 <span>
                   <span
-                    className="block text-[10px] tracking-[0.2em] text-[#6b5a48] uppercase"
-                    style={{ fontFamily: "var(--jb-text)" }}
+                    className="block text-[clamp(9px,2.8cqi,11px)] tracking-[0.2em] uppercase"
+                    style={{ ...text(700), color: C.pinkInk }}
                   >
                     You won
                   </span>
                   <span
-                    className="mt-1 block text-[clamp(1.1rem,5.4cqi,1.8rem)] leading-[1.05] text-[#2b2522]"
-                    style={{ fontFamily: "var(--jb-display)", fontWeight: 700 }}
+                    className="mt-1 block text-[clamp(1.2rem,6cqi,2rem)] leading-[1.05]"
+                    style={{ ...display(700), color: C.ink }}
                   >
                     {p.greeting}
                   </span>
                   <span
-                    className="mt-1 block text-[clamp(11px,3.2cqi,13px)] text-[#6b5a48]"
-                    style={{ fontFamily: "var(--jb-text)" }}
+                    className="mt-1 block text-[clamp(11px,3.2cqi,13px)]"
+                    style={{ ...text(500), color: `${C.ink}B3` }}
                   >
                     {p.contributors.length
                       ? `and ${p.contributors.length} notes from your people`
@@ -199,6 +240,22 @@ export function ScratchOpening(p: OpeningProps) {
                   </span>
                 </span>
               </div>
+              <Clay
+                id="heart"
+                show={done}
+                delay={0.3}
+                rotate={-14}
+                reduced={p.reduced}
+                className="top-[8%] left-[5%] w-[13%]"
+              />
+              <Clay
+                id="star"
+                show={done}
+                delay={0.45}
+                rotate={12}
+                reduced={p.reduced}
+                className="right-[5%] bottom-[8%] w-[13%]"
+              />
               <motion.canvas
                 ref={canvasRef}
                 className="absolute inset-0 size-full cursor-crosshair touch-none"
@@ -226,30 +283,42 @@ export function ScratchOpening(p: OpeningProps) {
                 role="img"
               />
             </div>
-            <Sheen strength={0.3} angle={120} width={26} />
+            <div className="relative mt-[3%] flex justify-center gap-[3%]" aria-hidden>
+              {[C.pink, C.butter, C.mint, C.lilac].map((c) => (
+                <span
+                  key={c}
+                  className="size-[clamp(6px,2cqi,9px)] rounded-full"
+                  style={{ background: c }}
+                />
+              ))}
+            </div>
+            <Gloss strength={0.4} height="30%" />
+            <Sheen strength={0.35} angle={120} width={26} />
           </div>
+          {/* The scratcher: a clay star that wiggles until you start. */}
           {done ? null : (
             <motion.span
-              className="pointer-events-none absolute -right-[3%] -bottom-[6%] grid size-[clamp(30px,10cqi,44px)] place-items-center rounded-full text-[clamp(12px,3.6cqi,16px)] font-black text-[#7a5a1a]"
-              style={{
-                background: "radial-gradient(circle at 35% 30%, #FFF1B8, #E2B13C 55%, #A87A1E)",
-                boxShadow: "inset 0 0 0 3px rgba(255,255,255,.35), 0 4px 10px rgba(0,0,0,.3)",
-              }}
-              animate={p.reduced ? {} : { rotate: [0, -14, 0], x: [0, -6, 0] }}
+              className="pointer-events-none absolute -right-[4%] -bottom-[10%] block w-[17%]"
+              animate={p.reduced ? {} : { rotate: [0, -16, 0], x: [0, -8, 0] }}
               transition={{ duration: 1.6, repeat: Infinity }}
               aria-hidden
             >
-              ♥
+              <img
+                src="/clay/orn-star@256.webp"
+                alt=""
+                draggable={false}
+                className="block w-full drop-shadow-[0_5px_6px_rgba(60,130,110,.35)]"
+              />
             </motion.span>
           )}
         </Object3D>
       </Layer>
 
-      <div className="mt-[min(9cqi,40px)] h-11">
+      <div className="mt-[min(12cqi,52px)] h-11">
         <FallbackButton
           onClick={sweep}
-          color="#ffffff"
-          ink="#ffffff"
+          color={C.ink}
+          ink={C.ink}
           hidden={done || started || !live(p)}
         >
           {p.buttonText}
@@ -259,12 +328,15 @@ export function ScratchOpening(p: OpeningProps) {
   );
 }
 
-export const scratchBackground = (): React.CSSProperties => ({
-  backgroundColor: "#2E5E58",
-  backgroundImage: [
-    "radial-gradient(55% 45% at 50% 45%, #4F8C82, transparent 75%)",
-    "radial-gradient(120% 90% at 50% 40%, transparent 50%, #12302caa)",
-    TEXTURE_SOFT.paper,
-  ].join(","),
-  backgroundSize: "auto, auto, 260px 260px",
-});
+export const scratchBackground = (): React.CSSProperties =>
+  pastelStage({
+    top: "#E6F8F1",
+    bottom: "#C8EEDF",
+    glow: "#FFFFFFD0",
+    blobs: [
+      ["#FFF0BFAA", 86, 14, 55],
+      ["#FFDDE8CC", 10, 86, 60],
+    ],
+    pattern: dotLayer("rgba(255,255,255,.6)", 1.8),
+    patternSize: "22px 22px",
+  });
