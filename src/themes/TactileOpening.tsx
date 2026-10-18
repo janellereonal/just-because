@@ -73,7 +73,7 @@ export const OPENINGS: Partial<Record<ThemeKind, Entry>> = {
   christmas: {
     Component: ChristmasOpening,
     background: christmasBackground,
-    ink: (c) => c.snow!,
+    ink: () => "#2B2522",
     button: "Untie the ribbon",
     sprinkles: 0.7,
   },
@@ -123,7 +123,7 @@ export const OPENINGS: Partial<Record<ThemeKind, Entry>> = {
   game: {
     Component: GameOpening,
     background: gameBackground,
-    ink: (c) => c.cream!,
+    ink: (c) => c.navy!,
     button: "Roll the dice",
     sprinkles: 0.35,
   },

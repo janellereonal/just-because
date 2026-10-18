@@ -109,8 +109,8 @@ function useRope(
 
 export function ChristmasOpening(p: OpeningProps) {
   const c = p.design.palette;
-  // The default gift sits on a light background, so its words are dark.
-  const ink = p.kind === "default" ? "#2B2522" : c.snow!;
+  // Both sit on a light background now, so the words are dark.
+  const ink = "#2B2522";
   const cast = useRef<CharacterHandle | null>(null);
   const boxRef = useRef<HTMLDivElement | null>(null);
   const svgRef = useRef<SVGSVGElement | null>(null);
@@ -489,14 +489,15 @@ function Lid({
   );
 }
 
+/** A warm cream room with a candle glow and a faint pine edge (Oct 2026: was a dark pine green). */
 export const christmasBackground = (c: ThemePalette): React.CSSProperties => ({
-  backgroundColor: c.pine,
+  backgroundColor: "#F6F0E8",
   backgroundImage: [
-    // Fairy-light glow behind, a soft lamp from the top left, then the room falling into shadow.
-    `radial-gradient(55% 45% at 50% 56%, ${c.gold}30, transparent 70%)`,
-    `radial-gradient(50% 35% at 22% 12%, rgba(255,236,190,.14), transparent 70%)`,
-    "radial-gradient(130% 100% at 50% 40%, transparent 48%, rgba(0,0,0,.5))",
-    `linear-gradient(180deg, #163A2B, ${c.pine})`,
+    // Fairy-light glow behind, a soft lamp from the top left, then a whisper of pine at the edges.
+    `radial-gradient(55% 45% at 50% 56%, ${c.gold}55, transparent 70%)`,
+    `radial-gradient(50% 35% at 22% 12%, rgba(255,255,255,.75), transparent 70%)`,
+    "radial-gradient(130% 100% at 50% 40%, transparent 55%, rgba(47,93,70,.14))",
+    "linear-gradient(180deg, #FAF6F0, #F1E8DD)",
     TEXTURE.grain,
   ].join(","),
   backgroundSize: "auto, auto, auto, auto, 160px 160px",

@@ -17,7 +17,7 @@ import { FallbackButton, Layer, SPRING, useBeats, useHaptics } from "@/themes/_s
 import { burstSet } from "@/themes/_shared/Sprinkles";
 import { pick } from "@/themes/_shared/iconSets";
 import { ContactShadow, Sheen, TEXTURE, Texture } from "@/themes/_shared/light";
-import { foley, melody } from "@/lib/play";
+import { candlePuff, chime, melody } from "@/lib/play";
 
 /** The cake is seen from a little above: an ellipse's height is this share of its width. */
 const ELLIPSE = 0.17;
@@ -46,7 +46,7 @@ export function BirthdayOpening(p: OpeningProps) {
       next[i] = true;
       return next;
     });
-    foley("breath");
+    candlePuff(i);
     h.tick();
   }
   function blowAll(stagger = 140) {
@@ -66,7 +66,8 @@ export function BirthdayOpening(p: OpeningProps) {
         burstSet(p.hostRef.current, r.left + 10, r.bottom - 20, p.iconSet, { count: 26, spread: 2.2, up: true, gravity: 1.4 });
         burstSet(p.hostRef.current, r.right - 10, r.bottom - 20, p.iconSet, { count: 26, spread: 2.2, up: true, gravity: 1.4 });
       }
-      foley("thunk");
+      // A light sparkle with the confetti (the old thud felt heavy right after the soft puffs).
+      chime("sparkle");
       h.success();
     }
     if (beat === 2) melody([392, 392, 440, 392, 523, 494], 0.22, "triangle", 0.06);
@@ -122,7 +123,7 @@ export function BirthdayOpening(p: OpeningProps) {
             if (i < 0) return prev;
             const next = [...prev];
             next[i] = true;
-            foley("breath");
+            candlePuff(i);
             return next;
           });
         }
