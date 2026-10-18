@@ -8,6 +8,9 @@ import { FormatView } from "@/components/formats/FormatView";
 import { formatInfo } from "@/lib/formats";
 import { introStyleForTheme } from "@/lib/intro";
 import { PageError, PageLoading, PageNotFound } from "@/components/PageStates";
+import { REPORT_COPY } from "@/copy/strings";
+import { ReportGift } from "@/components/ReportGift";
+import { readableInk } from "@/lib/palettes";
 
 // The opening animation is only needed the first time a gift is viewed.
 const GiftIntro = lazy(() =>
@@ -106,6 +109,9 @@ function PublishedPage() {
     );
   }
   const isOwner = !!me && (me.id === site.creator_id || me.isAdmin);
+  if (site.disabled_at && !me?.isAdmin) {
+    return <PageNotFound title={REPORT_COPY.pausedTitle} message={REPORT_COPY.pausedBody} actionLabel={REPORT_COPY.makeYourOwn} actionTo="/" showHeader={false} />;
+  }
   if (isGiftEnded(site) && site.status === "published") {
     return <GiftEndedPage isOwner={isOwner} siteId={site.id} title={site.title} />;
   }
@@ -200,6 +206,11 @@ function PublishedPage() {
           onReplayIntro={replayIntro}
         />
       )}
+      {opened || !formatInfo(site.format).usesIntro ? (
+        <div style={{ background: palette.background }}>
+          <ReportGift slug={site.slug} page="gift" tone={readableInk(palette.background)} />
+        </div>
+      ) : null}
     </>
   );
 }

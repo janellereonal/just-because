@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { NOINDEX } from "@/lib/seo";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
@@ -9,10 +10,11 @@ import { fetchThemes, type Theme } from "@/lib/themes";
 import { getPaymentsSetup, listPaymentLog, setThemePreview, setThemeStatus, setupPaymongoWebhook } from "@/lib/api";
 import { uploadFile } from "@/lib/upload";
 import { useAuth } from "@/hooks/useAuth";
+import { AdminReports } from "@/components/admin/AdminReports";
 
 export const Route = createFileRoute("/admin")({
   head: () => ({
-    meta: [
+    meta: [NOINDEX, 
       { title: "Theme admin | Just Because" },
       { name: "description", content: "Manage the Just Because theme template library." },
       { property: "og:title", content: "Theme admin | Just Because" },
@@ -80,6 +82,7 @@ function AdminPage() {
     <div className="min-h-screen bg-paper text-ink">
       <SiteHeader />
       <Metrics />
+      <AdminReports />
       <PaymentsSetup />
       <PaymentLog />
       <section className="mx-auto max-w-6xl px-5 py-14">

@@ -219,14 +219,18 @@ function SectionTitle({
   children,
   accent,
   font,
+  extra,
 }: {
   children: React.ReactNode;
   accent: string;
   font: string;
+  extra?: Record<string, unknown> | undefined;
 }) {
+  const { className: extraClass, ...rest } = (extra ?? {}) as { className?: string };
   return (
     <h2
-      className="sb-title text-[1.75rem] leading-tight font-semibold"
+      {...rest}
+      className={`sb-title text-[1.75rem] leading-tight font-semibold ${extraClass ?? ""}`}
       style={{ fontFamily: font, color: accent }}
     >
       {children}
@@ -994,7 +998,13 @@ export function NewSections({
   headingFont,
   accent,
   only,
+  titles,
+  titleProps,
 }: {
+  /** The organiser's own section titles, falling back to the defaults. */
+  titles?: Partial<Record<NewSectionType, string>>;
+  /** Click-to-edit wiring from the editor preview. */
+  titleProps?: (type: NewSectionType) => Record<string, unknown>;
   kind: ThemeKind;
   enabled: Set<string>;
   contributions: ViewContribution[];
@@ -1017,8 +1027,8 @@ export function NewSections({
         const common: Common = { kind, items, icons, hostRef, sample: !real.length, recipient };
         return (
           <section key={type} data-section={type} className="sb-section mt-16">
-            <SectionTitle accent={accent} font={headingFont}>
-              {SECTION_COPY[type].title}
+            <SectionTitle accent={accent} font={headingFont} extra={titleProps?.(type)}>
+              {titles?.[type] || SECTION_COPY[type].title}
             </SectionTitle>
             {type === "openwhen" ? <OpenWhen {...common} /> : null}
             {type === "capsule" ? <Capsule {...common} /> : null}

@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { NOINDEX } from "@/lib/seo";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { toast } from "sonner";
 import { authClient } from "@/lib/auth-client";
@@ -9,7 +10,7 @@ export const Route = createFileRoute("/reset-password")({
     token: typeof search["token"] === "string" ? search["token"] : undefined,
     error: typeof search["error"] === "string" ? search["error"] : undefined,
   }),
-  head: () => ({ meta: [{ title: "Choose a new password | Just Because" }] }),
+  head: () => ({ meta: [NOINDEX, { title: "Choose a new password | Just Because" }] }),
   component: ResetPasswordPage,
 });
 

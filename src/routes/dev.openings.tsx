@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { NOINDEX } from "@/lib/seo";
 import { useEffect, useState } from "react";
 import type { ThemeKind } from "@/lib/themeKind";
 import { TactileOpening } from "@/themes/TactileOpening";
@@ -14,6 +15,7 @@ import type { CharacterSetting } from "@/themes/_shared/cast/types";
  * /dev/openings?kind=birthday&char=fox     with a library character (or char=person:bookworm)
  */
 export const Route = createFileRoute("/dev/openings")({
+  head: () => ({ meta: [NOINDEX] }),
   validateSearch: (s: Record<string, unknown>) => ({
     kind: (typeof s["kind"] === "string" ? s["kind"] : "valentine") as ThemeKind,
     age: typeof s["age"] === "number" ? s["age"] : undefined,

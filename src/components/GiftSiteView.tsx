@@ -1,5 +1,6 @@
 import { giftVoice } from "@/lib/giftVoice";
 import { trackEvent } from "@/lib/track";
+import { sampleLetter } from "@/copy/strings";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { SkinDecor } from "@/components/SkinDecor";
 import { ScrollStory } from "@/components/ScrollStory";
@@ -749,8 +750,8 @@ export function GiftSiteView({
                     ),
                   )
                 : [
-                    { t: `So lucky to know you${sampleName ? `, ${sampleName}` : ""}. Love, Sam`, a: "Sam" },
-                    { t: "You make every room warmer. Can't wait to celebrate.", a: "Alex" },
+                    { t: sampleLetter(kind, 0, sampleName), a: "Sam" },
+                    { t: sampleLetter(kind, 1), a: "Alex" },
                   ].map((s, li) => (
                     <NoteCard key={s.a} kind={kind} index={li} text={s.t} author={s.a} accent={accentText} muted />
                   ))}
@@ -992,6 +993,17 @@ export function GiftSiteView({
           siteId={site.id}
           headingFont={fonts.heading}
           accent={accentText}
+          titles={{
+            openwhen: text.openwhen_title || titles.openwhen_title,
+            capsule: text.capsule_title || titles.capsule_title,
+            superlatives: text.superlatives_title || titles.superlatives_title,
+            quiz: text.quiz_title || titles.quiz_title,
+            map: text.map_title || titles.map_title,
+            coupons: text.coupons_title || titles.coupons_title,
+            video: text.video_title || titles.video_title,
+            doodle: text.doodle_title || titles.doodle_title,
+          }}
+          titleProps={(type) => fp(`${type}_title` as keyof CustomText)}
         />
 
         {!hasContent && !sample && (
