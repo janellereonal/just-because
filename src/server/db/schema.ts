@@ -10,6 +10,7 @@ import {
   text,
   timestamp,
   unique,
+  uniqueIndex,
   uuid,
 } from "drizzle-orm/pg-core";
 
@@ -191,6 +192,38 @@ export const giftReports = pgTable(
 /* Payments                                                           */
 /* ------------------------------------------------------------------ */
 
+/**
+ * Discount codes, made in /admin. What each type does to a price is in src/config/pricing.ts
+ * (`discountedAmount`). A use is counted only when a payment is confirmed (or a free code
+ * opens the gift), in the same transaction that marks the order paid.
+ */
+export const discountCodes = pgTable(
+  "discount_codes",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    /** Shown as typed when made (e.g. LAUNCH20); matched without caring about case. */
+    code: text("code").notNull(),
+    /** percent | fixed | free */
+    type: text("type").notNull(),
+    /** Percent off, or centavos off for fixed. 0 for free. */
+    value: integer("value").notNull().default(0),
+    /** Plan ids it works on. Empty means every plan. */
+    plans: text("plans").array().notNull().default(sql`'{}'::text[]`),
+    /** Null means no overall limit. */
+    maxUses: integer("max_uses"),
+    /** Null means no per-person limit. */
+    maxPerUser: integer("max_per_user").default(1),
+    expiresAt: timestamp("expires_at", { withTimezone: true }),
+    active: boolean("active").notNull().default(true),
+    /** Confirmed uses (paid orders, or free codes that opened a gift). */
+    usedCount: integer("used_count").notNull().default(0),
+    note: text("note"),
+    createdBy: text("created_by").references(() => user.id, { onDelete: "set null" }),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [uniqueIndex("discount_codes_code_lower").on(sql`lower(${t.code})`)],
+);
+
 export const orders = pgTable(
   "orders",
   {
@@ -208,6 +241,11 @@ export const orders = pgTable(
     amount: integer("amount").notNull(),
     currency: text("currency").notNull().default("PHP"),
     promoApplied: boolean("promo_applied").notNull().default(false),
+    /** The discount code used, if any. The code text is kept too, in case the code is deleted later. */
+    discountCodeId: uuid("discount_code_id").references(() => discountCodes.id, { onDelete: "set null" }),
+    discountCode: text("discount_code"),
+    /** Centavos taken off by the code (full price = amount + discountAmount). */
+    discountAmount: integer("discount_amount").notNull().default(0),
     /** pending | paid | failed | expired */
     status: text("status").notNull().default("pending"),
     provider: text("provider").notNull().default("paymongo"),

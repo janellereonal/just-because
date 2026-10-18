@@ -84,7 +84,7 @@ export async function notifyPaid(orderId: string) {
     kind: order.kind as "publish" | "upgrade" | "extend",
     recipient: recipientOf(site.customText, site.title),
     planName: getTier(order.tier)?.name ?? order.tier,
-    amount: formatPeso(order.amount),
+    amount: order.discountCode ? `${formatPeso(order.amount)} (code ${order.discountCode})` : formatPeso(order.amount),
     orderId: order.id,
     paidOn: day(order.updatedAt),
     openUntil: site.expiresAt ? day(site.expiresAt) : null,

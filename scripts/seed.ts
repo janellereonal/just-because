@@ -1,5 +1,6 @@
 // Restores the shared palettes and the occasion themes. Idempotent.
 import postgres from "postgres";
+import { discountCodes } from "../src/config/pricing";
 
 const url = process.env.DATABASE_URL_UNPOOLED || process.env.DATABASE_URL;
 if (!url) {
@@ -127,5 +128,14 @@ await sql.begin(async (tx) => {
               now() + make_interval(secs => ${i}))`;
   }
 });
+// Starter discount codes (src/config/pricing.ts). Only made once: if a code with that name
+// exists, it's left alone, so turning one off or changing it in /admin sticks.
+for (const c of discountCodes.starter) {
+  const expires = c.expiresInDays ? new Date(Date.now() + c.expiresInDays * 86_400_000) : null;
+  await sql`
+    insert into discount_codes (code, type, value, plans, max_uses, max_per_user, expires_at, note)
+    values (${c.code}, ${c.type}, ${c.value}, ${c.plans}::text[], ${c.maxUses}, ${c.maxPerUser}, ${expires}, ${c.note})
+    on conflict do nothing`;
+}
 await sql.end();
-console.log("Seeded palettes and themes.");
+console.log("Seeded palettes, themes and starter codes.");
