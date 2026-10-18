@@ -95,6 +95,15 @@ Locally, without `BLOB_READ_WRITE_TOKEN` uploads save to `.dev-uploads/`, and wi
   /admin). A payment that lands after the order was cancelled or timed out still counts.
 - `/api/cron/daily` (Vercel Cron, needs `CRON_SECRET`) sends the "ends in 14 days" reminder,
   re-checks unpaid orders from the last 2 days and expires stale ones.
+- Discount codes: `discount_codes` table, made and turned off in /admin; what each type does to a price
+  is `discountedAmount` in pricing.ts (percent lands on a whole peso, anything above zero is at least
+  `discountCodes.minCharge`). Logic in `src/server/discounts.ts`. Codes apply to a gift's first plan only
+  and replace the early-bird promo. The code goes in the PayMongo line item description and on the
+  order (`discount_code`, `discount_amount`). A use is counted in `applyPaidEvent`, in the same
+  transaction that marks the order paid, so abandoned checkouts never use one up. Free codes skip
+  PayMongo: the order is made with provider `free` and opened through `applyPaidEvent` too, which
+  re-checks the code with its row locked so the last use can't be taken twice. Starter codes are in
+  `discountCodes.starter`, made once by `db:seed`.
 - Orders keep their row when a gift or account is deleted (`site_id`/`owner_id` set null).
 - Tests: `bun test src` (the billing test runs only against a localhost DATABASE_URL, with
   the fake PayMongo in `tools/payments/fake-paymongo.ts`).

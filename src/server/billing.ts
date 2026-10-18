@@ -19,6 +19,7 @@ import {
 } from "@/config/pricing";
 import { getDb, schema } from "./db";
 import { HttpError } from "./guards";
+import { codeProblem, countUse, findCode, priceWith } from "./discounts";
 import { notifyPaid } from "./notify";
 import type { PaidEvent } from "./payments/types";
 
@@ -122,12 +123,19 @@ export type Quote = {
   kind: "publish" | "upgrade" | "extend";
   tier: Tier;
   fromTier: TierId | null;
+  /** What to charge, in centavos (after any promo or code). 0 means a free code covers it. */
   amount: number;
   promoApplied: boolean;
+  /** The code used, and how much it took off. */
+  discount: { id: string; code: string; off: number } | null;
 };
 
-/** Works out what this gift owes for `tierId`. Throws a friendly error if it can't be bought. */
-export async function quote(site: Site, tierId: string): Promise<Quote> {
+/**
+ * Works out what this gift owes for `tierId`, with an optional discount code (first plan only;
+ * it replaces the early-bird promo rather than stacking). Throws a friendly error if it can't
+ * be bought or the code can't be used.
+ */
+export async function quote(site: Site, tierId: string, opts: { code?: string | null | undefined; userId?: string } = {}): Promise<Quote> {
   const tier = getTier(tierId);
   if (!tier) throw new HttpError(400, "That plan doesn't exist.");
   if (site.tier === LEGACY_TIER) throw new HttpError(400, "This gift is already open for good. No payment needed.");
@@ -137,6 +145,14 @@ export async function quote(site: Site, tierId: string): Promise<Quote> {
   if (blocker) throw new HttpError(400, blocker);
 
   const current = getTier(site.tier);
+  if (opts.code && current) throw new HttpError(400, "Codes work when you first pick a plan.");
+  if (!current && opts.code) {
+    const code = await findCode(opts.code);
+    const problem = await codeProblem(code, tier, opts.userId ?? "");
+    if (problem || !code) throw new HttpError(400, problem ?? "We don't know that code.");
+    const { amount, off } = priceWith(code, tier.amount);
+    return { kind: "publish", tier, fromTier: null, amount, promoApplied: false, discount: { id: code.id, code: code.code, off } };
+  }
   if (!current) {
     let amount = tier.amount;
     let promoApplied = false;
@@ -144,12 +160,12 @@ export async function quote(site: Site, tierId: string): Promise<Quote> {
       amount = Math.max(amount - promo.amountOff, 100);
       promoApplied = true;
     }
-    return { kind: "publish", tier, fromTier: null, amount, promoApplied };
+    return { kind: "publish", tier, fromTier: null, amount, promoApplied, discount: null };
   }
   if (isExpired(site)) throw new HttpError(400, "This gift has ended. Extend it first, then you can upgrade.");
   if (tierRank(tier.id) <= tierRank(current.id))
     throw new HttpError(400, `This gift is already on ${current.name}.`);
-  return { kind: "upgrade", tier, fromTier: current.id, amount: tier.amount - current.amount, promoApplied: false };
+  return { kind: "upgrade", tier, fromTier: current.id, amount: tier.amount - current.amount, promoApplied: false, discount: null };
 }
 
 /** Keeps a paid gift open for another stretch of its current plan. */
@@ -157,7 +173,7 @@ export function quoteExtend(site: Site): Quote {
   if (site.tier === LEGACY_TIER) throw new HttpError(400, "This gift is already open for good. No payment needed.");
   const tier = getTier(site.tier);
   if (!tier) throw new HttpError(400, "Pick a plan to publish this gift first.");
-  return { kind: "extend", tier, fromTier: tier.id, amount: tier.extendAmount, promoApplied: false };
+  return { kind: "extend", tier, fromTier: tier.id, amount: tier.extendAmount, promoApplied: false, discount: null };
 }
 
 export function upgradeOptions(currentTier: string | null) {
@@ -216,6 +232,17 @@ export async function applyPaidEvent(event: PaidEvent, provider: string, source:
     if (event.amountPaid < order.amount)
       return { msg: `order ${order.id}: paid ${event.amountPaid} < expected ${order.amount}, not publishing`, orderId: order.id };
 
+    // A free code is checked again here, with the code row locked, so its last use can't be
+    // taken twice by two people at once. (Paid codes are honoured: the buyer has paid.)
+    if (order.discountCodeId && order.amount === 0) {
+      const [code] = await tx.select().from(schema.discountCodes).where(eq(schema.discountCodes.id, order.discountCodeId)).for("update");
+      const problem = await codeProblem(code ?? null, null, order.ownerId ?? "", tx);
+      if (problem) {
+        await tx.update(schema.orders).set({ status: "failed", updatedAt: new Date() }).where(eq(schema.orders.id, order.id));
+        return { msg: `order ${order.id}: free code ${order.discountCode} refused: ${problem}`, orderId: order.id, refused: problem };
+      }
+    }
+
     // Recorded here, inside the same transaction as the order update.
     const inserted = await tx
       .insert(schema.webhookEvents)
@@ -231,6 +258,8 @@ export async function applyPaidEvent(event: PaidEvent, provider: string, source:
       .update(schema.orders)
       .set({ status: "paid", providerPaymentId: event.paymentId, updatedAt: now })
       .where(eq(schema.orders.id, order.id));
+    // Counted once, together with the order turning paid.
+    if (order.discountCodeId) await countUse(order.discountCodeId, tx);
 
     if (!order.siteId) return { msg: `order ${order.id}: paid${late}, but its gift was deleted. Needs a refund.`, orderId: order.id };
     const [site] = await tx.select().from(schema.giftSites).where(eq(schema.giftSites.id, order.siteId)).for("update");
@@ -306,6 +335,7 @@ export async function reconcileOrder(
   everyMs = 5000,
 ): Promise<boolean> {
   if (order.status === "paid" || !order.providerCheckoutId) return order.status === "paid";
+  if (order.provider === "free") return false; // free codes never went to a payment provider
   // Checkout sessions don't take payments after about a day; a week is plenty of margin.
   if (Date.now() - order.createdAt.getTime() > 7 * 86_400_000) return false;
   const last = lastProviderCheck.get(order.id) ?? 0;

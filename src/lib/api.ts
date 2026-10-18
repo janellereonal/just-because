@@ -44,7 +44,7 @@ import {
   tierBlocker,
   upgradeOptions,
 } from "@/server/billing";
-import { TIERS, LEGACY_TIER, getTier, hasFeature } from "@/config/pricing";
+import { TIERS, LEGACY_TIER, discountLabel as discountLabelOf, getTier, hasFeature } from "@/config/pricing";
 import {
   clearTries,
   hashPassword,
@@ -980,9 +980,12 @@ async function openCheckout(
   q: Quote,
 ) {
   const db = getDb();
+  const free = q.amount === 0 && !!q.discount;
+  const freeId = free ? crypto.randomUUID() : null;
   const [order] = await db
     .insert(schema.orders)
     .values({
+      ...(freeId ? { id: freeId, providerCheckoutId: `free_${freeId}` } : {}),
       siteId: site.id,
       ownerId: user.id,
       kind: q.kind,
@@ -991,10 +994,26 @@ async function openCheckout(
       amount: q.amount,
       currency: "PHP",
       promoApplied: q.promoApplied,
-      provider: "paymongo",
+      discountCodeId: q.discount?.id ?? null,
+      discountCode: q.discount?.code ?? null,
+      discountAmount: q.discount?.off ?? 0,
+      provider: free ? "free" : "paymongo",
     })
     .returning({ id: schema.orders.id });
   if (q.kind === "publish") await track("gift_wrapped", { siteId: site.id, userId: user.id, props: { tier: q.tier.id } });
+  if (freeId) {
+    // A free code: no payment page. Opened through the same path as a paid order, so the use
+    // is counted once and the gift opens exactly as if it had been paid.
+    const { applyPaidEvent } = await import("@/server/billing");
+    await applyPaidEvent(
+      { eventId: `free_${freeId}`, eventType: "free_code", checkoutId: `free_${freeId}`, orderId: freeId, paymentId: null, amountPaid: 0 },
+      "free",
+      "confirm",
+    );
+    const [after] = await db.select({ status: schema.orders.status }).from(schema.orders).where(eq(schema.orders.id, freeId));
+    if (after?.status !== "paid") throw new HttpError(400, "That code was just used up. You can still pick a plan without it.");
+    return { orderId: freeId, checkoutUrl: `/checkout/${freeId}` };
+  }
   const { getProvider } = await import("@/server/payments");
   const { siteUrl } = await import("@/server/email");
   const base = siteUrl();
@@ -1009,7 +1028,9 @@ async function openCheckout(
   const itemDescription =
     q.kind === "extend"
       ? `${recipient}'s gift, ${q.tier.name} plan, open for another ${q.tier.liveFor.label}`
-      : `${recipient}'s gift, ${q.tier.name} plan (live for ${q.tier.liveFor.label})`;
+      : q.discount
+        ? `${recipient}'s gift, ${q.tier.name} plan (${q.discount.code}), live for ${q.tier.liveFor.label}`
+        : `${recipient}'s gift, ${q.tier.name} plan (live for ${q.tier.liveFor.label})`;
   try {
     const provider = getProvider("paymongo");
     const checkout = await provider.createCheckout({
@@ -1041,10 +1062,34 @@ async function openCheckout(
 
 /** Creates an order and a PayMongo checkout. The amount is worked out here, never sent by the browser. */
 export const startCheckout = createServerFn({ method: "POST" })
-  .inputValidator(z.object({ siteId: id, tier: z.enum(["sweet", "celebration", "keepsake"]) }))
+  .inputValidator(z.object({ siteId: id, tier: z.enum(["sweet", "celebration", "keepsake"]), code: z.string().max(40).optional() }))
   .handler(async ({ data }) => {
     const { user, site } = await ownedSite(data.siteId);
-    return openCheckout(user, site, await quote(site, data.tier));
+    return openCheckout(user, site, await quote(site, data.tier, { code: data.code?.trim() || null, userId: user.id }));
+  });
+
+/**
+ * "Have a code?" in the plan picker: what each plan would cost with it. Only a preview; the
+ * price is worked out again on the server when checkout starts.
+ */
+export const previewDiscountCode = createServerFn({ method: "POST" })
+  .inputValidator(z.object({ siteId: id, code: z.string().min(1).max(40) }))
+  .handler(async ({ data }) => {
+    const { user, site } = await ownedSite(data.siteId);
+    const { codeProblem, findCode, priceWith, tooManyTries } = await import("@/server/discounts");
+    if (tooManyTries(user.id)) return { ok: false as const, message: "That's a lot of codes. Try again in a few minutes." };
+    if (getTier(site.tier)) return { ok: false as const, message: "Codes work when you first pick a plan." };
+    const code = await findCode(data.code);
+    const general = await codeProblem(code, null, user.id);
+    if (general || !code) return { ok: false as const, message: general ?? "We don't know that code." };
+    const plans = await Promise.all(
+      TIERS.map(async (t) => {
+        const problem = await codeProblem(code, t, user.id);
+        const p = priceWith(code, t.amount);
+        return { id: t.id, applies: !problem, amount: problem ? t.amount : p.amount, was: t.amount, free: !problem && p.amount === 0 };
+      }),
+    );
+    return { ok: true as const, code: code.code, label: discountLabelOf(code), plans };
   });
 
 /** Pays to keep a gift open for another stretch of its plan (works before or after it ends). */
@@ -1108,6 +1153,85 @@ export const cancelOrder = createServerFn({ method: "POST" })
         .set({ status: "failed", updatedAt: new Date() })
         .where(and(eq(schema.orders.id, order.id), eq(schema.orders.status, "pending")));
     }
+    return { ok: true };
+  });
+
+/* ---------------- Discount codes (admin) ---------------- */
+
+const codeInput = z.object({
+  code: z
+    .string()
+    .trim()
+    .min(3)
+    .max(40)
+    .regex(/^[A-Za-z0-9_-]+$/, "Letters, numbers, dashes and underscores only."),
+  type: z.enum(["percent", "fixed", "free"]),
+  /** Percent (1 to 100) or pesos off for fixed; ignored for free. */
+  value: z.number().min(0).max(100000),
+  plans: z.array(z.enum(["sweet", "celebration", "keepsake"])).max(3),
+  maxUses: z.number().int().min(1).max(1_000_000).nullable(),
+  maxPerUser: z.number().int().min(1).max(1000).nullable(),
+  expiresAt: z.string().datetime().nullable(),
+  note: z.string().trim().max(200).optional(),
+});
+
+/** Admin: every code with its uses, and the latest paid orders that used one. */
+export const listDiscountCodes = createServerFn({ method: "GET" }).handler(async () => {
+  await requireAdmin();
+  const db = getDb();
+  const codes = await db.select().from(schema.discountCodes).orderBy(desc(schema.discountCodes.createdAt));
+  const o = schema.orders;
+  const recent = await db
+    .select({ id: o.id, code: o.discountCode, tier: o.tier, amount: o.amount, off: o.discountAmount, at: o.updatedAt, siteId: o.siteId, slug: schema.giftSites.slug })
+    .from(o)
+    .leftJoin(schema.giftSites, eq(schema.giftSites.id, o.siteId))
+    .where(and(eq(o.status, "paid"), sql`${o.discountCode} is not null`))
+    .orderBy(desc(o.updatedAt))
+    .limit(30);
+  return {
+    codes: codes.map((c) => ({ ...c, expiresAt: c.expiresAt?.toISOString() ?? null, createdAt: c.createdAt.toISOString(), label: discountLabelOf(c) })),
+    recent: recent.map((r) => ({ ...r, at: r.at.toISOString() })),
+  };
+});
+
+export const createDiscountCode = createServerFn({ method: "POST" })
+  .inputValidator(codeInput)
+  .handler(async ({ data }) => {
+    const user = await requireAdmin();
+    if (data.type === "percent" && (data.value < 1 || data.value > 100)) throw new HttpError(400, "Percent off has to be between 1 and 100.");
+    if (data.type === "fixed" && data.value < 1) throw new HttpError(400, "Say how many pesos off.");
+    const { findCode } = await import("@/server/discounts");
+    if (await findCode(data.code)) throw new HttpError(400, "There's already a code with that name.");
+    const [row] = await getDb()
+      .insert(schema.discountCodes)
+      .values({
+        code: data.code.toUpperCase(),
+        type: data.type,
+        // Fixed amounts are typed in pesos and stored in centavos.
+        value: data.type === "free" ? 0 : data.type === "fixed" ? Math.round(data.value * 100) : Math.round(data.value),
+        plans: data.plans,
+        maxUses: data.maxUses,
+        maxPerUser: data.maxPerUser,
+        expiresAt: data.expiresAt ? new Date(data.expiresAt) : null,
+        note: data.note || null,
+        createdBy: user.id,
+      })
+      .returning({ id: schema.discountCodes.id });
+    return { id: row!.id };
+  });
+
+/** Admin: turn a code off or on, or change when it ends. Uses already counted stay. */
+export const updateDiscountCode = createServerFn({ method: "POST" })
+  .inputValidator(z.object({ id, active: z.boolean().optional(), expiresAt: z.string().datetime().nullable().optional() }))
+  .handler(async ({ data }) => {
+    await requireAdmin();
+    await getDb()
+      .update(schema.discountCodes)
+      .set({
+        ...(data.active !== undefined ? { active: data.active } : {}),
+        ...(data.expiresAt !== undefined ? { expiresAt: data.expiresAt ? new Date(data.expiresAt) : null } : {}),
+      })
+      .where(eq(schema.discountCodes.id, data.id));
     return { ok: true };
   });
 
