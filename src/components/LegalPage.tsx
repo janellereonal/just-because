@@ -14,6 +14,9 @@ export function DraftBanner() {
   );
 }
 
+/** "How long we keep your information" -> "how-long-we-keep-your-information", for links to a section. */
+const slugOf = (h: string) => h.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
+
 export function LegalPage({ doc }: { doc: LegalDoc }) {
   const updated = new Date(`${SITE.legalUpdated}T00:00:00`).toLocaleDateString(undefined, { year: "numeric", month: "long", day: "numeric" });
   return (
@@ -24,12 +27,35 @@ export function LegalPage({ doc }: { doc: LegalDoc }) {
         <h1 className="mt-6 font-display text-[clamp(2rem,5vw,3rem)] leading-tight font-semibold tracking-tight">{doc.title}</h1>
         <p className="mt-2 text-sm text-muted">{FOOTER_COPY.updated(updated)}</p>
         <p className="mt-5 text-[17px] leading-relaxed text-ink/85">{doc.intro}</p>
-        {doc.sections.map((s) => (
-          <section key={s.h} className="mt-9">
-            <h2 className="font-display text-xl font-semibold">{s.h}</h2>
+        {doc.numbered ? (
+          <nav aria-label={FOOTER_COPY.onThisPage} className="mt-7 rounded-2xl bg-cream px-5 py-4">
+            <p className="font-mono text-[11px] tracking-[0.16em] text-muted uppercase">{FOOTER_COPY.onThisPage}</p>
+            <ol className="mt-2 grid gap-1 text-[15px] sm:grid-cols-2">
+              {doc.sections.map((s, n) => (
+                <li key={s.h}>
+                  <a href={`#${slugOf(s.h)}`} className="text-ink/80 underline-offset-4 hover:text-accent hover:underline">
+                    {n + 1}. {s.h}
+                  </a>
+                </li>
+              ))}
+            </ol>
+          </nav>
+        ) : null}
+        {doc.sections.map((s, n) => (
+          <section key={s.h} id={slugOf(s.h)} className="mt-10 scroll-mt-24">
+            <h2 className="font-display text-xl font-semibold">
+              {doc.numbered ? `${n + 1}. ` : ""}
+              {s.h}
+            </h2>
+            {s.summary ? (
+              <p className="mt-3 rounded-xl border-l-4 border-accent bg-[#FBEDE6] px-4 py-3 text-[15px] leading-relaxed text-ink/90">
+                <span className="font-semibold">{FOOTER_COPY.inShort} </span>
+                {s.summary}
+              </p>
+            ) : null}
             {s.body.map((b, i) =>
               typeof b === "string" ? (
-                <p key={i} className="mt-3 leading-relaxed text-ink/80">
+                <p key={i} className={`mt-3 leading-relaxed text-ink/80 ${/^\([a-z]\)/.test(b) ? "font-semibold text-ink" : ""}`}>
                   {b}
                 </p>
               ) : (

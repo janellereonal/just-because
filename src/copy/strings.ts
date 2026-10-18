@@ -425,6 +425,8 @@ export const FOOTER_COPY = {
   refunds: "Refunds",
   help: "Help",
   contact: "Contact us",
+  onThisPage: "On this page",
+  inShort: "In short:",
   draft: "Draft: under review.",
   draftBody: "This page is being reviewed and may change before it's final.",
   updated: (date: string) => `Last updated ${date}`,

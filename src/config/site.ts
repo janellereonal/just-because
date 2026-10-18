@@ -12,7 +12,7 @@ export const SITE = {
    */
   legalDraft: true,
   /** The date the legal pages were last changed (shown on each page). */
-  legalUpdated: "2026-10-16",
+  legalUpdated: "2026-10-18",
   /** Socials for the footer. Empty until Janelle sends them; empty ones are hidden. */
   socials: { instagram: "", tiktok: "", facebook: "" } as Record<string, string>,
 } as const;
