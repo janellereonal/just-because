@@ -203,46 +203,195 @@ export const PRIVACY: LegalDoc = {
 
 export const TERMS: LegalDoc = {
   title: "Terms of use",
-  intro: `These terms are the agreement between you and ${SITE.name} when you use ${SITE.url}. By making a gift, adding to one or buying a plan, you agree to them.`,
+  intro: `These terms are the agreement between you and ${SITE.name} when you use ${SITE.url}. By making a gift, adding to one, opening one or buying a plan, you agree to them. Each section starts with a short summary in plain English. The summary helps you find your way, but the full text under it is what counts.`,
+  numbered: true,
   sections: [
-    { h: "The service", body: ["You can make a gift page, invite friends to add notes, photos, songs and more, and send it to someone. Making, editing and collecting notes is free. Opening the finished gift to the recipient needs a paid plan."] },
-    { h: "Your account", body: ["Keep your sign-in details safe. You're responsible for what happens in your account. You must be 16 or older to make an account."] },
     {
-      h: "What you add",
+      h: "Who these terms apply to",
+      summary: "These terms apply to everyone who uses Just Because: people who make gifts, friends who add to them and people who open them.",
       body: [
-        "You keep the rights to everything you add. You give us permission to store it, show it to the people you share the gift with, and make the copies needed to run the service (for example, smaller versions of photos).",
-        "Only add things you have the right to share, and only add photos or recordings of other people if they'd be happy to be in the gift.",
+        `${SITE.name} lets you make a group gift page, invite friends to add letters, photos, songs and more, and send one finished page to the person it's for. In these terms, "${SITE.name}", "we" and "us" mean the team that runs the service, and "the service" means the website and everything on it.`,
+        "\"Organiser\" means the person who makes a gift. \"Friend\" means someone who adds to a gift. \"Recipient\" means the person a gift is for. \"Content\" means anything people add, such as words, photos, voice notes, videos, drawings and links.",
+        "Our Privacy policy and Refund policy are part of these terms.",
       ],
     },
     {
-      h: "Acceptable use",
+      h: "Who can use the service",
+      summary: "You need to be at least 16, and you need to give us true information.",
       body: [
-        "Please don't use the service to:",
-        { list: ["harass, threaten or bully anyone, or share someone's private information without permission", "share sexual content involving anyone under 18, or any illegal content", "share hate, violence, scams, spam or malware", "pretend to be someone else in a way that misleads people", "break the site, get around its limits, or access gifts that aren't yours"] },
-        "Anyone can report a gift with the Report link at the bottom of a gift or friend page. We may hide or remove gifts or accounts that break these rules, without a refund where the rules were clearly broken.",
+        "You must be at least 16 years old to make an account or add to a gift. If you use the service for a group, a school or a company, you confirm you're allowed to accept these terms for them.",
+        "Friends don't need an account. They can add to a gift through its friends link.",
       ],
     },
-    { h: "Organisers", body: ["The organiser approves what appears in a gift and is responsible for who they share the link with."] },
-    { h: "Plans and payment", body: [`Prices are shown in Philippine pesos before you pay, with an approximate amount in US dollars. A plan opens one gift for a set time (${plans}). Payments are handled by PayMongo. Refunds follow our Refund policy.`] },
-    { h: "Availability", body: ["We work hard to keep gifts online, but the service is provided as is. We can't promise it will never be interrupted."] },
-    { h: "Liability", body: ["To the extent the law allows, we aren't liable for indirect losses, and our total liability to you is limited to what you paid us in the 12 months before the claim. Nothing in these terms limits rights you have under Philippine consumer law."] },
-    { h: "Ending", body: ["You can delete your gifts or account at any time. We may suspend accounts that break these terms."] },
-    { h: "Law", body: ["These terms are governed by the laws of the Republic of the Philippines."] },
-    { h: "Contact", body: [`Questions about these terms: ${email}.`] },
+    {
+      h: "Your account",
+      summary: "Keep your sign-in safe. You're responsible for what happens in your account.",
+      body: [
+        "Give us a real email address and keep your password private. You're responsible for everything done in your account. If you think someone else has used your account, change your password and tell us straight away.",
+        "You can delete your account at any time from Account. Deleting it deletes your gifts and everything in them.",
+      ],
+    },
+    {
+      h: "Making and sharing a gift",
+      summary: "The organiser runs the gift: who gets the link, which notes appear and when it's sent. Anyone with a link can use it, so share it with care.",
+      body: [
+        { list: [
+          "The organiser decides which sections a gift has, approves or hides every note, and chooses when to send it.",
+          "Each gift has a friends link and a gift link. Anyone who has a link can use it and send it on. You're responsible for who you share links with.",
+          "Friends can edit or delete their own note from the same device while the gift is still being made.",
+          "Gift pages are hidden from search engines, but they aren't secret from people who have the link. Plans that include a password give you an extra lock.",
+        ] },
+      ],
+    },
+    {
+      h: "Your content",
+      summary: "What you add stays yours. You let us store it and show it to the people you share the gift with, only so the service works.",
+      body: [
+        "You keep all rights to the content you add. You give us a limited permission to store it, copy it (for example, making smaller versions of photos), show it to the people who have the gift's links, and process it in other ways needed to run the service. This permission ends when the content is deleted, apart from copies kept for a short time in backups.",
+        "You promise that you have the right to add what you add, and that people who appear in your photos, videos or recordings would be happy to be in the gift. Don't add other people's private information without their permission.",
+        "We don't use your content to advertise, and we don't use it to train artificial intelligence.",
+      ],
+    },
+    {
+      h: "What's not allowed",
+      summary: "Be kind and use the service as it's meant to be used. We can remove gifts that break these rules.",
+      body: [
+        "Don't use the service to:",
+        { list: [
+          "harass, threaten, bully or embarrass anyone, including the recipient",
+          "share sexual content involving anyone under 18, or any illegal content",
+          "share hate speech, violence, scams, spam or malware",
+          "share content you don't have the right to share, such as someone else's photos or music files",
+          "pretend to be someone else in a way that misleads people",
+          "break, overload or get around the limits of the service, or access gifts or accounts that aren't yours",
+          "copy, resell or build a competing product from the service, its designs or its code",
+        ] },
+        "Anyone can report a gift with the Report link at the bottom of a gift or friend page, or by emailing us. We may look at a reported gift, hide content, remove a gift or suspend an account that breaks these rules. Where a rule was clearly broken, we won't give a refund.",
+      ],
+    },
+    {
+      h: "Our designs and software",
+      summary: "The themes, openings, layouts, Bo and the rest of the service belong to us. You can use them in your gifts, not copy them elsewhere.",
+      body: [
+        `The service and everything we make for it, including the themes, openings, layouts, illustrations, our mascot Bo, the ${SITE.name} name and logo, and the code, belong to ${SITE.name} or the people we license them from. You may use them inside your gifts through the service. You may not copy, sell or reuse them outside the service without our written permission.`,
+        "If you send us ideas or feedback, we may use them without owing you anything.",
+      ],
+    },
+    {
+      h: "Plans and payment",
+      summary: "Making a gift and collecting notes is free. You pay once to send it. There's no subscription and nothing renews on its own.",
+      body: [
+        `Making, editing and collecting notes is free. Sending the finished gift to the recipient needs a paid plan. A plan opens one gift for a set time (${plans}) and comes with the limits shown when you buy it, such as how many friends and photos it holds.`,
+        { list: [
+          "Prices are shown in Philippine pesos before you pay, with an approximate amount in US dollars for reference. You pay the peso amount.",
+          "Each payment is a one-time payment. Plans don't renew on their own and we never charge you again without you choosing to.",
+          "You can upgrade a gift to a bigger plan by paying the difference, or extend it for another period before or after it ends.",
+          "Payments are handled by PayMongo. Their terms also apply to the payment itself.",
+          "We may change prices for future purchases. A change never affects a plan you've already paid for.",
+        ] },
+        "Refunds follow our Refund policy.",
+      ],
+    },
+    {
+      h: "When a gift ends",
+      summary: "When a plan runs out, the gift stops opening. You have 90 days to extend it or download everything before it's deleted.",
+      body: [
+        "When a plan's time is up, the gift link stops opening for the recipient. We email the organiser before that happens. After the plan ends, the organiser has 90 days to extend the gift or download everything in it, and then we delete it, as explained in our Privacy policy.",
+      ],
+    },
+    {
+      h: "Availability and changes to the service",
+      summary: "We work hard to keep gifts online, but we can't promise the service will never be interrupted or never change.",
+      body: [
+        "We may update, improve or change features, themes and layouts over time. If we ever stop offering the service altogether, we'll give organisers with active paid gifts at least 30 days' notice and a way to download their gifts.",
+        "The service is provided \"as is\". We don't promise it will always be available, free of errors or right for every purpose, except where the law says we must.",
+      ],
+    },
+    {
+      h: "Our responsibility to you",
+      summary: "If something goes wrong, our responsibility is limited to what you paid us in the last 12 months. Your rights as a consumer under Philippine law still apply.",
+      body: [
+        "As far as the law allows, we aren't responsible for indirect or unexpected losses, such as lost profits, lost opportunities or hurt feelings caused by what other people add to a gift. Our total responsibility to you for any claim is limited to the amount you paid us in the 12 months before the claim.",
+        "Nothing in these terms limits rights you have under the Consumer Act of the Philippines or any other law that can't be limited by agreement.",
+      ],
+    },
+    {
+      h: "Your responsibility",
+      summary: "If something you add or do causes a legal problem for us, you're responsible for it.",
+      body: [
+        "If someone makes a claim against us because of content you added or because you broke these terms, you agree to cover the reasonable costs that result, as far as the law allows.",
+      ],
+    },
+    {
+      h: "Ending your use of the service",
+      summary: "You can stop any time. We can suspend accounts that break these terms.",
+      body: [
+        "You can stop using the service, delete your gifts or delete your account at any time. We may suspend or close an account, or remove a gift, if these terms are broken, if the law requires it or to protect other people. Where it's safe and reasonable, we'll tell you why first.",
+      ],
+    },
+    {
+      h: "Disagreements and the law",
+      summary: "If you have a problem, email us first and we'll try to sort it out. These terms follow Philippine law.",
+      body: [
+        `If you have a complaint, please email ${email} first. We'll try to resolve it within 30 days. These terms are governed by the laws of the Republic of the Philippines, and any dispute will be handled by the courts of the Philippines.`,
+      ],
+    },
+    {
+      h: "Changes to these terms",
+      summary: "If we change something important, we'll update the date and tell organisers by email.",
+      body: [
+        "We may update these terms as the service changes or the law requires. We'll change the date at the top, and if a change matters, we'll email organisers before it takes effect. If you keep using the service after that, the new terms apply.",
+      ],
+    },
+    {
+      h: "Contact us",
+      summary: `Questions about these terms: ${email}.`,
+      body: [`For questions about these terms, email ${email}.`],
+    },
   ],
 };
 
 export const REFUNDS: LegalDoc = {
   title: "Refund policy",
-  intro: "We want every gift to land well. Here's when you can get your money back.",
+  intro: "We want every gift to land well. Here's when you can get your money back and how to ask. Each section starts with a short summary in plain English.",
+  numbered: true,
   sections: [
     {
-      h: "You can get a full refund if",
-      body: [{ list: ["you were charged twice for the same gift", "you paid but the gift didn't open because of a problem on our side, and we couldn't fix it within 3 days", "you ask within 7 days of paying and the recipient hasn't opened the gift yet"] }],
+      h: "When you can get a full refund",
+      summary: "Double charges, gifts that didn't open because of us, and change-of-mind within 7 days if the recipient hasn't opened it yet.",
+      body: [{ list: [
+        "You were charged twice for the same gift.",
+        "You paid, but the gift didn't open because of a problem on our side, and we couldn't fix it within 3 days of you telling us.",
+        "You ask within 7 days of paying and the recipient hasn't opened the gift yet.",
+      ] }],
     },
-    { h: "We can't refund", body: [{ list: ["a gift the recipient has already opened", "a plan that has run its full length", "gifts removed for breaking our Terms of use"] }] },
-    { h: "Upgrades and extensions", body: ["Upgrades and extensions follow the same rules, for the amount you paid for them."] },
-    { h: "How to ask", body: [`Email ${email} with the email you paid with and the gift's link. We reply within 3 working days. Approved refunds go back to the way you paid, through PayMongo, and usually arrive in 5 to 10 working days depending on your bank or wallet.`] },
+    {
+      h: "When we can't give a refund",
+      summary: "Once the recipient has opened the gift, or the plan has run its full length, the plan has done its job.",
+      body: [{ list: [
+        "The recipient has already opened the gift.",
+        "The plan has run its full length.",
+        "The gift was removed for breaking our Terms of use.",
+      ] }],
+    },
+    {
+      h: "Upgrades and extensions",
+      summary: "The same rules apply, for the amount you paid for the upgrade or extension.",
+      body: ["Upgrades and extensions follow the same rules as a first plan, for the amount you paid for them. If a full refund of a first plan is approved, any upgrade or extension on that gift is refunded too."],
+    },
+    {
+      h: "How to ask",
+      summary: `Email ${email} with the email you paid with and the gift's link. We reply within 3 working days.`,
+      body: [
+        `Email ${email} with the email address you paid with and the gift's link. Tell us briefly what happened. We reply within 3 working days.`,
+        "Approved refunds go back to the way you paid, through PayMongo. They usually arrive within 5 to 10 working days, depending on your bank or e-wallet. When a full refund is made, the gift's plan ends and the gift stops opening.",
+      ],
+    },
+    {
+      h: "Your rights",
+      summary: "This policy adds to your rights under Philippine consumer law. It doesn't take any away.",
+      body: ["Nothing in this policy limits rights you have under the Consumer Act of the Philippines."],
+    },
   ],
 };
 
