@@ -85,6 +85,7 @@
 }
 .pp-field { margin-top: 2px; font-size: 15px; font-weight: 800; text-transform: uppercase; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .pp-departs { margin-top: 18px; }
+.pp-departs.is-waiting { height: 78px; }
 .pp-board { margin-top: 7px; display: flex; flex-wrap: wrap; gap: 12px; }
 .pp-flaps { display: flex; flex-direction: column; align-items: center; gap: 4px; }
 .pp-flap {
@@ -334,7 +335,7 @@
 .pp-stamp-icon { position: absolute; display: block; color: currentColor; }
 .pp-stamp-icon.is-round { left: 50%; top: 40%; width: 18%; translate: -50% -50%; }
 .pp-stamp-icon.is-octa { left: 50%; top: 50%; width: 22%; translate: -50% -50%; }
-.pp-stamp-icon.is-rect { left: 9%; top: 41%; width: 11%; }
+.pp-stamp-icon.is-rect { left: 50%; top: 76%; width: 9%; translate: -50% 0; opacity: 0; }
 .pp-stamp-icon.is-oval { left: 13%; top: 43%; width: 10%; opacity: 0; }
 .pp-stamp-plane { display: block; }
 .pp-stamp-icon svg { stroke-width: 2.4; }
@@ -478,8 +479,8 @@
   color: var(--pp-on-band, #fff);
   background: linear-gradient(160deg, color-mix(in srgb, var(--pp-band, #3E8CCE) 80%, #fff), var(--pp-band, #3E8CCE));
   box-shadow: inset 0 0 0 4px #fff, 0 2px 4px rgba(0,0,0,.2);
-  -webkit-mask: radial-gradient(circle at 3px 3px, transparent 2.2px, #000 2.6px) -3px -3px / 6px 6px;
-  mask: radial-gradient(circle at 3px 3px, transparent 2.2px, #000 2.6px) -3px -3px / 6px 6px;
+  -webkit-mask: linear-gradient(#000 0 0) center / calc(100% - 6px) calc(100% - 6px) no-repeat, radial-gradient(circle at 3px 3px, transparent 2px, #000 2.4px) -3px -3px / 6px 6px;
+  mask: linear-gradient(#000 0 0) center / calc(100% - 6px) calc(100% - 6px) no-repeat, radial-gradient(circle at 3px 3px, transparent 2px, #000 2.4px) -3px -3px / 6px 6px;
 }
 .pp-postmark {
   position: absolute;

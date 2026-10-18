@@ -65,7 +65,7 @@ export function PartyBody(props: BodyProps) {
 
   // The last note was read: once its reader closes, bring the cake into view and blow out the last candle.
   useEffect(() => {
-    if (!allOpen || body.reading || opened.has(CHEER) || cheering.current) return;
+    if (!allOpen || body.reading || flipping || opened.has(CHEER) || cheering.current) return;
     cheering.current = true;
     const el = cakeRef.current;
     el?.scrollIntoView({ behavior: reduce ? "auto" : "smooth", block: "center" });
@@ -88,7 +88,7 @@ export function PartyBody(props: BodyProps) {
       },
       reduce ? 60 : 750,
     );
-  }, [allOpen, body.reading, opened, open, reduce, colors, body.hostRef]);
+  }, [allOpen, body.reading, flipping, opened, open, reduce, colors, body.hostRef]);
 
   function read(p: Piece, e: React.MouseEvent<HTMLElement>) {
     if (!opened.has(p.id)) {
@@ -133,11 +133,15 @@ export function PartyBody(props: BodyProps) {
   }, []);
   const pw = Math.round(Math.min(150, Math.max(92, bw * 0.27)));
   const per = Math.max(1, Math.floor((bw - 20) / (pw + 54)));
+  // On a phone a lot of photos go on one long string you swipe along, so the cake isn't pushed far down.
+  const scroll = per <= 2 && photos.length > 4;
   const strings = useMemo(() => {
+    if (scroll) return [photos];
     const out: Piece[][] = [];
     for (let i = 0; i < photos.length; i += per) out.push(photos.slice(i, i + per));
     return out;
-  }, [photos, per]);
+  }, [photos, per, scroll]);
+  const stringWidth = scroll ? photos.length * (pw + 48) + 48 : bw;
 
   const decos = Math.max(1, Math.floor(seats.length / 5));
   const flags = [colors.primary, colors.accent, colors.mix(colors.primary, "#FFFFFF", 0.55), colors.mix(colors.accent, "#FFFFFF", 0.6)];
@@ -176,9 +180,9 @@ export function PartyBody(props: BodyProps) {
           <CountdownLine date={data.countdownDate} className="pt-countdown" />
         </header>
 
-        <div ref={buntRef} className="pt-bunting" role={strings.length ? "region" : undefined} aria-label={strings.length ? t("party.bunting") : undefined} style={{ "--pw": `${pw}px` } as React.CSSProperties}>
+        <div ref={buntRef} className={`pt-bunting ${scroll ? "is-scroll" : ""}`} role={strings.length ? "region" : undefined} aria-label={strings.length ? t("party.bunting") : undefined} style={{ "--pw": `${pw}px` } as React.CSSProperties}>
           {(strings.length ? strings : [[]]).map((row, k) => (
-            <Garland key={k} row={row} index={k} width={bw} pw={pw} flags={flags} opened={opened} onOpen={read} accent={colors.primary} />
+            <Garland key={k} row={row} index={k} width={stringWidth} pw={pw} flags={flags} opened={opened} onOpen={read} accent={colors.primary} />
           ))}
         </div>
 
@@ -201,13 +205,17 @@ export function PartyBody(props: BodyProps) {
             {Array.from({ length: decos }, (_, i) => (
               <span key={i} className={`pt-deco is-d${i % 4}`} style={{ top: `${((i + 0.5) / decos) * 100}%` }} aria-hidden="true" />
             ))}
-            <ul className="pt-seats">
-              {seats.map((p, i) => (
-                <li key={p.id} style={{ "--i": Math.min(i, 16) } as React.CSSProperties}>
-                  <Setting piece={p} open={opened.has(p.id)} flipping={flipping === p.id} onOpen={(e) => read(p, e)} />
-                </li>
-              ))}
-            </ul>
+            {[0, 1].map((side) => (
+              <ul key={side} className={`pt-seats ${side ? "is-right" : "is-left"}`}>
+                {seats.map((p, i) =>
+                  i % 2 === side ? (
+                    <li key={p.id}>
+                      <Setting piece={p} open={opened.has(p.id)} flipping={flipping === p.id} onOpen={(e) => read(p, e)} />
+                    </li>
+                  ) : null,
+                )}
+              </ul>
+            ))}
             </div>
           ) : null}
         </section>
@@ -222,6 +230,11 @@ export function PartyBody(props: BodyProps) {
           <span className="pt-reader-fold" aria-hidden="true" />
           <span className="pt-reader-band" aria-hidden="true">
             <span className="pt-reader-dots" />
+            {body.reading.author ? (
+              <span className="pt-reader-name" style={{ fontFamily: fonts.heading }}>
+                {body.reading.author}
+              </span>
+            ) : null}
           </span>
           {data.named && !body.reading.sealed && !isLocked(body.reading) ? (
             <p className="pt-reader-for" style={{ fontFamily: fonts.heading }}>
@@ -445,7 +458,7 @@ function Garland({
     if (p) slots.push({ at: (start + gap + pw / 2) / width, photo: p });
   }
   return (
-    <div className={`pt-garland ${n ? "" : "is-plain"}`}>
+    <div className={`pt-garland ${n ? "" : "is-plain"}`} style={{ width: `${width}px` }}>
       <span className="pt-line">
         <svg className="pt-string" viewBox="0 0 100 40" preserveAspectRatio="none" aria-hidden="true">
           <path d="M-2 4 Q50 36 102 4" />

@@ -46,6 +46,18 @@ const POINTS: Record<string, number> = { a: 1, e: 1, i: 1, o: 1, u: 1, l: 1, n: 
 
 type Phase = "idle" | "rolling" | "moving";
 
+/** Is this colour a yellow or orange (hue 35 to 70 degrees, not grey)? */
+function isYellow(hex: string) {
+  const n = parseInt(hex.slice(1), 16);
+  const r = (n >> 16) / 255, g = ((n >> 8) & 255) / 255, b = (n & 255) / 255;
+  const max = Math.max(r, g, b), min = Math.min(r, g, b);
+  if (max - min < 0.2) return false;
+  let h = max === r ? ((g - b) / (max - min)) % 6 : max === g ? (b - r) / (max - min) + 2 : (r - g) / (max - min) + 4;
+  h *= 60;
+  if (h < 0) h += 360;
+  return h >= 35 && h <= 70;
+}
+
 /** Square i on a board `cols` wide, snaking: left to right, then right to left. */
 function place(i: number, cols: number) {
   const r = Math.floor(i / cols);
@@ -75,7 +87,8 @@ export function GameBoardBody(props: BodyProps) {
   const spaces = useMemo(
     () => [
       colors.accent,
-      colors.mix("#FFD34E", colors.accent, 0.08),
+      // A yellow accent already gives the butter square, so that one turns coral.
+      isYellow(colors.accent) ? colors.mix("#F0735F", colors.primary, 0.08) : colors.mix("#FFD34E", colors.accent, 0.08),
       colors.mix("#3BB98A", colors.primary, 0.14),
       colors.mix(colors.primary, "#FFFFFF", colors.dark ? 0.5 : 0.38),
     ],

@@ -81,8 +81,13 @@ export function PassportBody(props: BodyProps) {
         for (const e of entries) {
           if (!e.isIntersecting) continue;
           const el = e.target as HTMLElement;
-          el.setAttribute("data-in", "");
-          io.unobserve(el);
+          // This page and any it skipped past on a fast scroll.
+          for (const page of list.slice(0, list.indexOf(el) + 1)) {
+            if (!page.hasAttribute("data-wait")) continue;
+            page.removeAttribute("data-wait");
+            page.setAttribute("data-in", "");
+            io.unobserve(page);
+          }
           const now = performance.now();
           if (now - last > 350 && el.querySelector(".pp-stamp")) {
             last = now;
@@ -132,6 +137,7 @@ export function PassportBody(props: BodyProps) {
     if (!first) return;
     const el = bookRef.current?.querySelector<HTMLElement>(`[data-piece="${CSS.escape(first.id)}"]`);
     const page = el?.closest<HTMLElement>(".pp-page");
+    page?.removeAttribute("data-wait");
     page?.setAttribute("data-in", "");
     el?.scrollIntoView({ behavior: reduce ? "auto" : "smooth", block: "center" });
     setFound(name);
@@ -333,7 +339,11 @@ function Field({ label, value }: { label: string; value: string }) {
 /** "Departs in" on a split-flap board. */
 function Departures({ date }: { date: string | null }) {
   const c = useCountdown(date);
+  // Client only: the minutes would differ between the server render and hydration.
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
   if (!c) return null;
+  if (!mounted) return <div className="pp-departs is-waiting" aria-hidden="true" />;
   return (
     <div className="pp-departs" role="timer">
       <p className="pp-label">{t("passport.departs")}</p>
@@ -402,7 +412,7 @@ function RouteMap({
     const out: { name: string; x: number; y: number; path: string }[] = [];
     shown.forEach((name, i) => {
       const r = seed(name);
-      const a = (i / Math.max(1, n)) * Math.PI * 2 + r * 0.6 - Math.PI / 2;
+      const a = (i / Math.max(1, n)) * Math.PI * 2 + (r - 0.5) * 0.3 - Math.PI / 2;
       const rx = 118 + (i % 2) * 34 + r * 14;
       const ry = 70 + ((i + 1) % 2) * 18 + r * 10;
       const x = Math.max(24, Math.min(W - 24, home.x + Math.cos(a) * rx));

@@ -20,19 +20,19 @@ function body(id: StyleId, load: () => Promise<{ default: Lazy }>) {
 
 body("love-letter", () => import("@/components/bodies/LettersBody").then((m) => ({ default: m.LettersBody })));
 body("cake", () => import("@/components/bodies/PartyBody").then((m) => ({ default: m.PartyBody })));
-// body("record-player", () => import("@/components/bodies/CrateBody").then((m) => ({ default: m.CrateBody })));
-// body("invitation", () => import("@/components/bodies/ReceptionBody").then((m) => ({ default: m.ReceptionBody })));
+body("record-player", () => import("@/components/bodies/CrateBody").then((m) => ({ default: m.CrateBody })));
+body("invitation", () => import("@/components/bodies/ReceptionBody").then((m) => ({ default: m.ReceptionBody })));
 // body("countdown", () => import("@/components/bodies/RooftopBody").then((m) => ({ default: m.RooftopBody })));
 body("boarding-pass", () => import("@/components/bodies/PassportBody").then((m) => ({ default: m.PassportBody })));
-// body("gift-box", () => import("@/components/bodies/PresentsBody").then((m) => ({ default: m.PresentsBody })));
-// body("crib-mobile", () => import("@/components/bodies/NurseryBody").then((m) => ({ default: m.NurseryBody })));
+body("gift-box", () => import("@/components/bodies/PresentsBody").then((m) => ({ default: m.PresentsBody })));
+body("crib-mobile", () => import("@/components/bodies/NurseryBody").then((m) => ({ default: m.NurseryBody })));
 // body("fetch", () => import("@/components/bodies/ToyBasketBody").then((m) => ({ default: m.ToyBasketBody })));
 body("board-game", () => import("@/components/bodies/GameBoardBody").then((m) => ({ default: m.GameBoardBody })));
-// body("arcade", () => import("@/components/bodies/CabinetBody").then((m) => ({ default: m.CabinetBody })));
-// body("winter-window", () => import("@/components/bodies/FrostBody").then((m) => ({ default: m.FrostBody })));
+body("arcade", () => import("@/components/bodies/CabinetBody").then((m) => ({ default: m.CabinetBody })));
+body("winter-window", () => import("@/components/bodies/FrostBody").then((m) => ({ default: m.FrostBody })));
 body("care-package", () => import("@/components/bodies/UnpackBody").then((m) => ({ default: m.UnpackBody })));
 body("parol", () => import("@/components/bodies/LanternsBody").then((m) => ({ default: m.LanternsBody })));
-// body("debut", () => import("@/components/bodies/DanceCardBody").then((m) => ({ default: m.DanceCardBody })));
+body("debut", () => import("@/components/bodies/DanceCardBody").then((m) => ({ default: m.DanceCardBody })));
 
 /** The style's own body for this gift, or null to use its stored layout. */
 export function ownBodyFor(style: string | null | undefined): Lazy | null {

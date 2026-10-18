@@ -1,10 +1,11 @@
 /* parol body: src/components/bodies/LanternsBody.tsx */
 .pl-root {
+  --pl-tintk: 9%;
   --pl-size: min(80px, 20.5cqi);
   --pl-block: calc(var(--pl-size) * 2.5 + 52px);
   background: var(--pl-sky);
 }
-@container gift (min-width: 820px) { .pl-root { --pl-size: 100px; } }
+@container gift (min-width: 820px) { .pl-root { --pl-size: 96px; --pl-block: calc(var(--pl-size) * 2.4 + 60px); } }
 @container gift (min-width: 1200px) { .pl-root { --pl-size: 112px; } }
 
 .pl-sky { position: absolute; inset: 0; pointer-events: none; overflow: hidden; background: linear-gradient(180deg, var(--pl-sky) 0%, var(--pl-sky) 12%, var(--pl-sky-lo) 100%); }
@@ -21,6 +22,7 @@
   mask: radial-gradient(circle at 74% 34%, transparent 46%, #000 47%);
   opacity: .9;
 }
+.pl-root.is-light { --pl-tintk: 26%; }
 .pl-root.is-light .pl-moon { opacity: .55; box-shadow: none; }
 .pl-warm {
   position: absolute;
@@ -104,7 +106,7 @@
   left: -16px;
   right: -16px;
   bottom: 0;
-  height: 44%;
+  height: 36%;
   display: flex;
   align-items: flex-end;
   gap: 4px;
@@ -116,8 +118,23 @@
   flex: var(--w) 1 0;
   height: var(--h);
   min-width: 0;
-  background: color-mix(in srgb, var(--pl-house-hi) calc(var(--pl-glow) * 70%), var(--pl-house));
+  background:
+    linear-gradient(180deg, rgba(255, 220, 160, calc(var(--pl-glow) * .14)), transparent 60%),
+    linear-gradient(0deg, rgba(0,0,0,.16) 0 34%, transparent 34%),
+    color-mix(in srgb, var(--tint, transparent) var(--pl-tintk), color-mix(in srgb, var(--pl-house-hi) calc(var(--pl-glow) * 70%), var(--pl-house)));
   transition: background 1.2s ease;
+}
+.pl-house::after {
+  /* a door */
+  content: "";
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  width: min(30%, 16px);
+  height: 26%;
+  translate: -50% 0;
+  border-radius: 6px 6px 0 0;
+  background: color-mix(in srgb, var(--pl-house) 55%, #000);
 }
 .pl-roof {
   position: absolute;
@@ -131,7 +148,7 @@
 .pl-house.is-gable .pl-roof { height: 30px; clip-path: polygon(50% 0, 100% 100%, 0 100%); border: 0; }
 .pl-house.is-hip .pl-roof { height: 18px; clip-path: polygon(16% 0, 84% 0, 100% 100%, 0 100%); }
 .pl-house.is-flat .pl-roof { height: 6px; left: -3%; right: -3%; }
-.pl-wins { position: absolute; left: 16%; right: 16%; top: 16%; display: grid; gap: 5px 7px; }
+.pl-wins { position: absolute; left: 10%; right: 10%; top: 14%; display: grid; justify-content: space-evenly; gap: 6px 6px; }
 .pl-win {
   aspect-ratio: .78;
   border-radius: 2px 2px 0 0;
@@ -173,13 +190,13 @@
   aspect-ratio: 1;
   translate: -50% -50%;
   border-radius: 50%;
-  background: radial-gradient(circle, color-mix(in srgb, var(--glow) 75%, transparent) 0%, color-mix(in srgb, var(--glow) 28%, transparent) 26%, transparent 62%);
+  background: radial-gradient(circle, color-mix(in srgb, #FFF6DC 70%, var(--glow)) 0%, color-mix(in srgb, var(--glow) 55%, transparent) 14%, color-mix(in srgb, var(--glow) 22%, transparent) 32%, transparent 64%);
   opacity: 0;
   transition: opacity .7s ease;
   pointer-events: none;
 }
 .pl-root.is-light .pl-halo { mix-blend-mode: multiply; }
-.pl-lantern.is-lit .pl-halo { opacity: .9; animation: pl-flicker var(--flick, 3s) ease-in-out infinite; }
+.pl-lantern.is-lit .pl-halo { opacity: 1; animation: pl-flicker var(--flick, 3s) ease-in-out infinite; }
 .pl-lantern.is-fizzle .pl-halo { animation: pl-fizzle .7s linear both; }
 
 .pl-f1 { fill: var(--d1); transition: fill .6s ease; }

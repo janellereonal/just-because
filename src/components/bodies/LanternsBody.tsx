@@ -32,7 +32,11 @@ import {
 } from "@/components/bodies/kit";
 
 /** The parol opening's display face. */
-const DISPLAY: FontSpec = { family: '"Young Serif", Georgia, serif', source: "google", query: "Young+Serif" };
+const DISPLAY: FontSpec = {
+  family: '"Young Serif", Georgia, serif',
+  source: "google",
+  query: "Young+Serif",
+};
 
 /* ---------- the star: same geometry as the opening's, in a 100 x 150 box ---------- */
 const C = { x: 50, y: 46 };
@@ -49,14 +53,21 @@ const TRIS = Array.from({ length: 10 }, (_, i) => {
   const b = i % 2 === 0 ? TIPS[k]! : INNER[k]!;
   return `M${C.x} ${C.y}L${f(a.x)} ${f(a.y)}L${f(b.x)} ${f(b.y)}Z`;
 });
-const OUTLINE = TIPS.flatMap((tip, k) => [tip, INNER[k]!]).map((p, i) => `${i ? "L" : "M"}${f(p.x)} ${f(p.y)}`).join("") + "Z";
-const SPOKES = TIPS.map((p, k) => `M${C.x} ${C.y}L${f(p.x)} ${f(p.y)}M${C.x} ${C.y}L${f(INNER[k]!.x)} ${f(INNER[k]!.y)}`).join("");
+const OUTLINE =
+  TIPS.flatMap((tip, k) => [tip, INNER[k]!])
+    .map((p, i) => `${i ? "L" : "M"}${f(p.x)} ${f(p.y)}`)
+    .join("") + "Z";
+const SPOKES = TIPS.map(
+  (p, k) => `M${C.x} ${C.y}L${f(p.x)} ${f(p.y)}M${C.x} ${C.y}L${f(INNER[k]!.x)} ${f(INNER[k]!.y)}`,
+).join("");
 const TAILS = [TIPS[3]!, TIPS[2]!].map((tip, si) => {
   const dir = si ? 1 : -1;
   const end = { x: tip.x + dir * 3, y: tip.y + 52 };
   return {
     d: `M${f(tip.x)} ${f(tip.y)}C${f(tip.x + dir * 10)} ${f(tip.y + 18)} ${f(tip.x - dir * 8)} ${f(tip.y + 34)} ${f(end.x)} ${f(end.y)}`,
-    fringe: [-3, -1.5, 0, 1.5, 3].map((dx) => `M${f(end.x + dx)} ${f(end.y)}l${f(dx * 0.5)} 8`).join(""),
+    fringe: [-3, -1.5, 0, 1.5, 3]
+      .map((dx) => `M${f(end.x + dx)} ${f(end.y)}l${f(dx * 0.5)} 8`)
+      .join(""),
   };
 });
 const ROSETTE = Array.from({ length: 8 }, (_, k) => pt(k * 45, 8.5));
@@ -68,7 +79,10 @@ export function LanternsBody(props: BodyProps) {
   const body = useBody(props);
   const { data, colors, reduce } = body;
   useEffect(() => loadFont(DISPLAY, "high"), []);
-  const display = !body.site.font_choice || body.site.font_choice === "theme" ? DISPLAY.family : body.fonts.heading;
+  const display =
+    !body.site.font_choice || body.site.font_choice === "theme"
+      ? DISPLAY.family
+      : body.fonts.heading;
   const { opened: lit, open: light } = useOpened("lanterns", body.site.id, body.sample);
   const [swinging, setSwinging] = useState<string | null>(null);
   const [fizzle, setFizzle] = useState<string | null>(null);
@@ -99,7 +113,9 @@ export function LanternsBody(props: BodyProps) {
 
   // Each hue lit and unlit, worked out once for this palette.
   const hues = useMemo(() => {
-    const night = dark ? colors.mix(colors.bg, "#050816", 0.3) : colors.mix(colors.bg, "#FFFFFF", 0.4);
+    const night = dark
+      ? colors.mix(colors.bg, "#050816", 0.3)
+      : colors.mix(colors.bg, "#FFFFFF", 0.4);
     return HUES.map((h, i) => {
       const hue = i === 0 ? colors.mix(colors.primary, h, 0.35) : h;
       return {
@@ -133,7 +149,12 @@ export function LanternsBody(props: BodyProps) {
     window.setTimeout(() => setSwinging((s) => (s === p.id ? null : s)), 1500);
     chime("sparkle");
     buzz(8);
-    burst(body.hostRef.current, x, y, { shape: "sparkles", colors: ["#FFF4D6", "#FFD9A0", colors.primary], count: 10, spread: 0.7 });
+    burst(body.hostRef.current, x, y, {
+      shape: "sparkles",
+      colors: ["#FFF4D6", "#FFD9A0", colors.primary],
+      count: 10,
+      spread: 0.7,
+    });
     if (litCount + 1 === notes.length) window.setTimeout(() => chime("tada"), 500);
     window.setTimeout(() => body.read(p), reduce ? 0 : 460);
   }
@@ -147,13 +168,23 @@ export function LanternsBody(props: BodyProps) {
           "--pl-glow": glow.toFixed(3),
           "--pl-display": display,
           "--pl-sky": dark ? colors.bg : colors.mix(colors.bg, colors.accent, 0.12),
-          "--pl-sky-lo": dark ? colors.mix(colors.bg, colors.accent, 0.12) : colors.mix(colors.bg, "#FFD9A0", 0.35),
-          "--pl-house": dark ? colors.mix(colors.bg, "#000000", 0.42) : colors.mix(colors.ink, colors.bg, 0.55),
-          "--pl-house-hi": dark ? colors.mix(colors.bg, colors.primary, 0.22) : colors.mix(colors.ink, colors.primary, 0.45),
-          "--pl-wire": dark ? colors.mix(colors.bg, "#FFFFFF", 0.32) : colors.mix(colors.bg, colors.ink, 0.55),
+          "--pl-sky-lo": dark
+            ? colors.mix(colors.bg, colors.accent, 0.12)
+            : colors.mix(colors.bg, "#FFD9A0", 0.35),
+          "--pl-house": dark
+            ? colors.mix(colors.bg, "#000000", 0.42)
+            : colors.mix(colors.ink, colors.bg, 0.55),
+          "--pl-house-hi": dark
+            ? colors.mix(colors.bg, colors.primary, 0.22)
+            : colors.mix(colors.ink, colors.primary, 0.45),
+          "--pl-wire": dark
+            ? colors.mix(colors.bg, "#FFFFFF", 0.32)
+            : colors.mix(colors.bg, colors.ink, 0.55),
           "--pl-gold": colors.mix(colors.primary, "#E8B04B", 0.5),
           "--pl-frame": dark ? "#C9A55C" : "#A9843E",
-          "--pl-ground": dark ? colors.mix(colors.bg, "#000000", 0.5) : colors.mix(colors.bg, colors.ink, 0.1),
+          "--pl-ground": dark
+            ? colors.mix(colors.bg, "#000000", 0.5)
+            : colors.mix(colors.bg, colors.ink, 0.1),
           "--pl-ground-ink": dark ? "#F6EEDC" : colors.ink,
         } as React.CSSProperties
       }
@@ -165,8 +196,23 @@ export function LanternsBody(props: BodyProps) {
       {/* Shared paint for every lantern: the capiz shells and a warm core. */}
       <svg className="pl-defs" aria-hidden="true" focusable="false">
         <defs>
-          <pattern id="pl-capiz" width="7" height="7" patternUnits="userSpaceOnUse" patternTransform="rotate(18)">
-            <rect x="0.5" y="0.5" width="6" height="6" rx="1.8" fill="none" stroke="rgba(255,255,255,.26)" strokeWidth="0.5" />
+          <pattern
+            id="pl-capiz"
+            width="7"
+            height="7"
+            patternUnits="userSpaceOnUse"
+            patternTransform="rotate(18)"
+          >
+            <rect
+              x="0.5"
+              y="0.5"
+              width="6"
+              height="6"
+              rx="1.8"
+              fill="none"
+              stroke="rgba(255,255,255,.26)"
+              strokeWidth="0.5"
+            />
           </pattern>
           <radialGradient id="pl-core" cx="50%" cy="50%" r="50%">
             <stop offset="0" stopColor="#FFFFFF" stopOpacity="0.95" />
@@ -185,7 +231,9 @@ export function LanternsBody(props: BodyProps) {
             </span>
           </div>
           <p className="pl-kicker">{t("lanterns.kicker")}</p>
-          <h1 className="pl-name">{name ? <SampleText on={data.nameIsSample}>{name}</SampleText> : body.heading}</h1>
+          <h1 className="pl-name">
+            {name ? <SampleText on={data.nameIsSample}>{name}</SampleText> : body.heading}
+          </h1>
           {name ? <p className="pl-heading">{body.heading}</p> : null}
           <p className="pl-intro">{body.intro || body.voice.intro(name)}</p>
           <CountdownLine date={data.countdownDate} className="pl-countdown" />
@@ -232,19 +280,36 @@ export function LanternsBody(props: BodyProps) {
               <p className="pl-words-title">{t("lanterns.wordsTitle")}</p>
               <ul className="pl-flags">
                 {data.words.map((w, i) => (
-                  <li key={w.id} style={{ "--c": HUES[i % HUES.length], "--r": `${((seed(w.id) - 0.5) * 8).toFixed(1)}deg` } as React.CSSProperties}>
+                  <li
+                    key={w.id}
+                    style={
+                      {
+                        "--c": HUES[i % HUES.length],
+                        "--r": `${((seed(w.id) - 0.5) * 8).toFixed(1)}deg`,
+                      } as React.CSSProperties
+                    }
+                  >
                     <span>{w.text}</span>
                   </li>
                 ))}
               </ul>
             </section>
           ) : null}
-          <BodyFooter body={body} className="pl-footer" buttonStyle={{ background: colors.primary, color: colors.onPrimary }} />
+          <BodyFooter
+            body={body}
+            className="pl-footer"
+            buttonStyle={{ background: colors.primary, color: colors.onPrimary }}
+          />
         </div>
       </div>
 
       {body.reading ? (
-        <Reader piece={body.reading} onClose={body.closeReader} accent={colors.mix(colors.primary, "#7A4A10", 0.45)} className="pl-reader">
+        <Reader
+          piece={body.reading}
+          onClose={body.closeReader}
+          accent={colors.mix(colors.primary, "#7A4A10", 0.45)}
+          className="pl-reader"
+        >
           <span className="pl-reader-star" aria-hidden="true">
             <svg viewBox="0 0 100 100">
               <path d={OUTLINE} transform="translate(0 4)" />
@@ -282,11 +347,14 @@ function Wire({
   onTap: (p: Piece, e: React.MouseEvent) => void;
 }) {
   // The wire: one end a little higher than the other, sagging in the middle (in % of the block).
-  const left = 8 + seed(`wire-l-${index}`) * 8;
-  const right = 8 + seed(`wire-r-${index}`) * 8;
-  const sag = 9;
+  const left = 5 + seed(`wire-l-${index}`) * 7;
+  const right = 5 + seed(`wire-r-${index}`) * 7;
+  const sag = 7;
   const y = (x: number) => left + (right - left) * x + 4 * sag * x * (1 - x);
-  const path = Array.from({ length: 21 }, (_, i) => `${i ? "L" : "M"}${i * 5} ${y(i / 20).toFixed(2)}`).join("");
+  const path = Array.from(
+    { length: 21 },
+    (_, i) => `${i ? "L" : "M"}${i * 5} ${y(i / 20).toFixed(2)}`,
+  ).join("");
   return (
     <section className="pl-block">
       <Houses index={index} count={per + 1} glow={glow} />
@@ -297,7 +365,7 @@ function Wire({
         {row.map((p, j) => {
           const r = seed(p.id);
           const x = (j + 0.5) / per + (r - 0.5) * (0.3 / per);
-          const len = 4 + (j % 2) * 9 + r * 6;
+          const len = 3 + (j % 2) * 8 + r * 5;
           const on = lit.has(p.id);
           return (
             <li
@@ -332,7 +400,13 @@ function Wire({
                     </span>
                   ) : null}
                 </span>
-                <span className="pl-who">{isLocked(p) ? t("body.opensOn", { day: formatDay(p.date!) }) : p.author || t("lanterns.surprise")}</span>
+                <span className="pl-who">
+                  {isLocked(p)
+                    ? t("body.opensOn", {
+                        day: formatDay(p.date!, { day: "numeric", month: "short" }),
+                      })
+                    : p.author || t("lanterns.surprise")}
+                </span>
               </button>
             </li>
           );
@@ -345,7 +419,12 @@ function Wire({
 /** A parol, drawn the same way as the opening's: ten capiz panels, a rosette, two tails. */
 function ParolSvg({ mono, big = false }: { mono: string; big?: boolean }) {
   return (
-    <svg viewBox="0 0 100 150" className={`pl-parol ${big ? "is-big" : ""}`} aria-hidden="true" focusable="false">
+    <svg
+      viewBox="0 0 100 150"
+      className={`pl-parol ${big ? "is-big" : ""}`}
+      aria-hidden="true"
+      focusable="false"
+    >
       {TAILS.map((tl, i) => (
         <g key={i} className="pl-tail">
           <path d={tl.d} className="pl-tail-band" />
@@ -386,6 +465,7 @@ function Houses({ index, count, glow }: { index: number; count: number; glow: nu
           cols: r2 < 0.5 ? 2 : 3,
           rows: r2 > 0.6 ? 2 : 1,
           capiz: r2 < 0.35,
+          tint: Math.floor(seed(`tint-${index}-${i}`) * HUES.length),
           id: `${index}-${i}`,
         };
       }),
@@ -394,13 +474,25 @@ function Houses({ index, count, glow }: { index: number; count: number; glow: nu
   return (
     <div className="pl-houses" aria-hidden="true">
       {houses.map((h) => (
-        <span key={h.id} className={`pl-house is-${h.roof}`} style={{ "--w": h.w, "--h": `${h.h}%` } as React.CSSProperties}>
+        <span
+          key={h.id}
+          className={`pl-house is-${h.roof}`}
+          style={{ "--w": h.w, "--h": `${h.h}%`, "--tint": HUES[h.tint] } as React.CSSProperties}
+        >
           <span className="pl-roof" />
-          <span className="pl-wins" style={{ gridTemplateColumns: `repeat(${h.cols}, 1fr)` }}>
+          <span
+            className="pl-wins"
+            style={{ gridTemplateColumns: `repeat(${h.cols}, minmax(5px, 15px))` }}
+          >
             {Array.from({ length: h.cols * h.rows }, (_, k) => {
               const th = seed(`win-${h.id}-${k}`);
               const on = th < 0.1 || th < glow * 1.05;
-              return <span key={k} className={`pl-win ${h.capiz ? "is-capiz" : ""} ${on ? "is-on" : ""}`} />;
+              return (
+                <span
+                  key={k}
+                  className={`pl-win ${h.capiz ? "is-capiz" : ""} ${on ? "is-on" : ""}`}
+                />
+              );
             })}
           </span>
         </span>
