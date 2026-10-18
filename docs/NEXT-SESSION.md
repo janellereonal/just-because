@@ -1,5 +1,13 @@
 # Next session: picking up Just Because
 
+## 18 Oct 2026, evening: Constellation rebuilt as a 3D sky
+
+Janelle's bar for every style: Zine, Boarding Pass and Invitation (openings and bodies), "down to the audio".
+Constellation now meets it: WebGL night sky with a Milky Way, mountains, a heart of friends' stars that draws its
+outline as neighbours are found (any tap order), its own synthesized sound (`src/lib/nightsky/sound.ts`), drag to look
+around, reduced motion = a still sky, no WebGL = the classic sky. Test tap-through: `tools/screens/skyplay.cjs`.
+Next: bring the other styles up to the same bar, one at a time, each with its own sound.
+
 ## Latest (18 Oct 2026): styles and occasions
 
 Janelle's restructure: **Style** becomes the one visual choice, **Occasion** an optional filter, and the word

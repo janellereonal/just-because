@@ -251,6 +251,28 @@
 .cst-progress { font-family: var(--jb-display, "Fraunces", serif); font-size: clamp(1.4rem, 6cqi, 2rem); }
 .cst-share { margin-top: 16px; border-radius: 999px; padding: 10px 20px; font-weight: 600; background: #ffe39a; color: #2b2522; }
 
+/* The 3D night sky (NightSky.tsx). The page under the sky takes the ground's colour. */
+.cst-root.is-3d { background: var(--cst-ground, #05060f); }
+.nsk-wrap { position: relative; height: clamp(600px, 100svh, 980px); overflow: hidden; touch-action: pan-y; cursor: grab; user-select: none; -webkit-user-select: none;
+  background: radial-gradient(120% 80% at 50% 10%, color-mix(in oklab, var(--cst-tint) 14%, #0a0b1e), #03040b 70%); }
+.nsk-wrap:active { cursor: grabbing; }
+.nsk-wrap::after { content: ""; position: absolute; inset: auto 0 0; height: 90px; background: linear-gradient(transparent, var(--cst-ground, #05060f)); pointer-events: none; }
+.nsk-canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; opacity: 0; transition: opacity 1.4s ease; }
+.nsk-wrap.is-ready .nsk-canvas { opacity: 1; }
+.nsk-overlay { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; pointer-events: none; }
+.nsk-line { stroke: rgba(255, 234, 188, .92); stroke-width: 1.5; stroke-linecap: round; filter: drop-shadow(0 0 3px rgba(255, 222, 160, .95)) drop-shadow(0 0 10px rgba(255, 200, 130, .55)); }
+.nsk-meteor { stroke-width: 1.8; stroke-linecap: round; filter: drop-shadow(0 0 4px rgba(210, 225, 255, .9)); }
+.nsk-head { position: absolute; inset: 0 0 auto; z-index: 2; padding: clamp(28px, 7svh, 64px) 16px 0; text-align: center; pointer-events: none; text-shadow: 0 2px 22px rgba(0, 0, 0, .65); }
+.nsk-head .cst-intro { opacity: .78; }
+.nsk-stars { position: absolute; inset: 0; z-index: 3; pointer-events: none; }
+.nsk-star { position: absolute; left: 0; top: 0; width: var(--nsk-hit, 54px); height: var(--nsk-hit, 54px); border-radius: 50%; background: transparent; color: #fff8e6; pointer-events: auto; transition: opacity .8s ease; -webkit-tap-highlight-color: transparent; outline: none; will-change: transform; }
+.nsk-star:focus-visible { box-shadow: 0 0 0 2px rgba(255, 236, 190, .8); }
+.nsk-name { position: absolute; top: calc(50% + 16px); pointer-events: none; left: 50%; transform: translateX(-50%); white-space: nowrap; font-size: 11px; font-weight: 600; letter-spacing: .08em; opacity: 0; transition: opacity .4s ease; text-shadow: 0 0 10px rgba(0, 0, 0, .95), 0 0 2px rgba(0, 0, 0, .9); }
+.nsk-star.is-last .nsk-name, .nsk-star:hover .nsk-name, .nsk-star:focus-visible .nsk-name { opacity: .92; }
+.nsk-star:hover, .nsk-star:focus-visible, .nsk-star.is-last { z-index: 1; }
+.nsk-hint { position: absolute; inset: auto 0 22px; z-index: 2; text-align: center; font-size: 10px; font-weight: 600; letter-spacing: .24em; text-transform: uppercase; opacity: 0; pointer-events: none; animation: nsk-hint 7s ease 3.5s both; }
+@keyframes nsk-hint { 0% { opacity: 0; } 15%, 70% { opacity: .5; } 100% { opacity: 0; } }
+
 @media (prefers-reduced-motion: reduce) {
   .sbk-root *, .mix-root *, .scr-root *, .cst-root * { animation: none !important; }
   .sbk-leaf, .sbk-book { transition: opacity .3s ease !important; }
