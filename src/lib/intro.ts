@@ -85,6 +85,8 @@ export type IntroSettings = {
   burst?: IntroBurst;
   /** Parol Christmas: Simbang Gabi, one note a night from 16 to 24 December. */
   simbang?: boolean;
+  /** false = skip "Friends arrive" before the opening (flag friendsIntro). Empty = on. */
+  friends?: false;
 };
 
 export const LETTER_OPENINGS = ["seal", "peel", "slide"] as const;
@@ -154,6 +156,7 @@ export function normalizeIntroSettings(value: unknown): IntroSettings {
   const out: IntroSettings = {};
   if (v["opening"] === "classic") out.opening = "classic";
   if (v["letter"] === "peel" || v["letter"] === "slide") out.letter = v["letter"];
+  if (v["friends"] === false) out.friends = false;
   const h = v["hero"] as Record<string, unknown> | undefined;
   if (h && typeof h === "object") {
     if (h["type"] === "object" && KINDS.includes(String(h["kind"])))

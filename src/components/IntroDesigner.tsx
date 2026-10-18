@@ -227,6 +227,15 @@ export function IntroDesigner({
             onChange={(e) => set({ button_text: e.target.value || undefined })}
           />
         </label>
+        {isFlagOn("friendsIntro") ? (
+          <label className="flex items-start gap-3 rounded-xl border border-line bg-cream p-3">
+            <input type="checkbox" className="mt-0.5" checked={settings.friends !== false} onChange={(e) => set({ friends: e.target.checked ? undefined : false })} />
+            <span className="text-sm">
+              {t("story.option")}
+              <span className="mt-0.5 block text-xs text-muted">{t("story.optionHint")}</span>
+            </span>
+          </label>
+        ) : null}
         {offers.includes("simbang") ? (
           <label className="flex items-start gap-3 rounded-xl border border-line bg-cream p-3">
             <input type="checkbox" className="mt-0.5" checked={settings.simbang === true} onChange={(e) => set({ simbang: e.target.checked || undefined })} />

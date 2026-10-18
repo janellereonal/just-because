@@ -2,6 +2,8 @@
  * Feature flags. Every new user-facing feature starts behind one, OFF in
  * production until it's turned on. On in dev, so it can be built and tested.
  *
+ * Every flag is on in Vercel preview deployments (VITE_VERCEL_ENV=preview), so PRs can be tried.
+ *
  * Turn one on in production by setting VITE_FLAGS in Vercel (a comma list,
  * for example VITE_FLAGS=birthdayAge) and redeploying.
  *
@@ -25,6 +27,8 @@ export const FLAGS = {
   guestStart: "guestStart",
   /** Love Letter: the new openings (break the seal, peel it, slide it out) that grow into the gift. */
   letterOpenings: "letterOpenings",
+  /** "Friends arrive": a short story before the gift opens (friends pop out of a box, then shout). */
+  friendsIntro: "friendsIntro",
 } as const;
 
 export type FlagName = keyof typeof FLAGS;
@@ -34,7 +38,12 @@ function enabledList(): string[] {
   return raw.split(",").map((s) => s.trim()).filter(Boolean);
 }
 
+/** Vercel preview deployments (every PR) have every flag on, so new work can be tried there. Never production. */
+function isPreviewDeploy() {
+  return (import.meta.env["VITE_VERCEL_ENV"] as string | undefined) === "preview";
+}
+
 export function isFlagOn(name: FlagName): boolean {
-  if (import.meta.env.DEV) return true;
+  if (import.meta.env.DEV || isPreviewDeploy()) return true;
   return enabledList().includes(FLAGS[name]);
 }
