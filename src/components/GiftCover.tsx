@@ -6,7 +6,7 @@ import { IconGlyph } from "@/themes/_shared/Sprinkles";
 import { pick, resolveIconSet } from "@/themes/_shared/iconSets";
 import { themeStillUrl } from "@/components/Theme3D";
 import { FONT_PAIRINGS, backgroundCss, resolvePalette, type GiftSite } from "@/lib/gift";
-import { KIND_WORDS, giftHeading, themeKindOf } from "@/lib/themeKind";
+import { giftHeading, giftWords, themeKindOf } from "@/lib/themeKind";
 import { readableInk, readableOn } from "@/lib/palettes";
 import type { Theme } from "@/lib/themes";
 
@@ -32,7 +32,7 @@ export function GiftCover({ site, theme, className = "" }: { site: GiftSite; the
   const accent = readableOn(palette.background, palette.accent);
   const fonts = FONT_PAIRINGS[site.font_choice] ?? FONT_PAIRINGS.theme;
   const recipient = site.custom_text.recipient_name?.trim() ?? "";
-  const heading = giftHeading(site.custom_text, theme);
+  const heading = giftHeading(site.custom_text, theme, site.occasion);
   const cast = castFor(kind, site.character ?? null, site.icon_set ?? null);
   const icons = useMemo(() => resolveIconSet(cast.iconSet, { recipient, palette }), [cast.iconSet, recipient, palette]);
   const tint = icons.colors.length ? icons.colors : [palette.accent, palette.primary];
@@ -63,7 +63,7 @@ export function GiftCover({ site, theme, className = "" }: { site: GiftSite; the
       ) : null}
       <span className="absolute bottom-4 left-5 max-w-[54%]">
         <span className="block font-mono text-[9px] tracking-[0.18em] uppercase opacity-70" style={{ color: accent }}>
-          {KIND_WORDS[kind].badge}
+          {giftWords(theme, site.occasion).badge}
         </span>
         <span
           className="mt-1 line-clamp-2 block text-[1.35rem] leading-[1.05] font-semibold text-balance"

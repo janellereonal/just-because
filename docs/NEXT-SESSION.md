@@ -1,6 +1,21 @@
 # Next session: picking up Just Because
 
-## Latest (17 Oct 2026, afternoon)
+## Latest (18 Oct 2026): styles and occasions
+
+Janelle's restructure: **Style** becomes the one visual choice, **Occasion** an optional filter, and the word
+"theme" leaves the UI. Plan agreed on 18 Oct, in four PRs:
+1. **Model (this PR, `styles-model`):** `src/lib/styles.ts`, `src/lib/occasions.ts`, migration 0016
+   (`style`, `occasion`), create/update accept them, words follow the occasion. No visible change.
+2. /create (from, for, occasion, style, sections) and the editor, "theme" removed, "Celebration plan" badge,
+   behind flag `styles`. Pricing: styles from themes on every plan, layout styles keep their plan
+   (`tier.formats` must let theme styles through). Port #43's fixes (no double openings, Zine and Notebook
+   pick up the look, font and palette name clashes), then close #43.
+3. `/styles` gallery with occasion chips, nav and homepage links, `/themes` redirects.
+4. Openings for the 9 layout styles, Love Letter as the gold standard first (slow-motion recordings for Janelle).
+
+Open: cultural review of the Lunar New Year, Eid, Diwali and Hanukkah words (`culturalReview` in occasions.ts).
+
+## Earlier (17 Oct 2026, afternoon)
 
 **Merged since the morning:** #31 (payments and gift lifecycle) and the hotfix #41 (re-applies #31's migration safely), both merged by Janelle, plus docs #40.
 Migrations in the open PRs are renumbered to 0013 and written idempotently (`IF NOT EXISTS`), so a skipped migration can't break production again.

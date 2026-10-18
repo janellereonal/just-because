@@ -130,7 +130,7 @@ export function ConstellationView({
       <div className="mx-auto max-w-3xl px-4 pt-10 pb-14 text-center">
         <p className="cst-kicker">Look up{data.named ? ", " : ""}{data.named ? <SampleText on={data.nameIsSample}>{data.name}</SampleText> : null}</p>
         <h1 className="cst-title" style={{ fontFamily: fonts.heading }}>
-          {giftHeading(site.custom_text, theme)}
+          {giftHeading(site.custom_text, theme, site.occasion)}
         </h1>
         <p className="cst-intro">
           {site.custom_text.intro_message?.trim() ||

@@ -338,7 +338,7 @@ export function ScratchView({
         <header className="text-center">
           <p className="scr-kicker">Lucky you{data.named ? ", " : ""}{data.named ? <SampleText on={data.nameIsSample}>{data.name}</SampleText> : null}</p>
           <h1 className="scr-title" style={{ fontFamily: fonts.heading }}>
-            {giftHeading(site.custom_text, theme)}
+            {giftHeading(site.custom_text, theme, site.occasion)}
           </h1>
           <p className="mx-auto mt-3 max-w-md text-[15px] leading-relaxed opacity-80">
             {site.custom_text.intro_message?.trim() ||

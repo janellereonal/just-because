@@ -202,7 +202,7 @@ export function ZineView({
   const cd = useCountdown(data.countdownDate);
   const [sheet, setSheet] = useState<Piece | null>(null);
   const accent = palette.accent;
-  const heading = giftHeading(site.custom_text, theme);
+  const heading = giftHeading(site.custom_text, theme, site.occasion);
   const issueDate = new Date()
     .toLocaleDateString(undefined, { month: "short", year: "numeric" })
     .toUpperCase();
