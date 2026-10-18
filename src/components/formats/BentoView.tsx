@@ -1,4 +1,5 @@
 import { giftVoice } from "@/lib/giftVoice";
+import { shareGift } from "@/lib/track";
 import { localDate } from "@/lib/time";
 import { useEffect, useRef, useState } from "react";
 import { Theme3D } from "@/components/Theme3D";
@@ -100,6 +101,7 @@ function PhotoFace({ piece, palette }: { piece: Piece; palette: Palette }) {
     <>
       {url ? (
         <img
+          data-framed={piece.framed || undefined}
           src={url}
           alt={piece.text ?? `Photo from ${piece.author}`}
           loading="lazy"
@@ -302,11 +304,7 @@ export function BentoView({
             {showShare ? (
               <button
                 type="button"
-                onClick={() =>
-                  navigator.share
-                    ? void navigator.share({ title: site.title, url: location.href })
-                    : void navigator.clipboard.writeText(location.href)
-                }
+                onClick={() => shareGift(site)}
                 className="mt-6 inline-flex items-center gap-2 self-start rounded-full bg-white/20 px-4 py-2 text-sm backdrop-blur hover:bg-white/30"
               >
                 <Share2 className="size-4" /> Share

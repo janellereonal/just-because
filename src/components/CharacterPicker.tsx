@@ -93,6 +93,25 @@ export function CharacterPicker({
     setView("build");
   }
 
+  // Tabs scroll sideways on narrow panels; fade the side with more tabs.
+  const tabsRef = useRef<HTMLDivElement | null>(null);
+  const [fade, setFade] = useState<"" | "l" | "r" | "lr">("");
+  const updateFade = () => {
+    const el = tabsRef.current;
+    if (!el) return;
+    const left = el.scrollLeft > 2;
+    const right = el.scrollLeft + el.clientWidth < el.scrollWidth - 2;
+    setFade(left && right ? "lr" : left ? "l" : right ? "r" : "");
+  };
+  useEffect(() => {
+    updateFade();
+    const el = tabsRef.current;
+    if (!el || typeof ResizeObserver === "undefined") return;
+    const ro = new ResizeObserver(updateFade);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, [q, view]);
+
   if (view === "build" && char.type === "person") {
     return <PersonBuilder siteId={siteId} value={char} accessory={accessory} onChange={(c) => onSet(c)} onBack={() => setView(start === "quick" ? "quick" : "all")} />;
   }
@@ -150,7 +169,13 @@ export function CharacterPicker({
         <input value={q} onChange={(e) => setQ(e.target.value)} placeholder={CAST_COPY.searchPlaceholder} aria-label={CAST_COPY.searchLabel} className="w-full bg-transparent text-sm outline-none" />
       </label>
       {!needle ? (
-        <div role="tablist" aria-label={CAST_COPY.allCharacters} className="-mx-1 mt-2.5 flex gap-1.5 overflow-x-auto px-1 pb-1 [scrollbar-width:none]">
+        <div
+          ref={tabsRef}
+          onScroll={updateFade}
+          role="tablist"
+          aria-label={CAST_COPY.allCharacters}
+          className={`-mx-1 mt-2.5 flex gap-1.5 overflow-x-auto px-1 pb-1 [scrollbar-width:none] ${fade ? `tabs-fade-${fade}` : ""}`}
+        >
           {(
             [
               ["suggested", CAST_COPY.forThisGift],
@@ -183,7 +208,7 @@ export function CharacterPicker({
             <span className="grid size-[58px] place-items-center">
               <UserRoundPlus className="size-6" aria-hidden="true" />
             </span>
-            <span className="w-full truncate text-center text-[11px] text-ink">{CAST_COPY.makeShort}</span>
+            <span className="line-clamp-2 min-h-[2.4em] w-full text-center text-[11px] leading-[1.2] text-ink">{CAST_COPY.makeShort}</span>
           </button>
         ) : null}
         {shown.map((it) => (
@@ -213,6 +238,7 @@ function Tile({ item, on, accessory, wearing, size, lazy = false, onPick }: { it
     io.observe(ref.current);
     return () => io.disconnect();
   }, [seen]);
+  const { ref: stillRef, ready } = useStillReady(seen);
   return (
     <motion.button
       ref={ref}
@@ -223,10 +249,15 @@ function Tile({ item, on, accessory, wearing, size, lazy = false, onPick }: { it
       title={item.name}
       className={`grid place-items-center rounded-2xl border px-0.5 pt-1 pb-1.5 transition-colors ${on ? "border-accent bg-accent/8" : "border-line bg-cream hover:bg-glass/80"}`}
     >
-      <span className="block" style={{ width: size, height: size }}>
-        {seen ? <Character setting={{ ...item.setting, accessory: wearing } as CharacterSetting} accessory={accessory} size={size} live={false} follow={false} showName={false} /> : null}
+      <span ref={stillRef} className="relative block" style={{ width: size, height: size }}>
+        {!ready ? <span aria-hidden="true" className="cast-skel" /> : null}
+        {seen ? (
+          <span className={`block transition-opacity duration-200 ${ready ? "opacity-100" : "opacity-0"}`}>
+            <Character setting={{ ...item.setting, accessory: wearing } as CharacterSetting} accessory={accessory} size={size} live={false} follow={false} showName={false} />
+          </span>
+        ) : null}
       </span>
-      <span className="w-full truncate px-0.5 text-center text-[11px]">{item.name}</span>
+      <span className="line-clamp-2 min-h-[2.4em] w-full px-0.5 text-center text-[11px] leading-[1.2] [overflow-wrap:anywhere]">{item.name}</span>
     </motion.button>
   );
 }
@@ -243,7 +274,7 @@ function NoOne({ on, onPick, size = 50 }: { on: boolean; onPick: () => void; siz
       <span className="grid place-items-center text-lg" style={{ width: size, height: size }}>
         ∅
       </span>
-      <span className="text-[11px] text-ink">{CAST_COPY.noOne}</span>
+      <span className="line-clamp-2 min-h-[2.4em] text-center text-[11px] leading-[1.2] text-ink">{CAST_COPY.noOne}</span>
     </button>
   );
 }
@@ -254,4 +285,49 @@ function ActionChip({ onClick, icon, label }: { onClick: () => void; icon: React
       {icon} {label}
     </button>
   );
+}
+
+/**
+ * True once the character's still has loaded, so the picker never shows a body without its face.
+ * Characters drawn without a still (SVG only) are ready at once. Gives up after 8s and shows it anyway.
+ */
+function useStillReady(active: boolean) {
+  const ref = useRef<HTMLSpanElement | null>(null);
+  const [ready, setReady] = useState(false);
+  useEffect(() => {
+    if (!active || ready || !ref.current) return;
+    const host = ref.current;
+    let done = false;
+    const finish = () => {
+      if (done) return;
+      done = true;
+      setReady(true);
+    };
+    const check = () => {
+      const svgImage = host.querySelector("image");
+      const img = host.querySelector("img");
+      const href = svgImage?.getAttribute("href") ?? img?.getAttribute("src");
+      if (!svgImage && !img) {
+        // No still at all (drawn character) once something has rendered.
+        if (host.querySelector("svg")) finish();
+        return;
+      }
+      if (!href) return;
+      const probe = new Image();
+      probe.onload = finish;
+      probe.onerror = finish;
+      probe.src = href;
+      if (probe.complete) finish();
+    };
+    check();
+    const mo = new MutationObserver(check);
+    mo.observe(host, { childList: true, subtree: true, attributes: true, attributeFilter: ["href", "src"] });
+    const giveUp = window.setTimeout(finish, 8000);
+    return () => {
+      done = true;
+      mo.disconnect();
+      window.clearTimeout(giveUp);
+    };
+  }, [active, ready]);
+  return { ref, ready };
 }

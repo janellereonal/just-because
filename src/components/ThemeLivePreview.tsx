@@ -74,10 +74,10 @@ export function sampleFor(theme: Theme) {
   if (key.includes("pet")) return { heading: "Best boy, Milo", name: "Milo" };
   if (key.includes("new year")) return { heading: "Happy New Year, everyone", name: "the crew" };
   if (key.includes("anniversar")) return { heading: "Ten years, Liz", name: "Liz" };
+  if (key.includes("baby")) return { heading: "Welcome, little June", name: "June" };
   if (key.includes("bridal") || key.includes("shower"))
     return { heading: "Showered with love, Bea", name: "Bea" };
   if (key.includes("wedding")) return { heading: "Congratulations, Nora & James", name: "Nora & James" };
-  if (key.includes("baby")) return { heading: "Welcome, little June", name: "June" };
   if (key.includes("handwritten")) return { heading: "A few words for you, Noor", name: "Noor" };
   if (key.includes("game")) return { heading: "Game on, Kai", name: "Kai" };
   if (key.includes("pixel")) return { heading: "Level up, Theo", name: "Theo" };

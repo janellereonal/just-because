@@ -1,4 +1,5 @@
 import { giftVoice } from "@/lib/giftVoice";
+import { shareGift } from "@/lib/track";
 import { SampleText } from "@/components/SampleMark";
 import { giftHeading } from "@/lib/themeKind";
 import { centerInScroller } from "@/lib/scroll";
@@ -49,7 +50,7 @@ function Liner({ piece, accent }: { piece: Piece; accent: string }) {
   return (
     <div className="mix-liner-body">
       {piece.kind === "photo" && media ? (
-        <img src={media} alt={piece.text ?? ""} className="mix-liner-photo" />
+        <img src={media} alt={piece.text ?? ""} className="mix-liner-photo" data-framed={piece.framed || undefined} />
       ) : null}
       {piece.kind === "voice" && media ? <audio controls src={media} className="w-full" /> : null}
       {embed ? (
@@ -389,11 +390,7 @@ export function MixtapeView({
               type="button"
               className="mix-share"
               style={{ background: palette.accent, color: ink }}
-              onClick={() =>
-                navigator.share
-                  ? void navigator.share({ title: site.title, url: location.href })
-                  : void navigator.clipboard.writeText(location.href)
-              }
+              onClick={() => shareGift(site)}
             >
               Share the mixtape
             </button>

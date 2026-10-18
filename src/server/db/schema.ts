@@ -159,9 +159,32 @@ export const giftSites = pgTable(
      * itself, and never sent to the browser. Null = no password.
      */
     passwordHash: text("password_hash"),
+    /** Set by an admin after a report. A disabled gift doesn't open for anyone but the admin. */
+    disabledAt: timestamp("disabled_at", { withTimezone: true }),
+    disabledReason: text("disabled_reason"),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   },
   (t) => [index("gift_sites_creator_idx").on(t.creatorId)],
+);
+
+/** Reports from the "Report" link on gift and friend pages. */
+export const giftReports = pgTable(
+  "gift_reports",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    siteId: uuid("site_id").references(() => giftSites.id, { onDelete: "set null" }),
+    slug: text("slug").notNull(),
+    /** harassment | private-info | sexual | hate | spam | other */
+    reason: text("reason").notNull(),
+    details: text("details"),
+    /** Where it was reported from: gift | contribute */
+    page: text("page").notNull(),
+    /** A hash of the reporter's IP, to spot floods. Never the IP itself. */
+    reporterHash: text("reporter_hash"),
+    resolvedAt: timestamp("resolved_at", { withTimezone: true }),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [index("gift_reports_site_idx").on(t.siteId)],
 );
 
 /* ------------------------------------------------------------------ */
@@ -324,4 +347,48 @@ export const fundPledges = pgTable(
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   },
   (t) => [index("fund_pledges_fund_idx").on(t.fundId)],
+);
+
+/**
+ * Concierge beta requests ("Want us to handle it?"). Handled by hand: someone on the team
+ * contacts the organiser, takes payment manually and moves the status along in /admin.
+ */
+export const conciergeRequests = pgTable(
+  "concierge_requests",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    userId: text("user_id").references(() => user.id, { onDelete: "set null" }),
+    siteId: uuid("site_id").references(() => giftSites.id, { onDelete: "set null" }),
+    recipient: text("recipient").notNull(),
+    occasion: text("occasion").notNull(),
+    /** The day it needs to be ready, YYYY-MM-DD. */
+    deadline: date("deadline").notNull(),
+    friends: integer("friends").notNull(),
+    /** How to reach the organiser: an email, a phone number, a Messenger name. */
+    contact: text("contact").notNull(),
+    timeZone: text("time_zone").notNull(),
+    notes: text("notes"),
+    /** new, contacted, in_progress, done */
+    status: text("status").notNull().default("new"),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [index("concierge_status_idx").on(t.status, t.createdAt)],
+);
+
+/**
+ * Product events for the admin metrics page (src/server/events.ts). No note content, no IP,
+ * no cookies: just what happened, to which gift, by which signed-in user if any.
+ */
+export const events = pgTable(
+  "events",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    name: text("name").notNull(),
+    siteId: uuid("site_id").references(() => giftSites.id, { onDelete: "set null" }),
+    userId: text("user_id").references(() => user.id, { onDelete: "set null" }),
+    props: jsonb("props").$type<Record<string, string | number | boolean>>(),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [index("events_name_at_idx").on(t.name, t.createdAt), index("events_site_idx").on(t.siteId)],
 );

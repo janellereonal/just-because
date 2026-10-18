@@ -1,4 +1,5 @@
 import { giftVoice } from "@/lib/giftVoice";
+import { shareGift } from "@/lib/track";
 import { mixHex } from "@/themes/_shared/iconSets";
 import { SampleText } from "@/components/SampleMark";
 import { giftHeading } from "@/lib/themeKind";
@@ -250,7 +251,7 @@ function Card({
               {locked ? `Opens ${piece.date}` : "Only for the recipient"}
             </span>
           ) : piece.kind === "photo" && media ? (
-            <img src={media} alt={piece.text ?? ""} />
+            <img src={media} alt={piece.text ?? ""} data-framed={piece.framed || undefined} />
           ) : (
             <span className="scr-text">
               {piece.kind === "song" ? (
@@ -391,11 +392,7 @@ export function ScratchView({
               type="button"
               className="mt-5 rounded-full px-5 py-2.5 font-medium"
               style={{ background: palette.accent, color: readableInk(palette.accent) }}
-              onClick={() =>
-                navigator.share
-                  ? void navigator.share({ title: site.title, url: location.href })
-                  : void navigator.clipboard.writeText(location.href)
-              }
+              onClick={() => shareGift(site)}
             >
               Share the gift
             </button>

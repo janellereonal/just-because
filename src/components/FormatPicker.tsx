@@ -1,5 +1,5 @@
 import { Lock } from "lucide-react";
-import { FORMATS, type GiftFormat } from "@/lib/formats";
+import { FORMATS, offeredFormats, type GiftFormat } from "@/lib/formats";
 import { formatPlanTag } from "@/config/pricing";
 
 /** A tiny live-ish preview of each format, drawn in CSS. */
@@ -64,6 +64,14 @@ export function FormatMini({ id }: { id: GiftFormat }) {
           <i />
         </span>
       );
+    case "handwritten":
+      return (
+        <span className="fmt-mini fmt-hand" aria-hidden>
+          <i />
+          <i />
+          <b>♥</b>
+        </span>
+      );
     case "stars":
       return (
         <span className="fmt-mini fmt-stars" aria-hidden>
@@ -117,7 +125,7 @@ export function FormatPicker({
       <div
         className={`mt-3 grid gap-2.5 ${compact ? "grid-cols-2" : "grid-cols-2 sm:grid-cols-3"}`}
       >
-        {FORMATS.map((f) => {
+        {FORMATS.filter((f) => f.id === value || offeredFormats().includes(f)).map((f) => {
           const active = value === f.id;
           const allowed = isAllowed ? isAllowed(f.id) : true;
           return (

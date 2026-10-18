@@ -139,8 +139,20 @@ verification is only required once `RESEND_API_KEY` and `EMAIL_FROM` are both se
 - Theme fonts: `src/themes/_shared/design.ts`. Never use Caveat, Pacifico, Dancing Script, Lobster or Great Vibes.
 - Newer sections keep their extra fields in `contributions.data`; shape and cleaning in `src/lib/sections.ts`.
 - New landing and section copy goes in `src/copy/strings.ts`.
+- Photobooth camera (flag `photoboothCamera`): `src/components/photobooth/PhotoBooth.tsx`, frames drawn on a canvas in
+  `src/lib/photobooth/frames.ts` (original shapes, gift palette, 1080x1350 JPEG). Booth photos are saved with
+  `data.framed = true` and every layout shows them whole (`img[data-framed]`), never cropped.
 
 ## Open product work
 
 Refunds and PayPal (notes in HANDOFF.md section 5), theme preview images (needs images),
 and turning on the early-bird promo when it's time (`promo.enabled` in pricing.ts).
+
+## Metrics
+
+Our own `events` table (`src/server/events.ts`), shown on /admin as "How gifts are doing". No
+third-party tracker, no cookies, no IP, no note content, so no cookie notice is needed. Server
+events: `gift_created`, `note_added`, `gift_wrapped` (checkout started), `plan_purchased`. Browser
+events go through `trackEvent()` in `src/lib/track.ts` (`invite_shared`, `friend_page_viewed`,
+`gift_opened`, `make_your_own_clicked`); the server drops the organiser's own views. Each event's
+allowed labels are in `EVENT_PROPS`; add new ones there.

@@ -1,4 +1,5 @@
 import { giftVoice } from "@/lib/giftVoice";
+import { shareGift } from "@/lib/track";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Theme3D } from "@/components/Theme3D";
 import { SampleText } from "@/components/SampleMark";
@@ -373,11 +374,7 @@ export function HuntView({
               type="button"
               className="mt-5 rounded-full px-5 py-2.5 text-sm font-medium"
               style={{ background: palette.accent, color: readableInk(palette.accent) }}
-              onClick={() =>
-                navigator.share
-                  ? void navigator.share({ title: site.title, url: location.href })
-                  : void navigator.clipboard.writeText(location.href)
-              }
+              onClick={() => shareGift(site)}
             >
               Share the gift
             </button>

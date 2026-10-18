@@ -4,6 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { SiteHeader } from "@/components/SiteHeader";
 import { BENTO_COUNT, SectionsBento } from "@/components/landing/SectionsBento";
 import { SECTIONS_PAGE } from "@/copy/strings";
+import { SiteFooter } from "@/components/SiteFooter";
 import { MODULES } from "@/lib/gift";
 import { ExampleGifts } from "@/components/landing/ExampleGifts";
 import { LANDING, LANDING_MORE } from "@/copy/strings";
@@ -320,32 +321,7 @@ function Index() {
         </div>
       </section>
 
-      <footer className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-3 px-5 pb-10 text-sm text-muted sm:flex-row">
-        <div className="flex items-center gap-2">
-          <Bo pose="idle" size={30} title="Bo" />
-          <span className="font-display text-base font-semibold text-ink">
-            Just <span className="text-accent">Because</span>
-          </span>
-        </div>
-        <nav className="flex gap-5" aria-label="Footer">
-          <Link to="/themes" className="hover:text-ink">
-            {LANDING_MORE.footer.themes}
-          </Link>
-          <a href="#pricing" className="hover:text-ink">
-            {LANDING_MORE.footer.plans}
-          </a>
-          {user ? (
-            <Link to="/dashboard" className="hover:text-ink">
-              {LANDING_MORE.footer.myGifts}
-            </Link>
-          ) : (
-            <Link to="/auth" className="hover:text-ink">
-              {LANDING_MORE.footer.signIn}
-            </Link>
-          )}
-        </nav>
-        <p>{LANDING_MORE.footer.line}</p>
-      </footer>
+      <SiteFooter />
     </div>
   );
 }

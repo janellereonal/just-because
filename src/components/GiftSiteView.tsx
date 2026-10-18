@@ -1,4 +1,6 @@
 import { giftVoice } from "@/lib/giftVoice";
+import { shareGift, trackEvent } from "@/lib/track";
+import { sampleLetter } from "@/copy/strings";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { SkinDecor } from "@/components/SkinDecor";
 import { ScrollStory } from "@/components/ScrollStory";
@@ -69,9 +71,10 @@ function PhotoCard({ item, accent }: { item: Contribution; accent: string }) {
       >
         <span className="sb-flip-card">
           <span className="sb-flip-front relative block">
-            <span className="block aspect-square w-full overflow-hidden rounded-[3px] bg-black/5">
+            {/* Photobooth photos have their frame and words drawn in, so they keep their 4:5 shape. */}
+            <span className={`block ${item.data?.["framed"] === true ? "aspect-[4/5]" : "aspect-square"} w-full overflow-hidden rounded-[3px] bg-black/5`}>
               {url ? (
-                <img src={url} alt={caption ?? "Contributed photo"} className="size-full object-cover" draggable={false} />
+                <img src={url} alt={caption ?? "Contributed photo"} className="size-full object-cover" draggable={false} data-framed={item.data?.["framed"] === true || undefined} />
               ) : null}
             </span>
             <span className="sb-flip-hint" aria-hidden="true">
@@ -564,12 +567,7 @@ export function GiftSiteView({
   }
 
   function share() {
-    const url = window.location.href;
-    if (navigator.share) {
-      void navigator.share({ title: site.title, url });
-    } else {
-      void navigator.clipboard.writeText(url);
-    }
+    shareGift(site);
   }
 
   const hasContent =
@@ -748,8 +746,8 @@ export function GiftSiteView({
                     ),
                   )
                 : [
-                    { t: `So lucky to know you${sampleName ? `, ${sampleName}` : ""}. Love, Sam`, a: "Sam" },
-                    { t: "You make every room warmer. Can't wait to celebrate.", a: "Alex" },
+                    { t: sampleLetter(kind, 0, sampleName), a: "Sam" },
+                    { t: sampleLetter(kind, 1), a: "Alex" },
                   ].map((s, li) => (
                     <NoteCard key={s.a} kind={kind} index={li} text={s.t} author={s.a} accent={accentText} muted />
                   ))}
@@ -991,6 +989,17 @@ export function GiftSiteView({
           siteId={site.id}
           headingFont={fonts.heading}
           accent={accentText}
+          titles={{
+            openwhen: text.openwhen_title || titles.openwhen_title,
+            capsule: text.capsule_title || titles.capsule_title,
+            superlatives: text.superlatives_title || titles.superlatives_title,
+            quiz: text.quiz_title || titles.quiz_title,
+            map: text.map_title || titles.map_title,
+            coupons: text.coupons_title || titles.coupons_title,
+            video: text.video_title || titles.video_title,
+            doodle: text.doodle_title || titles.doodle_title,
+          }}
+          titleProps={(type) => fp(`${type}_title` as keyof CustomText)}
         />
 
         {!hasContent && !sample && (
@@ -1013,6 +1022,16 @@ export function GiftSiteView({
             <p className="text-sm">Made with Just Because</p>
           </div>
           <p className="mt-1 text-xs opacity-70">Tag us and use #justbecause</p>
+          {showShare && !sample ? (
+            <a
+              href="/"
+              onClick={() => trackEvent("make_your_own_clicked", site.id, { source: "gift_footer" })}
+              className="mt-2 inline-block text-xs underline underline-offset-2 opacity-80"
+              style={{ color: accentText }}
+            >
+              Make one for someone
+            </a>
+          ) : null}
           {onReplayIntro ? (
             <button
               type="button"

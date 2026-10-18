@@ -3,7 +3,8 @@
  * The `format` column is plain text, so adding one here needs no migration.
  * Which plans can use which format lives in src/config/pricing.ts.
  */
-export const FORMAT_IDS = ["scrapbook", "comic", "bento", "hunt", "zine", "storybook", "mixtape", "scratch", "stars"] as const;
+import { isFlagOn, type FlagName } from "@/config/flags";
+export const FORMAT_IDS = ["scrapbook", "comic", "bento", "hunt", "zine", "storybook", "mixtape", "scratch", "stars", "handwritten"] as const;
 export type GiftFormat = (typeof FORMAT_IDS)[number];
 
 export type FormatInfo = {
@@ -16,6 +17,8 @@ export type FormatInfo = {
   /** Shows the gift opening animation first (comic has its own cover). */
   usesIntro: boolean;
   isNew?: boolean;
+  /** Only offered in pickers while this flag is on (src/config/flags.ts). Saved gifts always render. */
+  flag?: FlagName;
 };
 
 export const FORMATS: FormatInfo[] = [
@@ -86,7 +89,21 @@ export const FORMATS: FormatInfo[] = [
     usesIntro: true,
     isNew: true,
   },
+  {
+    id: "handwritten",
+    title: "Handwritten",
+    copy: "A notebook of notes and doodles",
+    about: "Every friend writes in their own hand, on lined pages and sticky notes, with doodles that draw themselves in.",
+    usesIntro: true,
+    isNew: true,
+    flag: "handwrittenFormat",
+  },
 ];
+
+/** The formats to offer in pickers right now. */
+export function offeredFormats(): FormatInfo[] {
+  return FORMATS.filter((f) => !f.flag || isFlagOn(f.flag));
+}
 
 export function isGiftFormat(value: unknown): value is GiftFormat {
   return typeof value === "string" && (FORMAT_IDS as readonly string[]).includes(value);

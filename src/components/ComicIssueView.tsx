@@ -8,6 +8,7 @@
  * Everything is sized with container queries, so it reads the same in a
  * phone preview on a laptop as on a real phone.
  */
+import { shareGift } from "@/lib/track";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { AnimatePresence, motion, useReducedMotion, type PanInfo } from "motion/react";
 import { ChevronLeft, ChevronRight, List, Repeat2, Share2, X } from "lucide-react";
@@ -113,7 +114,7 @@ function Panel({ item, type, index }: { item: ViewContribution; type: ModuleType
   if (type === "photobooth")
     return (
       <article className="cx-panel cx-photo">
-        <div className="cx-photo-frame">{media ? <img src={media} alt={item.text_content ?? COMIC_COPY.photoAlt} /> : <div className="cx-photo-empty" aria-hidden="true" />}</div>
+        <div className="cx-photo-frame">{media ? <img src={media} alt={item.text_content ?? COMIC_COPY.photoAlt} data-framed={item.data?.["framed"] === true || undefined} /> : <div className="cx-photo-empty" aria-hidden="true" />}</div>
         <div className="cx-photo-cap">
           <Caption>{item.text_content || COMIC_COPY.legendary}</Caption>
         </div>
@@ -519,7 +520,7 @@ export function ComicIssueView({ kind, site, modules, contributions, calendarEnt
                   type="button"
                   className="cx-icon"
                   aria-label={COMIC_COPY.share}
-                  onClick={() => (navigator.share ? void navigator.share({ title: site.title, url: window.location.href }) : void navigator.clipboard.writeText(window.location.href))}
+                  onClick={() => shareGift(site)}
                 >
                   <Share2 className="size-4" />
                 </button>

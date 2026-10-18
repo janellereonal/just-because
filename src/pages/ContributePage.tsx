@@ -1,14 +1,17 @@
 import { OrnamentIcon } from "@/components/GiftTree";
+import { trackEvent } from "@/lib/track";
+import { FRIEND_PAGE, friendAddLine } from "@/copy/strings";
+import { friendsIn } from "@/lib/noteCounts";
 import { engineThemeForName } from "@/themes/engine/registry";
 import { t } from "@/i18n";
 import { CharCount } from "@/components/ui/CharCount";
 import { LIMITS, noteTextLimit, tooLong } from "@/lib/limits";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { lazy, Suspense, useEffect, useMemo, useRef, useState } from "react";
 import {useParams} from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { deleteOwnContribution, getGiftRoom, submitContribution, updateOwnContribution } from "@/lib/api";
-import { uploadFile } from "@/lib/upload";
+import { UploadError, uploadFile } from "@/lib/upload";
 import { getDeviceId } from "@/lib/device";
 import {
   FONT_PAIRINGS,
@@ -33,18 +36,27 @@ import { ModuleExample } from "@/components/ModuleExample";
 import { centerInScroller } from "@/lib/scroll";
 import { themeKindOf } from "@/lib/themeKind";
 import Bo from "@/components/Bo";
-import { Brush, CalendarDays, CircleHelp, Hourglass, Image as ImageIcon, Lock, Mail, MailOpen, MapPin, Mic, Music2, Sparkles, Ticket, Trophy, Type, Users, Video } from "lucide-react";
+import { Brush, CalendarDays, Camera, CircleHelp, Hourglass, Image as ImageIcon, Lock, Mail, MailOpen, MapPin, Mic, MoreHorizontal, Music2, Sparkles, Ticket, Trophy, Type, Users, Video } from "lucide-react";
 import { SectionFields } from "@/components/sections/SectionFields";
 import { SECTION_NEEDS, isNewSection, normalizeSectionData } from "@/lib/sections";
 import { meshGradient } from "@/lib/giftPieces";
+import { isFlagOn } from "@/config/flags";
+import { PHOTOBOOTH_COPY } from "@/copy/strings";
+import { AnimatePresence } from "motion/react";
 
 const MODULE_ICON: Partial<Record<ModuleType, typeof Mail>> = {
   letters: Mail, photobooth: ImageIcon, songs: Music2, wordcloud: Type, voice: Mic, tree: Sparkles, calendar: CalendarDays,
   openwhen: MailOpen, capsule: Hourglass, superlatives: Trophy, quiz: CircleHelp, map: MapPin, coupons: Ticket, video: Video, doodle: Brush,
 };
 /** Short tab names for the newer sections. */
+const TAB_LIMIT = 4;
 const SHORT: Partial<Record<ModuleType, string>> = { openwhen: "Open-when", capsule: "Time capsule", superlatives: "Award", quiz: "Quiz", map: "Memory pin", coupons: "Coupon", video: "Video", doodle: "Doodle" };
 import { PageError, PageLoading, PageNotFound } from "@/components/PageStates";
+import { REPORT_COPY } from "@/copy/strings";
+import { ReportGift } from "@/components/ReportGift";
+
+// The photobooth only loads when someone opens it.
+const PhotoBooth = lazy(() => import("@/components/photobooth/PhotoBooth").then((m) => ({ default: m.PhotoBooth })));
 
 
 /* ---- remembering this device's own contributions ---- */
@@ -149,13 +161,22 @@ function ContributePage() {
   useEffect(() => {
     if (siteId) setMine(readMine(siteId));
   }, [siteId]);
+  // Metrics: a friend opened the invite link (once per tab session; the organiser isn't counted).
+  useEffect(() => {
+    if (siteId) trackEvent("friend_page_viewed", siteId);
+  }, [siteId]);
 
   const [moduleType, setModuleType] = useState<ModuleType | null>(null);
+  const [moreTabs, setMoreTabs] = useState(false);
   const [name, setName] = useState("");
   const [pickedIdea, setIdea] = useState<string | null>(null);
   const [text, setText] = useState("");
   const [link, setLink] = useState("");
   const [file, setFile] = useState<File | null>(null);
+  const [booth, setBooth] = useState(false);
+  /** The photo the booth made, so it's sent marked as framed (gifts then show it uncropped). */
+  const boothFile = useRef<File | null>(null);
+  const boothOn = isFlagOn("photoboothCamera");
   const [busy, setBusy] = useState(false);
   const sendingRef = useRef(false);
   /** The id for the note being written, kept across retries so a repeat send is the same note. */
@@ -216,6 +237,9 @@ function ContributePage() {
     );
   }
 
+  if (site.disabled_at) {
+    return <PageNotFound title={REPORT_COPY.pausedTitle} message={REPORT_COPY.pausedBody} actionLabel={REPORT_COPY.makeYourOwn} actionTo="/" showHeader={false} />;
+  }
   const palette = resolvePalette(theme, site.custom_colors);
   const ink = readableInk(palette.background);
   const onAccent = readableInk(palette.accent);
@@ -232,6 +256,12 @@ function ContributePage() {
     modules.some((row) => row.module_type === m.type && row.enabled),
   );
   const active = moduleType ?? openModules[0]?.type ?? null;
+  // Four note types up front, the rest behind "More" (the chosen one always stays visible).
+  const extraTabs = openModules.length > TAB_LIMIT;
+  const shownTabs =
+    !extraTabs || moreTabs
+      ? openModules
+      : [...openModules.slice(0, TAB_LIMIT), ...openModules.slice(TAB_LIMIT).filter((m) => m.type === active)];
   const fieldStyle = {
     backgroundColor: palette.background,
     color: ink,
@@ -287,7 +317,8 @@ function ContributePage() {
       }),
     ...mine.map((record) => toView(record, site.id)),
   ];
-  const friendCount = new Set(giftContributions.map((c) => c.author_name.toLowerCase())).size;
+  // People, not notes, and the organiser isn't counted.
+  const friendCount = friendsIn(giftContributions);
 
   function resetForm() {
     setText("");
@@ -374,6 +405,8 @@ function ContributePage() {
       }
       cleanData = clean as Record<string, unknown>;
     }
+    // A new photo says whether it came out of the photobooth; no new photo keeps what's saved.
+    if (active === "photobooth" && file) cleanData = file === boothFile.current ? { framed: true } : {};
     if (name.trim().length > LIMITS.friendName) {
       toast.error(tooLong("your name", LIMITS.friendName));
       return;
@@ -398,9 +431,9 @@ function ContributePage() {
     if (file) {
       try {
         mediaPath = await uploadFile(file, "contribution", site.id);
-      } catch {
+      } catch (error) {
         setBusy(false);
-        toast.error("That file couldn't be uploaded.");
+        toast.error(error instanceof UploadError ? error.message : "That file couldn't be uploaded. Please try again.");
         return;
       }
     }
@@ -580,7 +613,7 @@ function ContributePage() {
                 {named ? `Add something for ${named}` : "Add something to the gift"}
               </h1>
               <p className="mx-auto mt-3 max-w-sm text-center text-[15px] leading-relaxed opacity-80 text-pretty">
-                {named ? `Friends are putting together a gift for ${named}.` : "Friends are putting a gift together."} Add a note, a photo or a song. It stays a surprise until they open it.
+                {named ? `Friends are putting together a gift for ${named}.` : "Friends are putting a gift together."} {openModules.length > 0 ? `${friendAddLine(openModules.map((m) => m.type))} It stays a surprise until they open it.` : FRIEND_PAGE.notReady}
               </p>
               <p className="mt-4 flex items-center justify-center gap-1.5 text-xs opacity-70">
                 <Users className="size-3.5" />
@@ -604,16 +637,25 @@ function ContributePage() {
               >
                 Add something else
               </button>
+              <a
+                href="/"
+                onClick={() => siteId && trackEvent("make_your_own_clicked", siteId, { source: "friend_page" })}
+                className="mt-4 block text-xs underline underline-offset-2 opacity-75"
+              >
+                Make a gift like this for someone
+              </a>
             </div>
           ) : openModules.length === 0 ? (
-            <p className="mt-10 text-center text-sm opacity-80">
-              This gift isn't taking notes right now.
-            </p>
+            <p className="mt-10 text-center text-sm opacity-80">{FRIEND_PAGE.notReady}</p>
           ) : (
             <form onSubmit={submit} className="mt-8 rounded-[28px] p-5 shadow-[0_24px_60px_-34px_rgba(43,37,34,.55)] sm:p-7" style={{ backgroundColor: surface }}>
               <p className="text-sm font-medium">What would you like to add?</p>
-              <div className={`mt-3 grid gap-2 ${openModules.length === 1 ? "grid-cols-1" : openModules.length === 2 ? "grid-cols-2" : "grid-cols-3"}`} role="tablist" aria-label="What to add">
-                {openModules.map((mod) => {
+              <div
+                className={`mt-3 grid gap-2 ${shownTabs.length + (extraTabs ? 1 : 0) === 1 ? "grid-cols-1" : shownTabs.length + (extraTabs ? 1 : 0) === 2 ? "grid-cols-2" : shownTabs.length + (extraTabs ? 1 : 0) === 4 ? "grid-cols-2 min-[420px]:grid-cols-4" : "grid-cols-3"}`}
+                role="tablist"
+                aria-label="What to add"
+              >
+                {shownTabs.map((mod) => {
                   const Icon = MODULE_ICON[mod.type] ?? Mail;
                   const on = active === mod.type;
                   return (
@@ -636,6 +678,18 @@ function ContributePage() {
                     </button>
                   );
                 })}
+                {extraTabs ? (
+                  <button
+                    type="button"
+                    aria-expanded={moreTabs}
+                    onClick={() => setMoreTabs((v) => !v)}
+                    className="flex flex-col items-center justify-center gap-1.5 rounded-2xl px-2 py-3 text-center text-[13px] leading-tight font-medium"
+                    style={{ backgroundColor: palette.background, color: ink, boxShadow: `inset 0 0 0 1px ${ink}1a` }}
+                  >
+                    <MoreHorizontal className="size-5" />
+                    {moreTabs ? FRIEND_PAGE.fewer : `${FRIEND_PAGE.more} (${openModules.length - TAB_LIMIT})`}
+                  </button>
+                ) : null}
               </div>
 
               {active && !isNewSection(active) ? (
@@ -719,6 +773,20 @@ function ContributePage() {
               ) : active === "photobooth" ? (
                 <>
                   <label className="mt-4 block text-sm font-medium">Photo</label>
+                  {boothOn ? (
+                    <button
+                      type="button"
+                      onClick={() => setBooth(true)}
+                      className="squish mt-2 flex w-full items-center gap-3 rounded-2xl px-4 py-3.5 text-left"
+                      style={{ background: palette.accent, color: onAccent }}
+                    >
+                      <Camera className="size-5 shrink-0" aria-hidden />
+                      <span>
+                        <span className="block text-sm font-semibold">{PHOTOBOOTH_COPY.open}</span>
+                        <span className="block text-xs opacity-80">{PHOTOBOOTH_COPY.openHint}</span>
+                      </span>
+                    </button>
+                  ) : null}
                   {dropZone("photo")}
                   <label className="mt-4 block text-sm font-medium">Caption (optional)</label>
                   <input
@@ -948,6 +1016,23 @@ function ContributePage() {
           </div>
         </div>
       </div>
+      <AnimatePresence>
+        {booth ? (
+          <Suspense fallback={null}>
+            <PhotoBooth
+              palette={palette}
+              fontFamily={fonts.heading}
+              onClose={() => setBooth(false)}
+              onUse={(made) => {
+                boothFile.current = made;
+                setFile(made);
+                setBooth(false);
+              }}
+            />
+          </Suspense>
+        ) : null}
+      </AnimatePresence>
+      <ReportGift slug={site.slug} page="contribute" tone={ink} />
     </div>
   );
 }

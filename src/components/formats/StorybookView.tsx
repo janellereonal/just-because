@@ -1,4 +1,5 @@
 import { giftVoice } from "@/lib/giftVoice";
+import { shareGift } from "@/lib/track";
 import { SampleText } from "@/components/SampleMark";
 import { giftHeading } from "@/lib/themeKind";
 import { useCallback, useEffect, useRef, useState } from "react";
@@ -46,7 +47,7 @@ function PieceBody({ piece, accent }: { piece: Piece; accent: string }) {
           style={{ transform: `rotate(${(seed(piece.id) - 0.5) * 6}deg)` }}
         >
           {media ? (
-            <img src={media} alt={piece.text ?? ""} draggable={false} />
+            <img src={media} alt={piece.text ?? ""} draggable={false} data-framed={piece.framed || undefined} />
           ) : (
             <span className="sbk-photo-empty" />
           )}
@@ -298,11 +299,7 @@ export function StorybookView({
                 type="button"
                 className="sbk-btn"
                 style={{ background: palette.accent, color: coverInk }}
-                onClick={() =>
-                  navigator.share
-                    ? void navigator.share({ title: site.title, url: location.href })
-                    : void navigator.clipboard.writeText(location.href)
-                }
+                onClick={() => shareGift(site)}
               >
                 Share the book
               </button>
