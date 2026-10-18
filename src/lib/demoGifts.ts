@@ -159,6 +159,8 @@ const ana: DemoGift = {
   theme: theme("Happy Birthday", "Celebration", anaPalette),
   palette: anaPalette,
   site: site("ana", "Ana", "Happy 30th, Ana", anaPalette, {
+    // Its style: with their own bodies on (flag styleBodies), the example reads in it.
+    style: "cake",
     countdown_at: atLocal(4, 19),
     custom_text: {
       heading: "Happy 30th, Ana",
@@ -251,6 +253,8 @@ const sam: DemoGift = {
   theme: theme("Bon Voyage", "Farewell", samPalette),
   palette: samPalette,
   site: site("sam", "Sam", "Bon voyage, Sam", samPalette, {
+    // Its style: with their own bodies on (flag styleBodies), the example reads in it.
+    style: "boarding-pass",
     countdown_at: atLocal(9, 6),
     background_style: "clean",
     custom_text: {
@@ -308,6 +312,8 @@ const milo: DemoGift = {
   theme: theme("Pets", "Pets", miloPalette),
   palette: miloPalette,
   site: site("milo", "Milo", "Happy gotcha day, Milo", miloPalette, {
+    // Its style: with their own bodies on (flag styleBodies), the example reads in it.
+    style: "fetch",
     custom_text: {
       heading: "Happy gotcha day, Milo",
       recipient_name: "Milo",
@@ -354,6 +360,8 @@ const nora: DemoGift = {
   theme: theme("Weddings", "Wedding", weddingPalette),
   palette: weddingPalette,
   site: site("nora-james", "Nora & James", "Nora & James", weddingPalette, {
+    // Its style: with their own bodies on (flag styleBodies), the example reads in it.
+    style: "invitation",
     background_style: "formal",
     custom_text: {
       heading: "Nora & James",

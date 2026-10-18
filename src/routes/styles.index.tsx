@@ -163,6 +163,7 @@ function StylesPage() {
         onUse={() => fullTheme && useStyle(fullTheme.style)}
         useLabel={t("gallery.use")}
         format={fullTheme?.style.body}
+        styleId={fullTheme?.style.id}
       />
       <LayoutStyleModal style={fullLayout} onClose={() => setFullLayout(null)} onUse={useStyle} />
     </div>
