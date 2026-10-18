@@ -159,7 +159,8 @@
 .skin-birthday .sk-hero { padding-top: 34px; }
 .skin-birthday .sb-hero {
   letter-spacing: -0.02em;
-  text-shadow: 2px 2px 0 color-mix(in oklab, var(--sk-a) 55%, transparent), 4px 4px 0 color-mix(in oklab, var(--sk-p) 40%, transparent);
+  /* One soft pastel offset in the gift's accent, lightened with white so it never reads as a second dark layer. */
+  text-shadow: 3px 3px 0 color-mix(in oklab, var(--sk-a) 38%, #fff);
 }
 .skin-birthday .sk-badge { background: #ffd166; color: #2b2522; transform: rotate(-3deg); box-shadow: 0 6px 14px -8px rgba(0,0,0,.4); }
 .skin-birthday .sb-title::after { width: 92px; height: 8px; opacity: 1; background: repeating-linear-gradient(90deg, #ff8fab 0 14px, #ffd166 14px 28px, #7ed7c1 28px 42px, #8fa8ff 42px 56px); }
