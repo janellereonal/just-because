@@ -45,6 +45,8 @@ const MODULE_ICON: Partial<Record<ModuleType, typeof Mail>> = {
 /** Short tab names for the newer sections. */
 const SHORT: Partial<Record<ModuleType, string>> = { openwhen: "Open-when", capsule: "Time capsule", superlatives: "Award", quiz: "Quiz", map: "Memory pin", coupons: "Coupon", video: "Video", doodle: "Doodle" };
 import { PageError, PageLoading, PageNotFound } from "@/components/PageStates";
+import { REPORT_COPY } from "@/copy/strings";
+import { ReportGift } from "@/components/ReportGift";
 
 
 /* ---- remembering this device's own contributions ---- */
@@ -216,6 +218,9 @@ function ContributePage() {
     );
   }
 
+  if (site.disabled_at) {
+    return <PageNotFound title={REPORT_COPY.pausedTitle} message={REPORT_COPY.pausedBody} actionLabel={REPORT_COPY.makeYourOwn} actionTo="/" showHeader={false} />;
+  }
   const palette = resolvePalette(theme, site.custom_colors);
   const ink = readableInk(palette.background);
   const onAccent = readableInk(palette.accent);
@@ -948,6 +953,7 @@ function ContributePage() {
           </div>
         </div>
       </div>
+      <ReportGift slug={site.slug} page="contribute" tone={ink} />
     </div>
   );
 }

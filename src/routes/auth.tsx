@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { NOINDEX } from "@/lib/seo";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { toast } from "sonner";
 import { useQuery } from "@tanstack/react-query";
@@ -20,7 +21,7 @@ export const Route = createFileRoute("/auth")({
     return next ? { next } : {};
   },
   head: () => ({
-    meta: [
+    meta: [NOINDEX, 
       { title: "Sign in | Just Because" },
       {
         name: "description",

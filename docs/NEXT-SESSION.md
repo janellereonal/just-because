@@ -110,7 +110,6 @@ work goes on autonomously. Her rules for this run:
 The three prompts are saved in `docs/prompts/` (launch.md, revenue.md, design.md) so a fresh session can read them.
 
 ### Questions for the morning
-- The real contact email (placeholder `hello@justbecause.site` in `src/config/site.ts`).
 - Legal pages: review them, then set `SITE.legalDraft = false`. Policy choices I made that need your OK: minimum
   age 16; contents kept 90 days after a plan ends, then deleted; unpaid drafts deleted after 12 months without
   changes; refunds within 7 days if the recipient hasn't opened it. PR 3 will implement the retention rules.
