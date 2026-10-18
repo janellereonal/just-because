@@ -19,7 +19,8 @@ Janelle's restructure: **Style** becomes the one visual choice, **Occasion** an 
    (`tier.formats` must let theme styles through). Port #43's fixes (no double openings, Zine and Notebook
    pick up the look, font and palette name clashes), then close #43.
 3. `/styles` gallery with occasion chips, nav and homepage links, `/themes` redirects.
-4. Openings for the 9 layout styles, Love Letter as the gold standard first (slow-motion recordings for Janelle).
+4. Openings for the 9 layout styles: done (18 Oct, branch `styles-complete`, `src/themes/layouts/`). Every style now
+   has an opening and a body, in the gallery and on real gifts. Next: slow-motion recordings and a real-phone pass.
 
 Open: cultural review of the Lunar New Year, Eid, Diwali and Hanukkah words (`culturalReview` in occasions.ts).
 
