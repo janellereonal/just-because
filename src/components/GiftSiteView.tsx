@@ -724,6 +724,7 @@ export function GiftSiteView({
                 palette={palette}
                 revealDate={site.tree_reveal_date}
                 sample={sample === true}
+                christmas={kind === "christmas"}
               />
             </div>
             {tree.length === 0 && sample ? <SampleNote>{voice.sample}</SampleNote> : null}

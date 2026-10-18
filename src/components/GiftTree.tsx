@@ -1,6 +1,7 @@
 /**
- * The wishing tree: a clay tree (public/clay/xtree.webp) with each friend's
- * clay ornament hanging from a branch. Ornaments sway on their own, wiggle
+ * The wishing tree: a clay tree with each friend's clay ornament hanging from a
+ * branch. Christmas gifts get the Christmas tree (public/clay/xtree.webp); every
+ * other gift gets a round, leafy tree (public/clay/wtree.webp) with no star or snow. Ornaments sway on their own, wiggle
  * when touched and open into the note. Locked ones show a little padlock.
  */
 import { useMemo, useState } from "react";
@@ -70,22 +71,35 @@ export function GiftTree({
   palette,
   revealDate,
   sample = false,
+  christmas = false,
 }: {
   contributions: ViewContribution[];
   palette: Palette;
   revealDate: string | null;
   sample?: boolean;
+  /** Christmas gifts get the Christmas tree. Everything else gets the everyday one. */
+  christmas?: boolean;
 }) {
   const reduce = useReducedMotion();
   const sampleItems = useMemo<ViewContribution[]>(
     () =>
       (
         [
-          ["Sam", "You make every Christmas brighter.", "star"],
-          ["Lia", "A little wish, just for you.", "heart"],
-          ["Jo", "Warm hugs from all of us.", "gift"],
-          ["Noor", "Save me a cookie this year.", "cookie"],
-          ["Theo", "Snow day soon, I can feel it.", "snowman"],
+          ...(christmas
+            ? ([
+                ["Sam", "You make every Christmas brighter.", "star"],
+                ["Lia", "A little wish, just for you.", "heart"],
+                ["Jo", "Warm hugs from all of us.", "gift"],
+                ["Noor", "Save me a cookie this year.", "cookie"],
+                ["Theo", "Snow day soon, I can feel it.", "snowman"],
+              ] as const)
+            : ([
+                ["Sam", "A year of good surprises.", "star"],
+                ["Lia", "A little wish, just for you.", "heart"],
+                ["Jo", "Warm hugs from all of us.", "gift"],
+                ["Noor", "More slow mornings and long lunches.", "cookie"],
+                ["Theo", "That every plan works out.", "bell"],
+              ] as const)),
         ] as const
       ).map(([who, text, key], i) => ({
         id: `tree-${i}`,
@@ -100,7 +114,7 @@ export function GiftTree({
         ornament_key: key,
         visibility: "public",
       })),
-    [],
+    [christmas],
   );
   const items = contributions.length > 0 ? contributions : sample ? sampleItems : [];
   const [page, setPage] = useState(0);
@@ -123,7 +137,7 @@ export function GiftTree({
         {/* The still has room around the tree; zoom in so the tree fills the space. */}
         <div className="absolute inset-0 origin-[50%_62%] scale-[1.22]">
           <img
-            src="/clay/xtree.webp"
+            src={christmas ? "/clay/xtree.webp" : "/clay/wtree.webp"}
             alt=""
             aria-hidden="true"
             draggable={false}
