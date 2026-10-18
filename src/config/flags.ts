@@ -21,6 +21,8 @@ export const FLAGS = {
   concierge: "concierge",
   /** Styles and occasions: the new /create (from, for, occasion, style, sections) and Style in the editor. */
   styles: "styles",
+  /** Start a gift without an account; sign in to share, pay or come back on another device. */
+  guestStart: "guestStart",
 } as const;
 
 export type FlagName = keyof typeof FLAGS;

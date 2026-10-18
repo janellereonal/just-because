@@ -2,6 +2,7 @@
  * Transactional email through Resend's HTTP API. Without RESEND_API_KEY
  * (local dev) emails are printed to the server log instead of sent.
  */
+import { isGuestEmail } from "./guestEmail";
 
 export function siteUrl() {
   if (process.env["APP_BASE_URL"]) return process.env["APP_BASE_URL"].replace(/\/$/, "");
@@ -62,6 +63,8 @@ function plainText(mail: Mail) {
 
 /** Sends one email. Never throws: a failed email shouldn't break the action that caused it. */
 export async function sendMail(mail: Mail): Promise<boolean> {
+  // Guests have a placeholder address that can't receive mail (see src/server/guests.ts).
+  if (isGuestEmail(mail.to)) return false;
   if (!emailEnabled()) {
     console.info(`[email:dev] to=${mail.to} subject="${mail.subject}"\n${plainText(mail)}`);
     return false;

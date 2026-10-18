@@ -3,7 +3,9 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { boWrap } from "@/lib/mascot/bus";
 import { getBilling, previewDiscountCode, setCustomSlug, setGiftPassword, startCheckout, startExtendCheckout } from "@/lib/api";
-import { CODE_COPY } from "@/copy/strings";
+import { CODE_COPY, GUEST_COPY } from "@/copy/strings";
+import { useAuth } from "@/hooks/useAuth";
+import { GuestSignInCard } from "@/components/GuestPrompt";
 import { PricingCards } from "@/components/PricingCards";
 import { PRICE_COPY } from "@/copy/strings";
 import { useViewerMoney } from "@/lib/viewerCurrency";
@@ -61,6 +63,7 @@ export function PlanPickerDialog({
   onOpenChange: (open: boolean) => void;
 }) {
   const { data: billing } = useBilling(siteId);
+  const { isGuest } = useAuth();
   const [busyTier, setBusyTier] = useState<TierId | null>(null);
   const [codeOpen, setCodeOpen] = useState(false);
   const [codeText, setCodeText] = useState("");
@@ -133,7 +136,8 @@ export function PlanPickerDialog({
             . Each plan says how many it holds; friends can keep adding until it's full.
           </p>
         ) : null}
-        {billing && mode === "publish" ? (
+        {isGuest ? <GuestSignInCard title={GUEST_COPY.payTitle} body={GUEST_COPY.payBody} /> : null}
+        {billing && mode === "publish" && !isGuest ? (
           <div className="-mt-1 text-sm">
             {applied ? (
               <p className="flex flex-wrap items-center gap-x-3 gap-y-1 rounded-xl border border-accent/40 bg-accent/10 px-3 py-2">
@@ -214,7 +218,7 @@ export function PlanPickerDialog({
                 label: (t) => (mode === "upgrade" ? `Upgrade to ${t.name}` : deal.get(t.id)?.free ? CODE_COPY.free(t.name) : `Choose ${t.name}`),
                 onPick: (t) => void pick(t),
                 busyTier,
-                disabled: !!busyTier,
+                disabled: !!busyTier || isGuest,
               }}
             />
           ) : (

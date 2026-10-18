@@ -120,6 +120,23 @@ cookie is an HMAC of the gift id and the current hash, so changing the password 
 out. A password only applies while the plan includes it (`needsPassword`); the owner never needs
 it. Wrong guesses are limited to 10 per 10 minutes per gift and IP (in memory, per instance).
 
+## Sign-in and guests
+
+- Google is the main sign-in button when `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET` are set; email
+  opens under "Use email instead". In Google Cloud (OAuth client, type Web) add the redirect URI
+  `https://justbecause.site/api/auth/callback/google` (and `http://localhost:8080/api/auth/callback/google`
+  for local work). Preview URLs change per branch, so Google sign-in is only expected on production.
+- Account linking: signing in with Google using an existing account's email adds Google to that account
+  (`account.accountLinking`, Google trusted). If that account's email was never confirmed, its password
+  and sessions are removed first (`databaseHooks.account.create.before` in `src/server/auth.ts`), so
+  someone who signed up with another person's email can't keep access.
+- Guests (flag `guestStart`): `/create` makes a guest session (Better Auth anonymous plugin,
+  `user.is_anonymous`, placeholder email at `guest.justbecause.invalid`, never mailed). Guests can make
+  up to 3 gifts and edit them. Sharing and paying ask them to sign in (`requireAccount()` /
+  `guestsSignInFirst` on the server). Signing in or up in the same browser runs `claimGuestGifts`
+  (`src/server/guests.ts`), which moves their gifts, orders, concierge requests and events to the real
+  account before the guest row is deleted. Never sign a guest out: the header shows "Sign in" instead.
+
 ## Emails
 
 Confirm-email on sign-up, password reset, new-note alert to the creator (max one per

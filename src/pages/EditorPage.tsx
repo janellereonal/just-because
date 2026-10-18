@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { OCCASION_NAMES } from "@/copy/strings";
+import { GuestBanner, GuestSignInCard } from "@/components/GuestPrompt";
+import { GUEST_COPY, OCCASION_NAMES } from "@/copy/strings";
 import { bodyFor, lookFor, resolveStyle, styleForLegacy, styleInfo, styleTitle, type StyleId } from "@/lib/styles";
 import { isQuietOccasion, occasionName, type OccasionId } from "@/lib/occasions";
 import { OccasionChips } from "@/components/styles/OccasionChips";
@@ -360,7 +361,7 @@ function SiteDashboard() {
     queryFn: () => fetchCalendarEntries(id),
   });
   const { data: billing } = useBilling(id);
-  const { user: authUser } = useAuth();
+  const { user: authUser, isGuest } = useAuth();
   /** Paid (or legacy) and not ended: the gift can go live without paying again. */
   const hasPlan = !!billing?.tier && !billing.ended;
   const planTier = getTier(billing?.tier);
@@ -1232,6 +1233,10 @@ function SiteDashboard() {
       <div className="space-y-5">
         {!solo ? (
           <StepGroup title="Invite friends" hint="Friends add their notes, photos and songs through this link. No account needed.">
+            {isGuest ? (
+              <GuestSignInCard title={GUEST_COPY.shareTitle} body={GUEST_COPY.shareBody} />
+            ) : (
+            <>
             <div className="flex items-center gap-2">
               <input
                 readOnly
@@ -1259,6 +1264,8 @@ function SiteDashboard() {
                 </a>
               </Button>
             </div>
+            </>
+            )}
           </StepGroup>
         ) : null}
         {!solo ? (
@@ -2127,6 +2134,7 @@ function SiteDashboard() {
         </div>
 
       </header>
+      <GuestBanner />
       <PlanBanner billing={billing} onUpgrade={() => setPlanPicker("upgrade")} onExtend={() => setExtendOpen(true)} />
       <ExtendDialog siteId={id} open={extendOpen} onOpenChange={setExtendOpen} />
       <PlanPickerDialog

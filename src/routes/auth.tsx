@@ -7,6 +7,8 @@ import { authClient } from "@/lib/auth-client";
 import { getAuthOptions } from "@/lib/api";
 import { SiteHeader } from "@/components/SiteHeader";
 import Bo from "@/components/Bo";
+import { useAuth } from "@/hooks/useAuth";
+import { GUEST_COPY } from "@/copy/strings";
 
 /** Only same-site paths, so the link can't send anyone elsewhere after signing in. */
 function safeNext(value: unknown): string | undefined {
@@ -48,6 +50,9 @@ function AuthPage() {
   const [name, setName] = useState("");
   const [busy, setBusy] = useState(false);
   const [resent, setResent] = useState(false);
+  // With Google on, it's the main button and the email form opens on request.
+  const [emailOpen, setEmailOpen] = useState(false);
+  const { isGuest } = useAuth();
 
   async function resend() {
     if (!sentTo) return;
@@ -166,14 +171,18 @@ function AuthPage() {
           ) : (
             <>
               <h1 className="font-display text-[2.1rem] leading-tight font-semibold tracking-tight">
-                {mode === "signin"
+                {isGuest && mode !== "forgot"
+                  ? GUEST_COPY.authHeading
+                  : mode === "signin"
                   ? "Welcome back"
                   : mode === "signup"
                     ? "Start a gift"
                     : "Forgot your password?"}
               </h1>
               <p className="mt-2 text-[15px] text-ink/65">
-                {mode === "signin"
+                {isGuest && mode !== "forgot"
+                  ? GUEST_COPY.authBody
+                  : mode === "signin"
                   ? "Sign in to keep working on your gifts."
                   : mode === "signup"
                     ? "Make an account to start a gift. Your friends won't need one."
@@ -185,20 +194,31 @@ function AuthPage() {
                   <button
                     onClick={handleGoogle}
                     disabled={busy}
-                    className="mt-6 w-full rounded-full bg-ink px-5 py-3 text-sm font-medium text-cream transition-colors hover:bg-ink/90 disabled:opacity-60"
+                    className="squish mt-6 min-h-12 w-full rounded-full bg-accent px-5 py-3.5 text-[15px] font-semibold text-cream transition-colors hover:bg-accent/90 disabled:opacity-60"
                   >
                     Continue with Google
                   </button>
-
-                  <div className="my-5 flex items-center gap-3 text-[11px] font-mono tracking-[0.14em] text-muted uppercase">
-                    <span className="h-px flex-1 bg-line" /> or{" "}
-                    <span className="h-px flex-1 bg-line" />
-                  </div>
+                  {emailOpen ? (
+                    <div className="my-5 flex items-center gap-3 text-[11px] font-mono tracking-[0.14em] text-muted uppercase">
+                      <span className="h-px flex-1 bg-line" /> or{" "}
+                      <span className="h-px flex-1 bg-line" />
+                    </div>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={() => setEmailOpen(true)}
+                      className="mt-3 min-h-11 w-full rounded-full border border-line bg-paper px-5 text-sm font-medium text-ink/80 transition-colors hover:bg-cream"
+                    >
+                      {GUEST_COPY.email}
+                    </button>
+                  )}
                 </>
               ) : (
                 <div className="mt-6" />
               )}
 
+              {!options?.google || emailOpen || mode === "forgot" ? (
+              <>
               <form onSubmit={handleEmail} className="space-y-3">
                 {mode === "signup" ? (
                   <input
@@ -236,7 +256,7 @@ function AuthPage() {
                 <button
                   type="submit"
                   disabled={busy}
-                  className="squish w-full rounded-full bg-accent px-5 py-3.5 text-[15px] font-semibold text-cream transition-colors hover:bg-accent/90 disabled:opacity-60"
+                  className={`squish w-full rounded-full px-5 py-3.5 text-[15px] font-semibold transition-colors disabled:opacity-60 ${options?.google ? "bg-ink text-cream hover:bg-ink/90" : "bg-accent text-cream hover:bg-accent/90"}`}
                 >
                   {mode === "signin"
                     ? "Sign in"
@@ -253,6 +273,8 @@ function AuthPage() {
                 >
                   Forgot your password?
                 </button>
+              ) : null}
+              </>
               ) : null}
 
               <button

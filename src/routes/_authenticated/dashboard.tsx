@@ -8,6 +8,9 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { ArrowUpRight, Link2, MoreHorizontal, PencilLine, Plus, Trash2 } from "lucide-react";
 import { SiteHeader } from "@/components/SiteHeader";
+import { GuestBanner, GuestSignInDialog } from "@/components/GuestPrompt";
+import { useAuth } from "@/hooks/useAuth";
+import { GUEST_COPY } from "@/copy/strings";
 import { deleteSite, listMySites } from "@/lib/api";
 import {
   DropdownMenu,
@@ -56,6 +59,8 @@ function status(site: GiftSite) {
 
 function GiftCard({ site, index, theme, counts }: { site: GiftSite; index: number; theme: Theme | null; counts: NoteCounts | null }) {
   const queryClient = useQueryClient();
+  const { isGuest } = useAuth();
+  const [askSignIn, setAskSignIn] = useState(false);
   const [confirming, setConfirming] = useState(false);
   const [deleting, setDeleting] = useState(false);
   // Paid plans keep their gift (and its receipt). Legacy gifts never had an order.
@@ -105,6 +110,7 @@ function GiftCard({ site, index, theme, counts }: { site: GiftSite; index: numbe
             <button
               type="button"
               onClick={() => {
+                if (isGuest) return setAskSignIn(true);
                 trackEvent("invite_shared", site.id, { channel: "dashboard" });
                 void navigator.clipboard.writeText(friendsLink).then(
                   () => toast.success("Invite link copied"),
@@ -116,6 +122,7 @@ function GiftCard({ site, index, theme, counts }: { site: GiftSite; index: numbe
               <Link2 className="size-4" /> Invite link
             </button>
           ) : null}
+          <GuestSignInDialog open={askSignIn} onOpenChange={setAskSignIn} title={GUEST_COPY.shareTitle} body={GUEST_COPY.shareBody} />
           {site.status === "published" ? (
             <a
               href={`/g/${site.slug}`}
@@ -200,6 +207,7 @@ function Dashboard() {
   return (
     <div className="min-h-screen bg-paper text-ink">
       <SiteHeader showMascot={!empty} />
+      <GuestBanner />
       <section className="mx-auto max-w-6xl px-4 pt-10 pb-20 sm:px-5">
         <div className="flex flex-wrap items-end justify-between gap-5">
           <div>
