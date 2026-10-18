@@ -13,7 +13,8 @@ import { OccasionChips } from "@/components/styles/OccasionChips";
 import { normalizeCharacter, type CharacterSetting } from "@/themes/_shared/cast/types";
 import { fetchThemes, type Theme } from "@/lib/themes";
 import { useAuth } from "@/hooks/useAuth";
-import { isOccasionId, occasionInfo, occasionName, type OccasionId } from "@/lib/occasions";
+import { isFlagOn } from "@/config/flags";
+import { isOccasionId, occasionInfo, occasionInSentence, type OccasionId } from "@/lib/occasions";
 import { STYLES, isRecommended, lookFor, splitForOccasion, styleCopy, styleTitle, type StyleInfo } from "@/lib/styles";
 
 export const Route = createFileRoute("/styles/")({
@@ -68,8 +69,9 @@ function StylesPage() {
   }
 
   function useStyle(style: StyleInfo) {
-    // Signed out, the /create guard sends them to sign in and brings them back with the style.
-    if (!user) toast.info("Sign in first, then you can start your gift.");
+    // Signed out, the /create guard sends them to sign in and brings them back with the style
+    // (or, with guestStart, starts them as a guest right there).
+    if (!user && !isFlagOn("guestStart")) toast.info("Sign in first, then you can start your gift.");
     else toast.success(`${styleTitle(style.id)} it is. Now, who's it for?`);
     navigate({
       to: "/create",
@@ -150,7 +152,7 @@ function StylesPage() {
             >
               {showOthers ? t("picker.style.hideOthers") : t("picker.style.showOthers", { n: split.others.length })}
             </button>
-            <p className="text-sm text-muted">{t("gallery.filteredFor", { occasion: occasionName(occasion).toLowerCase() })}</p>
+            <p className="text-sm text-muted">{t("gallery.filteredFor", { occasion: occasionInSentence(occasion) })}</p>
           </div>
         ) : null}
       </section>

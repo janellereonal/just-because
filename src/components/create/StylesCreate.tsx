@@ -9,7 +9,8 @@ import { useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { AnimatePresence } from "motion/react";
 import { t } from "@/i18n";
-import { GUIDE_COPY } from "@/copy/strings";
+import { GUEST_COPY, GUIDE_COPY } from "@/copy/strings";
+import { GuestSignInDialog } from "@/components/GuestPrompt";
 import { ConciergeOffer } from "@/components/ConciergeOffer";
 import { NewUserGuide, guideSeen } from "@/components/NewUserGuide";
 import { SiteHeader } from "@/components/SiteHeader";
@@ -25,7 +26,7 @@ import { usePalettes, suggestedPalettes } from "@/hooks/usePalettes";
 import { MODULES, normalizeSite, type ModuleType } from "@/lib/gift";
 import { PRESETS } from "@/lib/presets";
 import { occasionTitle, themeKindOf, type ThemeKind } from "@/lib/themeKind";
-import { occasionInfo, occasionName, type OccasionId } from "@/lib/occasions";
+import { occasionInfo, occasionInSentence, occasionName, type OccasionId } from "@/lib/occasions";
 import { STYLES, lookFor, styleForLegacy, styleInfo, styleTitle, type StyleId, type StyleInfo } from "@/lib/styles";
 import type { GiftFormat } from "@/lib/formats";
 import { accessoryForTheme } from "@/lib/bo3d/accessories";
@@ -47,6 +48,8 @@ const KIND_NAME: Partial<Record<ThemeKind, string>> = {
 };
 
 const CORE: ModuleType[] = ["letters", "photobooth", "songs", "voice", "wordcloud"];
+/** What a gift starts with when neither the occasion nor the style suggests anything. */
+const START: ModuleType[] = ["letters", "photobooth"];
 
 export function StylesCreate({
   fromUrl,
@@ -65,7 +68,7 @@ export function StylesCreate({
   formatFromUrl?: GiftFormat | undefined;
 }) {
   const navigate = useNavigate();
-  const { data: themes = [] } = useQuery({ queryKey: ["themes", "published"], queryFn: () => fetchThemes(false) });
+  const { data: themes = [], isPending: themesLoading } = useQuery({ queryKey: ["themes", "published"], queryFn: () => fetchThemes(false) });
   const byName = useMemo(() => new Map(themes.map((x) => [x.name.toLowerCase(), x])), [themes]);
   const themeRow = (name: string | undefined) => (name ? byName.get(name.toLowerCase()) : undefined);
 
@@ -98,6 +101,27 @@ export function StylesCreate({
 
   // Styles whose look is a draft theme stay hidden (they appear once published in /admin).
   const available = (s: StyleInfo) => s.looks.length === 0 || s.looks.some((l) => !!themeRow(l.theme));
+  // A link to a style that isn't out yet (?style=parol) starts with nothing picked instead.
+  useEffect(() => {
+    if (!themesLoading && style && !available(styleInfo(style))) setStyle(null);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [themesLoading, style]);
+
+  // The picks live in the address too, so a reload, Back or signing in keeps them.
+  // (Straight on history, so the sign-in check doesn't run again for every tap.)
+  useEffect(() => {
+    const q = new URLSearchParams(window.location.search);
+    const put = (k: string, v: string | null) => (v ? q.set(k, v) : q.delete(k));
+    put("style", style);
+    put("occasion", occasion);
+    put("from", solo ? "me" : null);
+    if (style) {
+      q.delete("theme");
+      q.delete("format");
+    }
+    const next = `${window.location.pathname}${q.size ? `?${q}` : ""}${window.location.hash}`;
+    if (next !== `${window.location.pathname}${window.location.search}${window.location.hash}`) window.history.replaceState(window.history.state, "", next);
+  }, [style, occasion, solo]);
   const info = style ? styleInfo(style) : null;
   const look = info ? lookFor(info, occasion) : null;
   const lookTheme: Theme | null = (look && themeRow(look.theme)) || null;
@@ -137,9 +161,9 @@ export function StylesCreate({
       ? (engineOccasion.sections.filter((x) => MODULES.some((m) => m.type === x)) as ModuleType[])
       : lookTheme
         ? PRESETS[themeKindOf(lookTheme)]
-        : [];
+        : START;
   const fromPage = (sectionsFromUrl ?? "").split(",").filter((x): x is ModuleType => MODULES.some((m) => m.type === x));
-  const [selected, setSelected] = useState<ModuleType[]>(fromPage.length ? fromPage : ["letters", "photobooth"]);
+  const [selected, setSelected] = useState<ModuleType[]>(fromPage.length ? fromPage : START);
   const [touched, setTouched] = useState(fromPage.length > 0);
   const [previewed, setPreviewed] = useState<ModuleType>("letters");
   const [showMore, setShowMore] = useState(false);
@@ -156,6 +180,8 @@ export function StylesCreate({
   const firstFive = ordered.slice(0, 5).map((m) => m.type);
   const listed = showMore ? ordered : ordered.filter((m) => firstFive.includes(m.type) || selected.includes(m.type));
   const hidden = ordered.filter((m) => !listed.includes(m));
+  /** What gets saved: a gift from one person has no tree (friends hang its ornaments). */
+  const toSave = solo ? selected.filter((x) => x !== "tree") : selected;
   function toggle(type: ModuleType) {
     setTouched(true);
     setSelected((prev) => (prev.includes(type) ? prev.filter((x) => x !== type) : [...prev, type]));
@@ -171,6 +197,7 @@ export function StylesCreate({
   }
 
   const [busy, setBusy] = useState(false);
+  const [guestFull, setGuestFull] = useState(false);
   const creating = useRef(false);
   const example = solo ? "Sam" : "Ana";
   async function handleCreate(e: React.FormEvent) {
@@ -186,7 +213,7 @@ export function StylesCreate({
       document.getElementById("gift-style")?.scrollIntoView({ behavior: "smooth", block: "center" });
       return;
     }
-    const modules = solo ? selected.filter((x) => x !== "tree") : selected;
+    const modules = toSave;
     if (modules.length === 0) {
       toast.error(solo ? "Pick at least one thing you'll add." : "Pick at least one thing friends can add.");
       return;
@@ -216,6 +243,11 @@ export function StylesCreate({
       creating.current = false;
       setBusy(false);
       const msg = error instanceof Error ? error.message : "";
+      // A guest with 3 gifts: sign in to keep going. The picks stay in the address, so they come back.
+      if (msg === GUEST_COPY.limit) {
+        setGuestFull(true);
+        return;
+      }
       toast.error(msg && msg.length < 160 && !/fetch|network/i.test(msg) ? msg : "Couldn't create that gift. Please try again.");
       return;
     }
@@ -245,6 +277,7 @@ export function StylesCreate({
       <SiteHeader />
       <BoBuddy followFocus intro={false} />
       <AnimatePresence>{guide ? <NewUserGuide onClose={() => setGuide(false)} /> : null}</AnimatePresence>
+      <GuestSignInDialog open={guestFull} onOpenChange={setGuestFull} title={GUEST_COPY.authHeading} body={GUEST_COPY.limitBody} />
       <section className="mx-auto max-w-3xl px-4 pt-14 pb-28 sm:px-5">
         <div className="relative pr-24 sm:pr-0">
           <p className="font-mono text-[11px] tracking-[0.18em] text-accent uppercase">New gift</p>
@@ -312,7 +345,7 @@ export function StylesCreate({
               placeholder={example}
               className="mt-5 w-full rounded-2xl border border-line bg-paper px-5 py-4 font-display text-lg outline-none transition-colors focus:border-accent focus:bg-white"
             />
-            <p className="mt-3 text-sm text-muted">
+            <p className="mt-3 text-sm text-muted [overflow-wrap:anywhere]">
               The gift opens with <span className="font-display text-base text-ink">{occasionTitle(lookTheme, recipient.trim() || example, occasion)}</span>
               {recipient.trim() ? null : <span className="ml-1.5 font-mono text-[10px] tracking-[0.12em] uppercase">(example)</span>}. You can change it later.
             </p>
@@ -330,7 +363,7 @@ export function StylesCreate({
             {perch("Pick one. I'll dress up for it.")}
             {step(4, t("picker.style.title"), t("picker.style.hint"))}
             <div className="mt-5">
-              <StylePicker value={style} onChange={pickStyle} occasion={occasion} available={available} />
+              <StylePicker value={style} onChange={pickStyle} occasion={occasion} available={available} loading={themesLoading} />
             </div>
           </div>
 
@@ -340,7 +373,7 @@ export function StylesCreate({
               5,
               solo ? "What will you add?" : "What can friends add?",
               suggested.length > 0
-                ? `We picked a few${occasion ? ` for ${occasionName(occasion).toLowerCase()}` : ""}. Turn on anything else.`
+                ? `We picked a few${occasion ? ` for ${occasionInSentence(occasion)}` : ""}. Turn on anything else.`
                 : "Turn on as many as you like.",
             )}
             <div className="mt-5 grid gap-5 md:grid-cols-[1fr_minmax(280px,340px)] md:items-start">
@@ -415,7 +448,7 @@ export function StylesCreate({
               <span className="min-w-0 leading-tight">
                 {occasion ? <span className="block truncate text-[11px] text-cream/70">{occasionName(occasion)}{solo ? " · Just me" : ""}</span> : null}
                 <span className="block truncate text-sm">
-                  {style ? styleTitle(style) : "No style yet"} · {selected.length} {selected.length === 1 ? "section" : "sections"}
+                  {style ? styleTitle(style) : "No style yet"} · {toSave.length} {toSave.length === 1 ? "section" : "sections"}
                   {!occasion && solo ? " · Just me" : ""}
                 </span>
               </span>

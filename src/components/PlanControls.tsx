@@ -3,7 +3,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { boWrap } from "@/lib/mascot/bus";
 import { getBilling, previewDiscountCode, setCustomSlug, setGiftPassword, startCheckout, startExtendCheckout } from "@/lib/api";
-import { CODE_COPY, GUEST_COPY } from "@/copy/strings";
+import { CODE_COPY, GUEST_COPY, PAY_SAFETY_COPY } from "@/copy/strings";
 import { useAuth } from "@/hooks/useAuth";
 import { GuestSignInCard } from "@/components/GuestPrompt";
 import { PricingCards } from "@/components/PricingCards";
@@ -48,11 +48,15 @@ function errorMessage(error: unknown, fallback: string) {
   return msg && msg.length < 200 ? msg : fallback;
 }
 
-/** Tier picker for publishing (first payment) or upgrading (pay the difference). */
+/**
+ * Tier picker for publishing (first payment) or upgrading (pay the difference). Once billing has
+ * loaded, the gift itself decides which (a gift paid for in another tab shows upgrade prices), and
+ * the server refuses a checkout if that changed after the prices were shown.
+ */
 export function PlanPickerDialog({
   siteId,
   recipient,
-  mode,
+  mode: asked,
   open,
   onOpenChange,
 }: {
@@ -62,7 +66,9 @@ export function PlanPickerDialog({
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }) {
+  const queryClient = useQueryClient();
   const { data: billing } = useBilling(siteId);
+  const mode: "publish" | "upgrade" = billing ? (getTier(billing.tier) && !billing.ended ? "upgrade" : "publish") : asked;
   const { isGuest } = useAuth();
   const [busyTier, setBusyTier] = useState<TierId | null>(null);
   const [codeOpen, setCodeOpen] = useState(false);
@@ -94,11 +100,13 @@ export function PlanPickerDialog({
       // The price is worked out again on the server; the code only goes along if it fits this plan.
       const code = applied && deal.get(tier)?.applies ? applied.code : undefined;
       // Bo wraps himself up while the checkout loads (never more than ~1s).
-      const [{ checkoutUrl }] = await Promise.all([startCheckout({ data: { siteId, tier, ...(code ? { code } : {}) } }), boWrap()]);
+      const [{ checkoutUrl }] = await Promise.all([startCheckout({ data: { siteId, tier, expect: mode, ...(code ? { code } : {}) } }), boWrap()]);
       window.location.assign(checkoutUrl);
     } catch (error) {
       setBusyTier(null);
       toast.error(errorMessage(error, "We couldn't open the payment page. Please try again."));
+      // The plan may have changed in another tab: show what it can buy now.
+      void queryClient.invalidateQueries({ queryKey: ["billing", siteId] });
     }
   }
 
@@ -206,7 +214,9 @@ export function PlanPickerDialog({
             )}
           </div>
         ) : null}
-        {billing ? (
+        {billing?.paused ? (
+          <p role="status" className="rounded-xl bg-cream px-3 py-3 text-sm">{PAY_SAFETY_COPY.paused}</p>
+        ) : billing ? (
           tiers.length > 0 ? (
             <PricingCards
               tiers={tiers}
@@ -276,6 +286,8 @@ export function ExtendDialog({
   let body: React.ReactNode;
   if (!billing) {
     body = <p className="py-6 text-center text-sm text-muted">Loading…</p>;
+  } else if (billing.paused) {
+    body = <p role="status" className="rounded-xl bg-cream px-3 py-3 text-sm">{PAY_SAFETY_COPY.paused}</p>;
   } else if (!billing.extend || !tier) {
     body = <p className="text-sm text-muted">This gift doesn't need extending.</p>;
   } else {
@@ -336,6 +348,13 @@ export function PlanBanner({
   onUpgrade: () => void;
   onExtend: () => void;
 }) {
+  if (billing?.paused) {
+    return (
+      <div role="status" className="border-b border-line bg-butter px-4 py-2.5 text-sm">
+        {PAY_SAFETY_COPY.pausedBanner}
+      </div>
+    );
+  }
   if (!billing || !billing.tier || billing.legacy) return null;
   if (billing.ended) {
     return (

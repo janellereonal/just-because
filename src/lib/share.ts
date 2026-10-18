@@ -4,6 +4,7 @@
  * paused gifts get a generic card.
  */
 import { createServerFn } from "@tanstack/react-start";
+import { notFound } from "@tanstack/react-router";
 import { eq } from "drizzle-orm";
 import { z } from "zod";
 import { getDb, schema } from "@/server/db";
@@ -20,7 +21,9 @@ export const getShareMeta = createServerFn({ method: "GET" })
       .from(schema.giftSites)
       .leftJoin(schema.themes, eq(schema.themes.id, schema.giftSites.themeId))
       .where(eq(schema.giftSites.slug, data.slug));
-    if (!row || row.disabledAt) return null;
+    // No gift with this link: the page answers 404 (the route shows its friendly not-found page).
+    if (!row) throw notFound();
+    if (row.disabledAt) return null;
     const kind = themeKindOf({ name: row.themeName, category: row.themeCategory });
     const name = String((row.customText as Record<string, unknown> | null)?.["recipient_name"] ?? "").trim().slice(0, 40);
     return { recipient: row.passwordHash || !name ? null : name, kind };

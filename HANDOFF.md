@@ -229,13 +229,14 @@ A. Keys are in and the webhook works (14 Oct): set up from /admin, first card te
 B. Upload theme preview images once Janelle sends them (Admin → Upload preview).
 C. Early-bird promo: built but off (`promo.enabled` in pricing.ts). Turn on only when Janelle says so.
 D. **Refunds (not built, notes only).** When it's needed:
-   - Today, a duplicate payment (two tabs) is logged as `[payments] ... Needs a refund.` in
-     `applyPaidEvent` and the order is marked paid without changing the gift. Refund those by hand
+   - Today, a payment that bought nothing (paid twice, or after the gift was deleted) marks the order
+     `refund_pending`, and an overpaid upgrade stays `paid`; both write a `refund due` row to
+     payment_log with the amount, listed on /admin under "Refunds to make". Refund those by hand
      in the PayMongo dashboard (Payments → the payment → Refund).
    - To automate: add `refundPayment(paymentId, amount, reason)` to `PaymentProvider` in
      `src/server/payments/types.ts`; PayMongo's is `POST /v1/refunds` with
      `{ payment_id, amount, reason }` (reasons: duplicate, fraudulent, requested_by_customer, others).
-   - Add order statuses `refund_pending` / `refunded`, call it from the duplicate branch of
+   - Add order status `refunded` (and a refunded amount column), call it from the duplicate branch of
      `applyPaidEvent` (after the transaction commits), and listen for `payment.refunded` /
      `payment.refund.updated` to mark the order refunded. Refunds of a used plan should stay
      manual (an admin button on /admin with a reason), not automatic.

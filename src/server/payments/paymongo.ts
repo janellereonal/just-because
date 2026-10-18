@@ -3,6 +3,8 @@
  * Docs: https://developers.paymongo.com/docs/checkout-implementation
  *
  *  - createCheckout: POST /v1/checkout_sessions with Basic auth (secret key).
+ *  - expireCheckout: POST /v1/checkout_sessions/{id}/expire, so an older checkout for the
+ *    same gift can't be paid as well (PayMongo answers 400 if it's paid or already expired).
  *  - handleWebhook: verifies `Paymongo-Signature` (t=…,te=…,li=…) as
  *    HMAC-SHA256(webhook secret, `${t}.${rawBody}`), compared to `te` in test
  *    mode or `li` in live mode. For `checkout_session.payment.paid` it then
@@ -11,7 +13,7 @@
  */
 import { createHmac, timingSafeEqual } from "node:crypto";
 import { enabledPaymentMethods, statementDescriptor } from "@/config/pricing";
-import type { CardOrigin, CheckoutOrder, CheckoutResult, PaidEvent, PayMethod, PaymentProvider, WebhookOutcome } from "./types";
+import type { CardOrigin, CheckoutOrder, CheckoutResult, ExpireResult, PaidEvent, PayMethod, PaymentProvider, WebhookOutcome } from "./types";
 
 const PAID_EVENT = "checkout_session.payment.paid";
 /** How old a webhook signature may be, in seconds. */
@@ -34,6 +36,8 @@ function secretKey() {
 
 async function call<T>(path: string, init: RequestInit = {}): Promise<T> {
   const res = await fetch(`${apiBase()}${path}`, {
+    // A hung request shouldn't hold up a checkout (or a database transaction around it).
+    signal: AbortSignal.timeout(20_000),
     ...init,
     headers: {
       Authorization: `Basic ${Buffer.from(`${secretKey()}:`).toString("base64")}`,
@@ -54,6 +58,8 @@ type CheckoutSession = {
     id: string;
     attributes: {
       checkout_url: string;
+      /** "active" or "expired". Read defensively: missing means we don't know. */
+      status?: string | null;
       livemode: boolean;
       reference_number?: string | null;
       metadata?: Record<string, string> | null;
@@ -168,7 +174,11 @@ async function handleWebhook(rawBody: string, headers: Headers): Promise<Webhook
   try {
     payload = JSON.parse(rawBody) as EventPayload;
   } catch {
-    return { kind: "rejected", reason: "body isn't JSON" };
+    return { kind: "rejected", reason: "body isn't JSON", malformed: true };
+  }
+  // `null`, a number or a list parse fine but aren't an event.
+  if (!payload || typeof payload !== "object" || Array.isArray(payload)) {
+    return { kind: "rejected", reason: "body isn't a JSON object", malformed: true };
   }
   const eventId = payload.data?.id ?? "";
   const eventType = payload.data?.attributes?.type ?? "";
@@ -234,6 +244,40 @@ async function checkPaid(
   };
 }
 
+function hasPaid(session: CheckoutSession) {
+  return (session.data.attributes.payments ?? []).some((p) => p.attributes.status === "paid");
+}
+
+async function reopenCheckout(checkoutId: string): Promise<string | null> {
+  try {
+    const session = await call<CheckoutSession>(`/v1/checkout_sessions/${encodeURIComponent(checkoutId)}`);
+    const a = session.data.attributes;
+    if (hasPaid(session) || a.status === "expired" || !a.checkout_url) return null;
+    return a.checkout_url;
+  } catch (error) {
+    console.warn("[payments] couldn't look up checkout", checkoutId, error);
+    return null;
+  }
+}
+
+async function expireCheckout(checkoutId: string): Promise<ExpireResult> {
+  try {
+    await call<CheckoutSession>(`/v1/checkout_sessions/${encodeURIComponent(checkoutId)}/expire`, { method: "POST" });
+    return "closed";
+  } catch (error) {
+    // 400 means paid, already expired, or a payment under way. Ask which.
+    try {
+      const session = await call<CheckoutSession>(`/v1/checkout_sessions/${encodeURIComponent(checkoutId)}`);
+      if (hasPaid(session)) return "paid";
+      if (session.data.attributes.status === "expired") return "closed";
+    } catch {
+      // fall through
+    }
+    console.warn("[payments] couldn't expire checkout", checkoutId, error);
+    return "open";
+  }
+}
+
 /* ---------------- webhook setup (admin) ---------------- */
 
 export type WebhookInfo = { id: string; url: string; events: string[]; status: string; livemode: boolean };
@@ -287,4 +331,4 @@ export async function ensureWebhook(url: string): Promise<{ action: string; webh
   return { action, webhook };
 }
 
-export const paymongo: PaymentProvider = { name: "paymongo", createCheckout, handleWebhook, checkPaid };
+export const paymongo: PaymentProvider = { name: "paymongo", createCheckout, handleWebhook, checkPaid, reopenCheckout, expireCheckout };

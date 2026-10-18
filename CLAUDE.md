@@ -87,9 +87,20 @@ Locally, without `BLOB_READ_WRITE_TOKEN` uploads save to `.dev-uploads/`, and wi
 - Caps: contributors are counted by distinct **device id** (`contributions.device_id`, a random
   id the contribute page keeps in localStorage, `src/lib/device.ts`). Old rows without one fall
   back to the name, and a name already seen with a device isn't counted twice. Photos are
-  photobooth items. Hidden items don't count. Over the cap, friends see "this gift is full"
-  and the owner gets an upgrade banner. `device_id` is never returned to the browser.
+  photobooth items. Hidden items don't count. The owner's own notes (`by_owner`) never take a friend slot (their
+  photos still count). Over the cap, friends see "this gift is full" and the owner gets an upgrade banner.
+  `device_id` is never returned to the browser. Anything that adds or un-hides an item goes through `withRoom`
+  (billing.ts): check and save in one transaction under an advisory lock per gift, so friends sending at once
+  can't pass a cap together.
 - Paid features live in `TierFeatures`; check them with `hasFeature(tier, "...")`.
+- One open checkout per gift (`openCheckout` in `src/server/checkout.ts`, under an advisory lock per gift): the same
+  plan again within 30 min gets the same checkout back; anything else first expires the older checkout at PayMongo
+  (`expireCheckout`), and stops with "paid in another tab" if it turns out it was just paid. Cancelling expires it too.
+  Paused gifts (`disabled_at`) can't be quoted. The plan picker sends `expect` (publish/upgrade) and a stale one gets 409.
+- Paid twice anyway (an old checkout PayMongo wouldn't close)? `applyPaidEvent` works from the gift as it is now: a higher
+  plan is applied as an upgrade from the real current plan, anything else bought nothing and the order becomes
+  `refund_pending`. Money owed back is a `payment_log` row with event `refund due` ("refund <centavos>: why"), written in
+  the same transaction; the confirm page tells the buyer, /admin lists it under "Refunds to make". Refunds are by hand.
 - We don't handle `payment.failed` on purpose: it's per attempt, and hosted checkout lets the
   buyer retry on the same session. Unpaid orders count as abandoned after 24h.
 - Live keys (`sk_live_`) are refused unless `PAYMONGO_ALLOW_LIVE=true`.
@@ -102,7 +113,10 @@ Locally, without `BLOB_READ_WRITE_TOKEN` uploads save to `.dev-uploads/`, and wi
   `discountCodes.minCharge`). Logic in `src/server/discounts.ts`. Codes apply to a gift's first plan only
   and replace the early-bird promo. The code goes in the PayMongo line item description and on the
   order (`discount_code`, `discount_amount`). A use is counted in `applyPaidEvent`, in the same
-  transaction that marks the order paid, so abandoned checkouts never use one up. Free codes skip
+  transaction that marks the order paid, so abandoned checkouts never use one up. For the limits (`max_uses`,
+  `max_per_user`), checkouts still open with the code from the last 24h on other gifts hold a use, and checkouts with
+  the same code take turns (advisory lock in `openCheckout`). `applyPaidEvent` re-checks every coded order: a paid one
+  over the limit still opens the gift and writes a `code over limit` row to payment_log for a look by hand. Free codes skip
   PayMongo: the order is made with provider `free` and opened through `applyPaidEvent` too, which
   re-checks the code with its row locked so the last use can't be taken twice. Starter codes are in
   `discountCodes.starter`, made once by `db:seed`.
@@ -166,6 +180,21 @@ verification is only required once `RESEND_API_KEY` and `EMAIL_FROM` are both se
   because a HEIC decoder needs WebAssembly, which our CSP doesn't allow.
 - Old uploads can be shrunk with `tools/media/compress-existing.ts` (dry run by default, never deletes).
 
+## Editor saving
+
+- The editor autosaves through `useGiftSaver` (`src/hooks/useGiftSaver.ts`): only fields that changed, 700ms after
+  the last edit, one save at a time. Words, colors, the opening (`intro_settings`) and the cast all go through
+  `updateSite`; JSON fields merge key by key (`src/lib/siteDraft.ts`, tested).
+- Each save sends what the editor last saw for those fields (`base`). If one changed elsewhere since (another tab, a
+  phone), `updateSite` refuses with 409 and the editor shows "This gift was changed somewhere else". Never write a
+  gift field from the editor around this.
+- Changes the editor makes by itself (words following a new occasion or style via `followAutoWords`, the opening
+  reset on a style switch) are saved as `soft` keys (`setDraft(update, { soft })`). If one changed elsewhere, the
+  server keeps its value and saves the rest of the patch (`checkSave`, returns `skipped`); the tab then shows it.
+- Failed saves stay unsaved and retry (2s, 5s, 10s, then every 30s, and on `online`). Leaving or hiding the page sends
+  what's left with `keepalive`; leaving in the app waits for it. `gift_sites.updated_at` is set by a trigger on
+  every update (migration 0019).
+
 ## Known gotchas
 
 - Countdowns are a UTC moment (`countdown_at`) shown in each viewer's own time zone; calendar days open
@@ -188,6 +217,14 @@ verification is only required once `RESEND_API_KEY` and `EMAIL_FROM` are both se
 - Gifts from before styles have both null and render exactly as before: theme opening + saved layout,
   theme words (`resolveStyle`, `giftWords`; tested for every theme × layout in `src/lib/styles.test.ts`).
 - Changing only the layout of a styled gift clears its style (it becomes a theme + layout gift).
+- Style pickers (`StylePicker loading`) show placeholder cards until the themes have loaded, so cards never
+  reshuffle under a finger. /create keeps its picks in the address (`?style=&occasion=&from=`, history.replace).
+- Changing the occasion (or the style, on a gift without one) swaps words we filled in, like the heading
+  "Happy birthday, Ana", for the new ones; typed words stay (`followAutoWords`, `src/lib/autoWords.ts`). Switching
+  style also clears `intro_settings.opening` ("Classic"), so the new style's own opening plays.
+- Name a gift's look with `giftLookTitle` (its style, or its layout for older gifts), never `formatInfo(format).title`.
+- Gift box wears the Christmas theme, so only Christmas lists it. Handwritten falls back to Storybook while
+  `handwrittenFormat` is off (turning the flag on is the real fix).
 - Every style has an opening and a body. Theme styles use their theme's opening (`src/themes/<theme>`). Layout
   styles (Scrapbook, Storybook, Comic, Bento, Hunt, Zine, Mixtape, Scratch, Constellation) have their own in
   `src/themes/layouts/` (registry `LAYOUT_OPENINGS`, shared kit in `kit.tsx`), picked by `TactileOpening`'s `style`

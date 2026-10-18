@@ -148,7 +148,7 @@ export function DiscountCodes() {
         <p className="font-medium sm:col-span-2 lg:col-span-4">New code</p>
         <label className="text-xs text-muted">
           Code
-          <input value={code} onChange={(e) => setCode(e.target.value.replace(/\s+/g, "").toUpperCase())} placeholder="LAUNCH20" required minLength={3} maxLength={40} pattern="[A-Za-z0-9_-]+" className={`${field} mt-1 font-mono`} />
+          <input value={code} onChange={(e) => setCode(e.target.value.replace(/\s+/g, "").toUpperCase())} placeholder="LAUNCH20" required minLength={3} maxLength={40} pattern="[A-Za-z0-9_\-]+" className={`${field} mt-1 font-mono`} />
         </label>
         <label className="text-xs text-muted">
           Type

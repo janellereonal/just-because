@@ -4,7 +4,7 @@ import { t } from "@/i18n";
 import { CharCount } from "@/components/ui/CharCount";
 import { LIMITS } from "@/lib/limits";
 import { ImagePlus, Loader2, RotateCcw, Shuffle, Undo2, X } from "lucide-react";
-import { STICKER_COPY } from "@/copy/strings";
+import { OPENING_CHOICE_COPY, STICKER_COPY } from "@/copy/strings";
 import { toast } from "sonner";
 import { themeStillUrl } from "@/components/Theme3D";
 import { HERO_WORD } from "@/components/GiftIntro";
@@ -129,7 +129,10 @@ export function IntroDesigner({
   offers = [],
   badgeHint,
   onUndoStickers,
+  styleName,
 }: {
+  /** The gift's style ("Cake"), so the Opening style choice says which opening is on. */
+  styleName?: string | undefined;
   /** Undo the last sticker change (shown when there is one). */
   onUndoStickers?: (() => void) | undefined;
   /** The label the opening shows when the line on top is empty (the occasion's name). */
@@ -252,7 +255,7 @@ export function IntroDesigner({
             aria-pressed={!classic}
             onClick={() => set({ opening: undefined })}
           >
-            Signature
+            {styleName ? OPENING_CHOICE_COPY.styleChip(styleName) : "Signature"}
           </button>
           <button
             type="button"
@@ -264,6 +267,7 @@ export function IntroDesigner({
           </button>
         </div>
         <p className="mt-2 text-xs text-muted">
+          {styleName ? <span className="block font-medium text-ink">{classic ? OPENING_CHOICE_COPY.classicOn(styleName) : OPENING_CHOICE_COPY.styleOn(styleName)}</span> : null}
           {classic
             ? `A 3D scene, stickers and a button. ${STICKER_COPY.hint}`
             : isFlagOn("styles") ? t("picker.style.ownObject") : "The theme's own object, opened with a gesture."}

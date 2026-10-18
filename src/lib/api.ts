@@ -19,9 +19,10 @@
  *  - a password-protected gift (paid feature) also needs the right password
  *    first; the password hash itself never leaves the server
  */
-import { GUEST_COPY } from "@/copy/strings";
+import { GUEST_COPY, SAVE_COPY } from "@/copy/strings";
+import { canonicalFields, checkSave, flatten, withoutKeys } from "@/lib/siteDraft";
 import { FORMAT_IDS, type GiftFormat } from "@/lib/formats";
-import { STYLE_IDS, bodyFor, lookFor, styleInfo, type StyleInfo } from "@/lib/styles";
+import { STYLE_IDS, bodyFor, isStyleId, lookFor, styleInfo, type StyleInfo } from "@/lib/styles";
 import { OCCASION_IDS, occasionInfo, type OccasionId } from "@/lib/occasions";
 import { FONT_CHOICE_IDS } from "@/lib/fontChoices";
 import { FIELD_NAMES, LIMITS, customTextLimit, noteTextLimit, tooLong } from "@/lib/limits";
@@ -39,15 +40,13 @@ import { CLIENT_EVENTS, track } from "@/server/events";
 import { notifyNewNote } from "@/server/notify";
 import { clientIp, rateLimit } from "@/server/rateLimit";
 import {
-  checkRoom,
   expireStaleOrders,
   isExpired,
   isOpen,
-  quote,
-  quoteExtend,
   siteUsage,
   tierBlocker,
   upgradeOptions,
+  withRoom,
 } from "@/server/billing";
 import { TIERS, LEGACY_TIER, discountLabel as discountLabelOf, getTier, hasFeature, tierAllowsLook } from "@/config/pricing";
 import {
@@ -525,134 +524,186 @@ export const createSite = createServerFn({ method: "POST" })
 
 const date = z.string().regex(/^\d{4}-\d{2}-\d{2}$/).nullable();
 
+/** Keyed JSON fields in a patch: one entry per key, null removes it. */
+const keyedPatch = z.record(z.string().max(60), json);
+/** How big a keyed JSON field may get once merged (it's settings, not content). */
+const MAX_SETTINGS_JSON = 12_000;
+
+/**
+ * Saves editor changes. Only the fields in `patch` are written; JSON fields
+ * (custom_text, custom_colors, intro_settings, format_settings) merge key by key.
+ * `base` holds what the editor last saw for each of those fields: if one of them
+ * changed since (another tab, a phone), nothing is written and the editor gets a
+ * 409 so it can load the latest instead of overwriting (src/lib/siteDraft.ts).
+ * `soft` keys (words the editor changed by itself) are left out instead, and
+ * listed in `skipped`. Returns the saved gift.
+ */
 export const updateSite = createServerFn({ method: "POST" })
   .inputValidator(
     z.object({
       id,
       patch: z.object({
-        title: z.string().trim().min(1).max(200),
-        custom_text: jsonObject,
-        custom_colors: paletteShape,
-        font_choice: z.enum(FONT_CHOICE_IDS),
-        countdown_date: date,
+        title: z.string().trim().min(1).max(200).optional(),
+        custom_text: z.record(z.string().max(60), z.string().max(20000).nullable()).optional(),
+        custom_colors: z
+          .object({ background: z.string().max(40).nullable(), primary: z.string().max(40).nullable(), accent: z.string().max(40).nullable() })
+          .partial()
+          .optional(),
+        font_choice: z.enum(FONT_CHOICE_IDS).optional(),
+        countdown_date: date.optional(),
         countdown_at: z.string().datetime({ offset: true }).nullable().optional(),
-        calendar_locked: z.boolean(),
-        intro_text: z.string().trim().max(LIMITS.greeting, tooLong("the greeting", LIMITS.greeting)).nullable(),
-        background_style: z.enum(["paper", "clean", "formal", "gradient"]),
-        tree_reveal_date: date,
-        palette_id: id.nullable(),
-        share_notes: z.boolean(),
+        calendar_locked: z.boolean().optional(),
+        intro_text: z.string().trim().max(LIMITS.greeting, tooLong("the greeting", LIMITS.greeting)).nullable().optional(),
+        background_style: z.enum(["paper", "clean", "formal", "gradient"]).optional(),
+        tree_reveal_date: date.optional(),
+        palette_id: id.nullable().optional(),
+        share_notes: z.boolean().optional(),
         status: z.enum(["draft", "published"]).optional(),
-        format: z.enum(FORMAT_IDS),
+        format: z.enum(FORMAT_IDS).optional(),
         /** Change the style (null clears it). The server sets the layout and theme to match. */
         style: z.enum(STYLE_IDS).nullable().optional(),
         style_look: z.string().trim().max(40).nullable().optional(),
         occasion: occasionField.nullable().optional(),
-        format_settings: jsonObject,
+        format_settings: keyedPatch.optional(),
+        intro_settings: keyedPatch.optional(),
+        character: jsonObject.nullable().optional(),
+        icon_set: jsonObject.nullable().optional(),
         solo: z.boolean().optional(),
       }),
+      /** What the editor last saw for each field it's changing, in the same shape. */
+      base: jsonObject.optional(),
+      /** Values this editor has in another save still on its way; those count as seen too. */
+      base_alt: jsonObject.optional(),
+      /** Patch keys (flat, like `custom_text.heading`) the editor changed by itself; skipped instead of refused if changed elsewhere. */
+      soft: z.array(z.string().max(80)).max(64).optional(),
     }),
   )
   .handler(async ({ data }) => {
     await requireSiteOwner(data.id);
-    const [site] = await getDb().select().from(schema.giftSites).where(eq(schema.giftSites.id, data.id));
-    if (!site) throw new HttpError(404, "We couldn't find that gift.");
-    const p = data.patch;
-    // Words: trimmed, with the same limits the editor's counters show.
-    const cleanText: Record<string, string> = {};
-    for (const [k, v] of Object.entries(p.custom_text)) {
-      if (typeof v !== "string") continue;
-      const t = v.trim();
-      const max = customTextLimit(k);
-      if ([...t].length > max) throw new HttpError(422, tooLong(FIELD_NAMES[k] ?? "that title", max));
-      if (t) cleanText[k] = t;
-    }
-    p.custom_text = cleanText;
-    // Going live needs a paid plan. The first publish happens in the payment webhook;
-    // this only re-opens a paid gift that the owner had taken offline.
-    if (p.status === "published" && site.status !== "published") {
-      if (!site.tier) throw new HttpError(402, "Pick a plan to publish this gift.");
-      if (isExpired(site)) throw new HttpError(400, "This gift has ended.");
-      // While it was offline it could collect past its plan's limits; it has to fit again to reopen.
-      const reopenTier = getTier(site.tier);
-      if (reopenTier) {
-        const blocker = tierBlocker(reopenTier, await siteUsage(site.id), p.format, site.style);
-        if (blocker) throw new HttpError(409, `${blocker} Upgrade, or hide a few, to reopen it.`);
+    let p = data.patch;
+    const softKeys = data.soft ?? [];
+    const patchKeys = new Set(Object.keys(flatten(p as Record<string, unknown>)));
+    if (softKeys.some((k) => !patchKeys.has(k))) throw new HttpError(400, "Something got mixed up. Refresh the page and try again.");
+    let skipped: string[] = [];
+    const saved = await getDb().transaction(async (tx) => {
+      // Locked until this save is written, so two tabs saving at once can't both pass the check.
+      const [site] = await tx.select().from(schema.giftSites).where(eq(schema.giftSites.id, data.id)).for("update");
+      if (!site) throw new HttpError(404, "We couldn't find that gift.");
+
+      // Never overwrite a change this editor hasn't seen. A new style brings its own layout, so that isn't checked twice.
+      // Words the editor changed by itself (soft) that changed elsewhere keep the server's value; the rest saves.
+      const check = checkSave(
+        flatten(canonicalFields(toRow(site))),
+        flatten(data.base ?? {}),
+        flatten(p as Record<string, unknown>),
+        { skip: p.style ? ["format"] : [], alt: flatten(data.base_alt ?? {}), soft: softKeys },
+      );
+      if (check.clashes.length) {
+        console.info(`[editor] refused a stale save on gift ${site.id}: ${check.clashes.join(", ")}`);
+        throw new HttpError(409, SAVE_COPY.serverConflict);
       }
-    }
-    // Style: a new style brings its own layout and theme. Changing only the layout of a
-    // styled gift (from an older editor) turns it back into a theme + layout gift, which
-    // still plays the same opening.
-    let format: GiftFormat = p.format;
-    let styleCols: { style?: string | null; themeId?: string | null } = {};
-    const occasion = p.occasion !== undefined ? p.occasion : (site.occasion as OccasionId | null);
-    if (p.style) {
-      const style = styleInfo(p.style);
-      const keepBody = site.style === style.id && (site.format === style.body || site.format === style.fallbackBody);
-      format = keepBody ? (site.format as GiftFormat) : bodyFor(style);
-      styleCols = { style: style.id, themeId: await themeForStyle(style, occasion, p.style_look) };
-    } else if (p.style === null) {
-      styleCols = { style: null };
-    } else if (site.style && p.format !== site.format) {
-      styleCols = { style: null };
-    }
-    const tier = getTier(site.tier);
-    if (tier && !tierAllowsLook(tier, format, styleCols.style !== undefined ? styleCols.style : site.style)) {
-      throw new HttpError(400, `${tier.name} doesn't include that format. Upgrade to use it.`);
-    }
-    await getDb()
-      .update(schema.giftSites)
-      .set({
-        title: p.title,
-        customText: p.custom_text,
-        customColors: p.custom_colors,
-        fontChoice: p.font_choice,
-        countdownDate: p.countdown_date,
-        ...(p.countdown_at !== undefined ? { countdownAt: p.countdown_at ? new Date(p.countdown_at) : null } : {}),
-        calendarLocked: p.calendar_locked,
-        introText: p.intro_text,
-        backgroundStyle: p.background_style,
-        treeRevealDate: p.tree_reveal_date,
-        paletteId: p.palette_id,
-        shareNotes: p.share_notes,
-        ...(p.status ? { status: p.status } : {}),
-        format,
-        ...styleCols,
-        ...(p.occasion !== undefined ? { occasion: p.occasion } : {}),
-        formatSettings: p.format_settings,
-        ...(p.solo !== undefined ? { solo: p.solo } : {}),
-      })
-      .where(eq(schema.giftSites.id, data.id));
-    return { ok: true };
+      skipped = check.skipped;
+      if (skipped.length) p = withoutKeys(p, skipped);
+
+      const set: Partial<typeof schema.giftSites.$inferInsert> = {};
+      if (p.title !== undefined) set.title = p.title;
+      // Words: trimmed, with the same limits the editor's counters show. Empty removes.
+      if (p.custom_text) {
+        const text: Record<string, string> = { ...(site.customText as Record<string, string>) };
+        for (const [k, v] of Object.entries(p.custom_text)) {
+          const t = (v ?? "").trim();
+          if (!t) {
+            delete text[k];
+            continue;
+          }
+          const max = customTextLimit(k);
+          if ([...t].length > max) throw new HttpError(422, tooLong(FIELD_NAMES[k] ?? "that title", max));
+          text[k] = t;
+        }
+        set.customText = text;
+      }
+      if (p.custom_colors) set.customColors = mergeKeys(site.customColors, p.custom_colors);
+      if (p.format_settings) set.formatSettings = mergeKeys(site.formatSettings, p.format_settings);
+      // The opening: cleaned server side, only known keys, hex colors, safe upload URLs.
+      if (p.intro_settings) set.introSettings = normalizeIntroSettings(mergeKeys(normalizeIntroSettings(site.introSettings), p.intro_settings));
+      if (p.character !== undefined) set.character = p.character ? normalizeCharacter(p.character) : null;
+      if (p.icon_set !== undefined) set.iconSet = p.icon_set ? normalizeIconSetting(p.icon_set) : null;
+      for (const [k, v] of [["formatSettings", set.formatSettings], ["introSettings", set.introSettings]] as const) {
+        if (v !== undefined && JSON.stringify(v).length > MAX_SETTINGS_JSON) throw new HttpError(400, k === "introSettings" ? "That opening has too much in it." : "That has too much in it.");
+      }
+      if (p.font_choice !== undefined) set.fontChoice = p.font_choice;
+      if (p.countdown_date !== undefined) set.countdownDate = p.countdown_date;
+      if (p.countdown_at !== undefined) set.countdownAt = p.countdown_at ? new Date(p.countdown_at) : null;
+      if (p.calendar_locked !== undefined) set.calendarLocked = p.calendar_locked;
+      if (p.intro_text !== undefined) set.introText = p.intro_text;
+      if (p.background_style !== undefined) set.backgroundStyle = p.background_style;
+      if (p.tree_reveal_date !== undefined) set.treeRevealDate = p.tree_reveal_date;
+      if (p.palette_id !== undefined) set.paletteId = p.palette_id;
+      if (p.share_notes !== undefined) set.shareNotes = p.share_notes;
+      if (p.solo !== undefined) set.solo = p.solo;
+      if (p.occasion !== undefined) set.occasion = p.occasion;
+
+      // Style: a new style brings its own layout and theme, and a new occasion can change
+      // the theme it wears. Changing only the layout of a styled gift (from an older editor)
+      // turns it back into a theme + layout gift, which still plays the same opening.
+      const occasion = p.occasion !== undefined ? p.occasion : (site.occasion as OccasionId | null);
+      let format = site.format as GiftFormat;
+      let style = site.style;
+      if (p.style) {
+        const info = styleInfo(p.style);
+        const keepBody = site.style === info.id && (site.format === info.body || site.format === info.fallbackBody);
+        format = keepBody ? format : bodyFor(info);
+        style = info.id;
+        set.themeId = await themeForStyle(info, occasion, p.style_look);
+      } else if (p.style === null) {
+        style = null;
+        if (p.format) format = p.format;
+      } else if (p.format !== undefined && p.format !== site.format) {
+        format = p.format;
+        if (site.style) style = null;
+      } else if (p.occasion !== undefined && p.occasion !== site.occasion && site.style && isStyleId(site.style)) {
+        set.themeId = await themeForStyle(styleInfo(site.style), occasion, null);
+      }
+      const lookChanged = format !== site.format || style !== site.style;
+      if (lookChanged) {
+        set.format = format;
+        set.style = style;
+        const tier = getTier(site.tier);
+        if (tier && !tierAllowsLook(tier, format, style)) throw new HttpError(400, `${tier.name} doesn't include that format. Upgrade to use it.`);
+      }
+
+      // Going live needs a paid plan. The first publish happens in the payment webhook;
+      // this only re-opens a paid gift that the owner had taken offline.
+      if (p.status !== undefined) {
+        if (p.status === "published" && site.status !== "published") {
+          if (!site.tier) throw new HttpError(402, "Pick a plan to publish this gift.");
+          if (isExpired(site)) throw new HttpError(400, "This gift has ended.");
+          // While it was offline it could collect past its plan's limits; it has to fit again to reopen.
+          const reopenTier = getTier(site.tier);
+          if (reopenTier) {
+            const blocker = tierBlocker(reopenTier, await siteUsage(site.id), format, style);
+            if (blocker) throw new HttpError(409, `${blocker} Upgrade, or hide a few, to reopen it.`);
+          }
+        }
+        set.status = p.status;
+      }
+
+      if (Object.keys(set).length === 0) return site;
+      const [row] = await tx.update(schema.giftSites).set(set).where(eq(schema.giftSites.id, site.id)).returning();
+      return row!;
+    });
+    return { ok: true, site: siteRow(saved, { owner: true }), skipped };
   });
 
-/** The creator's custom opening. Cleaned server side: only known keys, hex colors, safe upload URLs. */
-export const updateIntroSettings = createServerFn({ method: "POST" })
-  .inputValidator(z.object({ id, settings: jsonObject }))
-  .handler(async ({ data }) => {
-    await requireSiteOwner(data.id);
-    if (JSON.stringify(data.settings).length > 12_000) throw new HttpError(400, "That opening has too much in it.");
-    const settings = normalizeIntroSettings(data.settings);
-    await getDb()
-      .update(schema.giftSites)
-      .set({ introSettings: settings })
-      .where(eq(schema.giftSites.id, data.id));
-    return { ok: true, settings };
-  });
-
-/** The gift's cast: its character and icon set. Cleaned server side; null = theme default. */
-export const updateCast = createServerFn({ method: "POST" })
-  .inputValidator(z.object({ id, character: jsonObject.nullable(), iconSet: jsonObject.nullable() }))
-  .handler(async ({ data }) => {
-    await requireSiteOwner(data.id);
-    const character = data.character ? normalizeCharacter(data.character) : null;
-    const iconSet = data.iconSet ? normalizeIconSetting(data.iconSet) : null;
-    await getDb()
-      .update(schema.giftSites)
-      .set({ character, iconSet })
-      .where(eq(schema.giftSites.id, data.id));
-    return { ok: true, character, iconSet };
-  });
+/** A JSON object with some keys replaced; null removes a key. */
+function mergeKeys(current: unknown, patch: Record<string, unknown>): Record<string, Json> {
+  const out: Record<string, unknown> = current && typeof current === "object" && !Array.isArray(current) ? { ...(current as Record<string, unknown>) } : {};
+  for (const [k, v] of Object.entries(patch)) {
+    if (v === null || v === undefined) delete out[k];
+    else out[k] = v;
+  }
+  return out as Record<string, Json>;
+}
 
 export const deleteSite = createServerFn({ method: "POST" })
   .inputValidator(z.object({ id }))
@@ -665,7 +716,8 @@ export const deleteSite = createServerFn({ method: "POST" })
       .from(schema.orders)
       .where(and(eq(schema.orders.siteId, data.id), eq(schema.orders.status, "paid")))
       .limit(1);
-    if (paid) throw new Error("This gift has a paid plan, so it stays. You can unpublish it from the editor.");
+    // A friendly 409, not a 500, when it was paid for in another tab after this page loaded.
+    if (paid) throw new HttpError(409, "This gift has a paid plan, so it stays. You can unpublish it from the editor.");
     await db.delete(schema.giftSites).where(eq(schema.giftSites.id, data.id));
     // Every photo, voice note and picture stored for it goes too.
     const { deleteGiftMedia } = await import("@/server/uploads");
@@ -862,30 +914,36 @@ export const submitContribution = createServerFn({ method: "POST" })
     }
     rateLimit(`note:ip:${clientIp()}`, 30, 10 * 60_000, "You're adding notes very quickly. Wait a few minutes and try again.");
     rateLimit(`note:gift:${data.siteId}`, 200, 60 * 60_000, "This gift is getting a lot of notes right now. Try again in a little while.");
-    // Paid plans have caps. Tell the friend kindly instead of failing.
     const deviceId = data.deviceId ?? null;
-    const room = await checkRoom(site, data.authorName, data.moduleType, deviceId);
-    if (!room.ok) return { ok: false as const, full: room.reason };
     const [module] = await db
       .select({ enabled: schema.siteModules.enabled })
       .from(schema.siteModules)
       .where(and(eq(schema.siteModules.siteId, data.siteId), eq(schema.siteModules.moduleType, data.moduleType)));
     if (!module?.enabled) throw new HttpError(400, "That section isn't open on this gift.");
-    const inserted = await db.insert(c).values({
-      id: data.id,
-      siteId: data.siteId,
-      moduleType: data.moduleType,
-      authorName: data.authorName,
-      textContent: data.textContent,
-      mediaUrl: data.mediaUrl,
-      externalLink: data.externalLink,
-      status: "pending",
-      ornamentKey: data.moduleType === "tree" ? (data.ornamentKey ?? "bauble") : null,
-      visibility: data.moduleType === "tree" ? data.visibility : "public",
-      editToken: data.editToken,
-      deviceId,
-      data: sectionData,
-    }).onConflictDoNothing({ target: c.id }).returning({ id: c.id });
+    // Paid plans have caps. Tell the friend kindly instead of failing. Checked and saved under one
+    // lock, so friends sending at the same moment can't pass the cap together.
+    const saved = await withRoom(data.siteId, async (tx, _site, room) => {
+      const fits = await room({ authorName: data.authorName, moduleType: data.moduleType, deviceId });
+      if (!fits.ok) return fits;
+      const rows = await tx.insert(c).values({
+        id: data.id,
+        siteId: data.siteId,
+        moduleType: data.moduleType,
+        authorName: data.authorName,
+        textContent: data.textContent,
+        mediaUrl: data.mediaUrl,
+        externalLink: data.externalLink,
+        status: "pending",
+        ornamentKey: data.moduleType === "tree" ? (data.ornamentKey ?? "bauble") : null,
+        visibility: data.moduleType === "tree" ? data.visibility : "public",
+        editToken: data.editToken,
+        deviceId,
+        data: sectionData,
+      }).onConflictDoNothing({ target: c.id }).returning({ id: c.id });
+      return { ok: true as const, inserted: rows };
+    });
+    if (!saved.ok) return { ok: false as const, full: saved.reason };
+    const inserted = saved.inserted;
     // Two identical requests at the same moment: only the first one notifies.
     if (inserted.length) {
       await notifyNewNote(data.siteId, data.authorName).catch((e) => console.error("[notify]", e));
@@ -940,31 +998,34 @@ export const saveOwnerNote = createServerFn({ method: "POST" })
         .where(eq(c.id, data.id));
       return { ok: true as const, full: null };
     }
-    const [site] = await db.select().from(schema.giftSites).where(eq(schema.giftSites.id, data.siteId));
-    if (!site) throw new HttpError(404, "We couldn't find that gift.");
-    const room = await checkRoom(site, data.authorName, data.moduleType, null);
-    if (!room.ok) return { ok: false as const, full: room.reason };
-    // Turn the section on if it isn't yet, so the note actually shows.
-    await db
-      .insert(schema.siteModules)
-      .values({ siteId: data.siteId, moduleType: data.moduleType, price: "0", enabled: true })
-      .onConflictDoUpdate({
-        target: [schema.siteModules.siteId, schema.siteModules.moduleType],
-        set: { enabled: true },
+    // The owner isn't a friend, so only the photo cap applies to their notes.
+    const saved = await withRoom(data.siteId, async (tx, _site, room) => {
+      const fits = await room({ authorName: data.authorName, moduleType: data.moduleType, byOwner: true });
+      if (!fits.ok) return fits;
+      // Turn the section on if it isn't yet, so the note actually shows.
+      await tx
+        .insert(schema.siteModules)
+        .values({ siteId: data.siteId, moduleType: data.moduleType, price: "0", enabled: true })
+        .onConflictDoUpdate({
+          target: [schema.siteModules.siteId, schema.siteModules.moduleType],
+          set: { enabled: true },
+        });
+      await tx.insert(c).values({
+        id: data.id,
+        siteId: data.siteId,
+        moduleType: data.moduleType,
+        authorName: data.authorName,
+        textContent: data.textContent,
+        mediaUrl: data.mediaUrl,
+        externalLink: data.externalLink,
+        status: "approved",
+        visibility: "public",
+        byOwner: true,
+        data: sectionData,
       });
-    const inserted = await db.insert(c).values({
-      id: data.id,
-      siteId: data.siteId,
-      moduleType: data.moduleType,
-      authorName: data.authorName,
-      textContent: data.textContent,
-      mediaUrl: data.mediaUrl,
-      externalLink: data.externalLink,
-      status: "approved",
-      visibility: "public",
-      byOwner: true,
-      data: sectionData,
+      return { ok: true as const };
     });
+    if (!saved.ok) return { ok: false as const, full: saved.reason };
     await track("note_added", { siteId: data.siteId, userId: user.id, props: { type: data.moduleType, by_owner: true } });
     return { ok: true as const, full: null };
   });
@@ -1039,107 +1100,29 @@ export const getBilling = createServerFn({ method: "GET" })
         blocker: tierBlocker(t, usage, site.format, site.style),
       })),
       latestOrder: latest ?? null,
+      /** Paused by us (a report): it can't be paid for or opened until it's un-paused. */
+      paused: !!site.disabledAt,
       /** Price and length of one more stretch on the current plan (null for legacy or unpaid). */
       extend: tier ? { amount: tier.extendAmount, label: tier.liveFor.label } : null,
     };
   });
 
-type Quote = Awaited<ReturnType<typeof quote>>;
-
-/** Saves the order and opens a PayMongo checkout for it. The amount always comes from the quote. */
-async function openCheckout(
-  user: { id: string; email: string; name: string },
-  site: typeof schema.giftSites.$inferSelect,
-  q: Quote,
-) {
-  const db = getDb();
-  const free = q.amount === 0 && !!q.discount;
-  const freeId = free ? crypto.randomUUID() : null;
-  const [order] = await db
-    .insert(schema.orders)
-    .values({
-      ...(freeId ? { id: freeId, providerCheckoutId: `free_${freeId}` } : {}),
-      siteId: site.id,
-      ownerId: user.id,
-      kind: q.kind,
-      tier: q.tier.id,
-      fromTier: q.fromTier,
-      amount: q.amount,
-      currency: "PHP",
-      promoApplied: q.promoApplied,
-      discountCodeId: q.discount?.id ?? null,
-      discountCode: q.discount?.code ?? null,
-      discountAmount: q.discount?.off ?? 0,
-      provider: free ? "free" : "paymongo",
-    })
-    .returning({ id: schema.orders.id });
-  if (q.kind === "publish") await track("gift_wrapped", { siteId: site.id, userId: user.id, props: { tier: q.tier.id } });
-  if (freeId) {
-    // A free code: no payment page. Opened through the same path as a paid order, so the use
-    // is counted once and the gift opens exactly as if it had been paid.
-    const { applyPaidEvent } = await import("@/server/billing");
-    await applyPaidEvent(
-      { eventId: `free_${freeId}`, eventType: "free_code", checkoutId: `free_${freeId}`, orderId: freeId, paymentId: null, amountPaid: 0 },
-      "free",
-      "confirm",
-    );
-    const [after] = await db.select({ status: schema.orders.status }).from(schema.orders).where(eq(schema.orders.id, freeId));
-    if (after?.status !== "paid") throw new HttpError(400, "That code was just used up. You can still pick a plan without it.");
-    return { orderId: freeId, checkoutUrl: `/checkout/${freeId}` };
-  }
-  const { getProvider } = await import("@/server/payments");
-  const { siteUrl } = await import("@/server/email");
-  const base = siteUrl();
-  const recipient =
-    ((site.customText as { recipient_name?: string } | null)?.recipient_name ?? "").trim() || site.title;
-  const itemName =
-    q.kind === "upgrade"
-      ? `Upgrade to ${q.tier.name}`
-      : q.kind === "extend"
-        ? `Keep the gift open for ${q.tier.liveFor.label} more`
-        : `Just Because ${q.tier.name}`;
-  const itemDescription =
-    q.kind === "extend"
-      ? `${recipient}'s gift, ${q.tier.name} plan, open for another ${q.tier.liveFor.label}`
-      : q.discount
-        ? `${recipient}'s gift, ${q.tier.name} plan (${q.discount.code}), live for ${q.tier.liveFor.label}`
-        : `${recipient}'s gift, ${q.tier.name} plan (live for ${q.tier.liveFor.label})`;
-  try {
-    const provider = getProvider("paymongo");
-    const checkout = await provider.createCheckout({
-      orderId: order!.id,
-      siteId: site.id,
-      amount: q.amount,
-      currency: "PHP",
-      itemName,
-      itemDescription,
-      successUrl: `${base}/checkout/${order!.id}`,
-      cancelUrl: `${base}/checkout/${order!.id}?cancelled=1`,
-      customerEmail: user.email,
-      customerName: user.name,
-    });
-    await db
-      .update(schema.orders)
-      .set({ providerCheckoutId: checkout.checkoutId, updatedAt: new Date() })
-      .where(eq(schema.orders.id, order!.id));
-    return { orderId: order!.id, checkoutUrl: checkout.checkoutUrl };
-  } catch (error) {
-    console.error("[payments] createCheckout failed", error);
-    await db
-      .update(schema.orders)
-      .set({ status: "failed", updatedAt: new Date() })
-      .where(eq(schema.orders.id, order!.id));
-    throw new HttpError(502, "We couldn't open the payment page just now. Please try again.");
-  }
-}
-
 /** Creates an order and a PayMongo checkout. The amount is worked out here, never sent by the browser. */
 export const startCheckout = createServerFn({ method: "POST" })
-  .inputValidator(z.object({ siteId: id, tier: z.enum(["sweet", "celebration", "keepsake"]), code: z.string().max(40).optional() }))
+  .inputValidator(
+    z.object({
+      siteId: id,
+      tier: z.enum(["sweet", "celebration", "keepsake"]),
+      code: z.string().max(40).optional(),
+      /** What the plan picker showed; refused if the gift's plan changed since (another tab). */
+      expect: z.enum(["publish", "upgrade"]).optional(),
+    }),
+  )
   .handler(async ({ data }) => {
     const { user, site } = await ownedSite(data.siteId);
     guestsSignInFirst(user);
-    return openCheckout(user, site, await quote(site, data.tier, { code: data.code?.trim() || null, userId: user.id }));
+    const { openCheckout } = await import("@/server/checkout");
+    return openCheckout(user, site.id, { kind: "plan", tier: data.tier, code: data.code?.trim() || null, expect: data.expect });
   });
 
 /**
@@ -1155,11 +1138,11 @@ export const previewDiscountCode = createServerFn({ method: "POST" })
     if (tooManyTries(user.id)) return { ok: false as const, message: "That's a lot of codes. Try again in a few minutes." };
     if (getTier(site.tier)) return { ok: false as const, message: "Codes work when you first pick a plan." };
     const code = await findCode(data.code);
-    const general = await codeProblem(code, null, user.id);
+    const general = await codeProblem(code, null, user.id, undefined, { siteId: site.id });
     if (general || !code) return { ok: false as const, message: general ?? "We don't know that code." };
     const plans = await Promise.all(
       TIERS.map(async (t) => {
-        const problem = await codeProblem(code, t, user.id);
+        const problem = await codeProblem(code, t, user.id, undefined, { siteId: site.id });
         const p = priceWith(code, t.amount);
         return { id: t.id, applies: !problem, amount: problem ? t.amount : p.amount, was: t.amount, free: !problem && p.amount === 0 };
       }),
@@ -1173,7 +1156,8 @@ export const startExtendCheckout = createServerFn({ method: "POST" })
   .handler(async ({ data }) => {
     const { user, site } = await ownedSite(data.siteId);
     guestsSignInFirst(user);
-    return openCheckout(user, site, quoteExtend(site));
+    const { openCheckout } = await import("@/server/checkout");
+    return openCheckout(user, site.id, { kind: "extend" });
   });
 
 async function ownedOrder(orderId: string) {
@@ -1186,35 +1170,46 @@ async function ownedOrder(orderId: string) {
 /**
  * Polled by the "Confirming your payment" page. The webhook is the main way an
  * order gets marked paid; as a backup we ask the provider directly (at most
- * every 5s per order) whenever the order isn't marked paid, including after a
+ * every 5s per order) whenever the order isn't settled, including after a
  * cancel or a timeout, since the buyer may have paid in another tab. Nothing
  * from the browser is trusted.
+ *
+ * Someone else's order (or one that doesn't exist) comes back as `missing`
+ * rather than an error, so the page can say so instead of retrying.
  */
 export const getOrderStatus = createServerFn({ method: "GET" })
   .inputValidator(z.object({ orderId: id }))
   .handler(async ({ data }) => {
-    let order = await ownedOrder(data.orderId);
-    if (order.status !== "paid") {
-      const { reconcileOrder } = await import("@/server/billing");
-      if (await reconcileOrder(order, "confirm", 5000)) order = await ownedOrder(data.orderId);
+    const user = await requireUser();
+    const { isSettled, isExpired: ended, reconcileOrder, refundsDue } = await import("@/server/billing");
+    const load = async () => {
+      const [row] = await getDb().select().from(schema.orders).where(eq(schema.orders.id, data.orderId));
+      return row && (row.ownerId === user.id || user.isAdmin) ? row : null;
+    };
+    let order = await load();
+    if (!order) return { id: data.orderId, status: "missing" as const, kind: null, tier: null, amount: 0, refund: 0, site: null };
+    if (!isSettled(order.status)) {
+      await reconcileOrder(order, "confirm", 5000);
+      order = (await load()) ?? order;
     }
-    if (!order.siteId) return { id: order.id, status: order.status, kind: order.kind, tier: order.tier, amount: order.amount, site: null };
-    const [site] = await getDb()
-      .select({
-        id: schema.giftSites.id,
-        slug: schema.giftSites.slug,
-        title: schema.giftSites.title,
-        expiresAt: schema.giftSites.expiresAt,
-      })
-      .from(schema.giftSites)
-      .where(eq(schema.giftSites.id, order.siteId!));
+    /** Money we owe back on this order: all of it if it bought nothing, or what was paid over the price. */
+    const refund = (await refundsDue([order.id])).get(order.id) ?? 0;
+    const base = { id: order.id, status: order.status, kind: order.kind, tier: order.tier, amount: order.amount, refund };
+    if (!order.siteId) return { ...base, site: null };
+    const [site] = await getDb().select().from(schema.giftSites).where(eq(schema.giftSites.id, order.siteId));
+    if (!site) return { ...base, site: null };
     return {
-      id: order.id,
-      status: order.status,
-      kind: order.kind,
-      tier: order.tier,
-      amount: order.amount,
-      site: site ? { ...site, expiresAt: site.expiresAt?.toISOString() ?? null } : null,
+      ...base,
+      site: {
+        id: site.id,
+        slug: site.slug,
+        title: site.title,
+        expiresAt: site.expiresAt?.toISOString() ?? null,
+        /** The gift's plan now, so "Try again" offers what it can really buy (first plan, upgrade or extend). */
+        tier: site.tier,
+        ended: ended(site),
+        recipient: ((site.customText as { recipient_name?: string } | null)?.recipient_name ?? "").trim() || null,
+      },
     };
   });
 
@@ -1223,14 +1218,45 @@ export const cancelOrder = createServerFn({ method: "POST" })
   .inputValidator(z.object({ orderId: id }))
   .handler(async ({ data }) => {
     const order = await ownedOrder(data.orderId);
-    if (order.status === "pending") {
-      await getDb()
-        .update(schema.orders)
-        .set({ status: "failed", updatedAt: new Date() })
-        .where(and(eq(schema.orders.id, order.id), eq(schema.orders.status, "pending")));
-    }
+    const { cancelCheckout } = await import("@/server/checkout");
+    await cancelCheckout(order);
     return { ok: true };
   });
+
+/**
+ * Admin: payments we owe back (paid twice, paid more than an upgrade cost, or paid after the
+ * gift was deleted), newest first. Refunds are made by hand in the PayMongo dashboard for now.
+ */
+export const listRefundsDue = createServerFn({ method: "GET" }).handler(async () => {
+  await requireAdmin();
+  const { REFUND_EVENT, refundAmountOf } = await import("@/server/billing");
+  const l = schema.paymentLog;
+  const o = schema.orders;
+  const rows = await getDb()
+    .select({
+      at: l.at,
+      outcome: l.outcome,
+      orderId: l.orderId,
+      paymentId: o.providerPaymentId,
+      paid: o.amount,
+      tier: o.tier,
+      kind: o.kind,
+      status: o.status,
+      slug: schema.giftSites.slug,
+    })
+    .from(l)
+    .leftJoin(o, eq(o.id, l.orderId))
+    .leftJoin(schema.giftSites, eq(schema.giftSites.id, o.siteId))
+    .where(eq(l.event, REFUND_EVENT))
+    .orderBy(desc(l.at))
+    .limit(50);
+  return rows.map((r) => ({
+    ...r,
+    at: r.at.toISOString(),
+    amount: refundAmountOf(r.outcome),
+    why: r.outcome.replace(/^refund \d+: /, ""),
+  }));
+});
 
 /* ---------------- Discount codes (admin) ---------------- */
 
@@ -1428,8 +1454,16 @@ export const setCustomSlug = createServerFn({ method: "POST" })
       .select({ id: schema.giftSites.id })
       .from(schema.giftSites)
       .where(eq(schema.giftSites.slug, data.slug));
-    if (taken) return { ok: false, slug: site.slug, error: "That link name is taken. Try another." };
-    await getDb().update(schema.giftSites).set({ slug: data.slug }).where(eq(schema.giftSites.id, site.id));
+    const takenError = { ok: false, slug: site.slug, error: "That link name is taken. Try another." };
+    if (taken) return takenError;
+    try {
+      await getDb().update(schema.giftSites).set({ slug: data.slug }).where(eq(schema.giftSites.id, site.id));
+    } catch (error) {
+      // Two gifts asking for the same name at the same moment: the second one loses, kindly.
+      const { isUniqueViolation } = await import("@/server/db/errors");
+      if (isUniqueViolation(error)) return takenError;
+      throw error;
+    }
     return { ok: true, slug: data.slug };
   });
 
@@ -1520,19 +1554,23 @@ export const setContributionStatus = createServerFn({ method: "POST" })
   .handler(async ({ data }) => {
     const siteId = await contributionSite(data.ids);
     await requireSiteOwner(siteId);
-    const [site] = await getDb().select().from(schema.giftSites).where(eq(schema.giftSites.id, siteId));
-    if (site && data.status !== "hidden") {
-      // Showing hidden items again counts towards the plan, like a new note would.
-      const hidden = await getDb().select().from(c).where(and(inArray(c.id, data.ids), eq(c.status, "hidden")));
-      for (const row of hidden) {
-        const room = await checkRoom(site, row.authorName, row.moduleType, row.deviceId);
-        if (!room.ok && room.reason !== "ended") {
-          throw new HttpError(409, room.reason === "photos" ? "This gift has all the photos its plan holds. Upgrade to show more." : "This gift has all the friends its plan holds. Upgrade to show more.");
-        }
-        await getDb().update(c).set({ status: data.status }).where(eq(c.id, row.id));
-      }
+    if (data.status === "hidden") {
+      await getDb().update(c).set({ status: data.status }).where(inArray(c.id, data.ids));
+      return { ok: true };
     }
-    await getDb().update(c).set({ status: data.status }).where(inArray(c.id, data.ids));
+    // Showing hidden items again counts towards the plan, like a new note would, under the same
+    // lock as friends sending notes so the two can't pass the cap together.
+    await withRoom(siteId, async (tx, _site, room) => {
+      const hidden = await tx.select().from(c).where(and(inArray(c.id, data.ids), eq(c.status, "hidden")));
+      for (const row of hidden) {
+        const fits = await room({ authorName: row.authorName, moduleType: row.moduleType, deviceId: row.deviceId, byOwner: row.byOwner });
+        if (!fits.ok && fits.reason !== "ended") {
+          throw new HttpError(409, fits.reason === "photos" ? "This gift has all the photos its plan holds. Upgrade to show more." : "This gift has all the friends its plan holds. Upgrade to show more.");
+        }
+        await tx.update(c).set({ status: data.status }).where(eq(c.id, row.id));
+      }
+      await tx.update(c).set({ status: data.status }).where(inArray(c.id, data.ids));
+    });
     return { ok: true };
   });
 

@@ -300,6 +300,8 @@ export type GiftSite = {
   published_at: string | null;
   expires_at: string | null;
   created_at: string;
+  /** When anything in the gift last changed (set by the database). Null on old copies. */
+  updated_at?: string | null | undefined;
   /** Owner view only: a recipient password is saved (it may not apply on every plan). */
   password_set: boolean;
   /** The recipient link asks for a password (set, and included in the plan). */
@@ -409,6 +411,7 @@ export function normalizeSite(row: Record<string, unknown>): GiftSite {
     published_at: (row["published_at"] as string | null) ?? null,
     expires_at: (row["expires_at"] as string | null) ?? null,
     created_at: String(row["created_at"]),
+    updated_at: row["updated_at"] ? String(row["updated_at"]) : null,
     password_set: Boolean(row["password_set"]),
     password_protected: Boolean(row["password_protected"]),
     disabled_at: (row["disabled_at"] as string | null) ?? null,

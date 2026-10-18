@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, notFound } from "@tanstack/react-router";
 import { FormatView } from "@/components/formats/FormatView";
 import { PageNotFound } from "@/components/PageStates";
 import { TactileOpening } from "@/themes/TactileOpening";
@@ -16,6 +16,11 @@ export const Route = createFileRoute("/example/$id")({
       },
     ],
   }),
+  // Unknown examples answer 404, with the same friendly page.
+  loader: ({ params }) => {
+    if (!isDemoId(params.id)) throw notFound();
+  },
+  notFoundComponent: () => <PageNotFound message="We don't have that example." />,
   component: ExamplePage,
 });
 
