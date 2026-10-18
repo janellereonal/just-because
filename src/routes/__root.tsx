@@ -1,3 +1,4 @@
+import { galleryLink } from "@/lib/gallery";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import {
   Outlet,
@@ -29,8 +30,8 @@ function NotFoundComponent() {
           <Link to="/" className="squish inline-flex min-h-12 items-center rounded-full bg-ink px-6 text-sm font-semibold text-cream">
             Go home
           </Link>
-          <Link to="/themes" className="squish inline-flex min-h-12 items-center rounded-full bg-pink px-6 text-sm font-semibold">
-            See themes
+          <Link to={galleryLink().to} className="squish inline-flex min-h-12 items-center rounded-full bg-pink px-6 text-sm font-semibold">
+            {galleryLink().see}
           </Link>
         </div>
       </div>

@@ -1,3 +1,5 @@
+import { t } from "@/i18n";
+import { isFlagOn } from "@/config/flags";
 /**
  * Formats, shown by design: the same gift (Ana's 30th) in a phone, rendered
  * live in whichever format is picked. It steps through all nine on its own
@@ -64,7 +66,7 @@ export function FormatShowroom() {
         <p className="mt-4 text-center text-sm text-cream/70">{info.about}</p>
       </div>
 
-      <div role="radiogroup" aria-label={C.pickLabel} className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+      <div role="radiogroup" aria-label={isFlagOn("styles") ? t("picker.style.label") : C.pickLabel} className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
         {FORMATS.map((f) => {
           const on = f.id === format;
           return (

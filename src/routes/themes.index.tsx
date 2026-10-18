@@ -3,7 +3,8 @@ import { NEW_THEME_NAMES, PH_THEME_NAMES, needsCountry, orderThemes } from "@/li
 import { getVisitorCountry } from "@/lib/api";
 import { engineThemeForName } from "@/themes/engine/registry";
 import { AnimatePresence, LayoutGroup, motion } from "motion/react";
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, redirect, useNavigate } from "@tanstack/react-router";
+import { isFlagOn } from "@/config/flags";
 import { useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { SiteHeader } from "@/components/SiteHeader";
@@ -16,6 +17,10 @@ import { fetchThemes, type Theme } from "@/lib/themes";
 import { useAuth } from "@/hooks/useAuth";
 
 export const Route = createFileRoute("/themes/")({
+  // With styles on, the gallery lives at /styles.
+  beforeLoad: () => {
+    if (isFlagOn("styles")) throw redirect({ to: "/styles", search: { occasion: undefined }, statusCode: 301 });
+  },
   head: () => ({
     meta: [
       { title: "Themes | Just Because" },

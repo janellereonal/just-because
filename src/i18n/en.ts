@@ -441,6 +441,24 @@ export const en = {
   "guide.style.title": "Pick a style",
   "guide.style.body": "It's how the gift opens, how it looks and how they read it. Say what it's for and the best ones come first.",
   "guide.style.dashboard": "Birthday, send-off, wedding, or just because. Then pick a style.",
+  // Styles gallery (/styles) and the links to it (flag `styles`).
+  "nav.styles": "Styles",
+  "nav.browseStyles": "Browse styles",
+  "nav.seeStyles": "See styles",
+  "gallery.title": "Styles | Just Because",
+  "gallery.description": "Browse gift styles and see each one play, before you pick.",
+  "gallery.kicker": "Style library",
+  "gallery.heading": "Find the one that feels like them",
+  "gallery.body": "Every style opens like something real: a letter, a record, a cake. Hover one to watch it, tap it to open it yourself.",
+  "gallery.filter": "What's it for?",
+  "gallery.all": "All styles",
+  "gallery.use": "Use this style",
+  "gallery.useAria": "Open {style} full screen",
+  "gallery.layoutLine": "A sample gift as a {style}",
+  "gallery.more": "More styles",
+  "gallery.seeAll": "See all {n} styles",
+  "gallery.seeAllPlain": "See all the styles",
+  "gallery.step": "Pick a style",
 } as const;
 
 export type MessageKey = keyof typeof en;
