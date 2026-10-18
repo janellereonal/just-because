@@ -8,9 +8,13 @@ import {
   HeadContent,
   Scripts,
   type ErrorComponentProps,
+  useLocation,
 } from "@tanstack/react-router";
 import { type ReactNode, useEffect } from "react";
 import { installClientErrorReporting, reportClientError } from "@/lib/clientErrors";
+import { analyticsEnabled } from "@/config/analytics";
+import { identifyOrganiser, initAnalytics, syncRecording } from "@/lib/analytics";
+import { useAuth } from "@/hooks/useAuth";
 import { Toaster } from "sonner";
 
 import appCss from "../styles.css?url";
@@ -126,12 +130,28 @@ function RootShell({ children }: { children: ReactNode }) {
   );
 }
 
+/**
+ * PostHog: starts after the first render, links signed-in organisers by id, and pauses
+ * recordings on private pages. Only mounted when VITE_POSTHOG_KEY is set.
+ */
+function AnalyticsBridge() {
+  const { pathname } = useLocation();
+  const { user, loading } = useAuth();
+  useEffect(() => void initAnalytics(), []);
+  useEffect(() => syncRecording(pathname), [pathname]);
+  useEffect(() => {
+    if (!loading) identifyOrganiser(user?.id ?? null);
+  }, [user?.id, loading]);
+  return null;
+}
+
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
   useEffect(() => installClientErrorReporting(), []);
 
   return (
     <QueryClientProvider client={queryClient}>
+      {analyticsEnabled() ? <AnalyticsBridge /> : null}
       {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
       <Outlet />
       <Toaster position="top-center" />

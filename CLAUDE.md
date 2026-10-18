@@ -211,3 +211,13 @@ events: `gift_created`, `note_added`, `gift_wrapped` (checkout started), `plan_p
 events go through `trackEvent()` in `src/lib/track.ts` (`invite_shared`, `friend_page_viewed`,
 `gift_opened`, `make_your_own_clicked`); the server drops the organiser's own views. Each event's
 allowed labels are in `EVENT_PROPS`; add new ones there.
+
+PostHog (optional, off unless `VITE_POSTHOG_KEY` is set; settings in `src/config/analytics.ts`):
+- Browser: `src/lib/analytics.ts`, loaded after first render from `AnalyticsBridge` in `__root.tsx`. Traffic
+  goes through our own `/ingest/*` route (`src/routes/ingest.$.ts`), so the CSP stays same-site.
+- No cookies (localStorage), Do Not Track respected, autocapture never sends page text, recordings mask all
+  text and inputs and block uploaded media. No recordings on `/g/`, `/contribute/`, `/checkout/`.
+- `redactUrl` cuts gift and order ids out of every URL-like property (`/g/:id`) and drops query strings
+  except `utm_*`. Never send note content, names or emails to PostHog. Organisers are identified by user id only.
+- Server events (not the browser ones) are copied from `track()` via `src/server/posthog.ts`.
+- The privacy policy (`src/copy/legal.ts`) switches its analytics lines on with the key. Keep them true.

@@ -1,5 +1,6 @@
 /**
- * Product events, kept in our own Postgres (no third-party tracker, no cookies, no IP).
+ * Product events, kept in our own Postgres (no cookies, no IP). Server-side events are
+ * also copied to PostHog when it's switched on (src/server/posthog.ts).
  * Never stores note content: only the event name, the gift, the signed-in user and a few
  * short labels (a section type, a share channel, a plan id).
  *
@@ -7,6 +8,7 @@
  */
 import { eq } from "drizzle-orm";
 import { getDb, schema } from "@/server/db";
+import { captureServerEvent } from "@/server/posthog";
 
 export const EVENT_NAMES = [
   "gift_created",
@@ -114,6 +116,10 @@ export async function track(
     await getDb()
       .insert(schema.events)
       .values({ name, siteId: opts.siteId ?? null, userId: opts.userId ?? null, props });
+    // Browser events already reach PostHog from the browser; only copy the server's own.
+    if (!(CLIENT_EVENTS as readonly string[]).includes(name)) {
+      await captureServerEvent(name, { userId: opts.userId ?? null, siteId: opts.siteId ?? null, props });
+    }
   } catch (error) {
     console.error("[events] couldn't record", name, error instanceof Error ? error.message : error);
   }

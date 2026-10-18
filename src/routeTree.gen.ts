@@ -35,6 +35,7 @@ import { Route as DevThemesRouteImport } from './routes/dev.themes'
 import { Route as DevWorstCaseRouteImport } from './routes/dev.worst-case'
 import { Route as ExampleIdRouteImport } from './routes/example.$id'
 import { Route as GSlugRouteImport } from './routes/g.$slug'
+import { Route as IngestSplatRouteImport } from './routes/ingest.$'
 import { Route as StylesIndexRouteImport } from './routes/styles.index'
 import { Route as ThemesIndexRouteImport } from './routes/themes.index'
 import { Route as ThemesIdRouteImport } from './routes/themes.$id'
@@ -174,6 +175,11 @@ const GSlugRoute = GSlugRouteImport.update({
   path: '/g/$slug',
   getParentRoute: () => rootRouteImport,
 } as any)
+const IngestSplatRoute = IngestSplatRouteImport.update({
+  id: '/ingest/$',
+  path: '/ingest/$',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const StylesIndexRoute = StylesIndexRouteImport.update({
   id: '/styles/',
   path: '/styles/',
@@ -247,6 +253,7 @@ export interface FileRoutesByFullPath {
   '/dev/worst-case': typeof DevWorstCaseRoute
   '/example/$id': typeof ExampleIdRoute
   '/g/$slug': typeof GSlugRoute
+  '/ingest/$': typeof IngestSplatRoute
   '/themes/$id': typeof ThemesIdRoute
   '/styles/': typeof StylesIndexRoute
   '/themes/': typeof ThemesIndexRoute
@@ -283,6 +290,7 @@ export interface FileRoutesByTo {
   '/dev/worst-case': typeof DevWorstCaseRoute
   '/example/$id': typeof ExampleIdRoute
   '/g/$slug': typeof GSlugRoute
+  '/ingest/$': typeof IngestSplatRoute
   '/themes/$id': typeof ThemesIdRoute
   '/styles': typeof StylesIndexRoute
   '/themes': typeof ThemesIndexRoute
@@ -321,6 +329,7 @@ export interface FileRoutesById {
   '/dev/worst-case': typeof DevWorstCaseRoute
   '/example/$id': typeof ExampleIdRoute
   '/g/$slug': typeof GSlugRoute
+  '/ingest/$': typeof IngestSplatRoute
   '/themes/$id': typeof ThemesIdRoute
   '/styles/': typeof StylesIndexRoute
   '/themes/': typeof ThemesIndexRoute
@@ -359,6 +368,7 @@ export interface FileRouteTypes {
     | '/dev/worst-case'
     | '/example/$id'
     | '/g/$slug'
+    | '/ingest/$'
     | '/themes/$id'
     | '/styles/'
     | '/themes/'
@@ -395,6 +405,7 @@ export interface FileRouteTypes {
     | '/dev/worst-case'
     | '/example/$id'
     | '/g/$slug'
+    | '/ingest/$'
     | '/themes/$id'
     | '/styles'
     | '/themes'
@@ -432,6 +443,7 @@ export interface FileRouteTypes {
     | '/dev/worst-case'
     | '/example/$id'
     | '/g/$slug'
+    | '/ingest/$'
     | '/themes/$id'
     | '/styles/'
     | '/themes/'
@@ -467,6 +479,7 @@ export interface RootRouteChildren {
   DevWorstCaseRoute: typeof DevWorstCaseRoute
   ExampleIdRoute: typeof ExampleIdRoute
   GSlugRoute: typeof GSlugRoute
+  IngestSplatRoute: typeof IngestSplatRoute
   ThemesIdRoute: typeof ThemesIdRoute
   StylesIndexRoute: typeof StylesIndexRoute
   ThemesIndexRoute: typeof ThemesIndexRoute
@@ -660,6 +673,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof GSlugRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/ingest/$': {
+      id: '/ingest/$'
+      path: '/ingest/$'
+      fullPath: '/ingest/$'
+      preLoaderRoute: typeof IngestSplatRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/styles/': {
       id: '/styles/'
       path: '/styles'
@@ -769,6 +789,7 @@ const rootRouteChildren: RootRouteChildren = {
   DevWorstCaseRoute: DevWorstCaseRoute,
   ExampleIdRoute: ExampleIdRoute,
   GSlugRoute: GSlugRoute,
+  IngestSplatRoute: IngestSplatRoute,
   ThemesIdRoute: ThemesIdRoute,
   StylesIndexRoute: StylesIndexRoute,
   ThemesIndexRoute: ThemesIndexRoute,
