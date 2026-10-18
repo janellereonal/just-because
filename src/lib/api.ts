@@ -18,7 +18,7 @@
  *    first; the password hash itself never leaves the server
  */
 import { GUEST_COPY, SAVE_COPY } from "@/copy/strings";
-import { canonicalFields, findConflicts, flatten } from "@/lib/siteDraft";
+import { canonicalFields, checkSave, flatten, withoutKeys } from "@/lib/siteDraft";
 import { FORMAT_IDS, type GiftFormat } from "@/lib/formats";
 import { STYLE_IDS, bodyFor, isStyleId, lookFor, styleInfo, type StyleInfo } from "@/lib/styles";
 import { OCCASION_IDS, occasionInfo, type OccasionId } from "@/lib/occasions";
@@ -505,7 +505,8 @@ const MAX_SETTINGS_JSON = 12_000;
  * `base` holds what the editor last saw for each of those fields: if one of them
  * changed since (another tab, a phone), nothing is written and the editor gets a
  * 409 so it can load the latest instead of overwriting (src/lib/siteDraft.ts).
- * Returns the saved gift.
+ * `soft` keys (words the editor changed by itself) are left out instead, and
+ * listed in `skipped`. Returns the saved gift.
  */
 export const updateSite = createServerFn({ method: "POST" })
   .inputValidator(
@@ -543,27 +544,36 @@ export const updateSite = createServerFn({ method: "POST" })
       base: jsonObject.optional(),
       /** Values this editor has in another save still on its way; those count as seen too. */
       base_alt: jsonObject.optional(),
+      /** Patch keys (flat, like `custom_text.heading`) the editor changed by itself; skipped instead of refused if changed elsewhere. */
+      soft: z.array(z.string().max(80)).max(64).optional(),
     }),
   )
   .handler(async ({ data }) => {
     await requireSiteOwner(data.id);
-    const p = data.patch;
+    let p = data.patch;
+    const softKeys = data.soft ?? [];
+    const patchKeys = new Set(Object.keys(flatten(p as Record<string, unknown>)));
+    if (softKeys.some((k) => !patchKeys.has(k))) throw new HttpError(400, "Something got mixed up. Refresh the page and try again.");
+    let skipped: string[] = [];
     const saved = await getDb().transaction(async (tx) => {
       // Locked until this save is written, so two tabs saving at once can't both pass the check.
       const [site] = await tx.select().from(schema.giftSites).where(eq(schema.giftSites.id, data.id)).for("update");
       if (!site) throw new HttpError(404, "We couldn't find that gift.");
 
       // Never overwrite a change this editor hasn't seen. A new style brings its own layout, so that isn't checked twice.
-      const clashes = findConflicts(
+      // Words the editor changed by itself (soft) that changed elsewhere keep the server's value; the rest saves.
+      const check = checkSave(
         flatten(canonicalFields(toRow(site))),
         flatten(data.base ?? {}),
         flatten(p as Record<string, unknown>),
-        { skip: p.style ? ["format"] : [], alt: flatten(data.base_alt ?? {}) },
+        { skip: p.style ? ["format"] : [], alt: flatten(data.base_alt ?? {}), soft: softKeys },
       );
-      if (clashes.length) {
-        console.info(`[editor] refused a stale save on gift ${site.id}: ${clashes.join(", ")}`);
+      if (check.clashes.length) {
+        console.info(`[editor] refused a stale save on gift ${site.id}: ${check.clashes.join(", ")}`);
         throw new HttpError(409, SAVE_COPY.serverConflict);
       }
+      skipped = check.skipped;
+      if (skipped.length) p = withoutKeys(p, skipped);
 
       const set: Partial<typeof schema.giftSites.$inferInsert> = {};
       if (p.title !== undefined) set.title = p.title;
@@ -652,7 +662,7 @@ export const updateSite = createServerFn({ method: "POST" })
       const [row] = await tx.update(schema.giftSites).set(set).where(eq(schema.giftSites.id, site.id)).returning();
       return row!;
     });
-    return { ok: true, site: siteRow(saved, { owner: true }) };
+    return { ok: true, site: siteRow(saved, { owner: true }), skipped };
   });
 
 /** A JSON object with some keys replaced; null removes a key. */

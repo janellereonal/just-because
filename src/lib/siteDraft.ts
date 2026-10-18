@@ -12,7 +12,9 @@
  * A save sends the changed fields plus the `known` value of each. The server
  * refuses (409) if one of those fields now holds something else, so a second
  * tab or a phone never silently overwrites a change it hasn't seen. Fields
- * nobody else touched merge, key by key for the JSON columns.
+ * nobody else touched merge, key by key for the JSON columns. Words the editor
+ * changed by itself (`soft` keys, see checkSave) never cause a 409: if they
+ * changed elsewhere, the server keeps its value and saves the rest.
  *
  * Shared by the editor (src/hooks/useGiftSaver.ts) and updateSite in api.ts.
  */
@@ -145,6 +147,41 @@ export function findConflicts(current: Flat, base: Flat, patch: Flat, opts: { sk
     clashes.push(key);
   }
   return clashes.sort();
+}
+
+/**
+ * The server's check for one save. `soft` keys are words the editor changed by itself
+ * (the heading following a new occasion, the opening reset by a new style), not typed.
+ * One of those that changed elsewhere since isn't a clash: it's left out (`skipped`),
+ * the server keeps its value, and the rest of the save goes through.
+ */
+export function checkSave(
+  current: Flat,
+  base: Flat,
+  patch: Flat,
+  opts: { skip?: readonly string[]; alt?: Flat; soft?: readonly string[] } = {},
+): { clashes: string[]; skipped: string[] } {
+  const found = findConflicts(current, base, patch, opts);
+  const soft = new Set(opts.soft ?? []);
+  return { clashes: found.filter((k) => !soft.has(k)), skipped: found.filter((k) => soft.has(k)) };
+}
+
+/** A patch without some flat keys (`custom_text.heading`, `title`...). */
+export function withoutKeys<T extends Record<string, unknown>>(patch: T, keys: readonly string[]): T {
+  const out: Record<string, unknown> = { ...patch };
+  for (const key of keys) {
+    const dot = key.indexOf(".");
+    if (dot < 0) {
+      delete out[key];
+      continue;
+    }
+    const field = key.slice(0, dot);
+    if (!isObject(out[field])) continue;
+    const obj = { ...(out[field] as Record<string, unknown>) };
+    delete obj[key.slice(dot + 1)];
+    out[field] = obj;
+  }
+  return out as T;
 }
 
 /**

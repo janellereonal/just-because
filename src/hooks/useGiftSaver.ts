@@ -16,6 +16,9 @@ import { applyFlat, changedKeys, flatten, rebase, same, toPatch, type Flat } fro
  *   and in-app navigation waits for it.
  * - If the gift changed somewhere else in a way that clashes, saving stops and
  *   `state` is "conflict" until `loadLatest()`.
+ * - Changes the editor makes by itself (`setDraft(update, { soft })`, like the heading
+ *   following a new occasion) never clash: if that field changed elsewhere, the
+ *   server keeps its value and this tab shows it.
  */
 export type SaveState = "saved" | "saving" | "retrying" | "offline" | "conflict";
 
@@ -56,6 +59,8 @@ export function useGiftSaver(id: string, site: GiftSite | null | undefined) {
   const conflict = useRef(false);
   const lastKeepalive = useRef<string | null>(null);
   const lastPulledToast = useRef(0);
+  /** Unsaved fields the editor changed by itself, not typed (sent as `soft`). */
+  const softKeys = useRef<Set<string>>(new Set());
 
   const unsavedKeys = () => (draftRef.current ? changedKeys(flatOf(draftRef.current), sent.current) : []);
 
@@ -134,6 +139,7 @@ export function useGiftSaver(id: string, site: GiftSite | null | undefined) {
       const base = toPatch(keys, known.current);
       // A value still on its way counts as a base too (a keepalive save can overtake it).
       const alt = toPatch(keys.filter((k) => k in inFlightFlat.current), inFlightFlat.current);
+      const soft = keys.filter((k) => softKeys.current.has(k));
       if (keepalive) {
         const sig = JSON.stringify(patch);
         if (lastKeepalive.current === sig) return "none";
@@ -153,6 +159,7 @@ export function useGiftSaver(id: string, site: GiftSite | null | undefined) {
             patch: patch as never,
             base: base as never,
             ...(Object.keys(alt).length ? { base_alt: alt as never } : {}),
+            ...(soft.length ? { soft } : {}),
           },
           fetch: doFetch,
         });
@@ -160,7 +167,11 @@ export function useGiftSaver(id: string, site: GiftSite | null | undefined) {
         failing.current = false;
         attempts.current = 0;
         if (keepalive) lastKeepalive.current = null;
-        absorb(normalizeSite(res.site as Record<string, unknown>), { saved: new Set(keys), sentFlat: flat });
+        const now = draftRef.current ? flatOf(draftRef.current) : flat;
+        for (const k of keys) if (same(now[k], flat[k])) softKeys.current.delete(k);
+        // Soft fields the server skipped (changed elsewhere) aren't "saved": the rebase pulls the server's value in.
+        const skipped = new Set(res.skipped ?? []);
+        absorb(normalizeSite(res.site as Record<string, unknown>), { saved: new Set(keys.filter((k) => !skipped.has(k))), sentFlat: flat });
         void queryClient.invalidateQueries({ queryKey: ["my-sites"] });
         return "ok";
       } catch (err) {
@@ -182,6 +193,7 @@ export function useGiftSaver(id: string, site: GiftSite | null | undefined) {
           if (!same(fresh[k], flat[k])) continue;
           setFlat(back, k, known.current[k]);
           setFlat(sent.current, k, known.current[k]);
+          softKeys.current.delete(k);
         }
         show(applyFlat(draftRef.current as unknown as Record<string, unknown>, back) as unknown as GiftSite);
         toast.error(message && message.length < 160 ? message : SAVE_COPY.rejected);
@@ -233,11 +245,22 @@ export function useGiftSaver(id: string, site: GiftSite | null | undefined) {
   const runRef = useRef(run);
   runRef.current = run;
 
-  /** Changes the draft and queues a save. Same shape as React's setState updater. */
+  /**
+   * Changes the draft and queues a save. Same shape as React's setState updater.
+   * `soft`: flat keys (`custom_text.heading`, `title`...) this change makes by itself, not typed.
+   */
   const setDraft = useCallback(
-    (update: (prev: GiftSite | null) => GiftSite | null) => {
-      const next = update(draftRef.current);
-      if (!next || next === draftRef.current) return;
+    (update: (prev: GiftSite | null) => GiftSite | null, opts: { soft?: readonly string[] | undefined } = {}) => {
+      const prev = draftRef.current;
+      const next = update(prev);
+      if (!next || next === prev) return;
+      if (prev) {
+        const soft = new Set(opts.soft ?? []);
+        for (const k of changedKeys(flatOf(prev), flatOf(next))) {
+          if (soft.has(k)) softKeys.current.add(k);
+          else softKeys.current.delete(k);
+        }
+      }
       show(next);
       if (conflict.current || retryTimer.current) {
         refresh();
@@ -304,6 +327,7 @@ export function useGiftSaver(id: string, site: GiftSite | null | undefined) {
     conflict.current = false;
     failing.current = false;
     attempts.current = 0;
+    softKeys.current.clear();
     if (timer.current) window.clearTimeout(timer.current);
     if (retryTimer.current) window.clearTimeout(retryTimer.current);
     timer.current = retryTimer.current = null;

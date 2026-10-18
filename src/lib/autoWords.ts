@@ -55,3 +55,11 @@ export function followAutoWords(
   if (Object.keys(text).length) out.custom_text = { ...site.custom_text, ...text };
   return out;
 }
+
+/**
+ * The saved fields a followAutoWords result changes, as flat keys (`title`, `custom_text.heading`),
+ * so the editor can save them as automatic (soft) changes that never clash with a typed one.
+ */
+export function autoWordKeys(words: { title?: string; custom_text?: CustomText }): string[] {
+  return [...(words.title !== undefined ? ["title"] : []), ...Object.keys(words.custom_text ?? {}).map((k) => `custom_text.${k}`)];
+}

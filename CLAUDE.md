@@ -172,6 +172,9 @@ verification is only required once `RESEND_API_KEY` and `EMAIL_FROM` are both se
 - Each save sends what the editor last saw for those fields (`base`). If one changed elsewhere since (another tab, a
   phone), `updateSite` refuses with 409 and the editor shows "This gift was changed somewhere else". Never write a
   gift field from the editor around this.
+- Changes the editor makes by itself (words following a new occasion or style via `followAutoWords`, the opening
+  reset on a style switch) are saved as `soft` keys (`setDraft(update, { soft })`). If one changed elsewhere, the
+  server keeps its value and saves the rest of the patch (`checkSave`, returns `skipped`); the tab then shows it.
 - Failed saves stay unsaved and retry (2s, 5s, 10s, then every 30s, and on `online`). Leaving or hiding the page sends
   what's left with `keepalive`; leaving in the app waits for it. `gift_sites.updated_at` is set by a trigger on
   every update (migration 0019).

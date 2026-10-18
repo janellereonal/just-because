@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test";
 import { normalizeSite } from "./gift";
-import { applyFlat, canonicalFields, changedKeys, findConflicts, flatten, rebase, same, toPatch } from "./siteDraft";
+import { applyFlat, canonicalFields, changedKeys, checkSave, findConflicts, flatten, rebase, same, toPatch, withoutKeys } from "./siteDraft";
 
 /** A stored gift row as the server sends it (snake_case). */
 const row = {
@@ -106,6 +106,31 @@ describe("findConflicts", () => {
   });
 });
 
+describe("checkSave (soft keys)", () => {
+  // Tab B added "!" to the heading; tab A, which hasn't seen it, changes the occasion and its heading follows.
+  const current = { ...flatten(row), "custom_text.heading": "Happy birthday, Kai!" };
+  const base = { occasion: "birthday", "custom_text.heading": "Happy birthday, Kai" };
+  const patch = { occasion: "thank-you", "custom_text.heading": "Thank you, Kai" };
+  test("a soft key changed elsewhere is skipped and the rest saves", () => {
+    expect(checkSave(current, base, patch, { soft: ["custom_text.heading"] })).toEqual({ clashes: [], skipped: ["custom_text.heading"] });
+  });
+  test("a soft key nobody else touched saves", () => {
+    expect(checkSave(flatten(row), base, patch, { soft: ["custom_text.heading"] })).toEqual({ clashes: [], skipped: [] });
+  });
+  test("the same change typed (not soft) is still refused", () => {
+    expect(checkSave(current, base, patch)).toEqual({ clashes: ["custom_text.heading"], skipped: [] });
+    expect(findConflicts(current, base, patch)).toEqual(["custom_text.heading"]);
+  });
+  test("a soft key doesn't excuse a hard clash elsewhere in the save", () => {
+    const cur = { ...current, occasion: "anniversary" };
+    expect(checkSave(cur, base, patch, { soft: ["custom_text.heading"] })).toEqual({ clashes: ["occasion"], skipped: ["custom_text.heading"] });
+  });
+  test("skipped keys are taken out of the patch", () => {
+    const out = withoutKeys({ occasion: "thank-you", title: "Thank you", custom_text: { heading: "Thank you, Kai", footer_note: "x" } }, ["custom_text.heading", "title"]);
+    expect(out).toEqual({ occasion: "thank-you", custom_text: { footer_note: "x" } });
+  });
+});
+
 describe("rebase", () => {
   const base = flatten(row);
   test("brings in a change made elsewhere when nothing here is unsaved", () => {
@@ -139,6 +164,17 @@ describe("rebase", () => {
     expect(r.draft["custom_text.heading"]).toBe("Hello ");
     expect(r.known["custom_text.heading"]).toBe("Hello");
     expect(r.pulled).toEqual([]);
+  });
+  test("a soft key the server skipped is pulled in, not left unsaved", () => {
+    // Sent "Thank you, Kai" as soft; the server kept the other tab's heading. Not in `saved`.
+    const draft = { ...base, occasion: "thank-you", "custom_text.heading": "Thank you, Kai" };
+    const server = { ...base, occasion: "thank-you", "custom_text.heading": "Happy birthday, Kai!" };
+    const r = rebase({ draft, sent: draft, known: base, server, saved: new Set(["occasion"]) });
+    expect(r.draft["custom_text.heading"]).toBe("Happy birthday, Kai!");
+    expect(r.sent["custom_text.heading"]).toBe("Happy birthday, Kai!");
+    expect(r.known["custom_text.heading"]).toBe("Happy birthday, Kai!");
+    expect(r.clashes).toEqual([]);
+    expect(changedKeys(r.draft, r.sent)).toEqual([]);
   });
   test("a key removed elsewhere goes away here too", () => {
     const server = { ...base };

@@ -4,7 +4,7 @@ import { GUEST_COPY, OCCASION_NAMES, SAVE_COPY } from "@/copy/strings";
 import { useGiftSaver, type SaveState } from "@/hooks/useGiftSaver";
 import { bodyFor, lookFor, resolveStyle, styleForLegacy, styleInfo, styleTitle, type StyleId } from "@/lib/styles";
 import { isQuietOccasion, occasionName, type OccasionId } from "@/lib/occasions";
-import { followAutoWords } from "@/lib/autoWords";
+import { autoWordKeys, followAutoWords } from "@/lib/autoWords";
 import { OccasionChips } from "@/components/styles/OccasionChips";
 import { StyleArt, StylePicker } from "@/components/styles/StylePicker";
 import { fetchThemes } from "@/lib/themes";
@@ -591,8 +591,9 @@ function SiteDashboard() {
   const messengerUrl = `https://www.facebook.com/dialog/send?link=${encodeURIComponent(contributeUrl)}&redirect_uri=${encodeURIComponent(contributeUrl)}&app_id=291494419107518`;
 
 
-  function patch(update: Partial<GiftSite>) {
-    setDraft((prev) => (prev ? { ...prev, ...update } : prev));
+  /** `soft`: fields this change makes by itself (not typed); see useGiftSaver. */
+  function patch(update: Partial<GiftSite>, soft?: string[]) {
+    setDraft((prev) => (prev ? { ...prev, ...update } : prev), { soft });
     touch(section);
   }
 
@@ -890,7 +891,8 @@ function SiteDashboard() {
   /** A new occasion. Words we filled in for the old one (the heading) follow; typed words stay. */
   function switchOccasion(next: OccasionId | null) {
     if (!draft) return;
-    patch({ occasion: next, ...followAutoWords(draft, { theme, occasion: draft.occasion }, { theme: themeFor(draft.style, next), occasion: next }) });
+    const auto = followAutoWords(draft, { theme, occasion: draft.occasion }, { theme: themeFor(draft.style, next), occasion: next });
+    patch({ occasion: next, ...auto }, autoWordKeys(auto));
   }
 
   /**
@@ -905,13 +907,18 @@ function SiteDashboard() {
     const lookTheme = look ? publishedThemes.find((x) => x.name === look.theme) : undefined;
     const pal = lookTheme ? palettesQuery.data?.find((p) => p.id === lookTheme.suggested_palette_ids[0]) : undefined;
     const { opening: _classic, ...intro } = draft.intro_settings;
-    patch({
-      style: next,
-      format: bodyFor(info),
-      intro_settings: intro,
-      ...followAutoWords(draft, { theme, occasion: draft.occasion }, { theme: themeFor(next, draft.occasion), occasion: draft.occasion }),
-      ...(pal ? { palette_id: pal.id, custom_colors: { background: pal.background, primary: pal.primary, accent: pal.accent } } : {}),
-    });
+    const auto = followAutoWords(draft, { theme, occasion: draft.occasion }, { theme: themeFor(next, draft.occasion), occasion: draft.occasion });
+    patch(
+      {
+        style: next,
+        format: bodyFor(info),
+        intro_settings: intro,
+        ...auto,
+        ...(pal ? { palette_id: pal.id, custom_colors: { background: pal.background, primary: pal.primary, accent: pal.accent } } : {}),
+      },
+      // The words we filled in and the opening reset follow along; if another tab changed them, theirs stays.
+      [...autoWordKeys(auto), "intro_settings.opening"],
+    );
     setStyleAsk(null);
     boSay(`${styleTitle(next)}. Lovely.`, "wink");
   }
