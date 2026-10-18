@@ -8,6 +8,7 @@
  * Everything is sized with container queries, so it reads the same in a
  * phone preview on a laptop as on a real phone.
  */
+import { material } from "@/lib/sound/material";
 import { photoProps, thumbOf } from "@/lib/media";
 import { shareGift } from "@/lib/track";
 import { useEffect, useMemo, useRef, useState } from "react";
@@ -16,8 +17,21 @@ import { ChevronLeft, ChevronRight, List, Repeat2, Share2, X } from "lucide-reac
 import { giftMoment } from "@/lib/giftPieces";
 import { countdownTarget, formatDay } from "@/lib/time";
 import { NEW_SECTION_TYPES, isNewSection, sectionAsText } from "@/lib/sections";
-import { signedMediaUrl, toEmbedUrl, type CalendarEntry, type GiftSite, type ModuleType, type SiteModule, type ViewContribution } from "@/lib/gift";
-import { COMIC_CHAPTERS, comicSettingDefaults, normalizeComicSettings, orderedComicIds } from "@/lib/comic";
+import {
+  signedMediaUrl,
+  toEmbedUrl,
+  type CalendarEntry,
+  type GiftSite,
+  type ModuleType,
+  type SiteModule,
+  type ViewContribution,
+} from "@/lib/gift";
+import {
+  COMIC_CHAPTERS,
+  comicSettingDefaults,
+  normalizeComicSettings,
+  orderedComicIds,
+} from "@/lib/comic";
 import { readableInk } from "@/lib/palettes";
 import type { Palette } from "@/lib/themes";
 import type { ThemeKind } from "@/lib/themeKind";
@@ -58,16 +72,39 @@ function useMedia(path: string | null) {
 /* ---------- small pieces ---------- */
 
 function Portrait({ item, size = "md" }: { item: ViewContribution; size?: "sm" | "md" }) {
-  const url = useMedia(item.sealed ? null : item.media_url && item.module_type === "photobooth" ? item.media_url : null);
+  const url = useMedia(
+    item.sealed
+      ? null
+      : item.media_url && item.module_type === "photobooth"
+        ? item.media_url
+        : null,
+  );
   return (
     <span className={`cx-portrait cx-portrait-${size}`} aria-hidden="true">
-      {url ? <img {...photoProps(url, thumbOf(item.data), "120px")} alt="" loading="lazy" decoding="async" /> : <b>{item.author_name.trim().charAt(0).toUpperCase() || "?"}</b>}
+      {url ? (
+        <img
+          {...photoProps(url, thumbOf(item.data), "120px")}
+          alt=""
+          loading="lazy"
+          decoding="async"
+        />
+      ) : (
+        <b>{item.author_name.trim().charAt(0).toUpperCase() || "?"}</b>
+      )}
     </span>
   );
 }
 
 /** A speech bubble with a tail that points down-left at the speaker. */
-function Bubble({ children, tail = "left", thought = false }: { children: React.ReactNode; tail?: "left" | "right" | "none"; thought?: boolean }) {
+function Bubble({
+  children,
+  tail = "left",
+  thought = false,
+}: {
+  children: React.ReactNode;
+  tail?: "left" | "right" | "none";
+  thought?: boolean;
+}) {
   return (
     <div className={`cx-bubble ${thought ? "cx-thought" : ""} cx-tail-${tail}`}>
       <div className="cx-bubble-text">{children}</div>
@@ -87,7 +124,13 @@ function Bubble({ children, tail = "left", thought = false }: { children: React.
   );
 }
 
-function Caption({ children, tone = "yellow" }: { children: React.ReactNode; tone?: "yellow" | "white" | "ink" }) {
+function Caption({
+  children,
+  tone = "yellow",
+}: {
+  children: React.ReactNode;
+  tone?: "yellow" | "white" | "ink";
+}) {
   return <p className={`cx-caption cx-caption-${tone}`}>{children}</p>;
 }
 
@@ -115,7 +158,19 @@ function Panel({ item, type, index }: { item: ViewContribution; type: ModuleType
   if (type === "photobooth")
     return (
       <article className="cx-panel cx-photo">
-        <div className="cx-photo-frame">{media ? <img {...photoProps(media, thumbOf(item.data), "(max-width: 640px) 80vw, 420px")} alt={item.text_content ?? COMIC_COPY.photoAlt} loading="lazy" decoding="async" data-framed={item.data?.["framed"] === true || undefined} /> : <div className="cx-photo-empty" aria-hidden="true" />}</div>
+        <div className="cx-photo-frame">
+          {media ? (
+            <img
+              {...photoProps(media, thumbOf(item.data), "(max-width: 640px) 80vw, 420px")}
+              alt={item.text_content ?? COMIC_COPY.photoAlt}
+              loading="lazy"
+              decoding="async"
+              data-framed={item.data?.["framed"] === true || undefined}
+            />
+          ) : (
+            <div className="cx-photo-empty" aria-hidden="true" />
+          )}
+        </div>
         <div className="cx-photo-cap">
           <Caption>{item.text_content || COMIC_COPY.legendary}</Caption>
         </div>
@@ -132,11 +187,19 @@ function Panel({ item, type, index }: { item: ViewContribution; type: ModuleType
         <Caption>{COMIC_COPY.nowPlaying(item.author_name)}</Caption>
         <div className="cx-tape" aria-hidden="true">
           <span className="cx-reel" />
-          <span className="cx-tape-label">{item.text_content?.slice(0, 26) || COMIC_COPY.track}</span>
+          <span className="cx-tape-label">
+            {item.text_content?.slice(0, 26) || COMIC_COPY.track}
+          </span>
           <span className="cx-reel" />
         </div>
         {embed ? (
-          <iframe src={embed} title={COMIC_COPY.songFrom(item.author_name)} loading="lazy" allow="encrypted-media; clipboard-write; picture-in-picture" className="cx-embed" />
+          <iframe
+            src={embed}
+            title={COMIC_COPY.songFrom(item.author_name)}
+            loading="lazy"
+            allow="encrypted-media; clipboard-write; picture-in-picture"
+            className="cx-embed"
+          />
         ) : item.external_link ? (
           <a className="cx-link" href={item.external_link} target="_blank" rel="noreferrer">
             {COMIC_COPY.listen}
@@ -153,7 +216,10 @@ function Panel({ item, type, index }: { item: ViewContribution; type: ModuleType
         <Caption tone="ink">{COMIC_COPY.transmission}</Caption>
         <div className="cx-waves" aria-hidden="true">
           {Array.from({ length: 14 }, (_, i) => (
-            <i key={i} style={{ animationDelay: `${(i % 7) * 0.09}s`, height: `${30 + ((i * 37) % 60)}%` }} />
+            <i
+              key={i}
+              style={{ animationDelay: `${(i % 7) * 0.09}s`, height: `${30 + ((i * 37) % 60)}%` }}
+            />
           ))}
         </div>
         {media ? <audio controls src={media} className="cx-audio" /> : null}
@@ -168,7 +234,13 @@ function Panel({ item, type, index }: { item: ViewContribution; type: ModuleType
   if (type === "video")
     return (
       <article className="cx-panel cx-photo">
-        <div className="cx-photo-frame cx-video">{media ? <video controls playsInline preload="metadata" src={media} /> : <div className="cx-photo-empty" aria-hidden="true" />}</div>
+        <div className="cx-photo-frame cx-video">
+          {media ? (
+            <video controls playsInline preload="metadata" src={media} />
+          ) : (
+            <div className="cx-photo-empty" aria-hidden="true" />
+          )}
+        </div>
         <div className="cx-photo-cap">
           <Caption>{item.text_content || COMIC_COPY.footage}</Caption>
         </div>
@@ -180,7 +252,13 @@ function Panel({ item, type, index }: { item: ViewContribution; type: ModuleType
   if (type === "doodle")
     return (
       <article className="cx-panel cx-photo cx-doodle">
-        <div className="cx-photo-frame">{media ? <img src={media} alt={COMIC_COPY.drawingBy(item.author_name)} /> : <div className="cx-photo-empty" aria-hidden="true" />}</div>
+        <div className="cx-photo-frame">
+          {media ? (
+            <img src={media} alt={COMIC_COPY.drawingBy(item.author_name)} />
+          ) : (
+            <div className="cx-photo-empty" aria-hidden="true" />
+          )}
+        </div>
         <span className="cx-credit">{COMIC_COPY.fanArt(item.author_name)}</span>
         <Mine show={item.mine} />
       </article>
@@ -212,7 +290,11 @@ function Panel({ item, type, index }: { item: ViewContribution; type: ModuleType
   const thought = type === "openwhen" || type === "capsule";
   return (
     <article className={`cx-panel cx-scene cx-letter ${flip ? "cx-flip" : ""}`}>
-      <Caption>{type === "letters" ? COMIC_COPY.says(item.author_name) : `${COMIC_CHAPTERS[type] ?? ""} · ${item.author_name}`}</Caption>
+      <Caption>
+        {type === "letters"
+          ? COMIC_COPY.says(item.author_name)
+          : `${COMIC_CHAPTERS[type] ?? ""} · ${item.author_name}`}
+      </Caption>
       <div className="cx-speaker">
         <Portrait item={item} />
         <Bubble tail={flip ? "right" : "left"} thought={thought}>
@@ -235,7 +317,12 @@ function CountdownSplash({ site }: { site: GiftSite }) {
   const end = countdownTarget(site);
   const target = end ? giftMoment(end) : now + 86400000;
   const s = Math.max(0, Math.floor((target - now) / 1000));
-  const parts = [Math.floor(s / 86400), Math.floor((s % 86400) / 3600), Math.floor((s % 3600) / 60), s % 60];
+  const parts = [
+    Math.floor(s / 86400),
+    Math.floor((s % 86400) / 3600),
+    Math.floor((s % 3600) / 60),
+    s % 60,
+  ];
   return (
     <div className="cx-splash">
       <div className="cx-burst">
@@ -258,11 +345,22 @@ function CountdownSplash({ site }: { site: GiftSite }) {
 }
 
 function PowerWords({ items }: { items: ViewContribution[] }) {
-  const words = items.flatMap((i) => (i.text_content ?? "").split(/[,\n]/)).map((w) => w.trim()).filter(Boolean).slice(0, 18);
+  const words = items
+    .flatMap((i) => (i.text_content ?? "").split(/[,\n]/))
+    .map((w) => w.trim())
+    .filter(Boolean)
+    .slice(0, 18);
   return (
     <div className="cx-words">
       {words.map((w, i) => (
-        <span key={`${w}-${i}`} className="cx-word" style={{ fontSize: `${1.1 + ((i * 7) % 5) * 0.32}rem`, transform: `rotate(${((i * 13) % 11) - 5}deg)` }}>
+        <span
+          key={`${w}-${i}`}
+          className="cx-word"
+          style={{
+            fontSize: `${1.1 + ((i * 7) % 5) * 0.32}rem`,
+            transform: `rotate(${((i * 13) % 11) - 5}deg)`,
+          }}
+        >
           {w}
         </span>
       ))}
@@ -271,7 +369,19 @@ function PowerWords({ items }: { items: ViewContribution[] }) {
 }
 
 function CalendarPage({ entries, siteId }: { entries: CalendarEntry[]; siteId: string }) {
-  const list = entries.length ? entries : [{ id: "sample", entry_date: new Date().toISOString(), text_content: COMIC_COPY.mission, type: "message" as const, site_id: siteId, media_url: null, external_link: null }];
+  const list = entries.length
+    ? entries
+    : [
+        {
+          id: "sample",
+          entry_date: new Date().toISOString(),
+          text_content: COMIC_COPY.mission,
+          type: "message" as const,
+          site_id: siteId,
+          media_url: null,
+          external_link: null,
+        },
+      ];
   return (
     <div className="cx-missions">
       {list.slice(0, 12).map((e) => (
@@ -309,9 +419,27 @@ function BackCover({ names, recipient }: { names: string[]; recipient: string })
 
 /* ---------- the book ---------- */
 
-type Page = { key: string; chapter: string; type: ModuleType | "back" | "countdown"; n: number; body: React.ReactNode };
+type Page = {
+  key: string;
+  chapter: string;
+  type: ModuleType | "back" | "countdown";
+  n: number;
+  body: React.ReactNode;
+};
 
-export function ComicIssueView({ kind, site, modules, contributions, calendarEntries = [], palette, showCover = false, showShare, onReplayCover, onClose, sample }: Props) {
+export function ComicIssueView({
+  kind,
+  site,
+  modules,
+  contributions,
+  calendarEntries = [],
+  palette,
+  showCover = false,
+  showShare,
+  onReplayCover,
+  onClose,
+  sample,
+}: Props) {
   const settings = normalizeComicSettings(site.format_settings);
   const defaults = comicSettingDefaults(site.custom_text.recipient_name, kind);
   const recipient = site.custom_text.recipient_name || COMIC_COPY.hero;
@@ -322,10 +450,14 @@ export function ComicIssueView({ kind, site, modules, contributions, calendarEnt
   const [world, setWorld] = useState<0 | 1>(0);
   const [wiping, setWiping] = useState(false);
   const enabled = new Set(modules.filter((m) => m.enabled).map((m) => m.module_type));
-  const chapterFor = (item: ViewContribution) => (settings.chapter_overrides?.[item.id] as ModuleType | undefined) ?? item.module_type;
+  const chapterFor = (item: ViewContribution) =>
+    (settings.chapter_overrides?.[item.id] as ModuleType | undefined) ?? item.module_type;
 
   const sorted = useMemo(() => {
-    const ids = orderedComicIds(contributions.map((i) => i.id), settings.panel_order);
+    const ids = orderedComicIds(
+      contributions.map((i) => i.id),
+      settings.panel_order,
+    );
     const byId = new Map(contributions.map((i) => [i.id, i]));
     return ids.map((id) => byId.get(id)).filter((i): i is ViewContribution => Boolean(i));
   }, [contributions, settings.panel_order]);
@@ -336,20 +468,63 @@ export function ComicIssueView({ kind, site, modules, contributions, calendarEnt
 
   const pages = useMemo<Page[]>(() => {
     const out: Page[] = [];
-    if (enabled.has("countdown")) out.push({ key: "countdown", chapter: COMIC_CHAPTERS.countdown, type: "countdown", n: 1, body: <CountdownSplash site={site} /> });
-    const types: ModuleType[] = ["letters", "photobooth", "songs", "voice", "wordcloud", "calendar", "tree", ...NEW_SECTION_TYPES];
+    if (enabled.has("countdown"))
+      out.push({
+        key: "countdown",
+        chapter: COMIC_CHAPTERS.countdown,
+        type: "countdown",
+        n: 1,
+        body: <CountdownSplash site={site} />,
+      });
+    const types: ModuleType[] = [
+      "letters",
+      "photobooth",
+      "songs",
+      "voice",
+      "wordcloud",
+      "calendar",
+      "tree",
+      ...NEW_SECTION_TYPES,
+    ];
     for (const type of types) {
       if (!enabled.has(type)) continue;
       if (type === "calendar") {
-        if (calendarEntries.length || sample) out.push({ key: type, chapter: COMIC_CHAPTERS.calendar, type, n: 1, body: <CalendarPage entries={calendarEntries} siteId={site.id} /> });
+        if (calendarEntries.length || sample)
+          out.push({
+            key: type,
+            chapter: COMIC_CHAPTERS.calendar,
+            type,
+            n: 1,
+            body: <CalendarPage entries={calendarEntries} siteId={site.id} />,
+          });
         continue;
       }
       let items = visible.filter((i) => chapterFor(i) === type);
       if (!items.length && sample)
-        items = [{ id: `sample-${type}`, site_id: site.id, module_type: type, author_name: "Sam", text_content: type === "letters" ? COMIC_COPY.sampleLetter : COMIC_COPY.legendary, media_url: null, external_link: null, status: "approved", ornament_key: null, visibility: "public", created_at: "" }];
+        items = [
+          {
+            id: `sample-${type}`,
+            site_id: site.id,
+            module_type: type,
+            author_name: "Sam",
+            text_content: type === "letters" ? COMIC_COPY.sampleLetter : COMIC_COPY.legendary,
+            media_url: null,
+            external_link: null,
+            status: "approved",
+            ornament_key: null,
+            visibility: "public",
+            created_at: "",
+          },
+        ];
       if (!items.length) continue;
       if (type === "wordcloud") {
-        out.push({ key: type, chapter: COMIC_CHAPTERS.wordcloud, type, n: 1, body: <PowerWords items={items} /> });
+        out.push({
+          key: type,
+          chapter: COMIC_CHAPTERS.wordcloud,
+          type,
+          n: 1,
+          body: <PowerWords items={items} />,
+        });
         continue;
       }
       const per = type === "photobooth" ? 4 : type === "letters" ? 3 : 2;
@@ -357,7 +532,12 @@ export function ComicIssueView({ kind, site, modules, contributions, calendarEnt
         const chunk = items.slice(i, i + per);
         out.push({
           key: `${type}-${i}`,
-          chapter: i === 0 ? COMIC_CHAPTERS[type] : type === "letters" ? COMIC_COPY.fanMail : COMIC_COPY.continued(COMIC_CHAPTERS[type], i / per + 1),
+          chapter:
+            i === 0
+              ? COMIC_CHAPTERS[type]
+              : type === "letters"
+                ? COMIC_COPY.fanMail
+                : COMIC_COPY.continued(COMIC_CHAPTERS[type], i / per + 1),
           type,
           n: chunk.length,
           body: chunk.map((item, k) => <Panel key={item.id} item={item} type={type} index={k} />),
@@ -365,12 +545,26 @@ export function ComicIssueView({ kind, site, modules, contributions, calendarEnt
       }
     }
     const names = [...new Set(contributions.map((i) => i.author_name))];
-    out.push({ key: "back", chapter: COMIC_COPY.toBeContinued, type: "back", n: 1, body: <BackCover names={names} recipient={recipient} /> });
+    out.push({
+      key: "back",
+      chapter: COMIC_COPY.toBeContinued,
+      type: "back",
+      n: 1,
+      body: <BackCover names={names} recipient={recipient} />,
+    });
     return out;
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [calendarEntries, contributions, modules, sample, site, visible, recipient]);
 
-  const go = (to: number) => setPage(([p]) => [Math.max(0, Math.min(pages.length - 1, to)), to > p ? 1 : -1]);
+  const go = (to: number) =>
+    setPage(([p]) => {
+      const n = Math.max(0, Math.min(pages.length - 1, to));
+      if (n !== p) {
+        material("pageTurn", { pan: n > p ? 0.25 : -0.25 });
+        window.setTimeout(() => material("panel", { strength: 0.8 }), 260);
+      }
+      return [n, to > p ? 1 : -1];
+    });
   const next = () => go(page + 1);
   const prev = () => go(page - 1);
   useEffect(() => {
@@ -409,13 +603,21 @@ export function ComicIssueView({ kind, site, modules, contributions, calendarEnt
     photos: contributions.filter((i) => i.module_type === "photobooth").length,
   };
   const issueNo = (site.id.split("").reduce((a, c) => a + c.charCodeAt(0), 0) % 90) + 1;
-  const month = new Date().toLocaleDateString(undefined, { month: "short", year: "numeric" }).toUpperCase();
+  const month = new Date()
+    .toLocaleDateString(undefined, { month: "short", year: "numeric" })
+    .toUpperCase();
 
   const current = pages[page];
   const variants = {
-    enter: (d: number) => (reduce ? { opacity: 0 } : { opacity: 0, x: d >= 0 ? "28%" : "-28%", rotateY: d >= 0 ? -16 : 16, scale: 0.97 }),
+    enter: (d: number) =>
+      reduce
+        ? { opacity: 0 }
+        : { opacity: 0, x: d >= 0 ? "28%" : "-28%", rotateY: d >= 0 ? -16 : 16, scale: 0.97 },
     center: { opacity: 1, x: "0%", rotateY: 0, scale: 1 },
-    exit: (d: number) => (reduce ? { opacity: 0 } : { opacity: 0, x: d >= 0 ? "-22%" : "22%", rotateY: d >= 0 ? 14 : -14, scale: 0.97 }),
+    exit: (d: number) =>
+      reduce
+        ? { opacity: 0 }
+        : { opacity: 0, x: d >= 0 ? "-22%" : "22%", rotateY: d >= 0 ? 14 : -14, scale: 0.97 },
   };
 
   return (
@@ -425,10 +627,18 @@ export function ComicIssueView({ kind, site, modules, contributions, calendarEnt
           <motion.div
             key="cover"
             className="cx-cover-stage"
-            exit={reduce ? { opacity: 0 } : { rotateY: -96, opacity: 0.4, transition: { duration: 0.7, ease } }}
+            exit={
+              reduce
+                ? { opacity: 0 }
+                : { rotateY: -96, opacity: 0.4, transition: { duration: 0.7, ease } }
+            }
             style={{ transformOrigin: "0% 50%", transformPerspective: 1600 }}
           >
-            <div className="cx-cover" role="img" aria-label={`${settings.cover_title || defaults.cover_title}. ${settings.cover_subtitle || defaults.cover_subtitle}.`}>
+            <div
+              className="cx-cover"
+              role="img"
+              aria-label={`${settings.cover_title || defaults.cover_title}. ${settings.cover_subtitle || defaults.cover_subtitle}.`}
+            >
               <div className="cx-cover-rays" aria-hidden="true" />
               <div className="cx-cover-dots" aria-hidden="true" />
               <header className="cx-mast">
@@ -443,7 +653,12 @@ export function ComicIssueView({ kind, site, modules, contributions, calendarEnt
                   <small>{month}</small>
                 </span>
               </header>
-              <motion.p className="cx-cover-sub cx-title" initial={reduce ? false : { y: -16, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ delay: 0.15, duration: 0.5, ease }}>
+              <motion.p
+                className="cx-cover-sub cx-title"
+                initial={reduce ? false : { y: -16, opacity: 0 }}
+                animate={{ y: 0, opacity: 1 }}
+                transition={{ delay: 0.15, duration: 0.5, ease }}
+              >
                 {settings.cover_subtitle || defaults.cover_subtitle}
               </motion.p>
               <motion.h1
@@ -457,15 +672,37 @@ export function ComicIssueView({ kind, site, modules, contributions, calendarEnt
               <div className="cx-cover-art">
                 <span className="cx-cover-burst" aria-hidden="true" />
                 {cast.character.type !== "none" ? (
-                  <motion.div className="cx-cover-hero" initial={reduce ? false : { y: 40, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ type: "spring", stiffness: 160, damping: 15, delay: 0.5 }}>
-                    <Character setting={cast.character} accessory={null} size={200} live follow showName={false} />
+                  <motion.div
+                    className="cx-cover-hero"
+                    initial={reduce ? false : { y: 40, opacity: 0 }}
+                    animate={{ y: 0, opacity: 1 }}
+                    transition={{ type: "spring", stiffness: 160, damping: 15, delay: 0.5 }}
+                  >
+                    <Character
+                      setting={cast.character}
+                      accessory={null}
+                      size={200}
+                      live
+                      follow
+                      showName={false}
+                    />
                   </motion.div>
                 ) : null}
               </div>
-              <motion.span className="cx-blurb cx-blurb-star cx-title" initial={reduce ? false : { scale: 0, rotate: -40 }} animate={{ scale: 1, rotate: 12 }} transition={{ type: "spring", stiffness: 300, damping: 14, delay: 0.75 }}>
+              <motion.span
+                className="cx-blurb cx-blurb-star cx-title"
+                initial={reduce ? false : { scale: 0, rotate: -40 }}
+                animate={{ scale: 1, rotate: 12 }}
+                transition={{ type: "spring", stiffness: 300, damping: 14, delay: 0.75 }}
+              >
                 {COMIC_COPY.featuring(counts.friends)}
               </motion.span>
-              <motion.span className="cx-blurb cx-blurb-box" initial={reduce ? false : { x: -40, opacity: 0 }} animate={{ x: 0, opacity: 1 }} transition={{ delay: 0.9, duration: 0.45, ease }}>
+              <motion.span
+                className="cx-blurb cx-blurb-box"
+                initial={reduce ? false : { x: -40, opacity: 0 }}
+                animate={{ x: 0, opacity: 1 }}
+                transition={{ delay: 0.9, duration: 0.45, ease }}
+              >
                 {COMIC_COPY.inside(counts.letters, counts.photos)}
               </motion.span>
               <footer className="cx-cover-foot">
@@ -494,14 +731,25 @@ export function ComicIssueView({ kind, site, modules, contributions, calendarEnt
                 </span>
               </footer>
               {onClose ? (
-                <button type="button" className="cx-icon cx-cover-close" aria-label={COMIC_COPY.closeCover} onClick={onClose}>
+                <button
+                  type="button"
+                  className="cx-icon cx-cover-close"
+                  aria-label={COMIC_COPY.closeCover}
+                  onClick={onClose}
+                >
                   <X className="size-4" />
                 </button>
               ) : null}
             </div>
           </motion.div>
         ) : (
-          <motion.div key="reader" className="cx-reader" initial={reduce ? false : { opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.35 }}>
+          <motion.div
+            key="reader"
+            className="cx-reader"
+            initial={reduce ? false : { opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.35 }}
+          >
             <div className="cx-desk" aria-hidden="true" />
             <header className="cx-bar">
               <button type="button" className="cx-chip" onClick={() => setMenuOpen(true)}>
@@ -514,7 +762,10 @@ export function ComicIssueView({ kind, site, modules, contributions, calendarEnt
               </div>
               {settings.two_worlds ? (
                 <button type="button" className="cx-chip" onClick={switchWorld}>
-                  <Repeat2 className="size-4" aria-hidden="true" /> {world === 0 ? settings.world_one || defaults.world_one : settings.world_two || defaults.world_two}
+                  <Repeat2 className="size-4" aria-hidden="true" />{" "}
+                  {world === 0
+                    ? settings.world_one || defaults.world_one
+                    : settings.world_two || defaults.world_two}
                 </button>
               ) : showShare ? (
                 <button
@@ -557,7 +808,9 @@ export function ComicIssueView({ kind, site, modules, contributions, calendarEnt
                         <small>{COMIC_COPY.chapter(page + 1)}</small>
                         <b className="cx-title">{current.chapter}</b>
                       </span>
-                      {current.type !== "back" && current.type !== "countdown" ? <span className="cx-sfx cx-sfx-head">{SFX[page % SFX.length]}</span> : null}
+                      {current.type !== "back" && current.type !== "countdown" ? (
+                        <span className="cx-sfx cx-sfx-head">{SFX[page % SFX.length]}</span>
+                      ) : null}
                     </div>
                     <div className={`cx-grid cx-grid-${current.type} `} data-n={current.n}>
                       {current.body}
@@ -569,13 +822,25 @@ export function ComicIssueView({ kind, site, modules, contributions, calendarEnt
             </div>
 
             <footer className="cx-controls">
-              <button type="button" className="cx-turn" onClick={prev} disabled={page === 0} aria-label={COMIC_COPY.prev}>
+              <button
+                type="button"
+                className="cx-turn"
+                onClick={prev}
+                disabled={page === 0}
+                aria-label={COMIC_COPY.prev}
+              >
                 <ChevronLeft className="size-5" />
               </button>
               <span className="cx-count">
                 <b>{page + 1}</b> / {pages.length}
               </span>
-              <button type="button" className="cx-turn cx-turn-next" onClick={next} disabled={page === pages.length - 1} aria-label={COMIC_COPY.next}>
+              <button
+                type="button"
+                className="cx-turn cx-turn-next"
+                onClick={next}
+                disabled={page === pages.length - 1}
+                aria-label={COMIC_COPY.next}
+              >
                 <ChevronRight className="size-5" />
               </button>
             </footer>
@@ -598,7 +863,13 @@ export function ComicIssueView({ kind, site, modules, contributions, calendarEnt
 
             <AnimatePresence>
               {wiping ? (
-                <motion.div className="cx-wipe" initial={{ clipPath: "inset(0 100% 0 0)" }} animate={{ clipPath: "inset(0 0% 0 0)" }} exit={{ clipPath: "inset(0 0 0 100%)" }} transition={{ duration: 0.38, ease }}>
+                <motion.div
+                  className="cx-wipe"
+                  initial={{ clipPath: "inset(0 100% 0 0)" }}
+                  animate={{ clipPath: "inset(0 0% 0 0)" }}
+                  exit={{ clipPath: "inset(0 0 0 100%)" }}
+                  transition={{ duration: 0.38, ease }}
+                >
                   <span className="cx-caption cx-caption-yellow">{COMIC_COPY.meanwhile}</span>
                 </motion.div>
               ) : null}
@@ -606,7 +877,13 @@ export function ComicIssueView({ kind, site, modules, contributions, calendarEnt
 
             <AnimatePresence>
               {menuOpen ? (
-                <motion.div className="cx-menu-back" onClick={() => setMenuOpen(false)} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+                <motion.div
+                  className="cx-menu-back"
+                  onClick={() => setMenuOpen(false)}
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                >
                   <motion.nav
                     className="cx-menu"
                     onClick={(e) => e.stopPropagation()}
@@ -618,7 +895,12 @@ export function ComicIssueView({ kind, site, modules, contributions, calendarEnt
                   >
                     <div className="cx-menu-head">
                       <p className="cx-title">{COMIC_COPY.contents}</p>
-                      <button type="button" className="cx-icon" aria-label={COMIC_COPY.close} onClick={() => setMenuOpen(false)}>
+                      <button
+                        type="button"
+                        className="cx-icon"
+                        aria-label={COMIC_COPY.close}
+                        onClick={() => setMenuOpen(false)}
+                      >
                         <X className="size-4" />
                       </button>
                     </div>

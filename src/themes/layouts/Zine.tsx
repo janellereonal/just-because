@@ -17,7 +17,8 @@ import {
 } from "@/themes/_shared/light";
 import { foley } from "@/lib/play";
 import { seed } from "@/components/formats/PieceSheet";
-import { giftColors, live, pressable, useAutoplay, useOpenSequence } from "./kit";
+import { material } from "@/lib/sound/material";
+import { giftColors, live, pressable, soundAt, useAutoplay, useOpenSequence } from "./kit";
 
 const CUTOUT_BG = ["#FFF", "#111", "#FFD23F", "#F2A7C3", "#9BD3E8", "#FFF"];
 const CUTOUT_FG = ["#111", "#FFF", "#111", "#111", "#111", "#C2366B"];
@@ -33,12 +34,17 @@ export function ZineOpening(p: OpeningProps) {
   const coverRef = useRef<HTMLDivElement | null>(null);
   const [ripped, setRipped] = useState(false);
   const [pull, setPull] = useState(0);
-  useOpenSequence(p, ripped, coverRef, 1700);
+  useOpenSequence(p, ripped, coverRef, 1700, "zine");
 
   function rip() {
     if (ripped || !live(p)) return;
     setRipped(true);
     foley("rip");
+    soundAt(p, [
+      [340, () => material("slap", { pan: 0.3 })],
+      [500, () => material("slap", { pan: -0.35 })],
+      [660, () => material("slap", { pan: 0.4, strength: 0.85 })],
+    ]);
     h.thud();
   }
   useAutoplay(p, [[900, rip]]);
@@ -211,7 +217,7 @@ export function ZineOpening(p: OpeningProps) {
       </Layer>
 
       <div className="mt-[min(9cqi,40px)] h-11">
-        <FallbackButton onClick={rip} color={c.accent} ink={c.accent} hidden={ripped || !live(p)}>
+        <FallbackButton onClick={rip} color="#111111" ink="#111111" hidden={ripped || !live(p)}>
           {p.buttonText}
         </FallbackButton>
       </div>

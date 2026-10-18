@@ -92,30 +92,51 @@ export function FormatView(props: Props) {
   useEffect(() => loadPairingFonts(props.site.font_choice), [props.site.font_choice]);
   // Handwritten draws video and quiz inside its own notebook.
   // Bento shows video and quiz inside its own board (see FormatBody), so it skips the block underneath.
-  const tiles = props.site.format !== "scrapbook" && props.site.format !== "comic" && props.site.format !== "handwritten" && props.site.format !== "bento";
+  const tiles =
+    props.site.format !== "scrapbook" &&
+    props.site.format !== "comic" &&
+    props.site.format !== "handwritten" &&
+    props.site.format !== "bento";
   const cast = castFor(kind, props.site.character ?? null, props.site.icon_set ?? null);
   const palette = props.palette ?? resolvePalette(props.theme, props.site.custom_colors);
   const roamIcons = useMemo(
-    () => (cast.roam >= 0 ? resolveIconSet(cast.iconSet, { recipient: props.site.custom_text.recipient_name ?? "", palette }) : null),
+    () =>
+      cast.roam >= 0
+        ? resolveIconSet(cast.iconSet, {
+            recipient: props.site.custom_text.recipient_name ?? "",
+            palette,
+          })
+        : null,
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [cast.roam, JSON.stringify(cast.iconSet), props.site.custom_text.recipient_name, palette.primary, palette.accent],
+    [
+      cast.roam,
+      JSON.stringify(cast.iconSet),
+      props.site.custom_text.recipient_name,
+      palette.primary,
+      palette.accent,
+    ],
   );
   return (
     <PlaceholderNameContext.Provider value={!!props.placeholderName}>
       <GiftKindContext.Provider value={kind}>
-      <div className="contents" style={themeFontVars(kind)}>
-        {/* Every format says when it's showing samples. The scrapbook labels each section itself. */}
-        {props.sample && props.site.format !== "scrapbook" && props.contributions.length === 0 ? (
-          <div className="pointer-events-none sticky top-0 z-[60] flex h-0 items-start justify-center overflow-visible">
-            <span className="mt-3 rounded-full px-3 py-1 text-[11px] font-medium whitespace-nowrap shadow-sm" style={{ background: "rgba(43,37,34,.86)", color: "#FBF8F2" }}>
-              {props.site.solo ? SAMPLE_BADGE.solo : SAMPLE_BADGE.friends}
-            </span>
-          </div>
-        ) : null}
-        <FormatBody {...props} />
-        {tiles ? <TileExtras {...props} kind={kind} /> : null}
-        {roamIcons && !isQuietOccasion(props.site.occasion) ? <Roamer icons={roamIcons} index={cast.roam} /> : null}
-      </div>
+        <div className="contents" style={themeFontVars(kind)}>
+          {/* Every format says when it's showing samples. The scrapbook labels each section itself. */}
+          {props.sample && props.site.format !== "scrapbook" && props.contributions.length === 0 ? (
+            <div className="pointer-events-none sticky top-0 z-[60] flex h-0 items-start justify-center overflow-visible">
+              <span
+                className="mt-3 rounded-full px-3 py-1 text-[11px] font-medium whitespace-nowrap shadow-sm"
+                style={{ background: "rgba(43,37,34,.86)", color: "#FBF8F2" }}
+              >
+                {props.site.solo ? SAMPLE_BADGE.solo : SAMPLE_BADGE.friends}
+              </span>
+            </div>
+          ) : null}
+          <FormatBody {...props} />
+          {tiles ? <TileExtras {...props} kind={kind} /> : null}
+          {roamIcons && !isQuietOccasion(props.site.occasion) ? (
+            <Roamer icons={roamIcons} index={cast.roam} />
+          ) : null}
+        </div>
       </GiftKindContext.Provider>
     </PlaceholderNameContext.Provider>
   );
@@ -123,8 +144,12 @@ export function FormatView(props: Props) {
 
 /** Which of video and quiz this gift has something to show for. */
 function extraKeys(props: Props): ("quiz" | "video")[] {
-  const enabled = new Set(props.modules.filter((m) => m.enabled).map((m) => m.module_type as string));
-  return (["quiz", "video"] as const).filter((t) => enabled.has(t) && (props.sample || props.contributions.some((c) => c.module_type === t)));
+  const enabled = new Set(
+    props.modules.filter((m) => m.enabled).map((m) => m.module_type as string),
+  );
+  return (["quiz", "video"] as const).filter(
+    (t) => enabled.has(t) && (props.sample || props.contributions.some((c) => c.module_type === t)),
+  );
 }
 
 /**
@@ -134,15 +159,28 @@ function extraKeys(props: Props): ("quiz" | "video")[] {
 function TileExtras(props: Props & { kind: ReturnType<typeof themeKindOf>; bare?: boolean }) {
   const host = useRef<HTMLDivElement | null>(null);
   const palette = props.palette ?? resolvePalette(props.theme, props.site.custom_colors);
-  const enabled = new Set(props.modules.filter((m) => m.enabled).map((m) => m.module_type as string));
+  const enabled = new Set(
+    props.modules.filter((m) => m.enabled).map((m) => m.module_type as string),
+  );
   const has = extraKeys(props).length > 0;
-  const icons = useMemo(() => resolveIconSet(castFor(props.kind, null, props.site.icon_set ?? null).iconSet, { recipient: props.site.custom_text.recipient_name ?? "", palette }), [props.kind, props.site.icon_set, props.site.custom_text.recipient_name, palette]);
+  const icons = useMemo(
+    () =>
+      resolveIconSet(castFor(props.kind, null, props.site.icon_set ?? null).iconSet, {
+        recipient: props.site.custom_text.recipient_name ?? "",
+        palette,
+      }),
+    [props.kind, props.site.icon_set, props.site.custom_text.recipient_name, palette],
+  );
   if (!has) return null;
   return (
     <div
       ref={host}
       className={props.bare ? "relative" : "relative overflow-hidden px-5 pt-4 pb-16"}
-      style={props.bare ? undefined : { background: palette.background, color: readableInk(palette.background) }}
+      style={
+        props.bare
+          ? undefined
+          : { background: palette.background, color: readableInk(palette.background) }
+      }
     >
       <div className={props.bare ? "" : "mx-auto max-w-3xl"}>
         <NewSections
@@ -196,7 +234,11 @@ function FormatBody(props: Props) {
           <BentoView
             {...common}
             theme={theme}
-            extras={keys.length ? { keys, node: <TileExtras {...props} kind={themeKindOf(theme)} bare /> } : null}
+            extras={
+              keys.length
+                ? { keys, node: <TileExtras {...props} kind={themeKindOf(theme)} bare /> }
+                : null
+            }
           />
         </Suspense>
       );

@@ -392,6 +392,7 @@ export function ConstellationView({
           piece={sheet}
           palette={{ ...palette, background: "#1d1b3a" }}
           onClose={() => setSheet(null)}
+          sound={null}
         />
       ) : null}
     </div>

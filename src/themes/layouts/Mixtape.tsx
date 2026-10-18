@@ -16,8 +16,8 @@ import {
   Texture,
   elevation,
 } from "@/themes/_shared/light";
-import { foley } from "@/lib/play";
-import { giftColors, live, pressable, useAutoplay, useOpenSequence } from "./kit";
+import { material } from "@/lib/sound/material";
+import { giftColors, live, pressable, soundAt, useAutoplay, useOpenSequence } from "./kit";
 
 function Reel({ spinning, reduced }: { spinning: boolean; reduced: boolean }) {
   return (
@@ -49,13 +49,18 @@ export function MixtapeOpening(p: OpeningProps) {
   const drop = useMotionValue(0);
   const y = useTransform(drop, [0, 1], ["0%", "62%"]);
   const scale = useTransform(drop, [0, 1], [1, 0.82]);
-  const beat = useOpenSequence(p, inDeck, deckRef, 2200);
+  const beat = useOpenSequence(p, inDeck, deckRef, 2200, "mixtape");
   const playing = beat >= 1;
 
   function play() {
     if (inDeck || !live(p)) return;
     setInDeck(true);
-    foley("thunk");
+    material("slide", { strength: 0.9 });
+    soundAt(p, [
+      [260, () => material("cassette", { strength: 1.2 })],
+      [520, () => material("cassette", { strength: 0.7 })],
+      [560, () => material("tapeHiss", { strength: 1.2 })],
+    ]);
     h.thud();
     void animate(drop, 1, p.reduced ? { duration: 0 } : SPRING.snappy);
   }

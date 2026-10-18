@@ -129,7 +129,9 @@ function bodyOf(p: Piece): string {
 const ids = (key: string) => `bento-${key}`;
 
 function scrollToSection(key: string, reduce: boolean) {
-  const el = document.getElementById(ids(key)) ?? document.querySelector(`.bento-extras [data-section="${key}"]`);
+  const el =
+    document.getElementById(ids(key)) ??
+    document.querySelector(`.bento-extras [data-section="${key}"]`);
   el?.scrollIntoView({ behavior: reduce ? "auto" : "smooth", block: "start" });
 }
 
@@ -159,7 +161,15 @@ function Avatar({ name, palette, size = 28 }: { name: string; palette: Palette; 
   );
 }
 
-function Byline({ who, palette, extra }: { who: string; palette: Palette; extra?: React.ReactNode }) {
+function Byline({
+  who,
+  palette,
+  extra,
+}: {
+  who: string;
+  palette: Palette;
+  extra?: React.ReactNode;
+}) {
   if (!who) return extra ? <span className="bento-byline">{extra}</span> : null;
   return (
     <span className="bento-byline">
@@ -199,12 +209,23 @@ function Tile({
   const delay = reduce ? undefined : `${Math.min(index, 10) * 45}ms`;
   if (!onOpen)
     return (
-      <div className={`bento-tile ${className}`} style={{ ...style, animationDelay: delay }} aria-label={label} role="group">
+      <div
+        className={`bento-tile ${className}`}
+        style={{ ...style, animationDelay: delay }}
+        aria-label={label}
+        role="group"
+      >
         {children}
       </div>
     );
   return (
-    <button type="button" onClick={onOpen} aria-label={label} className={`bento-tile group ${className}`} style={{ ...style, animationDelay: delay }}>
+    <button
+      type="button"
+      onClick={onOpen}
+      aria-label={label}
+      className={`bento-tile group ${className}`}
+      style={{ ...style, animationDelay: delay }}
+    >
       {children}
     </button>
   );
@@ -247,7 +268,15 @@ function LetterFace({ piece, palette, label }: { piece: Piece; palette: Palette;
   );
 }
 
-function PhotoFace({ piece, palette, contain }: { piece: Piece; palette: Palette; contain?: boolean }) {
+function PhotoFace({
+  piece,
+  palette,
+  contain,
+}: {
+  piece: Piece;
+  palette: Palette;
+  contain?: boolean;
+}) {
   const url = useMediaUrl(piece.media);
   return (
     <>
@@ -266,7 +295,9 @@ function PhotoFace({ piece, palette, contain }: { piece: Piece; palette: Palette
         <span
           className="absolute inset-0"
           aria-hidden
-          style={{ background: `linear-gradient(135deg, ${palette.accent}55, ${palette.primary}33), ${surfaceColor(palette.background)}` }}
+          style={{
+            background: `linear-gradient(135deg, ${palette.accent}55, ${palette.primary}33), ${surfaceColor(palette.background)}`,
+          }}
         />
       )}
       <span className="bento-photo-cap">
@@ -281,15 +312,25 @@ function SongFace({ piece, palette }: { piece: Piece; palette: Palette }) {
   const ink = readableInk(palette.background);
   return (
     <span className="flex h-full items-center gap-4">
-      <span className="bento-vinyl" style={{ "--vinyl": palette.accent } as React.CSSProperties} aria-hidden>
+      <span
+        className="bento-vinyl"
+        style={{ "--vinyl": palette.accent } as React.CSSProperties}
+        aria-hidden
+      >
         <Music2 className="size-5" style={{ color: readableInk(palette.accent) }} />
       </span>
       <span className="min-w-0 flex-1 text-left">
         <Label>{BENTO_COPY.songPick}</Label>
-        <span className="mt-1.5 line-clamp-2 block text-[15px] leading-snug font-medium">{piece.text || "Press play on this one."}</span>
+        <span className="mt-1.5 line-clamp-2 block text-[15px] leading-snug font-medium">
+          {piece.text || "Press play on this one."}
+        </span>
         <span className="mt-1 block truncate text-[13px] opacity-65">{piece.author}</span>
       </span>
-      <span className="grid size-11 shrink-0 place-items-center rounded-full" style={{ background: ink, color: palette.background }} aria-hidden>
+      <span
+        className="grid size-11 shrink-0 place-items-center rounded-full"
+        style={{ background: ink, color: palette.background }}
+        aria-hidden
+      >
         <Play className="size-4 translate-x-px" />
       </span>
     </span>
@@ -302,14 +343,23 @@ function VoiceFace({ piece, palette }: { piece: Piece; palette: Palette }) {
       <Label icon={Mic}>{BENTO_COPY.voiceNote}</Label>
       <span className="bento-wave" aria-hidden>
         {Array.from({ length: 24 }, (_, i) => (
-          <i key={i} style={{ height: `${18 + Math.abs(Math.sin(i * 1.7 + seed(piece.id) * 9)) * 74}%`, background: palette.accent }} />
+          <i
+            key={i}
+            style={{
+              height: `${18 + Math.abs(Math.sin(i * 1.7 + seed(piece.id) * 9)) * 74}%`,
+              background: palette.accent,
+            }}
+          />
         ))}
       </span>
       <Byline
         who={piece.author}
         palette={palette}
         extra={
-          <span className="grid size-8 place-items-center rounded-full" style={{ background: palette.accent, color: readableInk(palette.accent) }}>
+          <span
+            className="grid size-8 place-items-center rounded-full"
+            style={{ background: palette.accent, color: readableInk(palette.accent) }}
+          >
             <Play className="size-3.5 translate-x-px" />
           </span>
         }
@@ -318,13 +368,29 @@ function VoiceFace({ piece, palette }: { piece: Piece; palette: Palette }) {
   );
 }
 
-function OpenWhenFace({ piece, palette, headingFont }: { piece: Piece; palette: Palette; headingFont: string }) {
-  const when = str(piece.data?.["when"]) || (piece.text ?? "").split("\n")[0]!.replace(/^open when\s*/i, "");
+function OpenWhenFace({
+  piece,
+  palette,
+  headingFont,
+}: {
+  piece: Piece;
+  palette: Palette;
+  headingFont: string;
+}) {
+  const when =
+    str(piece.data?.["when"]) || (piece.text ?? "").split("\n")[0]!.replace(/^open when\s*/i, "");
   return (
     <span className="bento-envelope flex h-full flex-col">
-      <span className="bento-envelope-flap" aria-hidden style={{ background: `${palette.accent}1c` }} />
+      <span
+        className="bento-envelope-flap"
+        aria-hidden
+        style={{ background: `${palette.accent}1c` }}
+      />
       <Label icon={MailOpen}>{BENTO_COPY.openWhen}</Label>
-      <span className="mt-2 line-clamp-3 text-[19px] leading-tight font-semibold" style={{ fontFamily: headingFont }}>
+      <span
+        className="mt-2 line-clamp-3 text-[19px] leading-tight font-semibold"
+        style={{ fontFamily: headingFont }}
+      >
         {when}
       </span>
       <Byline
@@ -340,40 +406,74 @@ function OpenWhenFace({ piece, palette, headingFont }: { piece: Piece; palette: 
   );
 }
 
-function PlaceFace({ piece, palette, headingFont }: { piece: Piece; palette: Palette; headingFont: string }) {
+function PlaceFace({
+  piece,
+  palette,
+  headingFont,
+}: {
+  piece: Piece;
+  palette: Palette;
+  headingFont: string;
+}) {
   const place = str(piece.data?.["place"]) || (piece.text ?? "").split("\n")[0]!;
   const memory = bodyOf(piece);
   return (
     <span className="flex h-full flex-col">
       <span className="flex items-center gap-2">
-        <span className="bento-pin" style={{ background: palette.accent, color: readableInk(palette.accent) }} aria-hidden>
+        <span
+          className="bento-pin"
+          style={{ background: palette.accent, color: readableInk(palette.accent) }}
+          aria-hidden
+        >
           <MapPin className="size-3.5" />
         </span>
-        <span className="line-clamp-2 text-[17px] leading-tight font-semibold" style={{ fontFamily: headingFont }}>
+        <span
+          className="line-clamp-2 text-[17px] leading-tight font-semibold"
+          style={{ fontFamily: headingFont }}
+        >
           {place}
         </span>
       </span>
-      {memory ? <span className="mt-3 line-clamp-3 text-[14px] leading-relaxed opacity-85">{memory}</span> : null}
+      {memory ? (
+        <span className="mt-3 line-clamp-3 text-[14px] leading-relaxed opacity-85">{memory}</span>
+      ) : null}
       <Byline who={piece.author} palette={palette} />
     </span>
   );
 }
 
-function CouponFace({ piece, palette, headingFont }: { piece: Piece; palette: Palette; headingFont: string }) {
-  const title = str(piece.data?.["title"]) || (piece.text ?? "").replace(/^coupon:\s*/i, "").split("\n")[0]!;
+function CouponFace({
+  piece,
+  palette,
+  headingFont,
+}: {
+  piece: Piece;
+  palette: Palette;
+  headingFont: string;
+}) {
+  const title =
+    str(piece.data?.["title"]) || (piece.text ?? "").replace(/^coupon:\s*/i, "").split("\n")[0]!;
   const fine = str(piece.data?.["fine_print"]);
   return (
-    <span className="bento-ticket flex h-full flex-col" style={{ "--ticket": palette.accent } as React.CSSProperties}>
+    <span
+      className="bento-ticket flex h-full flex-col"
+      style={{ "--ticket": palette.accent } as React.CSSProperties}
+    >
       <span className="flex items-center justify-between">
         <Label icon={Ticket}>{BENTO_COPY.coupon}</Label>
         <span className="bento-ticket-no" aria-hidden>
           No. {String(Math.floor(seed(piece.id) * 900) + 100)}
         </span>
       </span>
-      <span className="mt-2 line-clamp-2 text-[19px] leading-tight font-semibold" style={{ fontFamily: headingFont, color: palette.accent }}>
+      <span
+        className="mt-2 line-clamp-2 text-[19px] leading-tight font-semibold"
+        style={{ fontFamily: headingFont, color: palette.accent }}
+      >
         {title}
       </span>
-      {fine ? <span className="mt-1.5 line-clamp-2 text-[13px] leading-snug opacity-75">{fine}</span> : null}
+      {fine ? (
+        <span className="mt-1.5 line-clamp-2 text-[13px] leading-snug opacity-75">{fine}</span>
+      ) : null}
       <Byline who={piece.author} palette={palette} />
     </span>
   );
@@ -383,7 +483,13 @@ function CapsuleFace({ piece, palette }: { piece: Piece; palette: Palette }) {
   const locked = piece.data?.["locked"] === true;
   if (!locked) return <LetterFace piece={piece} palette={palette} label={BENTO_COPY.capsuleFrom} />;
   const at = str(piece.data?.["unlock_at"]);
-  const when = at ? new Date(at).toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" }) : "";
+  const when = at
+    ? new Date(at).toLocaleDateString(undefined, {
+        month: "short",
+        day: "numeric",
+        year: "numeric",
+      })
+    : "";
   return (
     <span className="flex h-full flex-col">
       <Label icon={Hourglass}>{BENTO_COPY.short.capsule}</Label>
@@ -403,8 +509,13 @@ function CalendarFace({ piece, palette }: { piece: Piece; palette: Palette }) {
   const d = piece.date ? localDate(piece.date) : null;
   return (
     <span className="flex h-full flex-col">
-      <Label icon={CalendarDays}>{d ? d.toLocaleDateString(undefined, { month: "long" }) : "Surprise"}</Label>
-      <span className="my-auto text-5xl leading-none font-semibold tabular-nums" style={{ color: palette.accent }}>
+      <Label icon={CalendarDays}>
+        {d ? d.toLocaleDateString(undefined, { month: "long" }) : "Surprise"}
+      </Label>
+      <span
+        className="my-auto text-5xl leading-none font-semibold tabular-nums"
+        style={{ color: palette.accent }}
+      >
         {d ? d.toLocaleDateString(undefined, { day: "numeric" }) : "?"}
       </span>
       <span className="flex items-center gap-1.5 text-[13px] opacity-75">
@@ -432,14 +543,23 @@ function OrnamentFace({ piece, palette }: { piece: Piece; palette: Palette }) {
 
 /* ---------------- awards ---------------- */
 
-type Award = { key: string; award: string; voters: string[]; reasons: { who: string; text: string }[]; mine: boolean };
+type Award = {
+  key: string;
+  award: string;
+  voters: string[];
+  reasons: { who: string; text: string }[];
+  mine: boolean;
+};
 
 function groupAwards(pieces: Piece[]): Award[] {
   const groups = new Map<string, Award>();
   for (const p of pieces) {
     const award = str(p.data?.["award"]) || (p.text ?? "").split("\n")[0]!.trim();
     if (!award) continue;
-    const key = award.toLowerCase().replace(/[^\p{L}\p{N} ]/gu, "").replace(/\s+/g, " ");
+    const key = award
+      .toLowerCase()
+      .replace(/[^\p{L}\p{N} ]/gu, "")
+      .replace(/\s+/g, " ");
     const g = groups.get(key) ?? { key, award, voters: [], reasons: [], mine: false };
     if (p.author && !g.voters.includes(p.author)) g.voters.push(p.author);
     const reason = bodyOf(p);
@@ -450,22 +570,41 @@ function groupAwards(pieces: Piece[]): Award[] {
   return [...groups.values()].sort((a, b) => b.voters.length - a.voters.length);
 }
 
-function AwardFace({ award, palette, headingFont, rank }: { award: Award; palette: Palette; headingFont: string; rank: number }) {
+function AwardFace({
+  award,
+  palette,
+  headingFont,
+  rank,
+}: {
+  award: Award;
+  palette: Palette;
+  headingFont: string;
+  rank: number;
+}) {
   return (
     <span className="flex h-full flex-col">
       <span className="flex items-start justify-between gap-3">
         <span
           className="bento-medal"
           aria-hidden
-          style={{ background: rank === 0 ? palette.accent : `${palette.accent}26`, color: rank === 0 ? readableInk(palette.accent) : palette.accent }}
+          style={{
+            background: rank === 0 ? palette.accent : `${palette.accent}26`,
+            color: rank === 0 ? readableInk(palette.accent) : palette.accent,
+          }}
         >
           <Trophy className="size-4" />
         </span>
-        <span className="bento-pill" style={{ background: `${palette.accent}1a`, color: palette.accent }}>
+        <span
+          className="bento-pill"
+          style={{ background: `${palette.accent}1a`, color: palette.accent }}
+        >
           {BENTO_COPY.votes(award.voters.length)}
         </span>
       </span>
-      <span className="mt-3 line-clamp-2 text-[19px] leading-tight font-semibold" style={{ fontFamily: headingFont }}>
+      <span
+        className="mt-3 line-clamp-2 text-[19px] leading-tight font-semibold"
+        style={{ fontFamily: headingFont }}
+      >
         {award.award}
       </span>
       {award.reasons[0] ? (
@@ -508,7 +647,10 @@ export function BentoView({
   const [open, setOpen] = useState<Piece | null>(null);
   const ink = readableInk(palette.background);
   const heading = giftHeading(site.custom_text, theme, site.occasion);
-  const intro = site.custom_text.intro_message?.trim() || site.intro_text || voice.intro(data.named ? data.name : "");
+  const intro =
+    site.custom_text.intro_message?.trim() ||
+    site.intro_text ||
+    voice.intro(data.named ? data.name : "");
   const titles = data.titles as Record<string, string | undefined>;
 
   const sections = useMemo(() => {
@@ -528,11 +670,27 @@ export function BentoView({
       count: s.key === "superlatives" ? groupAwards(s.pieces).length : s.pieces.length,
       icon: ICONS[s.key],
     })),
-    ...(data.words.length ? [{ key: "words", label: BENTO_COPY.short.words, count: data.words.length, icon: ICONS.words }] : []),
-    ...(extras?.keys ?? []).map((k) => ({ key: k as string, label: BENTO_COPY.short[k], count: 0, icon: ICONS[k] })),
+    ...(data.words.length
+      ? [
+          {
+            key: "words",
+            label: BENTO_COPY.short.words,
+            count: data.words.length,
+            icon: ICONS.words,
+          },
+        ]
+      : []),
+    ...(extras?.keys ?? []).map((k) => ({
+      key: k as string,
+      label: BENTO_COPY.short[k],
+      count: 0,
+      icon: ICONS[k],
+    })),
   ];
 
-  const title = (key: string) => titles[`${key === "words" ? "wordcloud" : key}_title`]?.trim() || BENTO_COPY.short[key as keyof typeof BENTO_COPY.short];
+  const title = (key: string) =>
+    titles[`${key === "words" ? "wordcloud" : key}_title`]?.trim() ||
+    BENTO_COPY.short[key as keyof typeof BENTO_COPY.short];
   const pieceCount = data.notes.length + (data.words.length ? 1 : 0);
 
   return (
@@ -555,7 +713,10 @@ export function BentoView({
         <div className="bento-grid bento-top">
           <div
             className="bento-tile bento-hero"
-            style={{ background: `linear-gradient(145deg, ${palette.accent}, ${palette.primary})`, color: readableInk(palette.accent) }}
+            style={{
+              background: `linear-gradient(145deg, ${palette.accent}, ${palette.primary})`,
+              color: readableInk(palette.accent),
+            }}
           >
             <span className="bento-orb" aria-hidden />
             {theme ? (
@@ -571,7 +732,10 @@ export function BentoView({
             <p className="text-[11px] font-semibold tracking-[0.2em] uppercase opacity-80">
               A gift for <SampleText on={data.nameIsSample}>{data.name}</SampleText>
             </p>
-            <h1 className="mt-3 text-[clamp(2.2rem,5.5cqi,4.25rem)] leading-[0.95] font-semibold tracking-tight" style={{ fontFamily: fonts.heading }}>
+            <h1
+              className="mt-3 text-[clamp(2.2rem,5.5cqi,4.25rem)] leading-[0.95] font-semibold tracking-tight"
+              style={{ fontFamily: fonts.heading }}
+            >
               {heading}
             </h1>
             <p className="mt-4 max-w-md text-[15px] leading-relaxed opacity-90">{intro}</p>
@@ -589,7 +753,10 @@ export function BentoView({
           {cd ? (
             <div className="bento-tile bento-stat">
               <Label>{cd.done ? BENTO_COPY.itsTheDay : BENTO_COPY.countdown}</Label>
-              <p className="bento-stat-num tabular-nums" style={{ color: palette.accent, fontFamily: fonts.heading }}>
+              <p
+                className="bento-stat-num tabular-nums"
+                style={{ color: palette.accent, fontFamily: fonts.heading }}
+              >
                 {cd.done ? "Today" : cd.days}
               </p>
               <p className="text-[13px] opacity-70" suppressHydrationWarning>
@@ -606,7 +773,12 @@ export function BentoView({
               {voice.solo ? "♥" : data.friends.length || (data.isSample ? 6 : 0)}
             </p>
             <p className="text-[13px] opacity-70">
-              {voice.solo ? (data.friends[0] ?? "me") : data.friends.length === 1 ? "friend" : "friends"} · {BENTO_COPY.pieces(pieceCount)}
+              {voice.solo
+                ? (data.friends[0] ?? "me")
+                : data.friends.length === 1
+                  ? "friend"
+                  : "friends"}{" "}
+              · {BENTO_COPY.pieces(pieceCount)}
             </p>
           </div>
 
@@ -618,12 +790,24 @@ export function BentoView({
                   const Icon = s.icon;
                   return (
                     <li key={s.key}>
-                      <button type="button" onClick={() => scrollToSection(s.key, reduce)} className="bento-summary-row">
-                        <span className="bento-summary-icon" style={{ background: `${palette.accent}1a`, color: palette.accent }} aria-hidden>
+                      <button
+                        type="button"
+                        onClick={() => scrollToSection(s.key, reduce)}
+                        className="bento-summary-row"
+                      >
+                        <span
+                          className="bento-summary-icon"
+                          style={{ background: `${palette.accent}1a`, color: palette.accent }}
+                          aria-hidden
+                        >
                           <Icon className="size-3.5" />
                         </span>
                         <span className="truncate">{s.label}</span>
-                        {s.count ? <span className="ml-auto tabular-nums opacity-60">{s.count}</span> : <span className="ml-auto" />}
+                        {s.count ? (
+                          <span className="ml-auto tabular-nums opacity-60">{s.count}</span>
+                        ) : (
+                          <span className="ml-auto" />
+                        )}
                         <ChevronRight className="size-3.5 opacity-40" aria-hidden />
                       </button>
                     </li>
@@ -648,11 +832,26 @@ export function BentoView({
           const awards = key === "superlatives" ? groupAwards(pieces) : [];
           const count = key === "superlatives" ? awards.length : pieces.length;
           const boxes =
-            key === "superlatives" ? layout(key, awards.map(() => null), !!awards[0]?.reasons.length) : layout(key, pieces);
+            key === "superlatives"
+              ? layout(
+                  key,
+                  awards.map(() => null),
+                  !!awards[0]?.reasons.length,
+                )
+              : layout(key, pieces);
           return (
-            <section key={key} id={ids(key)} className="bento-section" aria-labelledby={`${ids(key)}-h`}>
+            <section
+              key={key}
+              id={ids(key)}
+              className="bento-section"
+              aria-labelledby={`${ids(key)}-h`}
+            >
               <header className="bento-section-head">
-                <span className="bento-section-icon" style={{ background: palette.accent, color: readableInk(palette.accent) }} aria-hidden>
+                <span
+                  className="bento-section-icon"
+                  style={{ background: palette.accent, color: readableInk(palette.accent) }}
+                  aria-hidden
+                >
                   <Icon className="size-4" />
                 </span>
                 <h2 id={`${ids(key)}-h`} style={{ fontFamily: fonts.heading }}>
@@ -675,7 +874,9 @@ export function BentoView({
                             id: `award-${a.key}`,
                             kind: "letter",
                             author: a.voters.join(", "),
-                            text: [a.award, ...a.reasons.map((r) => `${r.who}: ${r.text}`)].join("\n\n"),
+                            text: [a.award, ...a.reasons.map((r) => `${r.who}: ${r.text}`)].join(
+                              "\n\n",
+                            ),
                             media: null,
                             link: null,
                             sealed: false,
@@ -683,7 +884,12 @@ export function BentoView({
                           })
                         }
                       >
-                        <AwardFace award={a} palette={palette} headingFont={fonts.heading} rank={n} />
+                        <AwardFace
+                          award={a}
+                          palette={palette}
+                          headingFont={fonts.heading}
+                          rank={n}
+                        />
                         {a.mine ? <Yours /> : null}
                       </Tile>
                     ))
@@ -695,12 +901,21 @@ export function BentoView({
                         label={pieceLabel(p)}
                         className={`${sizeClass(key, boxes[n])} ${p.mine ? "bento-mine" : ""}`}
                         style={boxStyle(boxes[n])}
-                        onOpen={p.sealed || (key === "capsule" && p.data?.["locked"] === true) ? undefined : () => setOpen(p)}
+                        onOpen={
+                          p.sealed || (key === "capsule" && p.data?.["locked"] === true)
+                            ? undefined
+                            : () => setOpen(p)
+                        }
                       >
                         {p.sealed ? (
                           <SealedFace piece={p} name={data.name} palette={palette} />
                         ) : (
-                          <Face sectionKey={key} piece={p} palette={palette} headingFont={fonts.heading} />
+                          <Face
+                            sectionKey={key}
+                            piece={p}
+                            palette={palette}
+                            headingFont={fonts.heading}
+                          />
                         )}
                         {p.mine ? <Yours /> : null}
                       </Tile>
@@ -711,9 +926,17 @@ export function BentoView({
         })}
 
         {data.words.length ? (
-          <section id={ids("words")} className="bento-section" aria-labelledby={`${ids("words")}-h`}>
+          <section
+            id={ids("words")}
+            className="bento-section"
+            aria-labelledby={`${ids("words")}-h`}
+          >
             <header className="bento-section-head">
-              <span className="bento-section-icon" style={{ background: palette.accent, color: readableInk(palette.accent) }} aria-hidden>
+              <span
+                className="bento-section-icon"
+                style={{ background: palette.accent, color: readableInk(palette.accent) }}
+                aria-hidden
+              >
                 <Type className="size-4" />
               </span>
               <h2 id={`${ids("words")}-h`} style={{ fontFamily: fonts.heading }}>
@@ -755,12 +978,16 @@ export function BentoView({
                   </li>
                 ))}
               </ul>
-              {site.custom_text.footer_note ? <p className="mt-4 text-sm opacity-70">{site.custom_text.footer_note}</p> : null}
+              {site.custom_text.footer_note ? (
+                <p className="mt-4 text-sm opacity-70">{site.custom_text.footer_note}</p>
+              ) : null}
             </div>
           </section>
         ) : null}
       </div>
-      {open ? <PieceSheet piece={open} palette={palette} onClose={() => setOpen(null)} /> : null}
+      {open ? (
+        <PieceSheet piece={open} palette={palette} onClose={() => setOpen(null)} sound="lid" />
+      ) : null}
     </div>
   );
 }
@@ -768,7 +995,13 @@ export function BentoView({
 /** A card's size: columns on laptops (of 4), columns on phones (of 2), and rows. */
 type Box = { lg: number; sm: number; rows: number };
 
-function baseBox(key: SectionKey, p: Piece | null, n: number, total: number, wideFirst = false): Box {
+function baseBox(
+  key: SectionKey,
+  p: Piece | null,
+  n: number,
+  total: number,
+  wideFirst = false,
+): Box {
   const long = (p?.text?.length ?? 0) > 220;
   switch (key) {
     case "letters":
@@ -796,8 +1029,16 @@ function baseBox(key: SectionKey, p: Piece | null, n: number, total: number, wid
 function layout(key: SectionKey, items: (Piece | null)[], wideFirst = false): Box[] {
   const boxes = items.map((p, n) => baseBox(key, p, n, items.length, wideFirst));
   // Photos: a lone last photo would stretch across the whole row, so widen the second one instead.
-  if (key === "photobooth" && boxes.length > 3 && boxes.reduce((sum, b) => sum + b.lg * b.rows, 0) % 4 === 1) boxes[1]!.lg = 2;
-  for (const [prop, cols] of [["lg", 4], ["sm", 2]] as const) {
+  if (
+    key === "photobooth" &&
+    boxes.length > 3 &&
+    boxes.reduce((sum, b) => sum + b.lg * b.rows, 0) % 4 === 1
+  )
+    boxes[1]!.lg = 2;
+  for (const [prop, cols] of [
+    ["lg", 4],
+    ["sm", 2],
+  ] as const) {
     const cells = boxes.reduce((sum, b) => sum + b[prop] * b.rows, 0);
     const rest = cells % cols;
     if (!rest) continue;
@@ -827,12 +1068,28 @@ const boxStyle = (b: Box | undefined) =>
 
 function sizeClass(key: SectionKey, b: Box | undefined): string {
   const photo = key === "photobooth" || key === "doodle";
-  return ["bento-cell", photo ? "bento-photo" : "", key === "doodle" ? "bento-doodle" : "", photo && (b?.rows ?? 1) > 1 ? "bento-feature" : "", (b?.lg ?? 1) > 1 ? "is-wide" : ""]
+  return [
+    "bento-cell",
+    photo ? "bento-photo" : "",
+    key === "doodle" ? "bento-doodle" : "",
+    photo && (b?.rows ?? 1) > 1 ? "bento-feature" : "",
+    (b?.lg ?? 1) > 1 ? "is-wide" : "",
+  ]
     .filter(Boolean)
     .join(" ");
 }
 
-function Face({ sectionKey, piece, palette, headingFont }: { sectionKey: SectionKey; piece: Piece; palette: Palette; headingFont: string }) {
+function Face({
+  sectionKey,
+  piece,
+  palette,
+  headingFont,
+}: {
+  sectionKey: SectionKey;
+  piece: Piece;
+  palette: Palette;
+  headingFont: string;
+}) {
   switch (sectionKey) {
     case "photobooth":
       return <PhotoFace piece={piece} palette={palette} />;

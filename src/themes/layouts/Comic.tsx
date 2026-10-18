@@ -8,8 +8,8 @@ import { animate, motion, useMotionValue, useTransform } from "motion/react";
 import type { OpeningProps } from "@/themes/_shared/opening";
 import { FallbackButton, Layer, SPRING, useHaptics } from "@/themes/_shared/stage";
 import { FloorShadow, Object3D, Sheen, TEXTURE_SOFT, elevation } from "@/themes/_shared/light";
-import { foley } from "@/lib/play";
-import { giftColors, live, pressable, useAutoplay, useOpenSequence } from "./kit";
+import { material } from "@/lib/sound/material";
+import { giftColors, live, pressable, soundAt, useAutoplay, useOpenSequence } from "./kit";
 
 export function ComicOpening(p: OpeningProps) {
   const c = giftColors(p);
@@ -20,12 +20,14 @@ export function ComicOpening(p: OpeningProps) {
   const y = useTransform(rise, [0, 1], ["0%", "-34%"]);
   const bagY = useTransform(rise, [0, 0.6, 1], ["0%", "6%", "60%"]);
   const bagOpacity = useTransform(rise, [0.55, 1], [1, 0]);
-  useOpenSequence(p, out, coverRef, 1700);
+  useOpenSequence(p, out, coverRef, 1700, "comic");
 
   function slideOut() {
     if (out || !live(p)) return;
     setOut(true);
-    foley("paper");
+    material("slide", { strength: 1.3 });
+    material("tape", { strength: 0.4 });
+    soundAt(p, [[520, () => material("panel", { strength: 1.2 })]]);
     h.thud();
     void animate(rise, 1, p.reduced ? { duration: 0 } : SPRING.soft);
   }
