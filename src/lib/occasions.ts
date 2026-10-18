@@ -54,7 +54,11 @@ export type OccasionInfo = {
   quiet?: boolean;
   /** Greetings for a culture or faith. Shown once someone from it has checked the words. */
   culturalReview?: boolean;
-  /** Styles to show first, best match first. Every other style follows. */
+  /**
+   * The styles made for this occasion, best match first. Picking the occasion shows only these
+   * plus the plain layouts (Scrapbook, Storybook...), which suit anything. Every other style is
+   * one tap away under "Show other styles". The first three get the "Top pick" tag.
+   */
   styles: StyleId[];
   /** The sections a new gift starts with. */
   sections: ModuleType[];
@@ -65,32 +69,32 @@ export type OccasionInfo = {
 export const OCCASIONS: OccasionInfo[] = [
   {
     id: "birthday",
-    styles: ["cake", "gift-box", "board-game", "arcade", "debut", "scrapbook", "bento", "zine", "scratch"],
+    styles: ["cake", "debut", "board-game", "gift-box", "arcade", "scrapbook", "bento", "zine", "scratch", "hunt"],
     sections: ["letters", "photobooth", "wordcloud", "voice", "countdown", "superlatives"],
     bo: "birthday",
   },
   {
     id: "love",
-    styles: ["love-letter", "stars", "storybook", "mixtape", "handwritten", "scratch"],
+    styles: ["love-letter", "record-player", "stars", "storybook", "mixtape", "handwritten"],
     sections: ["letters", "openwhen", "photobooth", "songs", "coupons"],
     bo: "valentine",
   },
   {
     id: "valentines",
     parent: "love",
-    styles: ["love-letter", "stars", "scratch", "mixtape", "storybook"],
+    styles: ["love-letter", "stars", "mixtape", "scratch", "storybook"],
     sections: ["letters", "openwhen", "photobooth", "songs", "coupons"],
     bo: "valentine",
   },
   {
     id: "anniversary",
-    styles: ["love-letter", "stars", "storybook", "mixtape", "record-player", "scrapbook"],
+    styles: ["record-player", "love-letter", "stars", "storybook", "scrapbook", "mixtape"],
     sections: ["letters", "photobooth", "songs", "map", "capsule"],
     bo: "anniversary",
   },
   {
     id: "wedding",
-    styles: ["invitation", "countdown", "love-letter", "storybook", "scrapbook"],
+    styles: ["invitation", "love-letter", "storybook", "scrapbook", "stars"],
     sections: ["letters", "photobooth", "superlatives", "map", "video"],
     bo: "wedding",
   },
@@ -110,7 +114,7 @@ export const OCCASIONS: OccasionInfo[] = [
   },
   {
     id: "baby",
-    styles: ["crib-mobile", "scrapbook", "storybook", "hunt"],
+    styles: ["crib-mobile", "scrapbook", "storybook"],
     sections: ["letters", "photobooth", "capsule", "voice", "doodle"],
     bo: "baby",
   },
@@ -123,74 +127,74 @@ export const OCCASIONS: OccasionInfo[] = [
   },
   {
     id: "graduation",
-    styles: ["boarding-pass", "arcade", "scrapbook", "comic", "bento", "zine"],
+    styles: ["boarding-pass", "scrapbook", "comic", "zine", "bento"],
     sections: ["letters", "photobooth", "superlatives", "openwhen", "video"],
     bo: "default",
   },
   {
     id: "new-job",
-    styles: ["boarding-pass", "bento", "scrapbook", "comic"],
+    styles: ["boarding-pass", "care-package", "bento", "scrapbook"],
     sections: ["letters", "openwhen", "coupons", "photobooth", "voice"],
     bo: "default",
   },
   {
     id: "send-off",
-    styles: ["boarding-pass", "mixtape", "scrapbook", "comic", "storybook"],
+    styles: ["boarding-pass", "care-package", "mixtape", "scrapbook", "storybook"],
     sections: ["letters", "openwhen", "map", "photobooth", "video"],
     bo: "voyage",
   },
   {
     id: "moving",
     parent: "send-off",
-    styles: ["boarding-pass", "care-package", "scrapbook", "mixtape"],
+    styles: ["care-package", "boarding-pass", "scrapbook"],
     sections: ["letters", "openwhen", "map", "photobooth", "voice"],
     bo: "voyage",
   },
   {
     id: "retirement",
     parent: "send-off",
-    styles: ["record-player", "storybook", "boarding-pass", "scrapbook"],
+    styles: ["record-player", "boarding-pass", "storybook", "scrapbook"],
     sections: ["letters", "photobooth", "superlatives", "map", "video"],
     bo: "voyage",
   },
   {
     id: "get-well",
     quiet: true,
-    styles: ["handwritten", "storybook", "stars", "scrapbook"],
+    styles: ["care-package", "handwritten", "storybook", "stars"],
     sections: ["letters", "openwhen", "voice", "photobooth", "doodle"],
     bo: "default",
   },
   {
     id: "sympathy",
     quiet: true,
-    styles: ["handwritten", "storybook", "stars", "scrapbook"],
+    styles: ["handwritten", "storybook", "stars"],
     sections: ["letters", "photobooth", "voice"],
     bo: "default",
   },
   {
     id: "thank-you",
-    styles: ["handwritten", "gift-box", "scrapbook", "bento"],
+    styles: ["handwritten", "care-package", "gift-box", "scrapbook"],
     sections: ["letters", "photobooth", "voice", "doodle", "coupons"],
     bo: "default",
   },
   {
     id: "holidays",
     groupOnly: true,
-    styles: ["gift-box", "stars", "scrapbook"],
+    styles: ["gift-box", "parol", "winter-window", "countdown"],
     sections: ["letters", "photobooth", "voice", "wordcloud", "video"],
     bo: "christmas",
   },
   {
     id: "christmas",
     parent: "holidays",
-    styles: ["gift-box", "winter-window", "parol", "scrapbook", "hunt"],
+    styles: ["gift-box", "parol", "winter-window", "scrapbook"],
     sections: ["letters", "calendar", "tree", "photobooth", "coupons"],
     bo: "christmas",
   },
   {
     id: "new-year",
     parent: "holidays",
-    styles: ["countdown", "stars", "zine", "bento"],
+    styles: ["countdown", "stars", "zine"],
     sections: ["letters", "capsule", "superlatives", "video", "photobooth"],
     bo: "newyear",
   },
@@ -206,7 +210,7 @@ export const OCCASIONS: OccasionInfo[] = [
     id: "eid",
     parent: "holidays",
     culturalReview: true,
-    styles: ["stars", "gift-box", "scrapbook", "storybook"],
+    styles: ["stars", "storybook", "scrapbook"],
     sections: ["letters", "photobooth", "voice", "video", "wordcloud"],
     bo: "default",
   },
@@ -214,7 +218,7 @@ export const OCCASIONS: OccasionInfo[] = [
     id: "diwali",
     parent: "holidays",
     culturalReview: true,
-    styles: ["stars", "gift-box", "scrapbook"],
+    styles: ["stars", "scrapbook", "storybook"],
     sections: ["letters", "photobooth", "voice", "video", "wordcloud"],
     bo: "default",
   },
@@ -222,7 +226,7 @@ export const OCCASIONS: OccasionInfo[] = [
     id: "hanukkah",
     parent: "holidays",
     culturalReview: true,
-    styles: ["stars", "gift-box", "storybook"],
+    styles: ["stars", "storybook", "scrapbook"],
     sections: ["letters", "photobooth", "voice", "video", "wordcloud"],
     bo: "default",
   },
@@ -234,7 +238,7 @@ export const OCCASIONS: OccasionInfo[] = [
   },
   {
     id: "just-because",
-    styles: ["love-letter", "handwritten", "scrapbook", "scratch", "hunt", "care-package"],
+    styles: ["love-letter", "handwritten", "care-package", "board-game", "arcade", "scrapbook", "scratch", "hunt"],
     sections: ["letters", "photobooth", "songs", "voice", "wordcloud"],
     bo: "default",
   },
