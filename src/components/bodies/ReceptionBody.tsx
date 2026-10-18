@@ -38,7 +38,7 @@ export function ReceptionBody(props: BodyProps) {
   const body = useBody(props);
   const { data, colors, fonts, reduce, site, theme } = body;
   const { opened, open } = useOpened("reception", site.id, body.sample);
-  const blush = site.occasion === "bridal-shower" || /bridal/i.test(theme?.name ?? "") || (typeof window !== "undefined" && window.location.search.includes("look=blush")); // TEMP-LOOK
+  const blush = site.occasion === "bridal-shower" || /bridal/i.test(theme?.name ?? "");
   const notes = data.notes;
   const photos = notes.filter((p) => p.kind === "photo" && !p.sealed);
   const cards = notes.filter((p) => !(p.kind === "photo" && !p.sealed));
@@ -107,7 +107,8 @@ export function ReceptionBody(props: BodyProps) {
           "--rx-bloom-deep": blush ? "#D9918B" : "#E6DCCB",
           "--rx-wall": colors.dark ? colors.mix(colors.bg, "#FFFFFF", 0.04) : colors.mix(colors.bg, colors.primary, 0.05),
           "--rx-wall-line": colors.dark ? "rgba(255,255,255,.07)" : colors.mix(colors.bg, colors.primary, 0.16),
-          "--rx-accent-ink": colors.mix(colors.primary, colors.ink, 0.35),
+          "--rx-accent-ink": colors.mix(colors.primary, colors.ink, colors.dark ? 0.7 : 0.35),
+          "--rx-glow": colors.dark ? "rgba(255, 220, 160, .07)" : "rgba(255,255,255,.5)",
         } as React.CSSProperties
       }
     >

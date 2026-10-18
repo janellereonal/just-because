@@ -141,6 +141,7 @@ export function ToyBasketBody(props: BodyProps) {
           "--tb-wicker-deep": colors.mix("#A87A3E", colors.primary, 0.08),
           "--tb-wicker-dark": colors.mix("#5E3F1E", colors.primary, 0.08),
           "--tb-collar": colors.primary,
+          "--tb-trail": pawTrail(colors.ink),
           "--tb-title": colors.dark ? colors.mix(colors.primary, "#FFFFFF", 0.5) : colors.primary,
           "--tb-rug1": colors.mix(colors.primary, "#FFFFFF", 0.62),
           "--tb-rug2": colors.mix(colors.accent, "#FFFFFF", 0.7),
@@ -210,7 +211,15 @@ export function ToyBasketBody(props: BodyProps) {
                 {inBasket.length && !all ? (
                   <ul className="tb-heap">
                     {inBasket.map((p, i) => (
-                      <li key={p.id} style={{ zIndex: 1 + Math.floor(seed(`${p.id}-z`) * 20) }}>
+                      <li
+                        key={p.id}
+                        style={
+                          {
+                            "--jx": `${((seed(`${p.id}-x`) - 0.5) * 18).toFixed(1)}px`,
+                            "--jy": `${((seed(`${p.id}-y`) - 0.5) * 22).toFixed(1)}px`,
+                          } as React.CSSProperties
+                        }
+                      >
                         {takenNow.has(p.id) && opened.has(p.id) ? (
                           <span className="tb-gap" aria-hidden="true" />
                         ) : (
@@ -339,7 +348,7 @@ function ToyButton({
       type="button"
       data-toy={piece.id}
       className={`tb-toy is-${toy} ${onRug ? "is-out" : ""} ${landing ? "is-landing" : ""}`}
-      style={{ "--tilt": `${tilt.toFixed(1)}deg`, "--i": index % 12 } as React.CSSProperties}
+      style={{ "--tilt": `${tilt.toFixed(1)}deg`, "--i": index % 12, "--sc": (0.84 + seed(`${piece.id}-s`) * 0.3).toFixed(2), "--tr": `${((r - 0.5) * 18).toFixed(1)}deg` } as React.CSSProperties}
       onClick={onPull}
       aria-label={pieceLabel(piece)}
     >
@@ -442,6 +451,14 @@ function ToyArt({ toy, tc, r }: { toy: Toy; tc: Colors; r: number }) {
       <path d="M44 67q6 4 12 0" fill="none" stroke="#2E2220" strokeWidth="2.5" strokeLinecap="round" />
     </svg>
   );
+}
+
+/** A tile of little paw prints walking left to right, as a CSS background. */
+function pawTrail(color: string) {
+  const paw = (x: number, y: number, r: number) =>
+    `<g transform='translate(${x} ${y}) rotate(${r})'><ellipse cx='0' cy='4' rx='6' ry='5'/><circle cx='-6' cy='-4' r='2.4'/><circle cx='-2' cy='-7.5' r='2.4'/><circle cx='2.5' cy='-7.5' r='2.4'/><circle cx='6.5' cy='-4' r='2.4'/></g>`;
+  const svg = `<svg xmlns='http://www.w3.org/2000/svg' width='150' height='120'><g fill='${color}'>${paw(18, 70, 80)}${paw(52, 50, 100)}${paw(88, 74, 80)}${paw(124, 54, 100)}</g></svg>`;
+  return `url("data:image/svg+xml,${encodeURIComponent(svg)}")`;
 }
 
 function colorMixLite(a: string, b: string) {

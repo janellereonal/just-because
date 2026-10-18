@@ -433,7 +433,7 @@ export const en = {
   "unpack.bbPara": "Para kay {name}",
   "unpack.bbParaYou": "Para sa'yo",
   "unpack.fragile": "Fragile. Open with love.",
-  "unpack.handle": "Handle with care",
+  "unpack.bbBox": "Balikbayan box",
   "unpack.thisSideUp": "This side up",
   "unpack.slipTitle": "Packing slip",
   "unpack.slipSub": "{n} things, packed for {name}",
