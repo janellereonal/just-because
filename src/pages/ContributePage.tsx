@@ -1,4 +1,6 @@
 import { OrnamentIcon } from "@/components/GiftTree";
+import { FRIEND_PAGE, friendAddLine } from "@/copy/strings";
+import { friendsIn } from "@/lib/noteCounts";
 import { engineThemeForName } from "@/themes/engine/registry";
 import { t } from "@/i18n";
 import { CharCount } from "@/components/ui/CharCount";
@@ -33,7 +35,7 @@ import { ModuleExample } from "@/components/ModuleExample";
 import { centerInScroller } from "@/lib/scroll";
 import { themeKindOf } from "@/lib/themeKind";
 import Bo from "@/components/Bo";
-import { Brush, CalendarDays, CircleHelp, Hourglass, Image as ImageIcon, Lock, Mail, MailOpen, MapPin, Mic, Music2, Sparkles, Ticket, Trophy, Type, Users, Video } from "lucide-react";
+import { Brush, CalendarDays, CircleHelp, Hourglass, Image as ImageIcon, Lock, Mail, MailOpen, MapPin, Mic, MoreHorizontal, Music2, Sparkles, Ticket, Trophy, Type, Users, Video } from "lucide-react";
 import { SectionFields } from "@/components/sections/SectionFields";
 import { SECTION_NEEDS, isNewSection, normalizeSectionData } from "@/lib/sections";
 import { meshGradient } from "@/lib/giftPieces";
@@ -43,6 +45,7 @@ const MODULE_ICON: Partial<Record<ModuleType, typeof Mail>> = {
   openwhen: MailOpen, capsule: Hourglass, superlatives: Trophy, quiz: CircleHelp, map: MapPin, coupons: Ticket, video: Video, doodle: Brush,
 };
 /** Short tab names for the newer sections. */
+const TAB_LIMIT = 4;
 const SHORT: Partial<Record<ModuleType, string>> = { openwhen: "Open-when", capsule: "Time capsule", superlatives: "Award", quiz: "Quiz", map: "Memory pin", coupons: "Coupon", video: "Video", doodle: "Doodle" };
 import { PageError, PageLoading, PageNotFound } from "@/components/PageStates";
 import { REPORT_COPY } from "@/copy/strings";
@@ -153,6 +156,7 @@ function ContributePage() {
   }, [siteId]);
 
   const [moduleType, setModuleType] = useState<ModuleType | null>(null);
+  const [moreTabs, setMoreTabs] = useState(false);
   const [name, setName] = useState("");
   const [pickedIdea, setIdea] = useState<string | null>(null);
   const [text, setText] = useState("");
@@ -237,6 +241,12 @@ function ContributePage() {
     modules.some((row) => row.module_type === m.type && row.enabled),
   );
   const active = moduleType ?? openModules[0]?.type ?? null;
+  // Four note types up front, the rest behind "More" (the chosen one always stays visible).
+  const extraTabs = openModules.length > TAB_LIMIT;
+  const shownTabs =
+    !extraTabs || moreTabs
+      ? openModules
+      : [...openModules.slice(0, TAB_LIMIT), ...openModules.slice(TAB_LIMIT).filter((m) => m.type === active)];
   const fieldStyle = {
     backgroundColor: palette.background,
     color: ink,
@@ -292,7 +302,8 @@ function ContributePage() {
       }),
     ...mine.map((record) => toView(record, site.id)),
   ];
-  const friendCount = new Set(giftContributions.map((c) => c.author_name.toLowerCase())).size;
+  // People, not notes, and the organiser isn't counted.
+  const friendCount = friendsIn(giftContributions);
 
   function resetForm() {
     setText("");
@@ -585,7 +596,7 @@ function ContributePage() {
                 {named ? `Add something for ${named}` : "Add something to the gift"}
               </h1>
               <p className="mx-auto mt-3 max-w-sm text-center text-[15px] leading-relaxed opacity-80 text-pretty">
-                {named ? `Friends are putting together a gift for ${named}.` : "Friends are putting a gift together."} Add a note, a photo or a song. It stays a surprise until they open it.
+                {named ? `Friends are putting together a gift for ${named}.` : "Friends are putting a gift together."} {openModules.length > 0 ? `${friendAddLine(openModules.map((m) => m.type))} It stays a surprise until they open it.` : FRIEND_PAGE.notReady}
               </p>
               <p className="mt-4 flex items-center justify-center gap-1.5 text-xs opacity-70">
                 <Users className="size-3.5" />
@@ -611,14 +622,16 @@ function ContributePage() {
               </button>
             </div>
           ) : openModules.length === 0 ? (
-            <p className="mt-10 text-center text-sm opacity-80">
-              This gift isn't taking notes right now.
-            </p>
+            <p className="mt-10 text-center text-sm opacity-80">{FRIEND_PAGE.notReady}</p>
           ) : (
             <form onSubmit={submit} className="mt-8 rounded-[28px] p-5 shadow-[0_24px_60px_-34px_rgba(43,37,34,.55)] sm:p-7" style={{ backgroundColor: surface }}>
               <p className="text-sm font-medium">What would you like to add?</p>
-              <div className={`mt-3 grid gap-2 ${openModules.length === 1 ? "grid-cols-1" : openModules.length === 2 ? "grid-cols-2" : "grid-cols-3"}`} role="tablist" aria-label="What to add">
-                {openModules.map((mod) => {
+              <div
+                className={`mt-3 grid gap-2 ${shownTabs.length + (extraTabs ? 1 : 0) === 1 ? "grid-cols-1" : shownTabs.length + (extraTabs ? 1 : 0) === 2 ? "grid-cols-2" : shownTabs.length + (extraTabs ? 1 : 0) === 4 ? "grid-cols-2 min-[420px]:grid-cols-4" : "grid-cols-3"}`}
+                role="tablist"
+                aria-label="What to add"
+              >
+                {shownTabs.map((mod) => {
                   const Icon = MODULE_ICON[mod.type] ?? Mail;
                   const on = active === mod.type;
                   return (
@@ -641,6 +654,18 @@ function ContributePage() {
                     </button>
                   );
                 })}
+                {extraTabs ? (
+                  <button
+                    type="button"
+                    aria-expanded={moreTabs}
+                    onClick={() => setMoreTabs((v) => !v)}
+                    className="flex flex-col items-center justify-center gap-1.5 rounded-2xl px-2 py-3 text-center text-[13px] leading-tight font-medium"
+                    style={{ backgroundColor: palette.background, color: ink, boxShadow: `inset 0 0 0 1px ${ink}1a` }}
+                  >
+                    <MoreHorizontal className="size-5" />
+                    {moreTabs ? FRIEND_PAGE.fewer : `${FRIEND_PAGE.more} (${openModules.length - TAB_LIMIT})`}
+                  </button>
+                ) : null}
               </div>
 
               {active && !isNewSection(active) ? (

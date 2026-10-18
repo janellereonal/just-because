@@ -409,6 +409,73 @@ export const SECTIONS_PAGE = {
   link: (n: number) => `See all ${n} sections`,
 } as const;
 
+/** The friend page (contribute). */
+export const FRIEND_PAGE = {
+  /** How each section reads in "Add a note, a photo or a song". */
+  things: {
+    letters: "a note",
+    photobooth: "a photo",
+    songs: "a song",
+    voice: "a voice note",
+    wordcloud: "a word",
+    tree: "an ornament",
+    calendar: "a surprise",
+    countdown: "a countdown",
+    openwhen: "an open-when letter",
+    capsule: "a time capsule note",
+    superlatives: "an award",
+    quiz: "a quiz question",
+    map: "a place",
+    coupons: "a coupon",
+    video: "a video",
+    doodle: "a doodle",
+  } as Record<string, string>,
+  notReady: "The organiser is still setting this up. Check back soon.",
+  more: "More",
+  fewer: "Fewer",
+};
+
+/** "Add a note, a photo or a song." built from the sections that are on. */
+export function friendAddLine(types: readonly string[]): string {
+  const words = types.map((t) => FRIEND_PAGE.things[t]).filter((w): w is string => !!w);
+  if (words.length === 0) return "";
+  if (words.length === 1) return `Add ${words[0]}.`;
+  if (words.length <= 3) return `Add ${words.slice(0, -1).join(", ")} or ${words[words.length - 1]}.`;
+  return `Add ${words.slice(0, 3).join(", ")} and more.`;
+}
+
+/**
+ * Sample letters shown in previews before friends add theirs, matched to the occasion.
+ * The first one is also the friend page example. `{name}` becomes ", Ana" or nothing.
+ */
+export const SAMPLE_LETTERS: Record<string, [string, string, string]> = {
+  valentine: ["Happy Valentine's Day{name}. You make ordinary days feel special.", "Still my favourite person to sit next to.", "Thank you for loving me so well."],
+  birthday: ["Happy birthday{name}. Here's to your best year yet.", "Another year of you is a gift to all of us.", "Cake first, then we talk. Love you."],
+  voyage: ["Safe travels{name}. Send us a postcard from there.", "Go see everything. We'll keep your seat warm.", "Proud of you for taking the leap."],
+  christmas: ["Merry Christmas{name}. You make the season brighter.", "Thank you for every gift that wasn't wrapped.", "Here's to cocoa, carols and you."],
+  pets: ["Who's a good one{name}? You are.", "Thank you for every greeting at the door.", "Best nap buddy there ever was."],
+  newyear: ["Happy New Year{name}. Here's to your best year yet.", "So glad we got through last year together.", "Big plans, small steps. We're with you."],
+  anniversary: ["Happy anniversary{name}. Here's to many more years together.", "You two make it look easy.", "Thank you for showing us what love looks like."],
+  wedding: ["Congratulations{name}. So happy for you both.", "What a day, and what a pair.", "Wishing you a lifetime of good mornings."],
+  bridal: ["Can't wait to celebrate you{name}.", "Here's to the bride, and the best is yet to come.", "So happy for you. Save me a dance."],
+  baby: ["Welcome to the world, little one{name}.", "That little one is so lucky to have you.", "Sleep when you can. We're here for the rest."],
+  handwritten: ["I wrote this one by hand, just for you{name}.", "A few words I've been meaning to say.", "Keep this for a rainy day."],
+  game: ["You always win{name}, and I don't even mind.", "Player two, ready when you are.", "GG. Thanks for every round."],
+  pixel: ["Achievement unlocked: best friend{name}.", "Extra life, just for you.", "Press start on a great year."],
+  default: ["Thinking of you{name}, always.", "You make every room warmer.", "Thank you for always showing up."],
+};
+
+/** One sample letter, with the name filled in (or left out). */
+export function sampleLetter(kind: string, i: number, name = ""): string {
+  const set = SAMPLE_LETTERS[kind] ?? SAMPLE_LETTERS["default"]!;
+  return set[i % set.length]!.replace("{name}", name ? `, ${name}` : "");
+}
+
+/** Shown on every format while it's showing sample notes. */
+export const SAMPLE_BADGE = {
+  friends: "Sample notes. Friends' notes replace these.",
+  solo: "Sample notes. Yours replace these.",
+};
 /** Footer and legal pages. */
 export const FOOTER_COPY = {
   line: "Made for the people you love.",
