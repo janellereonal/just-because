@@ -117,6 +117,35 @@ export const PAYMENT_METHOD_LABELS: Record<string, string> = {
 export const usdDisplayRate = 0.017;
 
 /**
+ * Other currencies we show a guide price in, as units per 1 US dollar, so
+ * updating `usdDisplayRate` moves them all. Display only, like the dollar.
+ * Pegged currencies (AED, SAR, QAR, HKD) barely move; the rest are rough.
+ * A viewer whose currency isn't listed sees the dollar guide.
+ */
+export const perUsdDisplayRates: Record<string, number> = {
+  USD: 1,
+  EUR: 0.87,
+  GBP: 0.75,
+  AUD: 1.52,
+  CAD: 1.38,
+  NZD: 1.68,
+  SGD: 1.3,
+  HKD: 7.8,
+  JPY: 150,
+  AED: 3.67,
+  SAR: 3.75,
+  QAR: 3.64,
+  KWD: 0.31,
+};
+
+/**
+ * Text on the customer's card statement. Null uses the business name on our
+ * PayMongo account. Foreign buyers dispute charges they don't recognise, so
+ * once tested in test mode, set this to something like "JUSTBECAUSE.SITE".
+ */
+export const statementDescriptor: string | null = null;
+
+/**
  * Early-bird promo, applied automatically on the server to the first
  * `maxUses` paid publishes. Off by default. Doesn't apply to upgrades.
  */
@@ -179,8 +208,14 @@ export function formatPeso(centavos: number): string {
 }
 
 export function formatUsdApprox(centavos: number): string {
-  const usd = Math.round((centavos / 100) * usdDisplayRate);
-  return `≈ ${new Intl.NumberFormat(undefined, { style: "currency", currency: "USD", currencyDisplay: "narrowSymbol", maximumFractionDigits: 0 }).format(usd)}`;
+  return formatApprox(centavos, "USD");
+}
+
+/** "≈ €9" for a peso amount, in any currency in `perUsdDisplayRates` (falls back to dollars). */
+export function formatApprox(centavos: number, currency: string): string {
+  const code = perUsdDisplayRates[currency] ? currency : "USD";
+  const value = Math.round((centavos / 100) * usdDisplayRate * perUsdDisplayRates[code]!);
+  return `≈ ${new Intl.NumberFormat(undefined, { style: "currency", currency: code, currencyDisplay: "narrowSymbol", maximumFractionDigits: 0 }).format(value)}`;
 }
 
 /** "GCash, Maya, cards, or QR Ph" */

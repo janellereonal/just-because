@@ -44,7 +44,13 @@ export const EVENT_PROPS: Record<EventName, Record<string, readonly string[] | "
   friend_page_viewed: {},
   note_added: { type: [] as string[], by_owner: "bool" },
   gift_wrapped: { tier: [] as string[] },
-  plan_purchased: { plan: [] as string[], kind: ["publish", "upgrade", "extend"] },
+  plan_purchased: {
+    plan: [] as string[],
+    kind: ["publish", "upgrade", "extend"],
+    method: ["card", "gcash", "paymaya", "qrph", "other"],
+    /** Cards only: issued in the Philippines or not. Tells us when a second payment provider is worth it. */
+    card_origin: ["local", "foreign", "unknown"],
+  },
   gift_opened: {},
   make_your_own_clicked: { source: ["gift_footer", "ended_page", "friend_page"] },
   theme_opening_started: {},

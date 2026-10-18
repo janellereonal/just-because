@@ -1131,6 +1131,15 @@ export const getPaymentsSetup = createServerFn({ method: "GET" }).handler(async 
       pending: sql<number>`(count(*) filter (where ${schema.orders.status} = 'pending'))::int`,
     })
     .from(schema.orders);
+  // Card payments by where the card was issued (from plan_purchased events), to know when foreign buyers matter.
+  const [cards] = await getDb()
+    .select({
+      local: sql<number>`(count(*) filter (where ${schema.events.props}->>'card_origin' = 'local'))::int`,
+      foreign: sql<number>`(count(*) filter (where ${schema.events.props}->>'card_origin' = 'foreign'))::int`,
+      unknown: sql<number>`(count(*) filter (where ${schema.events.props}->>'card_origin' = 'unknown'))::int`,
+    })
+    .from(schema.events)
+    .where(eq(schema.events.name, "plan_purchased"));
   let webhooks: { url: string; events: string[]; status: string; livemode: boolean }[] | null = null;
   let webhooksError: string | null = null;
   if (mode === "test" || (mode === "live" && process.env["PAYMONGO_ALLOW_LIVE"] === "true")) {
@@ -1158,6 +1167,7 @@ export const getPaymentsSetup = createServerFn({ method: "GET" }).handler(async 
     methods: enabledPaymentMethods,
     paidOrders: counts?.paid ?? 0,
     pendingOrders: counts?.pending ?? 0,
+    cardPayments: { local: cards?.local ?? 0, foreign: cards?.foreign ?? 0, unknown: cards?.unknown ?? 0 },
   };
 });
 

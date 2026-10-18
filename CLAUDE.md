@@ -72,6 +72,11 @@ Locally, without `BLOB_READ_WRITE_TOKEN` uploads save to `.dev-uploads/`, and wi
   through the API in the key's mode (test key → test webhook) and throws the secret away.
 - Provider code sits behind `src/server/payments/types.ts`; PayMongo is
   `src/server/payments/paymongo.ts`. A second provider (PayPal) would be a sibling file.
+- Buyers abroad: foreign cards work, charged in PHP (hosted checkout is pesos only). They see a guide price
+  in their currency (`formatApprox`, `useViewerMoney` in `src/lib/viewerCurrency.ts`, display only).
+  `applyPaidEvent` refuses a payment whose currency differs from the order's. `plan_purchased` records
+  `method` and `card_origin` (local/foreign card), shown in /admin. Dollar prices need PayMongo approval
+  and a card page of our own: `docs/payments-international.md`.
 - Order kinds: `publish` (first payment), `upgrade` (pay the difference; adds the extra months
   on top of the current end date, so extensions are kept) and `extend` (pay the tier's
   `extendAmount` for another `liveFor`, stacked on the end date, or from today if ended).
