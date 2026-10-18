@@ -1785,6 +1785,7 @@ function SiteDashboard() {
       contained
       style={introStyleForTheme(theme?.name)}
       kind={resolveStyle(draft, theme).introKind}
+      giftStyle={draft.style}
       occasionBadge={draft.occasion ? occasionName(draft.occasion) : undefined}
       calm={isQuietOccasion(draft.occasion)}
       palette={paletteNow}
@@ -1811,6 +1812,7 @@ function SiteDashboard() {
       contained
       style={introStyleForTheme(theme?.name)}
       kind={resolveStyle(draft, theme).introKind}
+      giftStyle={draft.style}
       occasionBadge={draft.occasion ? occasionName(draft.occasion) : undefined}
       calm={isQuietOccasion(draft.occasion)}
       palette={paletteNow}
@@ -2229,6 +2231,7 @@ function SiteDashboard() {
         <GiftIntro
           style={introStyleForTheme(theme?.name)}
           kind={resolveStyle(draft, theme).introKind}
+          giftStyle={draft.style}
           occasionBadge={draft.occasion ? occasionName(draft.occasion) : undefined}
           calm={isQuietOccasion(draft.occasion)}
           palette={paletteNow}

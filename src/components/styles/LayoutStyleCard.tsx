@@ -1,8 +1,8 @@
 /**
- * Gallery cards for layout styles (Scrapbook, Mixtape, Constellation...). Their own
- * openings come later, so the card shows the real thing they're about: a finished
- * sample gift (Ana's 30th) read in that layout. Hover, or scroll to it on a phone,
- * and it scrolls slowly; tap for the full sample.
+ * Gallery cards for layout styles (Scrapbook, Mixtape, Constellation...). The card
+ * shows the real thing they're about: a finished sample gift (Ana's 30th) read in
+ * that layout. Hover, or scroll to it on a phone, and it scrolls slowly. Tap for the
+ * full sample: the style's own opening (src/themes/layouts), then the gift.
  */
 import { useEffect, useMemo, useRef, useState } from "react";
 import { AnimatePresence, motion } from "motion/react";
@@ -12,6 +12,8 @@ import { DEMO_GIFTS } from "@/lib/demoGifts";
 import { SPRING } from "@/themes/_shared/stage";
 import { t } from "@/i18n";
 import { styleCopy, styleTitle, type StyleInfo } from "@/lib/styles";
+import { TactileOpening } from "@/themes/TactileOpening";
+import { SHOWCASE_COPY } from "@/copy/strings";
 
 const ANA = DEMO_GIFTS.ana;
 const STAGE_W = 390;
@@ -50,7 +52,9 @@ export function LayoutStyleCard({
   useEffect(() => {
     const el = ref.current;
     if (!el || !window.matchMedia("(hover: none)").matches) return;
-    const io = new IntersectionObserver(([e]) => setLive(!!e && e.intersectionRatio > 0.7), { threshold: [0, 0.7, 1] });
+    const io = new IntersectionObserver(([e]) => setLive(!!e && e.intersectionRatio > 0.7), {
+      threshold: [0, 0.7, 1],
+    });
     io.observe(el);
     return () => io.disconnect();
   }, []);
@@ -79,7 +83,15 @@ export function LayoutStyleCard({
         }
       }}
     >
-      <div ref={frame} className="relative overflow-hidden rounded-[22px]" style={{ aspectRatio: `${STAGE_W} / ${STAGE_H}`, contain: "layout paint", background: ANA.palette.background }}>
+      <div
+        ref={frame}
+        className="relative overflow-hidden rounded-[22px]"
+        style={{
+          aspectRatio: `${STAGE_W} / ${STAGE_H}`,
+          contain: "layout paint",
+          background: ANA.palette.background,
+        }}
+      >
         <div
           aria-hidden
           inert
@@ -89,10 +101,19 @@ export function LayoutStyleCard({
           <div
             style={{
               transform: live ? "translateY(-38%)" : "translateY(0)",
-              transition: live ? "transform 9s cubic-bezier(.45,0,.55,1)" : "transform 1.2s cubic-bezier(.22,1,.36,1)",
+              transition: live
+                ? "transform 9s cubic-bezier(.45,0,.55,1)"
+                : "transform 1.2s cubic-bezier(.22,1,.36,1)",
             }}
           >
-            <FormatView site={site} theme={ANA.theme} palette={ANA.palette} modules={ANA.modules} contributions={ANA.notes} calendarEntries={ANA.calendar} />
+            <FormatView
+              site={site}
+              theme={ANA.theme}
+              palette={ANA.palette}
+              modules={ANA.modules}
+              contributions={ANA.notes}
+              calendarEntries={ANA.calendar}
+            />
           </div>
         </div>
         <span className="absolute bottom-3 left-3 z-10 rounded-full bg-white/80 px-2.5 py-1 font-mono text-[10px] tracking-[0.14em] text-ink uppercase backdrop-blur-sm transition-opacity group-hover:opacity-0">
@@ -121,7 +142,15 @@ export function LayoutStyleCard({
 }
 
 /** Full screen: the sample gift in this layout, to scroll through and try. */
-export function LayoutStyleModal({ style, onClose, onUse }: { style: StyleInfo | null; onClose: () => void; onUse: (s: StyleInfo) => void }) {
+export function LayoutStyleModal({
+  style,
+  onClose,
+  onUse,
+}: {
+  style: StyleInfo | null;
+  onClose: () => void;
+  onUse: (s: StyleInfo) => void;
+}) {
   useEffect(() => {
     if (!style) return;
     const onKey = (e: KeyboardEvent) => e.key === "Escape" && onClose();
@@ -142,34 +171,113 @@ export function LayoutStyleModal({ style, onClose, onUse }: { style: StyleInfo |
   );
 }
 
-function LayoutModalBody({ style, onClose, onUse }: { style: StyleInfo; onClose: () => void; onUse: (s: StyleInfo) => void }) {
+function LayoutModalBody({
+  style,
+  onClose,
+  onUse,
+}: {
+  style: StyleInfo;
+  onClose: () => void;
+  onUse: (s: StyleInfo) => void;
+}) {
   const site = useAnaAs(style);
+  const [opened, setOpened] = useState(false);
+  const [round, setRound] = useState(0);
+  const friends = useMemo(
+    () => [...new Set(ANA.notes.map((n) => n.author_name).filter(Boolean))],
+    [],
+  );
   return (
     <motion.div
       role="dialog"
       aria-modal="true"
       aria-label={styleTitle(style.id)}
-      className="fixed inset-0 z-[80] overflow-x-hidden overflow-y-auto overscroll-contain [container:gift/inline-size]"
+      className="fixed inset-0 z-[80]"
       style={{ background: ANA.palette.background }}
       initial={{ opacity: 0, scale: 1.02 }}
       animate={{ opacity: 1, scale: 1 }}
       exit={{ opacity: 0, scale: 1.02 }}
       transition={SPRING.soft}
     >
-      <div className="pb-28">
-        <FormatView site={site} theme={ANA.theme} palette={ANA.palette} modules={ANA.modules} contributions={ANA.notes} calendarEntries={ANA.calendar} />
+      <div className="absolute inset-0 [container:gift/inline-size]">
+        {/* First the style's own opening, then the gift it opens into. */}
+        <AnimatePresence>
+          {opened ? (
+            <motion.div
+              key={`gift-${round}`}
+              className="absolute inset-0 z-[85] overflow-x-hidden overflow-y-auto overscroll-contain [container:gift/inline-size]"
+              style={{ background: ANA.palette.background }}
+              initial={{ opacity: 0, scale: 0.985, filter: "blur(6px)" }}
+              animate={{ opacity: 1, scale: 1, filter: "blur(0px)" }}
+              exit={{ opacity: 0, transition: { duration: 0.2 } }}
+              transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
+            >
+              <div className="pb-28">
+                <FormatView
+                  site={site}
+                  theme={ANA.theme}
+                  palette={ANA.palette}
+                  modules={ANA.modules}
+                  contributions={ANA.notes}
+                  calendarEntries={ANA.calendar}
+                />
+              </div>
+            </motion.div>
+          ) : null}
+        </AnimatePresence>
+        {opened ? null : (
+          <TactileOpening
+            key={round}
+            kind="default"
+            style={style.id}
+            palette={ANA.palette}
+            recipientName="Ana"
+            contributors={friends}
+            contained
+            onOpen={() => setOpened(true)}
+            onSkip={() => setOpened(true)}
+          />
+        )}
       </div>
-      <button type="button" onClick={onClose} aria-label="Close" className="fixed top-3 left-3 z-[90] grid size-10 place-items-center rounded-full bg-white/85 text-ink shadow">
+      <button
+        type="button"
+        onClick={onClose}
+        aria-label="Close"
+        className="absolute top-3 left-3 z-[90] grid size-10 place-items-center rounded-full bg-white/85 text-ink shadow"
+      >
         <X className="size-4" aria-hidden="true" />
       </button>
-      <div className="pointer-events-none fixed inset-x-0 bottom-0 z-[90] flex justify-center px-4 pb-5">
-        <div className="pointer-events-auto flex w-full max-w-md items-center gap-1.5 rounded-full bg-white/90 p-1.5 shadow-[0_18px_40px_-16px_rgba(43,37,34,.45)] ring-1 ring-ink/5 backdrop-blur-md">
-          <span className="min-w-0 truncate px-3 text-[13px] font-medium text-ink/75">{styleTitle(style.id)}</span>
-          <button type="button" onClick={() => onUse(style)} className="squish min-h-11 flex-1 rounded-full bg-accent px-4 text-[15px] font-medium whitespace-nowrap text-cream">
-            {t("gallery.use")}
-          </button>
-        </div>
-      </div>
+      <AnimatePresence>
+        {opened ? (
+          <motion.div
+            className="pointer-events-none absolute inset-x-0 bottom-0 z-[90] flex justify-center px-4 pb-5"
+            initial={{ opacity: 0, y: 40 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 40 }}
+            transition={{ ...SPRING.soft, delay: 0.35 }}
+          >
+            <div className="pointer-events-auto flex w-full max-w-md items-center gap-1.5 rounded-full bg-white/90 p-1.5 shadow-[0_18px_40px_-16px_rgba(43,37,34,.45)] ring-1 ring-ink/5 backdrop-blur-md">
+              <button
+                type="button"
+                onClick={() => {
+                  setOpened(false);
+                  setRound((n) => n + 1);
+                }}
+                className="min-h-11 shrink-0 rounded-full px-2.5 text-[12.5px] font-medium whitespace-nowrap text-ink/75 hover:bg-ink/5 hover:text-ink"
+              >
+                {SHOWCASE_COPY.again}
+              </button>
+              <button
+                type="button"
+                onClick={() => onUse(style)}
+                className="squish min-h-11 flex-1 rounded-full bg-accent px-4 text-[15px] font-medium whitespace-nowrap text-cream"
+              >
+                {t("gallery.use")}
+              </button>
+            </div>
+          </motion.div>
+        ) : null}
+      </AnimatePresence>
     </motion.div>
   );
 }

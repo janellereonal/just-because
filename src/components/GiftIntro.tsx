@@ -714,6 +714,8 @@ type GiftIntroProps = React.ComponentProps<typeof ClassicIntro> & {
   themeOptions?: ThemeOptions | undefined;
   /** Birthday: the age they're turning (shown as candles). */
   age?: number | null | undefined;
+  /** The gift's style id. Layout styles (scrapbook, mixtape...) play their own opening. */
+  giftStyle?: string | null | undefined;
 };
 
 /**
@@ -721,7 +723,7 @@ type GiftIntroProps = React.ComponentProps<typeof ClassicIntro> & {
  * record, a cake…); "classic" in the intro settings keeps the earlier 3D one.
  */
 export function GiftIntro(props: GiftIntroProps) {
-  const { character, iconSet, contributors, themeName, notes, slots, themeOptions, age, calm, ...rest } = props;
+  const { character, iconSet, contributors, themeName, notes, slots, themeOptions, age, calm, giftStyle, ...rest } = props;
   const kind = props.kind ?? STYLE_KIND[props.style];
   const s = props.settings ?? {};
   const engine = !!engineThemeForName(themeName);
@@ -749,6 +751,7 @@ export function GiftIntro(props: GiftIntroProps) {
       slots={slots}
       options={themeOptions}
       age={age}
+      style={giftStyle}
     />
   );
 }

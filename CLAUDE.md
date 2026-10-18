@@ -186,6 +186,10 @@ verification is only required once `RESEND_API_KEY` and `EMAIL_FROM` are both se
 - Gifts from before styles have both null and render exactly as before: theme opening + saved layout,
   theme words (`resolveStyle`, `giftWords`; tested for every theme × layout in `src/lib/styles.test.ts`).
 - Changing only the layout of a styled gift clears its style (it becomes a theme + layout gift).
+- Every style has an opening and a body. Theme styles use their theme's opening (`src/themes/<theme>`). Layout
+  styles (Scrapbook, Storybook, Comic, Bento, Hunt, Zine, Mixtape, Scratch, Constellation) have their own in
+  `src/themes/layouts/` (registry `LAYOUT_OPENINGS`, shared kit in `kit.tsx`), picked by `TactileOpening`'s `style`
+  prop (`giftStyle` on `GiftIntro`). They take the gift's palette. Try one at `/dev/openings?style=mixtape&pal=berry`.
 
 ## Themes, cast and sections
 

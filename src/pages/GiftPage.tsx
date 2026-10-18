@@ -184,6 +184,7 @@ function PublishedPage() {
         <GiftIntro
           style={introStyleForTheme(theme?.name)}
           kind={resolveStyle(site, theme).introKind}
+          giftStyle={site.style}
           occasionBadge={site.occasion ? occasionName(site.occasion) : undefined}
           calm={isQuietOccasion(site.occasion)}
           palette={palette}

@@ -18,12 +18,17 @@ import { BabyOpening, babyBackground } from "@/themes/baby/Opening";
 import { NewYearOpening, newYearBackground } from "@/themes/newyear/Opening";
 import { VoyageOpening, voyageBackground } from "@/themes/voyage/Opening";
 import { PetsOpening, petsBackground } from "@/themes/pets/Opening";
-import { ChristmasOpening, christmasBackground, defaultBackground } from "@/themes/christmas/Opening";
+import {
+  ChristmasOpening,
+  christmasBackground,
+  defaultBackground,
+} from "@/themes/christmas/Opening";
 import { HandwrittenOpening, handwrittenBackground } from "@/themes/handwritten/Opening";
 import { GameOpening, gameBackground } from "@/themes/game/Opening";
 import { PixelOpening, pixelBackground } from "@/themes/pixel/Opening";
 import { EngineStage } from "@/themes/engine/EngineStage";
 import { engineThemeForName } from "@/themes/engine/registry";
+import { layoutOpeningFor } from "@/themes/layouts";
 import type { EngineNote, ThemeOptions } from "@/themes/engine/define";
 import type { SlotInput } from "@/themes/engine/slots";
 
@@ -171,7 +176,10 @@ export function TactileOpening({
   options,
   age,
   calm = false,
+  style,
 }: {
+  /** A layout style's id (scrapbook, mixtape...): plays that style's own opening. */
+  style?: string | null | undefined;
   age?: number | null | undefined;
   /** Calm occasions (Sympathy, Get well): no drifting particles. */
   calm?: boolean | undefined;
@@ -229,22 +237,27 @@ export function TactileOpening({
       />
     );
   }
-  const Component = entry.Component;
+  const layout = layoutOpeningFor(style);
+  const Component = layout?.Component ?? entry.Component;
   const c = design.palette;
   return (
     <OpeningShell
       kind={kind}
-      background={entry.background(c)}
-      ink={entry.ink(c)}
+      background={layout ? layout.background() : entry.background(c)}
+      ink={layout ? layout.ink : entry.ink(c)}
       contained={contained}
       interactive={interactive}
       paused={paused}
       onDone={onOpen}
       onSkip={onSkip ?? onOpen}
       hint={interactive && !paused ? hint : ""}
-      badge={badgeText || design.name}
-      {...(entry.grain !== undefined ? { grain: entry.grain } : {})}
-      {...(entry.sprinkles !== 0 && !calm ? { sprinkles: set, sprinkleOpacity: entry.sprinkles ?? 0.4 } : {})}
+      badge={badgeText || layout?.badge || design.name}
+      {...((layout ? layout.grain : entry.grain) !== undefined
+        ? { grain: (layout ? layout.grain : entry.grain)! }
+        : {})}
+      {...(entry.sprinkles !== 0 && !calm
+        ? { sprinkles: set, sprinkleOpacity: entry.sprinkles ?? 0.4 }
+        : {})}
     >
       {({ hostRef, open, reduced }) => (
         <Component
@@ -253,8 +266,8 @@ export function TactileOpening({
           palette={palette}
           recipient={recipient}
           greeting={introText?.trim() || `For ${recipient}`}
-          badge={badgeText || design.name}
-          buttonText={buttonText || entry.button}
+          badge={badgeText || layout?.badge || design.name}
+          buttonText={buttonText || (layout ? layout.button : entry.button)}
           character={cast.character}
           accessory={cast.accessory}
           iconSet={set}
