@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { GuestBanner, GuestSignInCard } from "@/components/GuestPrompt";
-import { GUEST_COPY, OCCASION_NAMES } from "@/copy/strings";
+import { GUEST_COPY, OCCASION_NAMES, SAVE_COPY } from "@/copy/strings";
+import { useGiftSaver, type SaveState } from "@/hooks/useGiftSaver";
 import { bodyFor, lookFor, resolveStyle, styleForLegacy, styleInfo, styleTitle, type StyleId } from "@/lib/styles";
 import { isQuietOccasion, occasionName, type OccasionId } from "@/lib/occasions";
 import { OccasionChips } from "@/components/styles/OccasionChips";
@@ -17,7 +18,7 @@ import { engineIntroProps } from "@/lib/engineGift";
 import { CharCount } from "@/components/ui/CharCount";
 import { LIMITS, customTextLimit } from "@/lib/limits";
 import { themeKindOf } from "@/lib/themeKind";
-import {Link, useParams} from "@tanstack/react-router";
+import { Link, useBlocker, useParams } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { SiteHeader } from "@/components/SiteHeader";
@@ -30,9 +31,6 @@ import {
   deleteContributions,
   setContributionStatus,
   setModuleEnabled,
-  updateIntroSettings,
-  updateCast,
-  updateSite,
   upsertCalendarEntry,
 } from "@/lib/api";
 import { IntroDesigner } from "@/components/IntroDesigner";
@@ -211,10 +209,78 @@ function StepGroup({
   );
 }
 
+/**
+ * Where "Saved" shows in the top bar (from the small breakpoint up). A save that hasn't gone
+ * through yet also shows on phones, on the line under the gift's name (`under`).
+ */
+function SaveLabel({ state, under = false }: { state: SaveState; under?: boolean }) {
+  if (state === "saving" || state === "saved") {
+    if (under) return null;
+    return (
+      <span role="status" aria-live="polite" className="hidden shrink-0 font-mono text-[10px] tracking-[0.1em] text-muted uppercase sm:inline">
+        {state === "saving" ? SAVE_COPY.saving : SAVE_COPY.saved}
+      </span>
+    );
+  }
+  const full = state === "offline" ? SAVE_COPY.offline : state === "conflict" ? SAVE_COPY.notSaved : SAVE_COPY.retrying;
+  return (
+    <span
+      role="status"
+      aria-live="polite"
+      className={`shrink-0 rounded-full bg-[#FBEDE6] px-2 py-0.5 text-[11px] font-medium text-[#8C3A1C] ${under ? "sm:hidden" : "hidden sm:inline"}`}
+    >
+      {under ? SAVE_COPY.notSavedShort : full}
+    </span>
+  );
+}
+
+/** The gift changed in another tab or on another device, in a way that clashes with a change here. */
+function ChangedElsewhere({ busy, onLoad }: { busy: boolean; onLoad: () => void }) {
+  return (
+    <div className="fixed inset-0 z-[90] grid place-items-center bg-ink/30 px-5">
+      <div
+        role="alertdialog"
+        aria-modal="true"
+        aria-labelledby="changed-elsewhere-title"
+        aria-describedby="changed-elsewhere-body"
+        className="w-full max-w-sm rounded-2xl border border-line bg-paper p-5 text-ink shadow-xl"
+      >
+        <h2 id="changed-elsewhere-title" className="font-display text-xl leading-snug">
+          {SAVE_COPY.conflictTitle}
+        </h2>
+        <p id="changed-elsewhere-body" className="mt-2 text-sm text-muted">
+          {SAVE_COPY.conflictBody}
+        </p>
+        <Button autoFocus className="mt-5 w-full rounded-full" disabled={busy} onClick={onLoad}>
+          {busy ? SAVE_COPY.conflictLoading : SAVE_COPY.conflictButton}
+        </Button>
+      </div>
+    </div>
+  );
+}
+
 function SiteDashboard() {
   const { id } = useParams({ from: "/_authenticated/sites/$id" });
   const queryClient = useQueryClient();
-  const [draft, setDraft] = useState<GiftSite | null>(null);
+  const {
+    data: site,
+    isLoading: siteLoading,
+    error: siteError,
+    refetch: refetchSite,
+  } = useQuery({ queryKey: ["site", id], queryFn: () => fetchSiteById(id) });
+  // The draft on screen and its autosave: only changed fields, retried until saved, never over a newer change.
+  const saver = useGiftSaver(id, site);
+  const { draft, setDraft, state: saveState } = saver;
+  const saving = saveState === "saving";
+  // Leaving the editor in the app waits for the last save. If it can't go through, ask first.
+  useBlocker({
+    shouldBlockFn: async ({ current, next }) => {
+      if (current.pathname === next.pathname) return false;
+      if (await saver.flush()) return false;
+      return !window.confirm(SAVE_COPY.leaveUnsaved);
+    },
+    enableBeforeUnload: saver.atRisk,
+  });
   // Bo says something sweet once the recipient's name is filled in (not for the saved name on load).
   const recipientName = draft?.custom_text.recipient_name?.trim() ?? "";
   const lastNameSaid = useRef<string | null>(null);
@@ -231,9 +297,7 @@ function SiteDashboard() {
     }, 1100);
     return () => window.clearTimeout(t);
   }, [recipientName, draft]);
-  const [dirty, setDirty] = useState(false);
-  const [saving, setSaving] = useState(false);
-  const [savedAt, setSavedAt] = useState<number | null>(null);
+  const [loadingLatest, setLoadingLatest] = useState(false);
   const [introPreview, setIntroPreview] = useState(false);
   const [publishSuccess, setPublishSuccess] = useState(false);
   const [planPicker, setPlanPicker] = useState<"publish" | "upgrade" | null>(null);
@@ -275,11 +339,7 @@ function SiteDashboard() {
   const [device, setDevice] = useState<PreviewDevice>("phone");
   /** Bumped to replay the opening in the canvas while the Intro panel is open. */
   const [introCanvasKey, setIntroCanvasKey] = useState(0);
-  const introSaveTimer = useRef<number | null>(null);
-  const castSaveTimer = useRef<number | null>(null);
   const [moreSections, setMoreSections] = useState(false);
-  const castLatest = useRef<Cast | null>(null);
-  const introLatest = useRef<IntroSettings | null>(null);
   const [sheetOpen, setSheetOpen] = useState(false);
   /** Phone sheet height in % of the screen. Opens at 45 so the preview stays in view; drag the handle for more. */
   const [sheetH, setSheetH] = useState(45);
@@ -324,12 +384,6 @@ function SiteDashboard() {
   const fieldRefs = useRef<Record<string, HTMLElement | null>>({});
   const canvasRef = useRef<HTMLDivElement | null>(null);
 
-  const {
-    data: site,
-    isLoading: siteLoading,
-    error: siteError,
-    refetch: refetchSite,
-  } = useQuery({ queryKey: ["site", id], queryFn: () => fetchSiteById(id) });
   const palettesQuery = usePalettes();
   const { data: savedTheme = null } = useQuery({
     queryKey: ["theme", site?.theme_id],
@@ -365,10 +419,6 @@ function SiteDashboard() {
   /** Paid (or legacy) and not ended: the gift can go live without paying again. */
   const hasPlan = !!billing?.tier && !billing.ended;
   const planTier = getTier(billing?.tier);
-
-  useEffect(() => {
-    if (site && !draft) setDraft(site);
-  }, [site, draft]);
 
   // Restore the last open rail section for this gift ("Your notes" first on a new Just me gift).
   const sectionRestored = useRef(false);
@@ -470,16 +520,6 @@ function SiteDashboard() {
     [modules],
   );
 
-  // Quiet autosave
-  useEffect(() => {
-    if (!dirty || !draft) return;
-    const t = setTimeout(() => {
-      void persist(draft, true);
-    }, 700);
-    return () => clearTimeout(t);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [draft, dirty]);
-
   // Keep the matching field focused after a preview click re-renders the panel
   useEffect(() => {
     if (!focusField) return;
@@ -521,52 +561,6 @@ function SiteDashboard() {
     return () => window.removeEventListener("keydown", close);
   }, [fullPreview]);
 
-  /** Saves the gift. `status` is only sent for an explicit publish/unpublish, so autosave never changes it. */
-  async function persist(next: GiftSite, quiet: boolean, withStatus = false) {
-    setSaving(true);
-    let error: unknown = null;
-    try {
-      await updateSite({
-        data: {
-          id: next.id,
-          patch: {
-            title: next.title.trim() || "Untitled gift",
-            custom_text: next.custom_text as Record<string, string>,
-            custom_colors: next.custom_colors,
-            font_choice: next.font_choice,
-            countdown_date: next.countdown_date || null,
-            countdown_at: next.countdown_at || null,
-            calendar_locked: next.calendar_locked,
-            intro_text: next.intro_text,
-            background_style: next.background_style,
-            tree_reveal_date: next.tree_reveal_date || null,
-            palette_id: next.palette_id,
-            share_notes: next.share_notes,
-            ...(withStatus ? { status: next.status } : {}),
-            solo: next.solo,
-            format: next.format,
-            ...(stylesOn && next.style ? { style: next.style } : {}),
-            ...(stylesOn ? { occasion: next.occasion } : {}),
-            format_settings: next.format_settings as unknown as Record<string, never>,
-          },
-        },
-      });
-    } catch (e) {
-      error = e;
-    }
-    setSaving(false);
-    setDirty(false);
-    if (error) {
-      const msg = error instanceof Error && error.message.length < 160 ? error.message : "";
-      toast.error(msg || "Couldn't save your changes.");
-      return false;
-    }
-    setSavedAt(Date.now());
-    queryClient.invalidateQueries({ queryKey: ["site", id] });
-    if (!quiet && next.status === "published") setPublishSuccess(true);
-    return true;
-  }
-
   if (siteError) {
     return (
       <PageError
@@ -598,52 +592,19 @@ function SiteDashboard() {
 
   function patch(update: Partial<GiftSite>) {
     setDraft((prev) => (prev ? { ...prev, ...update } : prev));
-    setDirty(true);
     touch(section);
   }
 
-  /** Intro designer changes: shown at once, saved on their own shortly after. */
+  /** Intro designer changes: shown at once, saved with everything else. */
   function patchIntro(update: (prev: IntroSettings) => IntroSettings) {
     touch(section);
-    setDraft((prev) => {
-      if (!prev) return prev;
-      const next = update(prev.intro_settings);
-      introLatest.current = next;
-      return { ...prev, intro_settings: next };
-    });
-    if (introSaveTimer.current) window.clearTimeout(introSaveTimer.current);
-    introSaveTimer.current = window.setTimeout(() => {
-      const settings = introLatest.current;
-      if (!settings) return;
-      setSaving(true);
-      updateIntroSettings({ data: { id, settings: settings as Record<string, never> } })
-        .then(() => {
-          setSavedAt(Date.now());
-          void queryClient.invalidateQueries({ queryKey: ["site", id] });
-        })
-        .catch(() => toast.error("Couldn't save the opening. Try again in a moment."))
-        .finally(() => setSaving(false));
-    }, 600);
+    setDraft((prev) => (prev ? { ...prev, intro_settings: update(prev.intro_settings) } : prev));
   }
 
-  /** Cast changes: shown at once in the preview, saved shortly after. */
+  /** Cast changes: shown at once in the preview, saved with everything else. */
   function patchCast(next: Cast) {
     touch(section);
-    castLatest.current = next;
     setDraft((prev) => (prev ? { ...prev, character: next.character, icon_set: next.icon_set } : prev));
-    if (castSaveTimer.current) window.clearTimeout(castSaveTimer.current);
-    castSaveTimer.current = window.setTimeout(() => {
-      const c = castLatest.current;
-      if (!c) return;
-      setSaving(true);
-      updateCast({ data: { id, character: (c.character as Record<string, never> | null) ?? null, iconSet: (c.icon_set as Record<string, never> | null) ?? null } })
-        .then(() => {
-          setSavedAt(Date.now());
-          void queryClient.invalidateQueries({ queryKey: ["site", id] });
-        })
-        .catch(() => toast.error("Couldn't save the cast. Try again in a moment."))
-        .finally(() => setSaving(false));
-    }, 600);
   }
 
   /** Sticker changes from the preview canvas (move, resize, turn, delete, bring to front). */
@@ -667,19 +628,16 @@ function SiteDashboard() {
       if (key === "heading" && value.trim()) next.title = value;
       return next;
     });
-    setDirty(true);
     touch(section);
   }
 
   /** Renaming in the top bar changes the heading too, so there's one name. */
   function rename(value: string) {
     setDraft((prev) => (prev ? { ...prev, title: value, custom_text: { ...prev.custom_text, heading: value } } : prev));
-    setDirty(true);
   }
 
   function patchComic(update: Partial<ComicSettings>) {
     setDraft((prev) => prev ? { ...prev, format_settings: { ...normalizeComicSettings(prev.format_settings), ...update } } : prev);
-    setDirty(true);
   }
 
   function moveComicPanel(itemId: string, direction: -1 | 1) {
@@ -700,17 +658,12 @@ function SiteDashboard() {
       setPlanPicker("publish");
       return;
     }
-    const next = { ...draft, status: "published" as const };
-    const ok = await persist(next, false, true);
-    if (ok) setDraft(next);
+    if (await saver.saveStatus("published")) setPublishSuccess(true);
   }
 
   async function unpublish() {
     if (!draft) return;
-    const next = { ...draft, status: "draft" as const };
-    const ok = await persist(next, true, true);
-    if (!ok) return;
-    setDraft(next);
+    if (!(await saver.saveStatus("draft"))) return;
     toast.success("Gift unpublished. Your plan stays, so you can open it again any time.");
   }
 
@@ -1985,11 +1938,10 @@ function SiteDashboard() {
               <Pencil className="size-3.5 shrink-0 text-muted opacity-0 transition-opacity group-hover:opacity-100" />
             </button>
           )}
-          <span className="hidden shrink-0 font-mono text-[10px] tracking-[0.1em] text-muted uppercase sm:inline">
-            {saving || dirty ? "Saving…" : "Saved"}
-          </span>
+          <SaveLabel state={saveState} />
         </div>
         <div className="flex min-w-0 items-center gap-2 text-[11px] text-muted">
+          <SaveLabel state={saveState} under />
           {stylesOn ? (
             draft.style || draft.occasion ? (
               <span className="shrink-0 rounded-full px-2 py-0.5 font-medium" style={{ background: paletteNow.accent + "33", color: "#2B2522" }}>
@@ -2136,6 +2088,15 @@ function SiteDashboard() {
         </div>
 
       </header>
+      {saveState === "conflict" ? (
+        <ChangedElsewhere
+          busy={loadingLatest}
+          onLoad={() => {
+            setLoadingLatest(true);
+            void saver.loadLatest().finally(() => setLoadingLatest(false));
+          }}
+        />
+      ) : null}
       <GuestBanner />
       <PlanBanner billing={billing} onUpgrade={() => setPlanPicker("upgrade")} onExtend={() => setExtendOpen(true)} />
       <ExtendDialog siteId={id} open={extendOpen} onOpenChange={setExtendOpen} />

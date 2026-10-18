@@ -164,6 +164,18 @@ verification is only required once `RESEND_API_KEY` and `EMAIL_FROM` are both se
   because a HEIC decoder needs WebAssembly, which our CSP doesn't allow.
 - Old uploads can be shrunk with `tools/media/compress-existing.ts` (dry run by default, never deletes).
 
+## Editor saving
+
+- The editor autosaves through `useGiftSaver` (`src/hooks/useGiftSaver.ts`): only fields that changed, 700ms after
+  the last edit, one save at a time. Words, colors, the opening (`intro_settings`) and the cast all go through
+  `updateSite`; JSON fields merge key by key (`src/lib/siteDraft.ts`, tested).
+- Each save sends what the editor last saw for those fields (`base`). If one changed elsewhere since (another tab, a
+  phone), `updateSite` refuses with 409 and the editor shows "This gift was changed somewhere else". Never write a
+  gift field from the editor around this.
+- Failed saves stay unsaved and retry (2s, 5s, 10s, then every 30s, and on `online`). Leaving or hiding the page sends
+  what's left with `keepalive`; leaving in the app waits for it. `gift_sites.updated_at` is set by a trigger on
+  every update (migration 0019).
+
 ## Known gotchas
 
 - Countdowns are a UTC moment (`countdown_at`) shown in each viewer's own time zone; calendar days open

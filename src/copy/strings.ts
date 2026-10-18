@@ -747,3 +747,22 @@ export const BENTO_COPY = {
     video: "Videos",
   },
 } as const;
+
+/** The editor's save state (top bar), and the notice when the gift changed in another tab or device. */
+export const SAVE_COPY = {
+  saving: "Saving…",
+  saved: "Saved",
+  retrying: "Not saved yet, retrying",
+  notSaved: "Not saved",
+  notSavedShort: "Not saved yet",
+  offline: "Offline. We'll save when you're back",
+  conflictTitle: "This gift was changed somewhere else",
+  conflictBody: "Maybe in another tab or on your phone. Load the latest version to keep editing. Your last change here wasn't saved.",
+  conflictButton: "Load the latest",
+  conflictLoading: "Loading…",
+  pulled: "Updated with changes made somewhere else.",
+  rejected: "We couldn't save that change.",
+  leaveUnsaved: "Your last changes aren't saved yet. Leave anyway?",
+  /** Server reply when a save would overwrite a newer change (status 409). */
+  serverConflict: "This gift was changed somewhere else. Load the latest version and try again.",
+};

@@ -17,9 +17,10 @@
  *  - a password-protected gift (paid feature) also needs the right password
  *    first; the password hash itself never leaves the server
  */
-import { GUEST_COPY } from "@/copy/strings";
+import { GUEST_COPY, SAVE_COPY } from "@/copy/strings";
+import { canonicalFields, findConflicts, flatten } from "@/lib/siteDraft";
 import { FORMAT_IDS, type GiftFormat } from "@/lib/formats";
-import { STYLE_IDS, bodyFor, lookFor, styleInfo, type StyleInfo } from "@/lib/styles";
+import { STYLE_IDS, bodyFor, isStyleId, lookFor, styleInfo, type StyleInfo } from "@/lib/styles";
 import { OCCASION_IDS, occasionInfo, type OccasionId } from "@/lib/occasions";
 import { FONT_CHOICE_IDS } from "@/lib/fontChoices";
 import { FIELD_NAMES, LIMITS, customTextLimit, noteTextLimit, tooLong } from "@/lib/limits";
@@ -493,134 +494,176 @@ export const createSite = createServerFn({ method: "POST" })
 
 const date = z.string().regex(/^\d{4}-\d{2}-\d{2}$/).nullable();
 
+/** Keyed JSON fields in a patch: one entry per key, null removes it. */
+const keyedPatch = z.record(z.string().max(60), json);
+/** How big a keyed JSON field may get once merged (it's settings, not content). */
+const MAX_SETTINGS_JSON = 12_000;
+
+/**
+ * Saves editor changes. Only the fields in `patch` are written; JSON fields
+ * (custom_text, custom_colors, intro_settings, format_settings) merge key by key.
+ * `base` holds what the editor last saw for each of those fields: if one of them
+ * changed since (another tab, a phone), nothing is written and the editor gets a
+ * 409 so it can load the latest instead of overwriting (src/lib/siteDraft.ts).
+ * Returns the saved gift.
+ */
 export const updateSite = createServerFn({ method: "POST" })
   .inputValidator(
     z.object({
       id,
       patch: z.object({
-        title: z.string().trim().min(1).max(200),
-        custom_text: jsonObject,
-        custom_colors: paletteShape,
-        font_choice: z.enum(FONT_CHOICE_IDS),
-        countdown_date: date,
+        title: z.string().trim().min(1).max(200).optional(),
+        custom_text: z.record(z.string().max(60), z.string().max(20000).nullable()).optional(),
+        custom_colors: z
+          .object({ background: z.string().max(40).nullable(), primary: z.string().max(40).nullable(), accent: z.string().max(40).nullable() })
+          .partial()
+          .optional(),
+        font_choice: z.enum(FONT_CHOICE_IDS).optional(),
+        countdown_date: date.optional(),
         countdown_at: z.string().datetime({ offset: true }).nullable().optional(),
-        calendar_locked: z.boolean(),
-        intro_text: z.string().trim().max(LIMITS.greeting, tooLong("the greeting", LIMITS.greeting)).nullable(),
-        background_style: z.enum(["paper", "clean", "formal", "gradient"]),
-        tree_reveal_date: date,
-        palette_id: id.nullable(),
-        share_notes: z.boolean(),
+        calendar_locked: z.boolean().optional(),
+        intro_text: z.string().trim().max(LIMITS.greeting, tooLong("the greeting", LIMITS.greeting)).nullable().optional(),
+        background_style: z.enum(["paper", "clean", "formal", "gradient"]).optional(),
+        tree_reveal_date: date.optional(),
+        palette_id: id.nullable().optional(),
+        share_notes: z.boolean().optional(),
         status: z.enum(["draft", "published"]).optional(),
-        format: z.enum(FORMAT_IDS),
+        format: z.enum(FORMAT_IDS).optional(),
         /** Change the style (null clears it). The server sets the layout and theme to match. */
         style: z.enum(STYLE_IDS).nullable().optional(),
         style_look: z.string().trim().max(40).nullable().optional(),
         occasion: occasionField.nullable().optional(),
-        format_settings: jsonObject,
+        format_settings: keyedPatch.optional(),
+        intro_settings: keyedPatch.optional(),
+        character: jsonObject.nullable().optional(),
+        icon_set: jsonObject.nullable().optional(),
         solo: z.boolean().optional(),
       }),
+      /** What the editor last saw for each field it's changing, in the same shape. */
+      base: jsonObject.optional(),
+      /** Values this editor has in another save still on its way; those count as seen too. */
+      base_alt: jsonObject.optional(),
     }),
   )
   .handler(async ({ data }) => {
     await requireSiteOwner(data.id);
-    const [site] = await getDb().select().from(schema.giftSites).where(eq(schema.giftSites.id, data.id));
-    if (!site) throw new HttpError(404, "We couldn't find that gift.");
     const p = data.patch;
-    // Words: trimmed, with the same limits the editor's counters show.
-    const cleanText: Record<string, string> = {};
-    for (const [k, v] of Object.entries(p.custom_text)) {
-      if (typeof v !== "string") continue;
-      const t = v.trim();
-      const max = customTextLimit(k);
-      if ([...t].length > max) throw new HttpError(422, tooLong(FIELD_NAMES[k] ?? "that title", max));
-      if (t) cleanText[k] = t;
-    }
-    p.custom_text = cleanText;
-    // Going live needs a paid plan. The first publish happens in the payment webhook;
-    // this only re-opens a paid gift that the owner had taken offline.
-    if (p.status === "published" && site.status !== "published") {
-      if (!site.tier) throw new HttpError(402, "Pick a plan to publish this gift.");
-      if (isExpired(site)) throw new HttpError(400, "This gift has ended.");
-      // While it was offline it could collect past its plan's limits; it has to fit again to reopen.
-      const reopenTier = getTier(site.tier);
-      if (reopenTier) {
-        const blocker = tierBlocker(reopenTier, await siteUsage(site.id), p.format, site.style);
-        if (blocker) throw new HttpError(409, `${blocker} Upgrade, or hide a few, to reopen it.`);
+    const saved = await getDb().transaction(async (tx) => {
+      // Locked until this save is written, so two tabs saving at once can't both pass the check.
+      const [site] = await tx.select().from(schema.giftSites).where(eq(schema.giftSites.id, data.id)).for("update");
+      if (!site) throw new HttpError(404, "We couldn't find that gift.");
+
+      // Never overwrite a change this editor hasn't seen. A new style brings its own layout, so that isn't checked twice.
+      const clashes = findConflicts(
+        flatten(canonicalFields(toRow(site))),
+        flatten(data.base ?? {}),
+        flatten(p as Record<string, unknown>),
+        { skip: p.style ? ["format"] : [], alt: flatten(data.base_alt ?? {}) },
+      );
+      if (clashes.length) {
+        console.info(`[editor] refused a stale save on gift ${site.id}: ${clashes.join(", ")}`);
+        throw new HttpError(409, SAVE_COPY.serverConflict);
       }
-    }
-    // Style: a new style brings its own layout and theme. Changing only the layout of a
-    // styled gift (from an older editor) turns it back into a theme + layout gift, which
-    // still plays the same opening.
-    let format: GiftFormat = p.format;
-    let styleCols: { style?: string | null; themeId?: string | null } = {};
-    const occasion = p.occasion !== undefined ? p.occasion : (site.occasion as OccasionId | null);
-    if (p.style) {
-      const style = styleInfo(p.style);
-      const keepBody = site.style === style.id && (site.format === style.body || site.format === style.fallbackBody);
-      format = keepBody ? (site.format as GiftFormat) : bodyFor(style);
-      styleCols = { style: style.id, themeId: await themeForStyle(style, occasion, p.style_look) };
-    } else if (p.style === null) {
-      styleCols = { style: null };
-    } else if (site.style && p.format !== site.format) {
-      styleCols = { style: null };
-    }
-    const tier = getTier(site.tier);
-    if (tier && !tierAllowsLook(tier, format, styleCols.style !== undefined ? styleCols.style : site.style)) {
-      throw new HttpError(400, `${tier.name} doesn't include that format. Upgrade to use it.`);
-    }
-    await getDb()
-      .update(schema.giftSites)
-      .set({
-        title: p.title,
-        customText: p.custom_text,
-        customColors: p.custom_colors,
-        fontChoice: p.font_choice,
-        countdownDate: p.countdown_date,
-        ...(p.countdown_at !== undefined ? { countdownAt: p.countdown_at ? new Date(p.countdown_at) : null } : {}),
-        calendarLocked: p.calendar_locked,
-        introText: p.intro_text,
-        backgroundStyle: p.background_style,
-        treeRevealDate: p.tree_reveal_date,
-        paletteId: p.palette_id,
-        shareNotes: p.share_notes,
-        ...(p.status ? { status: p.status } : {}),
-        format,
-        ...styleCols,
-        ...(p.occasion !== undefined ? { occasion: p.occasion } : {}),
-        formatSettings: p.format_settings,
-        ...(p.solo !== undefined ? { solo: p.solo } : {}),
-      })
-      .where(eq(schema.giftSites.id, data.id));
-    return { ok: true };
+
+      const set: Partial<typeof schema.giftSites.$inferInsert> = {};
+      if (p.title !== undefined) set.title = p.title;
+      // Words: trimmed, with the same limits the editor's counters show. Empty removes.
+      if (p.custom_text) {
+        const text: Record<string, string> = { ...(site.customText as Record<string, string>) };
+        for (const [k, v] of Object.entries(p.custom_text)) {
+          const t = (v ?? "").trim();
+          if (!t) {
+            delete text[k];
+            continue;
+          }
+          const max = customTextLimit(k);
+          if ([...t].length > max) throw new HttpError(422, tooLong(FIELD_NAMES[k] ?? "that title", max));
+          text[k] = t;
+        }
+        set.customText = text;
+      }
+      if (p.custom_colors) set.customColors = mergeKeys(site.customColors, p.custom_colors);
+      if (p.format_settings) set.formatSettings = mergeKeys(site.formatSettings, p.format_settings);
+      // The opening: cleaned server side, only known keys, hex colors, safe upload URLs.
+      if (p.intro_settings) set.introSettings = normalizeIntroSettings(mergeKeys(normalizeIntroSettings(site.introSettings), p.intro_settings));
+      if (p.character !== undefined) set.character = p.character ? normalizeCharacter(p.character) : null;
+      if (p.icon_set !== undefined) set.iconSet = p.icon_set ? normalizeIconSetting(p.icon_set) : null;
+      for (const [k, v] of [["formatSettings", set.formatSettings], ["introSettings", set.introSettings]] as const) {
+        if (v !== undefined && JSON.stringify(v).length > MAX_SETTINGS_JSON) throw new HttpError(400, k === "introSettings" ? "That opening has too much in it." : "That has too much in it.");
+      }
+      if (p.font_choice !== undefined) set.fontChoice = p.font_choice;
+      if (p.countdown_date !== undefined) set.countdownDate = p.countdown_date;
+      if (p.countdown_at !== undefined) set.countdownAt = p.countdown_at ? new Date(p.countdown_at) : null;
+      if (p.calendar_locked !== undefined) set.calendarLocked = p.calendar_locked;
+      if (p.intro_text !== undefined) set.introText = p.intro_text;
+      if (p.background_style !== undefined) set.backgroundStyle = p.background_style;
+      if (p.tree_reveal_date !== undefined) set.treeRevealDate = p.tree_reveal_date;
+      if (p.palette_id !== undefined) set.paletteId = p.palette_id;
+      if (p.share_notes !== undefined) set.shareNotes = p.share_notes;
+      if (p.solo !== undefined) set.solo = p.solo;
+      if (p.occasion !== undefined) set.occasion = p.occasion;
+
+      // Style: a new style brings its own layout and theme, and a new occasion can change
+      // the theme it wears. Changing only the layout of a styled gift (from an older editor)
+      // turns it back into a theme + layout gift, which still plays the same opening.
+      const occasion = p.occasion !== undefined ? p.occasion : (site.occasion as OccasionId | null);
+      let format = site.format as GiftFormat;
+      let style = site.style;
+      if (p.style) {
+        const info = styleInfo(p.style);
+        const keepBody = site.style === info.id && (site.format === info.body || site.format === info.fallbackBody);
+        format = keepBody ? format : bodyFor(info);
+        style = info.id;
+        set.themeId = await themeForStyle(info, occasion, p.style_look);
+      } else if (p.style === null) {
+        style = null;
+        if (p.format) format = p.format;
+      } else if (p.format !== undefined && p.format !== site.format) {
+        format = p.format;
+        if (site.style) style = null;
+      } else if (p.occasion !== undefined && p.occasion !== site.occasion && site.style && isStyleId(site.style)) {
+        set.themeId = await themeForStyle(styleInfo(site.style), occasion, null);
+      }
+      const lookChanged = format !== site.format || style !== site.style;
+      if (lookChanged) {
+        set.format = format;
+        set.style = style;
+        const tier = getTier(site.tier);
+        if (tier && !tierAllowsLook(tier, format, style)) throw new HttpError(400, `${tier.name} doesn't include that format. Upgrade to use it.`);
+      }
+
+      // Going live needs a paid plan. The first publish happens in the payment webhook;
+      // this only re-opens a paid gift that the owner had taken offline.
+      if (p.status !== undefined) {
+        if (p.status === "published" && site.status !== "published") {
+          if (!site.tier) throw new HttpError(402, "Pick a plan to publish this gift.");
+          if (isExpired(site)) throw new HttpError(400, "This gift has ended.");
+          // While it was offline it could collect past its plan's limits; it has to fit again to reopen.
+          const reopenTier = getTier(site.tier);
+          if (reopenTier) {
+            const blocker = tierBlocker(reopenTier, await siteUsage(site.id), format, style);
+            if (blocker) throw new HttpError(409, `${blocker} Upgrade, or hide a few, to reopen it.`);
+          }
+        }
+        set.status = p.status;
+      }
+
+      if (Object.keys(set).length === 0) return site;
+      const [row] = await tx.update(schema.giftSites).set(set).where(eq(schema.giftSites.id, site.id)).returning();
+      return row!;
+    });
+    return { ok: true, site: siteRow(saved, { owner: true }) };
   });
 
-/** The creator's custom opening. Cleaned server side: only known keys, hex colors, safe upload URLs. */
-export const updateIntroSettings = createServerFn({ method: "POST" })
-  .inputValidator(z.object({ id, settings: jsonObject }))
-  .handler(async ({ data }) => {
-    await requireSiteOwner(data.id);
-    if (JSON.stringify(data.settings).length > 12_000) throw new HttpError(400, "That opening has too much in it.");
-    const settings = normalizeIntroSettings(data.settings);
-    await getDb()
-      .update(schema.giftSites)
-      .set({ introSettings: settings })
-      .where(eq(schema.giftSites.id, data.id));
-    return { ok: true, settings };
-  });
-
-/** The gift's cast: its character and icon set. Cleaned server side; null = theme default. */
-export const updateCast = createServerFn({ method: "POST" })
-  .inputValidator(z.object({ id, character: jsonObject.nullable(), iconSet: jsonObject.nullable() }))
-  .handler(async ({ data }) => {
-    await requireSiteOwner(data.id);
-    const character = data.character ? normalizeCharacter(data.character) : null;
-    const iconSet = data.iconSet ? normalizeIconSetting(data.iconSet) : null;
-    await getDb()
-      .update(schema.giftSites)
-      .set({ character, iconSet })
-      .where(eq(schema.giftSites.id, data.id));
-    return { ok: true, character, iconSet };
-  });
+/** A JSON object with some keys replaced; null removes a key. */
+function mergeKeys(current: unknown, patch: Record<string, unknown>): Record<string, Json> {
+  const out: Record<string, unknown> = current && typeof current === "object" && !Array.isArray(current) ? { ...(current as Record<string, unknown>) } : {};
+  for (const [k, v] of Object.entries(patch)) {
+    if (v === null || v === undefined) delete out[k];
+    else out[k] = v;
+  }
+  return out as Record<string, Json>;
+}
 
 export const deleteSite = createServerFn({ method: "POST" })
   .inputValidator(z.object({ id }))
