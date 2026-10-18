@@ -350,6 +350,33 @@ export const fundPledges = pgTable(
 );
 
 /**
+ * Concierge beta requests ("Want us to handle it?"). Handled by hand: someone on the team
+ * contacts the organiser, takes payment manually and moves the status along in /admin.
+ */
+export const conciergeRequests = pgTable(
+  "concierge_requests",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    userId: text("user_id").references(() => user.id, { onDelete: "set null" }),
+    siteId: uuid("site_id").references(() => giftSites.id, { onDelete: "set null" }),
+    recipient: text("recipient").notNull(),
+    occasion: text("occasion").notNull(),
+    /** The day it needs to be ready, YYYY-MM-DD. */
+    deadline: date("deadline").notNull(),
+    friends: integer("friends").notNull(),
+    /** How to reach the organiser: an email, a phone number, a Messenger name. */
+    contact: text("contact").notNull(),
+    timeZone: text("time_zone").notNull(),
+    notes: text("notes"),
+    /** new, contacted, in_progress, done */
+    status: text("status").notNull().default("new"),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [index("concierge_status_idx").on(t.status, t.createdAt)],
+);
+
+/**
  * Product events for the admin metrics page (src/server/events.ts). No note content, no IP,
  * no cookies: just what happened, to which gift, by which signed-in user if any.
  */

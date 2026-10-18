@@ -409,6 +409,44 @@ export const SECTIONS_PAGE = {
   link: (n: number) => `See all ${n} sections`,
 } as const;
 
+/** Concierge beta: "Want us to handle it?" */
+export const CONCIERGE_COPY = {
+  title: "Want us to handle it?",
+  pitch: "We chase the friends, tidy the photos and put the whole gift together for you.",
+  cta: "Tell us about it",
+  formTitle: "We'll handle it",
+  formIntro: "A few details and we'll take it from there. No payment yet: we'll sort that out with you directly.",
+  fields: {
+    recipient: "Who's it for?",
+    occasion: "What's the occasion?",
+    deadline: "When does it need to be ready?",
+    friends: "About how many friends?",
+    contact: "How should we reach you?",
+    contactHint: "An email, a phone number or a Messenger name.",
+    timeZone: "Your time zone",
+    notes: "Anything we should know?",
+    notesPlaceholder: "Inside jokes, people who must be in it, photos you already have…",
+  },
+  send: "Send request",
+  sending: "Sending…",
+  doneTitle: "Request sent",
+  done: "Got it. We'll contact you within 24 hours with next steps.",
+  doneHint: "You can keep working on the gift in the meantime.",
+};
+
+/** Plain occasion names, for prefilled forms ("Birthday"). Empty when the theme fits any occasion. */
+export const OCCASION_NAMES: Record<string, string> = {
+  valentine: "Valentine's Day",
+  birthday: "Birthday",
+  voyage: "Farewell",
+  christmas: "Christmas",
+  pets: "A pet",
+  newyear: "New Year",
+  anniversary: "Anniversary",
+  wedding: "Wedding",
+  bridal: "Bridal shower",
+  baby: "Baby shower",
+};
 /** The friend page (contribute). */
 export const FRIEND_PAGE = {
   /** How each section reads in "Add a note, a photo or a song". */

@@ -4,6 +4,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { SiteHeader } from "@/components/SiteHeader";
+import { ConciergeRequests } from "@/components/admin/ConciergeRequests";
 import { Metrics } from "@/components/admin/Metrics";
 import { ThemeMetrics } from "@/components/admin/ThemeMetrics";
 import { usePreviewUrl } from "@/components/ThemeCard";
@@ -82,6 +83,7 @@ function AdminPage() {
   return (
     <div className="min-h-screen bg-paper text-ink">
       <SiteHeader />
+      <ConciergeRequests />
       <Metrics />
       <ThemeMetrics />
       <AdminReports />
