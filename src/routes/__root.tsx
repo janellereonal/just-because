@@ -8,7 +8,8 @@ import {
   Scripts,
   type ErrorComponentProps,
 } from "@tanstack/react-router";
-import { type ReactNode } from "react";
+import { type ReactNode, useEffect } from "react";
+import { installClientErrorReporting, reportClientError } from "@/lib/clientErrors";
 import { Toaster } from "sonner";
 
 import appCss from "../styles.css?url";
@@ -39,6 +40,7 @@ function NotFoundComponent() {
 
 function ErrorComponent({ error, reset }: ErrorComponentProps) {
   console.error(error);
+  useEffect(() => reportClientError(error, "route"), [error]);
   const router = useRouter();
   return (
     <div className="flex min-h-screen items-center justify-center bg-background px-4">
@@ -125,6 +127,7 @@ function RootShell({ children }: { children: ReactNode }) {
 
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
+  useEffect(() => installClientErrorReporting(), []);
 
   return (
     <QueryClientProvider client={queryClient}>

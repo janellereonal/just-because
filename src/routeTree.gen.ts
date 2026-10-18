@@ -22,6 +22,7 @@ import { Route as TermsRouteImport } from './routes/terms'
 import { Route as AuthenticatedAccountRouteImport } from './routes/_authenticated/account'
 import { Route as AuthenticatedCreateRouteImport } from './routes/_authenticated/create'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
+import { Route as ApiClientErrorRouteImport } from './routes/api/client-error'
 import { Route as ApiUploadRouteImport } from './routes/api/upload'
 import { Route as ContributeSlugRouteImport } from './routes/contribute.$slug'
 import { Route as DevCastRouteImport } from './routes/dev.cast'
@@ -106,6 +107,11 @@ const AuthenticatedDashboardRoute = AuthenticatedDashboardRouteImport.update({
   id: '/dashboard',
   path: '/dashboard',
   getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const ApiClientErrorRoute = ApiClientErrorRouteImport.update({
+  id: '/api/client-error',
+  path: '/api/client-error',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const ApiUploadRoute = ApiUploadRouteImport.update({
   id: '/api/upload',
@@ -222,6 +228,7 @@ export interface FileRoutesByFullPath {
   '/account': typeof AuthenticatedAccountRoute
   '/create': typeof AuthenticatedCreateRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
+  '/api/client-error': typeof ApiClientErrorRoute
   '/api/upload': typeof ApiUploadRoute
   '/contribute/$slug': typeof ContributeSlugRoute
   '/dev/cast': typeof DevCastRoute
@@ -256,6 +263,7 @@ export interface FileRoutesByTo {
   '/account': typeof AuthenticatedAccountRoute
   '/create': typeof AuthenticatedCreateRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
+  '/api/client-error': typeof ApiClientErrorRoute
   '/api/upload': typeof ApiUploadRoute
   '/contribute/$slug': typeof ContributeSlugRoute
   '/dev/cast': typeof DevCastRoute
@@ -292,6 +300,7 @@ export interface FileRoutesById {
   '/_authenticated/account': typeof AuthenticatedAccountRoute
   '/_authenticated/create': typeof AuthenticatedCreateRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
+  '/api/client-error': typeof ApiClientErrorRoute
   '/api/upload': typeof ApiUploadRoute
   '/contribute/$slug': typeof ContributeSlugRoute
   '/dev/cast': typeof DevCastRoute
@@ -328,6 +337,7 @@ export interface FileRouteTypes {
     | '/account'
     | '/create'
     | '/dashboard'
+    | '/api/client-error'
     | '/api/upload'
     | '/contribute/$slug'
     | '/dev/cast'
@@ -362,6 +372,7 @@ export interface FileRouteTypes {
     | '/account'
     | '/create'
     | '/dashboard'
+    | '/api/client-error'
     | '/api/upload'
     | '/contribute/$slug'
     | '/dev/cast'
@@ -397,6 +408,7 @@ export interface FileRouteTypes {
     | '/_authenticated/account'
     | '/_authenticated/create'
     | '/_authenticated/dashboard'
+    | '/api/client-error'
     | '/api/upload'
     | '/contribute/$slug'
     | '/dev/cast'
@@ -430,6 +442,7 @@ export interface RootRouteChildren {
   ResetPasswordRoute: typeof ResetPasswordRoute
   SectionsRoute: typeof SectionsRoute
   TermsRoute: typeof TermsRoute
+  ApiClientErrorRoute: typeof ApiClientErrorRoute
   ApiUploadRoute: typeof ApiUploadRoute
   ContributeSlugRoute: typeof ContributeSlugRoute
   DevCastRoute: typeof DevCastRoute
@@ -542,6 +555,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/dashboard'
       preLoaderRoute: typeof AuthenticatedDashboardRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/api/client-error': {
+      id: '/api/client-error'
+      path: '/api/client-error'
+      fullPath: '/api/client-error'
+      preLoaderRoute: typeof ApiClientErrorRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/api/upload': {
       id: '/api/upload'
@@ -716,6 +736,7 @@ const rootRouteChildren: RootRouteChildren = {
   ResetPasswordRoute: ResetPasswordRoute,
   SectionsRoute: SectionsRoute,
   TermsRoute: TermsRoute,
+  ApiClientErrorRoute: ApiClientErrorRoute,
   ApiUploadRoute: ApiUploadRoute,
   ContributeSlugRoute: ContributeSlugRoute,
   DevCastRoute: DevCastRoute,

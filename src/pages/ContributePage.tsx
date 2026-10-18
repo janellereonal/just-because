@@ -8,7 +8,7 @@ import {useParams} from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { deleteOwnContribution, getGiftRoom, submitContribution, updateOwnContribution } from "@/lib/api";
-import { uploadFile } from "@/lib/upload";
+import { UploadError, uploadFile } from "@/lib/upload";
 import { getDeviceId } from "@/lib/device";
 import {
   FONT_PAIRINGS,
@@ -403,9 +403,9 @@ function ContributePage() {
     if (file) {
       try {
         mediaPath = await uploadFile(file, "contribution", site.id);
-      } catch {
+      } catch (error) {
         setBusy(false);
-        toast.error("That file couldn't be uploaded.");
+        toast.error(error instanceof UploadError ? error.message : "That file couldn't be uploaded. Please try again.");
         return;
       }
     }
