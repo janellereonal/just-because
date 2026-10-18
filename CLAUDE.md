@@ -85,8 +85,11 @@ Locally, without `BLOB_READ_WRITE_TOKEN` uploads save to `.dev-uploads/`, and wi
 - Caps: contributors are counted by distinct **device id** (`contributions.device_id`, a random
   id the contribute page keeps in localStorage, `src/lib/device.ts`). Old rows without one fall
   back to the name, and a name already seen with a device isn't counted twice. Photos are
-  photobooth items. Hidden items don't count. Over the cap, friends see "this gift is full"
-  and the owner gets an upgrade banner. `device_id` is never returned to the browser.
+  photobooth items. Hidden items don't count. The owner's own notes (`by_owner`) never take a friend slot (their
+  photos still count). Over the cap, friends see "this gift is full" and the owner gets an upgrade banner.
+  `device_id` is never returned to the browser. Anything that adds or un-hides an item goes through `withRoom`
+  (billing.ts): check and save in one transaction under an advisory lock per gift, so friends sending at once
+  can't pass a cap together.
 - Paid features live in `TierFeatures`; check them with `hasFeature(tier, "...")`.
 - One open checkout per gift (`openCheckout` in `src/server/checkout.ts`, under an advisory lock per gift): the same
   plan again within 30 min gets the same checkout back; anything else first expires the older checkout at PayMongo
@@ -108,7 +111,10 @@ Locally, without `BLOB_READ_WRITE_TOKEN` uploads save to `.dev-uploads/`, and wi
   `discountCodes.minCharge`). Logic in `src/server/discounts.ts`. Codes apply to a gift's first plan only
   and replace the early-bird promo. The code goes in the PayMongo line item description and on the
   order (`discount_code`, `discount_amount`). A use is counted in `applyPaidEvent`, in the same
-  transaction that marks the order paid, so abandoned checkouts never use one up. Free codes skip
+  transaction that marks the order paid, so abandoned checkouts never use one up. For the limits (`max_uses`,
+  `max_per_user`), checkouts still open with the code from the last 24h on other gifts hold a use, and checkouts with
+  the same code take turns (advisory lock in `openCheckout`). `applyPaidEvent` re-checks every coded order: a paid one
+  over the limit still opens the gift and writes a `code over limit` row to payment_log for a look by hand. Free codes skip
   PayMongo: the order is made with provider `free` and opened through `applyPaidEvent` too, which
   re-checks the code with its row locked so the last use can't be taken twice. Starter codes are in
   `discountCodes.starter`, made once by `db:seed`.
