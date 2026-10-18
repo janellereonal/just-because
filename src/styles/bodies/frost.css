@@ -74,7 +74,7 @@
 }
 .fw-fern { position: absolute; inset: 0; pointer-events: none; background: var(--fw-fern) center / 100% 100% no-repeat; opacity: .9; }
 .fw-transom-glass > :not(.fw-fern) { position: relative; }
-.fw-kicker { min-height: 1em; font-size: 11px; font-weight: 600; letter-spacing: .24em; text-transform: uppercase; opacity: .75; }
+.fw-kicker { min-height: 1em; max-width: 24ch; margin: 0 auto; font-size: 10.5px; font-weight: 600; letter-spacing: .2em; line-height: 1.6; text-transform: uppercase; opacity: .75; }
 .fw-name {
   margin-top: 8px;
   font-size: clamp(2.6rem, 14cqi, 4.6rem);
