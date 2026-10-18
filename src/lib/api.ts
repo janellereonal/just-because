@@ -40,8 +40,6 @@ import {
   expireStaleOrders,
   isExpired,
   isOpen,
-  quote,
-  quoteExtend,
   siteUsage,
   tierBlocker,
   upgradeOptions,
@@ -1044,107 +1042,29 @@ export const getBilling = createServerFn({ method: "GET" })
         blocker: tierBlocker(t, usage, site.format, site.style),
       })),
       latestOrder: latest ?? null,
+      /** Paused by us (a report): it can't be paid for or opened until it's un-paused. */
+      paused: !!site.disabledAt,
       /** Price and length of one more stretch on the current plan (null for legacy or unpaid). */
       extend: tier ? { amount: tier.extendAmount, label: tier.liveFor.label } : null,
     };
   });
 
-type Quote = Awaited<ReturnType<typeof quote>>;
-
-/** Saves the order and opens a PayMongo checkout for it. The amount always comes from the quote. */
-async function openCheckout(
-  user: { id: string; email: string; name: string },
-  site: typeof schema.giftSites.$inferSelect,
-  q: Quote,
-) {
-  const db = getDb();
-  const free = q.amount === 0 && !!q.discount;
-  const freeId = free ? crypto.randomUUID() : null;
-  const [order] = await db
-    .insert(schema.orders)
-    .values({
-      ...(freeId ? { id: freeId, providerCheckoutId: `free_${freeId}` } : {}),
-      siteId: site.id,
-      ownerId: user.id,
-      kind: q.kind,
-      tier: q.tier.id,
-      fromTier: q.fromTier,
-      amount: q.amount,
-      currency: "PHP",
-      promoApplied: q.promoApplied,
-      discountCodeId: q.discount?.id ?? null,
-      discountCode: q.discount?.code ?? null,
-      discountAmount: q.discount?.off ?? 0,
-      provider: free ? "free" : "paymongo",
-    })
-    .returning({ id: schema.orders.id });
-  if (q.kind === "publish") await track("gift_wrapped", { siteId: site.id, userId: user.id, props: { tier: q.tier.id } });
-  if (freeId) {
-    // A free code: no payment page. Opened through the same path as a paid order, so the use
-    // is counted once and the gift opens exactly as if it had been paid.
-    const { applyPaidEvent } = await import("@/server/billing");
-    await applyPaidEvent(
-      { eventId: `free_${freeId}`, eventType: "free_code", checkoutId: `free_${freeId}`, orderId: freeId, paymentId: null, amountPaid: 0 },
-      "free",
-      "confirm",
-    );
-    const [after] = await db.select({ status: schema.orders.status }).from(schema.orders).where(eq(schema.orders.id, freeId));
-    if (after?.status !== "paid") throw new HttpError(400, "That code was just used up. You can still pick a plan without it.");
-    return { orderId: freeId, checkoutUrl: `/checkout/${freeId}` };
-  }
-  const { getProvider } = await import("@/server/payments");
-  const { siteUrl } = await import("@/server/email");
-  const base = siteUrl();
-  const recipient =
-    ((site.customText as { recipient_name?: string } | null)?.recipient_name ?? "").trim() || site.title;
-  const itemName =
-    q.kind === "upgrade"
-      ? `Upgrade to ${q.tier.name}`
-      : q.kind === "extend"
-        ? `Keep the gift open for ${q.tier.liveFor.label} more`
-        : `Just Because ${q.tier.name}`;
-  const itemDescription =
-    q.kind === "extend"
-      ? `${recipient}'s gift, ${q.tier.name} plan, open for another ${q.tier.liveFor.label}`
-      : q.discount
-        ? `${recipient}'s gift, ${q.tier.name} plan (${q.discount.code}), live for ${q.tier.liveFor.label}`
-        : `${recipient}'s gift, ${q.tier.name} plan (live for ${q.tier.liveFor.label})`;
-  try {
-    const provider = getProvider("paymongo");
-    const checkout = await provider.createCheckout({
-      orderId: order!.id,
-      siteId: site.id,
-      amount: q.amount,
-      currency: "PHP",
-      itemName,
-      itemDescription,
-      successUrl: `${base}/checkout/${order!.id}`,
-      cancelUrl: `${base}/checkout/${order!.id}?cancelled=1`,
-      customerEmail: user.email,
-      customerName: user.name,
-    });
-    await db
-      .update(schema.orders)
-      .set({ providerCheckoutId: checkout.checkoutId, updatedAt: new Date() })
-      .where(eq(schema.orders.id, order!.id));
-    return { orderId: order!.id, checkoutUrl: checkout.checkoutUrl };
-  } catch (error) {
-    console.error("[payments] createCheckout failed", error);
-    await db
-      .update(schema.orders)
-      .set({ status: "failed", updatedAt: new Date() })
-      .where(eq(schema.orders.id, order!.id));
-    throw new HttpError(502, "We couldn't open the payment page just now. Please try again.");
-  }
-}
-
 /** Creates an order and a PayMongo checkout. The amount is worked out here, never sent by the browser. */
 export const startCheckout = createServerFn({ method: "POST" })
-  .inputValidator(z.object({ siteId: id, tier: z.enum(["sweet", "celebration", "keepsake"]), code: z.string().max(40).optional() }))
+  .inputValidator(
+    z.object({
+      siteId: id,
+      tier: z.enum(["sweet", "celebration", "keepsake"]),
+      code: z.string().max(40).optional(),
+      /** What the plan picker showed; refused if the gift's plan changed since (another tab). */
+      expect: z.enum(["publish", "upgrade"]).optional(),
+    }),
+  )
   .handler(async ({ data }) => {
     const { user, site } = await ownedSite(data.siteId);
     guestsSignInFirst(user);
-    return openCheckout(user, site, await quote(site, data.tier, { code: data.code?.trim() || null, userId: user.id }));
+    const { openCheckout } = await import("@/server/checkout");
+    return openCheckout(user, site.id, { kind: "plan", tier: data.tier, code: data.code?.trim() || null, expect: data.expect });
   });
 
 /**
@@ -1178,7 +1098,8 @@ export const startExtendCheckout = createServerFn({ method: "POST" })
   .handler(async ({ data }) => {
     const { user, site } = await ownedSite(data.siteId);
     guestsSignInFirst(user);
-    return openCheckout(user, site, quoteExtend(site));
+    const { openCheckout } = await import("@/server/checkout");
+    return openCheckout(user, site.id, { kind: "extend" });
   });
 
 async function ownedOrder(orderId: string) {
@@ -1191,35 +1112,46 @@ async function ownedOrder(orderId: string) {
 /**
  * Polled by the "Confirming your payment" page. The webhook is the main way an
  * order gets marked paid; as a backup we ask the provider directly (at most
- * every 5s per order) whenever the order isn't marked paid, including after a
+ * every 5s per order) whenever the order isn't settled, including after a
  * cancel or a timeout, since the buyer may have paid in another tab. Nothing
  * from the browser is trusted.
+ *
+ * Someone else's order (or one that doesn't exist) comes back as `missing`
+ * rather than an error, so the page can say so instead of retrying.
  */
 export const getOrderStatus = createServerFn({ method: "GET" })
   .inputValidator(z.object({ orderId: id }))
   .handler(async ({ data }) => {
-    let order = await ownedOrder(data.orderId);
-    if (order.status !== "paid") {
-      const { reconcileOrder } = await import("@/server/billing");
-      if (await reconcileOrder(order, "confirm", 5000)) order = await ownedOrder(data.orderId);
+    const user = await requireUser();
+    const { isSettled, isExpired: ended, reconcileOrder, refundsDue } = await import("@/server/billing");
+    const load = async () => {
+      const [row] = await getDb().select().from(schema.orders).where(eq(schema.orders.id, data.orderId));
+      return row && (row.ownerId === user.id || user.isAdmin) ? row : null;
+    };
+    let order = await load();
+    if (!order) return { id: data.orderId, status: "missing" as const, kind: null, tier: null, amount: 0, refund: 0, site: null };
+    if (!isSettled(order.status)) {
+      await reconcileOrder(order, "confirm", 5000);
+      order = (await load()) ?? order;
     }
-    if (!order.siteId) return { id: order.id, status: order.status, kind: order.kind, tier: order.tier, amount: order.amount, site: null };
-    const [site] = await getDb()
-      .select({
-        id: schema.giftSites.id,
-        slug: schema.giftSites.slug,
-        title: schema.giftSites.title,
-        expiresAt: schema.giftSites.expiresAt,
-      })
-      .from(schema.giftSites)
-      .where(eq(schema.giftSites.id, order.siteId!));
+    /** Money we owe back on this order: all of it if it bought nothing, or what was paid over the price. */
+    const refund = (await refundsDue([order.id])).get(order.id) ?? 0;
+    const base = { id: order.id, status: order.status, kind: order.kind, tier: order.tier, amount: order.amount, refund };
+    if (!order.siteId) return { ...base, site: null };
+    const [site] = await getDb().select().from(schema.giftSites).where(eq(schema.giftSites.id, order.siteId));
+    if (!site) return { ...base, site: null };
     return {
-      id: order.id,
-      status: order.status,
-      kind: order.kind,
-      tier: order.tier,
-      amount: order.amount,
-      site: site ? { ...site, expiresAt: site.expiresAt?.toISOString() ?? null } : null,
+      ...base,
+      site: {
+        id: site.id,
+        slug: site.slug,
+        title: site.title,
+        expiresAt: site.expiresAt?.toISOString() ?? null,
+        /** The gift's plan now, so "Try again" offers what it can really buy (first plan, upgrade or extend). */
+        tier: site.tier,
+        ended: ended(site),
+        recipient: ((site.customText as { recipient_name?: string } | null)?.recipient_name ?? "").trim() || null,
+      },
     };
   });
 
@@ -1228,14 +1160,45 @@ export const cancelOrder = createServerFn({ method: "POST" })
   .inputValidator(z.object({ orderId: id }))
   .handler(async ({ data }) => {
     const order = await ownedOrder(data.orderId);
-    if (order.status === "pending") {
-      await getDb()
-        .update(schema.orders)
-        .set({ status: "failed", updatedAt: new Date() })
-        .where(and(eq(schema.orders.id, order.id), eq(schema.orders.status, "pending")));
-    }
+    const { cancelCheckout } = await import("@/server/checkout");
+    await cancelCheckout(order);
     return { ok: true };
   });
+
+/**
+ * Admin: payments we owe back (paid twice, paid more than an upgrade cost, or paid after the
+ * gift was deleted), newest first. Refunds are made by hand in the PayMongo dashboard for now.
+ */
+export const listRefundsDue = createServerFn({ method: "GET" }).handler(async () => {
+  await requireAdmin();
+  const { REFUND_EVENT, refundAmountOf } = await import("@/server/billing");
+  const l = schema.paymentLog;
+  const o = schema.orders;
+  const rows = await getDb()
+    .select({
+      at: l.at,
+      outcome: l.outcome,
+      orderId: l.orderId,
+      paymentId: o.providerPaymentId,
+      paid: o.amount,
+      tier: o.tier,
+      kind: o.kind,
+      status: o.status,
+      slug: schema.giftSites.slug,
+    })
+    .from(l)
+    .leftJoin(o, eq(o.id, l.orderId))
+    .leftJoin(schema.giftSites, eq(schema.giftSites.id, o.siteId))
+    .where(eq(l.event, REFUND_EVENT))
+    .orderBy(desc(l.at))
+    .limit(50);
+  return rows.map((r) => ({
+    ...r,
+    at: r.at.toISOString(),
+    amount: refundAmountOf(r.outcome),
+    why: r.outcome.replace(/^refund \d+: /, ""),
+  }));
+});
 
 /* ---------------- Discount codes (admin) ---------------- */
 

@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { GuestBanner, GuestSignInCard } from "@/components/GuestPrompt";
-import { GUEST_COPY, OCCASION_NAMES, SAVE_COPY } from "@/copy/strings";
+import { GUEST_COPY, OCCASION_NAMES, PAY_SAFETY_COPY, SAVE_COPY } from "@/copy/strings";
 import { useGiftSaver, type SaveState } from "@/hooks/useGiftSaver";
 import { bodyFor, lookFor, resolveStyle, styleForLegacy, styleInfo, styleTitle, type StyleId } from "@/lib/styles";
 import { isQuietOccasion, occasionName, type OccasionId } from "@/lib/occasions";
@@ -1389,7 +1389,7 @@ function SiteDashboard() {
           <div>
             <Button
               className="h-12 w-full rounded-full text-base"
-              disabled={saving || !billing || !readyToWrap}
+              disabled={saving || !billing || !readyToWrap || billing.paused}
               onClick={() => {
                 if (hasPlan) void boWrap();
                 else boReact("cheer");
@@ -1400,7 +1400,9 @@ function SiteDashboard() {
               {hasPlan ? `Send it to ${draft.custom_text.recipient_name?.trim() || "them"}` : "Wrap it up"}
             </Button>
             <p className="mt-2 text-center text-xs text-muted">
-              {!readyToWrap
+              {billing?.paused
+                ? PAY_SAFETY_COPY.pausedWrap
+                : !readyToWrap
                 ? "Tick the two things above first."
                 : hasPlan
                   ? `Already paid for (${planSummary(billing)}). You can unpublish any time.`
@@ -2096,10 +2098,10 @@ function SiteDashboard() {
                 {canRenameLink(billing?.tier ?? null) ? (
                   <DropdownMenuItem onSelect={() => setLinkNameOpen(true)}>Change link name</DropdownMenuItem>
                 ) : null}
-                {billing && billing.upgrades.length > 0 && !billing.ended ? (
+                {billing && billing.upgrades.length > 0 && !billing.ended && !billing.paused ? (
                   <DropdownMenuItem onSelect={() => setPlanPicker("upgrade")}>Upgrade plan</DropdownMenuItem>
                 ) : null}
-                {billing?.extend ? (
+                {billing?.extend && !billing.paused ? (
                   <DropdownMenuItem onSelect={() => setExtendOpen(true)}>Extend this gift</DropdownMenuItem>
                 ) : null}
                 <DropdownMenuItem onSelect={() => void unpublish()}>Unpublish</DropdownMenuItem>

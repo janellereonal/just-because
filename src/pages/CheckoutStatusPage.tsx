@@ -8,6 +8,7 @@ import { PageError, PageLoading } from "@/components/PageStates";
 import { ExtendDialog, PlanPickerDialog } from "@/components/PlanControls";
 import { cancelOrder, getOrderStatus } from "@/lib/api";
 import { formatPeso, getTier } from "@/config/pricing";
+import { PAY_SAFETY_COPY } from "@/copy/strings";
 
 /** How long we keep checking before saying "this is taking a while". */
 const PATIENCE_MS = 90_000;
@@ -34,9 +35,12 @@ function CheckoutStatusPage() {
   const { data: order, error, refetch } = useQuery({
     queryKey: ["order", orderId],
     queryFn: () => getOrderStatus({ data: { orderId } }),
+    // "Missing" isn't an error (someone else's order); real errors get a retry button, not a spinner.
+    retry: 1,
     refetchInterval: (query) => {
+      if (query.state.status === "error") return false;
       const status = query.state.data?.status;
-      if (status === "paid") return false;
+      if (status === "paid" || status === "refund_pending" || status === "missing") return false;
       // After a cancel or a timeout, keep an eye out for a minute: they may have paid in another tab.
       if (cancelled || status === "failed" || status === "expired") return Date.now() - started < 60_000 ? 5000 : false;
       if (status && status !== "pending") return false;
@@ -50,26 +54,71 @@ function CheckoutStatusPage() {
     return () => window.clearTimeout(t);
   }, [order?.status, started]);
 
-  // Confetti once, when the payment is confirmed.
+  // Confetti once, when the payment is confirmed (not when we owe money back).
   useEffect(() => {
-    if (order?.status === "paid" && !window.matchMedia("(prefers-reduced-motion: reduce)").matches) setParty(true);
+    if (order?.status === "paid" && !order.refund && !window.matchMedia("(prefers-reduced-motion: reduce)").matches) setParty(true);
+  }, [order?.status, order?.refund]);
+
+  // A late payment landed while "Try again" was open: nothing more to pay here.
+  useEffect(() => {
+    if (order?.status === "paid" || order?.status === "refund_pending") setRetryOpen(false);
   }, [order?.status]);
 
   if (error) {
     return <PageError message="We couldn't check this payment just now." onRetry={() => void refetch()} />;
   }
   if (!order) return <PageLoading label="Confirming your payment…" />;
+  if (order.status === "missing") {
+    return (
+      <div className="min-h-screen bg-paper text-ink">
+        <SiteHeader />
+        <div className="grid min-h-[75vh] place-items-center px-4 py-10 text-center">
+          <div className="rise w-full max-w-xl rounded-[36px] bg-cream px-6 py-10 sm:px-12">
+            <Bo pose="idle" size={150} />
+            <h1 className="mt-3 font-display text-3xl font-medium tracking-tight">{PAY_SAFETY_COPY.notFoundTitle}</h1>
+            <p className="mx-auto mt-2 max-w-[42ch] text-ink/70">{PAY_SAFETY_COPY.notFound}</p>
+            <Link to="/dashboard" className="squish mt-6 inline-block rounded-full bg-white/80 px-6 py-3 text-sm font-medium">
+              Back to my gifts
+            </Link>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   const tier = getTier(order.tier);
   const editorUrl = order.site ? `/sites/${order.site.id}` : "/dashboard";
   const liveUrl =
     order.site && typeof window !== "undefined" ? `${window.location.origin}/g/${order.site.slug}` : "";
   const paid = order.status === "paid";
+  const owed = order.status === "refund_pending";
   // Cancel only counts while the order is still unpaid; a late payment still wins.
-  const stopped = !paid && (order.status === "failed" || order.status === "expired" || !!cancelled);
+  const stopped = !paid && !owed && (order.status === "failed" || order.status === "expired" || !!cancelled);
+  // "Try again" offers what the gift can buy now, whatever this order was.
+  const site = order.site;
+  const planNow = site && getTier(site.tier) && !site.ended ? "upgrade" : "publish";
 
   let body: React.ReactNode;
-  if (paid) {
+  if (owed) {
+    body = (
+      <>
+        <Bo pose="idle" size={150} />
+        <h1 className="mt-3 font-display text-3xl font-medium tracking-tight">
+          {site ? PAY_SAFETY_COPY.chargedTwiceTitle : "We'll refund this payment"}
+        </h1>
+        <p className="mx-auto mt-2 max-w-[42ch] text-ink/70">
+          {site
+            ? PAY_SAFETY_COPY.chargedTwice(formatPeso(order.refund || order.amount))
+            : PAY_SAFETY_COPY.deletedRefund(formatPeso(order.refund || order.amount))}
+        </p>
+        <div className="mt-6 flex flex-wrap justify-center gap-3">
+          <Link to={editorUrl} className="squish rounded-full bg-white/80 px-6 py-3 text-sm font-medium">
+            {site ? "Back to the editor" : "Back to my gifts"}
+          </Link>
+        </div>
+      </>
+    );
+  } else if (paid) {
     body = (
       <>
         <Bo pose="published" size={190} />
@@ -85,6 +134,11 @@ function CheckoutStatusPage() {
             ? "Your code covered it, so there was nothing to pay. A receipt is on its way to your email."
             : `Payment received, ${formatPeso(order.amount)}. A receipt is on its way to your email.`}
         </p>
+        {order.refund > 0 ? (
+          <p className="mx-auto mt-2 max-w-[42ch] rounded-2xl bg-white/70 px-4 py-3 text-ink/80">
+            {order.site ? PAY_SAFETY_COPY.overpaid(formatPeso(order.refund)) : PAY_SAFETY_COPY.deletedRefund(formatPeso(order.refund))}
+          </p>
+        ) : null}
         {order.kind === "extend" && order.site?.expiresAt ? (
           <p className="mt-1 text-ink/70">
             It now stays open until{" "}
@@ -131,7 +185,7 @@ function CheckoutStatusPage() {
           {order.status === "expired" ? "That payment timed out" : "No payment was made"}
         </h1>
         <p className="mx-auto mt-2 max-w-[42ch] text-ink/70">
-          {order.kind === "publish"
+          {order.kind === "publish" && planNow === "publish"
             ? "Your gift is still saved as a draft, and nothing was charged. You can try again whenever you're ready."
             : "Nothing was charged, and your gift is just as you left it. You can try again whenever you're ready."}
         </p>
@@ -179,7 +233,7 @@ function CheckoutStatusPage() {
     <div className="min-h-screen bg-paper text-ink">
       <SiteHeader />
       <div className="grid min-h-[75vh] place-items-center px-4 py-10 text-center">
-        <div className={`rise relative w-full max-w-xl overflow-hidden rounded-[36px] px-6 py-10 sm:px-12 ${paid ? "bg-mint" : stopped ? "bg-butter" : "bg-pink"}`}>
+        <div className={`rise relative w-full max-w-xl overflow-hidden rounded-[36px] px-6 py-10 sm:px-12 ${paid ? "bg-mint" : stopped || owed ? "bg-butter" : "bg-pink"}`}>
           <span aria-hidden className="absolute -top-16 -right-12 size-56 rounded-full bg-white/45 blur-2xl" />
           <div className="relative">{body}</div>
         </div>
@@ -199,13 +253,13 @@ function CheckoutStatusPage() {
           ))}
         </div>
       ) : null}
-      {order.site && order.kind === "extend" ? (
-        <ExtendDialog siteId={order.site.id} open={retryOpen} onOpenChange={setRetryOpen} />
-      ) : order.site ? (
+      {site && order.kind === "extend" && getTier(site.tier) ? (
+        <ExtendDialog siteId={site.id} open={retryOpen} onOpenChange={setRetryOpen} />
+      ) : site ? (
         <PlanPickerDialog
-          siteId={order.site.id}
-          recipient="them"
-          mode={order.kind === "upgrade" ? "upgrade" : "publish"}
+          siteId={site.id}
+          recipient={site.recipient || "them"}
+          mode={planNow}
           open={retryOpen}
           onOpenChange={setRetryOpen}
         />

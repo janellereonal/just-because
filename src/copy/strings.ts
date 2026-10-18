@@ -672,6 +672,21 @@ export const PRICE_COPY = {
   abroadPayNote: "Paying from outside the Philippines? Use a Visa or Mastercard. It's charged in pesos, and some banks add a small fee for that.",
 } as const;
 
+/** Paying safely: paused gifts, paying in two tabs, refunds we owe. */
+export const PAY_SAFETY_COPY = {
+  paused: "This gift is paused, so it can't be paid for right now. Write to us if you think that's a mistake.",
+  pausedBanner: "This gift is paused, so its link doesn't open and it can't be paid for. Write to us if you think that's a mistake.",
+  pausedWrap: "Paused, so it can't be wrapped up right now.",
+  planChanged: "This gift's plan changed in another tab. Have a look at the plans again before paying.",
+  paidElsewhere: "A payment for this gift just went through in another tab, so we stopped here. Have a look before paying again.",
+  chargedTwiceTitle: "You were charged twice",
+  chargedTwice: (amount: string) => `This gift already had this plan, so nothing changed. We'll refund ${amount} within a few days.`,
+  deletedRefund: (amount: string) => `This gift was deleted before the payment came in. We'll refund ${amount} within a few days.`,
+  overpaid: (amount: string) => `You paid ${amount} more than this needed, so we'll refund ${amount} within a few days.`,
+  notFoundTitle: "We couldn't find that payment",
+  notFound: "It may belong to another account. Sign in with the account that paid, or head back to your gifts.",
+};
+
 /** Starting a gift without an account (flag guestStart). */
 export const GUEST_COPY = {
   keep: "Sign in so you don't lose your gift.",

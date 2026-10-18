@@ -88,6 +88,14 @@ Locally, without `BLOB_READ_WRITE_TOKEN` uploads save to `.dev-uploads/`, and wi
   photobooth items. Hidden items don't count. Over the cap, friends see "this gift is full"
   and the owner gets an upgrade banner. `device_id` is never returned to the browser.
 - Paid features live in `TierFeatures`; check them with `hasFeature(tier, "...")`.
+- One open checkout per gift (`openCheckout` in `src/server/checkout.ts`, under an advisory lock per gift): the same
+  plan again within 30 min gets the same checkout back; anything else first expires the older checkout at PayMongo
+  (`expireCheckout`), and stops with "paid in another tab" if it turns out it was just paid. Cancelling expires it too.
+  Paused gifts (`disabled_at`) can't be quoted. The plan picker sends `expect` (publish/upgrade) and a stale one gets 409.
+- Paid twice anyway (an old checkout PayMongo wouldn't close)? `applyPaidEvent` works from the gift as it is now: a higher
+  plan is applied as an upgrade from the real current plan, anything else bought nothing and the order becomes
+  `refund_pending`. Money owed back is a `payment_log` row with event `refund due` ("refund <centavos>: why"), written in
+  the same transaction; the confirm page tells the buyer, /admin lists it under "Refunds to make". Refunds are by hand.
 - We don't handle `payment.failed` on purpose: it's per attempt, and hosted checkout lets the
   buyer retry on the same session. Unpaid orders count as abandoned after 24h.
 - Live keys (`sk_live_`) are refused unless `PAYMONGO_ALLOW_LIVE=true`.

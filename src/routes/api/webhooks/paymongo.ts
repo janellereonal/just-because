@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { and, eq, ne } from "drizzle-orm";
-import { applyPaidEvent, logPayment, reconcileOrder } from "@/server/billing";
+import { and, eq, notInArray } from "drizzle-orm";
+import { SETTLED_STATUSES, applyPaidEvent, logPayment, reconcileOrder } from "@/server/billing";
 import { clientIp, rateLimit } from "@/server/rateLimit";
 
 function underLogLimit() {
@@ -22,7 +22,8 @@ import { getProvider } from "@/server/payments";
  *    old or unmatched ones only make us ask PayMongo about that checkout, and only
  *    if we have an unpaid order for it.
  *  - Every call is written to payment_log with what we did.
- *  - 401 for bodies that aren't a usable paid event.
+ *  - 400 for bodies that aren't even a JSON object, 401 for ones that aren't a usable paid event.
+ *    Both are logged only a little per sender, so junk can't flood payment_log.
  *  - 200 for anything handled, ignored or already seen.
  *  - 500 only on a real failure, so PayMongo retries later.
  */
@@ -37,7 +38,7 @@ export const Route = createFileRoute("/api/webhooks/paymongo")({
           if (outcome.kind === "rejected") {
             // Anyone can post junk here; only log a little of it per sender.
             if (underLogLimit()) await logPayment("webhook", "rejected", outcome.reason);
-            return Response.json({ error: "rejected" }, { status: 401 });
+            return Response.json({ error: "rejected" }, { status: outcome.malformed ? 400 : 401 });
           }
           if (outcome.kind === "ignored") {
             if (underLogLimit()) await logPayment("webhook", outcome.eventType || "unknown", `ignored (${outcome.eventId || "no id"})`);
@@ -54,7 +55,7 @@ export const Route = createFileRoute("/api/webhooks/paymongo")({
             const [order] = await getDb()
               .select()
               .from(schema.orders)
-              .where(and(eq(schema.orders.providerCheckoutId, outcome.checkoutId), ne(schema.orders.status, "paid")));
+              .where(and(eq(schema.orders.providerCheckoutId, outcome.checkoutId), notInArray(schema.orders.status, [...SETTLED_STATUSES])));
             if (!order) {
               await logPayment("webhook", "hint", `${outcome.reason}; no unpaid order, skipped`, { checkoutId: outcome.checkoutId });
               return Response.json({ ok: true });

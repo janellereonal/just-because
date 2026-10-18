@@ -14,6 +14,7 @@ import { uploadFile } from "@/lib/upload";
 import { useAuth } from "@/hooks/useAuth";
 import { AdminReports } from "@/components/admin/AdminReports";
 import { DiscountCodes } from "@/components/admin/DiscountCodes";
+import { RefundsDue } from "@/components/admin/RefundsDue";
 
 export const Route = createFileRoute("/admin")({
   head: () => ({
@@ -91,6 +92,7 @@ function AdminPage() {
       <SignInSetup />
       <PaymentsSetup />
       <DiscountCodes />
+      <RefundsDue />
       <PaymentLog />
       <section className="mx-auto max-w-6xl px-5 py-14">
         <p className="font-mono text-[11px] tracking-[0.18em] text-accent uppercase">Admin</p>
@@ -371,7 +373,7 @@ function PaymentLog() {
   return (
     <section className="mx-auto max-w-6xl px-5 pt-10">
       <h2 className="font-display text-2xl font-medium tracking-tight">Payment log</h2>
-      <p className="mt-1 text-sm text-muted">Newest first. "Needs a refund" lines are payments for a gift that already had that plan, or was deleted.</p>
+      <p className="mt-1 text-sm text-muted">Newest first. "Needs a refund" lines are payments for a gift that already had that plan, paid more than an upgrade cost, or was deleted. They're also listed under Refunds to make.</p>
       <div className="mt-4 overflow-x-auto rounded-2xl border border-line bg-cream">
         <table className="w-full text-left text-xs">
           <thead className="text-muted">

@@ -65,7 +65,16 @@ export type WebhookOutcome =
    * the provider's API with our secret key, not from the request.
    */
   | { kind: "check"; checkoutId: string; reason: string }
-  | { kind: "rejected"; reason: string };
+  /** `malformed`: not even a JSON object, answered with 400. */
+  | { kind: "rejected"; reason: string; malformed?: boolean };
+
+/**
+ * What happened when we tried to close a checkout:
+ *  - closed: it can't take a payment any more (we closed it, or it already was)
+ *  - paid: it was paid, so it can't be closed (apply that payment)
+ *  - open: we couldn't close it and it isn't paid, so a payment may still come in
+ */
+export type ExpireResult = "closed" | "paid" | "open";
 
 export interface PaymentProvider {
   readonly name: string;
@@ -78,4 +87,11 @@ export interface PaymentProvider {
    * slow or missing. Returns null when nothing has been paid yet.
    */
   checkPaid(checkoutId: string): Promise<PaidEvent | null>;
+  /** The checkout page again, if it can still take a payment (not paid, not expired). Null otherwise. */
+  reopenCheckout(checkoutId: string): Promise<string | null>;
+  /**
+   * Stops a checkout from taking a payment, so a gift can only be paid for in one place at a
+   * time. Never throws.
+   */
+  expireCheckout(checkoutId: string): Promise<ExpireResult>;
 }

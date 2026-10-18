@@ -260,7 +260,7 @@ export const orders = pgTable(
     discountCode: text("discount_code"),
     /** Centavos taken off by the code (full price = amount + discountAmount). */
     discountAmount: integer("discount_amount").notNull().default(0),
-    /** pending | paid | failed | expired */
+    /** pending | paid | failed | expired | refund_pending (paid but bought nothing: owed back, see billing.ts) */
     status: text("status").notNull().default("pending"),
     provider: text("provider").notNull().default("paymongo"),
     providerCheckoutId: text("provider_checkout_id").unique(),

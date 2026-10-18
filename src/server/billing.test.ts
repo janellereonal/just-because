@@ -203,6 +203,104 @@ d("paying for a gift", () => {
     expect(msg).toContain("Needs a refund");
     const log = await db.getDb().select().from(db.schema.paymentLog).where(eq(db.schema.paymentLog.checkoutId, second.providerCheckoutId!));
     expect(log.some((l) => l.outcome.includes("refund"))).toBe(true);
+    // Not reported as a plain "paid": the order says it's owed back, with the whole amount.
+    expect((await orderOf(second.id)).status).toBe("refund_pending");
+    expect((await billing.refundsDue([second.id])).get(second.id)).toBe(second.amount);
+    // Reported again (webhook retry, confirm page): nothing more happens, still one refund line.
+    await billing.applyPaidEvent({ ...(await provider.checkPaid(second.providerCheckoutId!))!, eventId: "evt_retry" }, "paymongo", "webhook");
+    expect(await billing.reconcileOrder(await orderOf(second.id), "confirm", 0)).toBe(true);
+    expect((await billing.refundsDue([second.id])).get(second.id)).toBe(second.amount);
+    expect((await siteOf(site.id)).tier).toBe("celebration");
+  });
+
+  test("two first-plan checkouts paid: the higher plan wins as an upgrade, the extra is flagged", async () => {
+    // Sweet in one tab, Keepsake in the other, both paid (Sweet first).
+    const site = await newGift();
+    const sweet = await newOrder(site.id, { tier: "sweet", amount: 29900 });
+    const keepsake = await newOrder(site.id, { tier: "keepsake", amount: 99900 });
+    fake.pay(sweet.providerCheckoutId!);
+    fake.pay(keepsake.providerCheckoutId!);
+    await billing.reconcileOrder(sweet, "confirm", 0);
+    const sweetEnd = (await siteOf(site.id)).expiresAt!;
+    const msg = await billing.applyPaidEvent((await provider.checkPaid(keepsake.providerCheckoutId!))!, "paymongo", "webhook");
+    expect(msg).toContain("upgraded");
+    const s = await siteOf(site.id);
+    expect(s.tier).toBe("keepsake");
+    // Keepsake runs 36 months, Sweet 3: 33 more months on top of Sweet's end date.
+    const months = (s.expiresAt!.getUTCFullYear() - sweetEnd.getUTCFullYear()) * 12 + s.expiresAt!.getUTCMonth() - sweetEnd.getUTCMonth();
+    expect(months).toBe(33);
+    expect((await orderOf(keepsake.id)).status).toBe("paid");
+    // ₱999 + ₱299 paid for a ₱999 plan: ₱299 goes back.
+    expect((await billing.refundsDue([keepsake.id])).get(keepsake.id)).toBe(29900);
+  });
+
+  test("two first-plan checkouts paid the other way round: the lower one is refunded in full", async () => {
+    const site = await newGift();
+    const keepsake = await newOrder(site.id, { tier: "keepsake", amount: 99900 });
+    const sweet = await newOrder(site.id, { tier: "sweet", amount: 29900 });
+    fake.pay(keepsake.providerCheckoutId!);
+    fake.pay(sweet.providerCheckoutId!);
+    await billing.reconcileOrder(keepsake, "confirm", 0);
+    await billing.reconcileOrder(sweet, "confirm", 0);
+    expect((await siteOf(site.id)).tier).toBe("keepsake");
+    expect((await orderOf(sweet.id)).status).toBe("refund_pending");
+    expect((await billing.refundsDue([sweet.id])).get(sweet.id)).toBe(29900);
+  });
+
+  test("two upgrade tabs to the same plan: the second is refunded in full", async () => {
+    const site = await newGift("published", "sweet");
+    const a = await newOrder(site.id, { kind: "upgrade", tier: "celebration", amount: 30000 });
+    const b = await newOrder(site.id, { kind: "upgrade", tier: "celebration", amount: 30000 });
+    await db.getDb().update(db.schema.orders).set({ fromTier: "sweet" }).where(inArray(db.schema.orders.id, [a.id, b.id]));
+    fake.pay(a.providerCheckoutId!);
+    fake.pay(b.providerCheckoutId!);
+    await billing.reconcileOrder(a, "confirm", 0);
+    await billing.reconcileOrder(b, "confirm", 0);
+    expect((await siteOf(site.id)).tier).toBe("celebration");
+    expect((await orderOf(a.id)).status).toBe("paid");
+    expect((await orderOf(b.id)).status).toBe("refund_pending");
+    expect((await billing.refundsDue([a.id, b.id])).get(b.id)).toBe(30000);
+    expect((await billing.refundsDue([a.id])).get(a.id)).toBeUndefined();
+  });
+
+  test("a stale upgrade is applied from the plan the gift is really on, and the overpayment flagged", async () => {
+    // Sweet gift. Tab A: upgrade to Keepsake (₱700). Tab B: upgrade to Celebration (₱300). Pay B, then A.
+    const site = await newGift("published", "sweet");
+    const a = await newOrder(site.id, { kind: "upgrade", tier: "keepsake", amount: 70000 });
+    const b = await newOrder(site.id, { kind: "upgrade", tier: "celebration", amount: 30000 });
+    await db.getDb().update(db.schema.orders).set({ fromTier: "sweet" }).where(inArray(db.schema.orders.id, [a.id, b.id]));
+    fake.pay(b.providerCheckoutId!);
+    fake.pay(a.providerCheckoutId!);
+    await billing.reconcileOrder(b, "confirm", 0);
+    expect((await siteOf(site.id)).tier).toBe("celebration");
+    const msg = await billing.applyPaidEvent((await provider.checkPaid(a.providerCheckoutId!))!, "paymongo", "webhook");
+    expect(msg).toContain("from celebration");
+    expect((await siteOf(site.id)).tier).toBe("keepsake");
+    expect((await orderOf(a.id)).status).toBe("paid");
+    // ₱1,000 paid for a ₱700 upgrade: ₱300 goes back.
+    expect((await billing.refundsDue([a.id])).get(a.id)).toBe(30000);
+    expect((await billing.refundsDue([b.id])).get(b.id)).toBeUndefined();
+  });
+
+  test("a paid gift that has been paused still gets what was paid for, and stays paused", async () => {
+    const site = await newGift();
+    await db.getDb().update(db.schema.giftSites).set({ disabledAt: new Date() }).where(eq(db.schema.giftSites.id, site.id));
+    const order = await newOrder(site.id);
+    fake.pay(order.providerCheckoutId!);
+    const msg = await billing.applyPaidEvent((await provider.checkPaid(order.providerCheckoutId!))!, "paymongo", "webhook");
+    expect(msg).toContain("paused");
+    const s = await siteOf(site.id);
+    expect(s.tier).toBe("celebration");
+    expect(s.disabledAt).not.toBeNull();
+  });
+
+  test("a paused gift can't be quoted for any plan or an extension", async () => {
+    const draft = await newGift();
+    const paidGift = await newGift("published", "sweet");
+    await db.getDb().update(db.schema.giftSites).set({ disabledAt: new Date() }).where(inArray(db.schema.giftSites.id, [draft.id, paidGift.id]));
+    await expect(billing.quote(await siteOf(draft.id), "keepsake", { userId })).rejects.toThrow("paused");
+    await expect(billing.quote(await siteOf(paidGift.id), "keepsake", { userId })).rejects.toThrow("paused");
+    expect(() => billing.quoteExtend({ ...paidGift, disabledAt: new Date() })).toThrow("paused");
   });
 
   test("an extend adds time on top of the end date", async () => {
