@@ -10,8 +10,8 @@
  *    PayMongo's API rather than from the webhook body alone.
  */
 import { createHmac, timingSafeEqual } from "node:crypto";
-import { enabledPaymentMethods } from "@/config/pricing";
-import type { CheckoutOrder, CheckoutResult, PaidEvent, PaymentProvider, WebhookOutcome } from "./types";
+import { enabledPaymentMethods, statementDescriptor } from "@/config/pricing";
+import type { CardOrigin, CheckoutOrder, CheckoutResult, PaidEvent, PayMethod, PaymentProvider, WebhookOutcome } from "./types";
 
 const PAID_EVENT = "checkout_session.payment.paid";
 /** How old a webhook signature may be, in seconds. */
@@ -57,12 +57,48 @@ type CheckoutSession = {
       livemode: boolean;
       reference_number?: string | null;
       metadata?: Record<string, string> | null;
-      payments?: { id: string; attributes: { amount: number; status: string } }[];
+      payments?: PaymentRow[];
     };
   };
 };
 
+/**
+ * A payment inside a checkout session. PayMongo's docs only promise id, amount,
+ * status, currency and billing; real card payments also carry the card's brand
+ * and country on `source`. Everything past amount and status is read defensively.
+ */
+type PaymentRow = {
+  id: string;
+  attributes: {
+    amount: number;
+    status: string;
+    currency?: string | null;
+    foreign_fee?: number | null;
+    source?: { id?: string | null; type?: string | null; brand?: string | null; country?: string | null } | null;
+    billing?: { address?: { country?: string | null } | null } | null;
+  };
+};
+
+const WALLETS: Record<string, PayMethod> = { gcash: "gcash", paymaya: "paymaya", qrph: "qrph" };
+
+/** What paid, and for cards whether the card came from outside the Philippines. Metrics only. */
+export function describePayment(p: PaymentRow["attributes"]): { method: PayMethod; cardOrigin: CardOrigin | null } {
+  const type = (p.source?.type ?? "").toLowerCase();
+  if (WALLETS[type]) return { method: WALLETS[type]!, cardOrigin: null };
+  const isCard = type === "card" || !!p.source?.brand || (p.source?.id ?? "").startsWith("card_");
+  if (!isCard) return { method: "other", cardOrigin: null };
+  // The card's own country is the real answer; a foreign-card fee or the billing country are fallbacks.
+  const cardCountry = (p.source?.country ?? "").toUpperCase();
+  if (cardCountry) return { method: "card", cardOrigin: cardCountry === "PH" ? "local" : "foreign" };
+  if ((p.foreign_fee ?? 0) > 0) return { method: "card", cardOrigin: "foreign" };
+  const billing = (p.billing?.address?.country ?? "").toUpperCase();
+  if (billing) return { method: "card", cardOrigin: billing === "PH" ? "local" : "foreign" };
+  return { method: "card", cardOrigin: "unknown" };
+}
+
 async function createCheckout(order: CheckoutOrder): Promise<CheckoutResult> {
+  // Hosted checkout is pesos only. Dollars need the Payment Intents flow (docs/payments-international.md).
+  if (order.currency !== "PHP") throw new Error(`PayMongo hosted checkout only takes PHP, not ${order.currency}.`);
   const body = {
     data: {
       attributes: {
@@ -84,6 +120,7 @@ async function createCheckout(order: CheckoutOrder): Promise<CheckoutResult> {
         show_description: true,
         show_line_items: true,
         metadata: { order_id: order.orderId, site_id: order.siteId },
+        ...(statementDescriptor ? { statement_descriptor: statementDescriptor } : {}),
         ...(order.customerEmail
           ? { billing: { email: order.customerEmail, ...(order.customerName ? { name: order.customerName } : {}) } }
           : {}),
@@ -182,6 +219,8 @@ async function checkPaid(
   const paid = (session.data.attributes.payments ?? []).filter((p) => p.attributes.status === "paid");
   if (paid.length === 0) return null;
   const attrs = session.data.attributes;
+  const first = paid[0]!.attributes;
+  const currencies = new Set(paid.map((p) => (p.attributes.currency ?? "PHP").toUpperCase()));
   return {
     eventId: source.eventId,
     eventType: source.eventType,
@@ -189,6 +228,9 @@ async function checkPaid(
     orderId: attrs.metadata?.["order_id"] ?? attrs.reference_number ?? null,
     paymentId: paid[0]?.id ?? null,
     amountPaid: paid.reduce((sum, p) => sum + p.attributes.amount, 0),
+    // Mixed currencies on one checkout should never happen; "MIXED" makes applyPaidEvent refuse it.
+    currency: currencies.size === 1 ? [...currencies][0]! : "MIXED",
+    ...describePayment(first),
   };
 }
 

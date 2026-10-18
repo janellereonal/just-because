@@ -337,8 +337,17 @@ function Drawn({
       <motion.g style={{ x: face, y: faceY }}>
         {f.cheeks && !(image !== undefined && !image) ? (
           <>
-            <ellipse cx={f.cheeks.l[0]} cy={f.cheeks.l[1]} rx="7" ry="4.5" fill="#F27A93" opacity={blush ? 0.75 : clay ? 0.4 : 0.32} />
-            <ellipse cx={f.cheeks.r[0]} cy={f.cheeks.r[1]} rx="7" ry="4.5" fill="#F27A93" opacity={blush ? 0.75 : clay ? 0.4 : 0.32} />
+            {[f.cheeks.l, f.cheeks.r].map(([cx, cy], i) => (
+              <ellipse
+                key={i}
+                cx={cx}
+                cy={cy}
+                rx={7 * (f.blush?.size ?? 1)}
+                ry={4.5 * (f.blush?.size ?? 1)}
+                fill={f.blush?.color ?? "#F27A93"}
+                opacity={blush ? 0.8 : f.blush?.color ? 0.65 : clay ? 0.4 : 0.32}
+              />
+            ))}
           </>
         ) : null}
         {(clay?.hideEyes || (image !== undefined && !image) ? [] : [f.eyes.l, f.eyes.r]).map(([ex, ey], i) =>

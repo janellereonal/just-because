@@ -1,5 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { OCCASION_NAMES } from "@/copy/strings";
+import { resolveStyle } from "@/lib/styles";
+import { occasionName } from "@/lib/occasions";
 import { ConciergeOffer } from "@/components/ConciergeOffer";
 import { trackEvent } from "@/lib/track";
 import { countNotes, inGiftLabel, noteSummary, waitingLabel } from "@/lib/noteCounts";
@@ -540,7 +542,7 @@ function SiteDashboard() {
 
   const contributeUrl = `${typeof window === "undefined" ? "" : window.location.origin}/contribute/${site.slug}`;
   const liveUrl = `${typeof window === "undefined" ? "" : window.location.origin}/g/${site.slug}`;
-  const titles = defaultTitles(draft.custom_text, themeKindOf(theme));
+  const titles = defaultTitles(draft.custom_text, themeKindOf(theme), draft.occasion);
   const shareMessage = `Add something to ${draft.custom_text.recipient_name || "our"}'s gift: ${contributeUrl}`;
   const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(shareMessage)}`;
   const messengerUrl = `https://www.facebook.com/dialog/send?link=${encodeURIComponent(contributeUrl)}&redirect_uri=${encodeURIComponent(contributeUrl)}&app_id=291494419107518`;
@@ -928,7 +930,7 @@ function SiteDashboard() {
               settings={draft.intro_settings}
               onChange={patchIntro}
               palette={paletteNow}
-              kind={themeKindOf(theme)}
+              kind={resolveStyle(draft, theme).introKind}
               introStyle={introStyleForTheme(theme?.name)}
               offers={engineTheme?.offers}
               greeting={
@@ -1105,7 +1107,7 @@ function SiteDashboard() {
           <CastPanel
             simple
             siteId={id}
-            kind={themeKindOf(theme)}
+            kind={resolveStyle(draft, theme).introKind}
             recipient={draft.custom_text.recipient_name ?? ""}
             value={{ character: draft.character ?? null, icon_set: draft.icon_set ?? null }}
             onChange={patchCast}
@@ -1144,7 +1146,7 @@ function SiteDashboard() {
             >
               <CastPanel
                 siteId={id}
-                kind={themeKindOf(theme)}
+                kind={resolveStyle(draft, theme).introKind}
                 recipient={draft.custom_text.recipient_name ?? ""}
                 value={{ character: draft.character ?? null, icon_set: draft.icon_set ?? null }}
                 onChange={patchCast}
@@ -1636,7 +1638,8 @@ function SiteDashboard() {
     <GiftIntro
       contained
       style={introStyleForTheme(theme?.name)}
-      kind={themeKindOf(theme)}
+      kind={resolveStyle(draft, theme).introKind}
+      occasionBadge={draft.occasion ? occasionName(draft.occasion) : undefined}
       palette={paletteNow}
       fonts={FONT_PAIRINGS[draft.font_choice] ?? FONT_PAIRINGS.romantic}
       backgroundStyle={draft.background_style}
@@ -1660,7 +1663,8 @@ function SiteDashboard() {
       key={`canvas-intro-${introCanvasKey}`}
       contained
       style={introStyleForTheme(theme?.name)}
-      kind={themeKindOf(theme)}
+      kind={resolveStyle(draft, theme).introKind}
+      occasionBadge={draft.occasion ? occasionName(draft.occasion) : undefined}
       palette={paletteNow}
       fonts={FONT_PAIRINGS[draft.font_choice] ?? FONT_PAIRINGS.romantic}
       backgroundStyle={draft.background_style}
@@ -2067,7 +2071,8 @@ function SiteDashboard() {
       ) : introPreview ? (
         <GiftIntro
           style={introStyleForTheme(theme?.name)}
-          kind={themeKindOf(theme)}
+          kind={resolveStyle(draft, theme).introKind}
+          occasionBadge={draft.occasion ? occasionName(draft.occasion) : undefined}
           palette={paletteNow}
           fonts={FONT_PAIRINGS[draft.font_choice] ?? FONT_PAIRINGS.romantic}
           backgroundStyle={draft.background_style}

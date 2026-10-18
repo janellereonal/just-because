@@ -14,7 +14,15 @@
  */
 import { createHmac } from "node:crypto";
 
-type Session = { id: string; amount: number; orderId: string; paid: number; checkoutUrl: string };
+/** Optional extras on the fake payment, shaped like a real PayMongo card or wallet payment. */
+export type FakePaymentDetails = {
+  currency?: string;
+  foreign_fee?: number;
+  source?: { id?: string; type?: string; brand?: string; country?: string };
+  billing?: { address?: { country?: string } };
+};
+
+type Session = { id: string; amount: number; orderId: string; paid: number; checkoutUrl: string; details?: FakePaymentDetails | undefined };
 
 export function sign(secret: string, body: string, t = Math.floor(Date.now() / 1000), live = false) {
   const sig = createHmac("sha256", secret).update(`${t}.${body}`).digest("hex");
@@ -70,9 +78,10 @@ export function startFakePaymongo(port = 0) {
     add(id: string, amount: number, orderId: string) {
       sessions.set(id, { id, amount, orderId, paid: 0, checkoutUrl: "" });
     },
-    pay(id: string, amount?: number) {
+    pay(id: string, amount?: number, details?: FakePaymentDetails) {
       const s = sessions.get(id)!;
       s.paid += amount ?? s.amount;
+      if (details) s.details = details;
     },
     stop: () => server.stop(true),
   };
@@ -87,7 +96,7 @@ function view(s: Session) {
         livemode: false,
         reference_number: s.orderId,
         metadata: { order_id: s.orderId },
-        payments: s.paid ? [{ id: `pay_${s.id}`, attributes: { amount: s.paid, status: "paid" } }] : [],
+        payments: s.paid ? [{ id: `pay_${s.id}`, attributes: { amount: s.paid, status: "paid", ...s.details } }] : [],
       },
     },
   };

@@ -204,7 +204,7 @@ export function ZineView({
   const cd = useCountdown(data.countdownDate);
   const [sheet, setSheet] = useState<Piece | null>(null);
   const accent = palette.accent;
-  const heading = giftHeading(site.custom_text, theme);
+  const heading = giftHeading(site.custom_text, theme, site.occasion);
   const issueDate = new Date()
     .toLocaleDateString(undefined, { month: "short", year: "numeric" })
     .toUpperCase();
@@ -215,7 +215,8 @@ export function ZineView({
       : [];
 
   return (
-    <div className="zine-root min-h-screen" style={{ "--z-accent": accent } as React.CSSProperties}>
+    // The paper is tinted with the gift's background, so each occasion's zine has its own stock.
+    <div className="zine-root min-h-screen" style={{ "--z-accent": accent, "--z-theme": palette.background } as React.CSSProperties}>
       <div className="mx-auto max-w-5xl px-4 py-8 @2xl:px-8 @2xl:py-12">
         <header className="zine-masthead">
           <div className="flex items-center justify-between gap-3">
@@ -327,7 +328,7 @@ export function ZineView({
       {sheet ? (
         <PieceSheet
           piece={sheet}
-          palette={{ background: "#F4F1EA", primary: "#111111", accent }}
+          palette={{ background: palette.background, primary: palette.primary, accent }}
           onClose={() => setSheet(null)}
         />
       ) : null}

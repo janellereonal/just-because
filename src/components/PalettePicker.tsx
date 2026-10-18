@@ -142,7 +142,7 @@ function RolePicker({
  * theme's suggestions, not in everyone's "more palettes" list, so a draft
  * theme's colours don't appear before the theme does.
  */
-const THEME_ONLY_PALETTES = new Set(["Winter Cabin", "Snowy Pine", "Kraft Mail", "Air Mail", "Balikbayan", "Parol Night", "Capiz", "Debut Rose", "Debut Night"]);
+const THEME_ONLY_PALETTES = new Set(["Fireside", "Winter Cabin", "Snowy Pine", "Kraft Mail", "Air Mail", "Homeward", "Balikbayan", "Parol Night", "Capiz", "Debut Rose", "Debut Night"]);
 
 export function PalettePicker({
   theme,

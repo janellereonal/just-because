@@ -3,7 +3,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { FormatView } from "@/components/formats/FormatView";
 import { PageNotFound } from "@/components/PageStates";
 import { TactileOpening } from "@/themes/TactileOpening";
-import { DEMO_GIFTS, isDemoId } from "@/lib/demoGifts";
+import { DEMO_GIFTS, demoAge, isDemoId } from "@/lib/demoGifts";
 import { LANDING } from "@/copy/strings";
 
 export const Route = createFileRoute("/example/$id")({
@@ -46,6 +46,7 @@ function ExamplePage() {
             palette={g.palette}
             recipientName={g.who}
             contributors={g.friends}
+            age={demoAge(g)}
             contained
             onOpen={() => setOpened(true)}
             onSkip={() => setOpened(true)}

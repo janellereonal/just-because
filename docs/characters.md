@@ -177,3 +177,42 @@ and search matches names and tags.
 hat, outfit, outfit color, held item) and the 40 ready-made people. `src/lib/clay/person.ts` builds the clay model
 from a config. The face is live SVG from `personFace()`, which uses the same head layout as the model.
 A saved person is `{ type: "person", person, preset?, image_url? }`. See docs/NEXT-SESSION.md, session 12b.
+
+## Art inventory and how each piece is made (Oct 2026)
+
+| What | How many | How it's made | Where |
+| --- | --- | --- | --- |
+| Clay characters (the main look) | 50: 14 with a drawn version too, 36 clay only | three.js recipes rendered to stills (`public/clay/<id>.webp` 512 px and `@256`). The face (eyes, mouth, blush) is live SVG on top, positioned per character | recipes in `src/lib/clay/` (`scene.ts`, `animals.ts`, `objects.ts`), faces in `cast/library.tsx` (`clay`) and `cast/clayCast.ts` |
+| Drawn (flat SVG) versions | 14 (Bo, dog, both Shih Tzus, cat, bunny, bear, duck, frog, little you, cup, plant, cloud, moon) | Hand-written SVG in code. Shown only when someone picks their own colors, since the clay stills come in one color set | `cast/library.tsx` (`body`) |
+| Ready-made little people | 40 presets | Clay people, rendered to `public/clay/people/` | `cast/person.ts`, model in `src/lib/clay/person.ts` |
+| Built people (Person builder) | any | Same clay person model, rendered in the browser and uploaded | `PersonBuilder.tsx` |
+| Bo, the mascot | 8 poses | 3D stills, 960 px | `public/bo/*.webp`, `Bo.tsx`, live 3D in `Bo3D.tsx` |
+| Christmas tree ornaments | 16 + the tree | Clay recipes, like the characters | `src/lib/clay/tree.ts`, `public/clay/orn-*.webp` |
+| Sprinkles (icon sets) | 11 sets | SVG in code, plus system emoji for the Emoji set | `src/themes/_shared/iconSets.ts` |
+
+### Checking the art
+
+- `bun tools/art/symmetry.ts [id]` builds every clay recipe and lists paired parts (ears, patches,
+  paws, cheeks) whose mirror twin is off in position, size or tilt, plus faces whose eyes, cheeks and
+  mouth aren't on one center line. Differences that are meant to be there (giraffe spots, candle drips,
+  hair partings) are listed in `ON_PURPOSE` at the top.
+- `/dev/cast` (dev server) shows every character, the drawn versions, and `?size=64` for phone size.
+  `node tools/screens/castshots.cjs <outDir>` saves each one as its own image (`SIZE=64` for phone size).
+- After changing a recipe: `ONLY=panda,owl node tools/screens/clay.js ../op/clay/png` then
+  `python3 tools/screens/clay_webp.py ../op/clay/png ../../public/clay` (dev server running).
+
+### Rules the faces follow
+
+- Eyes level and the same distance from the center line; mouth on that line; cheeks mirrored. The
+  `face()` helper in `clayCast.ts` does this for you; hand-placed faces (snail, moon) are checked by the script.
+- Eyes sit in the middle of anything drawn around them (panda patches, owl discs). Those markings don't
+  cast shadows (`marking()` in `animals.ts`): the key light is up on the left, so a shadow lands only on
+  the right and the face looks lopsided.
+- Blush stays on the body. Narrow faces use a smaller blush (`blush: { size }`). Green skin uses
+  `GREEN_BLUSH`, because the default pink turns brown on green.
+
+### Known gaps
+
+- Picking custom colors swaps a clay character for its flat drawn version, which is a visible style
+  jump. Fix: render the clay recipe in the browser in the new colors, like the Person builder does.
+- The 36 clay-only characters can't be recolored at all (Customize only changes their name tag).

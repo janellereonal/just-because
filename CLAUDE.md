@@ -72,6 +72,11 @@ Locally, without `BLOB_READ_WRITE_TOKEN` uploads save to `.dev-uploads/`, and wi
   through the API in the key's mode (test key → test webhook) and throws the secret away.
 - Provider code sits behind `src/server/payments/types.ts`; PayMongo is
   `src/server/payments/paymongo.ts`. A second provider (PayPal) would be a sibling file.
+- Buyers abroad: foreign cards work, charged in PHP (hosted checkout is pesos only). They see a guide price
+  in their currency (`formatApprox`, `useViewerMoney` in `src/lib/viewerCurrency.ts`, display only).
+  `applyPaidEvent` refuses a payment whose currency differs from the order's. `plan_purchased` records
+  `method` and `card_origin` (local/foreign card), shown in /admin. Dollar prices need PayMongo approval
+  and a card page of our own: `docs/payments-international.md`.
 - Order kinds: `publish` (first payment), `upgrade` (pay the difference; adds the extra months
   on top of the current end date, so extensions are kept) and `extend` (pay the tier's
   `extendAmount` for another `liveFor`, stacked on the end date, or from today if ended).
@@ -142,6 +147,19 @@ verification is only required once `RESEND_API_KEY` and `EMAIL_FROM` are both se
 - Keep `@tanstack/react-start` at a patched version; Vercel blocks deploys of versions
   with known CVEs.
 - `bunfig.toml` refuses packages published less than 24h ago (supply-chain guard).
+
+## Styles and occasions (Oct 2026, replacing "theme + format" in the UI)
+
+- **Style** is the one visual choice (`src/lib/styles.ts`): its own opening, look and way of reading.
+  Styles made from themes (Cake, Love Letter...) borrow a theme row as their "look"; styles made
+  from layouts (Scrapbook, Mixtape...) wear none. **Occasion** (`src/lib/occasions.ts`) only sorts the
+  styles, picks the words, the starting sections and Bo's outfit. Words are full sentences in
+  `src/i18n/en.ts` (`occasion.<id>.*`, `style.<id>.*`).
+- Stored as `gift_sites.style` and `gift_sites.occasion` (migration 0016, both nullable). A style always
+  sets `format` to its layout and `theme_id` to its look, server side (`themeForStyle` in api.ts).
+- Gifts from before styles have both null and render exactly as before: theme opening + saved layout,
+  theme words (`resolveStyle`, `giftWords`; tested for every theme × layout in `src/lib/styles.test.ts`).
+- Changing only the layout of a styled gift clears its style (it becomes a theme + layout gift).
 
 ## Themes, cast and sections
 

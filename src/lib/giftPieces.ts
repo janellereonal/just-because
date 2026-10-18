@@ -247,7 +247,7 @@ export function usePieces({
         buckets.set("word", []);
       }
     }
-    const titles = { ...defaultTitles(site.custom_text), ...site.custom_text };
+    const titles = { ...defaultTitles(site.custom_text, "default", site.occasion), ...site.custom_text };
     const countdownDate =
       enabled.has("countdown") && (countdownTarget(site) || sample)
         ? (countdownTarget(site) ?? new Date(Date.now() + 12 * 86400000).toISOString())

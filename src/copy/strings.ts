@@ -335,7 +335,7 @@ export const COMIC_COPY = {
   next: "Next page",
   share: "Share this issue",
   close: "Close",
-  replay: "Replay cover",
+  replay: "See the cover",
   backToEdit: "Back to editing",
   meanwhile: "Meanwhile, in the other world…",
   mine: "You're in this issue",
@@ -648,3 +648,14 @@ export const UPLOAD_COPY = {
   tooLong: (kind: "photo" | "voice" | "video") =>
     kind === "video" ? "Videos can be up to a minute long. Try a shorter clip." : "Voice notes can be up to 2 minutes long.",
 };
+
+/** Prices and paying, for buyers in the Philippines and everywhere else. */
+export const PRICE_COPY = {
+  approxSuffix: "(approx.)",
+  /** Under the plan cards, for visitors in the Philippines. */
+  footerLocal: "Prices are in pesos.",
+  /** Under the plan cards, for everyone else. */
+  footerAbroad: "You pay in Philippine pesos, and cards from any country work. The amount in your currency is a guide. Your bank sets the exact rate.",
+  /** Next to the pay button, for visitors outside the Philippines. */
+  abroadPayNote: "Paying from outside the Philippines? Use a Visa or Mastercard. It's charged in pesos, and some banks add a small fee for that.",
+} as const;

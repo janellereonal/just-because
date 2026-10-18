@@ -191,7 +191,7 @@ export function MixtapeView({
     },
   };
 
-  const label = giftHeading(site.custom_text, theme);
+  const label = giftHeading(site.custom_text, theme, site.occasion);
   const mm = String(Math.floor(counter / 10)).padStart(3, "0");
 
   return (

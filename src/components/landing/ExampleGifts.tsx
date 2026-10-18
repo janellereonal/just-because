@@ -5,7 +5,7 @@
 import { useEffect, useRef, useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { motion } from "motion/react";
-import { DEMO_GIFTS, DEMO_ORDER, type DemoId } from "@/lib/demoGifts";
+import { DEMO_GIFTS, DEMO_ORDER, demoAge, type DemoId } from "@/lib/demoGifts";
 import { TactileOpening } from "@/themes/TactileOpening";
 import { loadThemeFonts, themeFontVars } from "@/themes/_shared/design";
 import { SPRING } from "@/themes/_shared/stage";
@@ -70,6 +70,7 @@ function ExampleCard({ id, i }: { id: DemoId; i: number }) {
               palette={g.palette}
               recipientName={g.who}
               contributors={g.friends}
+              age={demoAge(g)}
               contained
               interactive={false}
               paused={!playing}

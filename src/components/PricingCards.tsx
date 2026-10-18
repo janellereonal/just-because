@@ -1,11 +1,13 @@
 import {
   TIERS,
   featureList,
+  formatApprox,
   formatPeso,
-  formatUsdApprox,
   type Tier,
   type TierId,
 } from "@/config/pricing";
+import { PRICE_COPY } from "@/copy/strings";
+import { useViewerMoney } from "@/lib/viewerCurrency";
 
 type Props = {
   /** Only show these tiers (e.g. upgrade options). Defaults to all. */
@@ -22,6 +24,8 @@ type Props = {
 };
 
 export function PricingCards({ tiers = TIERS, priceFor, blockerFor, action, priceNote, compact }: Props) {
+  // Null until the page has loaded in the browser: until then everyone sees the dollar guide.
+  const money = useViewerMoney();
   return (
     <div>
       <div className={`grid gap-4 ${tiers.length >= 3 ? "md:grid-cols-3" : tiers.length === 2 ? "sm:grid-cols-2" : ""}`}>
@@ -51,8 +55,9 @@ export function PricingCards({ tiers = TIERS, priceFor, blockerFor, action, pric
               <p className={`${priceNote ? "mt-1" : "mt-4"} font-display text-4xl font-medium tracking-tight`} suppressHydrationWarning>
                 {formatPeso(price)}
               </p>
-              <p className="text-xs text-muted" suppressHydrationWarning>
-                {formatUsdApprox(price)} <span className="opacity-80">(approx.)</span>
+              {/* In the Philippines the peso price is enough; the line stays (invisible) so the card doesn't jump. */}
+              <p className={`text-xs text-muted ${money?.local ? "invisible" : ""}`} aria-hidden={money?.local || undefined} suppressHydrationWarning>
+                {formatApprox(price, money?.currency ?? "USD")} <span className="opacity-80">{PRICE_COPY.approxSuffix}</span>
               </p>
               {!compact && (
                 <ul className="mt-5 space-y-2 text-sm">
@@ -85,8 +90,8 @@ export function PricingCards({ tiers = TIERS, priceFor, blockerFor, action, pric
           );
         })}
       </div>
-      <p className="mt-5 text-center text-sm text-muted">
-        Prices are in pesos. The dollar amount is only a guide.
+      <p className="mx-auto mt-5 max-w-xl text-center text-sm text-muted">
+        {money && !money.local ? PRICE_COPY.footerAbroad : PRICE_COPY.footerLocal}
       </p>
       {tiers.some((t) => t.contributors.unlimited || t.photos.unlimited) && (
         <p className="mt-1 text-center text-xs text-muted">"Unlimited" is subject to fair use.</p>

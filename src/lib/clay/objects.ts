@@ -167,7 +167,8 @@ export const OBJECTS: Record<string, ClayRecipe> = {
     ...flame(60, 28, 0.9),
     lathe(CYL(0.12), [60, 88, 0], [80, 36, 66], c.skin),
     lathe(CYL(0.25), [60, 70, 0], [84, 14, 70], c.primary),
-    ...[26, 40, 56, 72, 88].map((x, i) => blob([x, 79 + (i % 2) * 3, 26 - Math.abs(x - 60) * 0.25], [10, 12 + (i % 2) * 4, 8], c.primary)),
+    // Icing drips, mirrored around the middle.
+    ...[28, 44, 60, 76, 92].map((x, i) => blob([x, 79 + (i % 2) * 3, 26 - Math.abs(x - 60) * 0.25], [10, 12 + (i % 2) * 4, 8], c.primary)),
     blob([60, 62, 6], [10, 10, 10], c.secondary, [0, 0, 0], { rough: 0.3, gloss: 0.6 }),
   ],
   balloon: (c) => [

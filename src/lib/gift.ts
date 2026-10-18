@@ -16,6 +16,8 @@ import { normalizeIntroSettings, type IntroSettings } from "@/lib/intro";
 import { normalizeCharacter, type CharacterSetting } from "@/themes/_shared/cast/types";
 import { normalizeIconSetting, type IconSetSetting } from "@/themes/_shared/iconSets";
 import { isGiftFormat, type GiftFormat } from "@/lib/formats";
+import { isStyleId, type StyleId } from "@/lib/styles";
+import { isOccasionId, occasionWords, type OccasionId } from "@/lib/occasions";
 import { NEW_SECTION_TYPES, type NewSectionType } from "@/lib/sections";
 import { SECTION_COPY } from "@/copy/strings";
 import { KIND_WORDS, type ThemeKind } from "@/lib/themeKind";
@@ -122,7 +124,7 @@ export const FONT_PAIRINGS = {
   modern: { label: "Modern", heading: "'Poppins', sans-serif", body: "'Inter', sans-serif" },
   // Key kept for saved gifts; the old script face is gone.
   handwritten: { label: "Fairytale", heading: "'Fraunces', serif", body: "'Karla', sans-serif" },
-  storybook: { label: "Storybook", heading: "'Young Serif', serif", body: "'Nunito', sans-serif", google: "Young+Serif&family=Nunito:wght@400;600;700" },
+  storybook: { label: "Fable", heading: "'Young Serif', serif", body: "'Nunito', sans-serif", google: "Young+Serif&family=Nunito:wght@400;600;700" },
   elegant: { label: "Elegant", heading: "'Cormorant Garamond', serif", body: "'Lato', sans-serif", google: "Cormorant+Garamond:wght@500;600;700&family=Lato:wght@400;700" },
   bold: { label: "Bold", heading: "'Bricolage Grotesque', sans-serif", body: "'DM Sans', sans-serif", google: "Bricolage+Grotesque:opsz,wght@12..96,600..800&family=DM+Sans:wght@400;500;700" },
   bubbly: { label: "Bubbly", heading: "'Baloo 2', sans-serif", body: "'Nunito', sans-serif", google: "Baloo+2:wght@600;700;800&family=Nunito:wght@400;600;700" },
@@ -130,8 +132,8 @@ export const FONT_PAIRINGS = {
   typewriter: { label: "Typewriter", heading: "'Courier Prime', monospace", body: "'Karla', sans-serif", google: "Courier+Prime:wght@400;700&family=Karla:wght@400;600" },
   groovy: { label: "Groovy", heading: "'Shrikhand', serif", body: "'DM Sans', sans-serif", google: "Shrikhand&family=DM+Sans:wght@400;500;700" },
   retro: { label: "Retro", heading: "'Bungee', sans-serif", body: "'Outfit', sans-serif", google: "Bungee&family=Outfit:wght@400;500;700" },
-  comic: { label: "Comic", heading: "'Bangers', sans-serif", body: "'Comic Neue', sans-serif", google: "Bangers&family=Comic+Neue:wght@400;700" },
-  pixel: { label: "Pixel", heading: "'Pixelify Sans', sans-serif", body: "'Outfit', sans-serif", google: "Pixelify+Sans:wght@500;700&family=Outfit:wght@400;500;700" },
+  comic: { label: "Inked", heading: "'Bangers', sans-serif", body: "'Comic Neue', sans-serif", google: "Bangers&family=Comic+Neue:wght@400;700" },
+  pixel: { label: "8-bit", heading: "'Pixelify Sans', sans-serif", body: "'Outfit', sans-serif", google: "Pixelify+Sans:wght@500;700&family=Outfit:wght@400;500;700" },
 } as const;
 
 export const FONT_CHOICES: readonly FontChoiceId[] = FONT_CHOICE_IDS;
@@ -186,10 +188,10 @@ export type CustomText = {
 };
 
 /** Sensible pre-filled titles, based on the occasion and who the gift is for. */
-export function defaultTitles(text: CustomText, kind: ThemeKind = "default") {
+export function defaultTitles(text: CustomText, kind: ThemeKind = "default", occasion?: OccasionId | null) {
   const name = text.recipient_name?.trim() || "you";
   return {
-    heading: KIND_WORDS[kind].occasion,
+    heading: occasion ? occasionWords(occasion).occasion : KIND_WORDS[kind].occasion,
     letters_title: `Letters for ${name}`,
     photobooth_title: "Photobooth",
     songs_title: "Songs that remind us of you",
@@ -264,7 +266,12 @@ export type GiftSite = {
   theme_id: string | null;
   slug: string;
   status: "draft" | "published";
+  /** How the notes are read. A style always sets this to its own layout. */
   format: GiftFormat;
+  /** The gift's style (src/lib/styles.ts). Null for gifts made before styles. */
+  style: StyleId | null;
+  /** What it's for (src/lib/occasions.ts). Null = the theme's own words, as before. */
+  occasion: OccasionId | null;
   format_settings: ComicSettings;
   custom_text: CustomText;
   custom_colors: Partial<Palette>;
@@ -373,6 +380,8 @@ export function normalizeSite(row: Record<string, unknown>): GiftSite {
     slug: String(row["slug"]),
     status: row["status"] === "published" ? "published" : "draft",
     format: isGiftFormat(row["format"]) ? row["format"] : "scrapbook",
+    style: isStyleId(row["style"]) ? row["style"] : null,
+    occasion: isOccasionId(row["occasion"]) ? row["occasion"] : null,
     format_settings: normalizeComicSettings(row["format_settings"]),
     custom_text: (row["custom_text"] as CustomText) ?? {},
     custom_colors: (row["custom_colors"] as Partial<Palette>) ?? {},
