@@ -26,6 +26,8 @@ export type OpeningProps = {
   iconSet: IconSet;
   /** Friends' names, for stamps, sparks and tags. */
   contributors: string[];
+  /** Birthday: the age they're turning, when the organiser gave it (flag: birthdayAge). */
+  age?: number | null | undefined;
   interactive: boolean;
   /** Rest on the first frame (a gallery card that isn't playing). */
   paused: boolean;

@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { NOINDEX } from "@/lib/seo";
 import { useQuery } from "@tanstack/react-query";
 import { fetchThemes } from "@/lib/themes";
 import { themeKindOf } from "@/lib/themeKind";
@@ -11,6 +12,7 @@ import type { GiftFormat } from "@/lib/formats";
  * theme x format. /dev/format?kind=birthday&format=comic
  */
 export const Route = createFileRoute("/dev/format")({
+  head: () => ({ meta: [NOINDEX] }),
   validateSearch: (s: Record<string, unknown>) => ({
     kind: typeof s["kind"] === "string" ? s["kind"] : "birthday",
     format: (typeof s["format"] === "string" ? s["format"] : "scrapbook") as GiftFormat,

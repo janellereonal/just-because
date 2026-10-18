@@ -13,18 +13,24 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as AdminRouteImport } from './routes/admin'
 import { Route as AuthRouteImport } from './routes/auth'
+import { Route as ContactRouteImport } from './routes/contact'
+import { Route as PrivacyRouteImport } from './routes/privacy'
+import { Route as RefundsRouteImport } from './routes/refunds'
 import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as SectionsRouteImport } from './routes/sections'
+import { Route as TermsRouteImport } from './routes/terms'
+import { Route as AuthenticatedAccountRouteImport } from './routes/_authenticated/account'
 import { Route as AuthenticatedCreateRouteImport } from './routes/_authenticated/create'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
-import { Route as ApiClientErrorRouteImport } from './routes/api/client-error'
 import { Route as ApiUploadRouteImport } from './routes/api/upload'
 import { Route as ContributeSlugRouteImport } from './routes/contribute.$slug'
 import { Route as DevCastRouteImport } from './routes/dev.cast'
 import { Route as DevClayRouteImport } from './routes/dev.clay'
 import { Route as DevFormatRouteImport } from './routes/dev.format'
+import { Route as DevOgRouteImport } from './routes/dev.og'
 import { Route as DevOpeningsRouteImport } from './routes/dev.openings'
 import { Route as DevPeopleRouteImport } from './routes/dev.people'
+import { Route as DevThemesRouteImport } from './routes/dev.themes'
 import { Route as DevWorstCaseRouteImport } from './routes/dev.worst-case'
 import { Route as ExampleIdRouteImport } from './routes/example.$id'
 import { Route as GSlugRouteImport } from './routes/g.$slug'
@@ -33,6 +39,7 @@ import { Route as ThemesIdRouteImport } from './routes/themes.$id'
 import { Route as AuthenticatedCheckoutOrderIdRouteImport } from './routes/_authenticated/checkout.$orderId'
 import { Route as AuthenticatedSitesIdRouteImport } from './routes/_authenticated/sites.$id'
 import { Route as ApiAuthSplatRouteImport } from './routes/api/auth/$'
+import { Route as ApiCronDailyRouteImport } from './routes/api/cron/daily'
 import { Route as ApiDevUploadsNameRouteImport } from './routes/api/dev-uploads.$name'
 import { Route as ApiWebhooksPaymongoRouteImport } from './routes/api/webhooks/paymongo'
 
@@ -55,6 +62,21 @@ const AuthRoute = AuthRouteImport.update({
   path: '/auth',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ContactRoute = ContactRouteImport.update({
+  id: '/contact',
+  path: '/contact',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PrivacyRoute = PrivacyRouteImport.update({
+  id: '/privacy',
+  path: '/privacy',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const RefundsRoute = RefundsRouteImport.update({
+  id: '/refunds',
+  path: '/refunds',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ResetPasswordRoute = ResetPasswordRouteImport.update({
   id: '/reset-password',
   path: '/reset-password',
@@ -65,6 +87,16 @@ const SectionsRoute = SectionsRouteImport.update({
   path: '/sections',
   getParentRoute: () => rootRouteImport,
 } as any)
+const TermsRoute = TermsRouteImport.update({
+  id: '/terms',
+  path: '/terms',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthenticatedAccountRoute = AuthenticatedAccountRouteImport.update({
+  id: '/account',
+  path: '/account',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedCreateRoute = AuthenticatedCreateRouteImport.update({
   id: '/create',
   path: '/create',
@@ -74,11 +106,6 @@ const AuthenticatedDashboardRoute = AuthenticatedDashboardRouteImport.update({
   id: '/dashboard',
   path: '/dashboard',
   getParentRoute: () => AuthenticatedRouteRoute,
-} as any)
-const ApiClientErrorRoute = ApiClientErrorRouteImport.update({
-  id: '/api/client-error',
-  path: '/api/client-error',
-  getParentRoute: () => rootRouteImport,
 } as any)
 const ApiUploadRoute = ApiUploadRouteImport.update({
   id: '/api/upload',
@@ -105,6 +132,11 @@ const DevFormatRoute = DevFormatRouteImport.update({
   path: '/dev/format',
   getParentRoute: () => rootRouteImport,
 } as any)
+const DevOgRoute = DevOgRouteImport.update({
+  id: '/dev/og',
+  path: '/dev/og',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const DevOpeningsRoute = DevOpeningsRouteImport.update({
   id: '/dev/openings',
   path: '/dev/openings',
@@ -113,6 +145,11 @@ const DevOpeningsRoute = DevOpeningsRouteImport.update({
 const DevPeopleRoute = DevPeopleRouteImport.update({
   id: '/dev/people',
   path: '/dev/people',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DevThemesRoute = DevThemesRouteImport.update({
+  id: '/dev/themes',
+  path: '/dev/themes',
   getParentRoute: () => rootRouteImport,
 } as any)
 const DevWorstCaseRoute = DevWorstCaseRouteImport.update({
@@ -156,6 +193,11 @@ const ApiAuthSplatRoute = ApiAuthSplatRouteImport.update({
   path: '/api/auth/$',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiCronDailyRoute = ApiCronDailyRouteImport.update({
+  id: '/api/cron/daily',
+  path: '/api/cron/daily',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiDevUploadsNameRoute = ApiDevUploadsNameRouteImport.update({
   id: '/api/dev-uploads/$name',
   path: '/api/dev-uploads/$name',
@@ -171,18 +213,24 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/admin': typeof AdminRoute
   '/auth': typeof AuthRoute
+  '/contact': typeof ContactRoute
+  '/privacy': typeof PrivacyRoute
+  '/refunds': typeof RefundsRoute
   '/reset-password': typeof ResetPasswordRoute
   '/sections': typeof SectionsRoute
+  '/terms': typeof TermsRoute
+  '/account': typeof AuthenticatedAccountRoute
   '/create': typeof AuthenticatedCreateRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
-  '/api/client-error': typeof ApiClientErrorRoute
   '/api/upload': typeof ApiUploadRoute
   '/contribute/$slug': typeof ContributeSlugRoute
   '/dev/cast': typeof DevCastRoute
   '/dev/clay': typeof DevClayRoute
   '/dev/format': typeof DevFormatRoute
+  '/dev/og': typeof DevOgRoute
   '/dev/openings': typeof DevOpeningsRoute
   '/dev/people': typeof DevPeopleRoute
+  '/dev/themes': typeof DevThemesRoute
   '/dev/worst-case': typeof DevWorstCaseRoute
   '/example/$id': typeof ExampleIdRoute
   '/g/$slug': typeof GSlugRoute
@@ -191,6 +239,7 @@ export interface FileRoutesByFullPath {
   '/checkout/$orderId': typeof AuthenticatedCheckoutOrderIdRoute
   '/sites/$id': typeof AuthenticatedSitesIdRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
+  '/api/cron/daily': typeof ApiCronDailyRoute
   '/api/dev-uploads/$name': typeof ApiDevUploadsNameRoute
   '/api/webhooks/paymongo': typeof ApiWebhooksPaymongoRoute
 }
@@ -198,18 +247,24 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/admin': typeof AdminRoute
   '/auth': typeof AuthRoute
+  '/contact': typeof ContactRoute
+  '/privacy': typeof PrivacyRoute
+  '/refunds': typeof RefundsRoute
   '/reset-password': typeof ResetPasswordRoute
   '/sections': typeof SectionsRoute
+  '/terms': typeof TermsRoute
+  '/account': typeof AuthenticatedAccountRoute
   '/create': typeof AuthenticatedCreateRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
-  '/api/client-error': typeof ApiClientErrorRoute
   '/api/upload': typeof ApiUploadRoute
   '/contribute/$slug': typeof ContributeSlugRoute
   '/dev/cast': typeof DevCastRoute
   '/dev/clay': typeof DevClayRoute
   '/dev/format': typeof DevFormatRoute
+  '/dev/og': typeof DevOgRoute
   '/dev/openings': typeof DevOpeningsRoute
   '/dev/people': typeof DevPeopleRoute
+  '/dev/themes': typeof DevThemesRoute
   '/dev/worst-case': typeof DevWorstCaseRoute
   '/example/$id': typeof ExampleIdRoute
   '/g/$slug': typeof GSlugRoute
@@ -218,6 +273,7 @@ export interface FileRoutesByTo {
   '/checkout/$orderId': typeof AuthenticatedCheckoutOrderIdRoute
   '/sites/$id': typeof AuthenticatedSitesIdRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
+  '/api/cron/daily': typeof ApiCronDailyRoute
   '/api/dev-uploads/$name': typeof ApiDevUploadsNameRoute
   '/api/webhooks/paymongo': typeof ApiWebhooksPaymongoRoute
 }
@@ -227,18 +283,24 @@ export interface FileRoutesById {
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/admin': typeof AdminRoute
   '/auth': typeof AuthRoute
+  '/contact': typeof ContactRoute
+  '/privacy': typeof PrivacyRoute
+  '/refunds': typeof RefundsRoute
   '/reset-password': typeof ResetPasswordRoute
   '/sections': typeof SectionsRoute
+  '/terms': typeof TermsRoute
+  '/_authenticated/account': typeof AuthenticatedAccountRoute
   '/_authenticated/create': typeof AuthenticatedCreateRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
-  '/api/client-error': typeof ApiClientErrorRoute
   '/api/upload': typeof ApiUploadRoute
   '/contribute/$slug': typeof ContributeSlugRoute
   '/dev/cast': typeof DevCastRoute
   '/dev/clay': typeof DevClayRoute
   '/dev/format': typeof DevFormatRoute
+  '/dev/og': typeof DevOgRoute
   '/dev/openings': typeof DevOpeningsRoute
   '/dev/people': typeof DevPeopleRoute
+  '/dev/themes': typeof DevThemesRoute
   '/dev/worst-case': typeof DevWorstCaseRoute
   '/example/$id': typeof ExampleIdRoute
   '/g/$slug': typeof GSlugRoute
@@ -247,6 +309,7 @@ export interface FileRoutesById {
   '/_authenticated/checkout/$orderId': typeof AuthenticatedCheckoutOrderIdRoute
   '/_authenticated/sites/$id': typeof AuthenticatedSitesIdRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
+  '/api/cron/daily': typeof ApiCronDailyRoute
   '/api/dev-uploads/$name': typeof ApiDevUploadsNameRoute
   '/api/webhooks/paymongo': typeof ApiWebhooksPaymongoRoute
 }
@@ -256,18 +319,24 @@ export interface FileRouteTypes {
     | '/'
     | '/admin'
     | '/auth'
+    | '/contact'
+    | '/privacy'
+    | '/refunds'
     | '/reset-password'
     | '/sections'
+    | '/terms'
+    | '/account'
     | '/create'
     | '/dashboard'
-    | '/api/client-error'
     | '/api/upload'
     | '/contribute/$slug'
     | '/dev/cast'
     | '/dev/clay'
     | '/dev/format'
+    | '/dev/og'
     | '/dev/openings'
     | '/dev/people'
+    | '/dev/themes'
     | '/dev/worst-case'
     | '/example/$id'
     | '/g/$slug'
@@ -276,6 +345,7 @@ export interface FileRouteTypes {
     | '/checkout/$orderId'
     | '/sites/$id'
     | '/api/auth/$'
+    | '/api/cron/daily'
     | '/api/dev-uploads/$name'
     | '/api/webhooks/paymongo'
   fileRoutesByTo: FileRoutesByTo
@@ -283,18 +353,24 @@ export interface FileRouteTypes {
     | '/'
     | '/admin'
     | '/auth'
+    | '/contact'
+    | '/privacy'
+    | '/refunds'
     | '/reset-password'
     | '/sections'
+    | '/terms'
+    | '/account'
     | '/create'
     | '/dashboard'
-    | '/api/client-error'
     | '/api/upload'
     | '/contribute/$slug'
     | '/dev/cast'
     | '/dev/clay'
     | '/dev/format'
+    | '/dev/og'
     | '/dev/openings'
     | '/dev/people'
+    | '/dev/themes'
     | '/dev/worst-case'
     | '/example/$id'
     | '/g/$slug'
@@ -303,6 +379,7 @@ export interface FileRouteTypes {
     | '/checkout/$orderId'
     | '/sites/$id'
     | '/api/auth/$'
+    | '/api/cron/daily'
     | '/api/dev-uploads/$name'
     | '/api/webhooks/paymongo'
   id:
@@ -311,18 +388,24 @@ export interface FileRouteTypes {
     | '/_authenticated'
     | '/admin'
     | '/auth'
+    | '/contact'
+    | '/privacy'
+    | '/refunds'
     | '/reset-password'
     | '/sections'
+    | '/terms'
+    | '/_authenticated/account'
     | '/_authenticated/create'
     | '/_authenticated/dashboard'
-    | '/api/client-error'
     | '/api/upload'
     | '/contribute/$slug'
     | '/dev/cast'
     | '/dev/clay'
     | '/dev/format'
+    | '/dev/og'
     | '/dev/openings'
     | '/dev/people'
+    | '/dev/themes'
     | '/dev/worst-case'
     | '/example/$id'
     | '/g/$slug'
@@ -331,6 +414,7 @@ export interface FileRouteTypes {
     | '/_authenticated/checkout/$orderId'
     | '/_authenticated/sites/$id'
     | '/api/auth/$'
+    | '/api/cron/daily'
     | '/api/dev-uploads/$name'
     | '/api/webhooks/paymongo'
   fileRoutesById: FileRoutesById
@@ -340,22 +424,28 @@ export interface RootRouteChildren {
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
   AdminRoute: typeof AdminRoute
   AuthRoute: typeof AuthRoute
+  ContactRoute: typeof ContactRoute
+  PrivacyRoute: typeof PrivacyRoute
+  RefundsRoute: typeof RefundsRoute
   ResetPasswordRoute: typeof ResetPasswordRoute
   SectionsRoute: typeof SectionsRoute
-  ApiClientErrorRoute: typeof ApiClientErrorRoute
+  TermsRoute: typeof TermsRoute
   ApiUploadRoute: typeof ApiUploadRoute
   ContributeSlugRoute: typeof ContributeSlugRoute
   DevCastRoute: typeof DevCastRoute
   DevClayRoute: typeof DevClayRoute
   DevFormatRoute: typeof DevFormatRoute
+  DevOgRoute: typeof DevOgRoute
   DevOpeningsRoute: typeof DevOpeningsRoute
   DevPeopleRoute: typeof DevPeopleRoute
+  DevThemesRoute: typeof DevThemesRoute
   DevWorstCaseRoute: typeof DevWorstCaseRoute
   ExampleIdRoute: typeof ExampleIdRoute
   GSlugRoute: typeof GSlugRoute
   ThemesIdRoute: typeof ThemesIdRoute
   ThemesIndexRoute: typeof ThemesIndexRoute
   ApiAuthSplatRoute: typeof ApiAuthSplatRoute
+  ApiCronDailyRoute: typeof ApiCronDailyRoute
   ApiDevUploadsNameRoute: typeof ApiDevUploadsNameRoute
   ApiWebhooksPaymongoRoute: typeof ApiWebhooksPaymongoRoute
 }
@@ -390,6 +480,27 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/contact': {
+      id: '/contact'
+      path: '/contact'
+      fullPath: '/contact'
+      preLoaderRoute: typeof ContactRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/privacy': {
+      id: '/privacy'
+      path: '/privacy'
+      fullPath: '/privacy'
+      preLoaderRoute: typeof PrivacyRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/refunds': {
+      id: '/refunds'
+      path: '/refunds'
+      fullPath: '/refunds'
+      preLoaderRoute: typeof RefundsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/reset-password': {
       id: '/reset-password'
       path: '/reset-password'
@@ -404,6 +515,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SectionsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/terms': {
+      id: '/terms'
+      path: '/terms'
+      fullPath: '/terms'
+      preLoaderRoute: typeof TermsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/_authenticated/account': {
+      id: '/_authenticated/account'
+      path: '/account'
+      fullPath: '/account'
+      preLoaderRoute: typeof AuthenticatedAccountRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/create': {
       id: '/_authenticated/create'
       path: '/create'
@@ -417,13 +542,6 @@ declare module '@tanstack/react-router' {
       fullPath: '/dashboard'
       preLoaderRoute: typeof AuthenticatedDashboardRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/api/client-error': {
-      id: '/api/client-error'
-      path: '/api/client-error'
-      fullPath: '/api/client-error'
-      preLoaderRoute: typeof ApiClientErrorRouteImport
-      parentRoute: typeof rootRouteImport
     }
     '/api/upload': {
       id: '/api/upload'
@@ -460,6 +578,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DevFormatRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/dev/og': {
+      id: '/dev/og'
+      path: '/dev/og'
+      fullPath: '/dev/og'
+      preLoaderRoute: typeof DevOgRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/dev/openings': {
       id: '/dev/openings'
       path: '/dev/openings'
@@ -472,6 +597,13 @@ declare module '@tanstack/react-router' {
       path: '/dev/people'
       fullPath: '/dev/people'
       preLoaderRoute: typeof DevPeopleRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/dev/themes': {
+      id: '/dev/themes'
+      path: '/dev/themes'
+      fullPath: '/dev/themes'
+      preLoaderRoute: typeof DevThemesRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/dev/worst-case': {
@@ -530,6 +662,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiAuthSplatRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/cron/daily': {
+      id: '/api/cron/daily'
+      path: '/api/cron/daily'
+      fullPath: '/api/cron/daily'
+      preLoaderRoute: typeof ApiCronDailyRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/dev-uploads/$name': {
       id: '/api/dev-uploads/$name'
       path: '/api/dev-uploads/$name'
@@ -548,6 +687,7 @@ declare module '@tanstack/react-router' {
 }
 
 interface AuthenticatedRouteRouteChildren {
+  AuthenticatedAccountRoute: typeof AuthenticatedAccountRoute
   AuthenticatedCreateRoute: typeof AuthenticatedCreateRoute
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
   AuthenticatedCheckoutOrderIdRoute: typeof AuthenticatedCheckoutOrderIdRoute
@@ -555,6 +695,7 @@ interface AuthenticatedRouteRouteChildren {
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
+  AuthenticatedAccountRoute: AuthenticatedAccountRoute,
   AuthenticatedCreateRoute: AuthenticatedCreateRoute,
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
   AuthenticatedCheckoutOrderIdRoute: AuthenticatedCheckoutOrderIdRoute,
@@ -569,22 +710,28 @@ const rootRouteChildren: RootRouteChildren = {
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
   AdminRoute: AdminRoute,
   AuthRoute: AuthRoute,
+  ContactRoute: ContactRoute,
+  PrivacyRoute: PrivacyRoute,
+  RefundsRoute: RefundsRoute,
   ResetPasswordRoute: ResetPasswordRoute,
   SectionsRoute: SectionsRoute,
-  ApiClientErrorRoute: ApiClientErrorRoute,
+  TermsRoute: TermsRoute,
   ApiUploadRoute: ApiUploadRoute,
   ContributeSlugRoute: ContributeSlugRoute,
   DevCastRoute: DevCastRoute,
   DevClayRoute: DevClayRoute,
   DevFormatRoute: DevFormatRoute,
+  DevOgRoute: DevOgRoute,
   DevOpeningsRoute: DevOpeningsRoute,
   DevPeopleRoute: DevPeopleRoute,
+  DevThemesRoute: DevThemesRoute,
   DevWorstCaseRoute: DevWorstCaseRoute,
   ExampleIdRoute: ExampleIdRoute,
   GSlugRoute: GSlugRoute,
   ThemesIdRoute: ThemesIdRoute,
   ThemesIndexRoute: ThemesIndexRoute,
   ApiAuthSplatRoute: ApiAuthSplatRoute,
+  ApiCronDailyRoute: ApiCronDailyRoute,
   ApiDevUploadsNameRoute: ApiDevUploadsNameRoute,
   ApiWebhooksPaymongoRoute: ApiWebhooksPaymongoRoute,
 }

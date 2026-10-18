@@ -1,4 +1,6 @@
 import { OrnamentIcon } from "@/components/GiftTree";
+import { engineThemeForName } from "@/themes/engine/registry";
+import { t } from "@/i18n";
 import { CharCount } from "@/components/ui/CharCount";
 import { LIMITS, noteTextLimit, tooLong } from "@/lib/limits";
 import { useEffect, useMemo, useRef, useState } from "react";
@@ -43,6 +45,8 @@ const MODULE_ICON: Partial<Record<ModuleType, typeof Mail>> = {
 /** Short tab names for the newer sections. */
 const SHORT: Partial<Record<ModuleType, string>> = { openwhen: "Open-when", capsule: "Time capsule", superlatives: "Award", quiz: "Quiz", map: "Memory pin", coupons: "Coupon", video: "Video", doodle: "Doodle" };
 import { PageError, PageLoading, PageNotFound } from "@/components/PageStates";
+import { REPORT_COPY } from "@/copy/strings";
+import { ReportGift } from "@/components/ReportGift";
 
 
 /* ---- remembering this device's own contributions ---- */
@@ -150,6 +154,7 @@ function ContributePage() {
 
   const [moduleType, setModuleType] = useState<ModuleType | null>(null);
   const [name, setName] = useState("");
+  const [pickedIdea, setIdea] = useState<string | null>(null);
   const [text, setText] = useState("");
   const [link, setLink] = useState("");
   const [file, setFile] = useState<File | null>(null);
@@ -213,9 +218,15 @@ function ContributePage() {
     );
   }
 
+  if (site.disabled_at) {
+    return <PageNotFound title={REPORT_COPY.pausedTitle} message={REPORT_COPY.pausedBody} actionLabel={REPORT_COPY.makeYourOwn} actionTo="/" showHeader={false} />;
+  }
   const palette = resolvePalette(theme, site.custom_colors);
   const ink = readableInk(palette.background);
   const onAccent = readableInk(palette.accent);
+  const accent = palette.accent;
+  // Themes on the theme engine give friends a few ideas to write about.
+  const ideas = (engineThemeForName(theme?.name)?.occasion.prompts ?? []).map((k) => t(k));
   const surface = surfaceColor(palette.background);
   const fonts = FONT_PAIRINGS[site.font_choice] ?? FONT_PAIRINGS.romantic;
   // Older gifts may have no recipient name; never fall back to the gift's name (often the organiser's own).
@@ -729,9 +740,25 @@ function ContributePage() {
               {active === "letters" ? (
                 <>
                   <label className="mt-4 block text-sm font-medium">Your message</label>
+                  {ideas.length ? (
+                    <div className="mt-2 flex flex-wrap gap-1.5" aria-label={t("contribute.ideas")}>
+                      {ideas.map((idea) => (
+                        <button
+                          key={idea}
+                          type="button"
+                          onClick={() => setIdea(idea)}
+                          className="rounded-full px-3 py-1.5 text-xs"
+                          style={idea === pickedIdea ? { background: accent, color: onAccent } : { ...fieldStyle }}
+                        >
+                          {idea}
+                        </button>
+                      ))}
+                    </div>
+                  ) : null}
                   <textarea
                     rows={5}
                     value={text}
+                    placeholder={pickedIdea ?? undefined}
                     maxLength={LIMITS.letter}
                     onChange={(e) => setText(e.target.value)}
                     className="mt-2 w-full rounded-xl px-4 py-3 text-sm outline-none"
@@ -926,6 +953,7 @@ function ContributePage() {
           </div>
         </div>
       </div>
+      <ReportGift slug={site.slug} page="contribute" tone={ink} />
     </div>
   );
 }

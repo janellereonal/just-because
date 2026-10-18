@@ -87,6 +87,19 @@ export function PlanPickerDialog({
           </DialogDescription>
         </DialogHeader>
         {billing ? (
+          <p className="-mt-1 rounded-xl bg-cream px-3 py-2 text-sm text-muted">
+            So far this gift has{" "}
+            <b className="text-ink">
+              {billing.usage.contributors} {billing.usage.contributors === 1 ? "friend" : "friends"}
+            </b>{" "}
+            and{" "}
+            <b className="text-ink">
+              {billing.usage.photos} {billing.usage.photos === 1 ? "photo" : "photos"}
+            </b>
+            . Each plan says how many it holds; friends can keep adding until it's full.
+          </p>
+        ) : null}
+        {billing ? (
           tiers.length > 0 ? (
             <PricingCards
               tiers={tiers}
@@ -106,6 +119,17 @@ export function PlanPickerDialog({
         ) : (
           <p className="py-10 text-center text-sm text-muted">Loading plans…</p>
         )}
+        <p className="text-center text-xs text-muted">
+          By continuing you agree to the{" "}
+          <a href="/terms" target="_blank" rel="noreferrer" className="underline underline-offset-2 hover:text-ink">
+            Terms
+          </a>{" "}
+          and{" "}
+          <a href="/refunds" target="_blank" rel="noreferrer" className="underline underline-offset-2 hover:text-ink">
+            Refund policy
+          </a>
+          . Prices are in Philippine pesos.
+        </p>
       </DialogContent>
     </Dialog>
   );
@@ -162,7 +186,17 @@ export function ExtendDialog({
         <Button className="w-full rounded-full" disabled={busy} onClick={() => void extend()}>
           {busy ? "Opening payment…" : `Extend for ${formatPeso(billing.extend.amount)}`}
         </Button>
-        <p className="text-center text-xs text-muted">Pay with {paymentMethodsSentence()}.</p>
+        <p className="text-center text-xs text-muted">
+          Pay with {paymentMethodsSentence()}. By continuing you agree to the{" "}
+          <a href="/terms" target="_blank" rel="noreferrer" className="underline underline-offset-2">
+            Terms
+          </a>{" "}
+          and{" "}
+          <a href="/refunds" target="_blank" rel="noreferrer" className="underline underline-offset-2">
+            Refund policy
+          </a>
+          .
+        </p>
       </div>
     );
   }

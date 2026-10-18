@@ -1,4 +1,9 @@
 import { useEffect, useMemo, useRef, useState } from "react";
+import { ExportGift } from "@/components/ExportGift";
+import { isFlagOn } from "@/config/flags";
+import { engineThemeForName } from "@/themes/engine/registry";
+import { t } from "@/i18n";
+import { engineIntroProps } from "@/lib/engineGift";
 import { CharCount } from "@/components/ui/CharCount";
 import { LIMITS, customTextLimit } from "@/lib/limits";
 import { themeKindOf } from "@/lib/themeKind";
@@ -258,6 +263,7 @@ function SiteDashboard() {
     queryFn: () => fetchTheme(site?.theme_id ?? null),
     enabled: !!site,
   });
+  const engineTheme = engineThemeForName(theme?.name);
   const { data: modules = [] } = useQuery({
     queryKey: ["modules", id],
     queryFn: () => fetchModules(id),
@@ -743,7 +749,7 @@ function SiteDashboard() {
   const fieldInput = (
     key: keyof CustomText,
     label: string,
-    opts: { long?: boolean; placeholder?: string; hint?: string } = {},
+    opts: { long?: boolean; placeholder?: string; hint?: string; numeric?: boolean } = {},
   ) => (
     <label className="block">
       <span className="flex items-baseline justify-between gap-2">
@@ -758,6 +764,7 @@ function SiteDashboard() {
           }}
           rows={3}
           maxLength={customTextLimit(key)}
+          {...(opts.numeric ? { inputMode: "numeric" as const, pattern: "[0-9]*" } : {})}
           value={draft.custom_text[key] ?? ""}
           placeholder={opts.placeholder ?? label}
           onFocus={() => setFocusField(key)}
@@ -794,6 +801,7 @@ function SiteDashboard() {
               palette={paletteNow}
               kind={themeKindOf(theme)}
               introStyle={introStyleForTheme(theme?.name)}
+              offers={engineTheme?.offers}
               greeting={
                 <label className="block">
                   <span className="flex items-baseline justify-between gap-2">
@@ -825,6 +833,11 @@ function SiteDashboard() {
           <div className="space-y-3">
             {fieldInput("heading", "Heading", { placeholder: titles.heading })}
             {fieldInput("recipient_name", "Who it's for", { placeholder: "Their name" })}
+            {themeKindOf(theme) === "birthday" && !engineTheme && isFlagOn("birthdayAge")
+              ? fieldInput("turning", t("birthday.turning"), { placeholder: "30", hint: t("birthday.turningHint"), numeric: true })
+              : null}
+            {engineTheme?.slots.includes("place") ? fieldInput("to_place", t("editor.toPlace"), { placeholder: "Lisbon, Portugal", hint: t("editor.toPlaceHint") }) : null}
+            {engineTheme?.slots.includes("senderPlace") ? fieldInput("from_place", t("editor.fromPlace"), { placeholder: "Manila, Philippines", hint: t("editor.fromPlaceHint") }) : null}
             {fieldInput("intro_message", "Message under the title", {
               long: true,
               placeholder: solo ? "I made this just for you. Take your time." : "We all got together to make you something.",
@@ -1171,6 +1184,9 @@ function SiteDashboard() {
             </p>
           </div>
         )}
+        <StepGroup title="Keep a copy" hint="Every note, photo and voice note, as a zip.">
+          <ExportGift siteId={id} title={draft.title} />
+        </StepGroup>
       </div>
     ),
     settings: (
@@ -1434,6 +1450,7 @@ function SiteDashboard() {
       character={draft.character}
       iconSet={draft.icon_set}
       contributors={friends}
+      {...engineIntroProps(theme?.name, draft, approved)}
       onOpen={() => setPreviewOpened(true)}
     />
   );
@@ -1457,6 +1474,7 @@ function SiteDashboard() {
       character={draft.character}
       iconSet={draft.icon_set}
       contributors={friends}
+      {...engineIntroProps(theme?.name, draft, approved)}
       onStickerMove={moveIntroSticker}
       onOpen={() => window.setTimeout(() => setIntroCanvasKey((k) => k + 1), 900)}
     />
@@ -1840,6 +1858,7 @@ function SiteDashboard() {
           character={draft.character}
           iconSet={draft.icon_set}
           contributors={friends}
+          {...engineIntroProps(theme?.name, draft, approved)}
           onOpen={() => setIntroPreview(false)}
         />
       ) : null}

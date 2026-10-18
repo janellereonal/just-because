@@ -1,9 +1,13 @@
 import { useEffect, useMemo, useState } from "react";
+import { NEW_THEME_NAMES, PH_THEME_NAMES, needsCountry, orderThemes } from "@/lib/themeOrder";
+import { getVisitorCountry } from "@/lib/api";
+import { engineThemeForName } from "@/themes/engine/registry";
 import { AnimatePresence, LayoutGroup, motion } from "motion/react";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { SiteHeader } from "@/components/SiteHeader";
+import { SiteFooter } from "@/components/SiteFooter";
 import { OpeningCard, OpeningPreviewModal } from "@/components/OpeningCard";
 import { normalizeCharacter, type CharacterSetting } from "@/themes/_shared/cast/types";
 import { SPRING } from "@/themes/_shared/stage";
@@ -26,6 +30,8 @@ export const Route = createFileRoute("/themes/")({
 /** Friendly occasion groups for the filter chips. */
 const GROUPS: { id: string; label: string; match: (key: string) => boolean }[] = [
   { id: "all", label: "All", match: () => true },
+  { id: "new", label: "New", match: (k) => NEW_THEME_NAMES.some((n) => k.includes(n)) },
+  { id: "christmas", label: "Christmas", match: (k) => /christmas|parol|simbang/.test(k) },
   { id: "birthday", label: "Birthdays", match: (k) => k.includes("birthday") },
   { id: "love", label: "Love", match: (k) => /valentine|romance|anniversar/.test(k) },
   { id: "wedding", label: "Weddings & showers", match: (k) => /wedding|bridal|shower/.test(k) },
@@ -33,7 +39,11 @@ const GROUPS: { id: string; label: string; match: (key: string) => boolean }[] =
   { id: "goodbye", label: "Send-offs", match: (k) => /voyage|farewell|despidida/.test(k) },
   { id: "pets", label: "Pets", match: (k) => /pet|companion/.test(k) },
   { id: "style", label: "Any occasion", match: (k) => /handwritten|game|pixel|style/.test(k) },
+  { id: "family", label: "Family and far away", match: (k) => /care package|balikbayan|family/.test(k) },
+  { id: "philippines", label: "Philippines", match: (k) => PH_THEME_NAMES.some((n) => k.includes(n)) },
 ];
+
+const ENGINE_GROUPS = new Set(["new", "christmas", "family", "philippines"]);
 
 const keyOf = (t: Theme) => `${t.category} ${t.name}`.toLowerCase();
 
@@ -52,12 +62,21 @@ function ThemesPage() {
       /* no saved cast */
     }
   }, []);
-  const { data: themes = [], isLoading } = useQuery({
+  const { data: rawThemes = [], isLoading } = useQuery({
     queryKey: ["themes", "published"],
     queryFn: () => fetchThemes(false),
   });
+  const { data: country = null } = useQuery({ queryKey: ["visitor-country"], queryFn: () => getVisitorCountry(), staleTime: Infinity, enabled: needsCountry(rawThemes) });
+  const themes = useMemo(() => orderThemes(rawThemes, country), [rawThemes, country]);
 
-  const groups = useMemo(() => GROUPS.filter((g) => g.id === "all" || themes.some((t) => g.match(keyOf(t)))), [themes]);
+  // The newer groups only show once one of the engine themes is in them (they're drafts until published).
+  const groups = useMemo(
+    () =>
+      GROUPS.filter(
+        (g) => g.id === "all" || themes.some((t) => g.match(keyOf(t)) && (!ENGINE_GROUPS.has(g.id) || !!engineThemeForName(t.name))),
+      ),
+    [themes],
+  );
   const shown = useMemo(() => {
     const g = GROUPS.find((x) => x.id === group) ?? GROUPS[0]!;
     return themes.filter((t) => g.match(keyOf(t)));
@@ -156,6 +175,7 @@ function ThemesPage() {
           </motion.div>
         )}
       </section>
+      <SiteFooter />
 
       <OpeningPreviewModal
         theme={full}

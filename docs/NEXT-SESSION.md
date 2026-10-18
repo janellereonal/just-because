@@ -1,5 +1,79 @@
 # Next session: picking up Just Because
 
+## Latest (17 Oct 2026, afternoon)
+
+**Merged since the morning:** #31 (payments and gift lifecycle) and the hotfix #41 (re-applies #31's migration safely), both merged by Janelle, plus docs #40.
+Migrations in the open PRs are renumbered to 0013 and written idempotently (`IF NOT EXISTS`), so a skipped migration can't break production again.
+
+**Open, waiting for Janelle (merge in this order):**
+1. [#23](https://github.com/janellereonal/just-because/pull/23) Launch PR 1: trust, privacy and sharing
+2. [#26](https://github.com/janellereonal/just-because/pull/26) Launch PR 2b: photo privacy
+3. [#33](https://github.com/janellereonal/just-because/pull/33) Launch PR 4: editor and organiser fixes
+4. [#35](https://github.com/janellereonal/just-because/pull/35) Launch PR 5: metrics
+5. [#36](https://github.com/janellereonal/just-because/pull/36) Revenue PR 6: theme metrics (on top of #35)
+6. [#38](https://github.com/janellereonal/just-because/pull/38) Revenue PR 5: concierge (flag `concierge`)
+7. [#42](https://github.com/janellereonal/just-because/pull/42) Handwritten becomes a Notebook layout (flag `handwrittenFormat`)
+8. [#43](https://github.com/janellereonal/just-because/pull/43) Add-on 6b: themes, layouts and sections. **Not flagged, so not auto-merged.** It includes #33, #35/#36 and #42, so merge it after them. It lets owners change the theme in the editor: Janelle to confirm.
+9. [#44](https://github.com/janellereonal/just-because/pull/44) Photobooth: camera, frames and a message (flag `photoboothCamera`)
+10. [#45](https://github.com/janellereonal/just-because/pull/45) New-user guide on /create (flag `newUserGuide`)
+
+Also still open: [#37](https://github.com/janellereonal/just-because/pull/37) design foundation (draft, waits for the design OK).
+
+#44 and #45 meet the self-merge rules but are held so the queue above doesn't pick up conflicts. After each merge, merge main into the remaining branches. The only conflicts are first-import lines (keep both), `flags.ts` and appends at the end of `strings.ts`.
+
+**Flags to turn on when ready** (`VITE_FLAGS`, comma list): `birthdayAge`, `concierge`, `handwrittenFormat`, `photoboothCamera`, `newUserGuide`.
+
+**Next up:** Revenue PR 3 (pricing and add-ons) and Revenue PR 4 (reminders). Both are unblocked now that #31 is merged.
+
+**Questions:**
+- Keep "Change theme" in the editor (#43), or make the theme fixed once a gift is made?
+- Do Vercel previews get their own Neon branch? If not, PR previews run migrations on the live database.
+
+## Morning report (17 Oct 2026)
+
+### 1. Merged automatically
+- [#25](https://github.com/janellereonal/just-because/pull/25) Launch PR 2a: input limits, double-tap guards, long-text fixes.
+- [#28](https://github.com/janellereonal/just-because/pull/28) Revenue PR 1: theme engine and Theme Bible.
+- [#29](https://github.com/janellereonal/just-because/pull/29) Revenue PR 2: Christmas, global and Filipino-first themes (seeded as drafts, hidden until you publish them).
+- [#39](https://github.com/janellereonal/just-because/pull/39) Revenue PR 7: `docs/roadmap.md` (docs only).
+- Docs updates: [#24](https://github.com/janellereonal/just-because/pull/24), [#27](https://github.com/janellereonal/just-because/pull/27), [#30](https://github.com/janellereonal/just-because/pull/30), [#32](https://github.com/janellereonal/just-because/pull/32), [#34](https://github.com/janellereonal/just-because/pull/34). Production deployed fine after each; homepage, /create and the example gift load.
+
+### 2. Waiting for your review (most important first)
+Each PR has screenshots at 390 and 1440 in its description. Previews: open the Vercel link on each PR.
+1. [#31](https://github.com/janellereonal/just-because/pull/31) **Launch PR 3: payments and gift lifecycle.** Late payments after a cancel still open the gift, a payment log, receipts, the 14-day reminder and a daily job, "Download everything", account deletion that removes photos. Touches payments, schema, emails and privacy. Has a list of things to test by hand (PayMongo test mode, `CRON_SECRET`, Blob delete, Resend).
+2. [#23](https://github.com/janellereonal/just-because/pull/23) **Launch PR 1 (draft): trust, privacy and sharing.** Legal pages, robots and noindex, link previews, security headers, report a gift.
+3. [#26](https://github.com/janellereonal/just-because/pull/26) **Launch PR 2b: photo privacy.** Strips location data from photos; scrubbed browser error reports.
+4. [#33](https://github.com/janellereonal/just-because/pull/33) **Launch PR 4: editor and organiser fixes.** All 12 items: one note count everywhere, all section titles, safer section toggles, Undo / Approve all / Delete, Skip intro, a 45% phone sheet, hair fixes in the people builder.
+5. [#35](https://github.com/janellereonal/just-because/pull/35) **Launch PR 5: metrics.** Our own events table and "How gifts are doing" on /admin. No tracker, no cookies, no note content.
+6. [#36](https://github.com/janellereonal/just-because/pull/36) **Revenue PR 6: theme metrics.** Stacked on #35 (merge #35 first). Per-theme table sorted by paid conversion, with a region filter.
+7. [#38](https://github.com/janellereonal/just-because/pull/38) **Revenue PR 5: concierge beta.** "Want us to handle it?" form, emails and an admin list. Flag off.
+8. [#37](https://github.com/janellereonal/just-because/pull/37) **Launch PR 6 (draft): Keepsake Modern design.** `/dev/design` and the hero mock only, waiting for your OK before anything changes site-wide.
+
+**Merge order that avoids trouble:** #23, #26, #31, then #33, #35, #36, #38. #23, #31, #35 and #38 each add a migration numbered 0011, and #31 and #33 overlap in the editor, so each one after the first needs a quick rebase and `bun run db:generate`. I can do those in the next session.
+
+### 3. Flags waiting to be turned on
+- `birthdayAge` (#29, merged): the age as candles on birthday cakes. Set `VITE_FLAGS=birthdayAge` in Vercel and redeploy.
+- `concierge` (#38, once merged): add it to `VITE_FLAGS` after setting `CONCIERGE_EMAIL`.
+- The five new themes (Winter Cabin, Care Package, Balikbayan Box, Parol, Debut) are drafts: publish each in /admin, Theme library, after a cultural review.
+
+### 4. Questions for the morning
+See "Questions for the morning" below. The new ones from tonight:
+- Who handles concierge requests, which email, and keep ₱1,499 / $49? (#38)
+- Design: go ahead with Fraunces replacing Fredoka, raspberry replacing terracotta, and the gift-tag logo direction? (#37)
+- `CRON_SECRET` in Vercel, the 90-day deletion of ended gifts, and storage caps per gift. (#31)
+- An organiser-wide time capsule date, or keep it per friend? (#33)
+- The "Make one for someone" links (#35) aren't behind a flag. Fine, or flag them?
+
+### 5. Reverted or broken
+Nothing reverted. Nothing broken on production. Two things to know:
+- The sandbox can't open Vercel previews, so every "checked in a browser" step used a local production build (as you allowed).
+- Revenue PR 3 (pricing and add-ons) and Revenue PR 4 (reminders) were not started: both wait for #31. Launch PR 7 and 8 were skipped as you asked.
+
+### 6. What's next
+1. Rebase the open PRs in the merge order above once you've reviewed them.
+2. Revenue PR 3 and 4 after #31 merges.
+3. Apply Keepsake Modern site-wide after your OK on #37.
+
 ## Overnight run (16 to 17 Oct 2026): status and queue
 
 **Read this block first.** Janelle combined three prompts (launch, revenue, design) into one queue and is asleep;
@@ -18,29 +92,189 @@ work goes on autonomously. Her rules for this run:
 | # | Item | Status |
 |---|---|---|
 | 1 | Launch PR 1: Trust, privacy and sharing | Draft [#23](https://github.com/janellereonal/just-because/pull/23), waits for Janelle (schema, robots, headers, privacy) |
-| 2 | Launch PR 2: Input hardening and reliability | Next |
-| 3 | Revenue PR 1: Theme engine and Theme Bible | |
-| 4 | Revenue PR 2: Christmas, global and Filipino-first themes | |
-| 5 | Launch PR 3: Payments and gift lifecycle | |
-| 6 | Launch PR 4: Editor and organiser fixes | |
-| 7 | Launch PR 5: Metrics | |
-| 8 | Revenue PR 3: Pricing, tiers, add-ons and payments | waits for 5 |
-| 9 | Revenue PR 4: Reminders engine | waits for 5 |
-| 10 | Revenue PR 6: Theme metrics | |
-| 11 | Launch PR 6: Design foundation (/dev/design draft only) | |
+| 2 | Launch PR 2: Input hardening and reliability | 2a **merged** [#25](https://github.com/janellereonal/just-because/pull/25); 2b [#26](https://github.com/janellereonal/just-because/pull/26) waits for Janelle (privacy) |
+| 3 | Revenue PR 1: Theme engine and Theme Bible | **Merged** [#28](https://github.com/janellereonal/just-because/pull/28) |
+| 4 | Revenue PR 2: Christmas, global and Filipino-first themes | **Merged** [#29](https://github.com/janellereonal/just-because/pull/29). Themes are drafts: review, then publish in /admin |
+| 5 | Launch PR 3: Payments and gift lifecycle | [#31](https://github.com/janellereonal/just-because/pull/31), waits for Janelle (payments, schema, emails, privacy). Manual tests listed in the PR |
+| 6 | Launch PR 4: Editor and organiser fixes | [#33](https://github.com/janellereonal/just-because/pull/33), waits for Janelle (not flagged; small data-rule changes). Overlaps #31 in EditorPage |
+| 7 | Launch PR 5: Metrics | [#35](https://github.com/janellereonal/just-because/pull/35), waits for Janelle (migration, privacy) |
+| 8 | Revenue PR 3: Pricing, tiers, add-ons and payments | not started, waits for #31 to merge |
+| 9 | Revenue PR 4: Reminders engine | not started, waits for #31 to merge |
+| 10 | Revenue PR 6: Theme metrics | [#36](https://github.com/janellereonal/just-because/pull/36), stacked on #35 |
+| 11 | Launch PR 6: Design foundation (/dev/design draft only) | Draft [#37](https://github.com/janellereonal/just-because/pull/37), waits for Janelle's OK |
 | 12 | Launch PR 7: Homepage, performance, accessibility | skipped until design OK |
-| 13 | Revenue PR 5: Concierge beta | |
+| 13 | Revenue PR 5: Concierge beta | [#38](https://github.com/janellereonal/just-because/pull/38), flag `concierge` off |
 | 14 | Launch PR 8: Launch QA | skipped until design OK |
-| 15 | Revenue PR 7: Roadmap (docs only) | |
+| 15 | Revenue PR 7: Roadmap (docs only) | **Merged** [#39](https://github.com/janellereonal/just-because/pull/39) |
 
 The three prompts are saved in `docs/prompts/` (launch.md, revenue.md, design.md) so a fresh session can read them.
 
 ### Questions for the morning
-- The real contact email (placeholder `hello@justbecause.site` in `src/config/site.ts`).
 - Legal pages: review them, then set `SITE.legalDraft = false`. Policy choices I made that need your OK: minimum
   age 16; contents kept 90 days after a plan ends, then deleted; unpaid drafts deleted after 12 months without
   changes; refunds within 7 days if the recipient hasn't opened it. PR 3 will implement the retention rules.
 - Socials for the footer (`SITE.socials`, hidden while empty).
+- Error reports (#26): I used our own `/api/client-error` endpoint that writes to the Vercel logs instead of
+  Sentry, because Sentry needs an account, a key and a CSP change. Do you want Sentry later?
+- Photos from iPhones in HEIC, plus videos and voice notes, keep their metadata (most browsers can't redraw HEIC).
+  Convert HEIC on the server later, or ask friends' phones to send JPEG (iOS does this when the picker allows it)?
+- New themes (#29): get a cultural review of Balikbayan Box, Parol and Simbang Gabi, and Debut, then publish
+  each in /admin (Theme library). They're drafts until then.
+- Turn on the birthday age? Set `VITE_FLAGS=birthdayAge` in Vercel and redeploy.
+- Simbang Gabi gates notes in the browser, so someone technical could read ahead with dev tools. Fine for a
+  surprise; say if you want it enforced on the server too (that touches the privacy rules in api.ts).
+- **#31:** add `CRON_SECRET` in Vercel (Production). Without it the daily job (14-day reminder, unpaid order
+  re-checks) refuses to run.
+- **#31:** deleting gifts 90 days after they end is not built yet. Today an ended gift is kept and its link
+  shows "This gift has been wrapped up". Build the deletion job once the legal pages (#23) are agreed?
+- **#31:** storage caps per gift, and plan limits for videos and voice notes. Today only photos count towards
+  a plan, and a friend could upload many large videos. Cap per file is already in place; want a per-gift total?
+- **#31 and #23** both add a migration numbered 0011. Whichever merges second needs `bun run db:generate` again
+  (I'll do it, or ask in the next session).
+- **#33:** time capsule dates are picked by each friend, so the Dates group only explains that. Want an
+  organiser-wide "opens on" date instead?
+- **#33 and #31** overlap in `EditorPage.tsx`; the second to merge needs a small rebase.
+- **#38:** who handles concierge requests and which email (`CONCIERGE_EMAIL`)? Keep ₱1,499 / $49?
+- **#37:** Fraunces instead of Fredoka, raspberry instead of terracotta, and the gift-tag logo: go ahead?
+- **#35:** "Make one for someone" links on the gift footer and friend page aren't flagged. OK?
+- **#35, #31, #23, #38** all add a migration numbered 0011; each after the first needs regenerating.
+- Rate limits are in memory per server instance. Fine for launch; a shared store (Upstash or Postgres) would make
+  them exact across instances. Worth it?
+
+### Launch PR 5 (#35) and Revenue PR 6 (#36): metrics
+- `events` table, `src/server/events.ts` (`track()`, `EVENT_PROPS` allow-list, never throws), browser events through
+  `trackEvent()` in `src/lib/track.ts` (`trackClientEvent` drops the organiser's own views and opens).
+- #36 adds theme, format and region (Vercel country header) to every event about a gift, plus
+  `theme_opening_started/completed`, `theme_replayed`, `theme_shared` (`shareGift()` in every format).
+- /admin: `src/components/admin/Metrics.tsx` and `ThemeMetrics.tsx`, server fns `getMetrics` and `getThemeMetrics`.
+
+### Revenue PR 5 (#38): concierge beta
+- `ConciergeOffer` (flag `concierge`), `submitConciergeRequest`, `listConciergeRequests`, `setConciergeStatus`,
+  `concierge_requests` table, `conciergeRequestEmail` to `CONCIERGE_EMAIL` or every admin. Price in pricing.ts.
+
+### Launch PR 6 (#37, draft): Keepsake Modern
+- `/dev/design` (`?view=hero`), `src/design/keepsake.css` (scoped to `.kd`, loaded as links on that page only),
+  `src/components/brand/Logo.tsx` and `FoldAndTie.tsx`, `docs/brand.md`. Fonts: `@fontsource-variable/*`.
+
+### Revenue PR 7 (#39, merged): `docs/roadmap.md`
+
+### Launch PR 4 (#33, branch `launch-editor`, waiting for Janelle)
+- Note counts: `src/lib/noteCounts.ts` (`countNotes`, `noteSummary`, `friendsIn`), with tests. Use it anywhere a
+  count is shown. `listMySites` returns `note_counts`; `listSealedContributions` returns `by_owner`.
+- New `custom_text` keys for the 8 newer sections (`openwhen_title` ... `doodle_title`), passed to `NewSections`
+  as `titles`. Words has a Dates group.
+- Section toggles: last one can't go off (client and `setModuleEnabled`); one with notes asks first.
+- Friend page copy: `FRIEND_PAGE` and `friendAddLine()` in strings.ts. `TAB_LIMIT = 4` in ContributePage.
+- Rail checks: `touched` per gift in localStorage `jb:touched:<id>`; `railDone()` in EditorPage.
+- Moderation: `setStatus(ids, status)` shows Undo; `removeNote`; `ReviewCard` has Delete, Show more.
+- Phone sheet: `sheetH` (45 or 88, drag handle), a spacer shrinks the preview above it.
+- People: hair fixes in `src/lib/clay/person.ts`; `/dev/people?grid=hair`; `tools/screens/hairgrid.cjs`.
+  Re-render presets with `PEOPLE=1 ONLY=... node clay.js` after changing hair.
+- Samples: `SAMPLE_LETTERS` / `sampleLetter()` in strings.ts; `GiftKindContext` (giftPieces) set by FormatView;
+  `SAMPLE_BADGE` shown by FormatView on every format but the scrapbook.
+
+### Launch PR 3 (#31, branch `launch-payments`, waiting for Janelle)
+- Payments (`src/server/billing.ts`):
+  - `applyPaidEvent` locks the order row first, then records the event. A payment after a cancel or a timeout
+    still opens the gift. A second payment for the same plan logs "Needs a refund" and changes nothing.
+  - `reconcileOrder` asks PayMongo about one unpaid order (under 7 days old); used by the confirm page, the
+    billing panel (`reconcileSiteOrders`), the webhook hints and the cron.
+  - `payment_log` table, written by `logPayment()`, shown in /admin.
+  - Webhook: signatures older than 10 minutes and unsigned calls are hints, rate-limited 6 a minute per checkout.
+  - Receipt email (`notifyPaid`). `addMonths` in pricing.ts is UTC and clamps the day.
+- Lifecycle:
+  - `/api/cron/daily` (vercel.json cron, 01:00 UTC, `CRON_SECRET`): 14-day reminder (`sendExpiryReminders`,
+    once per end date via `gift_sites.expiry_reminded_at`), re-checks unpaid orders from the last 2 days,
+    expires unpaid orders after 24h.
+  - **Decision I made:** an ended gift shows "This gift has been wrapped up"; the organiser can extend or download
+    a copy. Nothing is deleted yet (the 90-day deletion is a question above).
+  - `ExportGift` (fflate, in the browser): zip with notes.html, notes.csv and media/. In the editor (Wrap it up,
+    Keep a copy) and on the wrapped-up page.
+- Privacy: `/account` with type-DELETE deletion (`deleteAccount`). Deleting a gift, note or account removes its
+  files (`deleteMedia`, `deleteGiftMedia` in `src/server/uploads.ts`). Orders stay, with `site_id`/`owner_id` null.
+- Limits: republishing checks the plan (`tierBlocker`); un-hiding a note checks there's room.
+- Tests: `bun test src` (59). `src/server/billing.test.ts` runs only against a localhost DATABASE_URL, with the fake
+  PayMongo in `tools/payments/fake-paymongo.ts` (also runnable on its own). Export test: `tools/screens/exp.cjs`.
+- Janelle to test by hand: PayMongo test mode on the preview (pay; cancel then pay), `CRON_SECRET`, Blob delete,
+  Resend emails.
+- PR screenshots live on the `pr-shots` branch (never merged), one folder per PR.
+
+### Revenue PR 1 (#28, merged): the theme engine
+- `src/themes/engine/`:
+  - `useGesture` handles 13 gestures (touch, mouse, keyboard, reduced motion). The maths is in `core/progress.ts`, with tests.
+  - Materials, particles, synthesised sound packs and haptics.
+  - Slots with fallbacks.
+  - `defineTheme` and `validateTheme`.
+  - `EngineStage` runs a theme inside the shared opening shell.
+  - `kraft-parcel` is a dev-only sample theme.
+- `src/i18n/`: `t()` and strings in `en.ts`. Dates, numbers and money use the visitor's locale.
+- `/dev/themes` is the playground (dev only):
+  - `?theme=&size=phone|laptop&worst=1&autoplay=1&simbang=1&now=2026-12-19&notes=9`
+  - `&bare=1` shows the opening full screen, for screenshots.
+- Performance:
+  - `bun tools/perf/theme-budget.ts` checks size (400 KB).
+  - `node tools/perf/theme-fps.cjs <base> <id>` measures frame times with 4x CPU and slow 4G.
+  - `bun test` runs the tests. There's no CI yet.
+- `docs/theme-bible.md` has the 8 checks, cultural themes, and an audit of the 13 current themes with their top 3 fixes.
+
+### Revenue PR 2 (#29, merged): the new themes
+- Engine themes:
+  - `winter-cabin`, `care-package`, `balikbayan-box` (shares `care-package/Parcel.tsx`), `parol` and `debut`.
+  - Each has `theme.ts` (config plus occasion template) and `Object.tsx`.
+  - They're found by theme name (`engineThemeForName`). `TactileOpening` renders `EngineStage` for them, so every surface works.
+  - Gift data comes through `src/lib/engineGift.ts` (`engineIntroProps`, `previewEngineProps`, `simbangVisible`).
+- Simbang Gabi:
+  - Logic is in `src/themes/engine/simbang.ts`, with tests.
+  - It's a switch in `intro_settings.simbang` (opening settings, Parol only).
+  - The gift page shows only the notes that have opened, plus a night banner.
+  - Test it with `tools/screens/simbang.cjs <slug> <iso date> <out.png>`, which uses a fake clock.
+- Birthday:
+  - The "Turning" age is stored as `custom_text.turning` and shown as candles. It's behind flag `birthdayAge`.
+  - Flags live in `src/config/flags.ts` (env `VITE_FLAGS`). They're on in dev.
+- Seed:
+  - The 5 themes are seeded as `draft` (the seed's sixth column). It never changes an existing row's status.
+  - It also adds 9 palettes, which only show as their theme's suggestions (`THEME_ONLY_PALETTES` in PalettePicker).
+- Gallery:
+  - New groups: New, Christmas, Family and far away, and Philippines. They appear once an engine theme is published.
+  - `src/lib/themeOrder.ts` handles ordering by visitor country (`getVisitorCountry`, from the Vercel header): Balikbayan Box first for PH, Care Package first elsewhere.
+- Tools:
+  - `engine-shots.cjs <id> <outDir> [w] [h] [query]` saves rest, mid, done and note screenshots.
+  - `record.cjs <id> <out.mp4>` records via Chrome's screencast (about 4 fps in the sandbox).
+  - `edtest.cjs` fills an editor field.
+- Locally the 5 themes are published in the local DB. Local test gift with Simbang on: `pasko-for-lola-p4my6`.
+
+### Launch PR 2a (#25, merged) and 2b (#26, waiting for Janelle)
+- **2a, merged:**
+  - Text limits in one place: `src/lib/limits.ts`, with counters from `src/components/ui/CharCount.tsx`.
+  - Server-function error middleware `fnErrors` in `src/start.ts` turns errors into real status codes and safe
+    messages: 422 validation, 401, 403, 429, 500.
+  - `rateLimit()` and `clientIp()` in `src/server/rateLimit.ts`.
+  - Notes are idempotent: retries reuse the id and edit token, and the insert ignores repeats. A triple tap saves
+    one note.
+  - Create has a 15-second same-title guard, so a double tap makes one gift.
+  - Calendar fix: doors used the UTC day, which put every door one day early for viewers ahead of UTC. Use
+    `localDateKey()` from `src/lib/time.ts`, never `toISOString().slice(0, 10)`.
+  - Long-text fixes from `/dev/worst-case` (dev only; `?kind=&format=`, `&intro=1` shows the opening):
+    - Greetings scale down and clamp to five lines.
+    - Hint and Skip on openings stay off the button.
+    - Monograms use letters only (`initialsOf`).
+    - The zine masthead wraps between words.
+    - The bento hero reserves space for its 3D piece.
+    - Note cards reveal as soon as they enter the screen.
+  - Scratch foils and the night sky follow the gift's palette.
+  - The storybook is sized to the screen, with readable controls on dark backgrounds.
+  - The Roamer checks a spot is clear of text and controls before parking there, and again after scrolling.
+  - Tools: `tools/screens/cal.cjs` counts calendar doors in a time zone (`TZID=Asia/Manila`); `console.cjs` prints
+    console errors; `fn.cjs` calls a server function; `tap.cjs` triple-taps Send.
+- **2b, waiting for Janelle (privacy):**
+  - `preparePhoto()` in `src/lib/upload.ts` redraws JPEG, PNG and WebP to remove EXIF and GPS, turns them
+    upright and caps them at 2560px. Upload errors are friendlier.
+  - `src/lib/clientErrors.ts` plus `/api/client-error`: scrubbed browser errors go to the server log, at most five
+    per page load.
+  - `tools/screens/up.cjs` uploads a file through the friend page.
+- **Not reproduced:** the dev-only "This page didn't load" from the stress test, and React #418 on the live
+  homepage. The likely #418 causes (the calendar UTC day and two date labels) are fixed in 2a. Check the
+  console on prod after deploys.
 
 ### Launch PR 1 (#23, branch `launch-trust`, waiting for Janelle): what's in it
 - /privacy, /terms, /refunds, /contact (mailto form), shared footer on marketing and legal pages, draft banner

@@ -4,6 +4,7 @@
  * button. Hover (or scroll to it on a phone) to play; click anywhere on the
  * card for the full-screen version you can open with your own hands.
  */
+import { previewEngineProps } from "@/lib/engineGift";
 import { useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion, useMotionValue, useSpring, useTransform } from "motion/react";
 import { X } from "lucide-react";
@@ -11,7 +12,9 @@ import type { Palette, Theme } from "@/lib/themes";
 import { themeKindOf } from "@/lib/themeKind";
 import { TactileOpening, openingBackground } from "@/themes/TactileOpening";
 import type { CharacterSetting } from "@/themes/_shared/cast/types";
-import { designFor, loadThemeFonts, themeFontVars } from "@/themes/_shared/design";
+import { designFor, loadFont, loadThemeFonts, themeFontVars } from "@/themes/_shared/design";
+import { engineThemeForName } from "@/themes/engine/registry";
+import { t, type MessageKey } from "@/i18n";
 import { SPRING } from "@/themes/_shared/stage";
 import { claimPreview, releasePreview, useIsPlaying } from "@/components/ThemeLivePreview";
 import { GiftPeek } from "@/components/GiftPeek";
@@ -47,6 +50,10 @@ export function OpeningCard({
 }) {
   const kind = themeKindOf(theme);
   const design = designFor(kind);
+  // Themes built on the theme engine describe themselves.
+  const engine = engineThemeForName(theme.name);
+  const gestureLine = engine ? t(engine.hint ?? (`gesture.${engine.gesture}.label` as MessageKey)) : design.gesture;
+  const objectLine = engine ? engine.object : design.object;
   const palette = useThemePalette(theme);
   const playing = useIsPlaying(theme.id);
   const [loop, setLoop] = useState(0);
@@ -54,7 +61,10 @@ export function OpeningCard({
   const ref = useRef<HTMLDivElement | null>(null);
   const frame = useRef<HTMLDivElement | null>(null);
   const [scale, setScale] = useState(0.8);
-  useEffect(() => loadThemeFonts(kind), [kind]);
+  useEffect(() => {
+    if (!engine) return loadThemeFonts(kind);
+    loadFont(engine.fonts.display, "low");
+  }, [kind, engine]);
   useEffect(() => {
     const el = frame.current;
     if (!el) return;
@@ -129,6 +139,7 @@ export function OpeningCard({
             recipientName="Ana"
             character={character}
             contributors={SAMPLE_FRIENDS}
+            {...previewEngineProps(theme.name, "Ana")}
             contained
             interactive={false}
             paused={!playing}
@@ -143,14 +154,14 @@ export function OpeningCard({
           />
         </div>
         <span className="absolute bottom-3 left-3 z-10 rounded-full bg-white/80 px-2.5 py-1 font-mono text-[10px] tracking-[0.14em] text-ink uppercase backdrop-blur-sm transition-opacity group-hover:opacity-0">
-          {design.gesture}
+          {gestureLine}
         </span>
       </div>
-      <div className="flex flex-1 flex-col px-2 pt-3 pb-1" style={themeFontVars(kind)}>
+      <div className="flex flex-1 flex-col px-2 pt-3 pb-1" style={engine ? ({ ["--jb-display" as string]: engine.fonts.display.family } as React.CSSProperties) : themeFontVars(kind)}>
         <h3 className="text-[1.6rem] leading-tight" style={{ fontFamily: "var(--jb-display)" }}>
           {theme.name}
         </h3>
-        <p className="mt-0.5 text-sm text-muted">{design.object}</p>
+        <p className="mt-0.5 text-sm text-muted">{objectLine}</p>
         <button
           type="button"
           onClick={(e) => {
@@ -243,6 +254,7 @@ export function OpeningPreviewModal({
               recipientName="Ana"
               character={character}
               contributors={SAMPLE_FRIENDS}
+              {...previewEngineProps(theme.name, "Ana")}
               contained
               onOpen={() => setOpened(true)}
               onSkip={() => setOpened(true)}

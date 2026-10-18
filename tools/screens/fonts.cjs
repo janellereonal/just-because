@@ -27,18 +27,19 @@ async function useLocalFonts(target) {
     const css = families
       .flatMap((family) =>
         filesFor(family).map(
-          (x) => `@font-face{font-family:'${family}';font-style:${x.style};font-weight:${x.weight};font-display:swap;src:url(https://local-fonts.test/${x.file}) format('woff');}`,
+          (x) => `@font-face{font-family:'${family}';font-style:${x.style};font-weight:${x.weight};font-display:swap;src:url(https://fonts.gstatic.com/jb-local/${x.file}) format('woff');}`,
         ),
       )
       .join('\n');
     await route.fulfill({ status: 200, contentType: 'text/css', body: css, headers: { 'access-control-allow-origin': '*' } });
   });
-  await target.route(/local-fonts\.test\//, async (route) => {
+  // Served under fonts.gstatic.com so the site's Content-Security-Policy allows them.
+  await target.route(/fonts\.gstatic\.com\/jb-local\//, async (route) => {
     const file = path.join(DIR, path.basename(new URL(route.request().url()).pathname));
     if (!fs.existsSync(file)) return route.fulfill({ status: 404, body: '' });
     await route.fulfill({ status: 200, contentType: 'font/woff', body: fs.readFileSync(file), headers: { 'access-control-allow-origin': '*' } });
   });
-  await target.route(/fonts\.gstatic\.com/, (route) => route.fulfill({ status: 404, body: '' }));
+  await target.route(/fonts\.gstatic\.com\/(?!jb-local)/, (route) => route.fulfill({ status: 404, body: '' }));
 }
 
 module.exports = { useLocalFonts };
