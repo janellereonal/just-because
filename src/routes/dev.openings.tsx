@@ -14,7 +14,7 @@ import type { CharacterSetting } from "@/themes/_shared/cast/types";
  * /dev/openings?kind=valentine&auto=1&stay=1  plays it all, then holds the last moment
  * /dev/openings?kind=birthday&char=fox     with a library character (or char=person:bookworm)
  * /dev/openings?style=mixtape              a layout style's own opening (scrapbook, mixtape, zine...)
- * /dev/openings?style=mixtape&pal=berry    in another gift palette (cream, berry, night, sage)
+ * /dev/openings?style=mixtape&pal=berry    in another gift palette (cream, ana, berry, night, sage)
  */
 export const Route = createFileRoute("/dev/openings")({
   head: () => ({ meta: [NOINDEX] }),
@@ -39,6 +39,7 @@ export const Route = createFileRoute("/dev/openings")({
 
 const PALETTES: Record<string, { background: string; primary: string; accent: string }> = {
   cream: { background: "#FBF8F2", primary: "#B5623E", accent: "#E9C9B6" },
+  ana: { background: "#FFF4DE", primary: "#243087", accent: "#E8577E" },
   berry: { background: "#FFF4F6", primary: "#7A5CFF", accent: "#C2366B" },
   night: { background: "#151A2E", primary: "#3B4A8C", accent: "#F2C14E" },
   sage: { background: "#F3F6EF", primary: "#5E7D5A", accent: "#D9895B" },

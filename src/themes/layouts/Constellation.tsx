@@ -1,19 +1,20 @@
 /**
- * CONSTELLATION: a dreamy pastel night, a clay moon and soft clouds, and a
- * handful of brighter butter-yellow stars. Gesture: tap the glowing star, then
- * the next, to connect them. When the last line closes, the stars form a
- * heart, it fills with a pink glow and their name rises under it. The button
- * (and previews) connect them all in one go.
+ * CONSTELLATION: the same night the stars page shows: a deep sky with a hint
+ * of the gift's color, the Milky Way, a mountain ridge, and a handful of
+ * bright stars. Gesture: tap the glowing star, then the next, to connect them
+ * with the same warm golden lines. When the last line closes the stars make a
+ * heart and the sky takes over. The button (and previews) connect them all.
  */
 import { useEffect, useRef, useState } from "react";
 import { motion } from "motion/react";
 import type { CharacterHandle } from "@/themes/_shared/cast/types";
 import type { OpeningProps } from "@/themes/_shared/opening";
-import { FallbackButton, Layer, SPRING, useHaptics } from "@/themes/_shared/stage";
+import type { Palette } from "@/lib/themes";
+import { FallbackButton, Layer, useHaptics } from "@/themes/_shared/stage";
 import { melody } from "@/lib/play";
 import { seed } from "@/components/formats/PieceSheet";
 import { live, useAutoplay, useHint, useOpenSequence } from "./kit";
-import { Buddy, Clay, FONTS, display, pastelStage, useStyleFonts } from "./cute";
+import { Buddy } from "./buddy";
 
 /** A heart, drawn star to star (viewBox 0 0 100 100). */
 const STARS: [number, number][] = [
@@ -28,16 +29,11 @@ const STARS: [number, number][] = [
   [18, 30],
   [34, 22],
 ];
-
-const C = { star: "#FFE89A", glow: "#FFB8D4", line: "#FFD6E6", ink: "#FFF3FA", tint: "40,30,90" };
-
-/** A soft, rounded five-point star (viewBox 0 0 24 24). */
-const STAR_PATH =
-  "M12 2.6c.5 0 .9.3 1.1.7l2.2 4.6 5 .7c1 .1 1.4 1.4.7 2.1l-3.6 3.5.9 5c.2 1-.9 1.7-1.8 1.2L12 18l-4.5 2.4c-.9.5-2-.2-1.8-1.2l.9-5-3.6-3.5c-.7-.7-.3-2 .7-2.1l5-.7 2.2-4.6c.2-.4.6-.7 1.1-.7z";
+const LINE = "rgba(255,234,188,.92)";
 
 export function ConstellationOpening(p: OpeningProps) {
   const h = useHaptics();
-  const fonts = useStyleFonts(FONTS.round);
+  const accent = p.palette.accent;
   const skyRef = useRef<HTMLDivElement | null>(null);
   const cast = useRef<CharacterHandle | null>(null);
   const [lit, setLit] = useState(1); // stars connected so far (the first one glows from the start)
@@ -45,7 +41,7 @@ export function ConstellationOpening(p: OpeningProps) {
   const beat = useOpenSequence(p, done, skyRef, {
     hold: 2100,
     cast,
-    colors: [C.star, C.glow, "#D8CCFF", "#FFFFFF"],
+    colors: ["#FFE39A", "#FFFFFF", accent],
   });
   useHint(p, "Tap the glowing star, then the next one", done);
   const timers = useRef<number[]>([]);
@@ -77,86 +73,65 @@ export function ConstellationOpening(p: OpeningProps) {
   useAutoplay(p, [[900, connectAll]]);
 
   const lines = STARS.map((s, i) => [s, STARS[(i + 1) % STARS.length]!] as const);
-  const background = Array.from({ length: 70 }, (_, i) => ({
+  const dust = Array.from({ length: 90 }, (_, i) => ({
     x: seed(`x${i}`) * 100,
     y: seed(`y${i}`) * 100,
-    r: 0.2 + seed(`r${i}`) * 0.5,
+    r: 0.15 + seed(`r${i}`) * 0.45,
     d: seed(`d${i}`) * 3,
   }));
 
   return (
-    <div className="relative flex w-full flex-col items-center" style={fonts}>
-      {/* The moon and the clouds, a little behind the sky. */}
-      <Layer
-        depth={-10}
-        className="pointer-events-none absolute inset-x-0 -top-[50%] -bottom-[50%]"
+    <div
+      className="relative flex w-full flex-col items-center text-center"
+      style={{ color: "#F4F0FF", fontFamily: "var(--jb-text)" }}
+    >
+      <p className="cst-kicker">Look up, {p.recipient}</p>
+      <p
+        className="cst-title max-w-[90cqi]"
+        style={{ fontFamily: "var(--jb-display)", fontSize: "clamp(1.7rem, 8cqi, 2.8rem)" }}
       >
-        <Clay
-          id="moon"
-          float
-          rotate={-14}
-          reduced={p.reduced}
-          shadow={C.tint}
-          className="top-[10%] right-[8%] w-[19%]"
-        />
-        <Clay
-          id="cloud"
-          float
-          delay={0.9}
-          reduced={p.reduced}
-          shadow={C.tint}
-          className="bottom-[10%] left-[-6%] w-[32%]"
-        />
-        <Clay
-          id="cloud"
-          float
-          delay={1.7}
-          reduced={p.reduced}
-          shadow={C.tint}
-          className="right-[-8%] bottom-[16%] w-[26%]"
-        />
-      </Layer>
+        {p.greeting}
+      </p>
       <Layer
         depth={6}
-        className="relative"
-        style={{ width: "min(88cqi, 400px)", aspectRatio: "1" }}
+        className="relative mt-[min(4cqi,18px)]"
+        style={{ width: "min(86cqi, 400px)", aspectRatio: "1" }}
       >
-        <Buddy p={p} ref={cast} size={74} className="-bottom-[16%] -left-[2%]" />
+        <Buddy p={p} ref={cast} size={70} className="-bottom-[14%] -left-[4%]" />
         <div ref={skyRef} className="absolute inset-0">
-          <svg viewBox="0 0 100 100" className="absolute inset-0 size-full overflow-visible">
+          <svg
+            viewBox="0 0 100 100"
+            className="absolute inset-0 size-full overflow-visible"
+            aria-hidden
+          >
             <defs>
               <filter id="cst-glow" x="-50%" y="-50%" width="200%" height="200%">
-                <feGaussianBlur stdDeviation="1.4" result="b" />
+                <feGaussianBlur stdDeviation="1.2" result="b" />
                 <feMerge>
                   <feMergeNode in="b" />
                   <feMergeNode in="SourceGraphic" />
                 </feMerge>
               </filter>
-              <radialGradient id="cst-fill" cx=".5" cy=".55" r=".6">
-                <stop offset="0" stopColor="#FFD6E6" />
-                <stop offset="1" stopColor="#FF9EC4" />
-              </radialGradient>
             </defs>
-            {background.map((s, i) => (
+            {dust.map((s, i) => (
               <motion.circle
                 key={i}
                 cx={s.x}
                 cy={s.y}
                 r={s.r}
                 fill="#fff"
-                animate={p.reduced ? { opacity: 0.6 } : { opacity: [0.25, 0.85, 0.25] }}
+                animate={p.reduced ? { opacity: 0.6 } : { opacity: [0.2, 0.9, 0.2] }}
                 transition={{ duration: 2.5 + s.d, repeat: Infinity, delay: s.d }}
               />
             ))}
-            {/* The heart fills with a soft glow once it's closed. */}
+            {/* The heart glows softly once it's closed. */}
             <motion.polygon
               points={STARS.map((s) => s.join(",")).join(" ")}
-              fill="url(#cst-fill)"
+              style={{ fill: accent }}
               initial={false}
-              animate={{ opacity: beat >= 1 ? 0.42 : 0 }}
+              animate={{ opacity: beat >= 1 ? 0.16 : 0 }}
               transition={{ duration: p.reduced ? 0 : 0.8 }}
             />
-            {/* Lines between connected stars. */}
             {lines.map(([a, b], i) => (
               <motion.line
                 key={i}
@@ -164,8 +139,8 @@ export function ConstellationOpening(p: OpeningProps) {
                 y1={a[1]}
                 x2={b[0]}
                 y2={b[1]}
-                stroke={C.line}
-                strokeWidth={0.9}
+                stroke={LINE}
+                strokeWidth={0.55}
                 strokeLinecap="round"
                 filter="url(#cst-glow)"
                 initial={false}
@@ -174,7 +149,7 @@ export function ConstellationOpening(p: OpeningProps) {
               />
             ))}
           </svg>
-          {/* The stars you tap. */}
+          {/* The stars you tap, drawn like the stars page's. */}
           {STARS.map(([x, y], i) => {
             const isNext = !done && i === lit % STARS.length;
             const on = lit > i;
@@ -187,71 +162,31 @@ export function ConstellationOpening(p: OpeningProps) {
                 aria-label={
                   isNext ? `Star ${i + 1} of ${STARS.length}: tap to connect it` : `Star ${i + 1}`
                 }
-                className="absolute grid size-11 -translate-x-1/2 -translate-y-1/2 place-items-center rounded-full outline-none focus-visible:ring-2 focus-visible:ring-white/70"
-                style={{ left: `${x}%`, top: `${y}%` }}
+                className={`cst-star ${on ? "is-lit" : ""}`}
+                style={
+                  { left: `${x}%`, top: `${y}%`, "--cst-accent": accent } as React.CSSProperties
+                }
               >
                 {isNext && !p.reduced ? (
                   <motion.span
                     className="absolute size-8 rounded-full"
-                    style={{ border: `2px solid ${C.glow}` }}
-                    animate={{ scale: [0.6, 1.4], opacity: [0.9, 0] }}
+                    style={{ border: "1.5px solid rgba(255,236,190,.8)" }}
+                    animate={{ scale: [0.6, 1.5], opacity: [0.9, 0] }}
                     transition={{ duration: 1.3, repeat: Infinity }}
                     aria-hidden
                   />
                 ) : null}
-                <motion.svg
-                  viewBox="0 0 24 24"
-                  className="block"
-                  style={{
-                    filter: on
-                      ? `drop-shadow(0 0 6px ${C.glow}) drop-shadow(0 0 2px #fff)`
-                      : "drop-shadow(0 0 4px rgba(255,255,255,.5))",
-                  }}
-                  animate={{
-                    width: on ? 22 : isNext ? 18 : 13,
-                    height: on ? 22 : isNext ? 18 : 13,
-                    rotate: on ? 0 : -12,
-                  }}
-                  transition={SPRING.wobbly}
-                  aria-hidden
-                >
-                  <path d={STAR_PATH} fill={on || isNext ? C.star : "#E6E0FF"} />
-                  <path
-                    d={STAR_PATH}
-                    fill="#fff"
-                    opacity=".35"
-                    transform="translate(3 2.4) scale(.6)"
-                  />
-                </motion.svg>
+                <span className="cst-glow" aria-hidden />
+                <span className="cst-core" aria-hidden>
+                  ✦
+                </span>
               </button>
             );
           })}
-          {/* Their name under the heart. */}
-          <motion.div
-            className="absolute inset-x-0 top-[90%] text-center"
-            initial={false}
-            animate={{
-              opacity: beat >= 1 ? 1 : 0,
-              y: beat >= 1 ? 0 : 10,
-              scale: beat >= 1 ? 1 : 0.9,
-            }}
-            transition={p.reduced ? { duration: 0 } : SPRING.wobbly}
-          >
-            <span
-              className="block text-[clamp(1.4rem,7cqi,2.3rem)] leading-tight"
-              style={{
-                ...display(700),
-                color: C.ink,
-                textShadow: `0 0 18px ${C.glow}, 0 2px 0 rgba(40,30,90,.3)`,
-              }}
-            >
-              {p.greeting}
-            </span>
-          </motion.div>
         </div>
       </Layer>
 
-      <div className="mt-[min(16cqi,68px)] h-11">
+      <div className="mt-[min(12cqi,52px)] h-11">
         <FallbackButton
           onClick={connectAll}
           color="#ffffff"
@@ -265,13 +200,17 @@ export function ConstellationOpening(p: OpeningProps) {
   );
 }
 
-export const constellationBackground = (): React.CSSProperties =>
-  pastelStage({
-    top: "#2F2D6B",
-    bottom: "#A27CC4",
-    glow: "#7E72D255",
-    blobs: [
-      ["#FFB8D488", 50, 104, 90],
-      ["#8FB4FF55", 14, 20, 60],
-    ],
-  });
+/** The stars page's night: a hint of the gift's main color, the Milky Way, and a ridge on the horizon. */
+export const constellationBackground = (palette: Palette): React.CSSProperties => {
+  const ridge = `url("data:image/svg+xml,${encodeURIComponent(
+    "<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 60' preserveAspectRatio='none'><path d='M0 60V38l22-6 18 8 26-16 20 10 30-22 24 14 18-6 28 18 22-12 26 6 30-20 24 16 20-8 26 12 22-10 24 8V60z' fill='#05060f'/></svg>",
+  )}") bottom / 100% 14% no-repeat`;
+  return {
+    background: [
+      ridge,
+      // The Milky Way: a soft band of light across the sky.
+      "linear-gradient(118deg, transparent 30%, rgba(210,200,255,.07) 42%, rgba(255,240,220,.11) 50%, rgba(210,200,255,.07) 58%, transparent 70%)",
+      `radial-gradient(120% 80% at 50% 10%, color-mix(in oklab, ${palette.primary} 22%, #0a0b1e), #03040b 75%)`,
+    ].join(","),
+  };
+};

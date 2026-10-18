@@ -251,8 +251,8 @@ export function TactileOpening({
   return (
     <OpeningShell
       kind={kind}
-      background={layout ? layout.background() : entry.background(c)}
-      ink={layout ? layout.ink : entry.ink(c)}
+      background={layout ? layout.background(palette) : entry.background(c)}
+      ink={layout ? layout.ink(palette) : entry.ink(c)}
       contained={contained}
       interactive={interactive}
       paused={paused}

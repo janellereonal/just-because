@@ -112,16 +112,18 @@
   place-items: center;
   width: clamp(76px, 22cqi, 118px);
   aspect-ratio: 1;
-  padding: 10px;
+  padding: 6px;
   border-radius: 50%;
   background: var(--cx-yellow);
   border: 4px solid var(--cx-ink);
   box-shadow: 4px 4px 0 var(--cx-ink);
   text-align: center;
-  font-size: clamp(0.78rem, 3cqi, 1.05rem);
+  font-size: clamp(0.62rem, 2.7cqi, 1.05rem);
   line-height: 0.95;
   text-transform: uppercase;
-  overflow-wrap: anywhere;
+  /* Whole words only: "Featuring" never splits across lines. */
+  overflow-wrap: normal;
+  word-break: keep-all;
 }
 .cx-blurb-box {
   left: 4%;

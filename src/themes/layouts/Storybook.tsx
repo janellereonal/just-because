@@ -1,70 +1,37 @@
 /**
- * STORYBOOK: a lilac cloth hardcover with a gold-foil title, a clay moon and a
- * pink ribbon, on a dreamy dusk sky with drifting clouds. Gesture: open the
- * cover (drag it to the left, or tap). It swings open on the spine and the
- * first page reads "Chapter one" with the greeting, like the book the notes are
- * read in.
+ * STORYBOOK: the storybook itself, closed, exactly as its pages draw it: the
+ * cover in the gift's accent with its framed title, the page edges, and under
+ * the cover the dedication ("This book belongs to"). Gesture: open the cover
+ * (drag it to the left, or tap). It swings open on the spine like a page turn
+ * in the book, and the book carries on from the dedication.
  */
 import { useRef, useState } from "react";
 import { animate, motion, useMotionValue, useTransform } from "motion/react";
 import type { CharacterHandle } from "@/themes/_shared/cast/types";
 import type { OpeningProps } from "@/themes/_shared/opening";
+import type { Palette } from "@/lib/themes";
+import { readableInk } from "@/lib/palettes";
 import { FallbackButton, Layer, SPRING, useHaptics } from "@/themes/_shared/stage";
-import { FloorShadow, Object3D, Sheen, Texture } from "@/themes/_shared/light";
 import { foley } from "@/lib/play";
-import { live, pressable, signoff, useAutoplay, useHint, useOpenSequence } from "./kit";
-import {
-  Buddy,
-  Clay,
-  FONTS,
-  Gloss,
-  Sparkles,
-  display,
-  pastelStage,
-  puffy,
-  soft,
-  text,
-  useStyleFonts,
-} from "./cute";
-
-const GOLD = "linear-gradient(135deg, #E9C46A, #FFF4CC 35%, #F2CF74 55%, #FFFBE6 75%, #E9C46A)";
-const C = {
-  cloth: "#A99CF0",
-  clothDeep: "#8A7BE0",
-  ink: "#3F3566",
-  pink: "#F28FB0",
-  pinkInk: "#C2477A",
-  paper: "#FFFBF3",
-  tint: "90,70,160",
-};
-
-const foil = {
-  backgroundImage: GOLD,
-  WebkitBackgroundClip: "text",
-  backgroundClip: "text",
-  color: "transparent",
-  // A hairline of shade under the foil so it reads on the lilac cloth.
-  filter: "drop-shadow(0 1.5px 0 rgba(60,40,130,.55))",
-} as const;
+import { live, pressable, useAutoplay, useHint, useOpenSequence } from "./kit";
+import { Buddy } from "./buddy";
 
 export function StorybookOpening(p: OpeningProps) {
   const h = useHaptics();
-  const fonts = useStyleFonts(FONTS.story, FONTS.round);
+  const { background, primary, accent } = p.palette;
+  const coverInk = readableInk(accent);
   const pageRef = useRef<HTMLDivElement | null>(null);
   const cast = useRef<CharacterHandle | null>(null);
   const [open, setOpen] = useState(false);
   const angle = useMotionValue(0);
-  const shift = useTransform(angle, [0, -170], ["-25%", "0%"]);
-  const shade = useTransform(angle, [0, -100, -170], [0, 0.25, 0.08]);
-  const ribbon = useTransform(angle, [0, -20], [1, 0]);
-  // Closed, only the right half (the book) casts a shadow; it widens as the cover opens.
-  const shadowLeft = useTransform(angle, [0, -40], ["50%", "0%"]);
+  // Like the book on a phone: once turned, the cover fades so the page reads clean.
+  const coverOpacity = useTransform(angle, [0, -120, -170], [1, 1, 0]);
   useOpenSequence(p, open, pageRef, {
-    hold: 2200,
+    hold: 2300,
     cast,
-    colors: ["#FFE58A", C.pink, "#CFC4FF", "#FFFFFF"],
+    colors: [accent, primary, "#FFD166", "#FFFFFF"],
   });
-  useHint(p, "Open the book to start the story", open);
+  useHint(p, "Open the cover to start the story", open);
 
   function openCover() {
     if (open || !live(p)) return;
@@ -75,254 +42,82 @@ export function StorybookOpening(p: OpeningProps) {
   }
   useAutoplay(p, [[900, openCover]]);
 
+  const friends = p.contributors;
+
   return (
-    <div className="relative flex w-full flex-col items-center" style={fonts}>
-      {/* The sky around the book: clouds drifting, the moon up high. */}
-      <Layer
-        depth={-10}
-        className="pointer-events-none absolute inset-x-0 -top-[45%] -bottom-[40%]"
-      >
-        <Clay
-          id="cloud"
-          float
-          reduced={p.reduced}
-          shadow={C.tint}
-          className="top-[6%] left-[-6%] w-[30%]"
-        />
-        <Clay
-          id="cloud"
-          float
-          delay={1.3}
-          reduced={p.reduced}
-          shadow={C.tint}
-          className="right-[-8%] bottom-[10%] w-[32%]"
-        />
-        <Clay
-          id="moon"
-          float
-          delay={0.6}
-          rotate={-12}
-          reduced={p.reduced}
-          shadow={C.tint}
-          className="top-[10%] right-[8%] w-[17%]"
-        />
-        <Sparkles
-          reduced={p.reduced}
-          color="#FFF2B8"
-          spots={[
-            [28, 18, 14],
-            [62, 10, 18],
-            [86, 40, 12],
-            [8, 64, 16],
-            [40, 88, 14],
-          ]}
-        />
-      </Layer>
-      <Layer
-        depth={10}
-        className="relative"
-        style={{ width: "min(88cqi, 400px)", aspectRatio: "1.42" }}
-      >
-        <Buddy p={p} ref={cast} size={78} className="-right-[2%] -bottom-[16%]" />
-        <Object3D
-          pose={{ x: 16, y: -10, z: -1 }}
-          strength={8}
-          settle={open}
-          className="absolute inset-0"
+    <div
+      className="sbk-root relative flex w-full flex-col items-center"
+      style={
+        {
+          "--sbk-accent": accent,
+          "--sbk-primary": primary,
+          background: "transparent",
+          color: readableInk(background),
+          fontFamily: "var(--jb-text)",
+        } as React.CSSProperties
+      }
+    >
+      <Layer depth={8} className="relative" style={{ perspective: 2000 }}>
+        <Buddy p={p} ref={cast} size={78} className="-right-[12%] -bottom-[6%]" />
+        <div
+          className="sbk-book"
+          style={{ width: "min(74cqi, 340px, calc((100svh - 260px) * 0.723))", cursor: "default" }}
         >
-          <motion.div
-            className="absolute inset-0"
-            style={{ x: shift, transformStyle: "preserve-3d" }}
-          >
-            <motion.div className="absolute inset-y-0 right-0" style={{ left: shadowLeft }}>
-              <FloorShadow tint={C.tint} depth={12} radius={12} className="inset-0" />
-            </motion.div>
-            {/* Right page: chapter one. */}
-            <div
-              ref={pageRef}
-              className="absolute inset-y-[2%] right-[1%] left-1/2 overflow-hidden rounded-r-[8px] px-[9%] pt-[13%]"
-              style={{
-                background: C.paper,
-                boxShadow: `inset 14px 0 18px -14px rgba(${C.tint},.35), ${soft(C.tint, 0.5)}`,
-              }}
-            >
-              <Texture material="paper" opacity={0.45} />
-              <motion.div
-                initial={false}
-                animate={{ opacity: open ? 1 : 0, y: open ? 0 : 8 }}
-                transition={{ duration: p.reduced ? 0 : 0.7, delay: p.reduced ? 0 : 0.9 }}
-                className="relative"
-              >
-                <span
-                  className="block text-[clamp(9px,2.6cqi,11px)] tracking-[0.24em] uppercase"
-                  style={{ ...text(600), color: C.pinkInk }}
-                >
-                  Chapter one
-                </span>
-                <span
-                  className="mt-2 block text-[clamp(1.15rem,5.4cqi,1.8rem)] leading-[1.06] italic"
-                  style={{
-                    ...display(600),
-                    color: C.ink,
-                    fontVariationSettings: '"SOFT" 100, "opsz" 72',
-                  }}
-                >
-                  {p.greeting}
-                </span>
-                <span
-                  className="mt-3 block h-[2px] w-10 rounded-full"
-                  style={{ background: C.pink }}
-                />
-              </motion.div>
-              <Clay
-                id="star"
-                show={open}
-                delay={1.3}
-                rotate={-10}
-                reduced={p.reduced}
-                shadow={C.tint}
-                className="right-[10%] bottom-[10%] w-[24%]"
-              />
+          <div className="sbk-edges" />
+          {/* The first page: the dedication. */}
+          <div className="sbk-leaf" style={{ transition: "none" }}>
+            <div ref={pageRef} className="sbk-front">
+              <div className="sbk-page sbk-center">
+                <p className="sbk-kicker" style={{ color: accent }}>
+                  This book belongs to
+                </p>
+                <p className="sbk-name" style={{ fontFamily: "var(--jb-display)" }}>
+                  {p.recipient}
+                </p>
+                <p className="sbk-body">Everyone who loves you wrote a page. Turn slowly.</p>
+                {friends.length ? (
+                  <p className="sbk-small">Written by {friends.join(", ")}</p>
+                ) : null}
+              </div>
             </div>
-            {/* Page block edges under the cover. */}
-            <div
-              className="absolute inset-y-[2%] right-[0.5%] left-1/2 rounded-r-[8px]"
-              style={{
-                background: "repeating-linear-gradient(90deg, #EFE7F7 0 1px, #FFFAF2 1px 3px)",
-                transform: "translateZ(-2px)",
-              }}
-            />
-
-            {/* The cover, hinged on the spine. */}
-            <motion.div
-              className="absolute inset-y-0 right-0 left-1/2 cursor-pointer touch-none outline-none"
-              style={{ originX: 0, rotateY: angle, transformStyle: "preserve-3d", zIndex: 3 }}
-              onPan={(_, info) => {
-                if (open || !live(p)) return;
-                angle.set(Math.max(-170, Math.min(0, info.offset.x * 0.9)));
-              }}
-              onPanEnd={(_, info) => {
-                if (open || !live(p)) return;
-                if (info.offset.x < -70) openCover();
-                else void animate(angle, 0, SPRING.snappy);
-              }}
-              {...pressable(openCover, !open && live(p), "Open the book")}
-            >
-              <div
-                className="absolute inset-0 overflow-hidden rounded-l-[4px] rounded-r-[14px]"
-                style={{
-                  background: `linear-gradient(160deg, #C3B9FA, ${C.cloth} 50%, ${C.clothDeep})`,
-                  backfaceVisibility: "hidden",
-                  boxShadow: `${puffy("70,50,150", 1.2)}, inset 12px 0 16px -10px rgba(60,40,130,.35), ${soft(C.tint, 0.9)}`,
-                }}
-              >
-                <Texture material="linen" opacity={0.4} blend="multiply" />
-                <span
-                  className="absolute inset-[7%] rounded-[10px]"
-                  style={{
-                    border: "2px solid transparent",
-                    borderImage: `${GOLD} 1`,
-                    opacity: 0.9,
-                  }}
-                  aria-hidden
-                />
-                <div className="absolute inset-x-[12%] top-[15%] text-center">
-                  <span
-                    className="block text-[clamp(9px,2.6cqi,11px)] tracking-[0.28em] uppercase"
-                    style={{ ...foil, ...text(600) }}
-                  >
-                    The story of
-                  </span>
-                  <span
-                    className="mt-1.5 block truncate pb-[0.08em] text-[clamp(1.5rem,7.6cqi,2.5rem)] leading-[1.02] italic"
-                    style={{
-                      ...foil,
-                      ...display(700),
-                      fontVariationSettings: '"SOFT" 100, "opsz" 144',
-                    }}
-                  >
-                    {p.recipient}
-                  </span>
-                </div>
-                <Clay
-                  id="moon"
-                  rotate={-16}
-                  reduced={p.reduced}
-                  shadow="60,40,130"
-                  className="bottom-[13%] left-[33%] w-[34%]"
-                />
-                <Clay
-                  id="star"
-                  rotate={12}
-                  reduced={p.reduced}
-                  shadow="60,40,130"
-                  className="right-[16%] bottom-[40%] w-[13%]"
-                />
-                <Clay
-                  id="star"
-                  rotate={-20}
-                  reduced={p.reduced}
-                  shadow="60,40,130"
-                  className="bottom-[16%] left-[17%] w-[10%]"
-                />
-                <Gloss strength={0.32} height="34%" />
-                <Sheen strength={0.35} angle={120} width={26} />
-                <motion.span
-                  className="absolute inset-0 bg-[#2a2350]"
-                  style={{ opacity: shade }}
-                  aria-hidden
-                />
+          </div>
+          {/* The cover, hinged on the spine. */}
+          <motion.div
+            className="sbk-leaf touch-none outline-none"
+            style={{ rotateY: angle, opacity: coverOpacity, transition: "none", cursor: "pointer" }}
+            onPan={(_, info) => {
+              if (open || !live(p)) return;
+              angle.set(Math.max(-170, Math.min(0, info.offset.x * 0.9)));
+            }}
+            onPanEnd={(_, info) => {
+              if (open || !live(p)) return;
+              if (info.offset.x < -70) openCover();
+              else void animate(angle, 0, SPRING.snappy);
+            }}
+            {...pressable(openCover, !open && live(p), "Open the book")}
+          >
+            <div className="sbk-front">
+              <div className="sbk-cover" style={{ background: accent, color: coverInk }}>
+                <span className="sbk-cover-frame" />
+                <p className="sbk-cover-kicker">A storybook for</p>
+                <h1 style={{ fontFamily: "var(--jb-display)" }}>{p.recipient}</h1>
+                <p className="sbk-cover-sub">{p.greeting}</p>
+                <span className="sbk-cover-emblem" aria-hidden="true">
+                  ✦
+                </span>
+                <p className="sbk-cover-hint">Tap or drag the page to open</p>
               </div>
-              <div
-                className="absolute inset-0 overflow-hidden rounded-l-[14px] px-[9%] pt-[14%]"
-                style={{
-                  transform: "rotateY(180deg)",
-                  backfaceVisibility: "hidden",
-                  background: "#FBF5FF",
-                  boxShadow: `inset -14px 0 18px -14px rgba(${C.tint},.35)`,
-                }}
-              >
-                <Texture material="paper" opacity={0.45} />
-                <span
-                  className="relative block text-center text-[clamp(1.6rem,7cqi,2.4rem)]"
-                  style={{ color: C.pink }}
-                  aria-hidden
-                >
-                  ❦
-                </span>
-                <span
-                  className="relative mt-3 block text-center text-[clamp(9px,2.6cqi,11px)] tracking-[0.2em] uppercase"
-                  style={{ ...text(600), color: C.pinkInk }}
-                >
-                  Written by
-                </span>
-                <span
-                  className="relative mt-1 block text-center text-[clamp(12px,3.6cqi,16px)] leading-snug italic"
-                  style={{ ...display(500), color: C.ink }}
-                >
-                  {signoff(p.contributors)}
-                </span>
-              </div>
-            </motion.div>
-            {/* Ribbon bookmark. */}
-            <motion.span
-              className="absolute bottom-[-10%] left-[70%] z-[4] h-[17%] w-[4.5%]"
-              style={{
-                background: `linear-gradient(90deg, #E5739B, ${C.pink} 50%, #E5739B)`,
-                clipPath: "polygon(0 0,100% 0,100% 100%,50% 80%,0 100%)",
-                opacity: ribbon,
-              }}
-              aria-hidden
-            />
+            </div>
+            <div className="sbk-back" />
           </motion.div>
-        </Object3D>
+        </div>
       </Layer>
 
-      <div className="mt-[min(11cqi,48px)] h-11">
+      <div className="mt-[min(10cqi,44px)] h-11">
         <FallbackButton
           onClick={openCover}
-          color={C.clothDeep}
-          ink={C.ink}
+          color={readableInk(background)}
+          ink={readableInk(background)}
           hidden={open || !live(p)}
         >
           {p.buttonText}
@@ -332,13 +127,7 @@ export function StorybookOpening(p: OpeningProps) {
   );
 }
 
-export const storybookBackground = (): React.CSSProperties =>
-  pastelStage({
-    top: "#D9D2FF",
-    bottom: "#FFE2D6",
-    glow: "#FFFFFFCC",
-    blobs: [
-      ["#FFD1E3CC", 14, 70, 60],
-      ["#FFF1BFAA", 84, 22, 50],
-    ],
-  });
+/** The storybook's own room. */
+export const storybookBackground = (palette: Palette): React.CSSProperties => ({
+  background: `radial-gradient(120% 80% at 50% 0%, ${palette.background}, color-mix(in oklab, ${palette.primary} 22%, ${palette.background}))`,
+});

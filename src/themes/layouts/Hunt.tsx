@@ -1,48 +1,29 @@
 /**
- * GIFT HUNT: a rolled pastel treasure map tied with a pink string, on a calm
- * aqua sea with clouds drifting over. Gesture: unroll it (drag to the right,
- * or tap). The map opens out, a dotted trail draws itself from "You are here"
- * to an X, and a clay gift box pops up on the X, like the boxes they'll unwrap
- * one by one.
+ * GIFT HUNT: a rolled treasure map, drawn in the gift's own colors, on the
+ * hunt's soft mesh. Gesture: unroll it (drag to the right, or tap). The map
+ * opens out, a dotted trail draws itself from "You are here" to an X, and one
+ * of the hunt's own wrapped boxes (same paper, ribbon and bow as the boxes
+ * inside) pops up on the X.
  */
 import { useRef, useState } from "react";
 import { animate, motion, useMotionValue, useTransform } from "motion/react";
 import type { CharacterHandle } from "@/themes/_shared/cast/types";
 import type { OpeningProps } from "@/themes/_shared/opening";
+import type { Palette } from "@/lib/themes";
+import { readableInk } from "@/lib/palettes";
+import { meshGradient } from "@/lib/giftPieces";
 import { FallbackButton, Layer, SPRING, useHaptics } from "@/themes/_shared/stage";
 import { FloorShadow, Object3D, Texture } from "@/themes/_shared/light";
 import { foley } from "@/lib/play";
 import { live, pressable, useAutoplay, useHint, useOpenSequence } from "./kit";
-import {
-  Buddy,
-  Clay,
-  FONTS,
-  Sparkles,
-  display,
-  dotLayer,
-  pastelStage,
-  soft,
-  text,
-  useStyleFonts,
-} from "./cute";
+import { Buddy } from "./buddy";
 
-const C = {
-  paper: "#FFF7E6",
-  edge: "#F3E2C2",
-  ink: "#2F5560",
-  pink: "#F27BA3",
-  pinkInk: "#C2477A",
-  land: "#C6EBD3",
-  landDeep: "#9FD8B6",
-  water: "#C7E8F7",
-  lilac: "#D8CCFF",
-  butter: "#FFE38A",
-  tint: "50,120,130",
-};
+const mix = (a: string, k: number, b = "#ffffff") => `color-mix(in oklab, ${a} ${k}%, ${b})`;
 
 export function HuntOpening(p: OpeningProps) {
   const h = useHaptics();
-  const fonts = useStyleFonts(FONTS.round);
+  const { background, primary, accent } = p.palette;
+  const ink = readableInk(background);
   const xRef = useRef<HTMLSpanElement | null>(null);
   const cast = useRef<CharacterHandle | null>(null);
   const [open, setOpen] = useState(false);
@@ -55,7 +36,7 @@ export function HuntOpening(p: OpeningProps) {
   const beat = useOpenSequence(p, open, xRef, {
     hold: 2400,
     cast,
-    colors: [C.pink, C.butter, C.land, C.lilac, "#FFFFFF"],
+    colors: [accent, primary, "#FFD166", "#FFFFFF"],
   });
   useHint(p, "Unroll the map to start the hunt", open);
 
@@ -68,43 +49,31 @@ export function HuntOpening(p: OpeningProps) {
   }
   useAutoplay(p, [[900, unrollMap]]);
 
+  const paper = mix(background, 55);
+  const land = mix(primary, 14);
+  const landDeep = mix(primary, 30);
+  const water = mix(accent, 20);
+
   return (
-    <div className="relative flex w-full flex-col items-center" style={fonts}>
-      {/* Clouds drifting over the sea, the sun up high. */}
-      <Layer
-        depth={-10}
-        className="pointer-events-none absolute inset-x-0 -top-[55%] -bottom-[45%]"
+    <div
+      className="relative flex w-full flex-col items-center"
+      style={{ color: ink, fontFamily: "var(--jb-text)" }}
+    >
+      <p className="text-[11px] font-semibold tracking-[0.22em] uppercase opacity-70">
+        A gift hunt for {p.recipient}
+      </p>
+      <p
+        className="mt-2 max-w-[90cqi] text-center text-[clamp(1.6rem,8cqi,2.6rem)] leading-[1.05] font-bold"
+        style={{ fontFamily: "var(--jb-display)" }}
       >
-        <Clay
-          id="sun"
-          float
-          reduced={p.reduced}
-          shadow={C.tint}
-          className="top-[8%] left-[8%] w-[18%]"
-        />
-        <Clay
-          id="cloud"
-          float
-          delay={0.8}
-          reduced={p.reduced}
-          shadow={C.tint}
-          className="top-[12%] right-[-6%] w-[30%]"
-        />
-        <Clay
-          id="cloud"
-          float
-          delay={1.6}
-          reduced={p.reduced}
-          shadow={C.tint}
-          className="bottom-[8%] left-[-8%] w-[28%]"
-        />
-      </Layer>
+        {p.greeting}
+      </p>
       <Layer
         depth={10}
-        className="relative"
+        className="relative mt-[min(10cqi,44px)]"
         style={{ width: "min(88cqi, 400px)", aspectRatio: "1.45" }}
       >
-        <Buddy p={p} ref={cast} size={78} className="-bottom-[22%] left-[2%]" />
+        <Buddy p={p} ref={cast} size={76} className="-bottom-[22%] left-[2%]" />
         <Object3D
           pose={{ x: 20, y: -6, z: -2 }}
           strength={8}
@@ -113,12 +82,16 @@ export function HuntOpening(p: OpeningProps) {
         >
           <motion.div className="absolute inset-0" style={{ x: shift }}>
             <motion.div className="absolute inset-y-0 left-0" style={{ width }}>
-              <FloorShadow tint={C.tint} depth={8} radius={12} className="inset-0" />
+              <FloorShadow tint="43,37,34" depth={8} radius={14} className="inset-0" />
             </motion.div>
             {/* The map, revealed from the left as it unrolls. */}
             <motion.div
-              className="absolute inset-y-0 left-0 cursor-pointer touch-none overflow-hidden rounded-[12px] outline-none"
-              style={{ width, background: C.paper, boxShadow: soft(C.tint, 0.8) }}
+              className="absolute inset-y-0 left-0 cursor-pointer touch-none overflow-hidden rounded-[14px] outline-none"
+              style={{
+                width,
+                background: paper,
+                boxShadow: "0 18px 34px -22px rgba(43,37,34,.55)",
+              }}
               onPan={(_, info) => {
                 if (open || !live(p)) return;
                 unroll.set(Math.max(0.03, Math.min(0.7, 0.03 + info.offset.x / 400)));
@@ -131,52 +104,53 @@ export function HuntOpening(p: OpeningProps) {
               {...pressable(unrollMap, !open && live(p), "Unroll the map")}
             >
               <div className="absolute inset-y-0 left-0" style={{ width: "min(88cqi, 400px)" }}>
-                <Texture material="paper" opacity={0.4} />
-                <span
-                  className="absolute inset-0"
-                  style={{
-                    background: `radial-gradient(120% 90% at 50% 50%, transparent 60%, ${C.edge})`,
-                  }}
-                  aria-hidden
-                />
-                {/* Islands, a pond, hills and little trees. */}
+                <Texture material="paper" opacity={0.45} />
+                {/* Islands, a pond, hills and little trees, in the gift's colors. */}
                 <svg viewBox="0 0 400 276" className="absolute inset-0 size-full" aria-hidden>
                   <path
-                    d="M20 250c10-40 50-60 90-52s60-10 90 0 40 40 20 62-170 20-200-10z"
-                    fill={C.land}
+                    d="M14 254c10-44 52-64 94-56s62-10 94 0 42 42 22 64-178 22-210-8z"
+                    style={{ fill: land }}
                   />
                   <path
-                    d="M250 40c30-18 90-16 120 6s20 70-10 84-70 6-100-10-36-62-10-80z"
-                    fill={C.land}
+                    d="M246 40c32-20 94-18 124 6s22 72-10 86-72 6-104-10-38-64-10-82z"
+                    style={{ fill: land }}
                   />
-                  <ellipse cx="236" cy="200" rx="44" ry="20" fill={C.water} />
-                  <ellipse cx="226" cy="194" rx="14" ry="4" fill="#FFFFFF" opacity=".6" />
-                  <path d="M290 98c10-26 18-34 26-34s16 8 26 34z" fill={C.lilac} />
-                  <path d="M318 98c8-20 14-26 20-26s12 6 20 26z" fill="#C7B9FA" />
+                  <ellipse cx="238" cy="206" rx="44" ry="20" style={{ fill: water }} />
+                  <ellipse cx="228" cy="200" rx="14" ry="4" fill="#fff" opacity=".6" />
+                  <path d="M286 102c10-26 18-34 26-34s16 8 26 34z" style={{ fill: landDeep }} />
+                  <path
+                    d="M314 102c8-20 14-26 20-26s12 6 20 26z"
+                    style={{ fill: mix(primary, 42) }}
+                  />
                   {[
-                    [60, 212],
-                    [84, 222],
-                    [130, 214],
-                    [286, 62],
-                    [356, 70],
+                    [54, 218],
+                    [80, 228],
+                    [128, 220],
+                    [282, 64],
+                    [356, 72],
                   ].map(([x, y], i) => (
                     <g key={i}>
-                      <rect x={x! - 1.5} y={y! + 4} width="3" height="8" rx="1.5" fill="#C9A27A" />
-                      <circle cx={x} cy={y} r="9" fill={C.landDeep} />
-                      <circle cx={x! - 3} cy={y! - 3} r="3" fill="#FFFFFF" opacity=".45" />
+                      <rect
+                        x={x! - 1.5}
+                        y={y! + 4}
+                        width="3"
+                        height="8"
+                        rx="1.5"
+                        style={{ fill: mix(primary, 45, "#8a6a4a") }}
+                      />
+                      <circle cx={x} cy={y} r="9" style={{ fill: landDeep }} />
                     </g>
                   ))}
                   {/* A compass rose. */}
-                  <g transform="translate(352 232)">
-                    <circle r="20" fill="#FFFFFF" opacity=".7" />
-                    <path d="M0-17l5 12-5 5-5-5z" fill={C.pink} />
-                    <path d="M0 17l5-12-5-5-5 5z" fill={C.butter} />
-                    <path d="M-17 0l12-5 5 5-5 5zM17 0l-12-5-5 5 5 5z" fill={C.lilac} />
+                  <g transform="translate(354 234)">
+                    <circle r="19" fill="#fff" opacity=".75" />
+                    <path d="M0-16l5 11-5 5-5-5z" style={{ fill: accent }} />
+                    <path d="M0 16l5-11-5-5-5 5z" style={{ fill: primary }} />
                   </g>
                   <motion.path
-                    d="M58 236 C 110 200, 120 150, 170 140 S 260 150, 270 110 S 320 70, 336 64"
+                    d="M54 238 C 110 200, 120 160, 170 152 S 260 160, 280 128 S 318 104, 334 98"
                     fill="none"
-                    stroke={C.pink}
+                    style={{ stroke: accent }}
                     strokeWidth="4"
                     strokeDasharray="1 11"
                     strokeLinecap="round"
@@ -188,21 +162,28 @@ export function HuntOpening(p: OpeningProps) {
                       delay: p.reduced ? 0 : 0.5,
                     }}
                   />
-                  <circle cx="58" cy="236" r="8" fill={C.pink} stroke="#FFFFFF" strokeWidth="3" />
+                  <circle
+                    cx="54"
+                    cy="238"
+                    r="8"
+                    style={{ fill: primary }}
+                    stroke="#fff"
+                    strokeWidth="3"
+                  />
                 </svg>
                 <span
-                  className="absolute bottom-[3%] left-[4%] rounded-full bg-white/85 px-2 py-0.5 text-[clamp(9px,2.6cqi,11px)] tracking-[0.12em] uppercase"
-                  style={{ ...text(600), color: C.pinkInk }}
+                  className="absolute bottom-[3%] left-[4%] rounded-full bg-white/85 px-2 py-0.5 text-[10px] font-semibold tracking-[0.12em] uppercase"
+                  style={{ color: primary }}
                 >
                   You are here
                 </span>
-                {/* X marks the spot, then a gift pops up. */}
+                {/* X marks the spot, then one of the hunt's boxes pops up. */}
                 <span
                   ref={xRef}
-                  className="absolute top-[16%] right-[11%] grid size-[11%] place-items-center"
+                  className="absolute top-[30%] right-[12%] grid size-[11%] place-items-center"
                   aria-hidden
                 >
-                  <svg viewBox="0 0 24 24" className="size-full" style={{ color: C.pink }}>
+                  <svg viewBox="0 0 24 24" className="size-full" style={{ color: accent }}>
                     <path
                       d="M5 5l14 14M19 5L5 19"
                       stroke="currentColor"
@@ -210,28 +191,30 @@ export function HuntOpening(p: OpeningProps) {
                       strokeLinecap="round"
                     />
                   </svg>
-                  <Clay
-                    id="orn-gift"
-                    show={beat >= 2}
-                    reduced={p.reduced}
-                    shadow={C.tint}
-                    className="-top-[150%] left-1/2 w-[190%] -translate-x-1/2"
-                  />
+                  <motion.span
+                    className="hunt-box absolute -top-[150%] left-1/2 w-[220%]"
+                    style={
+                      {
+                        "--tint": "#FBD3DC",
+                        "--ribbon": primary,
+                        "--tilt": "-4deg",
+                        x: "-50%",
+                        animation: "none",
+                        cursor: "default",
+                      } as object
+                    }
+                    initial={false}
+                    animate={
+                      beat >= 2 ? { scale: 1, y: 0, opacity: 1 } : { scale: 0.3, y: 14, opacity: 0 }
+                    }
+                    transition={p.reduced ? { duration: 0 } : SPRING.wobbly}
+                  >
+                    <span className="hunt-lid" style={{ top: -8, height: 14, borderRadius: 5 }}>
+                      <span className="hunt-bow" style={{ top: -11, width: 26, height: 14 }} />
+                    </span>
+                    <span className="hunt-body" />
+                  </motion.span>
                 </span>
-                <div className="absolute top-[7%] left-[6%] max-w-[54%]">
-                  <span
-                    className="block text-[clamp(9px,2.6cqi,11px)] tracking-[0.2em] uppercase"
-                    style={{ ...text(600), color: C.pinkInk }}
-                  >
-                    {p.badge}
-                  </span>
-                  <span
-                    className="mt-1 block text-[clamp(1.15rem,5.6cqi,1.9rem)] leading-[1.05]"
-                    style={{ ...display(700), color: C.ink }}
-                  >
-                    {p.greeting}
-                  </span>
-                </div>
               </div>
             </motion.div>
             {/* The roll, travelling to the right edge as the map opens. */}
@@ -240,29 +223,22 @@ export function HuntOpening(p: OpeningProps) {
               style={{
                 left: rollX,
                 x: "-50%",
-                background: `linear-gradient(90deg, ${C.edge}, ${C.paper} 40%, #FFFFFF 55%, #EAD3A8)`,
-                boxShadow: soft(C.tint, 0.7),
+                background: `linear-gradient(90deg, ${mix(background, 40, "#c9b8a0")}, ${paper} 40%, #fff 55%, ${mix(background, 50, "#bba78c")})`,
+                boxShadow: "0 12px 22px -12px rgba(43,37,34,.55)",
               }}
               aria-hidden
             >
               <motion.span
                 className="absolute inset-x-[-30%] top-1/2 h-[4%] rounded-full"
-                style={{ background: C.pink, opacity: tie }}
+                style={{ background: accent, opacity: tie }}
               />
             </motion.span>
-            <Sparkles
-              reduced={p.reduced}
-              spots={[
-                [6, -8, 16],
-                [94, 108, 14],
-              ]}
-            />
           </motion.div>
         </Object3D>
       </Layer>
 
-      <div className="mt-[min(12cqi,52px)] h-11">
-        <FallbackButton onClick={unrollMap} color={C.ink} ink={C.ink} hidden={open || !live(p)}>
+      <div className="mt-[min(14cqi,60px)] h-11">
+        <FallbackButton onClick={unrollMap} color={ink} ink={ink} hidden={open || !live(p)}>
           {p.buttonText}
         </FallbackButton>
       </div>
@@ -270,15 +246,7 @@ export function HuntOpening(p: OpeningProps) {
   );
 }
 
-export const huntBackground = (): React.CSSProperties =>
-  pastelStage({
-    top: "#E3F8F8",
-    bottom: "#BCE7EE",
-    glow: "#FFFFFFCC",
-    blobs: [
-      ["#FFF1C7AA", 16, 14, 50],
-      ["#D9F2E2CC", 88, 88, 55],
-    ],
-    pattern: dotLayer("rgba(255,255,255,.55)", 1.8),
-    patternSize: "22px 22px",
-  });
+/** The hunt's own background: the gift's colors, softly meshed. */
+export const huntBackground = (palette: Palette): React.CSSProperties => ({
+  background: meshGradient(palette.primary, palette.accent, palette.background),
+});

@@ -24,6 +24,7 @@ import type { ThemeKind } from "@/lib/themeKind";
 import { castFor } from "@/themes/_shared/design";
 import { Character } from "@/themes/_shared/cast/Character";
 import { COMIC_COPY } from "@/copy/strings";
+import { ComicCover } from "@/components/ComicCover";
 
 type Props = {
   site: GiftSite;
@@ -428,77 +429,19 @@ export function ComicIssueView({ kind, site, modules, contributions, calendarEnt
             exit={reduce ? { opacity: 0 } : { rotateY: -96, opacity: 0.4, transition: { duration: 0.7, ease } }}
             style={{ transformOrigin: "0% 50%", transformPerspective: 1600 }}
           >
-            <div className="cx-cover" role="img" aria-label={`${settings.cover_title || defaults.cover_title}. ${settings.cover_subtitle || defaults.cover_subtitle}.`}>
-              <div className="cx-cover-rays" aria-hidden="true" />
-              <div className="cx-cover-dots" aria-hidden="true" />
-              <header className="cx-mast">
-                <span className="cx-imprint">
-                  <b>JB</b>
-                  <small>{COMIC_COPY.imprint}</small>
-                </span>
-                <span className="cx-tagline">{COMIC_COPY.tagline}</span>
-                <span className="cx-issue">
-                  <small>{COMIC_COPY.no}</small>
-                  <b>{issueNo}</b>
-                  <small>{month}</small>
-                </span>
-              </header>
-              <motion.p className="cx-cover-sub cx-title" initial={reduce ? false : { y: -16, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ delay: 0.15, duration: 0.5, ease }}>
-                {settings.cover_subtitle || defaults.cover_subtitle}
-              </motion.p>
-              <motion.h1
-                className="cx-cover-title cx-title"
-                initial={reduce ? false : { scale: 1.6, opacity: 0, rotate: -6 }}
-                animate={{ scale: 1, opacity: 1, rotate: -3 }}
-                transition={{ type: "spring", stiffness: 260, damping: 16, delay: 0.25 }}
-              >
-                {settings.cover_title || defaults.cover_title}
-              </motion.h1>
-              <div className="cx-cover-art">
-                <span className="cx-cover-burst" aria-hidden="true" />
-                {cast.character.type !== "none" ? (
-                  <motion.div className="cx-cover-hero" initial={reduce ? false : { y: 40, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ type: "spring", stiffness: 160, damping: 15, delay: 0.5 }}>
-                    <Character setting={cast.character} accessory={null} size={200} live follow showName={false} />
-                  </motion.div>
-                ) : null}
-              </div>
-              <motion.span className="cx-blurb cx-blurb-star cx-title" initial={reduce ? false : { scale: 0, rotate: -40 }} animate={{ scale: 1, rotate: 12 }} transition={{ type: "spring", stiffness: 300, damping: 14, delay: 0.75 }}>
-                {COMIC_COPY.featuring(counts.friends)}
-              </motion.span>
-              <motion.span className="cx-blurb cx-blurb-box" initial={reduce ? false : { x: -40, opacity: 0 }} animate={{ x: 0, opacity: 1 }} transition={{ delay: 0.9, duration: 0.45, ease }}>
-                {COMIC_COPY.inside(counts.letters, counts.photos)}
-              </motion.span>
-              <footer className="cx-cover-foot">
-                <span className="cx-seal">
-                  {COMIC_COPY.seal1}
-                  <br />
-                  {COMIC_COPY.seal2}
-                </span>
-                <motion.button
-                  type="button"
-                  className="cx-open"
-                  onClick={() => setCoverOpen(true)}
-                  {...(reduce ? {} : { whileHover: { rotate: -2, scale: 1.04 } })}
-                  whileTap={{ scale: 0.95 }}
-                  initial={reduce ? false : { y: 24, opacity: 0 }}
-                  animate={{ y: 0, opacity: 1 }}
-                  transition={{ delay: 1.05, type: "spring", stiffness: 260, damping: 18 }}
-                >
-                  {COMIC_COPY.open}
-                </motion.button>
-                <span className="cx-barcode" aria-hidden="true">
-                  {Array.from({ length: 18 }, (_, i) => (
-                    <i key={i} style={{ width: [2, 1, 3, 1, 2][i % 5] }} />
-                  ))}
-                  <small>{COMIC_COPY.priceless}</small>
-                </span>
-              </footer>
-              {onClose ? (
-                <button type="button" className="cx-icon cx-cover-close" aria-label={COMIC_COPY.closeCover} onClick={onClose}>
-                  <X className="size-4" />
-                </button>
-              ) : null}
-            </div>
+            <ComicCover
+              title={settings.cover_title || defaults.cover_title}
+              subtitle={settings.cover_subtitle || defaults.cover_subtitle}
+              issueNo={issueNo}
+              month={month}
+              character={cast.character}
+              friends={counts.friends}
+              letters={counts.letters}
+              photos={counts.photos}
+              reduce={!!reduce}
+              onOpen={() => setCoverOpen(true)}
+              {...(onClose ? { onClose } : {})}
+            />
           </motion.div>
         ) : (
           <motion.div key="reader" className="cx-reader" initial={reduce ? false : { opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.35 }}>
