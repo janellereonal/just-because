@@ -243,41 +243,47 @@ function ctxNow() {
   }
 }
 
+/** Pentatonic notes from G5 up, so candles going out one after another climb a little tune. */
+const CANDLE_NOTES = [784, 880, 1047, 1175, 1319, 1568, 1760, 2093, 2349, 2637];
+
 /**
- * A candle going out: a soft, low "fff" that fades in and out instead of a hiss that starts at
- * full volume. Low-passed air sliding down in pitch, quiet, a touch different each time so a row
- * of candles doesn't sound like one sample repeating. `index` staggers the pitch a little.
+ * One candle going out, as a cute "plip": a water-drop sine that slides up into its note, with a
+ * music-box tink on top. No noise at all (noise is what made the old one sound like a shot).
+ * `index` picks the note, so blowing out a row of candles plays a rising tune.
  */
+export function playCandle(ctx: BaseAudioContext, at: number, index = 0, dest: AudioNode = ctx.destination) {
+  const f = CANDLE_NOTES[index % CANDLE_NOTES.length]!;
+  // The drop: starts lower and slides up quickly, like a bubble popping.
+  const drop = ctx.createOscillator();
+  const dg = ctx.createGain();
+  drop.type = "sine";
+  drop.frequency.setValueAtTime(f * 0.55, at);
+  drop.frequency.exponentialRampToValueAtTime(f, at + 0.045);
+  dg.gain.setValueAtTime(0.0001, at);
+  dg.gain.exponentialRampToValueAtTime(0.075, at + 0.008);
+  dg.gain.exponentialRampToValueAtTime(0.0001, at + 0.2);
+  drop.connect(dg).connect(dest);
+  drop.start(at);
+  drop.stop(at + 0.25);
+  // The tink: a quiet bell an octave up that rings a little longer.
+  const bell = ctx.createOscillator();
+  const bg = ctx.createGain();
+  bell.type = "sine";
+  bell.frequency.setValueAtTime(f * 2, at + 0.03);
+  bg.gain.setValueAtTime(0.0001, at + 0.03);
+  bg.gain.exponentialRampToValueAtTime(0.022, at + 0.04);
+  bg.gain.exponentialRampToValueAtTime(0.0001, at + 0.45);
+  bell.connect(bg).connect(dest);
+  bell.start(at + 0.03);
+  bell.stop(at + 0.5);
+}
+
+/** The candle sound, when the viewer has sound on. */
 export function candlePuff(index = 0) {
   const ctx = ctxNow();
   if (!ctx) return;
   try {
-    const now = ctx.currentTime;
-    const dur = 0.42 + Math.random() * 0.08;
-    const len = Math.ceil(ctx.sampleRate * dur);
-    const buf = ctx.createBuffer(1, len, ctx.sampleRate);
-    const data = buf.getChannelData(0);
-    let last = 0;
-    for (let i = 0; i < len; i++) {
-      const t = i / len;
-      // Quick soft rise (no click), then a long gentle tail.
-      const env = Math.min(1, t / 0.12) * (1 - t) ** 2;
-      // A little smoothing takes the hard edge off the noise before the filter.
-      last = last * 0.55 + (Math.random() * 2 - 1) * 0.45;
-      data[i] = last * env;
-    }
-    const src = ctx.createBufferSource();
-    src.buffer = buf;
-    const filter = ctx.createBiquadFilter();
-    filter.type = "lowpass";
-    filter.Q.value = 0.3;
-    const top = 760 - (index % 5) * 40 + Math.random() * 60;
-    filter.frequency.setValueAtTime(top, now);
-    filter.frequency.exponentialRampToValueAtTime(220, now + dur);
-    const gain = ctx.createGain();
-    gain.gain.value = 0.14;
-    src.connect(filter).connect(gain).connect(ctx.destination);
-    src.start(now);
+    playCandle(ctx, ctx.currentTime + 0.005, index);
   } catch {
     /* sound is a nicety */
   }
