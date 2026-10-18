@@ -361,7 +361,7 @@ function Cover({ piece, index, shades, headingFont, small = false }: { piece: Pi
         <span className="rc-plain-ring" />
         <span className="rc-plain-note">
           <Lock className="size-4" />
-          {piece.sealed ? pieceWhat(piece) : t("body.opensOn", { day: formatDay(piece.date!) })}
+          {piece.sealed ? pieceWhat(piece) : t("body.opensOn", { day: formatDay(piece.date!, SHORT_DAY) })}
         </span>
         {!small ? (
           <span className="rc-cover-name is-dark" style={{ fontFamily: headingFont }}>
