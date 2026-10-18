@@ -29,6 +29,7 @@ import { NEW_SECTION_TYPES, SECTION_NEEDS, capsuleLocked, isNewSection, normaliz
 import { createServerFn } from "@tanstack/react-start";
 import { and, asc, desc, eq, inArray, ne, or, sql } from "drizzle-orm";
 import { z } from "zod";
+import { isFlagOn } from "@/config/flags";
 import { getDb, schema } from "@/server/db";
 import { CLIENT_EVENTS, track } from "@/server/events";
 import { notifyNewNote } from "@/server/notify";
@@ -200,11 +201,19 @@ function siteRow(site: SiteRecord, opts: { owner: boolean }) {
   const { passwordHash, ...rest } = site;
   const protectedNow = needsPassword(site);
   return {
-    ...toRow(rest),
+    ...toRow({ ...rest, customText: publicCustomText(site.customText) }),
     ...(opts.owner ? { password_set: !!passwordHash } : {}),
     password_protected: protectedNow,
     unlocked: opts.owner || !protectedNow || isUnlocked(site),
   };
+}
+
+/** custom_text without the secret half of the recipient's thank-you (see sendThanks). */
+function publicCustomText(text: unknown) {
+  if (!text || typeof text !== "object") return text;
+  const { thanks_key: _key, ...rest } = text as Record<string, unknown>;
+  void _key;
+  return rest;
 }
 
 /**
@@ -509,11 +518,17 @@ export const updateSite = createServerFn({ method: "POST" })
     // Words: trimmed, with the same limits the editor's counters show.
     const cleanText: Record<string, string> = {};
     for (const [k, v] of Object.entries(p.custom_text)) {
-      if (typeof v !== "string") continue;
+      if (typeof v !== "string" || (THANKS_KEYS as readonly string[]).includes(k)) continue;
       const t = v.trim();
       const max = customTextLimit(k);
       if ([...t].length > max) throw new HttpError(422, tooLong(FIELD_NAMES[k] ?? "that title", max));
       if (t) cleanText[k] = t;
+    }
+    // The recipient's thank-you isn't the editor's to change: keep what's stored, ignore what's sent.
+    const stored = (site.customText ?? {}) as Record<string, string>;
+    for (const k of THANKS_KEYS) {
+      delete cleanText[k];
+      if (typeof stored[k] === "string") cleanText[k] = stored[k];
     }
     p.custom_text = cleanText;
     // Going live needs a paid plan. The first publish happens in the payment webhook;
@@ -1652,4 +1667,64 @@ export const getThemeMetrics = createServerFn({ method: "GET" })
     }));
     list.sort((a, b) => (b.paid ?? -1) - (a.paid ?? -1) || b.created - a.created);
     return { rows: list, regions: [...regions].map((r) => r.region).filter(Boolean) };
+  });
+
+/* ------------------------------------------------------------------ */
+/* Thanks from the recipient (flag thankYou)                           */
+/* ------------------------------------------------------------------ */
+
+/**
+ * The recipient writes one thank-you to everyone. It's kept on the gift in custom_text
+ * (`thanks_text`, `thanks_at`, plus `thanks_key`, a hash of a random key kept on the
+ * device that wrote it, so only that device can change it). No new table. Friends see
+ * it on their link and the organiser sees it on the dashboard. `thanks_key` never
+ * leaves the server (see `publicCustomText`).
+ */
+export const THANKS_KEYS = ["thanks_text", "thanks_at", "thanks_key"] as const;
+const THANKS_MAX = 600;
+
+async function hashThanksKey(key: string) {
+  const bytes = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(`jb-thanks:${key}`));
+  return [...new Uint8Array(bytes)].map((b) => b.toString(16).padStart(2, "0")).join("");
+}
+
+export const sendThanks = createServerFn({ method: "POST" })
+  .inputValidator(
+    z.object({
+      siteId: id,
+      text: z.string().trim().min(1, "Write a few words first.").max(THANKS_MAX, tooLong("your thank-you", THANKS_MAX)),
+      key: z.string().min(16).max(80),
+    }),
+  )
+  .handler(async ({ data }) => {
+    if (!isFlagOn("thankYou")) throw new HttpError(404, "Not available yet.");
+    rateLimit(`thanks:ip:${clientIp()}`, 10, 10 * 60_000, "That's a lot of tries. Wait a few minutes and try again.");
+    rateLimit(`thanks:gift:${data.siteId}`, 10, 10 * 60_000, "That's a lot of tries. Wait a few minutes and try again.");
+    const [site] = await getDb().select().from(schema.giftSites).where(eq(schema.giftSites.id, data.siteId));
+    if (!site) throw new HttpError(404, "We couldn't find that gift.");
+    if (isOwnerOf(await currentUser(), site)) {
+      throw new HttpError(403, "Thanks come from the person the gift is for. Open the link signed out to try it.");
+    }
+    if (!isOpen(site) || !(await canViewGift(site.id))) throw new HttpError(403, "This gift isn't open right now.");
+    const text = (site.customText ?? {}) as Record<string, string>;
+    const keyHash = await hashThanksKey(data.key);
+    if (text["thanks_key"] && text["thanks_key"] !== keyHash) {
+      throw new HttpError(409, "A thank-you was already sent from another device.");
+    }
+    const next = { ...text, thanks_text: data.text, thanks_at: new Date().toISOString(), thanks_key: keyHash };
+    await getDb().update(schema.giftSites).set({ customText: next }).where(eq(schema.giftSites.id, site.id));
+    return { ok: true, at: next.thanks_at };
+  });
+
+/** The organiser can take a thank-you down (it then disappears for friends too). */
+export const clearThanks = createServerFn({ method: "POST" })
+  .inputValidator(z.object({ siteId: id }))
+  .handler(async ({ data }) => {
+    await requireSiteOwner(data.siteId);
+    const [site] = await getDb().select().from(schema.giftSites).where(eq(schema.giftSites.id, data.siteId));
+    if (!site) throw new HttpError(404, "We couldn't find that gift.");
+    const text = { ...((site.customText ?? {}) as Record<string, string>) };
+    for (const k of THANKS_KEYS) delete text[k];
+    await getDb().update(schema.giftSites).set({ customText: text }).where(eq(schema.giftSites.id, site.id));
+    return { ok: true };
   });

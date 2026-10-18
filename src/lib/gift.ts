@@ -182,6 +182,9 @@ export type CustomText = {
   footer_note?: string;
   /** Birthday: the age they're turning (digits). */
   turning?: string;
+  /** The recipient's thank-you to everyone, and when they sent it (flag thankYou, see sendThanks). */
+  thanks_text?: string;
+  thanks_at?: string;
   /** Parcel themes: where it's going and where it's from ("Lisbon, Portugal"). */
   to_place?: string;
   from_place?: string;

@@ -54,6 +54,7 @@ const SHORT: Partial<Record<ModuleType, string>> = { openwhen: "Open-when", caps
 import { PageError, PageLoading, PageNotFound } from "@/components/PageStates";
 import { REPORT_COPY } from "@/copy/strings";
 import { ReportGift } from "@/components/ReportGift";
+import { ThanksNote } from "@/components/Thanks";
 
 // The photobooth only loads when someone opens it.
 const PhotoBooth = lazy(() => import("@/components/photobooth/PhotoBooth").then((m) => ({ default: m.PhotoBooth })));
@@ -268,6 +269,16 @@ function ContributePage() {
     border: `1px solid ${ink}22`,
   };
   const canEdit = site.status !== "published";
+  // The recipient's thank-you, once they've sent one (flag thankYou).
+  const thanks =
+    isFlagOn("thankYou") && site.custom_text.thanks_text ? (
+      <ThanksNote
+        name={site.custom_text.recipient_name?.trim() ?? ""}
+        text={site.custom_text.thanks_text}
+        at={site.custom_text.thanks_at}
+        palette={palette}
+      />
+    ) : null;
   const giftEnded = room?.ended || fullReason === "ended";
   /* Someone who already added something can still add more; new names can't. */
   const noRoomForNewPeople = (room?.contributorsFull && mine.length === 0) || fullReason === "contributors";
@@ -300,6 +311,7 @@ function ContributePage() {
               ? `${theirGift} isn't taking new notes any more. Thank you for wanting to add something.`
               : `So many people wanted to add to ${named ? theirGift : "this gift"} that it ran out of room. If the organiser makes more room, this link will work again.`}
           </p>
+          {thanks ? <div className="mt-8">{thanks}</div> : null}
         </div>
       </div>
     );
@@ -588,6 +600,7 @@ function ContributePage() {
     >
       <div className="mx-auto grid max-w-6xl grid-cols-[minmax(0,1fr)] gap-10 lg:grid-cols-[minmax(0,460px)_minmax(0,1fr)]">
         <div>
+          {thanks ? <div className="mb-8">{thanks}</div> : null}
           {done ? (
             <div className="flex items-center justify-center gap-3 text-left">
               <Bo pose="delivery" size={120} animateKey={submitCount} />

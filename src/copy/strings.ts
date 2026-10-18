@@ -644,3 +644,29 @@ export const PRICE_COPY = {
   /** Next to the pay button, for visitors outside the Philippines. */
   abroadPayNote: "Paying from outside the Philippines? Use a Visa or Mastercard. It's charged in pesos, and some banks add a small fee for that.",
 } as const;
+
+/** The recipient's thank-you to everyone (flag thankYou). */
+export const THANKS_COPY = {
+  button: "Say thanks to everyone",
+  title: "Say thanks to everyone",
+  intro: (count: number) =>
+    count > 1
+      ? `${count} people put this together. Write one note back and they'll see it when they open their link again.`
+      : "Write one note back and everyone who added something will see it when they open their link again.",
+  placeholder: "I read every single one. Thank you for...",
+  send: "Send it",
+  sending: "Sending…",
+  cancel: "Not now",
+  sentTitle: "Sent",
+  sentBody: "Everyone who added something will see it on their link.",
+  edit: "Edit",
+  yours: "Your thank-you",
+  makeOne: "Make one for someone",
+  makeOneLine: "Know someone who'd love one of these?",
+  failed: "That didn't send. Try again in a moment.",
+  from: (name: string) => (name ? `A note from ${name}` : "A note from them"),
+  sentOn: (date: string) => `Sent ${date}`,
+  ownerTitle: (name: string) => (name ? `${name} said thanks` : "They said thanks"),
+  remove: "Remove",
+  removeConfirm: "Remove this thank-you? Friends won't see it any more.",
+} as const;

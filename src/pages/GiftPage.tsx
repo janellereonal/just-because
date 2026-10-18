@@ -36,6 +36,7 @@ import { ExtendDialog } from "@/components/PlanControls";
 import { clearIntroSkip, hasSkippedIntro, rememberIntroSkip } from "@/lib/introSkip";
 import { engineIntroProps, simbangVisible } from "@/lib/engineGift";
 import { t } from "@/i18n";
+import { SayThanks } from "@/components/Thanks";
 
 
 function PublishedPage() {
@@ -221,6 +222,14 @@ function PublishedPage() {
       )}
       {opened || !formatInfo(site.format).usesIntro ? (
         <div style={{ background: palette.background }}>
+          {previewing ? null : (
+            <SayThanks
+              site={site}
+              palette={palette}
+              isOwner={isOwner}
+              contributors={new Set(contributions.filter((c) => !c.by_owner).map((c) => c.author_name.trim().toLowerCase()).filter(Boolean)).size}
+            />
+          )}
           <ReportGift slug={site.slug} page="gift" tone={readableInk(palette.background)} />
         </div>
       ) : null}

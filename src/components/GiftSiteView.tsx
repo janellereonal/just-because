@@ -1023,7 +1023,7 @@ export function GiftSiteView({
             <Bo pose="idle" size={32} title="Bo" />
             <p className="text-sm">Made with Just Because</p>
           </div>
-          <p className="mt-1 text-xs opacity-70">Tag us and use #justbecause</p>
+          <p className="mt-1 text-xs opacity-70">Tag us and use #madewithjustbecause</p>
           {showShare && !sample ? (
             <a
               href="/"

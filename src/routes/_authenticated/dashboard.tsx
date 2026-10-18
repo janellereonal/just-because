@@ -29,6 +29,7 @@ import { formatInfo } from "@/lib/formats";
 import Bo from "@/components/Bo";
 import { GiftCover } from "@/components/GiftCover";
 import { fetchThemes, type Theme } from "@/lib/themes";
+import { OwnerThanks } from "@/components/Thanks";
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
   head: () => ({
@@ -91,6 +92,7 @@ function GiftCard({ site, index, theme, counts }: { site: GiftSite; index: numbe
           </span>
         </div>
         {counts ? <p className="-mt-2 text-sm text-muted">{noteSummary(counts)}</p> : null}
+        <OwnerThanks site={site} onRemoved={() => void queryClient.invalidateQueries({ queryKey: ["my-sites"] })} />
         <div className="mt-auto flex flex-wrap gap-2">
           <Link
             to="/sites/$id"
