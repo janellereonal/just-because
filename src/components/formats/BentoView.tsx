@@ -34,7 +34,7 @@ import { readableInk, surfaceColor } from "@/lib/palettes";
 import type { Palette } from "@/lib/themes";
 import { BENTO_COPY } from "@/copy/strings";
 import {
-  giftToday,
+  pieceLocked,
   meshGradient,
   useCountdown,
   useMediaUrl,
@@ -505,7 +505,7 @@ function CapsuleFace({ piece, palette }: { piece: Piece; palette: Palette }) {
 }
 
 function CalendarFace({ piece, palette }: { piece: Piece; palette: Palette }) {
-  const locked = !!piece.date && piece.date > giftToday();
+  const locked = pieceLocked(piece);
   const d = piece.date ? localDate(piece.date) : null;
   return (
     <span className="flex h-full flex-col">

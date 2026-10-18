@@ -5,12 +5,14 @@ import { themeKindOf } from "@/lib/themeKind";
 import { resolveStyle } from "@/lib/styles";
 import { isQuietOccasion, occasionName } from "@/lib/occasions";
 import {useParams} from "@tanstack/react-router";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { keepPreviousData, useQuery, useQueryClient } from "@tanstack/react-query";
+import { localToday, msToLocalMidnight } from "@/lib/time";
 import { FormatView } from "@/components/formats/FormatView";
 import { formatInfo } from "@/lib/formats";
 import { introStyleForTheme } from "@/lib/intro";
 import { PageError, PageLoading, PageNotFound } from "@/components/PageStates";
-import { REPORT_COPY } from "@/copy/strings";
+import { GIFT_FOOTER_COPY, REPORT_COPY } from "@/copy/strings";
+import { RotateCcw } from "lucide-react";
 import { ReportGift } from "@/components/ReportGift";
 import { readableInk } from "@/lib/palettes";
 
@@ -42,6 +44,33 @@ import { t } from "@/i18n";
 import { isFlagOn } from "@/config/flags";
 
 
+/** Today's date here. Updates at local midnight, and when the tab comes back (a laptop waking up). */
+function useLocalDay() {
+  const [day, setDay] = useState(() => localToday());
+  useEffect(() => {
+    let timer = 0;
+    const arm = () => {
+      window.clearTimeout(timer);
+      timer = window.setTimeout(() => {
+        setDay(localToday());
+        arm();
+      }, msToLocalMidnight() + 500);
+    };
+    const onVisible = () => {
+      if (document.visibilityState !== "visible") return;
+      setDay(localToday());
+      arm();
+    };
+    arm();
+    document.addEventListener("visibilitychange", onVisible);
+    return () => {
+      window.clearTimeout(timer);
+      document.removeEventListener("visibilitychange", onVisible);
+    };
+  }, []);
+  return day;
+}
+
 function PublishedPage() {
   const { slug } = useParams({ from: "/g/$slug" });
   const [opened, setOpened] = useState(false);
@@ -72,13 +101,18 @@ function PublishedPage() {
     enabled: !!site && !locked,
   });
 
+  // Locked doors and the tree's reveal open at local midnight; the server only sends their
+  // content once the day has started, so ask again when the day turns.
+  const day = useLocalDay();
   const { data: calendarEntries = [] } = useQuery({
-    queryKey: ["calendar", site?.id],
+    queryKey: ["calendar", site?.id, day],
     queryFn: () => fetchCalendarEntries(site!.id),
     enabled: !!site && !locked,
+    placeholderData: keepPreviousData,
   });
   const { data: treeOrnaments = [] } = useQuery({
-    queryKey: ["tree-ornaments", site?.id],
+    queryKey: ["tree-ornaments", site?.id, day],
+    placeholderData: keepPreviousData,
     queryFn: () => fetchPublicTreeOrnaments(site!.id),
     enabled: !!site && !locked,
   });
@@ -193,42 +227,45 @@ function PublishedPage() {
             calendarEntries={calendarEntries}
           />
         </div>
-{showStory ? (
-          <FriendsArrive
-            names={contributions.map((c) => c.author_name)}
-            recipient={site.custom_text.recipient_name}
-            palette={palette}
-            kind={resolveStyle(site, theme).introKind}
-            birthday={site.occasion === "birthday" || (!site.occasion && themeKindOf(theme) === "birthday")}
-            onDone={() => setStoryDone(true)}
-          />
-        ) : (
-                <GiftIntro
-          style={introStyleForTheme(theme?.name)}
-          kind={resolveStyle(site, theme).introKind}
-          giftStyle={site.style}
-          occasionBadge={site.occasion ? occasionName(site.occasion) : undefined}
-          calm={isQuietOccasion(site.occasion)}
-          palette={palette}
-          fonts={fonts}
-          backgroundStyle={site.background_style ?? "paper"}
-          recipientName={site.custom_text.recipient_name}
-          introText={site.intro_text ?? undefined}
-          settings={site.intro_settings}
-          character={site.character}
-          iconSet={site.icon_set}
-          contributors={[...new Set(contributions.map((c) => c.author_name.trim()).filter(Boolean))]}
-          {...engineIntroProps(theme?.name, site, contributions)}
-          onOpen={() => {
-            trackEvent("theme_opening_completed", site.id);
-            setOpened(true);
-          }}
-          onSkip={() => {
-            rememberIntroSkip(site.id);
-            setOpened(true);
-          }}
-        />
-        )}
+        {/* Long names wrap in the opening too (see .jb-gift). */}
+        <div className="jb-gift contents">
+          {showStory ? (
+            <FriendsArrive
+              names={contributions.map((c) => c.author_name)}
+              recipient={site.custom_text.recipient_name}
+              palette={palette}
+              kind={resolveStyle(site, theme).introKind}
+              birthday={site.occasion === "birthday" || (!site.occasion && themeKindOf(theme) === "birthday")}
+              onDone={() => setStoryDone(true)}
+            />
+          ) : (
+            <GiftIntro
+              style={introStyleForTheme(theme?.name)}
+              kind={resolveStyle(site, theme).introKind}
+              giftStyle={site.style}
+              occasionBadge={site.occasion ? occasionName(site.occasion) : undefined}
+              calm={isQuietOccasion(site.occasion)}
+              palette={palette}
+              fonts={fonts}
+              backgroundStyle={site.background_style ?? "paper"}
+              recipientName={site.custom_text.recipient_name}
+              introText={site.intro_text ?? undefined}
+              settings={site.intro_settings}
+              character={site.character}
+              iconSet={site.icon_set}
+              contributors={[...new Set(contributions.map((c) => c.author_name.trim()).filter(Boolean))]}
+              {...engineIntroProps(theme?.name, site, contributions)}
+              onOpen={() => {
+                trackEvent("theme_opening_completed", site.id);
+                setOpened(true);
+              }}
+              onSkip={() => {
+                rememberIntroSkip(site.id);
+                setOpened(true);
+              }}
+            />
+          )}
+        </div>
         </Suspense>
       ) : (
         <FormatView
@@ -245,7 +282,18 @@ function PublishedPage() {
         />
       )}
       {opened || !formatInfo(site.format).usesIntro ? (
-        <div style={{ background: palette.background }}>
+        <div className="flex flex-wrap items-center justify-center gap-x-3" style={{ background: palette.background }}>
+          {/* Scrapbook has this in its own footer; every other layout gets it here. */}
+          {formatInfo(site.format).usesIntro && site.format !== "scrapbook" ? (
+            <button
+              type="button"
+              onClick={replayIntro}
+              className="inline-flex min-h-9 items-center gap-1.5 rounded-full px-3 text-xs opacity-60 hover:opacity-100 focus-visible:opacity-100"
+              style={{ color: readableInk(palette.background) }}
+            >
+              <RotateCcw className="size-3.5" aria-hidden="true" /> {GIFT_FOOTER_COPY.replayIntro}
+            </button>
+          ) : null}
           <ReportGift slug={site.slug} page="gift" tone={readableInk(palette.background)} />
         </div>
       ) : null}

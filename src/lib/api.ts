@@ -5,7 +5,9 @@
  *
  *  - anyone can read a gift's settings, modules and calendar
  *  - guests only see *approved* contributions, and "only the recipient"
- *    ornament messages are never sent to the browser
+ *    ornament messages only go to the finished gift (/g/), never the friend page
+ *  - locked calendar doors and ornaments before the tree's reveal date go out
+ *    without their content until that day has started somewhere (UTC+14)
  *  - guests can add contributions (always pending) and edit/delete their own
  *    with the secret edit token, only while the gift is still a draft
  *  - only the creator can edit a gift, see pending items, approve, or plan
@@ -24,6 +26,7 @@ import { OCCASION_IDS, occasionInfo, type OccasionId } from "@/lib/occasions";
 import { FONT_CHOICE_IDS } from "@/lib/fontChoices";
 import { FIELD_NAMES, LIMITS, customTextLimit, noteTextLimit, tooLong } from "@/lib/limits";
 import { normalizeIntroSettings } from "@/lib/intro";
+import { dayStartedSomewhere } from "@/lib/time";
 import { normalizeCharacter } from "@/themes/_shared/cast/types";
 import { normalizeIconSetting } from "@/themes/_shared/iconSets";
 import { NEW_SECTION_TYPES, SECTION_NEEDS, capsuleLocked, isNewSection, normalizeSectionData } from "@/lib/sections";
@@ -111,6 +114,21 @@ function sectionPayload(type: string, raw: unknown, text: string | null, media: 
 function sealCapsule<T extends { moduleType: string; data: unknown; textContent: string | null; mediaUrl: string | null }>(row: T): T {
   if (row.moduleType !== "capsule" || !capsuleLocked(row.data)) return row;
   return { ...row, textContent: null, mediaUrl: null, data: { ...(row.data as object), locked: true } };
+}
+
+/**
+ * Public rows: a locked advent door keeps its surprise on the server until its day has
+ * started somewhere (UTC+14). Date and position stay, so the grid still draws; the
+ * browser opens each door at the viewer's own midnight and refetches then.
+ */
+function sealDoor<T extends { entryDate: string; textContent: string | null; mediaUrl: string | null; externalLink: string | null }>(row: T, now: number) {
+  if (dayStartedSomewhere(row.entryDate, now)) return { ...row, locked: false };
+  return { ...row, textContent: null, mediaUrl: null, externalLink: null, locked: true };
+}
+
+/** Before the tree's reveal date (started somewhere), ornaments go out without their words. */
+function treeSealed(site: { treeRevealDate: string | null }, now = Date.now()) {
+  return !!site.treeRevealDate && !dayStartedSomewhere(site.treeRevealDate, now);
 }
 const ORNAMENT_KEYS = [
   "bauble", "star", "stocking", "candy-cane", "snowman", "gingerbread", "bell", "wreath",
@@ -236,17 +254,20 @@ function siteRow(site: SiteRecord, opts: { owner: boolean }) {
 
 /**
  * Can the current visitor see the finished gift? Open gifts: anyone, after the
- * password if it has one. Otherwise only the owner (or an admin).
+ * password if it has one. Otherwise only the owner (or an admin). Returns the gift
+ * and whether the visitor owns it, or null.
  */
 async function canViewGift(siteId: string, opts: { allowSharedNotes?: boolean } = {}) {
   const [site] = await getDb().select().from(schema.giftSites).where(eq(schema.giftSites.id, siteId));
-  if (!site) return false;
-  if (site.disabledAt && !(await currentUser())?.isAdmin) return false;
+  if (!site) return null;
+  const user = await currentUser();
+  if (site.disabledAt && !user?.isAdmin) return null;
+  const owner = isOwnerOf(user, site);
   // Friends reading each other's notes while the gift is still being made (the contribute page).
-  if (opts.allowSharedNotes && site.shareNotes && site.status === "draft") return true;
-  if (isOwnerOf(await currentUser(), site)) return true;
-  if (!isOpen(site)) return false;
-  return !needsPassword(site) || isUnlocked(site);
+  if (opts.allowSharedNotes && site.shareNotes && site.status === "draft") return { site, owner };
+  if (owner) return { site, owner };
+  if (!isOpen(site)) return null;
+  return !needsPassword(site) || isUnlocked(site) ? { site, owner } : null;
 }
 
 /**
@@ -727,7 +748,8 @@ export const listContributions = createServerFn({ method: "GET" })
         .orderBy(asc(c.createdAt));
       return rows.map(toRow);
     }
-    if (!(await canViewGift(data.siteId, { allowSharedNotes: true }))) return [];
+    const view = await canViewGift(data.siteId, { allowSharedNotes: true });
+    if (!view) return [];
     const rows = await db
       .select(publicColumns)
       .from(c)
@@ -739,13 +761,21 @@ export const listContributions = createServerFn({ method: "GET" })
         ),
       )
       .orderBy(asc(c.createdAt));
-    return rows.map((r) => toRow(sealCapsule(r)));
+    // Ornaments wait for the tree's reveal date (the owner always sees them).
+    const treeLocked = !view.owner && treeSealed(view.site);
+    return rows.map((r) =>
+      toRow(treeLocked && r.moduleType === "tree" ? { ...r, textContent: null, locked: true } : sealCapsule(r)),
+    );
   });
 
 /** Name, section and position only. Never other people's words, photos or audio. */
 export const listSealedContributions = createServerFn({ method: "GET" })
   .inputValidator(z.object({ siteId: id }))
   .handler(async ({ data }) => {
+    const [site] = await getDb().select().from(schema.giftSites).where(eq(schema.giftSites.id, data.siteId));
+    if (!site) return [];
+    // Behind a password, even friends' names wait for it (same gate as the notes).
+    if (needsPassword(site) && !isUnlocked(site) && !isOwnerOf(await currentUser(), site)) return [];
     const rows = await getDb()
       .select({
         id: c.id,
@@ -765,11 +795,18 @@ export const listSealedContributions = createServerFn({ method: "GET" })
     return rows.map(toRow);
   });
 
-/** Every approved ornament; "only the recipient" messages come back without text. */
+/**
+ * Every approved ornament, for the finished gift (/g/, the recipient's link). Only readable
+ * once the gift is open (and after its password), so "only the recipient" messages come
+ * back with their words here; the friend page never gets them (listContributions leaves
+ * them out). Before the reveal date every ornament comes back without words.
+ */
 export const listPublicTreeOrnaments = createServerFn({ method: "GET" })
   .inputValidator(z.object({ siteId: id }))
   .handler(async ({ data }) => {
-    if (!(await canViewGift(data.siteId))) return [];
+    const view = await canViewGift(data.siteId);
+    if (!view) return [];
+    const locked = !view.owner && treeSealed(view.site);
     const rows = await getDb()
       .select({
         id: c.id,
@@ -784,9 +821,7 @@ export const listPublicTreeOrnaments = createServerFn({ method: "GET" })
       .from(c)
       .where(and(eq(c.siteId, data.siteId), eq(c.moduleType, "tree"), eq(c.status, "approved")))
       .orderBy(asc(c.createdAt));
-    return rows.map((row) =>
-      toRow({ ...row, textContent: row.visibility === "public" ? row.textContent : null }),
-    );
+    return rows.map((row) => toRow({ ...row, textContent: locked ? null : row.textContent, locked }));
   });
 
 export const submitContribution = createServerFn({ method: "POST" })
@@ -1520,14 +1555,17 @@ export const listCalendarEntries = createServerFn({ method: "GET" })
   .handler(async ({ data }) => {
     const [site] = await getDb().select().from(schema.giftSites).where(eq(schema.giftSites.id, data.siteId));
     if (!site) return [];
+    const owner = isOwnerOf(await currentUser(), site);
     // Behind a password, the calendar's surprises wait for the password too.
-    if (needsPassword(site) && !isUnlocked(site) && !isOwnerOf(await currentUser(), site)) return [];
+    if (needsPassword(site) && !isUnlocked(site) && !owner) return [];
     const rows = await getDb()
       .select()
       .from(schema.calendarEntries)
       .where(eq(schema.calendarEntries.siteId, data.siteId))
       .orderBy(asc(schema.calendarEntries.entryDate));
-    return rows.map(toRow);
+    if (owner || !site.calendarLocked) return rows.map(toRow);
+    const now = Date.now();
+    return rows.map((row) => toRow(sealDoor(row, now)));
   });
 
 export const upsertCalendarEntry = createServerFn({ method: "POST" })

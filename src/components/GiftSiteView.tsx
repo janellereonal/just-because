@@ -372,7 +372,8 @@ function CalendarGrid({
     <>
       <div className="grid grid-cols-4 gap-2 @xl:grid-cols-7">
         {days.map(({ date, entry }) => {
-          const sealed = locked && date > today;
+          // The server keeps a door's surprise until its day starts somewhere; it never opens early here.
+          const sealed = (locked && date > today) || !!entry?.locked;
           const has = !!entry && !sealed;
           return (
             <button

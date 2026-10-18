@@ -130,3 +130,23 @@ export function countdownTarget(site: {
 }): string | null {
   return site.countdown_at ?? site.countdown_date ?? null;
 }
+
+/** The earliest time zone (UTC+14, Kiribati): a calendar day starts there first. */
+const EARLIEST_ZONE_MS = 14 * 3600_000;
+
+/**
+ * Has this calendar day ("2026-12-24") started anywhere on Earth yet? The server uses it
+ * to decide what it may send: a door or a reveal date opens at each viewer's own local
+ * midnight, and the first local midnight anywhere is in UTC+14.
+ */
+export function dayStartedSomewhere(day: string, now: number = Date.now()): boolean {
+  const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(day);
+  if (!m) return true;
+  return now >= Date.UTC(Number(m[1]), Number(m[2]) - 1, Number(m[3])) - EARLIEST_ZONE_MS;
+}
+
+/** Milliseconds until the viewer's next local midnight (when a calendar door opens). */
+export function msToLocalMidnight(now: Date = new Date()): number {
+  const next = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1);
+  return next.getTime() - now.getTime();
+}

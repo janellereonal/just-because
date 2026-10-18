@@ -36,6 +36,8 @@ export type Piece = {
   thumb?: string;
   /** Calendar pieces: the day they unlock. */
   date?: string;
+  /** Calendar pieces the server is still keeping shut (no content sent yet). */
+  locked?: boolean;
   sample?: boolean;
   /** The section it came from (letters, coupons, superlatives...), for layouts that group by section. */
   section?: string;
@@ -68,6 +70,11 @@ export const giftMoment = momentOf;
 
 /** Today in the viewer's zone (calendar doors open at their local midnight). */
 export const giftToday = localToday;
+
+/** A calendar door that isn't open yet: its day hasn't come here, or the server is still keeping it shut. */
+export function pieceLocked(p: Pick<Piece, "kind" | "date" | "locked">) {
+  return p.kind === "calendar" && (!!p.locked || (!!p.date && p.date > giftToday()));
+}
 
 export function useCountdown(date: string | null) {
   const [now, setNow] = useState(() => Date.now());
@@ -203,7 +210,8 @@ export function usePieces({
             text: isNewSection(c.module_type) ? sectionAsText(c.module_type, c.data, c.text_content, (iso) => formatDay(iso)) : c.text_content,
             media: c.sealed || (c.module_type !== "doodle" && isNewSection(c.module_type)) ? null : c.media_url,
             link: c.external_link,
-            sealed: !!c.sealed,
+            // Ornaments the server holds back until the tree's reveal date show sealed too.
+            sealed: !!c.sealed || !!c.locked,
             mine: !!c.mine,
             section: c.module_type,
             ...(!c.sealed && isNewSection(c.module_type) && c.data ? { data: c.data as Record<string, unknown> } : {}),
@@ -224,6 +232,7 @@ export function usePieces({
           sealed: false,
           mine: false,
           date: e.entry_date.slice(0, 10),
+          ...(e.locked ? { locked: true } : {}),
           section: "calendar",
         })),
       );

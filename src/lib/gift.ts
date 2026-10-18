@@ -219,6 +219,8 @@ export type CalendarEntry = {
   text_content: string | null;
   media_url: string | null;
   external_link: string | null;
+  /** A locked door whose day hasn't started anywhere yet: the server sent no content. */
+  locked?: boolean;
 };
 
 export const BACKGROUND_STYLES = {
@@ -347,7 +349,12 @@ export type Contribution = {
  * A contribution as shown in a gift view. `sealed` items carry no content at
  * all (the browser never receives it); `mine` marks the visitor's own item.
  */
-export type ViewContribution = Contribution & { sealed?: boolean; mine?: boolean };
+export type ViewContribution = Contribution & {
+  sealed?: boolean;
+  mine?: boolean;
+  /** An ornament whose words the server keeps until the tree's reveal date. */
+  locked?: boolean;
+};
 
 /** Name, section and position only — never other people's words, photos or audio. */
 export async function fetchSealedContributions(siteId: string): Promise<ViewContribution[]> {
@@ -418,6 +425,7 @@ export function normalizeCalendarEntry(row: Record<string, unknown>): CalendarEn
     text_content: (row["text_content"] as string | null) ?? null,
     media_url: (row["media_url"] as string | null) ?? null,
     external_link: (row["external_link"] as string | null) ?? null,
+    ...(row["locked"] === true ? { locked: true } : {}),
   };
 }
 
@@ -465,9 +473,12 @@ export const ORNAMENTS = [
 
 export type OrnamentKey = (typeof ORNAMENTS)[number][0];
 
-export async function fetchPublicTreeOrnaments(siteId: string) {
+export async function fetchPublicTreeOrnaments(siteId: string): Promise<ViewContribution[]> {
   const data = await listPublicTreeOrnaments({ data: { siteId } });
-  return data.map((row) => normalizeContribution({ ...row, module_type: "tree" }));
+  return data.map((row) => ({
+    ...normalizeContribution({ ...row, module_type: "tree" }),
+    ...(row["locked"] === true ? { locked: true } : {}),
+  }));
 }
 
 export async function fetchSiteBySlug(slug: string) {

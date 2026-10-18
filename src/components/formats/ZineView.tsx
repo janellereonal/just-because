@@ -7,7 +7,7 @@ import { useState } from "react";
 import { Lock, Mic, Play } from "lucide-react";
 import { readableInk } from "@/lib/palettes";
 import {
-  giftToday,
+  pieceLocked,
   useCountdown,
   useMediaUrl,
   usePieces,
@@ -108,7 +108,7 @@ function Cutout({
   const s = seed(piece.id);
   const rot = (s - 0.5) * 7;
   const sticker = s > 0.62 ? STICKERS[Math.floor(s * 100) % STICKERS.length] : null;
-  const locked = piece.kind === "calendar" && !!piece.date && piece.date > giftToday();
+  const locked = pieceLocked(piece);
   const variant =
     piece.kind === "letter"
       ? s > 0.5

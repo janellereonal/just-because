@@ -9,7 +9,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { Lock, Mic, Music2, Sparkles } from "lucide-react";
 import { FONT_PAIRINGS } from "@/lib/gift";
 import { readableInk, surfaceColor } from "@/lib/palettes";
-import { giftToday, useMediaUrl, usePieces, useReducedMotion, type Piece } from "@/lib/giftPieces";
+import { pieceLocked, useMediaUrl, usePieces, useReducedMotion, type Piece } from "@/lib/giftPieces";
 import type { FormatViewProps } from "@/components/formats/FormatView";
 import { PieceSheet, seed } from "@/components/formats/PieceSheet";
 import { burst, buzz, chime } from "@/lib/play";
@@ -331,7 +331,7 @@ function Card({
   accent: string;
 }) {
   const media = useMediaUrl(piece.kind === "photo" ? piece.media : null);
-  const locked = piece.kind === "calendar" && !!piece.date && piece.date > giftToday();
+  const locked = pieceLocked(piece);
   const tilt = (seed(piece.id) - 0.5) * 4;
   return (
     <article

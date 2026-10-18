@@ -9,7 +9,7 @@ import { Lock, Mic, Music2, RotateCcw, Sparkles } from "lucide-react";
 import { FONT_PAIRINGS } from "@/lib/gift";
 import { readableInk, surfaceColor } from "@/lib/palettes";
 import {
-  giftToday,
+  pieceLocked,
   meshGradient,
   useCountdown,
   usePieces,
@@ -199,13 +199,12 @@ export function HuntView({
   const [sheet, setSheet] = useState<Piece | null>(null);
   const [burst, setBurst] = useState(0);
   const [sticker, setSticker] = useState<string | null>(null);
-  const today = giftToday();
   const boxes = useMemo(
     () => data.notes.filter((p) => !p.sealed || p.kind !== "word"),
     [data.notes],
   );
   const openable = boxes.filter(
-    (p) => !(p.kind === "calendar" && p.date && p.date > today) && !p.sealed,
+    (p) => !pieceLocked(p) && !p.sealed,
   );
   const done = openable.filter((p) => opened.has(p.id)).length;
   const total = openable.length;
@@ -338,7 +337,7 @@ export function HuntView({
               reduce={reduce}
               piece={p}
               open={opened.has(p.id)}
-              locked={(p.kind === "calendar" && !!p.date && p.date > today) || p.sealed}
+              locked={pieceLocked(p) || p.sealed}
               tint={tints[n % tints.length]!}
               ribbon={[palette.accent, palette.primary, "#ffffff"][n % 3]!}
               onOpen={() => unwrap(p)}

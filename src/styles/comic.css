@@ -241,7 +241,7 @@
 .cx-thought-dots i:last-child { width: 9px; height: 9px; bottom: -30px; left: 0; }
 .cx-tail-right .cx-thought-dots i:first-child { left: auto; right: 10px; }
 .cx-tail-right .cx-thought-dots i:last-child { left: auto; right: 0; }
-.cx-lettering, .cx-bubble-text { display: block; font-weight: 700; font-size: clamp(14.5px, 3.8cqi, 17px); line-height: 1.38; white-space: pre-line; overflow-wrap: break-word; }
+.cx-lettering, .cx-bubble-text { display: block; font-weight: 700; font-size: clamp(14.5px, 3.8cqi, 17px); line-height: 1.38; white-space: pre-line; overflow-wrap: anywhere; }
 .cx-answer { display: inline-block; margin-top: 6px; padding: 1px 6px; background: var(--cx-yellow); border-radius: 4px; }
 .cx-mine { position: absolute; top: 8px; right: 8px; z-index: 2; padding: 3px 8px; transform: rotate(4deg); background: var(--cx-yellow); border: 2px solid var(--cx-ink); font-family: "Bangers", sans-serif; font-size: 0.9rem; letter-spacing: 0.04em; }
 
