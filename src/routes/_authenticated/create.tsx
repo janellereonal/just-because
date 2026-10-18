@@ -7,12 +7,16 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { SiteHeader } from "@/components/SiteHeader";
-import { createSite, getVisitorCountry } from "@/lib/api";
+import { createSite, getVisitorCountry, listMySites } from "@/lib/api";
+import { isFlagOn } from "@/config/flags";
+import { GUIDE_COPY } from "@/copy/strings";
+import { NewUserGuide, guideSeen } from "@/components/NewUserGuide";
+import { AnimatePresence } from "motion/react";
 import { needsCountry, orderThemes } from "@/lib/themeOrder";
 import { LIMITS } from "@/lib/limits";
 import { fetchThemes } from "@/lib/themes";
 import { usePalettes, suggestedPalettes } from "@/hooks/usePalettes";
-import { MODULES, type ModuleType } from "@/lib/gift";
+import { MODULES, normalizeSite, type ModuleType } from "@/lib/gift";
 import { PRESETS } from "@/lib/presets";
 import { occasionTitle, themeKindOf } from "@/lib/themeKind";
 import { SectionPreview } from "@/components/SectionPreview";
@@ -74,6 +78,18 @@ function CreatePage() {
   });
   const { data: country = null } = useQuery({ queryKey: ["visitor-country"], queryFn: () => getVisitorCountry(), staleTime: Infinity, enabled: needsCountry(rawThemes) });
   const themes = useMemo(() => orderThemes(rawThemes, country), [rawThemes, country]);
+
+  // New organisers (no gifts yet) see a short guide first, once. Shares the dashboard's cache.
+  const guideOn = isFlagOn("newUserGuide");
+  const { data: mySites } = useQuery({
+    queryKey: ["my-sites"],
+    queryFn: async () => (await listMySites()).map((row) => normalizeSite(row as Record<string, unknown>)),
+    enabled: guideOn,
+  });
+  const [guide, setGuide] = useState(false);
+  useEffect(() => {
+    if (guideOn && mySites && mySites.length === 0 && !guideSeen()) setGuide(true);
+  }, [guideOn, mySites]);
 
   const [recipient, setRecipient] = useState("");
   const [solo, setSolo] = useState(fromUrl === "me");
@@ -221,6 +237,7 @@ function CreatePage() {
     <div className="min-h-screen bg-paper text-ink">
       <SiteHeader />
       <BoBuddy followFocus intro={false} />
+      <AnimatePresence>{guide ? <NewUserGuide onClose={() => setGuide(false)} /> : null}</AnimatePresence>
       <section className="mx-auto max-w-3xl px-4 pt-14 pb-28 sm:px-5">
         <div className="relative pr-24 sm:pr-0">
           <p className="font-mono text-[11px] tracking-[0.18em] text-accent uppercase">New gift</p>
@@ -240,6 +257,11 @@ function CreatePage() {
               ? "Takes a minute. You can change everything later, and add your notes whenever you're ready."
               : "Takes a minute. You can change everything later, even after friends start adding notes."}
           </p>
+          {guideOn ? (
+            <button type="button" onClick={() => setGuide(true)} className="mt-2 text-sm font-medium text-accent underline underline-offset-4">
+              {GUIDE_COPY.reopen}
+            </button>
+          ) : null}
         </div>
 
         <form onSubmit={handleCreate} className="mt-10 space-y-5" data-bo-zone>

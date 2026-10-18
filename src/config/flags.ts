@@ -11,6 +11,8 @@
 export const FLAGS = {
   /** "Turning" on birthday gifts: the cake shows the real age in candles. */
   birthdayAge: "birthdayAge",
+  /** A short guide before a new organiser's first gift, on /create. */
+  newUserGuide: "newUserGuide",
   /** Photobooth: take a photo with the camera, pick a frame and write a message on it. */
   photoboothCamera: "photoboothCamera",
   /** The Handwritten format (a notebook of notes and doodles) in the format pickers. */
