@@ -5,6 +5,7 @@
  */
 import { SITE } from "@/config/site";
 import { TIERS } from "@/config/pricing";
+import { POSTHOG_REGION, analyticsEnabled } from "@/config/analytics";
 
 export type LegalBlock = string | { list: string[] };
 /** `summary` is a plain-English line shown above the section; the body is what counts. */
@@ -13,6 +14,9 @@ export type LegalSection = { h: string; summary?: string; body: LegalBlock[] };
 export type LegalDoc = { title: string; intro: string; numbered?: boolean; sections: LegalSection[] };
 
 const email = SITE.contactEmail;
+/** PostHog lines only appear while it's switched on, so the policy is accurate either way. */
+const posthogOn = analyticsEnabled();
+const posthogWhere = POSTHOG_REGION === "eu" ? "European Union" : "United States";
 const plans = TIERS.map((t) => `${t.name}: ${t.liveFor.label}`).join(", ");
 
 export const PRIVACY: LegalDoc = {
@@ -51,6 +55,11 @@ export const PRIVACY: LegalDoc = {
           "Your approximate country, worked out from your IP address. We use it only as a country code (for example, PH), to understand in total numbers where gifts are made and opened. We don't keep your IP address with it and we don't collect your precise location.",
           "Error reports: if a page breaks, your browser can send us a short technical report. We remove names, emails and note content from these reports before they're stored.",
           "Product events: we count things like \"a gift was made\" or \"a note was added\" to see how the service is used. These events never include the words, photos or recordings in a note.",
+          ...(posthogOn
+            ? [
+                "Usage analytics: we use PostHog to see which pages people visit and what they click, so we can find what's confusing and fix it. On some pages it may record how the page is used (scrolling and clicks) to help us find problems. These records hide everything typed or written on the page and any photos or videos people uploaded, and we never record the gift page a recipient opens, the page where friends add to a gift, or checkout. Links to a gift are shortened before they're sent, so PostHog can't open anyone's gift.",
+              ]
+            : []),
         ] },
         "(d) Cookies and storage on your device",
         { list: [
@@ -58,7 +67,9 @@ export const PRIVACY: LegalDoc = {
           "If a gift has a password, a cookie remembers that you entered it, so you don't have to type it again.",
           "Friends' devices keep a random device id and a private edit key, so you can change or delete your own note and so we can count how many people joined. They don't identify who you are.",
           "Your browser also remembers small preferences, such as whether you've seen the opening of a gift or a short guide.",
-          "We don't use advertising cookies, tracking pixels or third-party analytics.",
+          posthogOn
+            ? "Our analytics (PostHog) keeps a random visitor id in your browser's storage, not in a cookie. You can turn it off with your browser's Do Not Track setting. We don't use advertising cookies or tracking pixels."
+            : "We don't use advertising cookies, tracking pixels or third-party analytics.",
         ] },
         "(e) Photos",
         "Photos can carry hidden details, such as the place they were taken. We remove location details from photos when they're uploaded.",
@@ -108,6 +119,7 @@ export const PRIVACY: LegalDoc = {
           "Neon (United States): our database.",
           "PayMongo (Philippines): takes payments.",
           "Resend (United States): sends our emails.",
+          ...(posthogOn ? [`PostHog (${posthogWhere}): usage analytics, as described above.`] : []),
           "Google (United States): sign-in with Google, if you choose it, and the web fonts our pages load.",
         ] },
         "If a friend adds a Spotify or YouTube link, the player is loaded from Spotify or YouTube when the gift is opened. Those companies' own privacy policies apply to what happens inside their players.",
