@@ -19,6 +19,7 @@ import { and, desc, eq, sql } from "drizzle-orm";
 import { PAY_SAFETY_COPY } from "@/copy/strings";
 import { applyPaidEvent, logPayment, quote, quoteExtend, reconcileOrder, type Quote } from "./billing";
 import { getDb, schema } from "./db";
+import { cleanCode } from "./discounts";
 import { track } from "./events";
 import { HttpError } from "./guards";
 
@@ -80,8 +81,13 @@ export async function openCheckout(user: Buyer, siteId: string, req: CheckoutReq
       .orderBy(desc(schema.orders.createdAt));
     const [site] = await tx.select().from(schema.giftSites).where(eq(schema.giftSites.id, siteId));
     if (!site) throw new HttpError(404, "We couldn't find that gift.");
+    // Checkouts with the same code take turns too (any gift, anyone), so its limits are counted with
+    // every open checkout in (one per person on two gifts at once, or the last use started twice).
+    // Always taken after the gift's lock, so two requests never wait on each other the other way round.
+    const code = req.kind === "plan" ? cleanCode(req.code ?? "").toLowerCase() : "";
+    if (code) await tx.execute(sql`select pg_advisory_xact_lock(hashtext(${`code:${code}`}))`);
 
-    const q = req.kind === "extend" ? quoteExtend(site) : await quote(site, req.tier, { code: req.code ?? null, userId: user.id });
+    const q = req.kind === "extend" ? quoteExtend(site) : await quote(site, req.tier, { code: req.code ?? null, userId: user.id, db: tx });
     // The picker showed first-plan prices but the gift was paid for meanwhile (or the other way round).
     if (req.kind === "plan" && req.expect && req.expect !== q.kind) throw new HttpError(409, PAY_SAFETY_COPY.planChanged);
     const free = q.amount === 0 && !!q.discount;

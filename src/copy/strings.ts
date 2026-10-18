@@ -687,6 +687,12 @@ export const PAY_SAFETY_COPY = {
   notFound: "It may belong to another account. Sign in with the account that paid, or head back to your gifts.",
 };
 
+/** Discount codes whose last use is held by a checkout someone hasn't finished yet. */
+export const CODE_LIMIT_COPY = {
+  yoursElsewhere: "You started paying for another gift with this code. Finish or cancel that payment first, then try again here.",
+  allHeld: "Every use of this code is waiting on a payment right now. If one isn't finished, it frees up within a day.",
+};
+
 /** Starting a gift without an account (flag guestStart). */
 export const GUEST_COPY = {
   keep: "Sign in so you don't lose your gift.",

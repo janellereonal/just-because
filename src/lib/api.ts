@@ -36,13 +36,13 @@ import { CLIENT_EVENTS, track } from "@/server/events";
 import { notifyNewNote } from "@/server/notify";
 import { clientIp, rateLimit } from "@/server/rateLimit";
 import {
-  checkRoom,
   expireStaleOrders,
   isExpired,
   isOpen,
   siteUsage,
   tierBlocker,
   upgradeOptions,
+  withRoom,
 } from "@/server/billing";
 import { TIERS, LEGACY_TIER, discountLabel as discountLabelOf, getTier, hasFeature, tierAllowsLook } from "@/config/pricing";
 import {
@@ -866,30 +866,36 @@ export const submitContribution = createServerFn({ method: "POST" })
     }
     rateLimit(`note:ip:${clientIp()}`, 30, 10 * 60_000, "You're adding notes very quickly. Wait a few minutes and try again.");
     rateLimit(`note:gift:${data.siteId}`, 200, 60 * 60_000, "This gift is getting a lot of notes right now. Try again in a little while.");
-    // Paid plans have caps. Tell the friend kindly instead of failing.
     const deviceId = data.deviceId ?? null;
-    const room = await checkRoom(site, data.authorName, data.moduleType, deviceId);
-    if (!room.ok) return { ok: false as const, full: room.reason };
     const [module] = await db
       .select({ enabled: schema.siteModules.enabled })
       .from(schema.siteModules)
       .where(and(eq(schema.siteModules.siteId, data.siteId), eq(schema.siteModules.moduleType, data.moduleType)));
     if (!module?.enabled) throw new HttpError(400, "That section isn't open on this gift.");
-    const inserted = await db.insert(c).values({
-      id: data.id,
-      siteId: data.siteId,
-      moduleType: data.moduleType,
-      authorName: data.authorName,
-      textContent: data.textContent,
-      mediaUrl: data.mediaUrl,
-      externalLink: data.externalLink,
-      status: "pending",
-      ornamentKey: data.moduleType === "tree" ? (data.ornamentKey ?? "bauble") : null,
-      visibility: data.moduleType === "tree" ? data.visibility : "public",
-      editToken: data.editToken,
-      deviceId,
-      data: sectionData,
-    }).onConflictDoNothing({ target: c.id }).returning({ id: c.id });
+    // Paid plans have caps. Tell the friend kindly instead of failing. Checked and saved under one
+    // lock, so friends sending at the same moment can't pass the cap together.
+    const saved = await withRoom(data.siteId, async (tx, _site, room) => {
+      const fits = await room({ authorName: data.authorName, moduleType: data.moduleType, deviceId });
+      if (!fits.ok) return fits;
+      const rows = await tx.insert(c).values({
+        id: data.id,
+        siteId: data.siteId,
+        moduleType: data.moduleType,
+        authorName: data.authorName,
+        textContent: data.textContent,
+        mediaUrl: data.mediaUrl,
+        externalLink: data.externalLink,
+        status: "pending",
+        ornamentKey: data.moduleType === "tree" ? (data.ornamentKey ?? "bauble") : null,
+        visibility: data.moduleType === "tree" ? data.visibility : "public",
+        editToken: data.editToken,
+        deviceId,
+        data: sectionData,
+      }).onConflictDoNothing({ target: c.id }).returning({ id: c.id });
+      return { ok: true as const, inserted: rows };
+    });
+    if (!saved.ok) return { ok: false as const, full: saved.reason };
+    const inserted = saved.inserted;
     // Two identical requests at the same moment: only the first one notifies.
     if (inserted.length) {
       await notifyNewNote(data.siteId, data.authorName).catch((e) => console.error("[notify]", e));
@@ -943,31 +949,34 @@ export const saveOwnerNote = createServerFn({ method: "POST" })
         .where(eq(c.id, data.id));
       return { ok: true as const, full: null };
     }
-    const [site] = await db.select().from(schema.giftSites).where(eq(schema.giftSites.id, data.siteId));
-    if (!site) throw new HttpError(404, "We couldn't find that gift.");
-    const room = await checkRoom(site, data.authorName, data.moduleType, null);
-    if (!room.ok) return { ok: false as const, full: room.reason };
-    // Turn the section on if it isn't yet, so the note actually shows.
-    await db
-      .insert(schema.siteModules)
-      .values({ siteId: data.siteId, moduleType: data.moduleType, price: "0", enabled: true })
-      .onConflictDoUpdate({
-        target: [schema.siteModules.siteId, schema.siteModules.moduleType],
-        set: { enabled: true },
+    // The owner isn't a friend, so only the photo cap applies to their notes.
+    const saved = await withRoom(data.siteId, async (tx, _site, room) => {
+      const fits = await room({ authorName: data.authorName, moduleType: data.moduleType, byOwner: true });
+      if (!fits.ok) return fits;
+      // Turn the section on if it isn't yet, so the note actually shows.
+      await tx
+        .insert(schema.siteModules)
+        .values({ siteId: data.siteId, moduleType: data.moduleType, price: "0", enabled: true })
+        .onConflictDoUpdate({
+          target: [schema.siteModules.siteId, schema.siteModules.moduleType],
+          set: { enabled: true },
+        });
+      await tx.insert(c).values({
+        id: data.id,
+        siteId: data.siteId,
+        moduleType: data.moduleType,
+        authorName: data.authorName,
+        textContent: data.textContent,
+        mediaUrl: data.mediaUrl,
+        externalLink: data.externalLink,
+        status: "approved",
+        visibility: "public",
+        byOwner: true,
+        data: sectionData,
       });
-    const inserted = await db.insert(c).values({
-      id: data.id,
-      siteId: data.siteId,
-      moduleType: data.moduleType,
-      authorName: data.authorName,
-      textContent: data.textContent,
-      mediaUrl: data.mediaUrl,
-      externalLink: data.externalLink,
-      status: "approved",
-      visibility: "public",
-      byOwner: true,
-      data: sectionData,
+      return { ok: true as const };
     });
+    if (!saved.ok) return { ok: false as const, full: saved.reason };
     await track("note_added", { siteId: data.siteId, userId: user.id, props: { type: data.moduleType, by_owner: true } });
     return { ok: true as const, full: null };
   });
@@ -1080,11 +1089,11 @@ export const previewDiscountCode = createServerFn({ method: "POST" })
     if (tooManyTries(user.id)) return { ok: false as const, message: "That's a lot of codes. Try again in a few minutes." };
     if (getTier(site.tier)) return { ok: false as const, message: "Codes work when you first pick a plan." };
     const code = await findCode(data.code);
-    const general = await codeProblem(code, null, user.id);
+    const general = await codeProblem(code, null, user.id, undefined, { siteId: site.id });
     if (general || !code) return { ok: false as const, message: general ?? "We don't know that code." };
     const plans = await Promise.all(
       TIERS.map(async (t) => {
-        const problem = await codeProblem(code, t, user.id);
+        const problem = await codeProblem(code, t, user.id, undefined, { siteId: site.id });
         const p = priceWith(code, t.amount);
         return { id: t.id, applies: !problem, amount: problem ? t.amount : p.amount, was: t.amount, free: !problem && p.amount === 0 };
       }),
@@ -1480,19 +1489,23 @@ export const setContributionStatus = createServerFn({ method: "POST" })
   .handler(async ({ data }) => {
     const siteId = await contributionSite(data.ids);
     await requireSiteOwner(siteId);
-    const [site] = await getDb().select().from(schema.giftSites).where(eq(schema.giftSites.id, siteId));
-    if (site && data.status !== "hidden") {
-      // Showing hidden items again counts towards the plan, like a new note would.
-      const hidden = await getDb().select().from(c).where(and(inArray(c.id, data.ids), eq(c.status, "hidden")));
-      for (const row of hidden) {
-        const room = await checkRoom(site, row.authorName, row.moduleType, row.deviceId);
-        if (!room.ok && room.reason !== "ended") {
-          throw new HttpError(409, room.reason === "photos" ? "This gift has all the photos its plan holds. Upgrade to show more." : "This gift has all the friends its plan holds. Upgrade to show more.");
-        }
-        await getDb().update(c).set({ status: data.status }).where(eq(c.id, row.id));
-      }
+    if (data.status === "hidden") {
+      await getDb().update(c).set({ status: data.status }).where(inArray(c.id, data.ids));
+      return { ok: true };
     }
-    await getDb().update(c).set({ status: data.status }).where(inArray(c.id, data.ids));
+    // Showing hidden items again counts towards the plan, like a new note would, under the same
+    // lock as friends sending notes so the two can't pass the cap together.
+    await withRoom(siteId, async (tx, _site, room) => {
+      const hidden = await tx.select().from(c).where(and(inArray(c.id, data.ids), eq(c.status, "hidden")));
+      for (const row of hidden) {
+        const fits = await room({ authorName: row.authorName, moduleType: row.moduleType, deviceId: row.deviceId, byOwner: row.byOwner });
+        if (!fits.ok && fits.reason !== "ended") {
+          throw new HttpError(409, fits.reason === "photos" ? "This gift has all the photos its plan holds. Upgrade to show more." : "This gift has all the friends its plan holds. Upgrade to show more.");
+        }
+        await tx.update(c).set({ status: data.status }).where(eq(c.id, row.id));
+      }
+      await tx.update(c).set({ status: data.status }).where(inArray(c.id, data.ids));
+    });
     return { ok: true };
   });
 
