@@ -1,10 +1,10 @@
 import { giftVoice } from "@/lib/giftVoice";
-import { GiftProgress } from "@/components/GiftProgress";
 import { shareGift, trackEvent } from "@/lib/track";
 import { sampleLetter } from "@/copy/strings";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { SkinDecor } from "@/components/SkinDecor";
 import { ScrollStory } from "@/components/ScrollStory";
+import { GiftProgress } from "@/components/GiftProgress";
 import { Theme3D, type Theme3DHandle } from "@/components/Theme3D";
 import { WishCandles, useSkinPlay } from "@/components/SkinPlay";
 import { buzz, chime } from "@/lib/play";
