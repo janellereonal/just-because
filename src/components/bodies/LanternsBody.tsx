@@ -403,7 +403,10 @@ function Wire({
                     </span>
                   ) : null}
                   {/* A little paper tag on a thread, hanging between the tails */}
-                  <span className="pl-tag" style={{ "--tr": `${((r - 0.5) * 10).toFixed(1)}deg` } as React.CSSProperties}>
+                  <span
+                    className="pl-tag"
+                    style={{ "--tr": `${((r - 0.5) * 10).toFixed(1)}deg` } as React.CSSProperties}
+                  >
                     <span className="pl-tag-text">
                       {isLocked(p)
                         ? t("body.opensOn", {

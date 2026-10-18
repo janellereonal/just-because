@@ -196,7 +196,7 @@ export function UnpackBody(props: BodyProps) {
           "--up-stamp": bb
             ? colors.mix("#C8352B", colors.primary, 0.15)
             : colors.mix("#C8452B", colors.primary, 0.2),
-          "--up-band": colors.mix("#1F4E8C", colors.accent, 0.5),
+          "--up-band": colors.mix("#1F4E8C", colors.accent, bb ? 0.22 : 0.5),
           "--up-table": colors.dark
             ? colors.mix(colors.bg, "#8A5A34", 0.32)
             : colors.mix(colors.bg, "#B07A48", 0.32),
@@ -271,7 +271,7 @@ export function UnpackBody(props: BodyProps) {
             <span className="up-flap is-right" aria-hidden="true" />
             <span className="up-flap is-bottom" aria-hidden="true">
               <span className="up-arrows">
-                ↑↑ {bb ? t("unpack.handle") : t("unpack.thisSideUp")}
+                {bb ? t("unpack.bbBox") : `↑↑ ${t("unpack.thisSideUp")}`}
               </span>
             </span>
             <span className="up-tape is-a" aria-hidden="true" />
@@ -465,7 +465,7 @@ function Thing({
         {Icon && state !== "out" ? <Icon className="size-2.5 shrink-0" /> : null}
         <span className="truncate">
           {locked
-            ? t("body.opensOn", { day: formatDay(piece.date!, { day: "numeric", month: "short" }) })
+            ? formatDay(piece.date!, { day: "numeric", month: "short" })
             : piece.author || t("unpack.surpriseTag")}
         </span>
       </span>

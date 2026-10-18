@@ -205,11 +205,11 @@
 
 /* Balikbayan: printed bands on every flap, the name in marker */
 .up-root.is-bb .up-flap.is-top { background: linear-gradient(0deg, transparent 0 62%, var(--up-band) 62% 86%, var(--up-stamp) 86% 92%, transparent 92%), repeating-linear-gradient(90deg, rgba(60, 35, 10, .045) 0 1px, transparent 1px 6px), linear-gradient(0deg, var(--up-card-lo), var(--up-card) 35%, var(--up-card-hi)); }
-.up-root.is-bb .up-flap.is-bottom { background: linear-gradient(180deg, transparent 0 62%, var(--up-band) 62% 86%, var(--up-stamp) 86% 92%, transparent 92%), repeating-linear-gradient(90deg, rgba(60, 35, 10, .045) 0 1px, transparent 1px 6px), linear-gradient(180deg, var(--up-card-lo), var(--up-card) 35%, var(--up-card-hi)); }
+.up-root.is-bb .up-flap.is-bottom { background: linear-gradient(180deg, transparent 0 40%, var(--up-stamp) 40% 46%, var(--up-band) 46% 90%, transparent 90%), repeating-linear-gradient(90deg, rgba(60, 35, 10, .045) 0 1px, transparent 1px 6px), linear-gradient(180deg, var(--up-card-lo), var(--up-card) 35%, var(--up-card-hi)); }
 .up-root.is-bb .up-flap.is-left { background: linear-gradient(90deg, transparent 0 18%, var(--up-band) 18% 40%, transparent 40%), repeating-linear-gradient(0deg, rgba(60, 35, 10, .045) 0 1px, transparent 1px 6px), linear-gradient(90deg, var(--up-card-hi), var(--up-card) 60%, var(--up-card-lo)); }
 .up-root.is-bb .up-flap.is-right { background: linear-gradient(270deg, transparent 0 18%, var(--up-band) 18% 40%, transparent 40%), repeating-linear-gradient(0deg, rgba(60, 35, 10, .045) 0 1px, transparent 1px 6px), linear-gradient(270deg, var(--up-card-hi), var(--up-card) 60%, var(--up-card-lo)); }
-.up-root.is-bb .up-arrows { color: #fff; opacity: .95; translate: 0 18%; }
-.up-root.is-bb .up-marker { translate: 0 -16%; }
+.up-root.is-bb .up-arrows { align-self: end; margin-bottom: calc(var(--fl) * .2); color: #fff; opacity: 1; font-family: var(--up-label); font-size: clamp(10px, 3cqi, 15px); font-weight: 900; letter-spacing: .14em; }
+.up-root.is-bb .up-marker { translate: 0 -24%; }
 
 /* Inside: walls, rim, a bed of shredded paper */
 .up-inside {
