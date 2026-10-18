@@ -31,8 +31,8 @@ export function isExpired(site: Pick<Site, "expiresAt">, now = new Date()) {
 }
 
 /** The recipient link works: published, paid (or legacy) and not ended. */
-export function isOpen(site: Pick<Site, "status" | "tier" | "expiresAt">) {
-  return site.status === "published" && !!site.tier && !isExpired(site);
+export function isOpen(site: Pick<Site, "status" | "tier" | "expiresAt"> & { disabledAt?: Date | null }) {
+  return site.status === "published" && !!site.tier && !isExpired(site) && !site.disabledAt;
 }
 
 /* ---------------- usage & limits ---------------- */

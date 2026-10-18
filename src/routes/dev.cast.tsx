@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { NOINDEX } from "@/lib/seo";
 import { Character } from "@/themes/_shared/cast/Character";
 import { CHARACTERS } from "@/themes/_shared/cast/library";
 import { ICON_SETS } from "@/themes/_shared/iconSets";
@@ -6,6 +7,7 @@ import { IconGlyph } from "@/themes/_shared/Sprinkles";
 
 /** Dev only: every character and icon set on one page, for checking the art. */
 export const Route = createFileRoute("/dev/cast")({
+  head: () => ({ meta: [NOINDEX] }),
   component: () =>
     import.meta.env.DEV ? (
       <div className="min-h-screen bg-[#F4EEE3] p-6">
