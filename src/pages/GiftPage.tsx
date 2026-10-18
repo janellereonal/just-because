@@ -87,6 +87,12 @@ function PublishedPage() {
     if (me && (me.id === site.creator_id || me.isAdmin)) return;
     if (isGiftOpen(site)) trackEvent("gift_opened", site.id);
   }, [site?.id, locked, meReady, me?.id]);
+  // Theme metrics: the opening started (it shows until it's opened or skipped).
+  useEffect(() => {
+    if (!site || locked || !meReady || opened || !skipChecked) return;
+    if (me && (me.id === site.creator_id || me.isAdmin)) return;
+    if (isGiftOpen(site) && formatInfo(site.format).usesIntro) trackEvent("theme_opening_started", site.id);
+  }, [site?.id, locked, meReady, opened, skipChecked, me?.id]);
 
   if (isLoading || !meReady || (!!site && (!themeReady || !skipChecked))) {
     return <PageLoading label="Opening your gift…" />;
@@ -138,6 +144,7 @@ function PublishedPage() {
   const fonts = FONT_PAIRINGS[site.font_choice] ?? FONT_PAIRINGS.romantic;
 
   function replayIntro() {
+    trackEvent("theme_replayed", site!.id);
     clearIntroSkip(site!.id);
     setOpened(false);
   }
@@ -185,7 +192,10 @@ function PublishedPage() {
           iconSet={site.icon_set}
           contributors={[...new Set(contributions.map((c) => c.author_name.trim()).filter(Boolean))]}
           {...engineIntroProps(theme?.name, site, contributions)}
-          onOpen={() => setOpened(true)}
+          onOpen={() => {
+            trackEvent("theme_opening_completed", site.id);
+            setOpened(true);
+          }}
           onSkip={() => {
             rememberIntroSkip(site.id);
             setOpened(true);

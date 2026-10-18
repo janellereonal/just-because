@@ -1348,7 +1348,7 @@ export const trackClientEvent = createServerFn({ method: "POST" })
     const isOwner = !!me && me.id === site.creatorId;
     // Shares are the organiser's; views and opens only count when it isn't them looking.
     if (data.name === "invite_shared" && !isOwner) return { ok: false };
-    if ((data.name === "friend_page_viewed" || data.name === "gift_opened") && isOwner) return { ok: false };
+    if (data.name !== "invite_shared" && data.name !== "make_your_own_clicked" && isOwner) return { ok: false };
     if (data.name === "gift_opened" && site.status !== "published") return { ok: false };
     await track(data.name, { siteId: site.id, userId: me?.id ?? null, ...(data.props ? { props: data.props } : {}) });
     return { ok: true };
@@ -1429,4 +1429,64 @@ export const getMetrics = createServerFn({ method: "GET" })
       sharers: hours.length,
       events: counts.map((r) => ({ name: r.name, count: r.n, gifts: r.sites })).sort((a, b) => a.name.localeCompare(b.name)),
     };
+  });
+
+/**
+ * Admin: how each theme does, from events. Region is the visitor's country (payments use the
+ * country the gift was made from). Sorted by paid conversion: this decides which themes to build more of.
+ */
+export const getThemeMetrics = createServerFn({ method: "GET" })
+  .inputValidator(z.object({ days: z.number().int().min(1).max(365), region: z.string().regex(/^[A-Z]{2}$/).nullable() }))
+  .handler(async ({ data }) => {
+    await requireAdmin();
+    const db = getDb();
+    const since = sql`now() - make_interval(days => ${data.days})`;
+    const rows = await db.execute<{
+      theme: string | null;
+      created: number;
+      opened: number;
+      started: number;
+      completed: number;
+      replayed: number;
+      shared: number;
+      paid: number;
+      myo: number;
+    }>(sql`
+      with ev as (
+        select e.name, e.site_id, e.props->>'kind' as kind,
+          coalesce(e.props->>'theme', s.theme_id::text) as theme,
+          coalesce(e.props->>'region', (select g.props->>'region' from events g where g.site_id = e.site_id and g.name = 'gift_created' limit 1)) as region
+        from events e left join gift_sites s on s.id = e.site_id
+        where e.created_at > ${since} and e.site_id is not null
+      )
+      select theme,
+        count(*) filter (where name = 'gift_created')::int as created,
+        count(*) filter (where name = 'gift_opened')::int as opened,
+        count(*) filter (where name = 'theme_opening_started')::int as started,
+        count(*) filter (where name = 'theme_opening_completed')::int as completed,
+        count(*) filter (where name = 'theme_replayed')::int as replayed,
+        count(*) filter (where name = 'theme_shared')::int as shared,
+        count(distinct site_id) filter (where name = 'plan_purchased' and kind = 'publish')::int as paid,
+        count(*) filter (where name = 'make_your_own_clicked')::int as myo
+      from ev
+      where ${data.region}::text is null or region = ${data.region}
+      group by theme`);
+    const regions = await db.execute<{ region: string }>(sql`
+      select distinct props->>'region' as region from events
+      where created_at > ${since} and props ? 'region' order by 1`);
+    const themes = await db.select({ id: schema.themes.id, name: schema.themes.name }).from(schema.themes);
+    const nameOf = new Map(themes.map((t) => [t.id, t.name]));
+    const rate = (a: number, b: number) => (b > 0 ? Math.round((a / b) * 1000) / 10 : null);
+    const list = [...rows].map((r) => ({
+      theme: r.theme ? (nameOf.get(r.theme) ?? "Removed theme") : "No theme",
+      created: r.created,
+      completion: rate(r.completed, r.started),
+      replay: rate(r.replayed, r.completed),
+      share: rate(r.shared, r.opened),
+      paid: rate(r.paid, r.created),
+      makeYourOwn: rate(r.myo, r.opened),
+      counts: { opened: r.opened, started: r.started, completed: r.completed, paid: r.paid },
+    }));
+    list.sort((a, b) => (b.paid ?? -1) - (a.paid ?? -1) || b.created - a.created);
+    return { rows: list, regions: [...regions].map((r) => r.region).filter(Boolean) };
   });

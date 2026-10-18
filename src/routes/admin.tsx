@@ -5,6 +5,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { SiteHeader } from "@/components/SiteHeader";
 import { Metrics } from "@/components/admin/Metrics";
+import { ThemeMetrics } from "@/components/admin/ThemeMetrics";
 import { usePreviewUrl } from "@/components/ThemeCard";
 import { fetchThemes, type Theme } from "@/lib/themes";
 import { getPaymentsSetup, listPaymentLog, setThemePreview, setThemeStatus, setupPaymongoWebhook } from "@/lib/api";
@@ -82,6 +83,7 @@ function AdminPage() {
     <div className="min-h-screen bg-paper text-ink">
       <SiteHeader />
       <Metrics />
+      <ThemeMetrics />
       <AdminReports />
       <PaymentsSetup />
       <PaymentLog />
