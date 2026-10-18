@@ -49,7 +49,9 @@ export async function authorizeUpload(kind: UploadKind, targetId: string, media:
   if (!site) throw new Error("We couldn't find that gift.");
   if (media === "photo") return { contentTypes: IMAGE, maxBytes: MEDIA_LIMITS.photo.mb * MB };
   if (media === "voice") return { contentTypes: AUDIO, maxBytes: MEDIA_LIMITS.voice.mb * MB };
-  // Video messages are the biggest thing a friend sends: up to a minute on a phone.
+  // Video messages are the biggest thing a friend sends: up to a minute on a phone. Only videos.
+  if (media === "video") return { contentTypes: VIDEO, maxBytes: MEDIA_LIMITS.video.mb * MB };
+  // Older pages that don't say what the file is.
   return { contentTypes: [...IMAGE, ...AUDIO, ...VIDEO], maxBytes: MEDIA_LIMITS.video.mb * MB };
 }
 

@@ -10,8 +10,11 @@ function recipientOf(customText: unknown, title: string) {
   return name || title;
 }
 
-/** Emails the creator that a friend added something, at most once per 30 minutes per gift. */
-export async function notifyNewNote(siteId: string, authorName: string) {
+/**
+ * Emails the creator that a friend added something (or changed a note that's already
+ * in the gift), at most once per 30 minutes per gift.
+ */
+export async function notifyNewNote(siteId: string, authorName: string, opts: { edited?: boolean } = {}) {
   const db = getDb();
   const g = schema.giftSites;
   // Claim the slot atomically so two quick submissions don't both send.
@@ -42,6 +45,7 @@ export async function notifyNewNote(siteId: string, authorName: string) {
     authorName,
     pendingCount: pending,
     editorUrl: `${siteUrl()}/sites/${site.id}`,
+    edited: !!opts.edited,
   });
 }
 

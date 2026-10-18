@@ -12,7 +12,8 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { deleteOwnContribution, getGiftRoom, submitContribution, updateOwnContribution } from "@/lib/api";
 import { UploadError, uploadMedia, type UploadStage } from "@/lib/upload";
-import { UPLOAD_COPY } from "@/copy/strings";
+import { NOTE_RULES_COPY, UPLOAD_COPY } from "@/copy/strings";
+import { fileFits, hasWord, isSongLink, mediaKindFor } from "@/lib/noteRules";
 import { getDeviceId } from "@/lib/device";
 import {
   FONT_PAIRINGS,
@@ -193,6 +194,8 @@ function ContributePage() {
   const [treeStep, setTreeStep] = useState<1 | 2>(1);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [sectionData, setSectionData] = useState<Record<string, unknown>>({});
+  /** What they started writing in each section, so switching sections never carries words (or a file) across. */
+  const drafts = useRef<Partial<Record<ModuleType, { text: string; link: string; data: Record<string, unknown> }>>>({});
   const giftRef = useRef<HTMLDivElement | null>(null);
   const doneRef = useRef<HTMLDivElement | null>(null);
   const [device, setDevice] = useState<PreviewDevice>("phone");
@@ -331,6 +334,33 @@ function ContributePage() {
     setSectionData({});
   }
 
+  function switchSection(next: ModuleType) {
+    if (next === active && !editingId) return;
+    // Keep what they wrote here for when they come back (not an edit of a sent note).
+    if (active && !editingId) drafts.current[active] = { text, link, data: sectionData };
+    const saved = drafts.current[next];
+    delete drafts.current[next];
+    setModuleType(next);
+    setEditingId(null);
+    setText(saved?.text ?? "");
+    setLink(saved?.link ?? "");
+    setSectionData(saved?.data ?? {});
+    // A file belongs to the section it was picked for: a photo never goes out as a voice note.
+    setFile(null);
+    boothFile.current = null;
+    if (next === "tree") setTreeStep(1);
+  }
+
+  /** A picked file, if it's the kind this section takes. */
+  function pickFile(next: File | null) {
+    const kind = active ? mediaKindFor(active) : null;
+    if (next && kind && !fileFits(next, kind)) {
+      toast.error(NOTE_RULES_COPY.wrongFile(kind));
+      return;
+    }
+    setFile(next);
+  }
+
   function startEdit(record: MineRecord) {
     setModuleType(record.module_type);
     setEditingId(record.id);
@@ -373,12 +403,16 @@ function ContributePage() {
       toast.error("Please write a message.");
       return;
     }
-    if (active === "songs" && !link.trim()) {
-      toast.error("Please paste a Spotify or YouTube link.");
+    if (active === "songs" && !isSongLink(link)) {
+      toast.error(NOTE_RULES_COPY.songLink);
       return;
     }
     if (active === "wordcloud" && !text.trim()) {
       toast.error("Please add at least one word.");
+      return;
+    }
+    if (active === "wordcloud" && !hasWord(text)) {
+      toast.error(NOTE_RULES_COPY.noWord);
       return;
     }
     if (active === "voice" && !file && !editingId) {
@@ -434,7 +468,7 @@ function ContributePage() {
     if (file) {
       try {
         // Photos get a small copy too, so grids and previews don't load the full photo.
-        const up = await uploadMedia(file, "contribution", site.id, { thumb: active === "photobooth", onStage: setStage });
+        const up = await uploadMedia(file, "contribution", site.id, { thumb: active === "photobooth", onStage: setStage, expect: mediaKindFor(active) });
         mediaPath = up.url;
         if (active === "photobooth" && up.thumbUrl) cleanData = { ...(cleanData ?? {}), thumb: up.thumbUrl };
       } catch (error) {
@@ -564,7 +598,7 @@ function ContributePage() {
       <input
         type="file"
         accept={kind === "photo" ? "image/*" : "audio/*"}
-        onChange={(e) => setFile(e.target.files?.[0] ?? null)}
+        onChange={(e) => pickFile(e.target.files?.[0] ?? null)}
         className="sr-only"
       />
       {file ? (
@@ -671,12 +705,7 @@ function ContributePage() {
                       type="button"
                       role="tab"
                       aria-selected={on}
-                      onClick={() => {
-                        setModuleType(mod.type);
-                        setEditingId(null);
-                        setSectionData({});
-                        if (mod.type === "tree") setTreeStep(1);
-                      }}
+                      onClick={() => switchSection(mod.type)}
                       className="flex flex-col items-center gap-1.5 rounded-2xl px-2 py-3 text-center text-[13px] leading-tight font-medium transition-transform hover:-translate-y-0.5"
                       style={on ? { backgroundColor: palette.accent, color: onAccent } : { backgroundColor: palette.background, color: ink, boxShadow: `inset 0 0 0 1px ${ink}1a` }}
                     >
@@ -840,7 +869,7 @@ function ContributePage() {
 
               {active === "songs" ? (
                 <>
-                  <label className="mt-4 block text-sm font-medium">Spotify or YouTube link</label>
+                  <label className="mt-4 block text-sm font-medium">Spotify, YouTube or Apple Music link</label>
                   <input
                     value={link}
                     onChange={(e) => setLink(e.target.value)}
@@ -916,7 +945,7 @@ function ContributePage() {
                   text={text}
                   onText={setText}
                   file={file}
-                  onFile={setFile}
+                  onFile={pickFile}
                   fieldStyle={fieldStyle}
                   accent={palette.accent}
                   onAccent={onAccent}

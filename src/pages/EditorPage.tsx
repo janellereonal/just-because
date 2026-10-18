@@ -10,6 +10,7 @@ import { ConciergeOffer } from "@/components/ConciergeOffer";
 import { trackEvent } from "@/lib/track";
 import { countNotes, inGiftLabel, noteSummary, waitingLabel } from "@/lib/noteCounts";
 import { ExportGift } from "@/components/ExportGift";
+import { ReviewCard } from "@/components/ReviewCard";
 import { isFlagOn } from "@/config/flags";
 import { engineThemeForName } from "@/themes/engine/registry";
 import { t } from "@/i18n";
@@ -2278,133 +2279,6 @@ function SiteDashboard() {
                 {!previewOpened && formatInfo(draft.format).usesIntro ? fullScreenIntro : null}
               </div>
             )}
-          </div>
-        </div>
-      ) : null}
-    </div>
-  );
-}
-
-const LONG_NOTE = 280;
-
-function ReviewCard({
-  item,
-  onApprove,
-  onHide,
-  onDelete,
-}: {
-  item: Contribution;
-  onApprove: () => void;
-  onHide: () => void;
-  onDelete: () => Promise<void>;
-}) {
-  const [url, setUrl] = useState<string | null>(null);
-  const [expanded, setExpanded] = useState(false);
-  const [confirmDelete, setConfirmDelete] = useState(false);
-  const [deleting, setDeleting] = useState(false);
-  const text = item.text_content ?? "";
-  const long = [...text].length > LONG_NOTE;
-  useEffect(() => {
-    let active = true;
-    signedMediaUrl(item.media_url).then((u) => {
-      if (active) setUrl(u);
-    });
-    return () => {
-      active = false;
-    };
-  }, [item.media_url]);
-
-  return (
-    <div className="card-paper p-4">
-      <div className="flex items-center justify-between gap-3">
-        <p className="text-sm font-medium">{item.author_name}</p>
-        <span className="font-mono text-[10px] tracking-[0.14em] text-muted uppercase">
-          {item.module_type} · {item.status}
-        </span>
-      </div>
-      {url && item.module_type === "voice" ? (
-        <audio controls src={url} className="mt-3 w-full" />
-      ) : url ? (
-        <img src={url} alt="" className="mt-3 aspect-square w-full rounded-xl object-cover" />
-      ) : null}
-      {text ? (
-        <>
-          <p className="mt-3 text-sm leading-relaxed whitespace-pre-line [overflow-wrap:anywhere]">
-            {long && !expanded ? `${[...text].slice(0, LONG_NOTE).join("").trimEnd()}…` : text}
-          </p>
-          {long ? (
-            <button type="button" onClick={() => setExpanded((v) => !v)} className="mt-1 text-xs font-medium text-accent underline">
-              {expanded ? "Show less" : "Show more"}
-            </button>
-          ) : null}
-        </>
-      ) : null}
-      {item.module_type === "tree" ? (
-        <p className="mt-2 text-xs text-muted">
-          Ornament: {item.ornament_key?.replace("-", " ") ?? "bauble"} · {item.visibility === "recipient" ? "Only the recipient" : "Anyone can read"}
-        </p>
-      ) : null}
-      {item.external_link ? (
-        <a
-          href={item.external_link}
-          target="_blank"
-          rel="noreferrer"
-          className="mt-2 block text-xs break-all text-accent underline"
-        >
-          {item.external_link}
-        </a>
-      ) : null}
-      <div className="mt-4 flex gap-2">
-        <button
-          onClick={onApprove}
-          disabled={item.status === "approved"}
-          className="flex-1 rounded-full bg-accent px-3 py-2 text-xs font-medium text-cream disabled:opacity-40"
-        >
-          Approve
-        </button>
-        <button
-          onClick={onHide}
-          disabled={item.status === "hidden"}
-          className="flex-1 rounded-full border border-line bg-cream px-3 py-2 text-xs font-medium disabled:opacity-40"
-        >
-          Hide
-        </button>
-        <button
-          type="button"
-          onClick={() => setConfirmDelete(true)}
-          aria-label={`Delete the note from ${item.author_name}`}
-          className="grid size-8 shrink-0 place-items-center rounded-full border border-line bg-cream text-muted hover:text-[#B4322E]"
-        >
-          <Trash2 className="size-3.5" />
-        </button>
-      </div>
-      {confirmDelete ? (
-        <div role="alert" className="mt-3 rounded-xl border border-line bg-paper p-3">
-          <p className="text-sm font-medium">Delete this note from {item.author_name}?</p>
-          <p className="mt-1 text-xs text-muted">It's gone for good, with any photo or voice note. Hide it instead if you might want it back.</p>
-          <div className="mt-2 flex gap-2">
-            <button
-              type="button"
-              disabled={deleting}
-              onClick={() => {
-                setDeleting(true);
-                void onDelete().finally(() => {
-                  setDeleting(false);
-                  setConfirmDelete(false);
-                });
-              }}
-              className="rounded-full bg-[#B4322E] px-3.5 py-1.5 text-xs font-medium text-white disabled:opacity-60"
-            >
-              {deleting ? "Deleting…" : "Delete"}
-            </button>
-            <button
-              type="button"
-              disabled={deleting}
-              onClick={() => setConfirmDelete(false)}
-              className="rounded-full border border-line px-3.5 py-1.5 text-xs font-medium"
-            >
-              Keep it
-            </button>
           </div>
         </div>
       ) : null}

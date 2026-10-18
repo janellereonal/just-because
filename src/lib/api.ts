@@ -27,6 +27,7 @@ import { normalizeIntroSettings } from "@/lib/intro";
 import { normalizeCharacter } from "@/themes/_shared/cast/types";
 import { normalizeIconSetting } from "@/themes/_shared/iconSets";
 import { NEW_SECTION_TYPES, SECTION_NEEDS, capsuleLocked, isNewSection, normalizeSectionData } from "@/lib/sections";
+import { isGiftMedia, noteProblem } from "@/lib/noteRules";
 import { createServerFn } from "@tanstack/react-start";
 import { and, asc, desc, eq, inArray, ne, or, sql } from "drizzle-orm";
 import { z } from "zod";
@@ -83,9 +84,7 @@ const OWNER_NOTE_TYPES = ["letters", "photobooth", "songs", "wordcloud", "voice"
 /** A small copy of a photo we stored for this gift (Vercel Blob, or a local dev upload), or null. */
 function ownThumb(value: unknown, siteId: string): string | null {
   if (typeof value !== "string" || value.length > 600) return null;
-  if (/^https:\/\/[\w.-]+\.public\.blob\.vercel-storage\.com\//.test(value) && value.includes(`/gifts/${siteId}/`)) return value;
-  if (/^\/api\/dev-uploads\/[\w.-]+$/.test(value) && value.includes(`gifts_${siteId}_`)) return value;
-  return null;
+  return isGiftMedia(value, siteId) ? value : null;
 }
 
 function sectionPayload(type: string, raw: unknown, text: string | null, media: string | null, siteId = ""): Record<string, unknown> | null {
@@ -126,11 +125,23 @@ const jsonObject = z.record(z.string(), json);
 
 const shortText = z.string().max(20000).nullable();
 const link = z.string().max(2000).nullable();
+/** Only files we stored ourselves (Vercel Blob, or local dev uploads). Notes also check the gift's folder (`checkNote`). */
 const mediaUrl = z
   .string()
   .max(2000)
-  .refine((v) => v.startsWith("https://") || v.startsWith("/api/dev-uploads/"), "Bad media URL")
+  .refine((v) => /^https:\/\/[a-z0-9-]+\.public\.blob\.vercel-storage\.com\//i.test(v) || v.startsWith("/api/dev-uploads/"), "Bad media URL")
   .nullable();
+
+/** The same checks the friend page makes (song links, words, the right kind of file from this gift), as a friendly 400. */
+function checkNote(
+  type: string,
+  note: { textContent: string | null; externalLink: string | null; mediaUrl: string | null },
+  siteId: string,
+  keepMedia: string | null = null,
+) {
+  const problem = noteProblem(type, note, siteId, keepMedia);
+  if (problem) throw new HttpError(400, problem);
+}
 
 /* ------------------------------------------------------------------ */
 /* Account                                                            */
@@ -803,6 +814,7 @@ export const submitContribution = createServerFn({ method: "POST" })
     const textMax = noteTextLimit(data.moduleType);
     if (data.textContent && [...data.textContent].length > textMax) throw new HttpError(422, tooLong(data.moduleType === "wordcloud" ? "your word" : "your note", textMax));
     const sectionData = sectionPayload(data.moduleType, data.data, data.textContent, data.mediaUrl, data.siteId);
+    checkNote(data.moduleType, data, data.siteId);
     const [site] = await db.select().from(schema.giftSites).where(eq(schema.giftSites.id, data.siteId));
     if (!site) throw new HttpError(404, "We couldn't find that gift.");
     if (site.disabledAt) throw new HttpError(403, "This gift has been paused, so it isn't taking notes right now.");
@@ -872,6 +884,7 @@ export const saveOwnerNote = createServerFn({ method: "POST" })
     if (data.textContent && [...data.textContent].length > textMax) throw new HttpError(422, tooLong(data.moduleType === "wordcloud" ? "the word" : "the note", textMax));
     const sectionData = sectionPayload(data.moduleType, data.data, data.textContent, data.mediaUrl, data.siteId);
     const db = getDb();
+    checkNote(data.moduleType, data, data.siteId, await savedMedia(data.id, data.siteId));
     const [existing] = await db
       .select({ siteId: c.siteId, byOwner: c.byOwner })
       .from(c)
@@ -1385,6 +1398,15 @@ export const setCustomSlug = createServerFn({ method: "POST" })
     return { ok: true, slug: data.slug };
   });
 
+/** The file an existing note of this gift already has (re-saving a note doesn't re-check it). */
+async function savedMedia(contributionId: string, siteId: string) {
+  const [row] = await getDb()
+    .select({ media: c.mediaUrl })
+    .from(c)
+    .where(and(eq(c.id, contributionId), eq(c.siteId, siteId)));
+  return row?.media ?? null;
+}
+
 async function ownDraftContribution(contributionId: string, token: string) {
   const db = getDb();
   const [row] = await db
@@ -1415,17 +1437,16 @@ export const updateOwnContribution = createServerFn({ method: "POST" })
     const textMax = noteTextLimit(row.moduleType as never);
     if (data.textContent && [...data.textContent].length > textMax) throw new HttpError(422, tooLong("your note", textMax));
     const sectionData = data.data !== undefined ? sectionPayload(row.moduleType, data.data, data.textContent, data.mediaUrl ?? "keep", row.siteId) : undefined;
-    await getDb()
-      .update(c)
-      .set({
-        textContent: data.textContent,
-        externalLink: data.externalLink,
-        ...(data.mediaUrl ? { mediaUrl: data.mediaUrl } : {}),
-        ...(row.moduleType === "tree" && data.visibility ? { visibility: data.visibility } : {}),
-        ...(sectionData !== undefined ? { data: sectionData } : {}),
-        status: "pending",
-      })
-      .where(eq(c.id, data.id));
+    checkNote(row.moduleType, data, row.siteId);
+    // The organiser's call stands: hidden stays hidden, approved stays in the gift (and they hear it changed).
+    const { saveFriendEdit } = await import("@/server/notes");
+    await saveFriendEdit(data.id, {
+      textContent: data.textContent,
+      externalLink: data.externalLink,
+      ...(data.mediaUrl ? { mediaUrl: data.mediaUrl } : {}),
+      ...(row.moduleType === "tree" && data.visibility ? { visibility: data.visibility } : {}),
+      ...(sectionData !== undefined ? { data: sectionData } : {}),
+    });
     return { ok: true };
   });
 
