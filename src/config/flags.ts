@@ -11,6 +11,8 @@
 export const FLAGS = {
   /** "Turning" on birthday gifts: the cake shows the real age in candles. */
   birthdayAge: "birthdayAge",
+  /** The Handwritten format (a notebook of notes and doodles) in the format pickers. */
+  handwrittenFormat: "handwrittenFormat",
   /** "Want us to handle it?" concierge requests on /create and in the editor. */
   concierge: "concierge",
 } as const;

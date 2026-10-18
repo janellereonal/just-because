@@ -40,6 +40,9 @@ const ScratchView = lazy(() =>
 const ConstellationView = lazy(() =>
   import("@/components/formats/ConstellationView").then((m) => ({ default: m.ConstellationView })),
 );
+const HandwrittenView = lazy(() =>
+  import("@/components/formats/HandwrittenView").then((m) => ({ default: m.HandwrittenView })),
+);
 const ZineView = lazy(() =>
   import("@/components/formats/ZineView").then((m) => ({ default: m.ZineView })),
 );
@@ -86,7 +89,8 @@ export function FormatView(props: Props) {
   const kind = themeKindOf(props.theme);
   useEffect(() => loadThemeFonts(kind), [kind]);
   useEffect(() => loadPairingFonts(props.site.font_choice), [props.site.font_choice]);
-  const tiles = props.site.format !== "scrapbook" && props.site.format !== "comic";
+  // Handwritten draws video and quiz inside its own notebook.
+  const tiles = props.site.format !== "scrapbook" && props.site.format !== "comic" && props.site.format !== "handwritten";
   const cast = castFor(kind, props.site.character ?? null, props.site.icon_set ?? null);
   const palette = props.palette ?? resolvePalette(props.theme, props.site.custom_colors);
   const roamIcons = useMemo(
@@ -210,6 +214,12 @@ function FormatBody(props: Props) {
       return (
         <Suspense fallback={fallback}>
           <ConstellationView {...common} theme={theme} />
+        </Suspense>
+      );
+    case "handwritten":
+      return (
+        <Suspense fallback={fallback}>
+          <HandwrittenView {...common} theme={theme} />
         </Suspense>
       );
     default:

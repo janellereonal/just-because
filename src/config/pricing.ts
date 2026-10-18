@@ -65,7 +65,7 @@ export const TIERS: Tier[] = [
     mostPopular: true,
     contributors: { cap: 30, unlimited: false },
     photos: { cap: 150, unlimited: false },
-    formats: ["scrapbook", "comic", "bento", "hunt", "zine", "storybook", "mixtape", "scratch", "stars"],
+    formats: ["scrapbook", "comic", "bento", "hunt", "zine", "storybook", "mixtape", "scratch", "stars", "handwritten"],
     liveFor: { months: 12, label: "1 year" },
     extendAmount: 29900,
     features: { customLinkName: false, passwordProtection: true },
@@ -78,7 +78,7 @@ export const TIERS: Tier[] = [
     // "Unlimited" on the card, with a fair-use cap so one gift can't run away with storage.
     contributors: { cap: 500, unlimited: true },
     photos: { cap: 1000, unlimited: true },
-    formats: ["scrapbook", "comic", "bento", "hunt", "zine", "storybook", "mixtape", "scratch", "stars"],
+    formats: ["scrapbook", "comic", "bento", "hunt", "zine", "storybook", "mixtape", "scratch", "stars", "handwritten"],
     liveFor: { months: 36, label: "3 years" },
     extendAmount: 49900,
     features: { customLinkName: true, passwordProtection: true },
