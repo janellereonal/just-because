@@ -8,6 +8,8 @@
  * unfolds flat into a heavy card-stock note. Two looks: Weddings (ivory and
  * greenery) and Bridal Shower (blush and roses).
  */
+// Its styles load with it, not with every page.
+import "@/styles/bodies/reception.css";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Lock, Mic, Music2 } from "lucide-react";
 import { t } from "@/i18n";
@@ -34,8 +36,21 @@ import {
 const SHORT_DAY: Intl.DateTimeFormatOptions = { day: "numeric", month: "short" };
 
 /** Shapes in pairs that share a row on a phone, and the frames each shape can wear. */
-const SHAPES = ["is-wide", "is-tall", "is-square", "is-square", "is-tall", "is-wide", "is-tall", "is-tall"] as const;
-const FRAMES = { "is-wide": ["is-ornate", "is-thin"], "is-square": ["is-thin", "is-ornate"], "is-tall": ["is-oval", "is-arch", "is-ornate"] } as const;
+const SHAPES = [
+  "is-wide",
+  "is-tall",
+  "is-square",
+  "is-square",
+  "is-tall",
+  "is-wide",
+  "is-tall",
+  "is-tall",
+] as const;
+const FRAMES = {
+  "is-wide": ["is-ornate", "is-thin"],
+  "is-square": ["is-thin", "is-ornate"],
+  "is-tall": ["is-oval", "is-arch", "is-ornate"],
+} as const;
 
 export function ReceptionBody(props: BodyProps) {
   const body = useBody(props);
@@ -79,7 +94,15 @@ export function ReceptionBody(props: BodyProps) {
         body.read(p);
         if (!reduce && !p.sealed && !isLocked(p)) {
           chime("chime");
-          burst(body.hostRef.current, r.left + r.width / 2, r.top, { shape: "petals", colors: blush ? ["#F2C6C2", "#E7A9A3", "#FFFFFF"] : ["#FFFFFF", colors.primary, "#E9DFC8"], count: 9, spread: 0.8, up: true });
+          burst(body.hostRef.current, r.left + r.width / 2, r.top, {
+            shape: "petals",
+            colors: blush
+              ? ["#F2C6C2", "#E7A9A3", "#FFFFFF"]
+              : ["#FFFFFF", colors.primary, "#E9DFC8"],
+            count: 9,
+            spread: 0.8,
+            up: true,
+          });
         }
       },
       reduce ? 0 : 420,
@@ -97,7 +120,11 @@ export function ReceptionBody(props: BodyProps) {
       className={`rx-root ${blush ? "is-blush" : "is-ivory"}`}
       style={
         {
-          "--rx-linen": colors.mix(blush ? "#FFF6F3" : "#FFFDF8", colors.primary, colors.dark ? 0.06 : 0.04),
+          "--rx-linen": colors.mix(
+            blush ? "#FFF6F3" : "#FFFDF8",
+            colors.primary,
+            colors.dark ? 0.06 : 0.04,
+          ),
           "--rx-linen-deep": colors.mix(blush ? "#EBD7D1" : "#E9E2D2", colors.primary, 0.08),
           "--rx-card": blush ? "#FFFAF8" : "#FFFEFA",
           "--rx-ink": blush ? "#4A3A3A" : "#3B3A33",
@@ -106,10 +133,20 @@ export function ReceptionBody(props: BodyProps) {
           "--rx-leaf": colors.mix(blush ? "#A3B596" : "#8FA587", colors.primary, 0.15),
           "--rx-leaf-deep": colors.mix(blush ? "#728A66" : "#5E7656", colors.primary, 0.12),
           "--rx-bloom": blush ? "#F2C6C2" : "#FFFFFF",
-          "--rx-swag": colors.mix(blush ? colors.mix("#E0A9A3", colors.primary, 0.25) : colors.mix("#9DB08F", colors.primary, 0.45), "#FFFFFF", 0.25),
+          "--rx-swag": colors.mix(
+            blush
+              ? colors.mix("#E0A9A3", colors.primary, 0.25)
+              : colors.mix("#9DB08F", colors.primary, 0.45),
+            "#FFFFFF",
+            0.25,
+          ),
           "--rx-bloom-deep": blush ? "#D9918B" : "#E6DCCB",
-          "--rx-wall": colors.dark ? colors.mix(colors.bg, "#FFFFFF", 0.04) : colors.mix(colors.bg, colors.primary, 0.05),
-          "--rx-wall-line": colors.dark ? "rgba(255,255,255,.07)" : colors.mix(colors.bg, colors.primary, 0.16),
+          "--rx-wall": colors.dark
+            ? colors.mix(colors.bg, "#FFFFFF", 0.04)
+            : colors.mix(colors.bg, colors.primary, 0.05),
+          "--rx-wall-line": colors.dark
+            ? "rgba(255,255,255,.07)"
+            : colors.mix(colors.bg, colors.primary, 0.16),
           "--rx-accent-ink": colors.mix(colors.primary, colors.ink, colors.dark ? 0.7 : 0.35),
           "--rx-glow": colors.dark ? "rgba(255, 220, 160, .07)" : "rgba(255,255,255,.5)",
         } as React.CSSProperties
@@ -121,7 +158,11 @@ export function ReceptionBody(props: BodyProps) {
           <Sprig className="rx-head-sprig" />
           <p className="rx-kicker">{t("reception.kicker")}</p>
           <h1 className="rx-name" style={{ fontFamily: fonts.heading }}>
-            {data.named ? <SampleText on={data.nameIsSample}>{data.name}</SampleText> : body.heading}
+            {data.named ? (
+              <SampleText on={data.nameIsSample}>{data.name}</SampleText>
+            ) : (
+              body.heading
+            )}
           </h1>
           {data.named ? <p className="rx-heading">{body.heading}</p> : null}
           <p className="rx-intro">{body.intro || body.voice.intro(data.named ? data.name : "")}</p>
@@ -139,12 +180,29 @@ export function ReceptionBody(props: BodyProps) {
                 const kinds = FRAMES[shape];
                 const kind = kinds[(i + Math.floor(seed(p.id) * kinds.length)) % kinds.length]!;
                 return (
-                  <li key={p.id} className={`rx-frame-spot ${shape}`} style={{ "--drop": `${Math.round((seed(`${p.id}d`) - 0.5) * 30)}px` } as React.CSSProperties}>
+                  <li
+                    key={p.id}
+                    className={`rx-frame-spot ${shape}`}
+                    style={
+                      {
+                        "--drop": `${Math.round((seed(`${p.id}d`) - 0.5) * 30)}px`,
+                      } as React.CSSProperties
+                    }
+                  >
                     <span className="rx-hook" aria-hidden="true" />
-                    <button type="button" className={`rx-frame ${kind} ${opened.has(p.id) ? "is-seen" : ""}`} onClick={() => view(p)} aria-label={pieceLabel(p)}>
+                    <button
+                      type="button"
+                      className={`rx-frame ${kind} ${opened.has(p.id) ? "is-seen" : ""}`}
+                      onClick={() => view(p)}
+                      aria-label={pieceLabel(p)}
+                    >
                       <span className="rx-mat">
                         <span className="rx-pic">
-                          <PhotoFace piece={p} tint={colors.primary} sizes="(max-width: 640px) 45vw, 280px" />
+                          <PhotoFace
+                            piece={p}
+                            tint={colors.primary}
+                            sizes="(max-width: 640px) 45vw, 280px"
+                          />
                         </span>
                       </span>
                     </button>
@@ -156,19 +214,34 @@ export function ReceptionBody(props: BodyProps) {
           </section>
         ) : null}
 
-        <section ref={hallRef} className="rx-hall" aria-label={t("reception.count", { n: cards.length })}>
+        <section
+          ref={hallRef}
+          className="rx-hall"
+          aria-label={t("reception.count", { n: cards.length })}
+        >
           <div className="rx-hall-head">
             <p className="rx-section" style={{ fontFamily: fonts.heading }}>
               {notes.length ? t("reception.hint") : body.voice.empty(t("reception.what"))}
             </p>
             {notes.length ? (
               <p className="rx-progress" role="status">
-                {read === notes.length ? t("reception.allRead") : t("reception.progress", { n: read, total: notes.length })}
+                {read === notes.length
+                  ? t("reception.allRead")
+                  : t("reception.progress", { n: read, total: notes.length })}
               </p>
             ) : null}
           </div>
           {(tables.length ? tables : [[]]).map((row, k) => (
-            <Table key={k} index={k} row={row} per={per} opened={opened} unfolding={unfolding} onOpen={unfold} headingFont={fonts.heading} />
+            <Table
+              key={k}
+              index={k}
+              row={row}
+              per={per}
+              opened={opened}
+              unfolding={unfolding}
+              onOpen={unfold}
+              headingFont={fonts.heading}
+            />
           ))}
         </section>
 
@@ -188,15 +261,27 @@ export function ReceptionBody(props: BodyProps) {
           </section>
         ) : null}
 
-        <BodyFooter body={body} className="rx-footer" buttonStyle={{ background: colors.primary, color: colors.onPrimary }} />
+        <BodyFooter
+          body={body}
+          className="rx-footer"
+          buttonStyle={{ background: colors.primary, color: colors.onPrimary }}
+        />
       </div>
 
       {body.reading ? (
-        <Reader piece={body.reading} onClose={body.closeReader} accent={colors.mix(colors.accent, "#3B3A33", 0.25)} className="rx-reader">
+        <Reader
+          piece={body.reading}
+          onClose={body.closeReader}
+          accent={colors.mix(colors.accent, "#3B3A33", 0.25)}
+          className="rx-reader"
+        >
           <span className="rx-reader-crease" aria-hidden="true" />
           <span className="rx-reader-border" aria-hidden="true" />
           <Sprig className="rx-reader-sprig" />
-          {data.named && !body.reading.sealed && !isLocked(body.reading) && body.reading.kind !== "photo" ? (
+          {data.named &&
+          !body.reading.sealed &&
+          !isLocked(body.reading) &&
+          body.reading.kind !== "photo" ? (
             <p className="rx-reader-dear" style={{ fontFamily: fonts.heading }}>
               {t("reception.dear", { name: data.name })}
             </p>
@@ -233,22 +318,58 @@ function Table({
       <div className="rx-table-top" aria-hidden="true">
         <span className="rx-garland">
           {Array.from({ length: per + 3 }, (_, i) => (
-            <span key={i} className={`rx-bloom ${i % 3 === 1 ? "is-small" : ""}`} style={{ left: `${(i / (per + 2)) * 100}%`, "--rot": `${(seed(`b${index}-${i}`) * 90).toFixed(0)}deg` } as React.CSSProperties} />
+            <span
+              key={i}
+              className={`rx-bloom ${i % 3 === 1 ? "is-small" : ""}`}
+              style={
+                {
+                  left: `${(i / (per + 2)) * 100}%`,
+                  "--rot": `${(seed(`b${index}-${i}`) * 90).toFixed(0)}deg`,
+                } as React.CSSProperties
+              }
+            />
           ))}
           {Array.from({ length: per * 2 + 4 }, (_, i) => (
-            <span key={`l${i}`} className="rx-leaf" style={{ left: `${(i / (per * 2 + 3)) * 100}%`, "--rot": `${(i % 2 ? -1 : 1) * (30 + seed(`l${index}-${i}`) * 50)}deg` } as React.CSSProperties} />
+            <span
+              key={`l${i}`}
+              className="rx-leaf"
+              style={
+                {
+                  left: `${(i / (per * 2 + 3)) * 100}%`,
+                  "--rot": `${(i % 2 ? -1 : 1) * (30 + seed(`l${index}-${i}`) * 50)}deg`,
+                } as React.CSSProperties
+              }
+            />
           ))}
         </span>
         {Array.from({ length: candles }, (_, i) => (
-          <span key={i} className="rx-candle" style={{ left: `${((i + 1) / (candles + 1)) * 100}%`, "--h": `${0.8 + seed(`c${index}-${i}`) * 0.3}` } as React.CSSProperties}>
-            <span className="rx-flame" style={{ animationDelay: `${-seed(`f${index}-${i}`) * 1.3}s` }} />
+          <span
+            key={i}
+            className="rx-candle"
+            style={
+              {
+                left: `${((i + 1) / (candles + 1)) * 100}%`,
+                "--h": `${0.8 + seed(`c${index}-${i}`) * 0.3}`,
+              } as React.CSSProperties
+            }
+          >
+            <span
+              className="rx-flame"
+              style={{ animationDelay: `${-seed(`f${index}-${i}`) * 1.3}s` }}
+            />
           </span>
         ))}
       </div>
       <ul className="rx-cards">
         {row.map((p) => (
           <li key={p.id}>
-            <PlaceCard piece={p} open={opened.has(p.id)} unfolding={unfolding === p.id} onOpen={(e) => onOpen(p, e)} headingFont={headingFont} />
+            <PlaceCard
+              piece={p}
+              open={opened.has(p.id)}
+              unfolding={unfolding === p.id}
+              onOpen={(e) => onOpen(p, e)}
+              headingFont={headingFont}
+            />
           </li>
         ))}
       </ul>
@@ -257,9 +378,28 @@ function Table({
   );
 }
 
-function PlaceCard({ piece, open, unfolding, onOpen, headingFont }: { piece: Piece; open: boolean; unfolding: boolean; onOpen: (e: React.MouseEvent<HTMLElement>) => void; headingFont: string }) {
+function PlaceCard({
+  piece,
+  open,
+  unfolding,
+  onOpen,
+  headingFont,
+}: {
+  piece: Piece;
+  open: boolean;
+  unfolding: boolean;
+  onOpen: (e: React.MouseEvent<HTMLElement>) => void;
+  headingFont: string;
+}) {
   const locked = isLocked(piece);
-  const Icon = piece.sealed || locked ? Lock : piece.kind === "song" ? Music2 : piece.kind === "voice" ? Mic : null;
+  const Icon =
+    piece.sealed || locked
+      ? Lock
+      : piece.kind === "song"
+        ? Music2
+        : piece.kind === "voice"
+          ? Mic
+          : null;
   return (
     <button
       type="button"
@@ -276,7 +416,9 @@ function PlaceCard({ piece, open, unfolding, onOpen, headingFont }: { piece: Pie
         <span className="rx-card-rule" />
         <span className="rx-card-what">
           {Icon ? <Icon className="size-2.5" /> : null}
-          {locked ? t("body.opensOn", { day: formatDay(piece.date!, SHORT_DAY) }) : pieceWhat(piece)}
+          {locked
+            ? t("body.opensOn", { day: formatDay(piece.date!, SHORT_DAY) })
+            : pieceWhat(piece)}
         </span>
         {open ? <span className="rx-card-foil" aria-hidden="true" /> : null}
       </span>
@@ -288,13 +430,35 @@ function PlaceCard({ piece, open, unfolding, onOpen, headingFont }: { piece: Pie
 function Sprig({ className }: { className: string }) {
   return (
     <svg className={className} viewBox="0 0 120 40" aria-hidden="true">
-      <path d="M6 22 C 34 18, 70 18, 114 20" fill="none" stroke="var(--rx-leaf-deep)" strokeWidth="1.2" strokeLinecap="round" />
+      <path
+        d="M6 22 C 34 18, 70 18, 114 20"
+        fill="none"
+        stroke="var(--rx-leaf-deep)"
+        strokeWidth="1.2"
+        strokeLinecap="round"
+      />
       {[16, 30, 44, 58, 72, 86, 100].map((x, i) => (
-        <g key={x} transform={`translate(${x} ${20 - (i % 2 ? -1 : 1) * 0.5}) rotate(${i % 2 ? 32 : -32})`}>
-          <ellipse cx="0" cy={i % 2 ? 6 : -6} rx="4.2" ry="8" fill={i % 3 === 0 ? "var(--rx-leaf-deep)" : "var(--rx-leaf)"} />
+        <g
+          key={x}
+          transform={`translate(${x} ${20 - (i % 2 ? -1 : 1) * 0.5}) rotate(${i % 2 ? 32 : -32})`}
+        >
+          <ellipse
+            cx="0"
+            cy={i % 2 ? 6 : -6}
+            rx="4.2"
+            ry="8"
+            fill={i % 3 === 0 ? "var(--rx-leaf-deep)" : "var(--rx-leaf)"}
+          />
         </g>
       ))}
-      <circle cx="60" cy="19" r="5.5" fill="var(--rx-bloom)" stroke="var(--rx-bloom-deep)" strokeWidth="1" />
+      <circle
+        cx="60"
+        cy="19"
+        r="5.5"
+        fill="var(--rx-bloom)"
+        stroke="var(--rx-bloom-deep)"
+        strokeWidth="1"
+      />
       <circle cx="60" cy="19" r="2.2" fill="var(--rx-bloom-deep)" />
     </svg>
   );

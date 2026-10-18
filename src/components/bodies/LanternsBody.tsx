@@ -9,6 +9,8 @@
  * device, and the street gets brighter as more are lit: the sky warms and the
  * windows of the houses come on.
  */
+// Its styles load with it, not with every page.
+import "@/styles/bodies/lanterns.css";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Lock } from "lucide-react";
 import { t } from "@/i18n";

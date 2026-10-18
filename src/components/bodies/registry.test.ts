@@ -19,7 +19,9 @@ describe("every theme style reads in a body of its own", () => {
 
   test("no two styles share a body", () => {
     const src = readFileSync(new URL("./registry.ts", import.meta.url), "utf8");
-    const files = [...src.matchAll(/^body\("([^"]+)", \(\) => import\("@\/components\/bodies\/(\w+)"\)/gm)].map((m) => m[2]);
+    const files = [
+      ...src.matchAll(/^body\("([^"]+)", \(\) => import\("@\/components\/bodies\/(\w+)"\)/gm),
+    ].map((m) => m[2]);
     expect(files.length).toBe(own.size);
     expect(new Set(files).size).toBe(files.length);
   });

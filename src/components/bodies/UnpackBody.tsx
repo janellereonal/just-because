@@ -11,6 +11,8 @@
  * beside the box. Balikbayan Box is the same body in its own look: printed
  * bands, tape everywhere and the name in marker.
  */
+// Its styles load with it, not with every page.
+import "@/styles/bodies/unpack.css";
 import { useEffect, useMemo, useState } from "react";
 import { Camera, Check, Lock, Mail, Mic, Music2, Sparkles } from "lucide-react";
 import { t } from "@/i18n";

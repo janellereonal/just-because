@@ -9,6 +9,8 @@
  * pinned to a "best friends" wall of polaroids with paw prints, and the words
  * are dog biscuits.
  */
+// Its styles load with it, not with every page.
+import "@/styles/bodies/toybasket.css";
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { CalendarDays, Lock, Mic, Music2, PawPrint, Star } from "lucide-react";
 import { t } from "@/i18n";

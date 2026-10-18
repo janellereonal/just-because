@@ -9,6 +9,8 @@
  * polaroids pegged to bunting above the table. When the last note is read the
  * last candle puffs out and the party goes off.
  */
+// Its styles load with it, not with every page.
+import "@/styles/bodies/party.css";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Lock, Mic, Music2 } from "lucide-react";
 import { t } from "@/i18n";
@@ -79,15 +81,30 @@ export function PartyBody(props: BodyProps) {
         open(CHEER);
         foley("breath");
         buzz([12, 50, 12]);
-        window.setTimeout(() => {
-          const r = el?.getBoundingClientRect();
-          if (r) {
-            const conf = [colors.primary, colors.accent, "#FFD166", "#8DE3C6", "#FFFFFF"];
-            burst(body.hostRef.current, r.left + r.width * 0.3, r.top + r.height * 0.35, { shape: "confetti", colors: conf, count: 28, spread: 1.8, up: true });
-            burst(body.hostRef.current, r.left + r.width * 0.7, r.top + r.height * 0.35, { shape: "confetti", colors: conf, count: 28, spread: 1.8, up: true });
-          }
-          chime("tada");
-        }, reduce ? 0 : 420);
+        window.setTimeout(
+          () => {
+            const r = el?.getBoundingClientRect();
+            if (r) {
+              const conf = [colors.primary, colors.accent, "#FFD166", "#8DE3C6", "#FFFFFF"];
+              burst(body.hostRef.current, r.left + r.width * 0.3, r.top + r.height * 0.35, {
+                shape: "confetti",
+                colors: conf,
+                count: 28,
+                spread: 1.8,
+                up: true,
+              });
+              burst(body.hostRef.current, r.left + r.width * 0.7, r.top + r.height * 0.35, {
+                shape: "confetti",
+                colors: conf,
+                count: 28,
+                spread: 1.8,
+                up: true,
+              });
+            }
+            chime("tada");
+          },
+          reduce ? 0 : 420,
+        );
       },
       reduce ? 60 : 750,
     );
@@ -118,7 +135,13 @@ export function PartyBody(props: BodyProps) {
         setFlipping(null);
         body.read(p);
         if (!reduce && !p.sealed && !isLocked(p))
-          burst(body.hostRef.current, x, y, { shape: "confetti", colors: [colors.primary, colors.accent, "#FFD166"], count: 10, spread: 0.8, up: true });
+          burst(body.hostRef.current, x, y, {
+            shape: "confetti",
+            colors: [colors.primary, colors.accent, "#FFD166"],
+            count: 10,
+            spread: 0.8,
+            up: true,
+          });
       },
       reduce ? 0 : 380,
     );
@@ -130,7 +153,9 @@ export function PartyBody(props: BodyProps) {
   useEffect(() => {
     const el = buntRef.current;
     if (!el || typeof ResizeObserver === "undefined") return;
-    const ro = new ResizeObserver(([e]) => e && setBw(Math.max(200, Math.round(e.contentRect.width))));
+    const ro = new ResizeObserver(
+      ([e]) => e && setBw(Math.max(200, Math.round(e.contentRect.width))),
+    );
     ro.observe(el);
     return () => ro.disconnect();
   }, []);
@@ -147,7 +172,12 @@ export function PartyBody(props: BodyProps) {
   const stringWidth = scroll ? photos.length * (pw + 48) + 48 : bw;
 
   const decos = Math.max(1, Math.floor(seats.length / 5));
-  const flags = [colors.primary, colors.accent, colors.mix(colors.primary, "#FFFFFF", 0.55), colors.mix(colors.accent, "#FFFFFF", 0.6)];
+  const flags = [
+    colors.primary,
+    colors.accent,
+    colors.mix(colors.primary, "#FFFFFF", 0.55),
+    colors.mix(colors.accent, "#FFFFFF", 0.6),
+  ];
 
   return (
     <BodyRoot
@@ -168,9 +198,15 @@ export function PartyBody(props: BodyProps) {
           "--pt-pri-soft": colors.mix(colors.primary, "#FFFFFF", 0.55),
           "--pt-card": colors.mix("#FFFDF7", colors.primary, 0.03),
           // The name is in the gift's own colour, pulled toward the page's ink until it reads on any background.
-          "--pt-name": colors.dark ? colors.mix(colors.ink, colors.primary, 0.22) : colors.mix(colors.primary, colors.ink, 0.38),
-          "--pt-name-shadow": colors.dark ? colors.mix(colors.primary, colors.bg, 0.3) : colors.mix(colors.accent, colors.bg, 0.7),
-          "--pt-wall-dot": colors.dark ? "rgba(255,255,255,.05)" : colors.mix(colors.bg, colors.primary, 0.12),
+          "--pt-name": colors.dark
+            ? colors.mix(colors.ink, colors.primary, 0.22)
+            : colors.mix(colors.primary, colors.ink, 0.38),
+          "--pt-name-shadow": colors.dark
+            ? colors.mix(colors.primary, colors.bg, 0.3)
+            : colors.mix(colors.accent, colors.bg, 0.7),
+          "--pt-wall-dot": colors.dark
+            ? "rgba(255,255,255,.05)"
+            : colors.mix(colors.bg, colors.primary, 0.12),
         } as React.CSSProperties
       }
     >
@@ -179,23 +215,51 @@ export function PartyBody(props: BodyProps) {
         <header className="pt-head">
           <p className="pt-kicker">{t("party.kicker")}</p>
           <h1 className="pt-name" style={{ fontFamily: fonts.heading }}>
-            {data.named ? <SampleText on={data.nameIsSample}>{data.name}</SampleText> : body.heading}
+            {data.named ? (
+              <SampleText on={data.nameIsSample}>{data.name}</SampleText>
+            ) : (
+              body.heading
+            )}
           </h1>
           {data.named ? <p className="pt-heading">{body.heading}</p> : null}
           <p className="pt-intro">{body.intro || body.voice.intro(data.named ? data.name : "")}</p>
           <CountdownLine date={data.countdownDate} className="pt-countdown" />
         </header>
 
-        <div ref={buntRef} className={`pt-bunting ${scroll ? "is-scroll" : ""}`} role={strings.length ? "region" : undefined} aria-label={strings.length ? t("party.bunting") : undefined} style={{ "--pw": `${pw}px` } as React.CSSProperties}>
+        <div
+          ref={buntRef}
+          className={`pt-bunting ${scroll ? "is-scroll" : ""}`}
+          role={strings.length ? "region" : undefined}
+          aria-label={strings.length ? t("party.bunting") : undefined}
+          style={{ "--pw": `${pw}px` } as React.CSSProperties}
+        >
           {(strings.length ? strings : [[]]).map((row, k) => (
-            <Garland key={k} row={row} index={k} width={stringWidth} pw={pw} flags={flags} opened={opened} onOpen={read} accent={colors.primary} />
+            <Garland
+              key={k}
+              row={row}
+              index={k}
+              width={stringWidth}
+              pw={pw}
+              flags={flags}
+              opened={opened}
+              onOpen={read}
+              accent={colors.primary}
+            />
           ))}
         </div>
 
         <section className="pt-table" aria-label={t("party.table")}>
           <span className="pt-runner" aria-hidden="true" />
           <div className="pt-head-of-table">
-            <Cake innerRef={cakeRef} count={drawn} lit={lit} puffs={puffs} cheer={cheer} name={data.named ? data.name : ""} headingFont={fonts.heading} />
+            <Cake
+              innerRef={cakeRef}
+              count={drawn}
+              lit={lit}
+              puffs={puffs}
+              cheer={cheer}
+              name={data.named ? data.name : ""}
+              headingFont={fonts.heading}
+            />
             <p className="pt-status" role="status" aria-live="polite">
               {total === 0
                 ? body.voice.empty(t("party.what"))
@@ -208,31 +272,50 @@ export function PartyBody(props: BodyProps) {
           </div>
           {seats.length ? (
             <div className="pt-seats-wrap">
-            {Array.from({ length: decos }, (_, i) => (
-              <span key={i} className={`pt-deco is-d${i % 4}`} style={{ top: `${((i + 0.5) / decos) * 100}%` }} aria-hidden="true" />
-            ))}
-            {[0, 1].map((side) => (
-              <ul key={side} className={`pt-seats ${side ? "is-right" : "is-left"}`}>
-                {seats.map((p, i) =>
-                  i % 2 === side ? (
-                    <li key={p.id}>
-                      <Setting piece={p} open={opened.has(p.id)} flipping={flipping === p.id} onOpen={(e) => read(p, e)} />
-                    </li>
-                  ) : null,
-                )}
-              </ul>
-            ))}
+              {Array.from({ length: decos }, (_, i) => (
+                <span
+                  key={i}
+                  className={`pt-deco is-d${i % 4}`}
+                  style={{ top: `${((i + 0.5) / decos) * 100}%` }}
+                  aria-hidden="true"
+                />
+              ))}
+              {[0, 1].map((side) => (
+                <ul key={side} className={`pt-seats ${side ? "is-right" : "is-left"}`}>
+                  {seats.map((p, i) =>
+                    i % 2 === side ? (
+                      <li key={p.id}>
+                        <Setting
+                          piece={p}
+                          open={opened.has(p.id)}
+                          flipping={flipping === p.id}
+                          onOpen={(e) => read(p, e)}
+                        />
+                      </li>
+                    ) : null,
+                  )}
+                </ul>
+              ))}
             </div>
           ) : null}
         </section>
 
         {data.words.length ? <Balloons body={body} /> : null}
 
-        <BodyFooter body={body} className="pt-footer" buttonStyle={{ background: colors.primary, color: colors.onPrimary }} />
+        <BodyFooter
+          body={body}
+          className="pt-footer"
+          buttonStyle={{ background: colors.primary, color: colors.onPrimary }}
+        />
       </div>
 
       {body.reading ? (
-        <Reader piece={body.reading} onClose={body.closeReader} accent={colors.mix(colors.primary, "#2B1A20", 0.2)} className="pt-reader">
+        <Reader
+          piece={body.reading}
+          onClose={body.closeReader}
+          accent={colors.mix(colors.primary, "#2B1A20", 0.2)}
+          className="pt-reader"
+        >
           <span className="pt-reader-fold" aria-hidden="true" />
           <span className="pt-reader-band" aria-hidden="true">
             <span className="pt-reader-dots" />
@@ -258,7 +341,8 @@ export function PartyBody(props: BodyProps) {
 /** Candle spots on the cake's top: an outer ring, then an inner one. In 0..100 of the top's box. */
 function candleSpots(n: number) {
   const spots: { x: number; y: number; rank: number }[] = [];
-  const at = (a: number, r: number) => spots.push({ x: 50 + Math.cos(a) * r * 50, y: 50 + Math.sin(a) * r * 50, rank: 0 });
+  const at = (a: number, r: number) =>
+    spots.push({ x: 50 + Math.cos(a) * r * 50, y: 50 + Math.sin(a) * r * 50, rank: 0 });
   // Along the back of the cake, so the name piped on the front stays clear.
   const back = (count: number, r: number) => {
     for (let i = 0; i < count; i++) at(Math.PI + ((i + 1) / (count + 1)) * Math.PI, r);
@@ -266,7 +350,8 @@ function candleSpots(n: number) {
   if (n <= 5) back(n, 0.6);
   else {
     const outer = Math.min(n, 10);
-    for (let i = 0; i < outer; i++) at(-Math.PI / 2 + Math.PI / outer + (i / outer) * Math.PI * 2, 0.75);
+    for (let i = 0; i < outer; i++)
+      at(-Math.PI / 2 + Math.PI / outer + (i / outer) * Math.PI * 2, 0.75);
     back(n - outer, 0.42);
   }
   // Which candle goes out when: spread around the cake, not in a circle.
@@ -299,13 +384,23 @@ function Cake({
       Array.from({ length: 22 }, (_, i) => {
         const a = seed(`sa${i}`) * Math.PI * 2;
         const r = 0.15 + seed(`sr${i}`) * 0.7;
-        return { x: 50 + Math.cos(a) * r * 50, y: 50 + Math.sin(a) * r * 50, rot: seed(`so${i}`) * 180, c: i % 4 };
+        return {
+          x: 50 + Math.cos(a) * r * 50,
+          y: 50 + Math.sin(a) * r * 50,
+          rot: seed(`so${i}`) * 180,
+          c: i % 4,
+        };
       }),
     [],
   );
   const glow = count ? lit / count : 0;
   return (
-    <div ref={innerRef} className={`pt-cake ${cheer ? "is-cheer" : ""}`} aria-hidden="true" style={{ "--glow": glow } as React.CSSProperties}>
+    <div
+      ref={innerRef}
+      className={`pt-cake ${cheer ? "is-cheer" : ""}`}
+      aria-hidden="true"
+      style={{ "--glow": glow } as React.CSSProperties}
+    >
       <span className="pt-cake-plate" />
       <span className="pt-cake-side">
         <svg viewBox="0 0 100 30" preserveAspectRatio="none" className="pt-cake-drip">
@@ -316,11 +411,25 @@ function Cake({
       <span className="pt-cake-top">
         <span className="pt-cake-light" />
         {sprinkles.map((s, i) => (
-          <span key={i} className={`pt-sprinkle is-c${s.c}`} style={{ left: `${s.x}%`, top: `${s.y}%`, rotate: `${s.rot}deg` }} />
+          <span
+            key={i}
+            className={`pt-sprinkle is-c${s.c}`}
+            style={{ left: `${s.x}%`, top: `${s.y}%`, rotate: `${s.rot}deg` }}
+          />
         ))}
         {Array.from({ length: beads }, (_, i) => {
           const a = (i / beads) * Math.PI * 2;
-          return <span key={i} className="pt-bead" style={{ left: `${50 + Math.cos(a) * 47}%`, top: `${50 + Math.sin(a) * 45}%`, zIndex: Math.round(50 + Math.sin(a) * 45) }} />;
+          return (
+            <span
+              key={i}
+              className="pt-bead"
+              style={{
+                left: `${50 + Math.cos(a) * 47}%`,
+                top: `${50 + Math.sin(a) * 45}%`,
+                zIndex: Math.round(50 + Math.sin(a) * 45),
+              }}
+            />
+          );
         })}
         {name ? (
           <span className="pt-cake-name" style={{ fontFamily: headingFont }}>
@@ -331,7 +440,11 @@ function Cake({
           const on = s.rank < lit;
           const puff = puffs[s.rank];
           return (
-            <span key={i} className={`pt-candle ${on ? "is-lit" : "is-out"} ${i % 3 === 1 ? "is-b" : i % 3 === 2 ? "is-c" : ""}`} style={{ left: `${s.x}%`, top: `${s.y}%`, zIndex: Math.round(s.y) + 100 }}>
+            <span
+              key={i}
+              className={`pt-candle ${on ? "is-lit" : "is-out"} ${i % 3 === 1 ? "is-b" : i % 3 === 2 ? "is-c" : ""}`}
+              style={{ left: `${s.x}%`, top: `${s.y}%`, zIndex: Math.round(s.y) + 100 }}
+            >
               <span className="pt-candle-stick" />
               <span className="pt-flame" style={{ animationDelay: `${-seed(`f${i}`) * 1.2}s` }} />
               {puff && !on ? <span key={puff} className="pt-smoke" /> : null}
@@ -345,19 +458,38 @@ function Cake({
 
 /* ---------- a place setting ---------- */
 
-function Setting({ piece, open, flipping, onOpen }: { piece: Piece; open: boolean; flipping: boolean; onOpen: (e: React.MouseEvent<HTMLElement>) => void }) {
+function Setting({
+  piece,
+  open,
+  flipping,
+  onOpen,
+}: {
+  piece: Piece;
+  open: boolean;
+  flipping: boolean;
+  onOpen: (e: React.MouseEvent<HTMLElement>) => void;
+}) {
   const r = seed(piece.id);
   const locked = isLocked(piece);
   const favour = Math.floor(r * 3);
   const name = piece.author || t("party.surprise");
-  const sub = piece.sealed ? pieceWhat(piece) : locked ? t("body.opensOn", { day: formatDay(piece.date!, SHORT_DAY) }) : pieceWhat(piece);
+  const sub = piece.sealed
+    ? pieceWhat(piece)
+    : locked
+      ? t("body.opensOn", { day: formatDay(piece.date!, SHORT_DAY) })
+      : pieceWhat(piece);
   return (
     <button
       type="button"
       className={`pt-setting ${open ? "is-open" : ""} ${flipping ? "is-flip" : ""}`}
       onClick={onOpen}
       aria-label={pieceLabel(piece)}
-      style={{ "--tilt": `${((r - 0.5) * 8).toFixed(1)}deg`, "--fav": `${(seed(`${piece.id}f`) * 70 - 35).toFixed(0)}deg` } as React.CSSProperties}
+      style={
+        {
+          "--tilt": `${((r - 0.5) * 8).toFixed(1)}deg`,
+          "--fav": `${(seed(`${piece.id}f`) * 70 - 35).toFixed(0)}deg`,
+        } as React.CSSProperties
+      }
     >
       <span className="pt-napkin" />
       <span className="pt-cutlery">
@@ -459,29 +591,59 @@ function Garland({
   const perGap = Math.max(1, Math.floor((gap - 4) / 30));
   for (let g = 0; g <= n; g++) {
     const start = g * (gap + pw);
-    for (let k = 0; k < perGap; k++) slots.push({ at: (start + ((k + 0.5) / perGap) * gap) / width, flag: f++ });
+    for (let k = 0; k < perGap; k++)
+      slots.push({ at: (start + ((k + 0.5) / perGap) * gap) / width, flag: f++ });
     const p = row[g];
     if (p) slots.push({ at: (start + gap + pw / 2) / width, photo: p });
   }
   return (
     <div className={`pt-garland ${n ? "" : "is-plain"}`} style={{ width: `${width}px` }}>
       <span className="pt-line">
-        <svg className="pt-string" viewBox="0 0 100 40" preserveAspectRatio="none" aria-hidden="true">
+        <svg
+          className="pt-string"
+          viewBox="0 0 100 40"
+          preserveAspectRatio="none"
+          aria-hidden="true"
+        >
           <path d="M-2 4 Q50 36 102 4" />
         </svg>
         {slots.map((s, i) => {
           const tt = s.at;
           const sag = 4 + 64 * tt * (1 - tt) * (1 - 0.08);
-          const style = { left: `${tt * 100}%`, top: `${(sag / 40) * 100}%`, "--rot": `${((0.5 - tt) * -24).toFixed(1)}deg` } as React.CSSProperties;
+          const style = {
+            left: `${tt * 100}%`,
+            top: `${(sag / 40) * 100}%`,
+            "--rot": `${((0.5 - tt) * -24).toFixed(1)}deg`,
+          } as React.CSSProperties;
           if ("flag" in s)
-            return <span key={i} className="pt-flag" style={{ ...style, "--flag": flags[s.flag % flags.length], "--fd": `${(-seed(`fl${i}`) * 3).toFixed(2)}s` } as React.CSSProperties} aria-hidden="true" />;
+            return (
+              <span
+                key={i}
+                className="pt-flag"
+                style={
+                  {
+                    ...style,
+                    "--flag": flags[s.flag % flags.length],
+                    "--fd": `${(-seed(`fl${i}`) * 3).toFixed(2)}s`,
+                  } as React.CSSProperties
+                }
+                aria-hidden="true"
+              />
+            );
           const p = s.photo;
           return (
             <button
               key={p.id}
               type="button"
               className={`pt-polaroid ${opened.has(p.id) ? "is-seen" : ""}`}
-              style={{ ...style, "--sw": `${(2.6 + seed(p.id) * 1.8).toFixed(2)}s`, "--sd": `${(-seed(p.id) * 3).toFixed(2)}s`, "--lean": `${((seed(`${p.id}l`) - 0.5) * 8).toFixed(1)}deg` } as React.CSSProperties}
+              style={
+                {
+                  ...style,
+                  "--sw": `${(2.6 + seed(p.id) * 1.8).toFixed(2)}s`,
+                  "--sd": `${(-seed(p.id) * 3).toFixed(2)}s`,
+                  "--lean": `${((seed(`${p.id}l`) - 0.5) * 8).toFixed(1)}deg`,
+                } as React.CSSProperties
+              }
               onClick={(e) => onOpen(p, e)}
               aria-label={pieceLabel(p)}
             >
@@ -502,7 +664,13 @@ function Garland({
 
 function Balloons({ body }: { body: Body }) {
   const { data, colors, fonts } = body;
-  const tints = [colors.primary, colors.accent, colors.mix(colors.primary, "#FFFFFF", 0.45), colors.mix(colors.accent, "#FFFFFF", 0.45), "#FFD166"];
+  const tints = [
+    colors.primary,
+    colors.accent,
+    colors.mix(colors.primary, "#FFFFFF", 0.45),
+    colors.mix(colors.accent, "#FFFFFF", 0.45),
+    "#FFD166",
+  ];
   return (
     <section className="pt-words" aria-label={t("party.wordsTitle")}>
       <p className="pt-words-title" style={{ fontFamily: fonts.heading }}>
@@ -515,7 +683,13 @@ function Balloons({ body }: { body: Body }) {
             <li
               key={w.id}
               className="pt-balloon"
-              style={{ "--bc": c, "--bd": `${(-seed(w.id) * 4).toFixed(2)}s`, "--bt": `${((seed(`${w.id}t`) - 0.5) * 10).toFixed(1)}deg` } as React.CSSProperties}
+              style={
+                {
+                  "--bc": c,
+                  "--bd": `${(-seed(w.id) * 4).toFixed(2)}s`,
+                  "--bt": `${((seed(`${w.id}t`) - 0.5) * 10).toFixed(1)}deg`,
+                } as React.CSSProperties
+              }
             >
               <span className="pt-balloon-body">
                 <span className="pt-balloon-word" style={{ color: readable(c) }}>

@@ -9,6 +9,8 @@
  * photos are entry photos and postcards clipped to the pages. Tap a stamp and
  * it lifts off the page into a postcard. Read stamps get a pencil tick.
  */
+// Its styles load with it, not with every page.
+import "@/styles/bodies/passport.css";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { CalendarDays, Camera, Heart, Lock, Mail, Mic, Music2, Plane, Star } from "lucide-react";
 import { t, type MessageKey } from "@/i18n";

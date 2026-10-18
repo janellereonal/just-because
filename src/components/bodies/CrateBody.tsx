@@ -9,6 +9,8 @@
  * initial on its label, and the note reads as liner notes. The back cover below
  * lists every record (Side A, Side B), so any of them is one tap away.
  */
+// Its styles load with it, not with every page.
+import "@/styles/bodies/crate.css";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { ChevronLeft, ChevronRight, Lock, Mic, Music2 } from "lucide-react";
 import { t } from "@/i18n";
@@ -79,7 +81,13 @@ export function CrateBody(props: BodyProps) {
         foley("needle");
         const r = crateRef.current?.getBoundingClientRect();
         if (r && !reduce && !p.sealed && !isLocked(p))
-          burst(body.hostRef.current, r.left + r.width / 2, r.top + r.height * 0.15, { shape: "hearts", colors: [colors.primary, colors.accent, "#F6E3B4"], count: 8, spread: 0.8, up: true });
+          burst(body.hostRef.current, r.left + r.width / 2, r.top + r.height * 0.15, {
+            shape: "hearts",
+            colors: [colors.primary, colors.accent, "#F6E3B4"],
+            count: 8,
+            spread: 0.8,
+            up: true,
+          });
       },
       reduce ? 0 : 760,
     );
@@ -127,7 +135,13 @@ export function CrateBody(props: BodyProps) {
     },
   };
 
-  const shades = [colors.primary, colors.accent, colors.mix(colors.primary, colors.accent, 0.5), colors.mix(colors.accent, "#1A1210", 0.45), colors.mix(colors.primary, "#FFFFFF", 0.4)];
+  const shades = [
+    colors.primary,
+    colors.accent,
+    colors.mix(colors.primary, colors.accent, 0.5),
+    colors.mix(colors.accent, "#1A1210", 0.45),
+    colors.mix(colors.primary, "#FFFFFF", 0.4),
+  ];
   const label = (i: number) => (i < sideB ? `A${i + 1}` : `B${i - sideB + 1}`);
 
   return (
@@ -154,7 +168,11 @@ export function CrateBody(props: BodyProps) {
         <header className="rc-head">
           <p className="rc-kicker">{t("crate.kicker")}</p>
           <h1 className="rc-name" style={{ fontFamily: fonts.heading }}>
-            {data.named ? <SampleText on={data.nameIsSample}>{data.name}</SampleText> : body.heading}
+            {data.named ? (
+              <SampleText on={data.nameIsSample}>{data.name}</SampleText>
+            ) : (
+              body.heading
+            )}
           </h1>
           {data.named ? <p className="rc-heading">{body.heading}</p> : null}
           <p className="rc-intro">{body.intro || body.voice.intro(data.named ? data.name : "")}</p>
@@ -162,106 +180,134 @@ export function CrateBody(props: BodyProps) {
         </header>
 
         <div className="rc-main">
-        <section className="rc-shop" aria-label={total ? t("crate.count", { n: total }) : t("crate.what")}>
-          <div ref={crateRef} className="rc-crate" {...handlers}>
-            <span className="rc-crate-back" aria-hidden="true" />
-            <span className="rc-crate-side is-left" aria-hidden="true" />
-            <span className="rc-crate-side is-right" aria-hidden="true" />
-            <div className="rc-stage">
-              {records.map((p, i) => {
-                const d = i - cur;
-                if (d > BEHIND || d < -FRONT) return null;
-                return (
-                  <Sleeve
-                    key={p.id}
-                    piece={p}
-                    d={d}
-                    index={i}
-                    track={label(i)}
-                    played={opened.has(p.id)}
-                    pulled={pulling === p.id}
-                    shades={shades}
-                    headingFont={fonts.heading}
-                    onClick={() => {
-                      if (drag.current?.moved) return;
-                      pull(p, i);
-                    }}
-                  />
-                );
-              })}
-              {total === 0 ? <p className="rc-empty">{body.voice.empty(t("crate.what"))}</p> : null}
-            </div>
-            <span className="rc-crate-front" aria-hidden="true">
-              <span className="rc-crate-handle" />
-              <span className="rc-crate-stencil" style={{ fontFamily: fonts.heading }}>
-                {data.named ? data.name : t("crate.what")}
+          <section
+            className="rc-shop"
+            aria-label={total ? t("crate.count", { n: total }) : t("crate.what")}
+          >
+            <div ref={crateRef} className="rc-crate" {...handlers}>
+              <span className="rc-crate-back" aria-hidden="true" />
+              <span className="rc-crate-side is-left" aria-hidden="true" />
+              <span className="rc-crate-side is-right" aria-hidden="true" />
+              <div className="rc-stage">
+                {records.map((p, i) => {
+                  const d = i - cur;
+                  if (d > BEHIND || d < -FRONT) return null;
+                  return (
+                    <Sleeve
+                      key={p.id}
+                      piece={p}
+                      d={d}
+                      index={i}
+                      track={label(i)}
+                      played={opened.has(p.id)}
+                      pulled={pulling === p.id}
+                      shades={shades}
+                      headingFont={fonts.heading}
+                      onClick={() => {
+                        if (drag.current?.moved) return;
+                        pull(p, i);
+                      }}
+                    />
+                  );
+                })}
+                {total === 0 ? (
+                  <p className="rc-empty">{body.voice.empty(t("crate.what"))}</p>
+                ) : null}
+              </div>
+              <span className="rc-crate-front" aria-hidden="true">
+                <span className="rc-crate-handle" />
+                <span className="rc-crate-stencil" style={{ fontFamily: fonts.heading }}>
+                  {data.named ? data.name : t("crate.what")}
+                </span>
               </span>
-            </span>
-          </div>
+            </div>
+
+            {total ? (
+              <div className="rc-dig">
+                <button
+                  type="button"
+                  className="rc-dig-btn"
+                  onClick={() => go(cur - 1)}
+                  disabled={cur === 0}
+                  aria-label={t("crate.prev")}
+                >
+                  <ChevronLeft className="size-5" />
+                </button>
+                <p className="rc-dig-count" aria-live="polite">
+                  <span>{t("crate.sleeves", { n: cur + 1, total })}</span>
+                  <span className="rc-dig-hint">{t("crate.hint")}</span>
+                </p>
+                <button
+                  type="button"
+                  className="rc-dig-btn"
+                  onClick={() => go(cur + 1)}
+                  disabled={cur >= total - 1}
+                  aria-label={t("crate.next")}
+                >
+                  <ChevronRight className="size-5" />
+                </button>
+              </div>
+            ) : null}
+          </section>
 
           {total ? (
-            <div className="rc-dig">
-              <button type="button" className="rc-dig-btn" onClick={() => go(cur - 1)} disabled={cur === 0} aria-label={t("crate.prev")}>
-                <ChevronLeft className="size-5" />
-              </button>
-              <p className="rc-dig-count" aria-live="polite">
-                <span>{t("crate.sleeves", { n: cur + 1, total })}</span>
-                <span className="rc-dig-hint">{t("crate.hint")}</span>
-              </p>
-              <button type="button" className="rc-dig-btn" onClick={() => go(cur + 1)} disabled={cur >= total - 1} aria-label={t("crate.next")}>
-                <ChevronRight className="size-5" />
-              </button>
-            </div>
+            <section className="rc-back" aria-label={t("crate.tracklist")}>
+              <div className="rc-back-head">
+                <p className="rc-back-title" style={{ fontFamily: fonts.heading }}>
+                  {t("crate.tracklist")}
+                </p>
+                <p className="rc-back-progress" role="status">
+                  {played === total
+                    ? t("crate.allPlayed")
+                    : t("crate.progress", { n: played, total })}
+                </p>
+              </div>
+              <div className="rc-sides">
+                {[records.slice(0, sideB), records.slice(sideB)].map((side, s) =>
+                  side.length ? (
+                    <div key={s} className="rc-side">
+                      <p className="rc-side-name">{s ? t("crate.sideB") : t("crate.sideA")}</p>
+                      <ol>
+                        {side.map((p, k) => {
+                          const i = s ? sideB + k : k;
+                          return (
+                            <li key={p.id}>
+                              <button
+                                type="button"
+                                className={`rc-track ${i === cur ? "is-cur" : ""} ${opened.has(p.id) ? "is-played" : ""}`}
+                                aria-label={pieceLabel(p)}
+                                onClick={() => {
+                                  go(i);
+                                  crateRef.current?.scrollIntoView({
+                                    behavior: reduce ? "auto" : "smooth",
+                                    block: "center",
+                                  });
+                                }}
+                              >
+                                <span className="rc-track-no">{label(i)}</span>
+                                <span className="rc-track-name">
+                                  {p.author || t("crate.surprise")}
+                                </span>
+                                <span className="rc-track-dots" />
+                                <span className="rc-track-what">
+                                  {p.sealed || isLocked(p) ? <Lock className="size-3" /> : null}
+                                  {opened.has(p.id)
+                                    ? t("crate.played")
+                                    : isLocked(p)
+                                      ? t("body.opensOn", { day: formatDay(p.date!, SHORT_DAY) })
+                                      : pieceWhat(p)}
+                                </span>
+                              </button>
+                            </li>
+                          );
+                        })}
+                      </ol>
+                    </div>
+                  ) : null,
+                )}
+              </div>
+            </section>
           ) : null}
-        </section>
-
-        {total ? (
-          <section className="rc-back" aria-label={t("crate.tracklist")}>
-            <div className="rc-back-head">
-              <p className="rc-back-title" style={{ fontFamily: fonts.heading }}>
-                {t("crate.tracklist")}
-              </p>
-              <p className="rc-back-progress" role="status">
-                {played === total ? t("crate.allPlayed") : t("crate.progress", { n: played, total })}
-              </p>
-            </div>
-            <div className="rc-sides">
-              {[records.slice(0, sideB), records.slice(sideB)].map((side, s) =>
-                side.length ? (
-                  <div key={s} className="rc-side">
-                    <p className="rc-side-name">{s ? t("crate.sideB") : t("crate.sideA")}</p>
-                    <ol>
-                      {side.map((p, k) => {
-                        const i = s ? sideB + k : k;
-                        return (
-                          <li key={p.id}>
-                            <button
-                              type="button"
-                              className={`rc-track ${i === cur ? "is-cur" : ""} ${opened.has(p.id) ? "is-played" : ""}`}
-                              aria-label={pieceLabel(p)}
-                              onClick={() => {
-                                go(i);
-                                crateRef.current?.scrollIntoView({ behavior: reduce ? "auto" : "smooth", block: "center" });
-                              }}
-                            >
-                              <span className="rc-track-no">{label(i)}</span>
-                              <span className="rc-track-name">{p.author || t("crate.surprise")}</span>
-                              <span className="rc-track-dots" />
-                              <span className="rc-track-what">
-                                {p.sealed || isLocked(p) ? <Lock className="size-3" /> : null}
-                                {opened.has(p.id) ? t("crate.played") : isLocked(p) ? t("body.opensOn", { day: formatDay(p.date!, SHORT_DAY) }) : pieceWhat(p)}
-                              </span>
-                            </button>
-                          </li>
-                        );
-                      })}
-                    </ol>
-                  </div>
-                ) : null,
-              )}
-            </div>
-          </section>
-        ) : null}
         </div>
 
         {data.words.length ? (
@@ -271,7 +317,16 @@ export function CrateBody(props: BodyProps) {
             </p>
             <ul className="rc-dividers">
               {data.words.map((w, i) => (
-                <li key={w.id} className="rc-divider" style={{ "--tab": `${(seed(w.id) * 46).toFixed(0)}%`, "--dc": shades[i % 3] } as React.CSSProperties}>
+                <li
+                  key={w.id}
+                  className="rc-divider"
+                  style={
+                    {
+                      "--tab": `${(seed(w.id) * 46).toFixed(0)}%`,
+                      "--dc": shades[i % 3],
+                    } as React.CSSProperties
+                  }
+                >
                   <span className="rc-divider-tab">{w.text}</span>
                 </li>
               ))}
@@ -279,11 +334,20 @@ export function CrateBody(props: BodyProps) {
           </section>
         ) : null}
 
-        <BodyFooter body={body} className="rc-footer" buttonStyle={{ background: colors.primary, color: colors.onPrimary }} />
+        <BodyFooter
+          body={body}
+          className="rc-footer"
+          buttonStyle={{ background: colors.primary, color: colors.onPrimary }}
+        />
       </div>
 
       {body.reading ? (
-        <Reader piece={body.reading} onClose={body.closeReader} accent={colors.mix(colors.accent, "#2E211B", 0.35)} className="rc-reader">
+        <Reader
+          piece={body.reading}
+          onClose={body.closeReader}
+          accent={colors.mix(colors.accent, "#2E211B", 0.35)}
+          className="rc-reader"
+        >
           <LinerHead
             piece={body.reading}
             index={records.findIndex((p) => p.id === body.reading!.id)}
@@ -326,7 +390,13 @@ function Sleeve({
     <button
       type="button"
       className={`rc-sleeve ${front ? "is-front" : d < 0 ? "is-tipped" : "is-behind"} ${pulled ? "is-pull" : ""}`}
-      style={{ "--d": d, "--jit": `${((seed(piece.id) - 0.5) * 3).toFixed(2)}deg`, zIndex: 50 - d } as React.CSSProperties}
+      style={
+        {
+          "--d": d,
+          "--jit": `${((seed(piece.id) - 0.5) * 3).toFixed(2)}deg`,
+          zIndex: 50 - d,
+        } as React.CSSProperties
+      }
       onClick={onClick}
       tabIndex={front ? 0 : -1}
       aria-hidden={front ? undefined : true}
@@ -348,7 +418,19 @@ function Sleeve({
 }
 
 /** Cover art: a photo note is its own cover; everything else gets a print in the gift's colors. */
-function Cover({ piece, index, shades, headingFont, small = false }: { piece: Piece; index: number; shades: string[]; headingFont: string; small?: boolean }) {
+function Cover({
+  piece,
+  index,
+  shades,
+  headingFont,
+  small = false,
+}: {
+  piece: Piece;
+  index: number;
+  shades: string[];
+  headingFont: string;
+  small?: boolean;
+}) {
   const r = seed(piece.id);
   const style = Math.floor(r * 6);
   const a = shades[index % shades.length]!;
@@ -361,7 +443,9 @@ function Cover({ piece, index, shades, headingFont, small = false }: { piece: Pi
         <span className="rc-plain-ring" />
         <span className="rc-plain-note">
           <Lock className="size-4" />
-          {piece.sealed ? pieceWhat(piece) : t("body.opensOn", { day: formatDay(piece.date!, SHORT_DAY) })}
+          {piece.sealed
+            ? pieceWhat(piece)
+            : t("body.opensOn", { day: formatDay(piece.date!, SHORT_DAY) })}
         </span>
         {!small ? (
           <span className="rc-cover-name is-dark" style={{ fontFamily: headingFont }}>
@@ -383,7 +467,10 @@ function Cover({ piece, index, shades, headingFont, small = false }: { piece: Pi
     );
   const Icon = piece.kind === "song" ? Music2 : piece.kind === "voice" ? Mic : null;
   return (
-    <span className={`rc-cover is-art is-s${style}`} style={{ "--ca": a, "--cb": b } as React.CSSProperties}>
+    <span
+      className={`rc-cover is-art is-s${style}`}
+      style={{ "--ca": a, "--cb": b } as React.CSSProperties}
+    >
       <span className="rc-art" />
       {!small ? (
         <>
@@ -427,7 +514,13 @@ function LinerHead({
           </span>
         </span>
         <span className="rc-liner-sleeve">
-          <Cover piece={piece} index={Math.max(0, index)} shades={shades} headingFont={headingFont} small />
+          <Cover
+            piece={piece}
+            index={Math.max(0, index)}
+            shades={shades}
+            headingFont={headingFont}
+            small
+          />
         </span>
       </div>
       <div className="rc-liner-meta">
@@ -437,7 +530,9 @@ function LinerHead({
         </p>
         <p className="rc-liner-track">
           {index >= 0 ? t("crate.side", { side, n }) : null}
-          {recipient && !piece.sealed && !isLocked(piece) ? ` · ${t("crate.for", { name: recipient })}` : ""}
+          {recipient && !piece.sealed && !isLocked(piece)
+            ? ` · ${t("crate.for", { name: recipient })}`
+            : ""}
         </p>
       </div>
     </div>

@@ -9,6 +9,8 @@
  * dance and their name. Tap a line and the card opens to that friend's note.
  * Read dances get a pressed rose in the margin (on this device).
  */
+// Its styles load with it, not with every page.
+import "@/styles/bodies/dancecard.css";
 import { useEffect, useMemo, useState } from "react";
 import { Lock, Mic, Music2, Camera } from "lucide-react";
 import { t, type MessageKey } from "@/i18n";

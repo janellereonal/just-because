@@ -9,6 +9,8 @@
  * can be tapped too, and the token jumps there. Opened squares get a peg and stay
  * that way on this device.
  */
+// Its styles load with it, not with every page.
+import "@/styles/bodies/gameboard.css";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Check, Lock, Mic, Music2, Star } from "lucide-react";
 import { t } from "@/i18n";
@@ -38,21 +40,70 @@ const ROW = 1.36;
 /** Little prints on the board between the rows. */
 const PRINTS = ["★", "♥", "✦", "●", "◆"];
 /** Where each face's pips sit, on a 3x3 grid. */
-const PIPS: Record<number, number[]> = { 1: [4], 2: [0, 8], 3: [0, 4, 8], 4: [0, 2, 6, 8], 5: [0, 2, 4, 6, 8], 6: [0, 2, 3, 5, 6, 8] };
+const PIPS: Record<number, number[]> = {
+  1: [4],
+  2: [0, 8],
+  3: [0, 4, 8],
+  4: [0, 2, 6, 8],
+  5: [0, 2, 4, 6, 8],
+  6: [0, 2, 3, 5, 6, 8],
+};
 /** The cube turn [x, y] that brings each face to the front. */
-const FACE_TURN: Record<number, [number, number]> = { 1: [0, 0], 6: [0, 180], 2: [0, -90], 5: [0, 90], 3: [-90, 0], 4: [90, 0] };
+const FACE_TURN: Record<number, [number, number]> = {
+  1: [0, 0],
+  6: [0, 180],
+  2: [0, -90],
+  5: [0, 90],
+  3: [-90, 0],
+  4: [90, 0],
+};
 /** Word tile points, like the letter tiles in a word game. */
-const POINTS: Record<string, number> = { a: 1, e: 1, i: 1, o: 1, u: 1, l: 1, n: 1, s: 1, t: 1, r: 1, d: 2, g: 2, b: 3, c: 3, m: 3, p: 3, f: 4, h: 4, v: 4, w: 4, y: 4, k: 5, j: 8, x: 8, q: 10, z: 10 };
+const POINTS: Record<string, number> = {
+  a: 1,
+  e: 1,
+  i: 1,
+  o: 1,
+  u: 1,
+  l: 1,
+  n: 1,
+  s: 1,
+  t: 1,
+  r: 1,
+  d: 2,
+  g: 2,
+  b: 3,
+  c: 3,
+  m: 3,
+  p: 3,
+  f: 4,
+  h: 4,
+  v: 4,
+  w: 4,
+  y: 4,
+  k: 5,
+  j: 8,
+  x: 8,
+  q: 10,
+  z: 10,
+};
 
 type Phase = "idle" | "rolling" | "moving";
 
 /** Is this colour a yellow or orange (hue 35 to 70 degrees, not grey)? */
 function isYellow(hex: string) {
   const n = parseInt(hex.slice(1), 16);
-  const r = (n >> 16) / 255, g = ((n >> 8) & 255) / 255, b = (n & 255) / 255;
-  const max = Math.max(r, g, b), min = Math.min(r, g, b);
+  const r = (n >> 16) / 255,
+    g = ((n >> 8) & 255) / 255,
+    b = (n & 255) / 255;
+  const max = Math.max(r, g, b),
+    min = Math.min(r, g, b);
   if (max - min < 0.2) return false;
-  let h = max === r ? ((g - b) / (max - min)) % 6 : max === g ? (b - r) / (max - min) + 2 : (r - g) / (max - min) + 4;
+  let h =
+    max === r
+      ? ((g - b) / (max - min)) % 6
+      : max === g
+        ? (b - r) / (max - min) + 2
+        : (r - g) / (max - min) + 4;
   h *= 60;
   if (h < 0) h += 360;
   return h >= 35 && h <= 70;
@@ -88,7 +139,9 @@ export function GameBoardBody(props: BodyProps) {
     () => [
       colors.accent,
       // A yellow accent already gives the butter square, so that one turns coral.
-      isYellow(colors.accent) ? colors.mix("#F0735F", colors.primary, 0.08) : colors.mix("#FFD34E", colors.accent, 0.08),
+      isYellow(colors.accent)
+        ? colors.mix("#F0735F", colors.primary, 0.08)
+        : colors.mix("#FFD34E", colors.accent, 0.08),
       colors.mix("#3BB98A", colors.primary, 0.14),
       colors.mix(colors.primary, "#FFFFFF", colors.dark ? 0.5 : 0.38),
     ],
@@ -130,7 +183,10 @@ export function GameBoardBody(props: BodyProps) {
   };
 
   const count = notes.filter((p) => opened.has(p.id)).length;
-  const rollable = useCallback((p: Piece) => !p.sealed && !isLocked(p) && !opened.has(p.id), [opened]);
+  const rollable = useCallback(
+    (p: Piece) => !p.sealed && !isLocked(p) && !opened.has(p.id),
+    [opened],
+  );
   /** The next note to land on after square `from` (wrapping round), or -1 when every one is read. */
   const nextTarget = useCallback(
     (from: number) => {
@@ -148,7 +204,10 @@ export function GameBoardBody(props: BodyProps) {
   }
 
   function scrollTo(i: number) {
-    squareRefs.current[i]?.scrollIntoView({ block: "center", behavior: reduce ? "auto" : "smooth" });
+    squareRefs.current[i]?.scrollIntoView({
+      block: "center",
+      behavior: reduce ? "auto" : "smooth",
+    });
   }
 
   /** The token is on square i: open its note card. */
@@ -161,7 +220,14 @@ export function GameBoardBody(props: BodyProps) {
       const c = centerOf(i);
       chime("tada");
       buzz([10, 40, 10]);
-      if (c) burst(body.hostRef.current, c.x, c.y, { shape: "confetti", colors: [...spaces, colors.primary], count: 34, spread: 1.6, up: true });
+      if (c)
+        burst(body.hostRef.current, c.x, c.y, {
+          shape: "confetti",
+          colors: [...spaces, colors.primary],
+          count: 34,
+          spread: 1.6,
+          up: true,
+        });
       return;
     }
     const p = notes[i - 1];
@@ -170,7 +236,14 @@ export function GameBoardBody(props: BodyProps) {
     foley("thunk");
     buzz(8);
     const c = centerOf(i);
-    if (c && !p.sealed && !isLocked(p)) burst(body.hostRef.current, c.x, c.y, { shape: "confetti", colors: [spaces[(i - 1) % 4]!, butter, colors.primary], count: 14, spread: 0.9, up: true });
+    if (c && !p.sealed && !isLocked(p))
+      burst(body.hostRef.current, c.x, c.y, {
+        shape: "confetti",
+        colors: [spaces[(i - 1) % 4]!, butter, colors.primary],
+        count: 14,
+        spread: 0.9,
+        up: true,
+      });
     later(() => body.read(p), reduce ? 0 : 380);
   }
 
@@ -223,11 +296,14 @@ export function GameBoardBody(props: BodyProps) {
       setGlide(true);
       setAt(0);
     }
-    later(() => {
-      setGlide(false);
-      chime("pop");
-      hop(from, to);
-    }, reduce ? 0 : 1000);
+    later(
+      () => {
+        setGlide(false);
+        chime("pop");
+        hop(from, to);
+      },
+      reduce ? 0 : 1000,
+    );
   }
 
   /** Tapping a square: the token jumps straight there. */
@@ -246,7 +322,12 @@ export function GameBoardBody(props: BodyProps) {
   }
 
   const pos = place(at, cols);
-  const status = notes.length === 0 ? "" : count === notes.length ? t("board.allRead") : t("board.progress", { n: count, total: notes.length });
+  const status =
+    notes.length === 0
+      ? ""
+      : count === notes.length
+        ? t("board.allRead")
+        : t("board.progress", { n: count, total: notes.length });
 
   return (
     <BodyRoot
@@ -257,7 +338,11 @@ export function GameBoardBody(props: BodyProps) {
           "--gb-panel": panel,
           "--gb-panel-ink": colors.onPrimary,
           "--gb-name": panelLight ? colors.onPrimary : butter,
-          "--gb-board": colors.mix(colors.dark ? "#F6EBD3" : "#FFF9EC", colors.bg, colors.dark ? 0.04 : 0.25),
+          "--gb-board": colors.mix(
+            colors.dark ? "#F6EBD3" : "#FFF9EC",
+            colors.bg,
+            colors.dark ? 0.04 : 0.25,
+          ),
           "--gb-board-deep": colors.mix("#E7D6B4", colors.primary, 0.08),
           "--gb-edge": colors.mix(colors.primary, "#000000", 0.25),
           "--gb-edge-deep": colors.mix(colors.primary, "#000000", 0.5),
@@ -279,7 +364,11 @@ export function GameBoardBody(props: BodyProps) {
           <div className="gb-lid-panel">
             <p className="gb-lid-kicker">{data.named ? t("board.kicker") : ""}</p>
             <h1 className="gb-lid-name" style={{ fontFamily: fonts.heading }}>
-              {data.named ? <SampleText on={data.nameIsSample}>{data.name}</SampleText> : body.heading}
+              {data.named ? (
+                <SampleText on={data.nameIsSample}>{data.name}</SampleText>
+              ) : (
+                body.heading
+              )}
             </h1>
             {data.named ? <p className="gb-lid-heading">{body.heading}</p> : null}
           </div>
@@ -290,10 +379,16 @@ export function GameBoardBody(props: BodyProps) {
           <p className="gb-rules-title" style={{ fontFamily: fonts.heading }}>
             {t("board.rulesTitle")}
           </p>
-          <p className="gb-rules-intro">{body.intro || body.voice.intro(data.named ? data.name : "")}</p>
+          <p className="gb-rules-intro">
+            {body.intro || body.voice.intro(data.named ? data.name : "")}
+          </p>
           {notes.length ? <p className="gb-rules-how">{t("board.rules")}</p> : null}
           <div className="gb-rules-meta">
-            <span className="gb-chip">{notes.length ? t("board.count", { n: notes.length }) : body.voice.empty(t("board.what"))}</span>
+            <span className="gb-chip">
+              {notes.length
+                ? t("board.count", { n: notes.length })
+                : body.voice.empty(t("board.what"))}
+            </span>
             <CountdownLine date={data.countdownDate} className="gb-chip is-timer" />
           </div>
         </section>
@@ -308,15 +403,24 @@ export function GameBoardBody(props: BodyProps) {
                   [0, 1].map((k) => {
                     // Two prints in each gap, never on the bend.
                     const free = cols - 1;
-                    const slot = Math.floor(((r * 7 + k * 3 + 1) * 0.618 % 1) * free);
+                    const slot = Math.floor((((r * 7 + k * 3 + 1) * 0.618) % 1) * free);
                     const c = (r % 2 ? slot + 1 : slot) + 0.5;
-                    if (k === 1 && Math.abs(Math.floor(((r * 7 + 1) * 0.618 % 1) * free) - slot) < 1) return null;
+                    if (
+                      k === 1 &&
+                      Math.abs(Math.floor((((r * 7 + 1) * 0.618) % 1) * free) - slot) < 1
+                    )
+                      return null;
                     return (
                       <span
                         key={`${r}-${k}`}
                         className="gb-print"
                         aria-hidden="true"
-                        style={{ left: `${(c / cols) * 100}%`, top: `${((r * ROW + 1 + (ROW - 1) / 2) / H) * 100}%`, color: `var(--gb-s${(r + k) % 4})`, rotate: `${(r * 23 + k * 41) % 40 - 20}deg` }}
+                        style={{
+                          left: `${(c / cols) * 100}%`,
+                          top: `${((r * ROW + 1 + (ROW - 1) / 2) / H) * 100}%`,
+                          color: `var(--gb-s${(r + k) % 4})`,
+                          rotate: `${((r * 23 + k * 41) % 40) - 20}deg`,
+                        }}
                       >
                         {PRINTS[(r * 2 + k) % PRINTS.length]}
                       </span>
@@ -333,7 +437,12 @@ export function GameBoardBody(props: BodyProps) {
                   } as React.CSSProperties;
                   if (i === 0)
                     return (
-                      <div key="start" ref={(el) => void (squareRefs.current[0] = el)} className="gb-sq is-start" style={style}>
+                      <div
+                        key="start"
+                        ref={(el) => void (squareRefs.current[0] = el)}
+                        className="gb-sq is-start"
+                        style={style}
+                      >
                         <span className="gb-tile">
                           <span className="gb-start-arrow" aria-hidden="true">
                             {r % 2 ? "←" : "→"}
@@ -346,7 +455,12 @@ export function GameBoardBody(props: BodyProps) {
                     );
                   if (i === finish)
                     return (
-                      <div key="finish" ref={(el) => void (squareRefs.current[i] = el)} className={`gb-sq is-finish ${done ? "is-done" : ""} ${landed === i ? "is-landed" : ""}`} style={style}>
+                      <div
+                        key="finish"
+                        ref={(el) => void (squareRefs.current[i] = el)}
+                        className={`gb-sq is-finish ${done ? "is-done" : ""} ${landed === i ? "is-landed" : ""}`}
+                        style={style}
+                      >
                         <span className="gb-tile">
                           <Star className="gb-finish-star" aria-hidden="true" />
                           <span className="gb-finish-word" style={{ fontFamily: fonts.heading }}>
@@ -376,10 +490,17 @@ export function GameBoardBody(props: BodyProps) {
                 {/* The token */}
                 <span
                   className={`gb-token ${glide ? "is-glide" : ""}`}
-                  style={{ left: `${((pos.c + 0.5) / cols) * 100}%`, top: `${((pos.r * ROW + 0.5) / H) * 100}%`, width: `${100 / cols}%` }}
+                  style={{
+                    left: `${((pos.c + 0.5) / cols) * 100}%`,
+                    top: `${((pos.r * ROW + 0.5) / H) * 100}%`,
+                    width: `${100 / cols}%`,
+                  }}
                   aria-hidden="true"
                 >
-                  <span key={glide ? `g${at}` : at} className={`gb-pawn ${at > 0 || glide ? "is-hop" : ""}`}>
+                  <span
+                    key={glide ? `g${at}` : at}
+                    className={`gb-pawn ${at > 0 || glide ? "is-hop" : ""}`}
+                  >
                     <span className="gb-pawn-shadow" />
                     <span className="gb-pawn-base" />
                     <span className="gb-pawn-body" />
@@ -392,12 +513,31 @@ export function GameBoardBody(props: BodyProps) {
 
           {notes.length ? (
             <div className="gb-tray">
-              <button type="button" className="gb-dice" onClick={roll} tabIndex={-1} aria-hidden="true" disabled={phase !== "idle"}>
+              <button
+                type="button"
+                className="gb-dice"
+                onClick={roll}
+                tabIndex={-1}
+                aria-hidden="true"
+                disabled={phase !== "idle"}
+              >
                 <Die value={faces[0]} spin={spin} dir={1} rolling={phase === "rolling"} />
-                <Die value={faces[1] ?? 1} spin={spin} dir={-1} rolling={phase === "rolling"} out={faces[1] === null} />
+                <Die
+                  value={faces[1] ?? 1}
+                  spin={spin}
+                  dir={-1}
+                  rolling={phase === "rolling"}
+                  out={faces[1] === null}
+                />
               </button>
               <div className="gb-tray-text">
-                <button type="button" className="gb-roll" onClick={roll} disabled={phase !== "idle"} aria-label={done && at === finish ? t("board.again") : t("board.rollAria")}>
+                <button
+                  type="button"
+                  className="gb-roll"
+                  onClick={roll}
+                  disabled={phase !== "idle"}
+                  aria-label={done && at === finish ? t("board.again") : t("board.rollAria")}
+                >
                   {done && at === finish ? t("board.again") : t("board.roll")}
                 </button>
                 <p className="gb-tray-status" role="status" aria-live="polite">
@@ -416,9 +556,18 @@ export function GameBoardBody(props: BodyProps) {
             <p className="gb-words-sub">{t("board.wordsSub")}</p>
             <ul className="gb-words-list">
               {data.words.map((w) => (
-                <li key={w.id} className="gb-word" style={{ rotate: `${((seed(w.id) - 0.5) * 5).toFixed(2)}deg` }} aria-label={w.text ?? ""}>
+                <li
+                  key={w.id}
+                  className="gb-word"
+                  style={{ rotate: `${((seed(w.id) - 0.5) * 5).toFixed(2)}deg` }}
+                  aria-label={w.text ?? ""}
+                >
                   {[...(w.text ?? "").trim()].slice(0, 14).map((ch, k) => (
-                    <span key={k} className={`gb-letter ${ch === " " ? "is-space" : ""}`} aria-hidden="true">
+                    <span
+                      key={k}
+                      className={`gb-letter ${ch === " " ? "is-space" : ""}`}
+                      aria-hidden="true"
+                    >
                       {ch.toUpperCase()}
                       {ch !== " " ? <sub>{POINTS[ch.toLowerCase()] ?? 1}</sub> : null}
                     </span>
@@ -429,10 +578,21 @@ export function GameBoardBody(props: BodyProps) {
           </section>
         ) : null}
 
-        <BodyFooter body={body} className="gb-footer" buttonStyle={{ background: colors.primary, color: colors.onPrimary }} />
+        <BodyFooter
+          body={body}
+          className="gb-footer"
+          buttonStyle={{ background: colors.primary, color: colors.onPrimary }}
+        />
       </div>
 
-      {body.reading ? <NoteCard body={body} piece={body.reading} spaces={spaces} index={notes.indexOf(body.reading)} /> : null}
+      {body.reading ? (
+        <NoteCard
+          body={body}
+          piece={body.reading}
+          spaces={spaces}
+          index={notes.indexOf(body.reading)}
+        />
+      ) : null}
     </BodyRoot>
   );
 }
@@ -444,7 +604,12 @@ function Road({ total, cols, H }: { total: number; cols: number; H: number }) {
     return `${i ? "L" : "M"}${(c + 0.5).toFixed(2)} ${(r * ROW + 0.5).toFixed(3)}`;
   }).join(" ");
   return (
-    <svg className="gb-road" viewBox={`0 0 ${cols} ${H}`} preserveAspectRatio="none" aria-hidden="true">
+    <svg
+      className="gb-road"
+      viewBox={`0 0 ${cols} ${H}`}
+      preserveAspectRatio="none"
+      aria-hidden="true"
+    >
       <path d={d} className="gb-road-edge" />
       <path d={d} className="gb-road-top" />
       <path d={d} className="gb-road-dash" />
@@ -478,14 +643,28 @@ function Square({
   ref: (el: HTMLButtonElement | null) => void;
 }) {
   const locked = mounted && isLocked(piece);
-  const Icon = piece.sealed || locked ? Lock : piece.kind === "song" ? Music2 : piece.kind === "voice" ? Mic : null;
+  const Icon =
+    piece.sealed || locked
+      ? Lock
+      : piece.kind === "song"
+        ? Music2
+        : piece.kind === "voice"
+          ? Mic
+          : null;
   const photo = piece.kind === "photo" && !piece.sealed && !locked;
   return (
     <button
       ref={ref}
       type="button"
       className={`gb-sq is-note ${open ? "is-open" : ""} ${landed ? "is-landed" : ""} ${photo ? "is-photo" : ""} ${locked ? "is-locked" : ""}`}
-      style={{ ...style, "--sq": `var(--gb-s${tone})`, "--sq-ink": readableInk(tint), "--tilt": `${((seed(piece.id) - 0.5) * 4).toFixed(2)}deg` } as React.CSSProperties}
+      style={
+        {
+          ...style,
+          "--sq": `var(--gb-s${tone})`,
+          "--sq-ink": readableInk(tint),
+          "--tilt": `${((seed(piece.id) - 0.5) * 4).toFixed(2)}deg`,
+        } as React.CSSProperties
+      }
       onClick={onClick}
       aria-label={pieceLabel(piece)}
     >
@@ -497,7 +676,9 @@ function Square({
           </span>
         ) : null}
         {locked ? (
-          <span className="gb-lockday">{formatDay(piece.date!, { day: "numeric", month: "short" })}</span>
+          <span className="gb-lockday">
+            {formatDay(piece.date!, { day: "numeric", month: "short" })}
+          </span>
         ) : (
           <span className={`gb-init ${photo ? "is-chip" : ""}`} style={{ fontFamily: headingFont }}>
             {initial(piece.author || "♡")}
@@ -519,7 +700,19 @@ function Square({
 }
 
 /** A CSS die: six faces, turned so `value` faces up, spinning a few extra turns per roll. */
-function Die({ value, spin, dir, rolling, out = false }: { value: number; spin: number; dir: 1 | -1; rolling: boolean; out?: boolean }) {
+function Die({
+  value,
+  spin,
+  dir,
+  rolling,
+  out = false,
+}: {
+  value: number;
+  spin: number;
+  dir: 1 | -1;
+  rolling: boolean;
+  out?: boolean;
+}) {
   const [x, y] = FACE_TURN[value] ?? [0, 0];
   const turns = spin * 720 * dir;
   const face = (n: number, tf: string) => (
@@ -530,9 +723,14 @@ function Die({ value, spin, dir, rolling, out = false }: { value: number; spin: 
     </span>
   );
   return (
-    <span className={`gb-die ${dir < 0 ? "is-b" : ""} ${rolling ? "is-rolling" : ""} ${out ? "is-out" : ""}`}>
+    <span
+      className={`gb-die ${dir < 0 ? "is-b" : ""} ${rolling ? "is-rolling" : ""} ${out ? "is-out" : ""}`}
+    >
       <span className="gb-die-shadow" />
-      <span className="gb-die-cube" style={{ transform: `rotateX(${x + turns}deg) rotateY(${y + turns * 0.75}deg)` }}>
+      <span
+        className="gb-die-cube"
+        style={{ transform: `rotateX(${x + turns}deg) rotateY(${y + turns * 0.75}deg)` }}
+      >
         {face(1, "rotateY(0deg)")}
         {face(6, "rotateY(180deg)")}
         {face(2, "rotateY(90deg)")}
@@ -545,7 +743,17 @@ function Die({ value, spin, dir, rolling, out = false }: { value: number; spin: 
 }
 
 /** The note card: like the cards you draw in a board game, in the square's colour. */
-function NoteCard({ body, piece, spaces, index }: { body: ReturnType<typeof useBody>; piece: Piece; spaces: string[]; index: number }) {
+function NoteCard({
+  body,
+  piece,
+  spaces,
+  index,
+}: {
+  body: ReturnType<typeof useBody>;
+  piece: Piece;
+  spaces: string[];
+  index: number;
+}) {
   const { colors, fonts } = body;
   const tint = spaces[Math.max(0, index) % 4]!;
   return (

@@ -9,6 +9,8 @@
  * stay turned on this device. Photos are clipped along a growth chart, and the
  * words float by as little clouds. Everything moves gently.
  */
+// Its styles load with it, not with every page.
+import "@/styles/bodies/nursery.css";
 import { useEffect, useMemo, useState } from "react";
 import { CalendarDays, Camera, Heart, Lock, Mail, Mic, Moon, Music2, Star } from "lucide-react";
 import { t } from "@/i18n";

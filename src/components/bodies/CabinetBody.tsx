@@ -8,6 +8,8 @@
  * screen flashes LEVEL CLEAR before the note opens in a pixel dialog box. A high
  * score table lists the friends, and the words are power-ups.
  */
+// Its styles load with it, not with every page.
+import "@/styles/bodies/cabinet.css";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { t } from "@/i18n";
 import { SampleText } from "@/components/SampleMark";
@@ -33,39 +35,191 @@ const PIXEL = "'Pixelify Sans', ui-monospace, 'SFMono-Regular', Menlo, monospace
 const PER_WORLD = 8;
 /** Level spots on a world map (128 x 112 pixels), in play order, bottom left to the top. */
 const SPOTS: [number, number][] = [
-  [14, 94], [38, 94], [62, 86], [94, 90], [112, 62], [80, 56], [46, 58], [62, 26],
+  [14, 94],
+  [38, 94],
+  [62, 86],
+  [94, 90],
+  [112, 62],
+  [80, 56],
+  [46, 58],
+  [62, 26],
 ];
 /** Free ground for scenery (centres), clear of the path. */
 const SCENERY: [number, number][] = [
-  [14, 14], [30, 38], [10, 70], [28, 74], [82, 74], [116, 102], [88, 104], [80, 10], [116, 38], [56, 104], [104, 10], [6, 44],
+  [14, 14],
+  [30, 38],
+  [10, 70],
+  [28, 74],
+  [82, 74],
+  [116, 102],
+  [88, 104],
+  [80, 10],
+  [116, 38],
+  [56, 104],
+  [104, 10],
+  [6, 44],
 ];
 const HEART = [".XX.XX.", "XXXXXXX", "XXXXXXX", ".XXXXX.", "..XXX..", "...X..."];
 
 type Rect = [number, number, number, number, string];
 /** Little sprites on a 12 x 12 grid. Colour keys are filled from the world's palette. */
 const SPRITES: Record<string, Rect[]> = {
-  tree: [[5, 8, 2, 4, "trunk"], [3, 1, 6, 1, "leaf"], [2, 2, 8, 6, "leaf"], [3, 8, 6, 1, "leafLo"], [3, 2, 2, 2, "leafHi"]],
-  bush: [[2, 6, 8, 1, "leaf"], [1, 7, 10, 4, "leaf"], [1, 10, 10, 1, "leafLo"], [3, 7, 2, 1, "leafHi"]],
-  flower: [[5, 6, 1, 5, "leafLo"], [4, 3, 3, 3, "pop"], [5, 4, 1, 1, "sun"], [6, 8, 2, 1, "leafLo"]],
-  cactus: [[5, 2, 2, 10, "leaf"], [2, 5, 2, 4, "leaf"], [3, 8, 2, 1, "leaf"], [8, 4, 2, 4, "leaf"], [7, 7, 1, 1, "leaf"], [5, 2, 1, 10, "leafHi"]],
-  rock: [[3, 7, 6, 1, "rock"], [2, 8, 8, 4, "rock"], [3, 8, 2, 1, "rockHi"], [2, 11, 8, 1, "leafLo"]],
-  pine: [[5, 10, 2, 2, "trunk"], [4, 1, 4, 3, "leaf"], [3, 4, 6, 3, "leaf"], [2, 7, 8, 3, "leaf"], [4, 1, 4, 1, "snow"], [3, 4, 3, 1, "snow"], [2, 7, 3, 1, "snow"]],
-  snowman: [[4, 6, 5, 5, "snow"], [5, 2, 3, 4, "snow"], [6, 3, 1, 1, "trunk"], [7, 4, 2, 1, "pop"], [4, 11, 5, 1, "leafLo"]],
-  lolly: [[6, 6, 1, 6, "snow"], [3, 1, 7, 6, "pop"], [5, 3, 3, 2, "snow"], [4, 2, 1, 1, "snow"]],
-  cupcake: [[3, 7, 6, 4, "trunk"], [2, 4, 8, 3, "snow"], [5, 2, 2, 2, "pop"], [4, 8, 1, 3, "leafLo"], [7, 8, 1, 3, "leafLo"]],
-  star: [[5, 3, 1, 5, "sun"], [3, 5, 5, 1, "sun"], [5, 5, 1, 1, "snow"]],
-  planet: [[4, 3, 5, 6, "pop"], [3, 4, 7, 4, "pop"], [1, 6, 11, 1, "sun"], [4, 4, 2, 1, "snow"]],
-  moon: [[4, 2, 4, 1, "sun"], [3, 3, 3, 6, "sun"], [4, 9, 4, 1, "sun"], [6, 3, 1, 1, "sun"]],
+  tree: [
+    [5, 8, 2, 4, "trunk"],
+    [3, 1, 6, 1, "leaf"],
+    [2, 2, 8, 6, "leaf"],
+    [3, 8, 6, 1, "leafLo"],
+    [3, 2, 2, 2, "leafHi"],
+  ],
+  bush: [
+    [2, 6, 8, 1, "leaf"],
+    [1, 7, 10, 4, "leaf"],
+    [1, 10, 10, 1, "leafLo"],
+    [3, 7, 2, 1, "leafHi"],
+  ],
+  flower: [
+    [5, 6, 1, 5, "leafLo"],
+    [4, 3, 3, 3, "pop"],
+    [5, 4, 1, 1, "sun"],
+    [6, 8, 2, 1, "leafLo"],
+  ],
+  cactus: [
+    [5, 2, 2, 10, "leaf"],
+    [2, 5, 2, 4, "leaf"],
+    [3, 8, 2, 1, "leaf"],
+    [8, 4, 2, 4, "leaf"],
+    [7, 7, 1, 1, "leaf"],
+    [5, 2, 1, 10, "leafHi"],
+  ],
+  rock: [
+    [3, 7, 6, 1, "rock"],
+    [2, 8, 8, 4, "rock"],
+    [3, 8, 2, 1, "rockHi"],
+    [2, 11, 8, 1, "leafLo"],
+  ],
+  pine: [
+    [5, 10, 2, 2, "trunk"],
+    [4, 1, 4, 3, "leaf"],
+    [3, 4, 6, 3, "leaf"],
+    [2, 7, 8, 3, "leaf"],
+    [4, 1, 4, 1, "snow"],
+    [3, 4, 3, 1, "snow"],
+    [2, 7, 3, 1, "snow"],
+  ],
+  snowman: [
+    [4, 6, 5, 5, "snow"],
+    [5, 2, 3, 4, "snow"],
+    [6, 3, 1, 1, "trunk"],
+    [7, 4, 2, 1, "pop"],
+    [4, 11, 5, 1, "leafLo"],
+  ],
+  lolly: [
+    [6, 6, 1, 6, "snow"],
+    [3, 1, 7, 6, "pop"],
+    [5, 3, 3, 2, "snow"],
+    [4, 2, 1, 1, "snow"],
+  ],
+  cupcake: [
+    [3, 7, 6, 4, "trunk"],
+    [2, 4, 8, 3, "snow"],
+    [5, 2, 2, 2, "pop"],
+    [4, 8, 1, 3, "leafLo"],
+    [7, 8, 1, 3, "leafLo"],
+  ],
+  star: [
+    [5, 3, 1, 5, "sun"],
+    [3, 5, 5, 1, "sun"],
+    [5, 5, 1, 1, "snow"],
+  ],
+  planet: [
+    [4, 3, 5, 6, "pop"],
+    [3, 4, 7, 4, "pop"],
+    [1, 6, 11, 1, "sun"],
+    [4, 4, 2, 1, "snow"],
+  ],
+  moon: [
+    [4, 2, 4, 1, "sun"],
+    [3, 3, 3, 6, "sun"],
+    [4, 9, 4, 1, "sun"],
+    [6, 3, 1, 1, "sun"],
+  ],
 };
 /** One look per world, picked in turn. Ground colours lean towards the gift's palette. */
 const WORLDS = [
-  { ground: "#58B85A", dots: "#4AA34E", path: "#F6E7B0", water: "#4FA3E0", sprites: ["tree", "bush", "flower"], trunk: "#7A4A2A", leaf: "#2F8A3E", leafHi: "#7DD46F", leafLo: "#246B30", rock: "#9AA0A8", rockHi: "#C8CDD3" },
-  { ground: "#E9C46A", dots: "#D9AE52", path: "#FFF4D6", water: "#4FB7C9", sprites: ["cactus", "rock", "cactus"], trunk: "#8A5A2E", leaf: "#3E9B57", leafHi: "#7BD18C", leafLo: "#B98E3E", rock: "#B07A4E", rockHi: "#D9A272" },
-  { ground: "#DCEBF7", dots: "#C6DCEE", path: "#FFFFFF", water: "#7FB4E6", sprites: ["pine", "snowman", "pine"], trunk: "#6B4A33", leaf: "#2E7D5B", leafHi: "#59A883", leafLo: "#A9C4DA", rock: "#8E9DB0", rockHi: "#C9D6E4" },
-  { ground: "#F7B6D2", dots: "#EE9EC1", path: "#FFF1F7", water: "#B9A3FF", sprites: ["lolly", "cupcake", "lolly"], trunk: "#C9845A", leaf: "#E06AA0", leafHi: "#FFC6E0", leafLo: "#D88AB0", rock: "#FFFFFF", rockHi: "#FFFFFF" },
-  { ground: "#2B2560", dots: "#352E74", path: "#9C94E8", water: "#14113A", sprites: ["star", "planet", "moon"], trunk: "#5B4AA8", leaf: "#7A5CFF", leafHi: "#B8A6FF", leafLo: "#1E1A48", rock: "#4A4290", rockHi: "#6A60C0" },
+  {
+    ground: "#58B85A",
+    dots: "#4AA34E",
+    path: "#F6E7B0",
+    water: "#4FA3E0",
+    sprites: ["tree", "bush", "flower"],
+    trunk: "#7A4A2A",
+    leaf: "#2F8A3E",
+    leafHi: "#7DD46F",
+    leafLo: "#246B30",
+    rock: "#9AA0A8",
+    rockHi: "#C8CDD3",
+  },
+  {
+    ground: "#E9C46A",
+    dots: "#D9AE52",
+    path: "#FFF4D6",
+    water: "#4FB7C9",
+    sprites: ["cactus", "rock", "cactus"],
+    trunk: "#8A5A2E",
+    leaf: "#3E9B57",
+    leafHi: "#7BD18C",
+    leafLo: "#B98E3E",
+    rock: "#B07A4E",
+    rockHi: "#D9A272",
+  },
+  {
+    ground: "#DCEBF7",
+    dots: "#C6DCEE",
+    path: "#FFFFFF",
+    water: "#7FB4E6",
+    sprites: ["pine", "snowman", "pine"],
+    trunk: "#6B4A33",
+    leaf: "#2E7D5B",
+    leafHi: "#59A883",
+    leafLo: "#A9C4DA",
+    rock: "#8E9DB0",
+    rockHi: "#C9D6E4",
+  },
+  {
+    ground: "#F7B6D2",
+    dots: "#EE9EC1",
+    path: "#FFF1F7",
+    water: "#B9A3FF",
+    sprites: ["lolly", "cupcake", "lolly"],
+    trunk: "#C9845A",
+    leaf: "#E06AA0",
+    leafHi: "#FFC6E0",
+    leafLo: "#D88AB0",
+    rock: "#FFFFFF",
+    rockHi: "#FFFFFF",
+  },
+  {
+    ground: "#2B2560",
+    dots: "#352E74",
+    path: "#9C94E8",
+    water: "#14113A",
+    sprites: ["star", "planet", "moon"],
+    trunk: "#5B4AA8",
+    leaf: "#7A5CFF",
+    leafHi: "#B8A6FF",
+    leafLo: "#1E1A48",
+    rock: "#4A4290",
+    rockHi: "#6A60C0",
+  },
 ];
-const KIND_TINT: Record<string, string> = { letter: "#FFFFFF", photo: "#7FD3FF", song: "#FF9AD0", voice: "#C8B4FF", ornament: "#FFE45C", calendar: "#9CF5C9" };
+const KIND_TINT: Record<string, string> = {
+  letter: "#FFFFFF",
+  photo: "#7FD3FF",
+  song: "#FF9AD0",
+  voice: "#C8B4FF",
+  ornament: "#FFE45C",
+  calendar: "#9CF5C9",
+};
 
 export function CabinetBody(props: BodyProps) {
   const body = useBody(props);
@@ -141,7 +295,14 @@ export function CabinetBody(props: BodyProps) {
       const r = nodeRefs.current[i]?.getBoundingClientRect();
       const x = e?.clientX || (r ? r.left + r.width / 2 : 0);
       const y = e?.clientY || (r ? r.top + r.height / 2 : 0);
-      if (x && !reduce) burst(body.hostRef.current, x, y, { shape: "stars", colors: [glow, pop, "#FFE45C"], count: 16, spread: 1.1, up: true });
+      if (x && !reduce)
+        burst(body.hostRef.current, x, y, {
+          shape: "stars",
+          colors: [glow, pop, "#FFE45C"],
+          count: 16,
+          spread: 1.1,
+          up: true,
+        });
     } else {
       chime(blocked ? "boop" : "pop");
       foley("thunk");
@@ -167,13 +328,25 @@ export function CabinetBody(props: BodyProps) {
   }
 
   function onKey(e: React.KeyboardEvent) {
-    const map: Record<string, "l" | "r" | "u" | "d"> = { ArrowLeft: "l", ArrowRight: "r", ArrowUp: "u", ArrowDown: "d" };
+    const map: Record<string, "l" | "r" | "u" | "d"> = {
+      ArrowLeft: "l",
+      ArrowRight: "r",
+      ArrowUp: "u",
+      ArrowDown: "d",
+    };
     const dir = map[e.key];
     if (!dir) return;
     e.preventDefault();
     setStick(dir);
     later(() => setStick(null), 180);
-    const to = dir === "l" ? sel - 1 : dir === "r" ? sel + 1 : dir === "u" ? (world + 1) * PER_WORLD : (world - 1) * PER_WORLD;
+    const to =
+      dir === "l"
+        ? sel - 1
+        : dir === "r"
+          ? sel + 1
+          : dir === "u"
+            ? (world + 1) * PER_WORLD
+            : (world - 1) * PER_WORLD;
     move(Math.max(0, Math.min(notes.length - 1, to)), true);
   }
 
@@ -185,7 +358,8 @@ export function CabinetBody(props: BodyProps) {
     const [x, y] = SPOTS[k]!;
     return [flip ? 128 - x : x, y];
   };
-  const levelTag = (i: number) => t("arcade.level", { w: Math.floor(i / PER_WORLD) + 1, n: (i % PER_WORLD) + 1 });
+  const levelTag = (i: number) =>
+    t("arcade.level", { w: Math.floor(i / PER_WORLD) + 1, n: (i % PER_WORLD) + 1 });
   const cur = current ? spot(sel % PER_WORLD) : null;
 
   return (
@@ -216,7 +390,11 @@ export function CabinetBody(props: BodyProps) {
               <span className="ac-bulbs" aria-hidden="true" />
               <p className="ac-marquee-kicker">{t("arcade.player")}</p>
               <h1 className="ac-marquee-name" style={{ fontFamily: PIXEL }}>
-                {data.named ? <SampleText on={data.nameIsSample}>{data.name}</SampleText> : body.heading}
+                {data.named ? (
+                  <SampleText on={data.nameIsSample}>{data.name}</SampleText>
+                ) : (
+                  body.heading
+                )}
               </h1>
               {data.named ? <p className="ac-marquee-heading">{body.heading}</p> : null}
             </header>
@@ -227,9 +405,15 @@ export function CabinetBody(props: BodyProps) {
                 <div className="ac-screen" onKeyDown={onKey}>
                   <div className="ac-hud">
                     {worlds > 1 ? (
-                      <div className="ac-worlds" role="group" aria-label={t("arcade.world", { n: world + 1 })}>
+                      <div
+                        className="ac-worlds"
+                        role="group"
+                        aria-label={t("arcade.world", { n: world + 1 })}
+                      >
                         {Array.from({ length: worlds }, (_, w) => {
-                          const all = notes.slice(w * PER_WORLD, (w + 1) * PER_WORLD).every((p) => opened.has(p.id));
+                          const all = notes
+                            .slice(w * PER_WORLD, (w + 1) * PER_WORLD)
+                            .every((p) => opened.has(p.id));
                           return (
                             <button
                               key={w}
@@ -247,13 +431,22 @@ export function CabinetBody(props: BodyProps) {
                     ) : (
                       <span className="ac-hud-label">{t("arcade.world", { n: 1 })}</span>
                     )}
-                    <span className="ac-score" aria-label={t("arcade.progress", { n: cleared, total: notes.length })}>
+                    <span
+                      className="ac-score"
+                      aria-label={t("arcade.progress", { n: cleared, total: notes.length })}
+                    >
                       {String(cleared * 1000).padStart(6, "0")}
                     </span>
                   </div>
 
                   <div key={world} className={`ac-map ${switched ? "is-in" : ""}`}>
-                    <WorldMap look={W} flip={flip} count={inWorld.length} lastWorld={world === worlds - 1} seedN={world} />
+                    <WorldMap
+                      look={W}
+                      flip={flip}
+                      count={inWorld.length}
+                      lastWorld={world === worlds - 1}
+                      seedN={world}
+                    />
                     {inWorld.map((p, k) => {
                       const i = world * PER_WORLD + k;
                       const [x, y] = spot(k);
@@ -265,7 +458,13 @@ export function CabinetBody(props: BodyProps) {
                           ref={(el) => void (nodeRefs.current[i] = el)}
                           type="button"
                           className={`ac-node ${done ? "is-done" : ""} ${locked ? "is-locked" : ""} ${i === sel ? "is-sel" : ""}`}
-                          style={{ left: `${(x / 128) * 100}%`, top: `${(y / 112) * 100}%`, "--tint": KIND_TINT[p.kind] ?? "#fff" } as React.CSSProperties}
+                          style={
+                            {
+                              left: `${(x / 128) * 100}%`,
+                              top: `${(y / 112) * 100}%`,
+                              "--tint": KIND_TINT[p.kind] ?? "#fff",
+                            } as React.CSSProperties
+                          }
                           onClick={(e) => play(i, e)}
                           onFocus={() => setSel(i)}
                           aria-label={`${levelTag(i)}. ${pieceLabel(p)}`}
@@ -277,7 +476,14 @@ export function CabinetBody(props: BodyProps) {
                       );
                     })}
                     {cur ? (
-                      <span className="ac-cursor" style={{ left: `${(cur[0] / 128) * 100}%`, top: `${(cur[1] / 112) * 100}%` }} aria-hidden="true">
+                      <span
+                        className="ac-cursor"
+                        style={{
+                          left: `${(cur[0] / 128) * 100}%`,
+                          top: `${(cur[1] / 112) * 100}%`,
+                        }}
+                        aria-hidden="true"
+                      >
                         <PixelHeart />
                       </span>
                     ) : null}
@@ -293,8 +499,12 @@ export function CabinetBody(props: BodyProps) {
                     {current ? (
                       <>
                         <span className="ac-info-level">{levelTag(sel)}</span>
-                        <span className="ac-info-name">{(current.author || t("arcade.friend")).toUpperCase()}</span>
-                        <span className={`ac-info-cta ${opened.has(current.id) ? "is-done" : ""}`}>{opened.has(current.id) ? `★ ${t("arcade.cleared")}` : t("arcade.press")}</span>
+                        <span className="ac-info-name">
+                          {(current.author || t("arcade.friend")).toUpperCase()}
+                        </span>
+                        <span className={`ac-info-cta ${opened.has(current.id) ? "is-done" : ""}`}>
+                          {opened.has(current.id) ? `★ ${t("arcade.cleared")}` : t("arcade.press")}
+                        </span>
                       </>
                     ) : (
                       <span className="ac-info-level">{t("arcade.insert")}</span>
@@ -302,8 +512,13 @@ export function CabinetBody(props: BodyProps) {
                   </div>
 
                   {banner ? (
-                    <div className={`ac-banner ${banner === "locked" ? "is-locked" : ""}`} aria-hidden="true">
-                      <span style={{ fontFamily: PIXEL }}>{banner === "clear" ? t("arcade.clear") : t("arcade.notYet")}</span>
+                    <div
+                      className={`ac-banner ${banner === "locked" ? "is-locked" : ""}`}
+                      aria-hidden="true"
+                    >
+                      <span style={{ fontFamily: PIXEL }}>
+                        {banner === "clear" ? t("arcade.clear") : t("arcade.notYet")}
+                      </span>
                     </div>
                   ) : null}
                   <span className="ac-scan" aria-hidden="true" />
@@ -319,14 +534,44 @@ export function CabinetBody(props: BodyProps) {
                 <span className="ac-stick-shaft" aria-hidden="true">
                   <span className="ac-stick-ball" />
                 </span>
-                <button type="button" className="ac-dir is-l" onClick={() => nudge("l")} disabled={!notes.length} aria-label={t("arcade.prev")} />
-                <button type="button" className="ac-dir is-r" onClick={() => nudge("r")} disabled={!notes.length} aria-label={t("arcade.next")} />
-                <button type="button" className="ac-dir is-u" onClick={() => nudge("u")} disabled={worlds < 2} aria-label={t("arcade.worldUp")} />
-                <button type="button" className="ac-dir is-d" onClick={() => nudge("d")} disabled={worlds < 2} aria-label={t("arcade.worldDown")} />
+                <button
+                  type="button"
+                  className="ac-dir is-l"
+                  onClick={() => nudge("l")}
+                  disabled={!notes.length}
+                  aria-label={t("arcade.prev")}
+                />
+                <button
+                  type="button"
+                  className="ac-dir is-r"
+                  onClick={() => nudge("r")}
+                  disabled={!notes.length}
+                  aria-label={t("arcade.next")}
+                />
+                <button
+                  type="button"
+                  className="ac-dir is-u"
+                  onClick={() => nudge("u")}
+                  disabled={worlds < 2}
+                  aria-label={t("arcade.worldUp")}
+                />
+                <button
+                  type="button"
+                  className="ac-dir is-d"
+                  onClick={() => nudge("d")}
+                  disabled={worlds < 2}
+                  aria-label={t("arcade.worldDown")}
+                />
               </div>
               <div className="ac-buttons">
                 <span className="ac-btn-wrap">
-                  <button type="button" className={`ac-btn is-b ${pressed === "b" ? "is-down" : ""}`} onClick={nextNew} disabled={!notes.length} aria-label={t("arcade.start")}>
+                  <button
+                    type="button"
+                    className={`ac-btn is-b ${pressed === "b" ? "is-down" : ""}`}
+                    onClick={nextNew}
+                    disabled={!notes.length}
+                    aria-label={t("arcade.start")}
+                  >
                     B
                   </button>
                   <span className="ac-btn-label">{t("arcade.newLevel")}</span>
@@ -340,7 +585,9 @@ export function CabinetBody(props: BodyProps) {
                       play(sel, e);
                     }}
                     disabled={!notes.length}
-                    aria-label={current ? `${t("arcade.play")}: ${pieceLabel(current)}` : t("arcade.play")}
+                    aria-label={
+                      current ? `${t("arcade.play")}: ${pieceLabel(current)}` : t("arcade.play")
+                    }
                   >
                     A
                   </button>
@@ -355,10 +602,14 @@ export function CabinetBody(props: BodyProps) {
                 <p className="ac-card-title" style={{ fontFamily: PIXEL }}>
                   {t("arcade.howTo")}
                 </p>
-                <p className="ac-card-intro">{body.intro || body.voice.intro(data.named ? data.name : "")}</p>
+                <p className="ac-card-intro">
+                  {body.intro || body.voice.intro(data.named ? data.name : "")}
+                </p>
                 {notes.length ? <p className="ac-card-rules">{t("arcade.rules")}</p> : null}
                 <p className="ac-card-count" style={{ fontFamily: PIXEL }}>
-                  {notes.length ? t("arcade.count", { n: notes.length }) : body.voice.empty(t("arcade.what"))}
+                  {notes.length
+                    ? t("arcade.count", { n: notes.length })
+                    : body.voice.empty(t("arcade.what"))}
                 </p>
               </section>
               <div className="ac-door">
@@ -387,17 +638,30 @@ export function CabinetBody(props: BodyProps) {
                 </p>
                 <ol className="ac-table" style={{ fontFamily: PIXEL }}>
                   {scores.slice(0, 10).map(([name, n], k) => (
-                    <li key={name} className={`ac-row ${k === 0 ? "is-top" : ""}`} style={{ "--row": ["#FFE45C", "#3DF2B0", "#FF5DA2", "#7FD3FF", "#C8B4FF"][k % 5] } as React.CSSProperties}>
+                    <li
+                      key={name}
+                      className={`ac-row ${k === 0 ? "is-top" : ""}`}
+                      style={
+                        {
+                          "--row": ["#FFE45C", "#3DF2B0", "#FF5DA2", "#7FD3FF", "#C8B4FF"][k % 5],
+                        } as React.CSSProperties
+                      }
+                    >
                       <span className="ac-rank">{String(k + 1).padStart(2, "0")}</span>
                       <span className="ac-name">{name.toUpperCase()}</span>
                       <span className="ac-dots" aria-hidden="true" />
-                      <span className="ac-pts" aria-label={n === 1 ? t("arcade.scoreOne") : t("arcade.score", { n })}>
+                      <span
+                        className="ac-pts"
+                        aria-label={n === 1 ? t("arcade.scoreOne") : t("arcade.score", { n })}
+                      >
                         {String(n * 1000).padStart(5, "0")}
                       </span>
                     </li>
                   ))}
                 </ol>
-                {scores.length > 10 ? <p className="ac-more">{t("arcade.more", { n: scores.length - 10 })}</p> : null}
+                {scores.length > 10 ? (
+                  <p className="ac-more">{t("arcade.more", { n: scores.length - 10 })}</p>
+                ) : null}
               </section>
             ) : null}
             {data.words.length ? (
@@ -408,7 +672,16 @@ export function CabinetBody(props: BodyProps) {
                 <p className="ac-side-sub">{t("arcade.powerupsSub")}</p>
                 <ul className="ac-power-list">
                   {data.words.map((w, k) => (
-                    <li key={w.id} className="ac-power-item" style={{ fontFamily: PIXEL, "--pw": ["#FFE45C", "#3DF2B0", "#FF5DA2", "#7FD3FF", "#C8B4FF"][k % 5] } as React.CSSProperties}>
+                    <li
+                      key={w.id}
+                      className="ac-power-item"
+                      style={
+                        {
+                          fontFamily: PIXEL,
+                          "--pw": ["#FFE45C", "#3DF2B0", "#FF5DA2", "#7FD3FF", "#C8B4FF"][k % 5],
+                        } as React.CSSProperties
+                      }
+                    >
                       <span className="ac-coin" aria-hidden="true" />
                       {w.text}
                     </li>
@@ -419,15 +692,27 @@ export function CabinetBody(props: BodyProps) {
           </aside>
         </div>
 
-        <BodyFooter body={body} className="ac-footer" buttonStyle={{ background: glow, color: colors.mix(glow, "#000000", 0.82), fontFamily: PIXEL }} />
+        <BodyFooter
+          body={body}
+          className="ac-footer"
+          buttonStyle={{
+            background: glow,
+            color: colors.mix(glow, "#000000", 0.82),
+            fontFamily: PIXEL,
+          }}
+        />
       </div>
 
       {body.reading ? (
         <Reader piece={body.reading} onClose={body.closeReader} accent={pop} className="ac-dialog">
           <div className="ac-tag" style={{ fontFamily: PIXEL }}>
-            <span className="ac-tag-name">{(body.reading.author || t("arcade.friend")).toUpperCase()}</span>
+            <span className="ac-tag-name">
+              {(body.reading.author || t("arcade.friend")).toUpperCase()}
+            </span>
             <span className="ac-tag-level">
-              {notes.indexOf(body.reading) >= 0 ? `${levelTag(notes.indexOf(body.reading))} · ` : ""}
+              {notes.indexOf(body.reading) >= 0
+                ? `${levelTag(notes.indexOf(body.reading))} · `
+                : ""}
               {pieceWhat(body.reading)}
             </span>
           </div>
@@ -447,14 +732,32 @@ function Timer({ date }: { date: string | null }) {
         {t("arcade.timerLabel")}
       </span>
       <span className="ac-timer-led" style={{ fontFamily: PIXEL }}>
-        {c.done ? t("body.countdown.done") : t("arcade.timer", { days: c.days, hours: String(c.hours).padStart(2, "0"), mins: String(c.mins).padStart(2, "0") })}
+        {c.done
+          ? t("body.countdown.done")
+          : t("arcade.timer", {
+              days: c.days,
+              hours: String(c.hours).padStart(2, "0"),
+              mins: String(c.mins).padStart(2, "0"),
+            })}
       </span>
     </div>
   );
 }
 
 /** One world's terrain: ground, a pond, scenery sprites, the dotted path and a castle at the end. */
-function WorldMap({ look, flip, count, lastWorld, seedN }: { look: (typeof WORLDS)[number]; flip: boolean; count: number; lastWorld: boolean; seedN: number }) {
+function WorldMap({
+  look,
+  flip,
+  count,
+  lastWorld,
+  seedN,
+}: {
+  look: (typeof WORLDS)[number];
+  flip: boolean;
+  count: number;
+  lastWorld: boolean;
+  seedN: number;
+}) {
   const fx = (x: number, w = 0) => (flip ? 128 - x - w : x);
   const colorOf = (k: string) => (look as Record<string, unknown>)[k] as string | undefined;
   const pts = SPOTS.slice(0, count).map(([x, y]) => [fx(x), y] as [number, number]);
@@ -470,7 +773,12 @@ function WorldMap({ look, flip, count, lastWorld, seedN }: { look: (typeof WORLD
   }
   const sprites = look.sprites;
   return (
-    <svg className="ac-map-svg" viewBox="0 0 128 112" shapeRendering="crispEdges" aria-hidden="true">
+    <svg
+      className="ac-map-svg"
+      viewBox="0 0 128 112"
+      shapeRendering="crispEdges"
+      aria-hidden="true"
+    >
       <rect width="128" height="112" fill={look.ground} />
       {/* dithered ground */}
       <pattern id={`ac-dith-${seedN}`} width="4" height="4" patternUnits="userSpaceOnUse">
@@ -493,7 +801,23 @@ function WorldMap({ look, flip, count, lastWorld, seedN }: { look: (typeof WORLD
         return (
           <g key={k} transform={`translate(${ox} ${oy})`}>
             {SPRITES[kind]!.map(([x, y, w, h, c], j) => (
-              <rect key={j} x={flip ? 12 - x - w : x} y={y} width={w} height={h} fill={colorOf(c) ?? (c === "snow" ? "#FFFFFF" : c === "sun" ? "#FFE45C" : c === "pop" ? "#FF5DA2" : "#000")} />
+              <rect
+                key={j}
+                x={flip ? 12 - x - w : x}
+                y={y}
+                width={w}
+                height={h}
+                fill={
+                  colorOf(c) ??
+                  (c === "snow"
+                    ? "#FFFFFF"
+                    : c === "sun"
+                      ? "#FFE45C"
+                      : c === "pop"
+                        ? "#FF5DA2"
+                        : "#000")
+                }
+              />
             ))}
           </g>
         );
@@ -525,7 +849,13 @@ function WorldMap({ look, flip, count, lastWorld, seedN }: { look: (typeof WORLD
 function PixelHeart() {
   return (
     <svg viewBox="0 0 7 6" shapeRendering="crispEdges" className="block size-full">
-      {HEART.flatMap((row, y) => [...row].map((ch, x) => (ch === "X" ? <rect key={`${x}-${y}`} x={x} y={y} width="1.02" height="1.02" fill="currentColor" /> : null)))}
+      {HEART.flatMap((row, y) =>
+        [...row].map((ch, x) =>
+          ch === "X" ? (
+            <rect key={`${x}-${y}`} x={x} y={y} width="1.02" height="1.02" fill="currentColor" />
+          ) : null,
+        ),
+      )}
       <rect x="1" y="1" width="1" height="1" fill="#FFFFFF" opacity=".8" />
     </svg>
   );

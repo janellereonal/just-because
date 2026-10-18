@@ -8,6 +8,8 @@
  * full-size reader, a note's content, the countdown and the footer. Each body
  * draws everything else itself.
  */
+// Shared body styles load with the first body a gift shows.
+import "@/styles/bodies/kit.css";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Lock, Mic, Music2, Camera, X } from "lucide-react";
 import { FONT_PAIRINGS, toEmbedUrl } from "@/lib/gift";
@@ -161,7 +163,9 @@ export function PhotoFace({
   return (
     <span
       className={`grid size-full place-items-center ${className}`}
-      style={{ background: `linear-gradient(135deg, ${mixHex(tint, "#FFFFFF", 0.55)}, ${mixHex(tint, "#FFFFFF", 0.25)})` }}
+      style={{
+        background: `linear-gradient(135deg, ${mixHex(tint, "#FFFFFF", 0.55)}, ${mixHex(tint, "#FFFFFF", 0.25)})`,
+      }}
       aria-label={piece.text ?? t("body.what.photo")}
     >
       <Camera className="size-7 opacity-50" style={{ color: mixHex(tint, "#000000", 0.35) }} />
@@ -199,11 +203,20 @@ export function PieceContent({
         {t("body.opensOn", { day: formatDay(piece.date!) })}
       </span>
     );
-  const text = piece.text?.trim() || (piece.kind === "song" ? t("body.songFallback") : piece.kind === "voice" ? t("body.voiceFallback") : "");
+  const text =
+    piece.text?.trim() ||
+    (piece.kind === "song"
+      ? t("body.songFallback")
+      : piece.kind === "voice"
+        ? t("body.voiceFallback")
+        : "");
   return (
     <span className="block">
       {piece.kind === "song" || piece.kind === "voice" ? (
-        <span className="mb-1.5 inline-flex items-center gap-1.5 text-[11px] font-semibold tracking-[0.14em] uppercase" style={{ color: accent }}>
+        <span
+          className="mb-1.5 inline-flex items-center gap-1.5 text-[11px] font-semibold tracking-[0.14em] uppercase"
+          style={{ color: accent }}
+        >
           {piece.kind === "song" ? <Music2 className="size-3.5" /> : <Mic className="size-3.5" />}
           {pieceWhat(piece)}
         </span>
@@ -211,7 +224,16 @@ export function PieceContent({
       {text ? (
         <span
           className="block leading-relaxed whitespace-pre-line"
-          style={clamp ? { display: "-webkit-box", WebkitLineClamp: clamp, WebkitBoxOrient: "vertical", overflow: "hidden" } : undefined}
+          style={
+            clamp
+              ? {
+                  display: "-webkit-box",
+                  WebkitLineClamp: clamp,
+                  WebkitBoxOrient: "vertical",
+                  overflow: "hidden",
+                }
+              : undefined
+          }
         >
           {text}
         </span>
@@ -267,20 +289,32 @@ export function Reader({
         style={style}
         onClick={(e) => e.stopPropagation()}
       >
-        <button ref={closeRef} type="button" onClick={onClose} className="body-reader-close" aria-label={t("body.close")}>
+        <button
+          ref={closeRef}
+          type="button"
+          onClick={onClose}
+          className="body-reader-close"
+          aria-label={t("body.close")}
+        >
           <X className="size-4" />
         </button>
         {children}
         {piece.sealed ? (
           <p className="py-10 text-center text-lg">{t("body.sealed")}</p>
         ) : locked ? (
-          <p className="py-10 text-center text-lg">{t("body.lockedLong", { day: formatDay(piece.date!) })}</p>
+          <p className="py-10 text-center text-lg">
+            {t("body.lockedLong", { day: formatDay(piece.date!) })}
+          </p>
         ) : (
           <>
             {piece.kind === "photo" ? (
               <div className="body-reader-photo">
                 {media ? (
-                  <img src={media} alt={piece.text ?? ""} className="max-h-[58vh] w-full rounded-xl object-contain" />
+                  <img
+                    src={media}
+                    alt={piece.text ?? ""}
+                    className="max-h-[58vh] w-full rounded-xl object-contain"
+                  />
                 ) : (
                   <div className="aspect-[4/3] w-full overflow-hidden rounded-xl">
                     <PhotoFace piece={piece} tint={accent} />
@@ -288,7 +322,9 @@ export function Reader({
                 )}
               </div>
             ) : null}
-            {piece.kind === "voice" && media ? <audio controls autoPlay src={media} className="mb-5 w-full" /> : null}
+            {piece.kind === "voice" && media ? (
+              <audio controls autoPlay src={media} className="mb-5 w-full" />
+            ) : null}
             {embed ? (
               <iframe
                 src={embed}
@@ -298,7 +334,13 @@ export function Reader({
                 className="mb-5 h-[152px] w-full rounded-2xl border-0"
               />
             ) : piece.link ? (
-              <a href={piece.link} target="_blank" rel="noreferrer" className="mb-5 inline-block underline underline-offset-4" style={{ color: accent }}>
+              <a
+                href={piece.link}
+                target="_blank"
+                rel="noreferrer"
+                className="mb-5 inline-block underline underline-offset-4"
+                style={{ color: accent }}
+              >
                 {t("body.openSong")}
               </a>
             ) : null}
@@ -316,7 +358,15 @@ export function Reader({
 }
 
 /** "12 days, 3 hours" until the countdown moment, or null when there isn't one. */
-export function CountdownLine({ date, className = "", style }: { date: string | null; className?: string; style?: React.CSSProperties }) {
+export function CountdownLine({
+  date,
+  className = "",
+  style,
+}: {
+  date: string | null;
+  className?: string;
+  style?: React.CSSProperties;
+}) {
   const c = useCountdown(date);
   if (!c) return null;
   return (

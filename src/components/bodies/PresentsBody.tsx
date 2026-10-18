@@ -8,6 +8,8 @@
  * puffs up and the note rises out into the reader. Unwrapped presents stay open
  * (lid tipped back, tissue showing) on this device.
  */
+// Its styles load with it, not with every page.
+import "@/styles/bodies/presents.css";
 import { useEffect, useMemo, useState } from "react";
 import { CalendarDays, Lock, Mic, Music2, Camera, Star } from "lucide-react";
 import { t } from "@/i18n";

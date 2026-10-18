@@ -65,9 +65,22 @@ function DevBodies() {
   const info = styleInfo(style);
   const look = lookFor(info, null, lookId || null);
   const gift = DEMO_GIFTS[isDemoId(demo) ? demo : "ana"];
-  const palette = EXTRA[pal] ?? (lookId ? LOOK_PALETTES[lookId] : undefined) ?? STYLE_PALETTES[style] ?? gift.palette;
+  const palette =
+    EXTRA[pal] ??
+    (lookId ? LOOK_PALETTES[lookId] : undefined) ??
+    STYLE_PALETTES[style] ??
+    gift.palette;
   const theme = useMemo<Theme | null>(
-    () => (look ? { ...gift.theme, id: `dev-${look.id}`, name: look.theme, category: "", palettes: [palette] } : null),
+    () =>
+      look
+        ? {
+            ...gift.theme,
+            id: `dev-${look.id}`,
+            name: look.theme,
+            category: "",
+            palettes: [palette],
+          }
+        : null,
     [gift.theme, look, palette],
   );
   const empty = demo === "sample" || demo === "empty";
@@ -78,7 +91,11 @@ function DevBodies() {
       format: info.body,
       solo,
       custom_colors: palette,
-      custom_text: { ...gift.site.custom_text, heading: "", ...(name ? { recipient_name: name } : {}) },
+      custom_text: {
+        ...gift.site.custom_text,
+        heading: "",
+        ...(name ? { recipient_name: name } : {}),
+      },
     }),
     [gift.site, style, info.body, solo, palette, name],
   );

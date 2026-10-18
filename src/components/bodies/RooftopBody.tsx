@@ -8,6 +8,8 @@
  * leaves a spark with the friend's name in the sky above the city, so the sky
  * fills up as you read. When every rocket has gone up, the finale goes off.
  */
+// Its styles load with it, not with every page.
+import "@/styles/bodies/rooftop.css";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Lock, Mic, Music2, Star } from "lucide-react";
 import { t } from "@/i18n";
@@ -36,7 +38,16 @@ const SKY_STEP = 14;
 const SKY_MAX = 400;
 const skyFor = (n: number) => Math.min(SKY_MAX, SKY_BASE + n * SKY_STEP);
 type Kind = "rocket" | "fountain" | "candle" | "cake";
-const KINDS: Kind[] = ["rocket", "fountain", "rocket", "candle", "cake", "rocket", "candle", "fountain"];
+const KINDS: Kind[] = [
+  "rocket",
+  "fountain",
+  "rocket",
+  "candle",
+  "cake",
+  "rocket",
+  "candle",
+  "fountain",
+];
 
 export function RooftopBody(props: BodyProps) {
   const body = useBody(props);
@@ -51,7 +62,12 @@ export function RooftopBody(props: BodyProps) {
   }, [notes, opened]);
   const [flying, setFlying] = useState<string | null>(null);
   const finaleDone = useRef(false);
-  const sparks = [colors.primary, colors.accent, "#FFF4D6", colors.mix(colors.primary, colors.accent, 0.5)];
+  const sparks = [
+    colors.primary,
+    colors.accent,
+    "#FFF4D6",
+    colors.mix(colors.primary, colors.accent, 0.5),
+  ];
 
   // Rockets per ledge: as many as fit.
   const roofRef = useRef<HTMLDivElement | null>(null);
@@ -115,13 +131,16 @@ export function RooftopBody(props: BodyProps) {
     const w = window.innerWidth;
     const h = window.innerHeight;
     for (let i = 0; i < 6; i++)
-      window.setTimeout(() => {
-        const x = w * (0.18 + seed(`fx${i}`) * 0.64);
-        const y = h * (0.14 + seed(`fy${i}`) * 0.3);
-        burst(host, x, y, { shape: "sparkles", colors: sparks, count: 22, spread: 1.6 });
-        ring(host, x, y, sparks[i % sparks.length]!);
-        if (i % 2 === 0) foley("crack");
-      }, 300 + i * 260);
+      window.setTimeout(
+        () => {
+          const x = w * (0.18 + seed(`fx${i}`) * 0.64);
+          const y = h * (0.14 + seed(`fy${i}`) * 0.3);
+          burst(host, x, y, { shape: "sparkles", colors: sparks, count: 22, spread: 1.6 });
+          ring(host, x, y, sparks[i % sparks.length]!);
+          if (i % 2 === 0) foley("crack");
+        },
+        300 + i * 260,
+      );
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [allLit, body.reading, flying, opened]);
 
@@ -133,7 +152,9 @@ export function RooftopBody(props: BodyProps) {
       className="rt-root"
       style={
         {
-          "--rt-night": colors.dark ? colors.mix(colors.bg, "#000000", 0.25) : colors.mix("#141A38", colors.primary, 0.08),
+          "--rt-night": colors.dark
+            ? colors.mix(colors.bg, "#000000", 0.25)
+            : colors.mix("#141A38", colors.primary, 0.08),
           "--rt-sky": colors.dark ? colors.bg : colors.mix("#1B2350", colors.primary, 0.1),
           "--rt-city": colors.dark ? colors.mix(colors.bg, "#000000", 0.45) : "#0E1230",
           "--rt-city-far": colors.dark ? colors.mix(colors.bg, colors.accent, 0.12) : "#262E5E",
@@ -144,7 +165,9 @@ export function RooftopBody(props: BodyProps) {
           "--rt-stone": colors.mix("#B9B2AA", colors.bg, 0.25),
           "--rt-skyH": `${skyH}px`,
           // It's always night up here: light palettes get a deep blue sky of their own.
-          ...(colors.dark ? {} : { background: colors.mix("#141A3C", colors.primary, 0.08), color: "#F4F1FF" }),
+          ...(colors.dark
+            ? {}
+            : { background: colors.mix("#141A3C", colors.primary, 0.08), color: "#F4F1FF" }),
         } as React.CSSProperties
       }
     >
@@ -156,54 +179,91 @@ export function RooftopBody(props: BodyProps) {
           <Clock date={data.countdownDate} headingFont={fonts.heading} />
           <p className="rt-kicker">{t("rooftop.kicker")}</p>
           <h1 className="rt-name" style={{ fontFamily: fonts.heading }}>
-            {data.named ? <SampleText on={data.nameIsSample}>{data.name}</SampleText> : body.heading}
+            {data.named ? (
+              <SampleText on={data.nameIsSample}>{data.name}</SampleText>
+            ) : (
+              body.heading
+            )}
           </h1>
           {data.named ? <p className="rt-heading">{body.heading}</p> : null}
           <p className="rt-intro">{body.intro || body.voice.intro(data.named ? data.name : "")}</p>
         </header>
 
         {/* The sky over the city: a spark for every note that went up */}
-        <div className="rt-sky" aria-label={t("rooftop.progress", { n: lit.length, total })} role="group">
+        <div
+          className="rt-sky"
+          aria-label={t("rooftop.progress", { n: lit.length, total })}
+          role="group"
+        >
           <div className="rt-sky-field">
-          <span className="rt-moon" aria-hidden="true" />
-          {lit.length === 0 && total ? <p className="rt-sky-hint">{t("rooftop.skyHint")}</p> : null}
-          {lit.map((p, k) => {
-            const i = notes.indexOf(p);
-            const sx = 6 + seed(`${p.id}x`) * 88;
-            const sy = 14 + seed(`${p.id}y`) * (skyFor(k + 1) - 66);
-            return (
-              <button
-                key={p.id}
-                type="button"
-                className="rt-spark"
-                tabIndex={-1}
-                style={{ left: `${sx}%`, bottom: `${sy.toFixed(0)}px`, "--sc": sparks[i % sparks.length], "--tw": `${(2.4 + seed(p.id) * 2.4).toFixed(2)}s`, "--td": `${(-seed(p.id) * 3).toFixed(2)}s` } as React.CSSProperties}
-                onClick={() => body.read(p)}
-                aria-label={pieceLabel(p)}
-              >
-                <span className="rt-spark-star" />
-                <span className="rt-spark-name">{p.author || t("rooftop.surprise")}</span>
-              </button>
-            );
-          })}
+            <span className="rt-moon" aria-hidden="true" />
+            {lit.length === 0 && total ? (
+              <p className="rt-sky-hint">{t("rooftop.skyHint")}</p>
+            ) : null}
+            {lit.map((p, k) => {
+              const i = notes.indexOf(p);
+              const sx = 6 + seed(`${p.id}x`) * 88;
+              const sy = 14 + seed(`${p.id}y`) * (skyFor(k + 1) - 66);
+              return (
+                <button
+                  key={p.id}
+                  type="button"
+                  className="rt-spark"
+                  tabIndex={-1}
+                  style={
+                    {
+                      left: `${sx}%`,
+                      bottom: `${sy.toFixed(0)}px`,
+                      "--sc": sparks[i % sparks.length],
+                      "--tw": `${(2.4 + seed(p.id) * 2.4).toFixed(2)}s`,
+                      "--td": `${(-seed(p.id) * 3).toFixed(2)}s`,
+                    } as React.CSSProperties
+                  }
+                  onClick={() => body.read(p)}
+                  aria-label={pieceLabel(p)}
+                >
+                  <span className="rt-spark-star" />
+                  <span className="rt-spark-name">{p.author || t("rooftop.surprise")}</span>
+                </button>
+              );
+            })}
           </div>
           <Skyline />
         </div>
       </div>
 
       {/* The roof: ledges of rockets */}
-      <section className="rt-roof" aria-label={total ? t("rooftop.count", { n: total }) : t("rooftop.what")}>
+      <section
+        className="rt-roof"
+        aria-label={total ? t("rooftop.count", { n: total }) : t("rooftop.what")}
+      >
         <div ref={roofRef} className="mx-auto max-w-[1080px] px-4">
           <p className="rt-status" role="status" aria-live="polite">
-            {total === 0 ? body.voice.empty(t("rooftop.what")) : allLit ? t("rooftop.allLit") : lit.length ? t("rooftop.progress", { n: lit.length, total }) : t("rooftop.hint")}
+            {total === 0
+              ? body.voice.empty(t("rooftop.what"))
+              : allLit
+                ? t("rooftop.allLit")
+                : lit.length
+                  ? t("rooftop.progress", { n: lit.length, total })
+                  : t("rooftop.hint")}
           </p>
         </div>
         {(ledges.length ? ledges : [[]]).map((row, k) => (
-          <div key={k} className={`rt-ledge ${k % 2 ? "is-odd" : ""}`} style={{ "--per": per } as React.CSSProperties}>
+          <div
+            key={k}
+            className={`rt-ledge ${k % 2 ? "is-odd" : ""}`}
+            style={{ "--per": per } as React.CSSProperties}
+          >
             <ul className="rt-rockets mx-auto max-w-[1080px] px-4">
               {row.map((p, i) => (
                 <li key={p.id}>
-                  <Rocket piece={p} index={k * per + i} gone={opened.has(p.id)} flying={flying === p.id} onLaunch={(e) => launch(p, e)} />
+                  <Rocket
+                    piece={p}
+                    index={k * per + i}
+                    gone={opened.has(p.id)}
+                    flying={flying === p.id}
+                    onLaunch={(e) => launch(p, e)}
+                  />
                 </li>
               ))}
             </ul>
@@ -228,20 +288,37 @@ export function RooftopBody(props: BodyProps) {
                 </p>
                 <p className="rt-words-list" style={{ fontFamily: fonts.heading }}>
                   {data.words.map((w, i) => (
-                    <span key={w.id} style={{ "--wc": sparks[i % sparks.length], "--wd": `${(-seed(w.id) * 4).toFixed(2)}s` } as React.CSSProperties}>
+                    <span
+                      key={w.id}
+                      style={
+                        {
+                          "--wc": sparks[i % sparks.length],
+                          "--wd": `${(-seed(w.id) * 4).toFixed(2)}s`,
+                        } as React.CSSProperties
+                      }
+                    >
                       {w.text}
                     </span>
                   ))}
                 </p>
               </section>
             ) : null}
-            <BodyFooter body={body} className="rt-footer" buttonStyle={{ background: colors.primary, color: colors.onPrimary }} />
+            <BodyFooter
+              body={body}
+              className="rt-footer"
+              buttonStyle={{ background: colors.primary, color: colors.onPrimary }}
+            />
           </div>
         </div>
       </section>
 
       {body.reading ? (
-        <Reader piece={body.reading} onClose={body.closeReader} accent={colors.mix(colors.accent, "#FFFFFF", 0.35)} className="rt-reader">
+        <Reader
+          piece={body.reading}
+          onClose={body.closeReader}
+          accent={colors.mix(colors.accent, "#FFFFFF", 0.35)}
+          className="rt-reader"
+        >
           <span className="rt-reader-sky" aria-hidden="true">
             <span className="rt-reader-burst" />
           </span>
@@ -261,21 +338,32 @@ export function RooftopBody(props: BodyProps) {
 function Clock({ date, headingFont }: { date: string | null; headingFont: string }) {
   const c = useCountdown(date);
   const pad = (n: number) => String(n).padStart(2, "0");
-  const parts = c ? [
-    { v: c.days > 99 ? String(c.days) : pad(c.days), l: t("rooftop.days") },
-    { v: pad(c.hours), l: t("rooftop.hours") },
-    { v: pad(c.mins), l: t("rooftop.mins") },
-    { v: pad(c.secs), l: t("rooftop.secs") },
-  ] : null;
+  const parts = c
+    ? [
+        { v: c.days > 99 ? String(c.days) : pad(c.days), l: t("rooftop.days") },
+        { v: pad(c.hours), l: t("rooftop.hours") },
+        { v: pad(c.mins), l: t("rooftop.mins") },
+        { v: pad(c.secs), l: t("rooftop.secs") },
+      ]
+    : null;
   return (
     <div className={`rt-clock ${c?.done ? "is-done" : ""}`}>
       {parts && !c?.done ? (
         <>
           <p className="rt-clock-label">{t("rooftop.until")}</p>
-          <p className="rt-clock-face" role="timer" aria-label={t("body.countdown.left", { days: c!.days, hours: c!.hours, mins: c!.mins })} style={{ fontFamily: headingFont }}>
+          <p
+            className="rt-clock-face"
+            role="timer"
+            aria-label={t("body.countdown.left", { days: c!.days, hours: c!.hours, mins: c!.mins })}
+            style={{ fontFamily: headingFont }}
+          >
             {parts.map((p, i) => (
               <span key={i} className="rt-clock-group">
-                {i ? <span className="rt-clock-colon" aria-hidden="true">:</span> : null}
+                {i ? (
+                  <span className="rt-clock-colon" aria-hidden="true">
+                    :
+                  </span>
+                ) : null}
                 <span className="rt-clock-unit">
                   <span className="rt-clock-num">{p.v}</span>
                   <span className="rt-clock-unit-label">{p.l}</span>
@@ -287,7 +375,9 @@ function Clock({ date, headingFont }: { date: string | null; headingFont: string
       ) : (
         <p className="rt-clock-face is-midnight" style={{ fontFamily: headingFont }}>
           <span className="rt-clock-num">00</span>
-          <span className="rt-clock-colon" aria-hidden="true">:</span>
+          <span className="rt-clock-colon" aria-hidden="true">
+            :
+          </span>
           <span className="rt-clock-num">00</span>
           {c?.done ? <span className="sr-only">{t("body.countdown.done")}</span> : null}
         </p>
@@ -298,17 +388,43 @@ function Clock({ date, headingFont }: { date: string | null; headingFont: string
 
 /* ---------- a rocket on the ledge ---------- */
 
-function Rocket({ piece, index, gone, flying, onLaunch }: { piece: Piece; index: number; gone: boolean; flying: boolean; onLaunch: (e: React.MouseEvent<HTMLElement>) => void }) {
+function Rocket({
+  piece,
+  index,
+  gone,
+  flying,
+  onLaunch,
+}: {
+  piece: Piece;
+  index: number;
+  gone: boolean;
+  flying: boolean;
+  onLaunch: (e: React.MouseEvent<HTMLElement>) => void;
+}) {
   const r = seed(piece.id);
   const locked = isLocked(piece);
   // A roof full of different fireworks: rockets on sticks, fountains, roman candles, cakes of tubes.
   const kind = KINDS[(index + Math.floor(seed(`${piece.id}k`) * KINDS.length)) % KINDS.length]!;
-  const Icon = piece.sealed || locked ? Lock : piece.kind === "song" ? Music2 : piece.kind === "voice" ? Mic : piece.kind === "ornament" ? Star : null;
+  const Icon =
+    piece.sealed || locked
+      ? Lock
+      : piece.kind === "song"
+        ? Music2
+        : piece.kind === "voice"
+          ? Mic
+          : piece.kind === "ornament"
+            ? Star
+            : null;
   return (
     <button
       type="button"
       className={`rt-rocket rt-k-${kind} is-c${(index + (index >> 2)) % 4} ${gone ? "is-gone" : ""} ${flying ? "is-flying" : ""} ${piece.sealed || locked ? "is-quiet" : ""}`}
-      style={{ "--h": `${(0.82 + r * 0.3).toFixed(2)}`, "--lean": `${((seed(`${piece.id}l`) - 0.5) * 6).toFixed(1)}deg` } as React.CSSProperties}
+      style={
+        {
+          "--h": `${(0.82 + r * 0.3).toFixed(2)}`,
+          "--lean": `${((seed(`${piece.id}l`) - 0.5) * 6).toFixed(1)}deg`,
+        } as React.CSSProperties
+      }
       onClick={onLaunch}
       aria-label={`${pieceLabel(piece)}${locked ? `. ${t("body.opensOn", { day: formatDay(piece.date!) })}` : ""}`}
       title={pieceWhat(piece)}
@@ -349,7 +465,17 @@ function Stars() {
   return (
     <>
       {stars.map((s, i) => (
-        <span key={i} className="rt-star" style={{ left: `${s.x}%`, top: `${s.y}%`, width: s.s, height: s.s, animationDelay: `${s.d}s` }} />
+        <span
+          key={i}
+          className="rt-star"
+          style={{
+            left: `${s.x}%`,
+            top: `${s.y}%`,
+            width: s.s,
+            height: s.s,
+            animationDelay: `${s.d}s`,
+          }}
+        />
       ))}
     </>
   );
@@ -375,17 +501,33 @@ function Skyline() {
     const windows: { x: number; y: number; blink: boolean; d: number }[] = [];
     for (const b of front)
       for (let wy = b.y + 6; wy < 134; wy += 7)
-        for (let wx = b.x + 3; wx < b.x + b.w - 4; wx += 5) if (r() < 0.3) windows.push({ x: wx, y: wy, blink: r() < 0.1, d: -r() * 7 });
+        for (let wx = b.x + 3; wx < b.x + b.w - 4; wx += 5)
+          if (r() < 0.3) windows.push({ x: wx, y: wy, blink: r() < 0.1, d: -r() * 7 });
     return { back, front, windows };
   }, []);
   const shape = (b: { x: number; y: number; w: number; spire: boolean }) =>
-    `M${b.x.toFixed(1)} 141V${b.y.toFixed(1)}h${b.w.toFixed(1)}V141z` + (b.spire ? `M${(b.x + b.w / 2 - 1).toFixed(1)} ${b.y.toFixed(1)}v-14h2v14z` : "");
+    `M${b.x.toFixed(1)} 141V${b.y.toFixed(1)}h${b.w.toFixed(1)}V141z` +
+    (b.spire ? `M${(b.x + b.w / 2 - 1).toFixed(1)} ${b.y.toFixed(1)}v-14h2v14z` : "");
   return (
-    <svg className="rt-skyline" viewBox="0 0 1200 140" preserveAspectRatio="xMidYMax slice" aria-hidden="true">
+    <svg
+      className="rt-skyline"
+      viewBox="0 0 1200 140"
+      preserveAspectRatio="xMidYMax slice"
+      aria-hidden="true"
+    >
       <path d={city.back.map(shape).join("")} fill="var(--rt-city-far)" />
       <path d={city.front.map(shape).join("")} fill="var(--rt-city)" />
       {city.windows.map((w, i) => (
-        <rect key={i} x={w.x} y={w.y} width="2.2" height="3" rx=".4" className={w.blink ? "rt-window is-blink" : "rt-window"} style={w.blink ? { animationDelay: `${w.d}s` } : undefined} />
+        <rect
+          key={i}
+          x={w.x}
+          y={w.y}
+          width="2.2"
+          height="3"
+          rx=".4"
+          className={w.blink ? "rt-window is-blink" : "rt-window"}
+          style={w.blink ? { animationDelay: `${w.d}s` } : undefined}
+        />
       ))}
     </svg>
   );

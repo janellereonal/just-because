@@ -8,6 +8,8 @@
  * frost). Tap a pane and a hand wipes an arc through the frost; the warm room and
  * the note show through, and it opens to read. Wiped panes stay clear and glow.
  */
+// Its styles load with it, not with every page.
+import "@/styles/bodies/frost.css";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Lock, Mic, Music2 } from "lucide-react";
 import { t } from "@/i18n";
@@ -39,8 +41,13 @@ const ICICLES = Array.from({ length: 30 }, (_, i) => {
   return `M${x.toFixed(2)} 0L${(x + 0.9).toFixed(2)} ${len.toFixed(2)}L${(x + 1.8).toFixed(2)} 0Z`;
 }).join("");
 /** A string of lights draped under the eave: seven dips, three bulbs in each. */
-const WIRE = Array.from({ length: 7 }, (_, i) => `${i ? "" : "M0 4"}Q${i * 100 + 50} 24 ${(i + 1) * 100} 4`).join("");
-const BULBS: [number, number][] = Array.from({ length: 7 }, (_, i) => [0.25, 0.5, 0.75].map((tt) => [((i + tt) / 7) * 100, 4 + 40 * tt * (1 - tt)] as [number, number])).flat();
+const WIRE = Array.from(
+  { length: 7 },
+  (_, i) => `${i ? "" : "M0 4"}Q${i * 100 + 50} 24 ${(i + 1) * 100} 4`,
+).join("");
+const BULBS: [number, number][] = Array.from({ length: 7 }, (_, i) =>
+  [0.25, 0.5, 0.75].map((tt) => [((i + tt) / 7) * 100, 4 + 40 * tt * (1 - tt)] as [number, number]),
+).flat();
 const WIPE_MS = 820;
 
 export function FrostBody(props: BodyProps) {
@@ -85,7 +92,13 @@ export function FrostBody(props: BodyProps) {
     timers.current.push(
       window.setTimeout(() => foley("crunch"), 260),
       window.setTimeout(() => {
-        burst(body.hostRef.current, r.left + r.width * 0.75, r.top + r.height * 0.3, { shape: "snow", colors: ["#FFFFFF", "#DDEBF7", glow], count: 12, spread: 0.8, up: true });
+        burst(body.hostRef.current, r.left + r.width * 0.75, r.top + r.height * 0.3, {
+          shape: "snow",
+          colors: ["#FFFFFF", "#DDEBF7", glow],
+          count: 12,
+          spread: 0.8,
+          up: true,
+        });
         chime("sparkle");
       }, WIPE_MS - 200),
       window.setTimeout(() => {
@@ -108,7 +121,9 @@ export function FrostBody(props: BodyProps) {
           "--fw-log": colors.mix(wood, colors.bg, colors.dark ? 0.08 : 0.12),
           "--fw-glow": glow,
           "--fw-glow-deep": colors.mix(glow, "#5A1E0A", 0.55),
-          "--fw-sky-top": colors.dark ? colors.mix(colors.bg, "#000000", 0.25) : colors.mix(colors.bg, "#C9DAEA", 0.45),
+          "--fw-sky-top": colors.dark
+            ? colors.mix(colors.bg, "#000000", 0.25)
+            : colors.mix(colors.bg, "#C9DAEA", 0.45),
           "--fw-sky-low": colors.bg,
           "--fw-flake": colors.dark ? "#FFFFFF" : "#FFFFFF",
           "--fw-flake-edge": colors.dark ? "rgba(255,255,255,.4)" : "rgba(120,150,180,.55)",
@@ -128,7 +143,11 @@ export function FrostBody(props: BodyProps) {
               <span className="fw-fern" aria-hidden="true" />
               <p className="fw-kicker">{data.named ? t("frost.kicker") : ""}</p>
               <h1 className="fw-name" style={{ fontFamily: fonts.heading }}>
-                {data.named ? <SampleText on={data.nameIsSample}>{data.name}</SampleText> : body.heading}
+                {data.named ? (
+                  <SampleText on={data.nameIsSample}>{data.name}</SampleText>
+                ) : (
+                  body.heading
+                )}
               </h1>
               {data.named ? <p className="fw-heading">{body.heading}</p> : null}
             </div>
@@ -146,7 +165,17 @@ export function FrostBody(props: BodyProps) {
                 <path d={WIRE} />
               </svg>
               {BULBS.map(([x, y], i) => (
-                <span key={i} style={{ left: `${x}%`, top: `${y}px`, "--bulb": ["#FFD27A", "#FF8A6B", "#9FE0B0", "#FFF2D0", "#8FC8FF"][i % 5], animationDelay: `${(i % 7) * -0.37}s` } as React.CSSProperties} />
+                <span
+                  key={i}
+                  style={
+                    {
+                      left: `${x}%`,
+                      top: `${y}px`,
+                      "--bulb": ["#FFD27A", "#FF8A6B", "#9FE0B0", "#FFF2D0", "#8FC8FF"][i % 5],
+                      animationDelay: `${(i % 7) * -0.37}s`,
+                    } as React.CSSProperties
+                  }
+                />
               ))}
             </span>
           </div>
@@ -155,7 +184,9 @@ export function FrostBody(props: BodyProps) {
             <section className="fw-sign">
               <span className="fw-sign-rope is-l" aria-hidden="true" />
               <span className="fw-sign-rope is-r" aria-hidden="true" />
-              <p className="fw-sign-intro">{body.intro || body.voice.intro(data.named ? data.name : "")}</p>
+              <p className="fw-sign-intro">
+                {body.intro || body.voice.intro(data.named ? data.name : "")}
+              </p>
               <CountdownLine date={data.countdownDate} className="fw-sign-countdown" />
               <p className="fw-sign-count" role="status" aria-live="polite">
                 {notes.length === 0
@@ -178,14 +209,25 @@ export function FrostBody(props: BodyProps) {
                     <div className="fw-frame">
                       {Array.from({ length: PANES }, (_, k) => {
                         const p = panes[k];
-                        if (!p) return (
+                        if (!p)
+                          return (
                             <span key={`f${k}`} className="fw-pane is-blank" aria-hidden="true">
                               <span className="fw-frost">
                                 <span className="fw-fern" />
                               </span>
                             </span>
                           );
-                        return <Pane key={p.id} piece={p} clear={opened.has(p.id)} wiping={wiping === p.id} onWipe={(e) => wipe(p, e)} headingFont={fonts.heading} mounted={mounted} />;
+                        return (
+                          <Pane
+                            key={p.id}
+                            piece={p}
+                            clear={opened.has(p.id)}
+                            wiping={wiping === p.id}
+                            onWipe={(e) => wipe(p, e)}
+                            headingFont={fonts.heading}
+                            mounted={mounted}
+                          />
+                        );
                       })}
                     </div>
                     <span className="fw-sill" aria-hidden="true">
@@ -212,7 +254,15 @@ export function FrostBody(props: BodyProps) {
             <div className="fw-words-glass">
               <span className="fw-fern" aria-hidden="true" />
               {data.words.map((w, i) => (
-                <span key={w.id} className="fw-word" style={{ fontFamily: fonts.heading, rotate: `${((seed(w.id) - 0.5) * 8).toFixed(1)}deg`, fontSize: `${1.15 + (i % 3) * 0.25}rem` }}>
+                <span
+                  key={w.id}
+                  className="fw-word"
+                  style={{
+                    fontFamily: fonts.heading,
+                    rotate: `${((seed(w.id) - 0.5) * 8).toFixed(1)}deg`,
+                    fontSize: `${1.15 + (i % 3) * 0.25}rem`,
+                  }}
+                >
                   {w.text}
                 </span>
               ))}
@@ -220,15 +270,26 @@ export function FrostBody(props: BodyProps) {
           </section>
         ) : null}
 
-        <BodyFooter body={body} className="fw-footer" buttonStyle={{ background: colors.primary, color: colors.onPrimary }} />
+        <BodyFooter
+          body={body}
+          className="fw-footer"
+          buttonStyle={{ background: colors.primary, color: colors.onPrimary }}
+        />
       </div>
 
       {body.reading ? (
-        <Reader piece={body.reading} onClose={body.closeReader} accent={colors.mix(colors.accent, "#000000", 0.15)} className="fw-reader">
+        <Reader
+          piece={body.reading}
+          onClose={body.closeReader}
+          accent={colors.mix(colors.accent, "#000000", 0.15)}
+          className="fw-reader"
+        >
           <p className="fw-reader-from" style={{ fontFamily: fonts.heading }}>
             <span className="fw-reader-init">{initial(body.reading.author || "♡")}</span>
             <span>
-              {body.reading.author ? t("frost.from", { name: body.reading.author }) : t("frost.fromFriend")}
+              {body.reading.author
+                ? t("frost.from", { name: body.reading.author })
+                : t("frost.fromFriend")}
               <span className="fw-reader-what">{pieceWhat(body.reading)}</span>
             </span>
           </p>
@@ -256,13 +317,25 @@ function Pane({
   const r = seed(piece.id);
   const locked = mounted && isLocked(piece);
   const photo = piece.kind === "photo" && !piece.sealed && !locked;
-  const text = piece.text?.trim() || (piece.kind === "song" ? t("body.songFallback") : piece.kind === "voice" ? t("body.voiceFallback") : "");
+  const text =
+    piece.text?.trim() ||
+    (piece.kind === "song"
+      ? t("body.songFallback")
+      : piece.kind === "voice"
+        ? t("body.voiceFallback")
+        : "");
   const Icon = piece.kind === "song" ? Music2 : piece.kind === "voice" ? Mic : null;
   return (
     <button
       type="button"
       className={`fw-pane ${clear ? "is-clear" : ""} ${wiping ? "is-wiping" : ""}`}
-      style={{ "--r": r, "--flip": r > 0.5 ? -1 : 1, "--light": `${20 + r * 60}%` } as React.CSSProperties}
+      style={
+        {
+          "--r": r,
+          "--flip": r > 0.5 ? -1 : 1,
+          "--light": `${20 + r * 60}%`,
+        } as React.CSSProperties
+      }
       onClick={onWipe}
       aria-label={pieceLabel(piece)}
     >
@@ -329,7 +402,16 @@ function Snowfall() {
         <span
           key={i}
           className={f.blur ? "is-near" : ""}
-          style={{ left: `${f.left}%`, width: f.size, height: f.size, animationDuration: `${f.dur}s`, animationDelay: `${f.delay}s`, "--drift": `${f.drift}px` } as React.CSSProperties}
+          style={
+            {
+              left: `${f.left}%`,
+              width: f.size,
+              height: f.size,
+              animationDuration: `${f.dur}s`,
+              animationDelay: `${f.delay}s`,
+              "--drift": `${f.drift}px`,
+            } as React.CSSProperties
+          }
         />
       ))}
     </div>

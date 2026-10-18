@@ -7,6 +7,8 @@
  * with the friend's initial. Open one and the flap lifts, the letter slides out
  * and reads on its own paper. Opened envelopes stay open on this device.
  */
+// Its styles load with it, not with every page.
+import "@/styles/bodies/letters.css";
 import { useEffect, useState } from "react";
 import { Mic, Music2, Camera, Lock } from "lucide-react";
 import { t } from "@/i18n";
@@ -48,7 +50,13 @@ export function LettersBody(props: BodyProps) {
     foley("paper");
     chime("whoosh");
     buzz(10);
-    burst(body.hostRef.current, e.clientX, e.clientY, { shape: "hearts", colors: [colors.primary, colors.accent, "#F4C6CF"], count: 14, spread: 1.2, up: true });
+    burst(body.hostRef.current, e.clientX, e.clientY, {
+      shape: "hearts",
+      colors: [colors.primary, colors.accent, "#F4C6CF"],
+      count: 14,
+      spread: 1.2,
+      up: true,
+    });
   }
 
   function read(p: Piece, e: React.MouseEvent) {
@@ -63,7 +71,14 @@ export function LettersBody(props: BodyProps) {
     const y = e.clientY;
     window.setTimeout(() => {
       body.read(p);
-      if (!reduce && !p.sealed && !isLocked(p)) burst(body.hostRef.current, x, y, { shape: "hearts", colors: [colors.primary, colors.accent], count: 6, spread: 0.7, up: true });
+      if (!reduce && !p.sealed && !isLocked(p))
+        burst(body.hostRef.current, x, y, {
+          shape: "hearts",
+          colors: [colors.primary, colors.accent],
+          count: 6,
+          spread: 0.7,
+          up: true,
+        });
     }, delay);
   }
 
@@ -97,7 +112,9 @@ export function LettersBody(props: BodyProps) {
             )}
           </h1>
           {data.named ? <p className="ll-cover-heading">{body.heading}</p> : null}
-          <p className="ll-cover-intro">{body.intro || body.voice.intro(data.named ? data.name : "")}</p>
+          <p className="ll-cover-intro">
+            {body.intro || body.voice.intro(data.named ? data.name : "")}
+          </p>
           <CountdownLine date={data.countdownDate} className="ll-cover-countdown" />
           <p className="ll-cover-count">
             {letters.length === 0
@@ -113,12 +130,20 @@ export function LettersBody(props: BodyProps) {
           untied ? (
             <>
               <p className="ll-progress" role="status" aria-live="polite">
-                {count === letters.length ? t("letters.allRead") : t("letters.progress", { n: count, total: letters.length })}
+                {count === letters.length
+                  ? t("letters.allRead")
+                  : t("letters.progress", { n: count, total: letters.length })}
               </p>
               <ul className="ll-spread">
                 {letters.map((p, i) => (
                   <li key={p.id} style={{ "--i": Math.min(i, 24) } as React.CSSProperties}>
-                    <Envelope piece={p} recipient={data.named ? data.name : ""} open={opened.has(p.id)} onOpen={(e) => read(p, e)} headingFont={fonts.heading} />
+                    <Envelope
+                      piece={p}
+                      recipient={data.named ? data.name : ""}
+                      open={opened.has(p.id)}
+                      onOpen={(e) => read(p, e)}
+                      headingFont={fonts.heading}
+                    />
                   </li>
                 ))}
               </ul>
@@ -143,12 +168,24 @@ export function LettersBody(props: BodyProps) {
           </section>
         ) : null}
 
-        <BodyFooter body={body} className="ll-footer" buttonStyle={{ background: colors.primary, color: colors.onPrimary }} />
+        <BodyFooter
+          body={body}
+          className="ll-footer"
+          buttonStyle={{ background: colors.primary, color: colors.onPrimary }}
+        />
       </div>
 
       {body.reading ? (
-        <Reader piece={body.reading} onClose={body.closeReader} accent={colors.primary} className="ll-reader">
-          {!body.reading.sealed && !isLocked(body.reading) && body.reading.kind !== "photo" && data.named ? (
+        <Reader
+          piece={body.reading}
+          onClose={body.closeReader}
+          accent={colors.primary}
+          className="ll-reader"
+        >
+          {!body.reading.sealed &&
+          !isLocked(body.reading) &&
+          body.reading.kind !== "photo" &&
+          data.named ? (
             <p className="ll-reader-dear" style={{ fontFamily: fonts.heading }}>
               {t("letters.dear", { name: data.name })}
             </p>
@@ -163,10 +200,24 @@ export function LettersBody(props: BodyProps) {
 function Bundle({ count, onUntie }: { count: number; onUntie: (e: React.MouseEvent) => void }) {
   return (
     <div className="ll-bundle-wrap">
-      <button type="button" className="ll-bundle" onClick={onUntie} aria-label={t("letters.untieAria", { n: count })}>
-        <span className="ll-bundle-env" style={{ "--r": "-5deg", "--y": "14px" } as React.CSSProperties} />
-        <span className="ll-bundle-env" style={{ "--r": "4deg", "--y": "7px" } as React.CSSProperties} />
-        <span className="ll-bundle-env" style={{ "--r": "-1deg", "--y": "0px" } as React.CSSProperties} />
+      <button
+        type="button"
+        className="ll-bundle"
+        onClick={onUntie}
+        aria-label={t("letters.untieAria", { n: count })}
+      >
+        <span
+          className="ll-bundle-env"
+          style={{ "--r": "-5deg", "--y": "14px" } as React.CSSProperties}
+        />
+        <span
+          className="ll-bundle-env"
+          style={{ "--r": "4deg", "--y": "7px" } as React.CSSProperties}
+        />
+        <span
+          className="ll-bundle-env"
+          style={{ "--r": "-1deg", "--y": "0px" } as React.CSSProperties}
+        />
         <span className="ll-ribbon-v" />
         <span className="ll-ribbon-h" />
         <span className="ll-bow">
@@ -198,7 +249,14 @@ function Envelope({
   const r = seed(piece.id);
   const tilt = (r - 0.5) * 7;
   const locked = isLocked(piece);
-  const Icon = piece.kind === "photo" ? Camera : piece.kind === "song" ? Music2 : piece.kind === "voice" ? Mic : null;
+  const Icon =
+    piece.kind === "photo"
+      ? Camera
+      : piece.kind === "song"
+        ? Music2
+        : piece.kind === "voice"
+          ? Mic
+          : null;
   return (
     <button
       type="button"
@@ -223,10 +281,16 @@ function Envelope({
         <span className="ll-env-to" style={{ fontFamily: headingFont }}>
           {recipient ? t("letters.to", { name: recipient }) : null}
         </span>
-        <span className="ll-env-from">{piece.author ? t("letters.fromLine", { name: piece.author }) : t("letters.fromFriend")}</span>
+        <span className="ll-env-from">
+          {piece.author ? t("letters.fromLine", { name: piece.author }) : t("letters.fromFriend")}
+        </span>
         {Icon || piece.sealed || locked ? (
           <span className="ll-env-stamp" aria-hidden="true">
-            {piece.sealed || locked ? <Lock className="size-3.5" /> : Icon ? <Icon className="size-3.5" /> : null}
+            {piece.sealed || locked ? (
+              <Lock className="size-3.5" />
+            ) : Icon ? (
+              <Icon className="size-3.5" />
+            ) : null}
           </span>
         ) : null}
       </span>
