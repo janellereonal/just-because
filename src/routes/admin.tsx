@@ -9,7 +9,7 @@ import { Metrics } from "@/components/admin/Metrics";
 import { ThemeMetrics } from "@/components/admin/ThemeMetrics";
 import { usePreviewUrl } from "@/components/ThemeCard";
 import { fetchThemes, type Theme } from "@/lib/themes";
-import { getPaymentsSetup, listPaymentLog, setThemePreview, setThemeStatus, setupPaymongoWebhook } from "@/lib/api";
+import { getPaymentsSetup, getSignInSetup, listPaymentLog, setThemePreview, setThemeStatus, setupPaymongoWebhook } from "@/lib/api";
 import { uploadFile } from "@/lib/upload";
 import { useAuth } from "@/hooks/useAuth";
 import { AdminReports } from "@/components/admin/AdminReports";
@@ -88,6 +88,7 @@ function AdminPage() {
       <Metrics />
       <ThemeMetrics />
       <AdminReports />
+      <SignInSetup />
       <PaymentsSetup />
       <DiscountCodes />
       <PaymentLog />
@@ -198,6 +199,52 @@ function AdminThemeRow({ theme, onToggle }: { theme: Theme; onToggle: () => void
         {theme.status === "published" ? "Published" : "Draft"}
       </button>
     </div>
+  );
+}
+
+/** Read-only checklist: is Google sign-in wired up? Shows whether things are set, never their values. */
+function SignInSetup() {
+  const { data } = useQuery({ queryKey: ["signin-setup"], queryFn: () => getSignInSetup() });
+  if (!data) return null;
+  const rows: { ok: boolean; label: string; help: string }[] = [
+    {
+      ok: data.googleId && data.googleIdLooksRight && !data.googleIdHasSpaces,
+      label: !data.googleId
+        ? "GOOGLE_CLIENT_ID isn't reaching the site"
+        : data.googleIdHasSpaces
+          ? "GOOGLE_CLIENT_ID has a space before or after it"
+          : data.googleIdLooksRight
+            ? "GOOGLE_CLIENT_ID is set"
+            : "GOOGLE_CLIENT_ID is set, but it doesn't end in .apps.googleusercontent.com",
+      help: "Vercel → Settings → Environment Variables (Production), then redeploy the newest deployment.",
+    },
+    {
+      ok: data.googleSecret,
+      label: data.googleSecret ? "GOOGLE_CLIENT_SECRET is set" : "GOOGLE_CLIENT_SECRET isn't reaching the site",
+      help: "Same place. Both are needed before the Google button shows.",
+    },
+    {
+      ok: data.googleOn,
+      label: data.googleOn ? "Google sign-in is on" : "Google sign-in is off",
+      help: `In Google Cloud → Clients, the redirect URI must be exactly ${data.redirectUri}`,
+    },
+  ];
+  return (
+    <section className="mx-auto max-w-6xl px-5 pt-14">
+      <h2 className="font-display text-2xl font-medium tracking-tight">Sign-in setup</h2>
+      <ul className="mt-4 space-y-2">
+        {rows.map((r) => (
+          <li key={r.label} className="rounded-2xl border border-line bg-white p-4 text-sm">
+            <p className="font-medium">
+              <span aria-hidden>{r.ok ? "✓ " : "✗ "}</span>
+              {r.label}
+            </p>
+            <p className="mt-1 text-muted">{r.help}</p>
+          </li>
+        ))}
+      </ul>
+      <p className="mt-2 text-xs text-muted">Google redirect URI: <code>{data.redirectUri}</code> · Deployment: <code>{data.deployment}</code></p>
+    </section>
   );
 }
 
