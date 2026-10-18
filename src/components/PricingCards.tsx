@@ -18,12 +18,14 @@ type Props = {
   blockerFor?: ((tier: Tier) => string | null) | undefined;
   /** Card button. Leave out for the landing page, where the cards link nowhere. */
   action?: { label: (tier: Tier) => string; onPick: (tier: TierId) => void; busyTier?: TierId | null; disabled?: boolean };
+  /** The full price to show crossed out next to a discounted one (null = no discount on this plan). */
+  wasFor?: ((tier: Tier) => number | null) | undefined;
   /** Small line above the price, e.g. "Pay the difference". */
   priceNote?: string | undefined;
   compact?: boolean | undefined;
 };
 
-export function PricingCards({ tiers = TIERS, priceFor, blockerFor, action, priceNote, compact }: Props) {
+export function PricingCards({ tiers = TIERS, priceFor, wasFor, blockerFor, action, priceNote, compact }: Props) {
   // Null until the page has loaded in the browser: until then everyone sees the dollar guide.
   const money = useViewerMoney();
   return (
@@ -31,6 +33,7 @@ export function PricingCards({ tiers = TIERS, priceFor, blockerFor, action, pric
       <div className={`grid gap-4 ${tiers.length >= 3 ? "md:grid-cols-3" : tiers.length === 2 ? "sm:grid-cols-2" : ""}`}>
         {tiers.map((tier) => {
           const price = priceFor ? priceFor(tier) : tier.amount;
+          const was = wasFor?.(tier) ?? null;
           const blocker = blockerFor?.(tier) ?? null;
           const busy = action?.busyTier === tier.id;
           return (
@@ -52,13 +55,22 @@ export function PricingCards({ tiers = TIERS, priceFor, blockerFor, action, pric
               <h3 className="font-display text-2xl font-medium tracking-tight">{tier.name}</h3>
               <p className="mt-1 text-sm text-muted">{tier.audience}</p>
               {priceNote && <p className="mt-4 font-mono text-[11px] tracking-[0.12em] text-muted uppercase">{priceNote}</p>}
-              <p className={`${priceNote ? "mt-1" : "mt-4"} font-display text-4xl font-medium tracking-tight`} suppressHydrationWarning>
-                {formatPeso(price)}
+              <p className={`${priceNote ? "mt-1" : "mt-4"} flex flex-wrap items-baseline gap-x-2 font-display text-4xl font-medium tracking-tight`} suppressHydrationWarning>
+                {was !== null && was !== price ? (
+                  <s className="text-2xl text-muted decoration-accent/70 decoration-2" aria-label={`was ${formatPeso(was)}`}>
+                    {formatPeso(was)}
+                  </s>
+                ) : null}
+                <span>{price === 0 && was !== null ? "Free" : formatPeso(price)}</span>
               </p>
-              {/* In the Philippines the peso price is enough; the line stays (invisible) so the card doesn't jump. */}
-              <p className={`text-xs text-muted ${money?.local ? "invisible" : ""}`} aria-hidden={money?.local || undefined} suppressHydrationWarning>
-                {formatApprox(price, money?.currency ?? "USD")} <span className="opacity-80">{PRICE_COPY.approxSuffix}</span>
-              </p>
+              {price > 0 ? (
+                // In the Philippines the peso price is enough; the line stays (invisible) so the card doesn't jump.
+                <p className={`text-xs text-muted ${money?.local ? "invisible" : ""}`} aria-hidden={money?.local || undefined} suppressHydrationWarning>
+                  {formatApprox(price, money?.currency ?? "USD")} <span className="opacity-80">{PRICE_COPY.approxSuffix}</span>
+                </p>
+              ) : (
+                <p className="text-xs text-muted">Nothing to pay</p>
+              )}
               {!compact && (
                 <ul className="mt-5 space-y-2 text-sm">
                   {featureList(tier).map((line) => (

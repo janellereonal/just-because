@@ -22,7 +22,7 @@ export type FakePaymentDetails = {
   billing?: { address?: { country?: string } };
 };
 
-type Session = { id: string; amount: number; orderId: string; paid: number; checkoutUrl: string; details?: FakePaymentDetails | undefined };
+type Session = { id: string; amount: number; orderId: string; paid: number; checkoutUrl: string; name?: string; description?: string; details?: FakePaymentDetails | undefined };
 
 export function sign(secret: string, body: string, t = Math.floor(Date.now() / 1000), live = false) {
   const sig = createHmac("sha256", secret).update(`${t}.${body}`).digest("hex");
@@ -42,9 +42,9 @@ export function startFakePaymongo(port = 0) {
     async fetch(req) {
       const url = new URL(req.url);
       if (req.method === "POST" && url.pathname === "/v1/checkout_sessions") {
-        const body = (await req.json()) as { data: { attributes: { line_items: { amount: number }[]; reference_number: string } } };
+        const body = (await req.json()) as { data: { attributes: { line_items: { amount: number; name?: string; description?: string }[]; reference_number: string } } };
         const id = `cs_${Math.random().toString(36).slice(2, 14)}`;
-        const s: Session = { id, amount: body.data.attributes.line_items[0]!.amount, orderId: body.data.attributes.reference_number, paid: 0, checkoutUrl: `${url.origin}/pay/${id}` };
+        const s: Session = { id, amount: body.data.attributes.line_items[0]!.amount, orderId: body.data.attributes.reference_number, paid: 0, checkoutUrl: `${url.origin}/pay/${id}`, name: body.data.attributes.line_items[0]!.name, description: body.data.attributes.line_items[0]!.description };
         sessions.set(id, s);
         return Response.json(view(s));
       }
