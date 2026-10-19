@@ -19,4 +19,4 @@ Use existing PostgreSQL and service integrations; the container must not migrate
 
 ## Completion notes
 
-Implemented Docker and Compose files, a private environment template, and the operator guide; linked it from the repository README. Docker CLI exists but Docker Compose plugin is unavailable, and registry access is blocked in this environment, so neither image build nor app dependency build could be completed here.
+Implemented Docker and Compose files, a private environment template, and the operator guide; linked it from the repository README. Compose configuration validates, and the image builds successfully. A runtime smoke test found a missing external `undici` dependency; the runtime stage now includes production dependencies. Rebuilt and verified the app returns HTTP 200 and passes its health check at `http://192.168.0.108:18080/`. The checkout has no application `.env`, so database-backed account, gift, and payment flows remain unconfigured.
