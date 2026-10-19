@@ -1,0 +1,56 @@
+:root {
+  --vp-c-brand-1: #a93857;
+  --vp-c-brand-2: #c34d6c;
+  --vp-c-brand-3: #8e2947;
+  --vp-c-brand-soft: rgb(195 77 108 / 13%);
+  --vp-font-family-base: "DM Sans", "Avenir Next", Avenir, sans-serif;
+  --vp-font-family-mono: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+  --vp-home-hero-name-color: #a93857;
+  --vp-home-hero-name-background: linear-gradient(120deg, #a93857 25%, #d17c8f 100%);
+}
+
+.dark {
+  --vp-c-brand-1: #f09aaf;
+  --vp-c-brand-2: #f5afbf;
+  --vp-c-brand-3: #df8099;
+  --vp-c-brand-soft: rgb(240 154 175 / 14%);
+  --vp-home-hero-name-color: #f09aaf;
+  --vp-home-hero-name-background: linear-gradient(120deg, #f09aaf 25%, #ffd2dc 100%);
+}
+
+.VPHomeHero .name,
+.VPHomeHero .text {
+  letter-spacing: -0.035em;
+}
+
+.VPButton {
+  border-radius: 999px !important;
+}
+
+.VPFeature {
+  border-radius: 20px !important;
+  transition:
+    border-color 160ms ease,
+    transform 160ms ease,
+    box-shadow 160ms ease;
+}
+
+.VPFeature:hover {
+  border-color: var(--vp-c-brand-1) !important;
+  box-shadow: 0 12px 32px rgb(110 47 62 / 9%);
+  transform: translateY(-2px);
+}
+
+.VPDoc h1,
+.VPDoc h2 {
+  letter-spacing: -0.025em;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
+  }
+}
