@@ -6,11 +6,10 @@ This deployment runs the app's Node server in Docker. It expects a PostgreSQL da
 
 Install Docker Engine and the Compose plugin. Copy `deployment/app/.env.example` to `deployment/app/.env` and fill in the production values. Keep `.env` private. Set `BETTER_AUTH_URL` and `APP_BASE_URL` to the exact public origin (for example `https://gifts.example.com`); configure OAuth redirect URLs and the PayMongo webhook at `/api/webhooks/paymongo` for that hostname. `DATABASE_URL` must be reachable from the container. Use a migration-capable `DATABASE_URL_UNPOOLED` if your database provider distinguishes pooled and direct connections.
 
-Apply schema changes deliberately from a trusted checkout with Bun installed, then start the service from the repository root:
+Apply schema changes deliberately before starting or updating the service. The one-shot migration service reads the same private environment file and is enabled only when you request it:
 
 ```sh
-bun install --frozen-lockfile
-bun run db:migrate
+docker compose -f deployment/app/compose.yaml --profile maintenance run --rm migrate
 docker compose -f deployment/app/compose.yaml up -d --build
 docker compose -f deployment/app/compose.yaml ps
 ```
@@ -31,4 +30,4 @@ Vercel Cron does not run in this deployment. Schedule the authenticated daily en
 
 Use a protected script/environment file for the secret instead of leaving it in a shared crontab. Back up PostgreSQL and the `app_uploads` volume; restore both together. Alternatively configure `BLOB_READ_WRITE_TOKEN` for Vercel Blob. To update, fetch the desired Git revision and run the Compose build command again. To stop, run `docker compose -f deployment/app/compose.yaml down`; the named upload volume remains. Roll back by checking out the previous known-good revision and rebuilding.
 
-The image build produces the Node Nitro server and does not automatically migrate or seed the database. Run migrations as a deliberate release step. Optional build-time analytics (`VITE_POSTHOG_KEY` and `VITE_POSTHOG_REGION`) must be supplied as build arguments if needed; otherwise analytics remains disabled.
+The image build produces the Node Nitro server and does not automatically migrate or seed the database. Run migrations as a deliberate release step with the opt-in maintenance service. Optional build-time analytics (`VITE_POSTHOG_KEY` and `VITE_POSTHOG_REGION`) must be supplied as build arguments if needed; otherwise analytics remains disabled.

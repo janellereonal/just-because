@@ -23,5 +23,15 @@ services:
       retries: 3
       start_period: 30s
 
+  migrate:
+    build:
+      context: ../..
+      dockerfile: deployment/app/Dockerfile
+      target: build
+    env_file:
+      - .env
+    command: ["bun", "run", "db:migrate"]
+    profiles: ["maintenance"]
+
 volumes:
   app_uploads:
