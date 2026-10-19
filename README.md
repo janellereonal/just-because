@@ -17,3 +17,7 @@ pnpm --dir doc/wiki docs:build
 For a preview from the Windows PC on your home network, follow
 [the LAN hosting guide](./doc/wiki/hosting/home-network.md). To publish it later, use the
 [VPS and Docker](./doc/wiki/hosting/vps-docker.md) or [AWS EC2](./doc/wiki/hosting/aws-ec2.md) guide.
+
+## Self-host the app
+
+For the Just Because application (separate from the static docs portal), see the [Docker/VPS/EC2 deployment guide](./deployment/app/README.md).

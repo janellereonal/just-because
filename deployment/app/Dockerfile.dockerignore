@@ -1,0 +1,12 @@
+.git
+.env
+.env.*
+!.env.example
+node_modules
+.output
+dist
+.dev-uploads
+coverage
+*.log
+doc/wiki/.vitepress/cache
+doc/wiki/.vitepress/dist
