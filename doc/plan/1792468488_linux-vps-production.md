@@ -13,10 +13,10 @@ Prepare the existing Docker app for public HTTPS hosting on a supported Linux VP
 
 ## Task board
 
-- [ ] Add Caddy to the app Compose stack for automatic HTTPS and reverse proxying; keep the app port private on production hosts.
-- [ ] Clarify safe bind-address defaults for private LAN preview versus public VPS deployment.
-- [ ] Update the deployment guide with VPS DNS, firewall, SSH hardening, TLS, secrets, managed database, uploads, cron, backup, update, and rollback steps.
-- [ ] Validate Compose configuration and build the app image; verify the application and proxy health locally where possible.
+- [x] Add Caddy to the app Compose stack for automatic HTTPS and reverse proxying; keep the app port private on production hosts.
+- [x] Clarify safe bind-address defaults for private LAN preview versus public VPS deployment.
+- [x] Update the deployment guide with VPS DNS, firewall, SSH hardening, TLS, secrets, managed database, uploads, cron, backup, update, and rollback steps.
+- [x] Validate Compose configuration syntax and whitespace; the Docker daemon was unavailable for container-level validation.
 - [ ] Leave documented server-specific values and database migration for the configured VPS release.
 - [ ] Update this board with evidence and commit as a scoped Conventional Commit.
 
@@ -26,4 +26,10 @@ Use a Linux VPS with Docker Compose and Caddy; keep PostgreSQL managed. Do not o
 
 ## Completion notes
 
-Pending.
+## Completion notes
+
+- Added the `public` Compose profile with Caddy, automatic HTTPS, persistent Caddy state, and loopback-only default app port binding.
+- Added documented LAN preview override and VPS setup, DNS/firewall, SSH, TLS, OAuth/PayMongo, migration, and operations guidance.
+- `docker-compose -f deployment/app/compose.yaml config --quiet` and `git diff --check` passed. Docker daemon access was denied in this session, so no image rebuild or container health check was possible.
+- Committed as `f8e2bed feat: prepare self-hosted app for public HTTPS`.
+- Remaining for a real public release: choose VPS and domain/DNS, configure managed database credentials in the ignored `.env`, decide uploads storage, apply migrations, and validate the hostname/HTTPS in production.
