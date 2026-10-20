@@ -10,10 +10,11 @@ services:
     env_file:
       - .env
     environment:
+      APP_BASE_URL: ${APP_BASE_URL:-http://localhost:8080}
       HOST: 0.0.0.0
       PORT: 8080
     ports:
-      - "${APP_PORT:-8080}:8080"
+      - "${APP_BIND_ADDRESS:-127.0.0.1}:${APP_PORT:-8080}:8080"
     volumes:
       - app_uploads:/app/.dev-uploads
     healthcheck:
@@ -23,6 +24,24 @@ services:
       retries: 3
       start_period: 30s
 
+  caddy:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    profiles: ["public"]
+    environment:
+      APP_DOMAIN: ${APP_DOMAIN:-localhost}
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      app:
+        condition: service_healthy
+
   migrate:
     build:
       context: ../..
@@ -30,8 +49,12 @@ services:
       target: build
     env_file:
       - .env
+    environment:
+      DATABASE_URL: ${DATABASE_URL_UNPOOLED:-${DATABASE_URL:-}}
     command: ["bun", "run", "db:migrate"]
     profiles: ["maintenance"]
 
 volumes:
   app_uploads:
+  caddy_data:
+  caddy_config:
