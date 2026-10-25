@@ -115,7 +115,8 @@ export const PRIVACY: LegalDoc = {
       body: [
         "We share information with these service providers only as far as they need it to provide their service to us. They're not allowed to use it for their own purposes.",
         { list: [
-          "Vercel (United States): hosts and runs the website, and stores photos, voice notes and videos (Vercel Blob).",
+          "Vercel (United States): hosts and runs the website and stores uploaded media in Vercel Blob on the Vercel deployment.",
+          "Cloudflare (global network): stores uploaded media in Cloudflare R2 when the service runs on its self-hosted deployment.",
           "Neon (United States): our database.",
           "PayMongo (Philippines): takes payments.",
           "Resend (United States): sends our emails.",

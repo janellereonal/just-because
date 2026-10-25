@@ -1,7 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { handleUpload, type HandleUploadBody } from "@vercel/blob/client";
 import { z } from "zod";
-import { UPLOAD_CACHE_SECONDS, authorizeUpload, saveDevUpload, uploadPathname } from "@/server/uploads";
+import { UPLOAD_CACHE_SECONDS, authorizeUpload, saveDevUpload, saveR2Upload, uploadPathname } from "@/server/uploads";
 
 const payloadSchema = z.object({
   kind: z.enum(["contribution", "calendar", "theme", "intro"]),
@@ -10,23 +9,23 @@ const payloadSchema = z.object({
 });
 
 /**
- * Photos and voice notes go straight from the browser to Vercel Blob. This
- * route only hands out a short-lived upload token after checking who may
- * upload what. Without BLOB_READ_WRITE_TOKEN (local dev) files are saved to
- * .dev-uploads/ instead.
+ * Vercel uses short-lived Blob client tokens. Self-hosted deployments receive
+ * uploads here, enforce actual file limits, then store the files in R2.
  */
 export const Route = createFileRoute("/api/upload")({
   server: {
     handlers: {
       POST: async ({ request }) => {
         if (!process.env["BLOB_READ_WRITE_TOKEN"]) {
-          if (process.env["NODE_ENV"] === "production" && process.env["VERCEL"]) {
+          if (process.env["MEDIA_STORAGE_PROVIDER"] === "r2") return saveR2Upload(request);
+          if (process.env["NODE_ENV"] === "production") {
             return Response.json({ error: "Uploads aren't configured." }, { status: 500 });
           }
           return saveDevUpload(request);
         }
-        const body = (await request.json()) as HandleUploadBody;
+        const body = (await request.json()) as import("@vercel/blob/client").HandleUploadBody;
         try {
+          const { handleUpload } = await import("@vercel/blob/client");
           const result = await handleUpload({
             body,
             request,

@@ -1,4 +1,3 @@
-import { upload } from "@vercel/blob/client";
 import { NOTE_RULES_COPY, UPLOAD_COPY } from "@/copy/strings";
 import { MEDIA_LIMITS } from "@/lib/limits";
 import { fileFits } from "@/lib/noteRules";
@@ -181,7 +180,19 @@ async function send(file: File, kind: UploadKind, targetId: string, media: Media
     if (!res.ok || !json.url) throw new UploadError(friendlyUploadError(json.error, kind === "contribution" ? media : undefined));
     return json.url;
   }
+  if (import.meta.env["VITE_MEDIA_STORAGE_PROVIDER"] === "r2") {
+    const form = new FormData();
+    form.set("file", file);
+    form.set("kind", kind);
+    form.set("targetId", targetId);
+    form.set("media", media);
+    const res = await fetch("/api/upload", { method: "POST", body: form });
+    const json = (await res.json().catch(() => ({}))) as { url?: string; error?: string };
+    if (!res.ok || !json.url) throw new UploadError(friendlyUploadError(json.error, kind === "contribution" ? media : undefined));
+    return json.url;
+  }
   try {
+    const { upload } = await import("@vercel/blob/client");
     const blob = await upload(pathname, file, {
       access: "public",
       handleUploadUrl: "/api/upload",

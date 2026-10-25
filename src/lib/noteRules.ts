@@ -89,7 +89,10 @@ export const hasWord = (text: string | null | undefined) => /[\p{L}\p{N}]/u.test
 export function isGiftMedia(url: string, siteId: string): boolean {
   if (!siteId || url.length > 2000) return false;
   const id = siteId.replace(/[^a-f0-9-]/gi, "");
+  let r2Host = "";
+  try { r2Host = import.meta.env["VITE_R2_PUBLIC_URL"] ? new URL(import.meta.env["VITE_R2_PUBLIC_URL"]).host : ""; } catch { /* invalid build config disables R2 URL acceptance */ }
   if (new RegExp(`^https://[a-z0-9-]+\\.public\\.blob\\.vercel-storage\\.com/gifts/${id}/[^/?#]+$`, "i").test(url)) return true;
+  if (r2Host && new URL(url).host.toLowerCase() === r2Host.toLowerCase() && new RegExp(`^https://${r2Host.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}/gifts/${id}/[^/?#]+$`, "i").test(url)) return true;
   return new RegExp(`^/api/dev-uploads/[\\w.-]*gifts_${id}_[\\w.-]+$`).test(url);
 }
 

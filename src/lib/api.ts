@@ -142,11 +142,11 @@ const jsonObject = z.record(z.string(), json);
 
 const shortText = z.string().max(20000).nullable();
 const link = z.string().max(2000).nullable();
-/** Only files we stored ourselves (Vercel Blob, or local dev uploads). Notes also check the gift's folder (`checkNote`). */
+/** Only files we stored ourselves (Vercel Blob, R2, or local dev uploads). */
 const mediaUrl = z
   .string()
   .max(2000)
-  .refine((v) => /^https:\/\/[a-z0-9-]+\.public\.blob\.vercel-storage\.com\//i.test(v) || v.startsWith("/api/dev-uploads/"), "Bad media URL")
+  .refine((v) => /^https:\/\/[a-z0-9-]+\.public\.blob\.vercel-storage\.com\//i.test(v) || isR2HostUrl(v) || v.startsWith("/api/dev-uploads/"), "Bad media URL")
   .nullable();
 
 /** The same checks the friend page makes (song links, words, the right kind of file from this gift), as a friendly 400. */
@@ -1533,7 +1533,20 @@ export const deleteOwnContribution = createServerFn({ method: "POST" })
 /** Stored files a newer section keeps in `data` (a capsule photo, a doodle...). */
 function mediaInData(data: unknown): string[] {
   if (!data || typeof data !== "object") return [];
-  return Object.values(data as Record<string, unknown>).filter((v): v is string => typeof v === "string" && /^(https:\/\/[\w.-]+\.public\.blob\.vercel-storage\.com\/|\/api\/dev-uploads\/)/.test(v));
+  return Object.values(data as Record<string, unknown>).filter((v): v is string => typeof v === "string" && (/^(https:\/\/[\w.-]+\.public\.blob\.vercel-storage\.com\/|\/api\/dev-uploads\/)/.test(v) || isR2HostUrl(v)));
+}
+
+function isR2HostUrl(value: string) {
+  const allowed = process.env["R2_PUBLIC_URL"];
+  if (!allowed) return false;
+  try {
+    const url = new URL(value);
+    const base = new URL(allowed);
+    const basePath = base.pathname.replace(/\/$/, "");
+    return url.protocol === "https:" && url.origin === base.origin && (!basePath || url.pathname.startsWith(`${basePath}/`));
+  } catch {
+    return false;
+  }
 }
 
 async function contributionSite(contributionIds: string[]) {

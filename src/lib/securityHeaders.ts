@@ -5,16 +5,17 @@
  * add it to CSP below and test the page.
  */
 const BLOB = "https://*.public.blob.vercel-storage.com";
+const R2_PUBLIC = import.meta.env["VITE_R2_PUBLIC_URL"] ? new URL(import.meta.env["VITE_R2_PUBLIC_URL"]).origin : "";
 export const CSP = [
   "default-src 'self'",
   // TanStack Start puts the hydration data in inline scripts.
   "script-src 'self' 'unsafe-inline'",
   "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://api.fontshare.com",
   "font-src 'self' data: https://fonts.gstatic.com https://cdn.fontshare.com https://api.fontshare.com",
-  `img-src 'self' data: blob: ${BLOB} https://lh3.googleusercontent.com`,
-  `media-src 'self' data: blob: ${BLOB}`,
+  `img-src 'self' data: blob: ${BLOB} ${R2_PUBLIC} https://lh3.googleusercontent.com`,
+  `media-src 'self' data: blob: ${BLOB} ${R2_PUBLIC}`,
   // Uploads go straight to Vercel Blob from the browser.
-  `connect-src 'self' ${BLOB} https://blob.vercel-storage.com https://vercel.com https://fonts.googleapis.com https://fonts.gstatic.com`,
+  `connect-src 'self' ${BLOB} ${R2_PUBLIC} https://blob.vercel-storage.com https://vercel.com https://fonts.googleapis.com https://fonts.gstatic.com`,
   "frame-src https://open.spotify.com https://www.youtube.com https://www.youtube-nocookie.com",
   "worker-src 'self' blob:",
   "object-src 'none'",

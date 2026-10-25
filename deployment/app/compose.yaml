@@ -1,22 +1,24 @@
 services:
   app:
+    image: ${APP_IMAGE:-ghcr.io/janellereonal/just-because:latest}
     build:
       context: ../..
       dockerfile: deployment/app/Dockerfile
       args:
         VITE_POSTHOG_KEY: ${VITE_POSTHOG_KEY:-}
         VITE_POSTHOG_REGION: ${VITE_POSTHOG_REGION:-us}
+        VITE_MEDIA_STORAGE_PROVIDER: ${VITE_MEDIA_STORAGE_PROVIDER:-r2}
+        VITE_R2_PUBLIC_URL: ${R2_PUBLIC_URL:-}
     restart: unless-stopped
     env_file:
       - .env
     environment:
       APP_BASE_URL: ${APP_BASE_URL:-http://localhost:8080}
+      MEDIA_STORAGE_PROVIDER: ${MEDIA_STORAGE_PROVIDER:-r2}
       HOST: 0.0.0.0
       PORT: 8080
     ports:
       - "${APP_BIND_ADDRESS:-127.0.0.1}:${APP_PORT:-8080}:8080"
-    volumes:
-      - app_uploads:/app/.dev-uploads
     healthcheck:
       test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:8080/').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
       interval: 30s
@@ -43,18 +45,16 @@ services:
         condition: service_healthy
 
   migrate:
-    build:
-      context: ../..
-      dockerfile: deployment/app/Dockerfile
-      target: build
+    image: ${APP_IMAGE:-ghcr.io/janellereonal/just-because:latest}
+    pull_policy: ${APP_PULL_POLICY:-missing}
     env_file:
       - .env
     environment:
       DATABASE_URL: ${DATABASE_URL_UNPOOLED:-${DATABASE_URL:-}}
-    command: ["bun", "run", "db:migrate"]
+    entrypoint: ["node"]
+    command: ["scripts/migrate.ts"]
     profiles: ["maintenance"]
 
 volumes:
-  app_uploads:
   caddy_data:
   caddy_config:

@@ -81,6 +81,17 @@ describe("files", () => {
     expect(isGiftMedia(`https://abc.public.blob.vercel-storage.com.evil.com/gifts/${SITE}/x.png`, SITE)).toBe(false);
     expect(isGiftMedia(blob(SITE, "x.png"), "")).toBe(false);
   });
+  test("R2 URLs must use the configured host and this gift's folder", () => {
+    const previous = import.meta.env["VITE_R2_PUBLIC_URL"];
+    import.meta.env["VITE_R2_PUBLIC_URL"] = "https://media.example.com";
+    try {
+      expect(isGiftMedia(`https://media.example.com/gifts/${SITE}/photo.webp`, SITE)).toBe(true);
+      expect(isGiftMedia(`https://media.example.com/gifts/${OTHER}/photo.webp`, SITE)).toBe(false);
+      expect(isGiftMedia(`https://media.example.com.evil.test/gifts/${SITE}/photo.webp`, SITE)).toBe(false);
+    } finally {
+      import.meta.env["VITE_R2_PUBLIC_URL"] = previous;
+    }
+  });
   test("a stored file named as another kind", () => {
     expect(clearlyNot(blob(SITE, "me.png"), "voice")).toBe(true);
     expect(clearlyNot(blob(SITE, "me.png"), "video")).toBe(true);

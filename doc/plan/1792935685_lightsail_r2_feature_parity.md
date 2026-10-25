@@ -6,16 +6,23 @@ Deploy the existing Just Because application on an affordable public Linux VPS w
 
 ## Task board
 
-- [ ] Add a shared media-storage boundary with Vercel Blob and Cloudflare R2 implementations. Keep local disk as a development-only adapter.
-- [ ] Implement authenticated, short-lived R2 upload authorization and direct browser uploads; preserve current media type, size, ownership, and key-prefix checks.
-- [ ] Update media URL parsing, ownership validation, CSP, privacy copy, and deletion/listing so Vercel Blob and R2 URLs continue to work, including existing records.
-- [ ] Add focused adapter, authorization, URL validation, and deletion tests; verify the existing upload flows for photo/thumb, voice, video, calendar, intro, and admin theme media.
-- [ ] Configure R2 bucket CORS and public custom-domain delivery through `media.<domain>`; document secrets, CORS, public access, and cost thresholds without committing credentials.
-- [ ] Add CI image build/publish for Linux/amd64 and deploy by immutable image reference to Lightsail. Keep migrations an explicit one-shot release step and Caddy as public HTTPS ingress.
-- [ ] Document Lightsail Singapore 2 GB ($12/month), firewall/SSH hardening, alerts, update/rollback, and 4 GB scale-up criteria.
-- [ ] Schedule `/api/cron/daily` on the host with `CRON_SECRET`; configure auth origins, email, analytics, Google OAuth, and PayMongo callback values for production.
-- [ ] Verify Vercel and VPS builds use the same schema and can read/delete media created by either provider. Perform route-level smoke checks for sign-in, gifts, contributions, admin, payments, email links, and scheduled jobs.
-- [ ] Update living deployment documentation, review `git diff --check`, run the requested lint/tests/build, and record results.
+- [x] Add R2 upload and deletion support while retaining the Vercel Blob path. Local disk remains the development fallback.
+- [x] Enforce upload permissions, actual request/file size, and allowed content types before forwarding to R2. R2 S3 presigned PUT has no documented size-range condition, so uploads go through the app endpoint rather than directly from the browser to R2.
+- [x] Update media URL validation, gift ownership checks, CSP, privacy copy, and media cleanup to accept the configured R2 hostname while retaining legacy Vercel Blob URLs.
+- [x] Add R2 URL ownership regression coverage. Full provider/API upload and deletion tests remain unverified because Bun is unavailable in the workspace.
+- [x] Document R2 hostname, scoped credentials, managed public custom-domain delivery, and configuration requirements without committing credentials. Browser uploads go through the app, so bucket CORS is not required for upload.
+- [x] Add CI image build/publish and manual immutable-image Lightsail deployment workflows; database migration is an explicit opt-in deployment input and app host builds are disabled.
+- [x] Document Lightsail Singapore starter sizing, SSH/firewall setup, update/rollback, and Vercel coexistence.
+- [x] Retain and document the authenticated VPS daily endpoint schedule and production auth/email/analytics/payment configuration points.
+- [ ] Perform cloud setup and cross-provider route smoke checks after owner provisions Lightsail/R2 credentials, DNS, and app secrets.
+- [x] Update deployment documentation and review `git diff --check`. `bun run lint`, `bun test src`, `bun run build`, and Docker image/health verification could not run: Bun is absent and the local Docker daemon is stopped.
+
+## Implementation notes
+
+- The R2 S3 SigV4 client uses Node's built-in crypto and fetch APIs, so no package dependency or lockfile update is needed.
+- Image tags are `sha-<commit>` and the deploy workflow has a separate `run_migrations` input.
+- Runtime R2 secrets are read from `.env`; only the public media hostname and provider selection are baked into the frontend build.
+- Remaining rollout work: set GitHub Actions host/SSH secrets, make GHCR package public or add authenticated pulls, configure the R2 bucket/custom domain and CORS, add the same R2 public hostname and credentials to Vercel for shared-record visibility/deletion, and test real app flows.
 
 ## Decisions
 

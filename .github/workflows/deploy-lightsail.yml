@@ -1,0 +1,56 @@
+name: Deploy Lightsail image
+
+on:
+  workflow_dispatch:
+    inputs:
+      image_tag:
+        description: Immutable image tag, for example sha-<commit>
+        required: true
+        type: string
+      run_migrations:
+        description: Run the explicit database migration step before deployment
+        required: true
+        default: false
+        type: boolean
+
+permissions:
+  contents: read
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install SSH key
+        env:
+          SSH_PRIVATE_KEY: ${{ secrets.LIGHTSAIL_SSH_PRIVATE_KEY }}
+          SSH_KNOWN_HOSTS: ${{ secrets.LIGHTSAIL_SSH_KNOWN_HOSTS }}
+        run: |
+          install -m 700 -d ~/.ssh
+          printf '%s\n' "$SSH_PRIVATE_KEY" > ~/.ssh/id_ed25519
+          chmod 600 ~/.ssh/id_ed25519
+          printf '%s\n' "$SSH_KNOWN_HOSTS" > ~/.ssh/known_hosts
+      - name: Copy deployment files
+        env:
+          LIGHTSAIL_HOST: ${{ secrets.LIGHTSAIL_HOST }}
+          LIGHTSAIL_USER: ${{ secrets.LIGHTSAIL_USER }}
+        run: |
+          ssh "$LIGHTSAIL_USER@$LIGHTSAIL_HOST" 'mkdir -p /opt/just-because/deployment/app'
+          scp deployment/app/compose.yaml deployment/app/Caddyfile "$LIGHTSAIL_USER@$LIGHTSAIL_HOST:/opt/just-because/deployment/app/"
+      - name: Pull release image
+        env:
+          LIGHTSAIL_HOST: ${{ secrets.LIGHTSAIL_HOST }}
+          LIGHTSAIL_USER: ${{ secrets.LIGHTSAIL_USER }}
+          IMAGE: ghcr.io/${{ github.repository }}:${{ inputs.image_tag }}
+        run: ssh "$LIGHTSAIL_USER@$LIGHTSAIL_HOST" "docker pull '$IMAGE'"
+      - name: Deploy image
+        env:
+          LIGHTSAIL_HOST: ${{ secrets.LIGHTSAIL_HOST }}
+          LIGHTSAIL_USER: ${{ secrets.LIGHTSAIL_USER }}
+          IMAGE: ghcr.io/${{ github.repository }}:${{ inputs.image_tag }}
+          RUN_MIGRATIONS: ${{ inputs.run_migrations }}
+        run: |
+          if [ "$RUN_MIGRATIONS" = "true" ]; then
+            ssh "$LIGHTSAIL_USER@$LIGHTSAIL_HOST" "cd /opt/just-because/deployment/app && APP_IMAGE='$IMAGE' APP_PULL_POLICY=always docker compose --profile maintenance run --rm migrate"
+          fi
+          ssh "$LIGHTSAIL_USER@$LIGHTSAIL_HOST" "cd /opt/just-because/deployment/app && APP_IMAGE='$IMAGE' APP_PULL_POLICY=always docker compose --profile public up -d --no-build --pull always --remove-orphans && APP_IMAGE='$IMAGE' docker compose ps"

@@ -114,12 +114,15 @@ export function stickerFontCss(s: number) {
   return `clamp(${lo.toFixed(0)}px, ${(s * 11).toFixed(1)}cqi, ${hi.toFixed(0)}px)`;
 }
 const HEX = /^#[0-9a-fA-F]{6}$/;
-/** Uploaded files: Vercel Blob (https) or local dev uploads. */
+/** Uploaded files: Vercel Blob, the configured R2 hostname, or local dev uploads. */
 export function isSafeMediaUrl(url: unknown): url is string {
+  let r2Host = "";
+  try { r2Host = import.meta.env["VITE_R2_PUBLIC_URL"] ? new URL(import.meta.env["VITE_R2_PUBLIC_URL"]).host : ""; } catch { /* invalid build config disables R2 URL acceptance */ }
   return (
     typeof url === "string" &&
     url.length <= 600 &&
     (/^https:\/\/[\w.-]+\.public\.blob\.vercel-storage\.com\/[\w./%-]+$/.test(url) ||
+      (!!r2Host && new URL(url).host.toLowerCase() === r2Host.toLowerCase() && new RegExp(`^https://${r2Host.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}/[\\w./%-]+$`).test(url)) ||
       /^\/api\/dev-uploads\/[\w.-]+$/.test(url))
   );
 }
