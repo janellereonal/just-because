@@ -20,7 +20,7 @@ Sydney is the region AWS assigned to this account's new console experience; the 
 
 The R2 implementation deliberately proxies uploads through the app so it can verify actual content and size before writing objects; browser CORS is not required for that upload path. The `media.<domain>` public hostname still must be attached to the R2 bucket for reads. Both the app hostname and media hostname, R2 credentials, auth origin/secret, email, analytics, PayMongo callback, and the scheduled daily endpoint need production configuration.
 
-CI is the intended builder, but the branch's three local commits must be pushed before a GitHub Actions workflow can build that exact source. The GHCR image must be pullable by Lightsail (public package or server-side registry credentials). Deployment automation also needs its SSH credentials and known-hosts value. The migration service and release flow need validation against the selected production database before running a migration.
+CI is the intended builder, but the application commits and subsequent documentation commits must be pushed before a GitHub Actions workflow can build that exact source. The GHCR image must be pullable by Lightsail (public package or server-side registry credentials). Deployment automation also needs its SSH credentials and known-hosts value. The migration service and release flow need validation against the selected production database before running a migration.
 
 ## Recommended direction
 

@@ -20,7 +20,7 @@ Deploy the existing TanStack Start/Nitro app on the owner-created Lightsail inst
 - [x] Record that the instance runs in Sydney, the actual plan size, the production config gaps, and the memory tradeoff for app-proxied large uploads.
 - [ ] Confirm or attach a Lightsail static IPv4 before DNS points at the host. Restrict SSH to the owner’s administration source; allow TCP 80/443 for Caddy, with UDP 443 optional.
 - [ ] Agree on and configure the app hostname and Cloudflare DNS. Create the R2 bucket and public read hostname; keep write/delete credentials scoped to that bucket.
-- [ ] Update deployment docs to Sydney/$7 and remove stale CORS instructions: the current upload endpoint proxies uploads through the app, so browser upload CORS is not part of this design.
+- [x] Update deployment guidance to the created Sydney/$7 instance and clarify that browser upload CORS is not needed because uploads pass through the app.
 - [ ] Prepare `/opt/just-because/deployment/app/.env` on the server with production-only values. Database URLs exist in the local ignored env file, but the production auth secret, hostname, and R2 values are currently missing. Keep secrets out of Git and container image build args.
 - [ ] Configure Google auth origins, email delivery/from address, PayMongo production callback/webhook settings, analytics build variables as desired, and a strong `CRON_SECRET` for the authenticated daily job.
 - [ ] Push this branch to GitHub, then run the image-build workflow for the exact branch/commit. Inspect build result and ensure the immutable GHCR image is pullable by the VPS (public package or configured registry credentials).
