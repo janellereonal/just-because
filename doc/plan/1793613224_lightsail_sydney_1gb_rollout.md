@@ -4,8 +4,8 @@ Supersedes `1792935685_lightsail_r2_feature_parity.md` for the actual rollout. T
 
 ## OPEN QUESTIONS
 
-- Which app hostname/domain should Caddy serve, and is its DNS managed in Cloudflare?
-- Is a Cloudflare R2 bucket and `media.<domain>` hostname ready, or should setup of those resources be part of the rollout?
+- Should the initial Lightsail deployment use `app.justbecause.site` for validation, or should `justbecause.site` be switched from its current destination after validation?
+- Is an R2 bucket already available? The public DNS currently uses Namecheap BasicDNS, so R2 custom-domain delivery would require either moving DNS to Cloudflare while preserving existing records or a Cloudflare Business/Enterprise partial setup.
 - Are the Google OAuth, email, analytics, and PayMongo production credentials/configuration available for the chosen hostname? Keep all secret values in a private environment file or provider secret store; do not add them to this plan or chat.
 
 ## Objective
@@ -18,8 +18,10 @@ Deploy the existing TanStack Start/Nitro app on the owner-created Lightsail inst
 - [x] Apply Ubuntu updates and reboot; Docker Engine and Compose were installed and `hello-world` ran successfully.
 - [x] Review branch and deployment source. At review start `codex/just-because-work` was clean and three commits ahead of origin; this documentation update adds a further local commit. The local application build and image build remain unverified because Bun/Node and the local Docker daemon are unavailable.
 - [x] Record that the instance runs in Sydney, the actual plan size, the production config gaps, and the memory tradeoff for app-proxied large uploads.
-- [ ] Confirm or attach a Lightsail static IPv4 before DNS points at the host. Restrict SSH to the owner’s administration source; allow TCP 80/443 for Caddy, with UDP 443 optional.
-- [ ] Agree on and configure the app hostname and Cloudflare DNS. Create the R2 bucket and public read hostname; keep write/delete credentials scoped to that bucket.
+- [x] Attach Lightsail static IPv4 `15.135.147.111` to `just-because-prod`.
+- [ ] Confirm Lightsail firewall access: restrict SSH to the owner’s administration source; allow TCP 80/443 for Caddy, with UDP 443 optional.
+- [ ] Configure an app hostname after choosing between `app.justbecause.site` for validation and a later root-domain cutover. Public DNS currently uses Namecheap BasicDNS; `justbecause.site` currently resolves to `216.198.79.1`, so preserve that record until cutover is explicitly intended.
+- [ ] Confirm/create the R2 bucket and choose its custom-domain DNS route. Keep write/delete credentials scoped to that bucket.
 - [x] Update deployment guidance to the created Sydney/$7 instance and clarify that browser upload CORS is not needed because uploads pass through the app.
 - [ ] Prepare `/opt/just-because/deployment/app/.env` on the server with production-only values. Database URLs exist in the local ignored env file, but the production auth secret, hostname, and R2 values are currently missing. Keep secrets out of Git and container image build args.
 - [ ] Configure Google auth origins, email delivery/from address, PayMongo production callback/webhook settings, analytics build variables as desired, and a strong `CRON_SECRET` for the authenticated daily job.
