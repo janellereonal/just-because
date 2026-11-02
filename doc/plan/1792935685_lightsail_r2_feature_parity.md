@@ -1,5 +1,7 @@
 # Plan: Lightsail deployment, R2 uploads, and feature parity
 
+> **Superseded for rollout:** The owner provisioned the $7 / 1 GB instance in Sydney (`ap-southeast-2`). Use [the Sydney rollout task board](1793613224_lightsail_sydney_1gb_rollout.md) for current deployment steps and sizing. This file preserves the original architecture decisions and completed implementation record.
+
 ## Objective
 
 Deploy the existing Just Because application on an affordable public Linux VPS while preserving the current Vercel deployment, managed PostgreSQL, and app behavior. Make uploaded media durable and portable across both runtimes.
