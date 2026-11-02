@@ -23,7 +23,8 @@ Deploy the existing TanStack Start/Nitro app on the owner-created Lightsail inst
 - [x] Update deployment guidance to the created Sydney/$7 instance and clarify that browser upload CORS is not needed because uploads pass through the app.
 - [ ] Prepare `/opt/just-because/deployment/app/.env` on the server with production-only values. Database URLs exist in the local ignored env file, but the production auth secret, hostname, and R2 values are currently missing. Keep secrets out of Git and container image build args.
 - [ ] Configure Google auth origins, email delivery/from address, PayMongo production callback/webhook settings, analytics build variables as desired, and a strong `CRON_SECRET` for the authenticated daily job.
-- [ ] Push this branch to GitHub, then run the image-build workflow for the exact branch/commit. Inspect build result and ensure the immutable GHCR image is pullable by the VPS (public package or configured registry credentials).
+- [x] Push the current branch to GitHub (`8522535bc55ab47b77d545bfc855a4838447ccef`).
+- [ ] Manually run the image-build workflow for this branch/commit from GitHub Actions; then inspect the build result and ensure the immutable GHCR image is pullable by the VPS (public package or configured registry credentials). The build has not been triggered yet.
 - [ ] Validate the image’s start and health check before touching production data. Confirm the Node migration command works in the runtime image.
 - [ ] Run the explicit database migration only after validating the production DB target and confirming a backup/recovery path.
 - [ ] Deploy the immutable image with Compose and Caddy. Verify DNS, automatic HTTPS, app health, sign-in, gift flows, uploads/media delivery and deletion, admin theme uploads, payment callback/webhook, email links, and daily endpoint.
