@@ -66,6 +66,8 @@ Neon is the existing database; this deployment does not move database contents. 
 
 Build in GitHub Actions, not on the 4 GB VM. Trigger the existing **Build app image** workflow for the approved commit and wait for it to succeed. Use its immutable tag `ghcr.io/janellereonal/just-because:sha-<full-commit-sha>`, not `latest`. Ensure the GHCR package is public or log in on the VM using a read-only package token without exposing it in terminal history.
 
+The source repository is private, which is separate from the GHCR image's visibility. An admin workstation needs GitHub access to fetch or clone the branch; if Git reports an authentication error, sign in there with `gh auth login` (or use an already authorized SSH key). Because the workflow only publishes automatically for `main`, use GitHub's **Actions → Build app image → Run workflow** and select the approved `codex/just-because-work` branch to publish this branch's commit. The VM does not need a GitHub source checkout when you copy the Compose files from that workstation and deploy only the built image. If the GHCR package is private, the VM must separately authenticate to `ghcr.io` with a GitHub personal access token (classic) that has `read:packages` access to that package. Use Docker's credential storage and enter the token only at the interactive prompt; never put it in a command argument, Compose file, or `.env`. If the image package is public, `docker pull` requires no login. GitHub Actions publishes with its workflow token; it does not use your personal credentials.
+
 ```sh
 docker pull ghcr.io/janellereonal/just-because:sha-<full-commit-sha>
 docker image inspect ghcr.io/janellereonal/just-because:sha-<full-commit-sha> --format '{{.Os}}/{{.Architecture}}'
