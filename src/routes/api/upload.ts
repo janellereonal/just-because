@@ -16,8 +16,10 @@ export const Route = createFileRoute("/api/upload")({
   server: {
     handlers: {
       POST: async ({ request }) => {
+        // The server-selected provider must win even if a legacy Vercel Blob
+        // token is still present in the environment during a migration.
+        if (process.env["MEDIA_STORAGE_PROVIDER"] === "r2") return saveR2Upload(request);
         if (!process.env["BLOB_READ_WRITE_TOKEN"]) {
-          if (process.env["MEDIA_STORAGE_PROVIDER"] === "r2") return saveR2Upload(request);
           if (process.env["NODE_ENV"] === "production") {
             return Response.json({ error: "Uploads aren't configured." }, { status: 500 });
           }
