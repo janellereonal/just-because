@@ -15,8 +15,10 @@ This task board follows the approved strategy in [`doc/study/1793679427_staging_
 - Vercel SSO protection is enabled for non-custom domains, but the project currently has legacy Django-style environment keys. Its `DATABASE_URL` applies to both Preview and Production, so Preview must not be deployed until the Preview database and app-specific variables are isolated.
 - The connected Supabase account has no projects. Local deployment configuration identifies the existing PostgreSQL service as Neon in `ap-southeast-1`; its credential value was not displayed.
 - User confirms the team owner will publish the Vercel review deployment when needed. No Vercel project settings or variables were changed here.
-- The local deployment `.env` has the Neon connection and app URL, but app domain, Better Auth secret, media provider/R2 credentials, email, PayMongo, and cron values are blank. Do not copy this file to Lightsail as a production-ready configuration.
+- Initial inspection found the local deployment `.env` had the Neon connection and app URL, but lacked the app domain, Better Auth secret, media provider/R2 credentials, email, PayMongo, and cron values. It has since been partially prepared as described below; do not copy it to Lightsail as production-ready until remaining services are configured.
+- Local ignored `deployment/app/.env` has now been prepared with `APP_DOMAIN=justbecause.site`, matching HTTPS app/auth origins, R2 media hostname `media.justbecause.site`, and newly generated auth/cron secrets. It is mode `0600` and remains ignored by Git. R2 credentials, Resend email, and PayMongo settings remain blank; this file has not been transferred to Lightsail.
 - Local build/lint could not start because Bun is unavailable; local Docker is installed but Colima is stopped. The Lightsail shell was not changed: this workspace's SSH attempt was blocked by outbound network policy, and no trusted host key is available locally.
+- The current Chrome session is signed out of AWS and is waiting at Lightsail sign-in; the user must complete sign-in before a Lightsail browser terminal can be used.
 - Lightsail Compose remains a production-only stack. No new staging database, Vercel variables, DNS records, migrations, or Lightsail deployment were changed during this inspection.
 
 ## Target Environments
