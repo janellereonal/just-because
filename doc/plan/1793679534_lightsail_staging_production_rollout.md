@@ -4,10 +4,17 @@ This task board follows the approved strategy in [`doc/study/1793679427_staging_
 
 ## OPEN QUESTIONS
 
-- Which managed PostgreSQL provider/database should supply the isolated staging database (or branch)? Do not reuse the production connection.
+- Create a separate Neon staging database/branch from the existing production Neon account. The local production connection identifies Neon in `ap-southeast-1`; no connected Supabase projects were found. Do not reuse production connection details in Preview.
 - Is Cloudflare R2 already set up? Confirm whether production DNS hosting will move from Namecheap to Cloudflare, or whether another approved production media path is needed. R2 custom-domain access requires the domain to be present in the Cloudflare account that owns the bucket.
 - Are the production OAuth, email, analytics, PayMongo, and cron settings ready? Keep secrets in private environment files or provider secret stores, never in this plan or chat.
 - The root DNS A record already points to Lightsail `15.135.147.111`, while the app has not yet been deployed. Confirm the live result and keep the former DNS target recorded for rollback.
+
+## Execution Status (2026-11-03)
+
+- Vercel project `just-because` is connected to GitHub repository `Viqqsss/just-because`; this checkout's `origin` is `janellereonal/just-because`. Resolve which repository is authoritative and connect Vercel to the intended source before deploying this branch.
+- Vercel SSO protection is enabled for non-custom domains, but the project currently has legacy Django-style environment keys. Its `DATABASE_URL` applies to both Preview and Production, so Preview must not be deployed until the Preview database and app-specific variables are isolated.
+- The connected Supabase account has no projects. Local deployment configuration identifies the existing PostgreSQL service as Neon in `ap-southeast-1`; its credential value was not displayed.
+- Lightsail Compose remains a production-only stack. No new staging database, Vercel variables, DNS records, migrations, or Lightsail deployment were changed during this inspection.
 
 ## Target Environments
 
@@ -22,8 +29,8 @@ The domain remains registered with Namecheap. Public DNS currently uses Namechea
 
 ### 1. Establish staging isolation
 
-- [ ] Confirm GitHub-to-Vercel integration and use Vercel Preview deployments for the staging branch.
-- [ ] Enable Vercel Authentication protection for Preview deployments.
+- [ ] Reconcile the Vercel GitHub connection (`Viqqsss/just-because`) with this checkout's `origin` (`janellereonal/just-because`), then use Preview deployments for the staging branch.
+- [x] Verify Vercel SSO protection is enabled for non-custom domains; confirm it remains enabled after the Git connection is corrected.
 - [ ] Create a separate staging PostgreSQL database or isolated branch; verify its connection target is distinct from production without exposing credentials.
 - [ ] Configure Preview-only variables, including staging database URL, unique Better Auth secret, staging app origin/OAuth callback, safe email, and disabled production cron.
 - [ ] Configure staging media independently (separate R2 bucket or a separate Vercel Blob token/provider); never allow staging writes/deletes against production media.
@@ -63,3 +70,4 @@ The domain remains registered with Namecheap. Public DNS currently uses Namechea
 - Run migrations deliberately and separately for staging and production.
 - Do not change domain nameservers or add/delete production DNS records without first copying and reviewing all existing records, including email records.
 - Current branch: `codex/just-because-work`. The existing Lightsail deploy workflow targets one production environment; staging is planned on Vercel Preview and is not configured yet.
+- Last inspection (2026-11-03) found a Git-source mismatch and shared legacy Vercel environment targets. Treat these as hard blockers for staging deployment until corrected and verified.
