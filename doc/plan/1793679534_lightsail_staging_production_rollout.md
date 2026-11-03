@@ -11,9 +11,12 @@ This task board follows the approved strategy in [`doc/study/1793679427_staging_
 
 ## Execution Status (2026-11-03)
 
-- Vercel project `just-because` is connected to GitHub repository `Viqqsss/just-because`; this checkout's `origin` is `janellereonal/just-because`. Resolve which repository is authoritative and connect Vercel to the intended source before deploying this branch.
+- The user confirmed `janellereonal/just-because` is the intended source. A team owner with access to the Vercel account will publish a review deployment when requested; verify that it uses this repository/branch and is protected before testing it. No Vercel project settings were changed here.
 - Vercel SSO protection is enabled for non-custom domains, but the project currently has legacy Django-style environment keys. Its `DATABASE_URL` applies to both Preview and Production, so Preview must not be deployed until the Preview database and app-specific variables are isolated.
 - The connected Supabase account has no projects. Local deployment configuration identifies the existing PostgreSQL service as Neon in `ap-southeast-1`; its credential value was not displayed.
+- User confirms the team owner will publish the Vercel review deployment when needed. No Vercel project settings or variables were changed here.
+- The local deployment `.env` has the Neon connection and app URL, but app domain, Better Auth secret, media provider/R2 credentials, email, PayMongo, and cron values are blank. Do not copy this file to Lightsail as a production-ready configuration.
+- Local build/lint could not start because Bun is unavailable; local Docker is installed but Colima is stopped. The Lightsail shell was not changed: this workspace's SSH attempt was blocked by outbound network policy, and no trusted host key is available locally.
 - Lightsail Compose remains a production-only stack. No new staging database, Vercel variables, DNS records, migrations, or Lightsail deployment were changed during this inspection.
 
 ## Target Environments
@@ -29,7 +32,7 @@ The domain remains registered with Namecheap. Public DNS currently uses Namechea
 
 ### 1. Establish staging isolation
 
-- [ ] Reconcile the Vercel GitHub connection (`Viqqsss/just-because`) with this checkout's `origin` (`janellereonal/just-because`), then use Preview deployments for the staging branch.
+- [ ] Team Vercel owner publishes a protected Preview from `janellereonal/just-because` when a review build is needed; verify the deployed commit matches the reviewed branch.
 - [x] Verify Vercel SSO protection is enabled for non-custom domains; confirm it remains enabled after the Git connection is corrected.
 - [ ] Create a separate staging PostgreSQL database or isolated branch; verify its connection target is distinct from production without exposing credentials.
 - [ ] Configure Preview-only variables, including staging database URL, unique Better Auth secret, staging app origin/OAuth callback, safe email, and disabled production cron.
@@ -70,4 +73,5 @@ The domain remains registered with Namecheap. Public DNS currently uses Namechea
 - Run migrations deliberately and separately for staging and production.
 - Do not change domain nameservers or add/delete production DNS records without first copying and reviewing all existing records, including email records.
 - Current branch: `codex/just-because-work`. The existing Lightsail deploy workflow targets one production environment; staging is planned on Vercel Preview and is not configured yet.
-- Last inspection (2026-11-03) found a Git-source mismatch and shared legacy Vercel environment targets. Treat these as hard blockers for staging deployment until corrected and verified.
+- Last inspection (2026-11-03) found shared legacy Vercel environment targets; the team owner will handle the review deployment. Treat isolated Preview variables and a distinct Neon staging database as hard blockers before staging smoke tests.
+- Deployment readiness is still blocked on filling production-only configuration, producing a verified image in CI, and obtaining a trusted Lightsail administration session; no migration or production cutover has occurred.
