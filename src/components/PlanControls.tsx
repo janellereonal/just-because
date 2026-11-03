@@ -2,7 +2,14 @@ import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { boWrap } from "@/lib/mascot/bus";
-import { getBilling, previewDiscountCode, setCustomSlug, setGiftPassword, startCheckout, startExtendCheckout } from "@/lib/api";
+import {
+  getBilling,
+  previewDiscountCode,
+  setCustomSlug,
+  setGiftPassword,
+  startCheckout,
+  startExtendCheckout,
+} from "@/lib/api";
 import { CODE_COPY, GUEST_COPY, PAY_SAFETY_COPY } from "@/copy/strings";
 import { useAuth } from "@/hooks/useAuth";
 import { GuestSignInCard } from "@/components/GuestPrompt";
@@ -40,7 +47,9 @@ export function useBilling(siteId: string) {
 function AbroadPayNote() {
   const money = useViewerMoney();
   if (!money || money.local) return null;
-  return <p className="mx-auto max-w-md text-center text-xs text-muted">{PRICE_COPY.abroadPayNote}</p>;
+  return (
+    <p className="mx-auto max-w-md text-center text-xs text-muted">{PRICE_COPY.abroadPayNote}</p>
+  );
 }
 
 function errorMessage(error: unknown, fallback: string) {
@@ -68,14 +77,21 @@ export function PlanPickerDialog({
 }) {
   const queryClient = useQueryClient();
   const { data: billing } = useBilling(siteId);
-  const mode: "publish" | "upgrade" = billing ? (getTier(billing.tier) && !billing.ended ? "upgrade" : "publish") : asked;
+  const mode: "publish" | "upgrade" = billing
+    ? getTier(billing.tier) && !billing.ended
+      ? "upgrade"
+      : "publish"
+    : asked;
   const { isGuest } = useAuth();
   const [busyTier, setBusyTier] = useState<TierId | null>(null);
   const [codeOpen, setCodeOpen] = useState(false);
   const [codeText, setCodeText] = useState("");
   const [checking, setChecking] = useState(false);
   const [codeError, setCodeError] = useState<string | null>(null);
-  const [applied, setApplied] = useState<Extract<Awaited<ReturnType<typeof previewDiscountCode>>, { ok: true }> | null>(null);
+  const [applied, setApplied] = useState<Extract<
+    Awaited<ReturnType<typeof previewDiscountCode>>,
+    { ok: true }
+  > | null>(null);
   const deal = new Map(applied?.plans.map((p) => [p.id, p]) ?? []);
 
   async function applyCode() {
@@ -100,7 +116,10 @@ export function PlanPickerDialog({
       // The price is worked out again on the server; the code only goes along if it fits this plan.
       const code = applied && deal.get(tier)?.applies ? applied.code : undefined;
       // Bo wraps himself up while the checkout loads (never more than ~1s).
-      const [{ checkoutUrl }] = await Promise.all([startCheckout({ data: { siteId, tier, expect: mode, ...(code ? { code } : {}) } }), boWrap()]);
+      const [{ checkoutUrl }] = await Promise.all([
+        startCheckout({ data: { siteId, tier, expect: mode, ...(code ? { code } : {}) } }),
+        boWrap(),
+      ]);
       window.location.assign(checkoutUrl);
     } catch (error) {
       setBusyTier(null);
@@ -198,34 +217,60 @@ export function PlanPickerDialog({
                     className="w-full rounded-full border border-line bg-paper px-4 py-2.5 font-mono text-sm tracking-wide uppercase outline-none focus:border-accent"
                   />
                   {codeError ? (
-                    <p id="plan-code-error" role="alert" className="mt-1.5 px-2 text-xs text-accent">
+                    <p
+                      id="plan-code-error"
+                      role="alert"
+                      className="mt-1.5 px-2 text-xs text-accent"
+                    >
                       {codeError}
                     </p>
                   ) : null}
                 </div>
-                <Button type="submit" variant="outline" className="rounded-full" disabled={checking || !codeText.trim()}>
+                <Button
+                  type="submit"
+                  variant="outline"
+                  className="rounded-full"
+                  disabled={checking || !codeText.trim()}
+                >
                   {checking ? CODE_COPY.checking : CODE_COPY.apply}
                 </Button>
               </form>
             ) : (
-              <button type="button" className="text-muted underline underline-offset-2 hover:text-ink" onClick={() => setCodeOpen(true)}>
+              <button
+                type="button"
+                className="text-muted underline underline-offset-2 hover:text-ink"
+                onClick={() => setCodeOpen(true)}
+              >
                 {CODE_COPY.ask}
               </button>
             )}
           </div>
         ) : null}
         {billing?.paused ? (
-          <p role="status" className="rounded-xl bg-cream px-3 py-3 text-sm">{PAY_SAFETY_COPY.paused}</p>
+          <p role="status" className="rounded-xl bg-cream px-3 py-3 text-sm">
+            {PAY_SAFETY_COPY.paused}
+          </p>
         ) : billing ? (
           tiers.length > 0 ? (
             <PricingCards
               tiers={tiers}
               wasFor={applied ? (t) => (deal.get(t.id)?.applies ? t.amount : null) : undefined}
-              priceFor={mode === "upgrade" ? (t) => upgradePrice.get(t.id) ?? t.amount : applied ? (t) => deal.get(t.id)?.amount ?? t.amount : undefined}
+              priceFor={
+                mode === "upgrade"
+                  ? (t) => upgradePrice.get(t.id) ?? t.amount
+                  : applied
+                    ? (t) => deal.get(t.id)?.amount ?? t.amount
+                    : undefined
+              }
               priceNote={mode === "upgrade" ? "Pay the difference" : undefined}
               blockerFor={(t) => blockers.get(t.id) ?? null}
               action={{
-                label: (t) => (mode === "upgrade" ? `Upgrade to ${t.name}` : deal.get(t.id)?.free ? CODE_COPY.free(t.name) : `Choose ${t.name}`),
+                label: (t) =>
+                  mode === "upgrade"
+                    ? `Upgrade to ${t.name}`
+                    : deal.get(t.id)?.free
+                      ? CODE_COPY.free(t.name)
+                      : `Choose ${t.name}`,
                 onPick: (t) => void pick(t),
                 busyTier,
                 disabled: !!busyTier || isGuest,
@@ -239,11 +284,21 @@ export function PlanPickerDialog({
         )}
         <p className="text-center text-xs text-muted">
           By continuing you agree to the{" "}
-          <a href="/terms" target="_blank" rel="noreferrer" className="underline underline-offset-2 hover:text-ink">
+          <a
+            href="/terms"
+            target="_blank"
+            rel="noreferrer"
+            className="underline underline-offset-2 hover:text-ink"
+          >
             Terms
           </a>{" "}
           and{" "}
-          <a href="/refunds" target="_blank" rel="noreferrer" className="underline underline-offset-2 hover:text-ink">
+          <a
+            href="/refunds"
+            target="_blank"
+            rel="noreferrer"
+            className="underline underline-offset-2 hover:text-ink"
+          >
             Refund policy
           </a>
           . Prices are in Philippine pesos.
@@ -255,7 +310,11 @@ export function PlanPickerDialog({
 }
 
 function shortDate(iso: string) {
-  return new Date(iso).toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" });
+  return new Date(iso).toLocaleDateString(undefined, {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  });
 }
 
 /** Pay to keep a gift open for another stretch of its plan. Works before or after it ends. */
@@ -275,7 +334,10 @@ export function ExtendDialog({
   async function extend() {
     setBusy(true);
     try {
-      const [{ checkoutUrl }] = await Promise.all([startExtendCheckout({ data: { siteId } }), boWrap()]);
+      const [{ checkoutUrl }] = await Promise.all([
+        startExtendCheckout({ data: { siteId } }),
+        boWrap(),
+      ]);
       window.location.assign(checkoutUrl);
     } catch (error) {
       setBusy(false);
@@ -287,7 +349,11 @@ export function ExtendDialog({
   if (!billing) {
     body = <p className="py-6 text-center text-sm text-muted">Loading…</p>;
   } else if (billing.paused) {
-    body = <p role="status" className="rounded-xl bg-cream px-3 py-3 text-sm">{PAY_SAFETY_COPY.paused}</p>;
+    body = (
+      <p role="status" className="rounded-xl bg-cream px-3 py-3 text-sm">
+        {PAY_SAFETY_COPY.paused}
+      </p>
+    );
   } else if (!billing.extend || !tier) {
     body = <p className="text-sm text-muted">This gift doesn't need extending.</p>;
   } else {
@@ -299,9 +365,15 @@ export function ExtendDialog({
     body = (
       <div className="space-y-4">
         <div className="rounded-2xl border border-line bg-cream p-4">
-          <p className="font-mono text-[10px] tracking-[0.08em] text-muted uppercase">{tier.name} plan</p>
-          <p className="mt-1 font-display text-3xl font-medium tracking-tight">{formatPeso(billing.extend.amount)}</p>
-          <p className="mt-1 text-sm text-muted">Another {billing.extend.label}, same plan and limits.</p>
+          <p className="font-mono text-[10px] tracking-[0.08em] text-muted uppercase">
+            {tier.name} plan
+          </p>
+          <p className="mt-1 font-display text-3xl font-medium tracking-tight">
+            {formatPeso(billing.extend.amount)}
+          </p>
+          <p className="mt-1 text-sm text-muted">
+            Another {billing.extend.label}, same plan and limits.
+          </p>
         </div>
         {when ? <p className="text-sm text-muted">{when}</p> : null}
         <Button className="w-full rounded-full" disabled={busy} onClick={() => void extend()}>
@@ -309,11 +381,21 @@ export function ExtendDialog({
         </Button>
         <p className="text-center text-xs text-muted">
           Pay with {paymentMethodsSentence()}. By continuing you agree to the{" "}
-          <a href="/terms" target="_blank" rel="noreferrer" className="underline underline-offset-2">
+          <a
+            href="/terms"
+            target="_blank"
+            rel="noreferrer"
+            className="underline underline-offset-2"
+          >
             Terms
           </a>{" "}
           and{" "}
-          <a href="/refunds" target="_blank" rel="noreferrer" className="underline underline-offset-2">
+          <a
+            href="/refunds"
+            target="_blank"
+            rel="noreferrer"
+            className="underline underline-offset-2"
+          >
             Refund policy
           </a>
           .
@@ -360,12 +442,7 @@ export function PlanBanner({
     return (
       <div className="flex flex-wrap items-center justify-between gap-3 border-b border-line bg-cream px-4 py-2.5 text-sm">
         <span>This gift has ended, so the link now shows a goodbye page.</span>
-        <Button
-          size="sm"
-          variant="outline"
-          className="rounded-full"
-          onClick={onExtend}
-        >
+        <Button size="sm" variant="outline" className="rounded-full" onClick={onExtend}>
           Extend this gift
         </Button>
       </div>
@@ -385,7 +462,8 @@ export function PlanBanner({
   return (
     <div className="flex flex-wrap items-center justify-between gap-3 border-b border-accent/30 bg-accent/10 px-4 py-2.5 text-sm">
       <span>
-        This gift is full: {what}. New friends will see a "this gift is full" note until you make room.
+        This gift is full: {what}. New friends will see a "this gift is full" note until you make
+        room.
       </span>
       {billing.upgrades.length > 0 ? (
         <Button size="sm" className="rounded-full" onClick={onUpgrade}>
@@ -439,8 +517,12 @@ export function LinkNameDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-md bg-paper">
         <DialogHeader>
-          <DialogTitle className="font-display text-xl font-medium">Choose the link name</DialogTitle>
-          <DialogDescription>Letters, numbers and dashes. The old link stops working.</DialogDescription>
+          <DialogTitle className="font-display text-xl font-medium">
+            Choose the link name
+          </DialogTitle>
+          <DialogDescription>
+            Letters, numbers and dashes. The old link stops working.
+          </DialogDescription>
         </DialogHeader>
         <form onSubmit={save} className="space-y-3">
           <div className="flex items-center rounded-xl border border-line bg-cream px-3 py-2 font-mono text-xs">
@@ -473,7 +555,11 @@ export function planSummary(billing: Billing | undefined): string | null {
   if (!tier) return null;
   if (billing.ended) return `${tier.name} plan, ended`;
   const until = billing.expiresAt
-    ? new Date(billing.expiresAt).toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" })
+    ? new Date(billing.expiresAt).toLocaleDateString(undefined, {
+        month: "short",
+        day: "numeric",
+        year: "numeric",
+      })
     : null;
   return until ? `${tier.name} plan, open until ${until}` : `${tier.name} plan`;
 }
@@ -481,7 +567,9 @@ export function planSummary(billing: Billing | undefined): string | null {
 /** Names of the plans that include a feature, e.g. "Celebration and Keepsake". */
 function plansWith(feature: "passwordProtection" | "customLinkName") {
   const names = TIERS.filter((t) => t.features[feature]).map((t) => t.name);
-  return names.length <= 1 ? names.join("") : `${names.slice(0, -1).join(", ")} and ${names[names.length - 1]}`;
+  return names.length <= 1
+    ? names.join("")
+    : `${names.slice(0, -1).join(", ")} and ${names[names.length - 1]}`;
 }
 
 /** Editor setting: a password the recipient types before the gift opens (paid feature). */
@@ -511,7 +599,9 @@ export function GiftPasswordSetting({
       await queryClient.invalidateQueries({ queryKey: ["site", siteId] });
       setEditing(false);
       setValue("");
-      toast.success(password === null ? "Password removed. The link opens without one." : "Password saved.");
+      toast.success(
+        password === null ? "Password removed. The link opens without one." : "Password saved.",
+      );
     } catch (error) {
       toast.error(errorMessage(error, "Use at least 4 characters."));
     } finally {
@@ -559,11 +649,22 @@ export function GiftPasswordSetting({
             className="w-full rounded-xl border border-line bg-paper px-3 py-2.5 text-sm outline-none focus:border-accent"
           />
           <div className="flex gap-2">
-            <Button type="submit" size="sm" className="rounded-full" disabled={busy || value.trim().length < 4}>
+            <Button
+              type="submit"
+              size="sm"
+              className="rounded-full"
+              disabled={busy || value.trim().length < 4}
+            >
               {busy ? "Saving…" : "Save password"}
             </Button>
             {passwordSet ? (
-              <Button type="button" size="sm" variant="ghost" className="rounded-full" onClick={() => setEditing(false)}>
+              <Button
+                type="button"
+                size="sm"
+                variant="ghost"
+                className="rounded-full"
+                onClick={() => setEditing(false)}
+              >
                 Cancel
               </Button>
             ) : null}
@@ -575,10 +676,21 @@ export function GiftPasswordSetting({
             On. People opening the link type the password first. You don't need it as the owner.
           </p>
           <div className="mt-3 flex gap-2">
-            <Button size="sm" variant="outline" className="rounded-full" onClick={() => setEditing(true)}>
+            <Button
+              size="sm"
+              variant="outline"
+              className="rounded-full"
+              onClick={() => setEditing(true)}
+            >
               Change
             </Button>
-            <Button size="sm" variant="ghost" className="rounded-full" disabled={busy} onClick={() => void save(null)}>
+            <Button
+              size="sm"
+              variant="ghost"
+              className="rounded-full"
+              disabled={busy}
+              onClick={() => void save(null)}
+            >
               Remove
             </Button>
           </div>

@@ -14,7 +14,13 @@ const GRAIN_SVG = encodeURIComponent(
 );
 
 /** Film grain over everything. Static (no animated noise), cheap to paint. */
-export function Grain({ opacity = 0.16, blend = "multiply" }: { opacity?: number; blend?: React.CSSProperties["mixBlendMode"] }) {
+export function Grain({
+  opacity = 0.16,
+  blend = "multiply",
+}: {
+  opacity?: number;
+  blend?: React.CSSProperties["mixBlendMode"];
+}) {
   return (
     <div
       aria-hidden="true"
@@ -104,9 +110,13 @@ export function ParallaxRoot({
       listening = true;
       window.addEventListener("deviceorientation", onTilt, { passive: true });
     };
-    const DOE = window.DeviceOrientationEvent as unknown as { requestPermission?: () => Promise<string> } | undefined;
+    const DOE = window.DeviceOrientationEvent as unknown as
+      { requestPermission?: () => Promise<string> } | undefined;
     const onFirstTap = () => {
-      if (DOE?.requestPermission) void DOE.requestPermission().then((r) => r === "granted" && listen()).catch(() => {});
+      if (DOE?.requestPermission)
+        void DOE.requestPermission()
+          .then((r) => r === "granted" && listen())
+          .catch(() => {});
     };
     if (DOE && typeof DOE.requestPermission !== "function") listen();
     else el.addEventListener("pointerdown", onFirstTap, { once: true });
@@ -155,7 +165,17 @@ export function Layer({
   const rY = useTransform(x, (v) => v * rotate);
   const rX = useTransform(y, (v) => -v * rotate);
   return (
-    <motion.div className={className} style={{ ...(style as object), x: tx, y: ty, rotateY: rY, rotateX: rX, willChange: live ? "transform" : undefined }}>
+    <motion.div
+      className={className}
+      style={{
+        ...(style as object),
+        x: tx,
+        y: ty,
+        rotateY: rY,
+        rotateX: rX,
+        willChange: live ? "transform" : undefined,
+      }}
+    >
       {children}
     </motion.div>
   );
@@ -180,7 +200,9 @@ export function useBeats(run: boolean, at: number[]) {
       return;
     }
     // Dev only: freeze on a beat to inspect it (window.__jbBeat = 2).
-    const frozen = import.meta.env.DEV ? (window as unknown as { __jbBeat?: number }).__jbBeat : undefined;
+    const frozen = import.meta.env.DEV
+      ? (window as unknown as { __jbBeat?: number }).__jbBeat
+      : undefined;
     if (typeof frozen === "number") {
       setBeat(Math.min(frozen, at.length - 1));
       return;

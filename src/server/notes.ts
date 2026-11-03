@@ -3,7 +3,10 @@ import { getDb, schema } from "./db";
 import { notifyNewNote } from "./notify";
 
 type FriendEdit = Partial<
-  Pick<typeof schema.contributions.$inferInsert, "textContent" | "externalLink" | "mediaUrl" | "visibility" | "data">
+  Pick<
+    typeof schema.contributions.$inferInsert,
+    "textContent" | "externalLink" | "mediaUrl" | "visibility" | "data"
+  >
 >;
 
 /**
@@ -20,7 +23,9 @@ export async function saveFriendEdit(id: string, edit: FriendEdit) {
     .where(eq(c.id, id))
     .returning({ siteId: c.siteId, status: c.status, authorName: c.authorName });
   if (row?.status === "approved") {
-    await notifyNewNote(row.siteId, row.authorName, { edited: true }).catch((e) => console.error("[notify]", e));
+    await notifyNewNote(row.siteId, row.authorName, { edited: true }).catch((e) =>
+      console.error("[notify]", e),
+    );
   }
   return row ?? null;
 }

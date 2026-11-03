@@ -26,7 +26,11 @@ export function cleanCode(raw: string): string {
   return raw.replace(/\s+/g, "").slice(0, 40);
 }
 
-export async function findCode(raw: string, db: Db = getDb(), lock = false): Promise<DiscountCode | null> {
+export async function findCode(
+  raw: string,
+  db: Db = getDb(),
+  lock = false,
+): Promise<DiscountCode | null> {
   const code = cleanCode(raw);
   if (!code) return null;
   const q = db
@@ -58,7 +62,12 @@ async function usesOf(code: DiscountCode, userId: string, db: Db, opts: CodeCoun
   const open = opts.paidOnly
     ? sql`false`
     : sql`${o.status} = 'pending' and ${o.createdAt} > now() - ${HOLD} and ${o.siteId} is distinct from ${opts.siteId ?? null}::uuid`;
-  const rows = await db.execute<{ used: number; held: number; mine_used: number; mine_held: number }>(sql`
+  const rows = await db.execute<{
+    used: number;
+    held: number;
+    mine_used: number;
+    mine_held: number;
+  }>(sql`
     select
       (select ${schema.discountCodes.usedCount} from ${schema.discountCodes} where ${schema.discountCodes.id} = ${code.id})::int as used,
       count(*) filter (where ${open})::int as held,
@@ -68,11 +77,22 @@ async function usesOf(code: DiscountCode, userId: string, db: Db, opts: CodeCoun
     where ${o.discountCodeId} = ${code.id}
   `);
   const r = rows[0];
-  return { used: Number(r?.used ?? code.usedCount), held: Number(r?.held ?? 0), mineUsed: Number(r?.mine_used ?? 0), mineHeld: Number(r?.mine_held ?? 0) };
+  return {
+    used: Number(r?.used ?? code.usedCount),
+    held: Number(r?.held ?? 0),
+    mineUsed: Number(r?.mine_used ?? 0),
+    mineHeld: Number(r?.mine_held ?? 0),
+  };
 }
 
 /** Why this code can't be used for this plan by this person right now, or null if it can. */
-export async function codeProblem(code: DiscountCode | null, tier: Tier | null, userId: string, db: Db = getDb(), opts: CodeCount = {}): Promise<string | null> {
+export async function codeProblem(
+  code: DiscountCode | null,
+  tier: Tier | null,
+  userId: string,
+  db: Db = getDb(),
+  opts: CodeCount = {},
+): Promise<string | null> {
   const now = opts.now ?? new Date();
   if (!code) return "We don't know that code. Check the spelling?";
   if (!code.active) return "That code isn't working anymore.";
@@ -86,12 +106,19 @@ export async function codeProblem(code: DiscountCode | null, tier: Tier | null, 
 }
 
 /** Just the use limits (overall and per person), counted as `codeProblem` does. */
-export async function limitProblem(code: DiscountCode, userId: string, db: Db = getDb(), opts: CodeCount = {}): Promise<string | null> {
+export async function limitProblem(
+  code: DiscountCode,
+  userId: string,
+  db: Db = getDb(),
+  opts: CodeCount = {},
+): Promise<string | null> {
   if (code.maxUses === null && code.maxPerUser === null) return null;
   const u = await usesOf(code, userId, db, opts);
   if (code.maxUses !== null && u.used >= code.maxUses) return "That code has been used up.";
-  if (code.maxPerUser !== null && u.mineUsed >= code.maxPerUser) return "You've already used that code.";
-  if (code.maxPerUser !== null && u.mineUsed + u.mineHeld >= code.maxPerUser) return CODE_LIMIT_COPY.yoursElsewhere;
+  if (code.maxPerUser !== null && u.mineUsed >= code.maxPerUser)
+    return "You've already used that code.";
+  if (code.maxPerUser !== null && u.mineUsed + u.mineHeld >= code.maxPerUser)
+    return CODE_LIMIT_COPY.yoursElsewhere;
   if (code.maxUses !== null && u.used + u.held >= code.maxUses) return CODE_LIMIT_COPY.allHeld;
   return null;
 }

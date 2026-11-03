@@ -10,10 +10,19 @@ const FULL_W = 1600;
  * shows big. Older photos have no small copy and just use the full one. A photo that can't load
  * shows a plain grey card instead of a broken-image icon.
  */
-export function photoProps(url: string | null | undefined, thumb: string | null | undefined, sizes: string) {
+export function photoProps(
+  url: string | null | undefined,
+  thumb: string | null | undefined,
+  sizes: string,
+) {
   if (!url) return {};
   if (!thumb) return { src: url, onError: onPhotoError };
-  return { src: url, srcSet: `${thumb} ${THUMB_W}w, ${url} ${FULL_W}w`, sizes, onError: onPhotoError };
+  return {
+    src: url,
+    srcSet: `${thumb} ${THUMB_W}w, ${url} ${FULL_W}w`,
+    sizes,
+    onError: onPhotoError,
+  };
 }
 
 /** A soft grey card with a small picture outline, shown where a photo can't load (no words, any language). */

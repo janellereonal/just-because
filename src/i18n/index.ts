@@ -49,14 +49,21 @@ export function formatNumber(n: number, opts?: Intl.NumberFormatOptions): string
 /** Money in the visitor's format, e.g. formatMoney(299, "PHP"). */
 export function formatMoney(amount: number, currency: string): string {
   try {
-    return new Intl.NumberFormat(LOCALE, { style: "currency", currency, maximumFractionDigits: amount % 1 === 0 ? 0 : 2 }).format(amount);
+    return new Intl.NumberFormat(LOCALE, {
+      style: "currency",
+      currency,
+      maximumFractionDigits: amount % 1 === 0 ? 0 : 2,
+    }).format(amount);
   } catch {
     return `${currency} ${amount}`;
   }
 }
 
 /** A day like "16 Oct" or "Oct 16", depending on where the visitor is. */
-export function formatShortDate(d: Date, opts: Intl.DateTimeFormatOptions = { day: "numeric", month: "short" }): string {
+export function formatShortDate(
+  d: Date,
+  opts: Intl.DateTimeFormatOptions = { day: "numeric", month: "short" },
+): string {
   try {
     return new Intl.DateTimeFormat(LOCALE, opts).format(d);
   } catch {

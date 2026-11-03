@@ -14,27 +14,84 @@ import { Greeting, type OpeningProps } from "@/themes/_shared/opening";
 import type { ThemePalette } from "@/themes/_shared/design";
 import { FallbackButton, Layer, SPRING, useBeats, useHaptics } from "@/themes/_shared/stage";
 import { burstSet } from "@/themes/_shared/Sprinkles";
-import { Extrude, FloorShadow, Object3D, Sheen, TEXTURE_SOFT, Texture, elevation, rim } from "@/themes/_shared/light";
+import {
+  Extrude,
+  FloorShadow,
+  Object3D,
+  Sheen,
+  TEXTURE_SOFT,
+  Texture,
+  elevation,
+  rim,
+} from "@/themes/_shared/light";
 import { chime, foley, melody } from "@/lib/play";
 
 /** Squares around the board's edge, clockwise from the bottom left: [col, row] on a 6x6 grid. */
 const TRACK: [number, number][] = [
-  [0, 5], [1, 5], [2, 5], [3, 5], [4, 5], [5, 5],
-  [5, 4], [5, 3], [5, 2], [5, 1], [5, 0],
-  [4, 0], [3, 0], [2, 0], [1, 0], [0, 0],
-  [0, 1], [0, 2], [0, 3], [0, 4],
+  [0, 5],
+  [1, 5],
+  [2, 5],
+  [3, 5],
+  [4, 5],
+  [5, 5],
+  [5, 4],
+  [5, 3],
+  [5, 2],
+  [5, 1],
+  [5, 0],
+  [4, 0],
+  [3, 0],
+  [2, 0],
+  [1, 0],
+  [0, 0],
+  [0, 1],
+  [0, 2],
+  [0, 3],
+  [0, 4],
 ];
 /** Where each face's pips sit, on a 3x3 grid (0..2). */
 const PIPS: Record<number, [number, number][]> = {
   1: [[1, 1]],
-  2: [[0, 0], [2, 2]],
-  3: [[0, 0], [1, 1], [2, 2]],
-  4: [[0, 0], [2, 0], [0, 2], [2, 2]],
-  5: [[0, 0], [2, 0], [1, 1], [0, 2], [2, 2]],
-  6: [[0, 0], [2, 0], [0, 1], [2, 1], [0, 2], [2, 2]],
+  2: [
+    [0, 0],
+    [2, 2],
+  ],
+  3: [
+    [0, 0],
+    [1, 1],
+    [2, 2],
+  ],
+  4: [
+    [0, 0],
+    [2, 0],
+    [0, 2],
+    [2, 2],
+  ],
+  5: [
+    [0, 0],
+    [2, 0],
+    [1, 1],
+    [0, 2],
+    [2, 2],
+  ],
+  6: [
+    [0, 0],
+    [2, 0],
+    [0, 1],
+    [2, 1],
+    [0, 2],
+    [2, 2],
+  ],
 };
 /** The cube turn that brings each face to the top-front. */
-const FACE_TURN: Record<number, [number, number]> = { 1: [0, 0], 2: [0, -90], 3: [-90, 0], 4: [90, 0], 5: [0, 90], 6: [180, 0] };
+const FACE_TURN: Record<number, [number, number]> = {
+  1: [0, 0],
+  2: [0, -90],
+  3: [-90, 0],
+  4: [90, 0],
+  5: [0, 90],
+  6: [180, 0],
+};
 
 export function GameOpening(p: OpeningProps) {
   const c = p.design.palette;
@@ -78,8 +135,20 @@ export function GameOpening(p: OpeningProps) {
       cast.current?.celebrate();
       const r = boardRef.current?.getBoundingClientRect();
       if (r) {
-        burstSet(p.hostRef.current, r.left + r.width * 0.3, r.top + r.height * 0.35, p.iconSet, { colors: [c.cranberry!, c.butter!, c.mint!, c.sky!], count: 16, spread: 1.4, up: true, gravity: 0.7 });
-        burstSet(p.hostRef.current, r.left + r.width * 0.7, r.top + r.height * 0.35, p.iconSet, { colors: [c.cranberry!, c.butter!, c.mint!, c.sky!], count: 16, spread: 1.4, up: true, gravity: 0.7 });
+        burstSet(p.hostRef.current, r.left + r.width * 0.3, r.top + r.height * 0.35, p.iconSet, {
+          colors: [c.cranberry!, c.butter!, c.mint!, c.sky!],
+          count: 16,
+          spread: 1.4,
+          up: true,
+          gravity: 0.7,
+        });
+        burstSet(p.hostRef.current, r.left + r.width * 0.7, r.top + r.height * 0.35, p.iconSet, {
+          colors: [c.cranberry!, c.butter!, c.mint!, c.sky!],
+          count: 16,
+          spread: 1.4,
+          up: true,
+          gravity: 0.7,
+        });
       }
     }
     if (beat === 4) p.onOpen();
@@ -99,28 +168,53 @@ export function GameOpening(p: OpeningProps) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [p.autoplay, p.paused]);
 
-  const cell = (col: number, row: number) => ({ left: `${(col / 6) * 100}%`, top: `${(row / 6) * 100}%`, width: `${100 / 6}%`, height: `${100 / 6}%` });
+  const cell = (col: number, row: number) => ({
+    left: `${(col / 6) * 100}%`,
+    top: `${(row / 6) * 100}%`,
+    width: `${100 / 6}%`,
+    height: `${100 / 6}%`,
+  });
   const square = TRACK[Math.min(at, TRACK.length - 1)]!;
   const colors = [c.cranberry!, c.butter!, c.mint!, c.sky!];
 
   return (
     <div className="relative flex w-full flex-col items-center">
-      <Layer depth={10} className="relative" style={{ width: "min(80cqi, 350px)", aspectRatio: "1" }}>
-        <Object3D pose={{ x: 34, y: 0, z: -8 }} strength={8} settle={beat >= 3} className="absolute inset-0">
-          <div className="absolute inset-0" style={{ transform: "translateZ(-14px)", transformStyle: "preserve-3d" }}>
+      <Layer
+        depth={10}
+        className="relative"
+        style={{ width: "min(80cqi, 350px)", aspectRatio: "1" }}
+      >
+        <Object3D
+          pose={{ x: 34, y: 0, z: -8 }}
+          strength={8}
+          settle={beat >= 3}
+          className="absolute inset-0"
+        >
+          <div
+            className="absolute inset-0"
+            style={{ transform: "translateZ(-14px)", transformStyle: "preserve-3d" }}
+          >
             <FloorShadow tint="20,25,45" depth={6} radius={22} className="inset-0" />
           </div>
           <div className="absolute inset-0" style={{ transformStyle: "preserve-3d" }}>
             <Extrude depth={12} color={c.navy!} edge="#151E3D" radius={22} slices={5} />
           </div>
-          <div ref={boardRef} className="absolute inset-0 overflow-hidden rounded-[22px]" style={{ background: c.cream, boxShadow: `${rim(0.8)}, ${elevation(0.35, "20,25,45", 0.6)}` }}>
+          <div
+            ref={boardRef}
+            className="absolute inset-0 overflow-hidden rounded-[22px]"
+            style={{
+              background: c.cream,
+              boxShadow: `${rim(0.8)}, ${elevation(0.35, "20,25,45", 0.6)}`,
+            }}
+          >
             <Texture material="card" opacity={0.5} />
             {TRACK.map(([col, row], i) => (
               <span key={i} className="absolute p-[3px]" style={cell(col, row)}>
                 <span
                   className="grid size-full place-items-center rounded-[8px] text-[clamp(10px,3.4cqi,15px)]"
                   style={{
-                    background: i === goal ? c.butter : `${colors[i % colors.length]}${i % 2 ? "cc" : "99"}`,
+                    background:
+                      i === goal ? c.butter : `${colors[i % colors.length]}${i % 2 ? "cc" : "99"}`,
                     boxShadow: "inset 0 -3px 0 rgba(0,0,0,.14), inset 0 1px 0 rgba(255,255,255,.5)",
                     color: c.navy,
                   }}
@@ -130,19 +224,36 @@ export function GameOpening(p: OpeningProps) {
               </span>
             ))}
             {/* The middle of the board: the greeting, printed on it */}
-            <div className="absolute inset-[18%] flex items-start justify-center rounded-[14px] px-[8%] pt-[7%] text-center" style={{ background: c.navy, color: c.cream, boxShadow: "inset 0 2px 6px rgba(0,0,0,.35)" }}>
+            <div
+              className="absolute inset-[18%] flex items-start justify-center rounded-[14px] px-[8%] pt-[7%] text-center"
+              style={{
+                background: c.navy,
+                color: c.cream,
+                boxShadow: "inset 0 2px 6px rgba(0,0,0,.35)",
+              }}
+            >
               <div>
-                <span className="block text-[10px] tracking-[0.24em] uppercase opacity-70" style={{ fontFamily: "var(--jb-text)" }}>
+                <span
+                  className="block text-[10px] tracking-[0.24em] uppercase opacity-70"
+                  style={{ fontFamily: "var(--jb-text)" }}
+                >
                   {p.badge}
                 </span>
-                <Greeting text={p.greeting} className="mt-2 text-[clamp(1.2rem,6.4cqi,1.9rem)]" style={{ fontWeight: 400, letterSpacing: "0.01em", color: c.butter }} />
+                <Greeting
+                  text={p.greeting}
+                  className="mt-2 text-[clamp(1.2rem,6.4cqi,1.9rem)]"
+                  style={{ fontWeight: 400, letterSpacing: "0.01em", color: c.butter }}
+                />
               </div>
             </div>
             <Sheen strength={0.35} angle={115} width={20} />
             {/* The token, hopping square to square */}
             <motion.span
               className="absolute z-[3] grid place-items-center"
-              animate={{ left: cell(square[0], square[1]).left, top: cell(square[0], square[1]).top }}
+              animate={{
+                left: cell(square[0], square[1]).left,
+                top: cell(square[0], square[1]).top,
+              }}
               transition={{ type: "spring", stiffness: 520, damping: 26 }}
               style={{ width: `${100 / 6}%`, height: `${100 / 6}%` }}
             >
@@ -152,25 +263,67 @@ export function GameOpening(p: OpeningProps) {
                 initial={{ y: rolled ? -14 : 0, scale: rolled ? 1.12 : 1 }}
                 animate={{ y: 0, scale: 1 }}
                 transition={SPRING.snappy}
-                style={{ background: `radial-gradient(circle at 34% 28%, #fff7, ${c.cranberry} 45%, #8E1D18)`, boxShadow: "0 4px 6px rgba(20,25,45,.35), inset 0 -2px 3px rgba(0,0,0,.25)" }}
+                style={{
+                  background: `radial-gradient(circle at 34% 28%, #fff7, ${c.cranberry} 45%, #8E1D18)`,
+                  boxShadow: "0 4px 6px rgba(20,25,45,.35), inset 0 -2px 3px rgba(0,0,0,.25)",
+                }}
               />
             </motion.span>
           </div>
 
           {/* The dice: real CSS cubes, lifted off the board */}
-          <div className="absolute inset-0" style={{ transformStyle: "preserve-3d", transform: "translateZ(30px)" }}>
-            <Die value={faces[0]} rolled={rolled} landed={beat >= 1} from={{ x: -90, y: 90 }} to={{ x: -38, y: 52 }} spin={[720, 360]} color={c.cream!} pip={c.cranberry!} onRoll={roll} label="Roll the dice" interactive={p.interactive && !rolled && !p.paused} />
-            <Die value={faces[1]} rolled={rolled} landed={beat >= 1} from={{ x: 90, y: 100 }} to={{ x: 40, y: 60 }} spin={[-360, 720]} color={c.butter!} pip={c.navy!} onRoll={roll} label="Roll the dice" interactive={p.interactive && !rolled && !p.paused} />
+          <div
+            className="absolute inset-0"
+            style={{ transformStyle: "preserve-3d", transform: "translateZ(30px)" }}
+          >
+            <Die
+              value={faces[0]}
+              rolled={rolled}
+              landed={beat >= 1}
+              from={{ x: -90, y: 90 }}
+              to={{ x: -38, y: 52 }}
+              spin={[720, 360]}
+              color={c.cream!}
+              pip={c.cranberry!}
+              onRoll={roll}
+              label="Roll the dice"
+              interactive={p.interactive && !rolled && !p.paused}
+            />
+            <Die
+              value={faces[1]}
+              rolled={rolled}
+              landed={beat >= 1}
+              from={{ x: 90, y: 100 }}
+              to={{ x: 40, y: 60 }}
+              spin={[-360, 720]}
+              color={c.butter!}
+              pip={c.navy!}
+              onRoll={roll}
+              label="Roll the dice"
+              interactive={p.interactive && !rolled && !p.paused}
+            />
           </div>
         </Object3D>
 
         <div className="absolute -right-[12%] bottom-[-10%] z-[4]">
-          <Character ref={cast} setting={p.character} accessory={p.accessory} size={84} live={!p.paused} showName={false} />
+          <Character
+            ref={cast}
+            setting={p.character}
+            accessory={p.accessory}
+            size={84}
+            live={!p.paused}
+            showName={false}
+          />
         </div>
       </Layer>
 
       <div className="mt-[min(10cqi,44px)] h-11">
-        <FallbackButton onClick={roll} color={c.navy!} ink={c.navy!} hidden={rolled || !p.interactive || p.paused}>
+        <FallbackButton
+          onClick={roll}
+          color={c.navy!}
+          ink={c.navy!}
+          hidden={rolled || !p.interactive || p.paused}
+        >
           {p.buttonText}
         </FallbackButton>
       </div>
@@ -220,7 +373,11 @@ function Die({
     if (!rolled) return;
     void animate(x, to.x, { type: "spring", stiffness: 70, damping: 12 });
     void animate(y, to.y, { type: "spring", stiffness: 70, damping: 12 });
-    void animate(lift, [0, 1, 0.15, 0.4, 0], { duration: 1, times: [0, 0.3, 0.6, 0.78, 1], ease: "easeOut" });
+    void animate(lift, [0, 1, 0.15, 0.4, 0], {
+      duration: 1,
+      times: [0, 0.3, 0.6, 0.78, 1],
+      ease: "easeOut",
+    });
     void animate(rx, target[0] + spin[0], { type: "spring", stiffness: 40, damping: 11 });
     void animate(ry, target[1] + spin[1], { type: "spring", stiffness: 40, damping: 11 });
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -239,15 +396,47 @@ function Die({
     >
       {Array.from({ length: 9 }, (_, i) => {
         const on = (PIPS[n] ?? []).some(([px, py]) => px + py * 3 === i);
-        return <span key={i} className="m-auto block size-[70%] rounded-full" style={{ background: on ? `radial-gradient(circle at 40% 35%, ${pip}aa, ${pip})` : "transparent", boxShadow: on ? "inset 0 1px 2px rgba(0,0,0,.4)" : undefined }} />;
+        return (
+          <span
+            key={i}
+            className="m-auto block size-[70%] rounded-full"
+            style={{
+              background: on
+                ? `radial-gradient(circle at 40% 35%, ${pip}aa, ${pip})`
+                : "transparent",
+              boxShadow: on ? "inset 0 1px 2px rgba(0,0,0,.4)" : undefined,
+            }}
+          />
+        );
       })}
     </span>
   );
   const half = `calc(${size} / 2)`;
 
   return (
-    <motion.div className="absolute top-1/2 left-1/2" style={{ x, y, width: size, height: size, marginLeft: `calc(${size} / -2)`, marginTop: `calc(${size} / -2)`, transformStyle: "preserve-3d" }}>
-      <motion.span aria-hidden="true" className="absolute inset-[6%] rounded-[30%]" style={{ background: "rgba(20,25,45,.5)", filter: "blur(6px)", transform: "translateZ(-30px) translate(8px, 10px)", scale: shadowScale, opacity: shadowOpacity }} />
+    <motion.div
+      className="absolute top-1/2 left-1/2"
+      style={{
+        x,
+        y,
+        width: size,
+        height: size,
+        marginLeft: `calc(${size} / -2)`,
+        marginTop: `calc(${size} / -2)`,
+        transformStyle: "preserve-3d",
+      }}
+    >
+      <motion.span
+        aria-hidden="true"
+        className="absolute inset-[6%] rounded-[30%]"
+        style={{
+          background: "rgba(20,25,45,.5)",
+          filter: "blur(6px)",
+          transform: "translateZ(-30px) translate(8px, 10px)",
+          scale: shadowScale,
+          opacity: shadowOpacity,
+        }}
+      />
       <motion.button
         type="button"
         aria-label={label}

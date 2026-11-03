@@ -19,10 +19,20 @@ export default defineTheme({
   effects: ["sparks", "dust"],
   sound: "capiz",
   slots: ["recipient", "monogram"],
-  palette: { background: "#111833", ink: "#F6EEDC", surface: "#F6EEDC", accent: "#E8B04B", accent2: "#C8453B" },
+  palette: {
+    background: "#111833",
+    ink: "#F6EEDC",
+    surface: "#F6EEDC",
+    accent: "#E8B04B",
+    accent2: "#C8453B",
+  },
   fonts: {
     display: { family: '"Young Serif", Georgia, serif', source: "google", query: "Young+Serif" },
-    text: { family: '"DM Sans", system-ui, sans-serif', source: "google", query: "DM+Sans:wght@400;500;700" },
+    text: {
+      family: '"DM Sans", system-ui, sans-serif',
+      source: "google",
+      query: "DM+Sans:wght@400;500;700",
+    },
   },
   categories: ["Holidays"],
   regions: { available: ["global"], featured: ["PH"] },
@@ -32,10 +42,23 @@ export default defineTheme({
   occasion: {
     defaultFormat: "scrapbook",
     sections: ["letters", "photobooth", "songs", "voice"],
-    prompts: ["occasion.parol.prompt1", "occasion.parol.prompt2", "occasion.parol.prompt3", "occasion.parol.prompt4"],
+    prompts: [
+      "occasion.parol.prompt1",
+      "occasion.parol.prompt2",
+      "occasion.parol.prompt3",
+      "occasion.parol.prompt4",
+    ],
     heading: "occasion.parol.heading",
     greeting: "occasion.parol.greeting",
   },
-  strings: ["theme.parol.hint", "theme.parol.lightAll", "theme.parol.night", "theme.parol.before", "theme.parol.next", "theme.parol.allLit", "theme.parol.simbangOption"],
+  strings: [
+    "theme.parol.hint",
+    "theme.parol.lightAll",
+    "theme.parol.night",
+    "theme.parol.before",
+    "theme.parol.next",
+    "theme.parol.allLit",
+    "theme.parol.simbangOption",
+  ],
   status: "live",
 });

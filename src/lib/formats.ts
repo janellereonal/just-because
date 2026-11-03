@@ -4,7 +4,18 @@
  * Which plans can use which format lives in src/config/pricing.ts.
  */
 import { isFlagOn, type FlagName } from "@/config/flags";
-export const FORMAT_IDS = ["scrapbook", "comic", "bento", "hunt", "zine", "storybook", "mixtape", "scratch", "stars", "handwritten"] as const;
+export const FORMAT_IDS = [
+  "scrapbook",
+  "comic",
+  "bento",
+  "hunt",
+  "zine",
+  "storybook",
+  "mixtape",
+  "scratch",
+  "stars",
+  "handwritten",
+] as const;
 export type GiftFormat = (typeof FORMAT_IDS)[number];
 
 export type FormatInfo = {
@@ -96,7 +107,8 @@ export const FORMATS: FormatInfo[] = [
     id: "handwritten",
     title: "Handwritten",
     copy: "A notebook of notes and doodles",
-    about: "Every friend writes in their own hand, on lined pages and sticky notes, with doodles that draw themselves in.",
+    about:
+      "Every friend writes in their own hand, on lined pages and sticky notes, with doodles that draw themselves in.",
     usesIntro: true,
     isNew: true,
     flag: "handwrittenFormat",

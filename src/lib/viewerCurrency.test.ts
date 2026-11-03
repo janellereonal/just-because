@@ -11,7 +11,10 @@ describe("detectViewerMoney", () => {
     expect(detectViewerMoney("Asia/Dubai", ["fil-PH"]).local).toBe(true);
   });
   test("abroad, the browser region picks the currency", () => {
-    expect(detectViewerMoney("Europe/London", ["en-GB"])).toEqual({ local: false, currency: "GBP" });
+    expect(detectViewerMoney("Europe/London", ["en-GB"])).toEqual({
+      local: false,
+      currency: "GBP",
+    });
     expect(detectViewerMoney("Europe/Berlin", ["de-DE"]).currency).toBe("EUR");
     expect(detectViewerMoney("Asia/Dubai", ["ar-AE"]).currency).toBe("AED");
   });
@@ -20,7 +23,10 @@ describe("detectViewerMoney", () => {
   });
   test("unknown regions and junk fall back to dollars", () => {
     expect(detectViewerMoney("America/Sao_Paulo", ["pt-BR"]).currency).toBe("USD");
-    expect(detectViewerMoney(undefined, ["not a tag!!"])).toEqual({ local: false, currency: "USD" });
+    expect(detectViewerMoney(undefined, ["not a tag!!"])).toEqual({
+      local: false,
+      currency: "USD",
+    });
     expect(currencyForRegion(null)).toBe("USD");
   });
 });

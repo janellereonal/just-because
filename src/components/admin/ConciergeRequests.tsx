@@ -28,14 +28,21 @@ type Row = {
 /** Admin only: concierge beta requests, newest first, with a status you move along by hand. */
 export function ConciergeRequests() {
   const queryClient = useQueryClient();
-  const { data = [], isLoading } = useQuery({ queryKey: ["concierge"], queryFn: async () => (await listConciergeRequests()) as unknown as Row[] });
+  const { data = [], isLoading } = useQuery({
+    queryKey: ["concierge"],
+    queryFn: async () => (await listConciergeRequests()) as unknown as Row[],
+  });
   const open = data.filter((r) => r.status !== "done").length;
   return (
     <section id="concierge" className="mx-auto max-w-6xl px-5 pt-14">
       <p className="font-mono text-[11px] tracking-[0.18em] text-accent uppercase">Admin</p>
       <h2 className="mt-2 font-display text-3xl font-medium tracking-tight">Concierge requests</h2>
       <p className="mt-2 text-sm text-muted">
-        {isLoading ? "Loading…" : data.length === 0 ? "No requests yet." : `${data.length} in total, ${open} still open. We promised a reply within 24 hours.`}
+        {isLoading
+          ? "Loading…"
+          : data.length === 0
+            ? "No requests yet."
+            : `${data.length} in total, ${open} still open. We promised a reply within 24 hours.`}
       </p>
       <div className="mt-5 space-y-3">
         {data.map((r) => (
@@ -46,7 +53,8 @@ export function ConciergeRequests() {
                   {r.recipient} · {r.occasion}
                 </p>
                 <p className="mt-0.5 text-xs text-muted">
-                  Needed by {r.deadline} ({r.time_zone}) · about {r.friends} friends · asked {new Date(r.created_at).toLocaleString()}
+                  Needed by {r.deadline} ({r.time_zone}) · about {r.friends} friends · asked{" "}
+                  {new Date(r.created_at).toLocaleString()}
                 </p>
               </div>
               <select
@@ -68,11 +76,17 @@ export function ConciergeRequests() {
               </select>
             </div>
             <p className="mt-2 text-sm">
-              {r.organiser || "Someone"} {r.organiser_email ? `(${r.organiser_email})` : ""} · reach them at <span className="font-medium">{r.contact}</span>
+              {r.organiser || "Someone"} {r.organiser_email ? `(${r.organiser_email})` : ""} · reach
+              them at <span className="font-medium">{r.contact}</span>
             </p>
-            {r.notes ? <p className="mt-2 text-sm whitespace-pre-line text-muted">{r.notes}</p> : null}
+            {r.notes ? (
+              <p className="mt-2 text-sm whitespace-pre-line text-muted">{r.notes}</p>
+            ) : null}
             {r.site_id ? (
-              <a href={`/sites/${r.site_id}`} className="mt-2 inline-block text-sm text-accent underline underline-offset-2">
+              <a
+                href={`/sites/${r.site_id}`}
+                className="mt-2 inline-block text-sm text-accent underline underline-offset-2"
+              >
                 Open their gift
               </a>
             ) : null}

@@ -21,7 +21,8 @@ export function scrub(text: string): string {
 
 export function reportClientError(error: unknown, where = "window") {
   if (typeof window === "undefined" || sent >= MAX_REPORTS) return;
-  const e = error instanceof Error ? error : new Error(typeof error === "string" ? error : "Unknown error");
+  const e =
+    error instanceof Error ? error : new Error(typeof error === "string" ? error : "Unknown error");
   const message = scrub(e.message || String(error));
   const key = `${where}:${message}`;
   if (seen.has(key)) return;
@@ -35,11 +36,17 @@ export function reportClientError(error: unknown, where = "window") {
     ua: navigator.userAgent.slice(0, 160),
   });
   try {
-    if (navigator.sendBeacon?.(`/api/client-error`, new Blob([body], { type: "application/json" }))) return;
+    if (navigator.sendBeacon?.(`/api/client-error`, new Blob([body], { type: "application/json" })))
+      return;
   } catch {
     /* fall through */
   }
-  void fetch("/api/client-error", { method: "POST", body, headers: { "content-type": "application/json" }, keepalive: true }).catch(() => {});
+  void fetch("/api/client-error", {
+    method: "POST",
+    body,
+    headers: { "content-type": "application/json" },
+    keepalive: true,
+  }).catch(() => {});
 }
 
 /** Listens for uncaught errors and rejected promises. Call once, in the browser. */

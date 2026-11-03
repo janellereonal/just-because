@@ -63,7 +63,12 @@ export function photoSlots(win: Rect, count: number, gap = 14): Rect[] {
   if (count <= 1) return [win];
   const w = (win.w - gap) / 2;
   const h = (win.h - gap) / 2;
-  return [0, 1, 2, 3].map((i) => ({ x: win.x + (i % 2) * (w + gap), y: win.y + Math.floor(i / 2) * (h + gap), w, h }));
+  return [0, 1, 2, 3].map((i) => ({
+    x: win.x + (i % 2) * (w + gap),
+    y: win.y + Math.floor(i / 2) * (h + gap),
+    w,
+    h,
+  }));
 }
 
 /** Source crop so an image covers a rect without stretching (centred, like object-fit: cover). */
@@ -118,7 +123,8 @@ export function fitMessage(
   }
   if (lines.length < maxLines && line) lines.push(line);
   const last = lines.length - 1;
-  if (last >= 0 && words.join(" ") !== lines.join(" ")) lines[last] = `${lines[last]!.replace(/\s*\S+$/, "")}…`;
+  if (last >= 0 && words.join(" ") !== lines.join(" "))
+    lines[last] = `${lines[last]!.replace(/\s*\S+$/, "")}…`;
   return { lines: lines.slice(0, maxLines), size: min };
 }
 
@@ -203,7 +209,11 @@ export function drawBooth(ctx: CanvasRenderingContext2D, input: DrawInput) {
     if (!img || !size) return;
     const c = coverCrop(size.w, size.h, slot);
     ctx.save();
-    roundRect(ctx, slot, frame === "confetti" || frame === "hearts" ? 28 : frame === "film" ? 10 : 4);
+    roundRect(
+      ctx,
+      slot,
+      frame === "confetti" || frame === "hearts" ? 28 : frame === "film" ? 10 : 4,
+    );
     ctx.clip();
     ctx.drawImage(img, c.sx, c.sy, c.sw, c.sh, slot.x, slot.y, slot.w, slot.h);
     ctx.restore();
@@ -238,8 +248,10 @@ export function drawBooth(ctx: CanvasRenderingContext2D, input: DrawInput) {
     // Only around the edges: never over the photo or the message.
     const box = messageBox(frame);
     const clear = (x: number, y: number) => {
-      const inWin = x > win.x - 14 && x < win.x + win.w + 14 && y > win.y - 14 && y < win.y + win.h + 14;
-      const inMsg = x > box.x - 20 && x < box.x + box.w + 20 && y > box.y - 10 && y < box.y + box.h + 10;
+      const inWin =
+        x > win.x - 14 && x < win.x + win.w + 14 && y > win.y - 14 && y < win.y + win.h + 14;
+      const inMsg =
+        x > box.x - 20 && x < box.x + box.w + 20 && y > box.y - 10 && y < box.y + box.h + 10;
       return !inWin && !inMsg;
     };
     for (let i = 0, tries = 0; i < 90 && tries < 4000; tries += 1) {
@@ -270,8 +282,15 @@ export function drawBooth(ctx: CanvasRenderingContext2D, input: DrawInput) {
   }
   if (frame === "hearts") {
     const spots = [
-      [70, 70, 70], [W - 80, 60, 56], [W - 60, 520, 44], [40, 640, 52], [W - 110, 1000, 74],
-      [120, 1010, 46], [W / 2, 40, 40], [250, 52, 30], [W - 260, 1060, 34],
+      [70, 70, 70],
+      [W - 80, 60, 56],
+      [W - 60, 520, 44],
+      [40, 640, 52],
+      [W - 110, 1000, 74],
+      [120, 1010, 46],
+      [W / 2, 40, 40],
+      [250, 52, 30],
+      [W - 260, 1060, 34],
     ];
     spots.forEach(([x, y, s], i) => {
       ctx.save();

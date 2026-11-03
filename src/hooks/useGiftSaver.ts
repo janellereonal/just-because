@@ -62,11 +62,15 @@ export function useGiftSaver(id: string, site: GiftSite | null | undefined) {
   /** Unsaved fields the editor changed by itself, not typed (sent as `soft`). */
   const softKeys = useRef<Set<string>>(new Set());
 
-  const unsavedKeys = () => (draftRef.current ? changedKeys(flatOf(draftRef.current), sent.current) : []);
+  const unsavedKeys = () =>
+    draftRef.current ? changedKeys(flatOf(draftRef.current), sent.current) : [];
 
   const refresh = useCallback(() => {
     if (conflict.current) setState("conflict");
-    else if (failing.current) setState(typeof navigator !== "undefined" && navigator.onLine === false ? "offline" : "retrying");
+    else if (failing.current)
+      setState(
+        typeof navigator !== "undefined" && navigator.onLine === false ? "offline" : "retrying",
+      );
     else if (inFlight.current || unsavedKeys().length) setState("saving");
     else setState("saved");
   }, []);
@@ -91,7 +95,10 @@ export function useGiftSaver(id: string, site: GiftSite | null | undefined) {
    * `sentFlat` is what the screen held when it sent them.
    */
   const absorb = useCallback(
-    (fresh: GiftSite, opts: { saved?: ReadonlySet<string>; sentFlat?: Flat; quiet?: boolean } = {}) => {
+    (
+      fresh: GiftSite,
+      opts: { saved?: ReadonlySet<string>; sentFlat?: Flat; quiet?: boolean } = {},
+    ) => {
       const current = draftRef.current;
       if (!current) return;
       if (version.current && fresh.updated_at && fresh.updated_at < version.current) return;
@@ -99,7 +106,13 @@ export function useGiftSaver(id: string, site: GiftSite | null | undefined) {
       const saved = new Set(opts.saved ?? []);
       const derived = DERIVED.some((k) => saved.has(k)) || saved.has("occasion");
       if (derived) for (const k of DERIVED) saved.add(k);
-      const r = rebase({ draft: flatOf(current), sent: sent.current, known: known.current, server, saved });
+      const r = rebase({
+        draft: flatOf(current),
+        sent: sent.current,
+        known: known.current,
+        server,
+        saved,
+      });
       // A style picks its own layout on the server: show the server's unless it was changed again since.
       if (derived && opts.sentFlat) {
         for (const k of DERIVED) {
@@ -138,7 +151,10 @@ export function useGiftSaver(id: string, site: GiftSite | null | undefined) {
       // Blank values go as null, so every changed field has a base the server can check.
       const base = toPatch(keys, known.current);
       // A value still on its way counts as a base too (a keepalive save can overtake it).
-      const alt = toPatch(keys.filter((k) => k in inFlightFlat.current), inFlightFlat.current);
+      const alt = toPatch(
+        keys.filter((k) => k in inFlightFlat.current),
+        inFlightFlat.current,
+      );
       const soft = keys.filter((k) => softKeys.current.has(k));
       if (keepalive) {
         const sig = JSON.stringify(patch);
@@ -171,7 +187,10 @@ export function useGiftSaver(id: string, site: GiftSite | null | undefined) {
         for (const k of keys) if (same(now[k], flat[k])) softKeys.current.delete(k);
         // Soft fields the server skipped (changed elsewhere) aren't "saved": the rebase pulls the server's value in.
         const skipped = new Set(res.skipped ?? []);
-        absorb(normalizeSite(res.site as Record<string, unknown>), { saved: new Set(keys.filter((k) => !skipped.has(k))), sentFlat: flat });
+        absorb(normalizeSite(res.site as Record<string, unknown>), {
+          saved: new Set(keys.filter((k) => !skipped.has(k))),
+          sentFlat: flat,
+        });
         void queryClient.invalidateQueries({ queryKey: ["my-sites"] });
         return "ok";
       } catch (err) {
@@ -195,7 +214,12 @@ export function useGiftSaver(id: string, site: GiftSite | null | undefined) {
           setFlat(sent.current, k, known.current[k]);
           softKeys.current.delete(k);
         }
-        show(applyFlat(draftRef.current as unknown as Record<string, unknown>, back) as unknown as GiftSite);
+        show(
+          applyFlat(
+            draftRef.current as unknown as Record<string, unknown>,
+            back,
+          ) as unknown as GiftSite,
+        );
         toast.error(message && message.length < 160 ? message : SAVE_COPY.rejected);
         return "rejected";
       } finally {
@@ -219,29 +243,32 @@ export function useGiftSaver(id: string, site: GiftSite | null | undefined) {
    * Saves now (or right after the save already on its way). Resolves when this round is done.
    * `keepalive`: the request survives the page closing.
    */
-  const run = useCallback((keepalive = false): Promise<Outcome> => {
-    if (timer.current) {
-      window.clearTimeout(timer.current);
-      timer.current = null;
-    }
-    if (inFlight.current) {
-      again.current = true;
-      return inFlight.current;
-    }
-    const p = send(keepalive).then((outcome) => {
-      inFlight.current = null;
-      if (outcome === "retry") scheduleRetry();
-      else if (again.current || (outcome === "ok" && unsavedKeys().length)) {
-        again.current = false;
-        timer.current = window.setTimeout(() => void runRef.current(), 0);
+  const run = useCallback(
+    (keepalive = false): Promise<Outcome> => {
+      if (timer.current) {
+        window.clearTimeout(timer.current);
+        timer.current = null;
       }
+      if (inFlight.current) {
+        again.current = true;
+        return inFlight.current;
+      }
+      const p = send(keepalive).then((outcome) => {
+        inFlight.current = null;
+        if (outcome === "retry") scheduleRetry();
+        else if (again.current || (outcome === "ok" && unsavedKeys().length)) {
+          again.current = false;
+          timer.current = window.setTimeout(() => void runRef.current(), 0);
+        }
+        refresh();
+        return outcome;
+      });
+      inFlight.current = p;
       refresh();
-      return outcome;
-    });
-    inFlight.current = p;
-    refresh();
-    return p;
-  }, [refresh, scheduleRetry, send]);
+      return p;
+    },
+    [refresh, scheduleRetry, send],
+  );
   const runRef = useRef(run);
   runRef.current = run;
 
@@ -250,7 +277,10 @@ export function useGiftSaver(id: string, site: GiftSite | null | undefined) {
    * `soft`: flat keys (`custom_text.heading`, `title`...) this change makes by itself, not typed.
    */
   const setDraft = useCallback(
-    (update: (prev: GiftSite | null) => GiftSite | null, opts: { soft?: readonly string[] | undefined } = {}) => {
+    (
+      update: (prev: GiftSite | null) => GiftSite | null,
+      opts: { soft?: readonly string[] | undefined } = {},
+    ) => {
       const prev = draftRef.current;
       const next = update(prev);
       if (!next || next === prev) return;
@@ -384,13 +414,16 @@ export function useGiftSaver(id: string, site: GiftSite | null | undefined) {
       if (inFlight.current) again.current = true;
       else void runRef.current(true);
     },
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+
     [],
   );
 
   /** Something typed here isn't on the server and can't get there by itself (offline, failing, or changed elsewhere). */
   const atRisk = useCallback(
-    () => conflict.current || (unsavedKeys().length > 0 && (failing.current || (typeof navigator !== "undefined" && navigator.onLine === false))),
+    () =>
+      conflict.current ||
+      (unsavedKeys().length > 0 &&
+        (failing.current || (typeof navigator !== "undefined" && navigator.onLine === false))),
     [],
   );
 

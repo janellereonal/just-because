@@ -14,11 +14,34 @@ import { Greeting, type OpeningProps } from "@/themes/_shared/opening";
 import type { ThemePalette } from "@/themes/_shared/design";
 import { FallbackButton, Layer, SPRING, useHaptics } from "@/themes/_shared/stage";
 import { burstSet } from "@/themes/_shared/Sprinkles";
-import { Extrude, FaceLight, FloorShadow, LightShaft, Object3D, TEXTURE, Texture, rim } from "@/themes/_shared/light";
+import {
+  Extrude,
+  FaceLight,
+  FloorShadow,
+  LightShaft,
+  Object3D,
+  TEXTURE,
+  Texture,
+  rim,
+} from "@/themes/_shared/light";
 import { useTilt } from "@/themes/_shared/stage";
 import { foley, melody } from "@/lib/play";
 
-const WORDS = ["", "One", "Two", "Three", "Four", "Five", "Six", "Seven", "Eight", "Nine", "Ten", "Eleven", "Twelve"];
+const WORDS = [
+  "",
+  "One",
+  "Two",
+  "Three",
+  "Four",
+  "Five",
+  "Six",
+  "Seven",
+  "Eight",
+  "Nine",
+  "Ten",
+  "Eleven",
+  "Twelve",
+];
 
 /** "Ten years, Liz" → 10, "Our 25th" → 25. Falls back to 3. */
 function yearsFrom(...texts: string[]) {
@@ -79,12 +102,17 @@ export function AnniversaryOpening(p: OpeningProps) {
       spin.set(spin.get() + speed * dt);
       raf = requestAnimationFrame(tick);
     };
-    const start = window.setTimeout(() => {
-      raf = requestAnimationFrame(tick);
-      melody([523, 659, 784, 659, 698, 880, 784, 0, 659, 587, 523], 0.32, "sine", 0.045);
-      cast.current?.idle();
-    }, p.reduced ? 0 : 450);
-    const timers = [...counts, 0].map((_, i) => window.setTimeout(() => setStep(i + 1), (p.reduced ? 0 : 900) + i * (p.reduced ? 0 : 420)));
+    const start = window.setTimeout(
+      () => {
+        raf = requestAnimationFrame(tick);
+        melody([523, 659, 784, 659, 698, 880, 784, 0, 659, 587, 523], 0.32, "sine", 0.045);
+        cast.current?.idle();
+      },
+      p.reduced ? 0 : 450,
+    );
+    const timers = [...counts, 0].map((_, i) =>
+      window.setTimeout(() => setStep(i + 1), (p.reduced ? 0 : 900) + i * (p.reduced ? 0 : 420)),
+    );
     return () => {
       window.clearTimeout(start);
       timers.forEach(window.clearTimeout);
@@ -97,7 +125,12 @@ export function AnniversaryOpening(p: OpeningProps) {
     if (!done) return;
     cast.current?.celebrate();
     const r = p.hostRef.current?.getBoundingClientRect();
-    if (r) burstSet(p.hostRef.current, r.left + r.width / 2, r.top + r.height * 0.3, p.iconSet, { colors: [c.champagne!, c.glow!, "#fff"], count: 22, spread: 1.6 });
+    if (r)
+      burstSet(p.hostRef.current, r.left + r.width / 2, r.top + r.height * 0.3, p.iconSet, {
+        colors: [c.champagne!, c.glow!, "#fff"],
+        count: 22,
+        spread: 1.6,
+      });
     h.success();
     const t = window.setTimeout(p.onOpen, p.reduced ? 400 : 1600);
     return () => window.clearTimeout(t);
@@ -152,9 +185,18 @@ export function AnniversaryOpening(p: OpeningProps) {
   return (
     <div className="relative flex w-full flex-col items-center">
       {/* Warm lamp light that comes up with the music */}
-      <motion.div className="pointer-events-none absolute -inset-[40%]" style={{ opacity: glow, background: `radial-gradient(40% 35% at 50% 45%, ${c.glow}66, transparent 70%)` }} />
+      <motion.div
+        className="pointer-events-none absolute -inset-[40%]"
+        style={{
+          opacity: glow,
+          background: `radial-gradient(40% 35% at 50% 45%, ${c.glow}66, transparent 70%)`,
+        }}
+      />
 
-      <div className="relative z-[3] flex h-[clamp(70px,22cqi,128px)] items-end justify-center text-center" style={{ color: c.champagne }}>
+      <div
+        className="relative z-[3] flex h-[clamp(70px,22cqi,128px)] items-end justify-center text-center"
+        style={{ color: c.champagne }}
+      >
         <AnimatePresence mode="popLayout">
           {step > 0 && !done ? (
             <motion.span
@@ -169,63 +211,175 @@ export function AnniversaryOpening(p: OpeningProps) {
               {counts[step - 1]} {counts[step - 1] === 1 ? "year" : "years"}
             </motion.span>
           ) : done ? (
-            <motion.div key="greeting" initial={{ y: 30, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={SPRING.soft}>
+            <motion.div
+              key="greeting"
+              initial={{ y: 30, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              transition={SPRING.soft}
+            >
               <Greeting text={label} className="text-[clamp(2rem,11cqi,3.6rem)]" />
-              <span className="mt-1 block text-[12px] tracking-[0.3em] uppercase opacity-70">and counting</span>
+              <span className="mt-1 block text-[12px] tracking-[0.3em] uppercase opacity-70">
+                and counting
+              </span>
             </motion.div>
           ) : null}
         </AnimatePresence>
       </div>
 
-      <Layer depth={9} className="relative mt-5" style={{ width: "min(86cqi, 400px)", aspectRatio: "1.18" }}>
+      <Layer
+        depth={9}
+        className="relative mt-5"
+        style={{ width: "min(86cqi, 400px)", aspectRatio: "1.18" }}
+      >
         {/* Lamp light from the top left, coming up with the music */}
         <motion.div className="pointer-events-none absolute -inset-[60%]" style={{ opacity: glow }}>
           <LightShaft color="255,207,138" strength={0.9} motes={12} angle={32} />
         </motion.div>
 
         {/* The deck, lying back on a table */}
-        <Object3D pose={{ x: POSE_X, y: -5 }} strength={8} perspective={900} className="absolute inset-0">
-          <div className="absolute inset-0" style={{ transform: "translateZ(-30px)", transformStyle: "preserve-3d" }}>
-            <FloorShadow tint="0,0,0" strength={1.3} radius={22} depth={4} className="inset-[-2%_-3%_-6%_-1%]" />
+        <Object3D
+          pose={{ x: POSE_X, y: -5 }}
+          strength={8}
+          perspective={900}
+          className="absolute inset-0"
+        >
+          <div
+            className="absolute inset-0"
+            style={{ transform: "translateZ(-30px)", transformStyle: "preserve-3d" }}
+          >
+            <FloorShadow
+              tint="0,0,0"
+              strength={1.3}
+              radius={22}
+              depth={4}
+              className="inset-[-2%_-3%_-6%_-1%]"
+            />
           </div>
           {/* Plinth: walnut veneer, 22px thick */}
           <Extrude depth={22} color="#2A1910" edge="#140C08" radius={18} slices={11} />
-          <div className="absolute inset-0 overflow-hidden rounded-[18px]" style={{ background: `linear-gradient(160deg, #7A4E36, ${c.walnut} 45%, #2E1C14)`, boxShadow: rim(0.8, "255,230,200") }}>
+          <div
+            className="absolute inset-0 overflow-hidden rounded-[18px]"
+            style={{
+              background: `linear-gradient(160deg, #7A4E36, ${c.walnut} 45%, #2E1C14)`,
+              boxShadow: rim(0.8, "255,230,200"),
+            }}
+          >
             <Texture material="wood" opacity={0.85} />
-            <span aria-hidden="true" className="absolute inset-0 block" style={{ background: "linear-gradient(125deg, rgba(255,235,210,.22), transparent 40%, rgba(0,0,0,.25))" }} />
+            <span
+              aria-hidden="true"
+              className="absolute inset-0 block"
+              style={{
+                background:
+                  "linear-gradient(125deg, rgba(255,235,210,.22), transparent 40%, rgba(0,0,0,.25))",
+              }}
+            />
             <FaceLight normal={[0, 0, 1]} max={0.35} ambient={0.55} />
           </div>
 
           {/* Platter: brushed aluminium rim, raised off the plinth */}
-          <div className="absolute top-[8%] left-[5%] aspect-square w-[74%]" style={{ transform: "translateZ(4px)", transformStyle: "preserve-3d" }}>
-            <span aria-hidden="true" className="absolute inset-[-4%] block rounded-full" style={{ background: "rgba(0,0,0,.55)", filter: "blur(5px)", transform: "translate(4%, 5%) translateZ(-3px)" }} />
-            <div className="absolute inset-[-3.5%] overflow-hidden rounded-full" style={{ background: "conic-gradient(from 200deg, #8d8780, #e6e1d9, #9a948c, #5d5853, #c8c2b9, #8d8780)", boxShadow: "inset 0 0 0 1px rgba(255,255,255,.25)" }}>
+          <div
+            className="absolute top-[8%] left-[5%] aspect-square w-[74%]"
+            style={{ transform: "translateZ(4px)", transformStyle: "preserve-3d" }}
+          >
+            <span
+              aria-hidden="true"
+              className="absolute inset-[-4%] block rounded-full"
+              style={{
+                background: "rgba(0,0,0,.55)",
+                filter: "blur(5px)",
+                transform: "translate(4%, 5%) translateZ(-3px)",
+              }}
+            />
+            <div
+              className="absolute inset-[-3.5%] overflow-hidden rounded-full"
+              style={{
+                background:
+                  "conic-gradient(from 200deg, #8d8780, #e6e1d9, #9a948c, #5d5853, #c8c2b9, #8d8780)",
+                boxShadow: "inset 0 0 0 1px rgba(255,255,255,.25)",
+              }}
+            >
               <Texture material="brushed" opacity={0.5} />
             </div>
           </div>
-          <div className="absolute top-[8%] left-[5%] aspect-square w-[74%]" style={{ transform: "translateZ(7px)" }}>
-            <motion.div className="absolute inset-0 rounded-full" style={{ rotate: spin, background: "repeating-radial-gradient(circle at 50% 50%, #151212 0 1.6px, #221d1b 1.6px 3.2px)", boxShadow: "inset 0 0 0 2px #0c0a09, inset 0 0 18px rgba(0,0,0,.7)" }}>
-              <div className="absolute inset-[33%] grid place-items-center rounded-full text-center" style={{ background: `radial-gradient(circle, ${c.champagne} 0 60%, #D9BF8C)`, color: c.espresso, boxShadow: "inset 0 0 0 1px rgba(0,0,0,.25), inset 2px 3px 6px rgba(255,255,255,.35)" }}>
-                <span className="px-1 text-[clamp(7px,2.1cqi,11px)] leading-tight font-semibold tracking-[0.12em] uppercase [overflow-wrap:anywhere]" style={{ fontFamily: "var(--jb-text)" }}>
+          <div
+            className="absolute top-[8%] left-[5%] aspect-square w-[74%]"
+            style={{ transform: "translateZ(7px)" }}
+          >
+            <motion.div
+              className="absolute inset-0 rounded-full"
+              style={{
+                rotate: spin,
+                background:
+                  "repeating-radial-gradient(circle at 50% 50%, #151212 0 1.6px, #221d1b 1.6px 3.2px)",
+                boxShadow: "inset 0 0 0 2px #0c0a09, inset 0 0 18px rgba(0,0,0,.7)",
+              }}
+            >
+              <div
+                className="absolute inset-[33%] grid place-items-center rounded-full text-center"
+                style={{
+                  background: `radial-gradient(circle, ${c.champagne} 0 60%, #D9BF8C)`,
+                  color: c.espresso,
+                  boxShadow:
+                    "inset 0 0 0 1px rgba(0,0,0,.25), inset 2px 3px 6px rgba(255,255,255,.35)",
+                }}
+              >
+                <span
+                  className="px-1 text-[clamp(7px,2.1cqi,11px)] leading-tight font-semibold tracking-[0.12em] uppercase [overflow-wrap:anywhere]"
+                  style={{ fontFamily: "var(--jb-text)" }}
+                >
                   {label}
                 </span>
-                <span className="absolute size-[9%] rounded-full" style={{ background: "radial-gradient(circle at 40% 35%, #f1ece4, #6d665f)" }} />
+                <span
+                  className="absolute size-[9%] rounded-full"
+                  style={{ background: "radial-gradient(circle at 40% 35%, #f1ece4, #6d665f)" }}
+                />
               </div>
             </motion.div>
             <VinylSheen />
           </div>
 
           {/* The tonearm's shadow on the record, then the arm itself up above it */}
-          <div className="pointer-events-none absolute top-[10%] right-[8%] grid size-[13%] place-items-center" style={{ transform: "translate(5%, 9%) translateZ(8px)" }} aria-hidden="true">
-            <motion.div className="absolute top-1/2 left-1/2 origin-top" style={{ rotate: arm, width: "18%", height: "520%", marginLeft: "-9%", filter: "blur(2.5px)", opacity: 0.55 }}>
+          <div
+            className="pointer-events-none absolute top-[10%] right-[8%] grid size-[13%] place-items-center"
+            style={{ transform: "translate(5%, 9%) translateZ(8px)" }}
+            aria-hidden="true"
+          >
+            <motion.div
+              className="absolute top-1/2 left-1/2 origin-top"
+              style={{
+                rotate: arm,
+                width: "18%",
+                height: "520%",
+                marginLeft: "-9%",
+                filter: "blur(2.5px)",
+                opacity: 0.55,
+              }}
+            >
               <span className="absolute inset-x-[30%] top-0 bottom-[14%] rounded-full bg-black" />
-              <span className="absolute bottom-0 left-1/2 h-[18%] w-[260%] -translate-x-1/2 rounded-[3px] bg-black" style={{ transform: "translateX(-50%) rotate(-18deg)" }} />
+              <span
+                className="absolute bottom-0 left-1/2 h-[18%] w-[260%] -translate-x-1/2 rounded-[3px] bg-black"
+                style={{ transform: "translateX(-50%) rotate(-18deg)" }}
+              />
             </motion.div>
           </div>
-          <div ref={pivotRef} className="absolute top-[10%] right-[8%] grid size-[13%] place-items-center rounded-full" style={{ transform: "translateZ(18px)", background: "radial-gradient(circle at 35% 30%, #f2ede5, #a59e94 55%, #6b655e)", boxShadow: "0 6px 10px -4px rgba(0,0,0,.6), inset 0 0 0 1px rgba(255,255,255,.35)" }}>
+          <div
+            ref={pivotRef}
+            className="absolute top-[10%] right-[8%] grid size-[13%] place-items-center rounded-full"
+            style={{
+              transform: "translateZ(18px)",
+              background: "radial-gradient(circle at 35% 30%, #f2ede5, #a59e94 55%, #6b655e)",
+              boxShadow: "0 6px 10px -4px rgba(0,0,0,.6), inset 0 0 0 1px rgba(255,255,255,.35)",
+            }}
+          >
             <motion.div
               className="absolute top-1/2 left-1/2 origin-top touch-none"
-              style={{ rotate: arm, width: "18%", height: "520%", marginLeft: "-9%", cursor: dropped ? "default" : "grab" }}
+              style={{
+                rotate: arm,
+                width: "18%",
+                height: "520%",
+                marginLeft: "-9%",
+                cursor: dropped ? "default" : "grab",
+              }}
               {...armHandlers}
               role="slider"
               aria-label="Tonearm. Drag onto the record to play"
@@ -240,9 +394,26 @@ export function AnniversaryOpening(p: OpeningProps) {
                 }
               }}
             >
-              <span className="absolute inset-x-[30%] top-0 bottom-[14%] rounded-full" style={{ background: "linear-gradient(90deg,#8a847c,#f4f0ea 40%,#b3ada5 60%,#7c766f)" }} />
-              <span className="absolute bottom-0 left-1/2 h-[18%] w-[260%] -translate-x-1/2 rounded-[3px]" style={{ background: "linear-gradient(180deg,#4a4542,#1c1a19)", boxShadow: "inset 0 1px 0 rgba(255,255,255,.25)", transform: "translateX(-50%) rotate(-18deg)" }} />
-              {!dropped && p.interactive && !p.paused ? <span className="jb-pulse absolute -bottom-[14px] left-1/2 size-[30px] rounded-full" style={{ boxShadow: `0 0 0 2px ${c.champagne}` }} /> : null}
+              <span
+                className="absolute inset-x-[30%] top-0 bottom-[14%] rounded-full"
+                style={{
+                  background: "linear-gradient(90deg,#8a847c,#f4f0ea 40%,#b3ada5 60%,#7c766f)",
+                }}
+              />
+              <span
+                className="absolute bottom-0 left-1/2 h-[18%] w-[260%] -translate-x-1/2 rounded-[3px]"
+                style={{
+                  background: "linear-gradient(180deg,#4a4542,#1c1a19)",
+                  boxShadow: "inset 0 1px 0 rgba(255,255,255,.25)",
+                  transform: "translateX(-50%) rotate(-18deg)",
+                }}
+              />
+              {!dropped && p.interactive && !p.paused ? (
+                <span
+                  className="jb-pulse absolute -bottom-[14px] left-1/2 size-[30px] rounded-full"
+                  style={{ boxShadow: `0 0 0 2px ${c.champagne}` }}
+                />
+              ) : null}
             </motion.div>
           </div>
 
@@ -251,25 +422,52 @@ export function AnniversaryOpening(p: OpeningProps) {
             <span
               key={k}
               className="absolute bottom-[9%] size-[7%] rounded-full"
-              style={{ right: `${10 + k * 11}%`, transform: "translateZ(5px)", background: "radial-gradient(circle at 35% 30%, #f6efe4, #a99d8d 60%, #6f6559)", boxShadow: "2px 4px 5px rgba(0,0,0,.5), inset 0 0 0 1px rgba(255,255,255,.3)" }}
+              style={{
+                right: `${10 + k * 11}%`,
+                transform: "translateZ(5px)",
+                background: "radial-gradient(circle at 35% 30%, #f6efe4, #a99d8d 60%, #6f6559)",
+                boxShadow: "2px 4px 5px rgba(0,0,0,.5), inset 0 0 0 1px rgba(255,255,255,.3)",
+              }}
             />
           ))}
           {/* A tiny amber light that comes on when it plays */}
-          <motion.span className="absolute bottom-[11%] left-[7%] size-[2.2%] rounded-full" style={{ transform: "translateZ(1px)", background: c.glow, boxShadow: `0 0 8px 2px ${c.glow}`, opacity: glow }} />
+          <motion.span
+            className="absolute bottom-[11%] left-[7%] size-[2.2%] rounded-full"
+            style={{
+              transform: "translateZ(1px)",
+              background: c.glow,
+              boxShadow: `0 0 8px 2px ${c.glow}`,
+              opacity: glow,
+            }}
+          />
         </Object3D>
 
         {/* The character sways along */}
         <motion.div
           className="absolute -bottom-[6%] -left-[4%] z-[4] origin-bottom"
           animate={dropped && !p.reduced ? { rotate: [-6, 6, -6] } : { rotate: 0 }}
-          transition={dropped ? { duration: 1.8, repeat: Infinity, ease: [0.45, 0, 0.55, 1] } : SPRING.soft}
+          transition={
+            dropped ? { duration: 1.8, repeat: Infinity, ease: [0.45, 0, 0.55, 1] } : SPRING.soft
+          }
         >
-          <Character ref={cast} setting={p.character} accessory={p.accessory} size={84} live={!p.paused} showName={false} />
+          <Character
+            ref={cast}
+            setting={p.character}
+            accessory={p.accessory}
+            size={84}
+            live={!p.paused}
+            showName={false}
+          />
         </motion.div>
       </Layer>
 
       <div className="mt-[min(8cqi,36px)] h-11">
-        <FallbackButton onClick={drop} color={c.champagne!} ink={c.champagne!} hidden={dropped || !p.interactive || p.paused}>
+        <FallbackButton
+          onClick={drop}
+          color={c.champagne!}
+          ink={c.champagne!}
+          hidden={dropped || !p.interactive || p.paused}
+        >
           {p.buttonText}
         </FallbackButton>
       </div>

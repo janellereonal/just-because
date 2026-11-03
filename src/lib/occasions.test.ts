@@ -13,6 +13,7 @@ describe("occasion names inside a sentence", () => {
     expect(occasionInSentence("bridal-shower")).toBe("bridal shower");
   });
   test("every occasion gives a name", () => {
-    for (const id of OCCASION_IDS) expect(occasionInSentence(id).toLowerCase()).toBe(occasionName(id).toLowerCase());
+    for (const id of OCCASION_IDS)
+      expect(occasionInSentence(id).toLowerCase()).toBe(occasionName(id).toLowerCase());
   });
 });

@@ -54,7 +54,10 @@ export function shortName(name: string) {
  * The friends to draw. Names are de-duplicated (case and spaces ignored). With no names yet,
  * three unnamed friends come out so the story still works in a preview.
  */
-export function storyCast(names: string[], max = MAX_FRIENDS): { friends: StoryFriend[]; total: number; extra: number } {
+export function storyCast(
+  names: string[],
+  max = MAX_FRIENDS,
+): { friends: StoryFriend[]; total: number; extra: number } {
   const seen = new Set<string>();
   const unique: string[] = [];
   for (const raw of names) {

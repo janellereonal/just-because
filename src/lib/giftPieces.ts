@@ -207,16 +207,27 @@ export function usePieces({
             id: c.id,
             kind,
             author: c.author_name,
-            text: isNewSection(c.module_type) ? sectionAsText(c.module_type, c.data, c.text_content, (iso) => formatDay(iso)) : c.text_content,
-            media: c.sealed || (c.module_type !== "doodle" && isNewSection(c.module_type)) ? null : c.media_url,
+            text: isNewSection(c.module_type)
+              ? sectionAsText(c.module_type, c.data, c.text_content, (iso) => formatDay(iso))
+              : c.text_content,
+            media:
+              c.sealed || (c.module_type !== "doodle" && isNewSection(c.module_type))
+                ? null
+                : c.media_url,
             link: c.external_link,
             // Ornaments the server holds back until the tree's reveal date show sealed too.
             sealed: !!c.sealed || !!c.locked,
             mine: !!c.mine,
             section: c.module_type,
-            ...(!c.sealed && isNewSection(c.module_type) && c.data ? { data: c.data as Record<string, unknown> } : {}),
-            ...(c.module_type === "photobooth" && c.data?.["framed"] === true ? { framed: true } : {}),
-            ...(c.module_type === "photobooth" && !c.sealed && typeof c.data?.["thumb"] === "string" ? { thumb: c.data["thumb"] as string } : {}),
+            ...(!c.sealed && isNewSection(c.module_type) && c.data
+              ? { data: c.data as Record<string, unknown> }
+              : {}),
+            ...(c.module_type === "photobooth" && c.data?.["framed"] === true
+              ? { framed: true }
+              : {}),
+            ...(c.module_type === "photobooth" && !c.sealed && typeof c.data?.["thumb"] === "string"
+              ? { thumb: c.data["thumb"] as string }
+              : {}),
           } satisfies Piece,
         ];
       });
@@ -263,7 +274,10 @@ export function usePieces({
         buckets.set("word", []);
       }
     }
-    const titles = { ...defaultTitles(site.custom_text, "default", site.occasion), ...site.custom_text };
+    const titles = {
+      ...defaultTitles(site.custom_text, "default", site.occasion),
+      ...site.custom_text,
+    };
     const countdownDate =
       enabled.has("countdown") && (countdownTarget(site) || sample)
         ? (countdownTarget(site) ?? new Date(Date.now() + 12 * 86400000).toISOString())

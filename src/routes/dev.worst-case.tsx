@@ -44,27 +44,44 @@ const fill = (seed: string, max: number) => {
   return out.slice(0, max).trimEnd();
 };
 const WORST = {
-  heading: fill("A very long heading that keeps going so we see where it wraps & breaks", LIMITS.heading),
-  intro: fill("Everyone who loves you put something in here, so take your time & read slowly.", LIMITS.introMessage),
+  heading: fill(
+    "A very long heading that keeps going so we see where it wraps & breaks",
+    LIMITS.heading,
+  ),
+  intro: fill(
+    "Everyone who loves you put something in here, so take your time & read slowly.",
+    LIMITS.introMessage,
+  ),
   footer: fill("With love, from all of us, every single one, near & far.", LIMITS.footer),
   greeting: fill("For you, from all of us who couldn't be there in person.", LIMITS.greeting),
   letter: fill(
     "I keep thinking about the summer we drove to the coast with no plan & a full tank. You sang every song wrong & I never told you. Thank you for every late call, every early coffee, and every time you said it would be okay.",
     LIMITS.letter,
   ),
-  caption: fill("The picnic where the wind took the napkins & we laughed until it rained", LIMITS.caption),
+  caption: fill(
+    "The picnic where the wind took the napkins & we laughed until it rained",
+    LIMITS.caption,
+  ),
   words: fill("kind, funny, unstoppable, brave, generous, loud, warm, honest", LIMITS.words),
-  ornament: fill("Merry everything. You make the whole year brighter & warmer than it has any right to be.", LIMITS.ornament),
+  ornament: fill(
+    "Merry everything. You make the whole year brighter & warmer than it has any right to be.",
+    LIMITS.ornament,
+  ),
 };
 
 function WorstCase() {
   const { kind, format, intro, cover, engine } = Route.useSearch();
   const engineDef = ENGINE_THEMES.find((x) => x.id === engine);
-  const { data: themes = [] } = useQuery({ queryKey: ["themes", false], queryFn: () => fetchThemes(false) });
+  const { data: themes = [] } = useQuery({
+    queryKey: ["themes", false],
+    queryFn: () => fetchThemes(false),
+  });
   const { data: all = [] } = usePalettes();
   const theme = themes.find((t) => themeKindOf(t) === kind);
   const pal = theme ? themePalettes(theme, all)[0] : undefined;
-  const palette = pal ? { background: pal.background, primary: pal.primary, accent: pal.accent } : undefined;
+  const palette = pal
+    ? { background: pal.background, primary: pal.primary, accent: pal.accent }
+    : undefined;
   const site = useMemo(() => {
     if (!theme) return null;
     const base = buildPreviewSite(theme, palette);
@@ -72,11 +89,25 @@ function WorstCase() {
       ...base,
       format,
       intro_text: WORST.greeting,
-      custom_text: { heading: WORST.heading, recipient_name: WORST_NAME, intro_message: WORST.intro, footer_note: WORST.footer },
+      custom_text: {
+        heading: WORST.heading,
+        recipient_name: WORST_NAME,
+        intro_message: WORST.intro,
+        footer_note: WORST.footer,
+      },
     };
   }, [theme, palette, format]);
   const modules: SiteModule[] = useMemo(
-    () => (theme && site ? showcaseSections(theme).map((type, i) => ({ id: `wc-${i}`, site_id: site.id, module_type: type, price: 0, enabled: true })) : []),
+    () =>
+      theme && site
+        ? showcaseSections(theme).map((type, i) => ({
+            id: `wc-${i}`,
+            site_id: site.id,
+            module_type: type,
+            price: 0,
+            enabled: true,
+          }))
+        : [],
     [theme, site],
   );
   const notes = useMemo(() => {
@@ -111,7 +142,10 @@ function WorstCase() {
         backgroundStyle={site.background_style ?? "paper"}
         recipientName={WORST_NAME}
         introText={WORST.greeting}
-        settings={{ badge_text: fill("A little something for you", LIMITS.openingLine), button_text: fill("Open it whenever you like", LIMITS.button) }}
+        settings={{
+          badge_text: fill("A little something for you", LIMITS.openingLine),
+          button_text: fill("Open it whenever you like", LIMITS.button),
+        }}
         character={null}
         iconSet={null}
         contributors={[WORST_NAME, "Jo", "Mika"]}
@@ -119,7 +153,13 @@ function WorstCase() {
           ? {
               themeName: engineDef.dbName,
               slots: WORST_SLOTS,
-              notes: notes.map((n) => ({ id: n.id, author: n.author_name, text: n.text_content, media: null, kind: n.module_type })),
+              notes: notes.map((n) => ({
+                id: n.id,
+                author: n.author_name,
+                text: n.text_content,
+                media: null,
+                kind: n.module_type,
+              })),
               themeOptions: { simbang: true, now: "2026-12-24T08:00:00", year: 2026 },
             }
           : {})}
@@ -130,7 +170,15 @@ function WorstCase() {
   }
   return (
     <div className="min-h-dvh [container:gift/inline-size]">
-      <FormatView site={site} theme={theme} palette={palette} modules={modules} contributions={notes} sample showCover={cover} />
+      <FormatView
+        site={site}
+        theme={theme}
+        palette={palette}
+        modules={modules}
+        contributions={notes}
+        sample
+        showCover={cover}
+      />
     </div>
   );
 }

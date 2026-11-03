@@ -26,7 +26,8 @@ if (!existsSync(FILE)) {
 
 const config = JSON.parse(readFileSync(FILE, "utf8"));
 const routes = Array.isArray(config.routes) ? config.routes : [];
-const isAssetHeaderRoute = (r) => r && r.src === "/assets/(.*)" && r.headers && !r.dest && !r.handle;
+const isAssetHeaderRoute = (r) =>
+  r && r.src === "/assets/(.*)" && r.headers && !r.dest && !r.handle;
 const fsIndex = routes.findIndex((r) => r && r.handle === "filesystem");
 
 if (fsIndex === -1 || routes.some((r) => r && r.handle === "hit")) {
@@ -40,8 +41,13 @@ const before = routes.slice(0, fsIndex).filter((r) => !isAssetHeaderRoute(r));
 const missing = { src: "/assets/(.*)", status: 404, headers: { "cache-control": "no-store" } };
 const after = routes.slice(fsIndex + 1).filter((r) => !isAssetHeaderRoute(r));
 // 3. Files that exist get the year-long cache.
-const hit = [{ handle: "hit" }, { src: "/assets/(.*)", headers: { "cache-control": IMMUTABLE }, continue: true, important: true }];
+const hit = [
+  { handle: "hit" },
+  { src: "/assets/(.*)", headers: { "cache-control": IMMUTABLE }, continue: true, important: true },
+];
 
 config.routes = [...before, routes[fsIndex], missing, ...after, ...hit];
 writeFileSync(FILE, JSON.stringify(config, null, 2));
-console.log("[asset-cache] /assets: year-long cache only for files that exist, missing ones are not cached");
+console.log(
+  "[asset-cache] /assets: year-long cache only for files that exist, missing ones are not cached",
+);

@@ -19,10 +19,24 @@ export default defineTheme({
   effects: ["confetti"],
   sound: "cardboard",
   slots: ["recipient", "place", "senderPlace", "date", "photo"],
-  palette: { background: "#F6EBDD", ink: "#3A2A20", surface: "#C3925B", accent: "#C8352B", accent2: "#1F4E8C" },
+  palette: {
+    background: "#F6EBDD",
+    ink: "#3A2A20",
+    surface: "#C3925B",
+    accent: "#C8352B",
+    accent2: "#1F4E8C",
+  },
   fonts: {
-    display: { family: '"Permanent Marker", "Comic Sans MS", cursive', source: "google", query: "Permanent+Marker" },
-    text: { family: '"Archivo", system-ui, sans-serif', source: "google", query: "Archivo:wght@500;700;900" },
+    display: {
+      family: '"Permanent Marker", "Comic Sans MS", cursive',
+      source: "google",
+      query: "Permanent+Marker",
+    },
+    text: {
+      family: '"Archivo", system-ui, sans-serif',
+      source: "google",
+      query: "Archivo:wght@500;700;900",
+    },
   },
   categories: ["Family", "Just because"],
   regions: { available: ["global"], featured: ["PH"] },
@@ -32,10 +46,21 @@ export default defineTheme({
   occasion: {
     defaultFormat: "scrapbook",
     sections: ["letters", "photobooth", "voice", "songs"],
-    prompts: ["occasion.parcel2.prompt1", "occasion.parcel2.prompt2", "occasion.parcel2.prompt3", "occasion.parcel2.prompt4"],
+    prompts: [
+      "occasion.parcel2.prompt1",
+      "occasion.parcel2.prompt2",
+      "occasion.parcel2.prompt3",
+      "occasion.parcel2.prompt4",
+    ],
     heading: "occasion.balikbayan.heading",
     greeting: "occasion.balikbayan.greeting",
   },
-  strings: ["theme.balikbayan.para", "theme.balikbayan.box", "theme.balikbayan.doorToDoor", "theme.parcel.handleWithCare", "theme.parcel.thisSideUp"],
+  strings: [
+    "theme.balikbayan.para",
+    "theme.balikbayan.box",
+    "theme.balikbayan.doorToDoor",
+    "theme.parcel.handleWithCare",
+    "theme.parcel.thisSideUp",
+  ],
   status: "live",
 });

@@ -54,12 +54,18 @@ describe("handleWebhook", () => {
     }
   });
   test("other event types are ignored", async () => {
-    const body = JSON.stringify({ data: { id: "evt_1", attributes: { type: "payment.failed", data: {} } } });
-    expect((await paymongo.paymongo.handleWebhook(body, h(sign(SECRET, body)))).kind).toBe("ignored");
+    const body = JSON.stringify({
+      data: { id: "evt_1", attributes: { type: "payment.failed", data: {} } },
+    });
+    expect((await paymongo.paymongo.handleWebhook(body, h(sign(SECRET, body)))).kind).toBe(
+      "ignored",
+    );
   });
   test("a paid event without a valid checkout id is rejected", async () => {
     const body = paidEventBody("not-a-session");
-    expect((await paymongo.paymongo.handleWebhook(body, h(sign(SECRET, body)))).kind).toBe("rejected");
+    expect((await paymongo.paymongo.handleWebhook(body, h(sign(SECRET, body)))).kind).toBe(
+      "rejected",
+    );
   });
   test("unsigned is only a hint to check", async () => {
     const r = await paymongo.paymongo.handleWebhook(paidEventBody("cs_abc123"), h());
@@ -72,7 +78,10 @@ describe("handleWebhook", () => {
   });
   test("an old signature is only a hint (replays)", async () => {
     const body = paidEventBody("cs_abc123");
-    const r = await paymongo.paymongo.handleWebhook(body, h(sign(SECRET, body, Math.floor(Date.now() / 1000) - 3600)));
+    const r = await paymongo.paymongo.handleWebhook(
+      body,
+      h(sign(SECRET, body, Math.floor(Date.now() / 1000) - 3600)),
+    );
     expect(r.kind === "check" && r.reason).toBe("signature too old");
   });
   test("a fresh, signed event is paid, with the amount from PayMongo, not the body", async () => {
@@ -90,24 +99,48 @@ describe("handleWebhook", () => {
 describe("what paid", () => {
   const card = (extra: object) => ({ amount: 59900, status: "paid", ...extra });
   test("wallets are wallets, with no card origin", () => {
-    expect(paymongo.describePayment(card({ source: { type: "gcash" } }))).toEqual({ method: "gcash", cardOrigin: null });
-    expect(paymongo.describePayment(card({ source: { type: "paymaya" } }))).toEqual({ method: "paymaya", cardOrigin: null });
+    expect(paymongo.describePayment(card({ source: { type: "gcash" } }))).toEqual({
+      method: "gcash",
+      cardOrigin: null,
+    });
+    expect(paymongo.describePayment(card({ source: { type: "paymaya" } }))).toEqual({
+      method: "paymaya",
+      cardOrigin: null,
+    });
   });
   test("the card's own country decides first", () => {
-    expect(paymongo.describePayment(card({ source: { type: "card", country: "PH" } })).cardOrigin).toBe("local");
-    expect(paymongo.describePayment(card({ source: { type: "card", country: "us" }, billing: { address: { country: "PH" } } })).cardOrigin).toBe("foreign");
+    expect(
+      paymongo.describePayment(card({ source: { type: "card", country: "PH" } })).cardOrigin,
+    ).toBe("local");
+    expect(
+      paymongo.describePayment(
+        card({ source: { type: "card", country: "us" }, billing: { address: { country: "PH" } } }),
+      ).cardOrigin,
+    ).toBe("foreign");
   });
   test("then a foreign-card fee, then the billing country", () => {
-    expect(paymongo.describePayment(card({ source: { id: "card_1" }, foreign_fee: 599 })).cardOrigin).toBe("foreign");
-    expect(paymongo.describePayment(card({ source: { brand: "visa" }, billing: { address: { country: "PH" } } })).cardOrigin).toBe("local");
+    expect(
+      paymongo.describePayment(card({ source: { id: "card_1" }, foreign_fee: 599 })).cardOrigin,
+    ).toBe("foreign");
+    expect(
+      paymongo.describePayment(
+        card({ source: { brand: "visa" }, billing: { address: { country: "PH" } } }),
+      ).cardOrigin,
+    ).toBe("local");
   });
   test("a card PayMongo says nothing about is unknown, and no source is other", () => {
-    expect(paymongo.describePayment(card({ source: { type: "card" } }))).toEqual({ method: "card", cardOrigin: "unknown" });
+    expect(paymongo.describePayment(card({ source: { type: "card" } }))).toEqual({
+      method: "card",
+      cardOrigin: "unknown",
+    });
     expect(paymongo.describePayment(card({}))).toEqual({ method: "other", cardOrigin: null });
   });
   test("checkPaid passes on the currency, method and card origin", async () => {
     fake.add("cs_foreign1", 59900, "22222222-2222-4222-8222-222222222222");
-    fake.pay("cs_foreign1", undefined, { currency: "PHP", source: { type: "card", brand: "mastercard", country: "GB" } });
+    fake.pay("cs_foreign1", undefined, {
+      currency: "PHP",
+      source: { type: "card", brand: "mastercard", country: "GB" },
+    });
     const event = await paymongo.paymongo.checkPaid("cs_foreign1");
     expect(event?.currency).toBe("PHP");
     expect(event?.method).toBe("card");

@@ -296,7 +296,10 @@ export function OwnNotes({
       let media = editing?.media_url ?? null;
       if (file) {
         // Photos get a small copy too, so grids and previews don't load the full photo.
-        const up = await uploadMedia(file, "contribution", siteId, { thumb: type === "photobooth", expect: mediaKindFor(type) });
+        const up = await uploadMedia(file, "contribution", siteId, {
+          thumb: type === "photobooth",
+          expect: mediaKindFor(type),
+        });
         media = up.url;
         if (type === "photobooth" && up.thumbUrl) clean = { ...(clean ?? {}), thumb: up.thumbUrl };
       }
@@ -359,36 +362,36 @@ export function OwnNotes({
   return (
     <div className="space-y-5">
       {showSolo ? (
-      <div>
-        <p className="text-xs text-muted">Who's it from?</p>
-        <div
-          className="mt-1.5 grid grid-cols-2 gap-1 rounded-full bg-cream p-1 ring-1 ring-line"
-          role="radiogroup"
-        >
-          {(
-            [
-              [true, "Just me"],
-              [false, "Me and friends"],
-            ] as const
-          ).map(([v, l]) => (
-            <button
-              key={l}
-              type="button"
-              role="radio"
-              aria-checked={solo === v}
-              onClick={() => onSoloChange(v)}
-              className={`rounded-full py-2 text-xs font-semibold transition-colors ${solo === v ? "bg-ink text-cream" : "text-muted hover:text-ink"}`}
-            >
-              {l}
-            </button>
-          ))}
+        <div>
+          <p className="text-xs text-muted">Who's it from?</p>
+          <div
+            className="mt-1.5 grid grid-cols-2 gap-1 rounded-full bg-cream p-1 ring-1 ring-line"
+            role="radiogroup"
+          >
+            {(
+              [
+                [true, "Just me"],
+                [false, "Me and friends"],
+              ] as const
+            ).map(([v, l]) => (
+              <button
+                key={l}
+                type="button"
+                role="radio"
+                aria-checked={solo === v}
+                onClick={() => onSoloChange(v)}
+                className={`rounded-full py-2 text-xs font-semibold transition-colors ${solo === v ? "bg-ink text-cream" : "text-muted hover:text-ink"}`}
+              >
+                {l}
+              </button>
+            ))}
+          </div>
+          <p className="mt-2 text-xs text-muted">
+            {solo
+              ? `You make every page for ${recipient || "them"}. There's no invite link.`
+              : "Friends add theirs through the link. You can add yours here too."}
+          </p>
         </div>
-        <p className="mt-2 text-xs text-muted">
-          {solo
-            ? `You make every page for ${recipient || "them"}. There's no invite link.`
-            : "Friends add theirs through the link. You can add yours here too."}
-        </p>
-      </div>
       ) : null}
 
       <div className="rounded-2xl bg-pink/30 p-3.5 ring-1 ring-pink">
@@ -397,24 +400,30 @@ export function OwnNotes({
             {editing ? `Edit your ${label(editing.module_type).toLowerCase()}` : "Add something"}
           </p>
         ) : null}
-        <div className={`${editing || showSolo ? "mt-2.5" : ""} flex flex-wrap gap-1.5`} role="radiogroup" aria-label="What to add">
-          {TYPES.filter((x, i) => i < 4 || moreTypes || x.type === type).map(({ type: t, label: l, icon: Icon }) => (
-            <button
-              key={t}
-              type="button"
-              role="radio"
-              aria-checked={type === t}
-              disabled={!!editing && editing.module_type !== t}
-              onClick={() => {
-                setType(t);
-                setFile(null);
-                setData({});
-              }}
-              className={`squish inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium ring-1 disabled:opacity-40 ${type === t ? "bg-ink text-cream ring-ink" : "bg-cream ring-line hover:bg-pink/40"}`}
-            >
-              <Icon className="size-3.5" /> {l}
-            </button>
-          ))}
+        <div
+          className={`${editing || showSolo ? "mt-2.5" : ""} flex flex-wrap gap-1.5`}
+          role="radiogroup"
+          aria-label="What to add"
+        >
+          {TYPES.filter((x, i) => i < 4 || moreTypes || x.type === type).map(
+            ({ type: t, label: l, icon: Icon }) => (
+              <button
+                key={t}
+                type="button"
+                role="radio"
+                aria-checked={type === t}
+                disabled={!!editing && editing.module_type !== t}
+                onClick={() => {
+                  setType(t);
+                  setFile(null);
+                  setData({});
+                }}
+                className={`squish inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium ring-1 disabled:opacity-40 ${type === t ? "bg-ink text-cream ring-ink" : "bg-cream ring-line hover:bg-pink/40"}`}
+              >
+                <Icon className="size-3.5" /> {l}
+              </button>
+            ),
+          )}
           {!editing ? (
             <button
               type="button"

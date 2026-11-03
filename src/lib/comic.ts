@@ -53,7 +53,10 @@ const COVER_SUBTITLE: Record<string, string> = {
   default: "SPECIAL COLLECTOR'S ISSUE",
 };
 
-export function comicSettingDefaults(recipient?: string, kind?: string): Required<Pick<ComicSettings, "cover_title" | "cover_subtitle" | "world_one" | "world_two">> {
+export function comicSettingDefaults(
+  recipient?: string,
+  kind?: string,
+): Required<Pick<ComicSettings, "cover_title" | "cover_subtitle" | "world_one" | "world_two">> {
   return {
     cover_title: `THE AMAZING ${(recipient || "YOU").toUpperCase()}`,
     cover_subtitle: COVER_SUBTITLE[kind ?? "default"] ?? "SPECIAL COLLECTOR'S ISSUE",
@@ -65,5 +68,7 @@ export function comicSettingDefaults(recipient?: string, kind?: string): Require
 export function orderedComicIds(ids: string[], order: string[] | undefined) {
   if (!order?.length) return ids;
   const rank = new Map(order.map((id, index) => [id, index]));
-  return [...ids].sort((a, b) => (rank.get(a) ?? Number.MAX_SAFE_INTEGER) - (rank.get(b) ?? Number.MAX_SAFE_INTEGER));
+  return [...ids].sort(
+    (a, b) => (rank.get(a) ?? Number.MAX_SAFE_INTEGER) - (rank.get(b) ?? Number.MAX_SAFE_INTEGER),
+  );
 }

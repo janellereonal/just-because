@@ -8,7 +8,18 @@
  * preset's file in public/clay/people/, else it is rendered in the browser.
  */
 
-export const SKIN_TONES = ["#FCE3D2", "#F6D2B8", "#EFC0A0", "#E6AE88", "#D69B74", "#C48660", "#A86D4A", "#8C5638", "#6E432B", "#523022"] as const;
+export const SKIN_TONES = [
+  "#FCE3D2",
+  "#F6D2B8",
+  "#EFC0A0",
+  "#E6AE88",
+  "#D69B74",
+  "#C48660",
+  "#A86D4A",
+  "#8C5638",
+  "#6E432B",
+  "#523022",
+] as const;
 
 export const HAIR_COLORS = [
   { id: "black", label: "Black", hex: "#2A2326" },
@@ -38,10 +49,23 @@ export const OUTFIT_COLORS = [
   { id: "navy", label: "Navy", hex: "#2E3F6E" },
 ] as const;
 
-const opts = <T extends string>(...pairs: [T, string][]) => pairs.map(([id, label]) => ({ id, label }));
+const opts = <T extends string>(...pairs: [T, string][]) =>
+  pairs.map(([id, label]) => ({ id, label }));
 
-export const AGES = opts(["kid", "Kid"], ["teen", "Teen"], ["adult", "Grown-up"], ["senior", "Grandparent"]);
-export const EXPRESSIONS = opts(["smile", "Smile"], ["grin", "Big grin"], ["joy", "Happy eyes"], ["wink", "Wink"], ["wow", "Surprised"], ["calm", "Calm"]);
+export const AGES = opts(
+  ["kid", "Kid"],
+  ["teen", "Teen"],
+  ["adult", "Grown-up"],
+  ["senior", "Grandparent"],
+);
+export const EXPRESSIONS = opts(
+  ["smile", "Smile"],
+  ["grin", "Big grin"],
+  ["joy", "Happy eyes"],
+  ["wink", "Wink"],
+  ["wow", "Surprised"],
+  ["calm", "Calm"],
+);
 export const HAIRS = opts(
   ["crop", "Short"],
   ["side", "Side part"],
@@ -68,8 +92,20 @@ export const HAIRS = opts(
   ["horseshoe", "Thinning"],
   ["bald", "Bald"],
 );
-export const FACIAL = opts(["none", "None"], ["stubble", "Stubble"], ["mustache", "Mustache"], ["goatee", "Goatee"], ["beard", "Beard"]);
-export const EYEWEAR = opts(["none", "None"], ["round", "Round glasses"], ["square", "Square glasses"], ["sun", "Sunglasses"], ["hearts", "Heart glasses"]);
+export const FACIAL = opts(
+  ["none", "None"],
+  ["stubble", "Stubble"],
+  ["mustache", "Mustache"],
+  ["goatee", "Goatee"],
+  ["beard", "Beard"],
+);
+export const EYEWEAR = opts(
+  ["none", "None"],
+  ["round", "Round glasses"],
+  ["square", "Square glasses"],
+  ["sun", "Sunglasses"],
+  ["hearts", "Heart glasses"],
+);
 export const HEADWEAR = opts(
   ["none", "None"],
   ["beanie", "Beanie"],
@@ -190,16 +226,37 @@ export type BodyLayout = {
 };
 
 export const LAYOUT: Record<Age, BodyLayout> = {
-  kid: { head: { x: 60, y: 50, w: 62, h: 58, d: 56 }, torso: { top: 80, bottom: 101, w: 38, d: 30 } },
-  teen: { head: { x: 60, y: 45, w: 58, h: 55, d: 53 }, torso: { top: 74, bottom: 99, w: 40, d: 30 } },
-  adult: { head: { x: 60, y: 41, w: 56, h: 53, d: 51 }, torso: { top: 69, bottom: 97, w: 44, d: 32 } },
-  senior: { head: { x: 60, y: 44, w: 56, h: 53, d: 51 }, torso: { top: 72, bottom: 98, w: 46, d: 34 } },
+  kid: {
+    head: { x: 60, y: 50, w: 62, h: 58, d: 56 },
+    torso: { top: 80, bottom: 101, w: 38, d: 30 },
+  },
+  teen: {
+    head: { x: 60, y: 45, w: 58, h: 55, d: 53 },
+    torso: { top: 74, bottom: 99, w: 40, d: 30 },
+  },
+  adult: {
+    head: { x: 60, y: 41, w: 56, h: 53, d: 51 },
+    torso: { top: 69, bottom: 97, w: 44, d: 32 },
+  },
+  senior: {
+    head: { x: 60, y: 44, w: 56, h: 53, d: 51 },
+    torso: { top: 72, bottom: 98, w: 46, d: 34 },
+  },
 };
 
 /** How high the hair reaches above the head's center, as a share of head height. */
 export function hairTop(p: PersonConfig) {
   const { head: H } = LAYOUT[p.age];
-  const k: Partial<Record<HairStyle, number>> = { afro: 0.8, curls: 0.68, longcurls: 0.66, spiky: 0.72, quiff: 0.74, bald: 0.5, horseshoe: 0.5, buzz: 0.52 };
+  const k: Partial<Record<HairStyle, number>> = {
+    afro: 0.8,
+    curls: 0.68,
+    longcurls: 0.66,
+    spiky: 0.72,
+    quiff: 0.74,
+    bald: 0.5,
+    horseshoe: 0.5,
+    buzz: 0.52,
+  };
   return H.y - H.h * (k[p.hair] ?? 0.62);
 }
 
@@ -209,9 +266,16 @@ export function personFace(p: PersonConfig) {
   const gap = H.w * 0.38;
   const ey = H.y + 3;
   return {
-    eyes: { l: [H.x - gap / 2, ey] as [number, number], r: [H.x + gap / 2, ey] as [number, number], size: H.w * 0.068 },
+    eyes: {
+      l: [H.x - gap / 2, ey] as [number, number],
+      r: [H.x + gap / 2, ey] as [number, number],
+      size: H.w * 0.068,
+    },
     mouth: [H.x, H.y + 15] as [number, number],
-    cheeks: { l: [H.x - gap / 2 - 7, H.y + 11] as [number, number], r: [H.x + gap / 2 + 7, H.y + 11] as [number, number] },
+    cheeks: {
+      l: [H.x - gap / 2 - 7, H.y + 11] as [number, number],
+      r: [H.x + gap / 2 + 7, H.y + 11] as [number, number],
+    },
     head: { x: H.x, y: hairTop(p) + 4, w: H.w * 0.82 },
     neck: { x: H.x, y: T.top + 1, w: T.w },
     hideEyes: p.eyewear === "sun",
@@ -228,7 +292,13 @@ const pick = <T extends string>(v: unknown, list: readonly { id: T }[], fallback
 
 export function normalizePerson(value: unknown): PersonConfig {
   const v = (value && typeof value === "object" ? value : {}) as Record<string, unknown>;
-  const skin = typeof v["skin"] === "number" && Number.isInteger(v["skin"]) && v["skin"] >= 0 && v["skin"] < SKIN_TONES.length ? v["skin"] : DEFAULT_PERSON.skin;
+  const skin =
+    typeof v["skin"] === "number" &&
+    Number.isInteger(v["skin"]) &&
+    v["skin"] >= 0 &&
+    v["skin"] < SKIN_TONES.length
+      ? v["skin"]
+      : DEFAULT_PERSON.skin;
   return {
     age: pick(v["age"], AGES, DEFAULT_PERSON.age),
     skin,
@@ -246,14 +316,30 @@ export function normalizePerson(value: unknown): PersonConfig {
 
 /** A short stable key for a person (file names, caches). */
 export function personKey(p: PersonConfig) {
-  const s = [p.age, p.skin, p.expression, p.hair, p.hairColor, p.facial, p.eyewear, p.headwear, p.outfit, p.outfitColor, p.held].join(".");
+  const s = [
+    p.age,
+    p.skin,
+    p.expression,
+    p.hair,
+    p.hairColor,
+    p.facial,
+    p.eyewear,
+    p.headwear,
+    p.outfit,
+    p.outfitColor,
+    p.held,
+  ].join(".");
   let h = 2166136261;
   for (let i = 0; i < s.length; i++) h = Math.imul(h ^ s.charCodeAt(i), 16777619);
   return (h >>> 0).toString(36);
 }
 
 /** "Little you" from before the builder: closest skin, hair and outfit colors, side part and a tee. */
-export function personFromLegacy(colors?: { primary?: string; secondary?: string; skin?: string }): PersonConfig {
+export function personFromLegacy(colors?: {
+  primary?: string;
+  secondary?: string;
+  skin?: string;
+}): PersonConfig {
   const near = (hex: string | undefined, list: readonly string[]) => {
     if (!hex) return -1;
     const rgb = (h: string) => [1, 3, 5].map((i) => parseInt(h.slice(i, i + 2), 16));
@@ -271,56 +357,411 @@ export function personFromLegacy(colors?: { primary?: string; secondary?: string
     return best;
   };
   const skin = near(colors?.skin ?? "#E9B48F", SKIN_TONES);
-  const hair = near(colors?.secondary ?? "#3B2A24", HAIR_COLORS.map((h) => h.hex));
-  const outfit = near(colors?.primary ?? "#6C8EF2", OUTFIT_COLORS.map((o) => o.hex));
-  return { ...DEFAULT_PERSON, skin, hairColor: HAIR_COLORS[hair]!.id, outfitColor: OUTFIT_COLORS[outfit]!.id };
+  const hair = near(
+    colors?.secondary ?? "#3B2A24",
+    HAIR_COLORS.map((h) => h.hex),
+  );
+  const outfit = near(
+    colors?.primary ?? "#6C8EF2",
+    OUTFIT_COLORS.map((o) => o.hex),
+  );
+  return {
+    ...DEFAULT_PERSON,
+    skin,
+    hairColor: HAIR_COLORS[hair]!.id,
+    outfitColor: OUTFIT_COLORS[outfit]!.id,
+  };
 }
 
 /* ---------- 40 ready-made people ---------- */
 
-const P = (id: string, name: string, tags: string[], p: Partial<PersonConfig>) => ({ id, name, tags, person: { ...DEFAULT_PERSON, ...p } as PersonConfig });
+const P = (id: string, name: string, tags: string[], p: Partial<PersonConfig>) => ({
+  id,
+  name,
+  tags,
+  person: { ...DEFAULT_PERSON, ...p } as PersonConfig,
+});
 
 export const PEOPLE = [
-  P("bookworm", "Bookworm", ["school", "handwritten", "graduation"], { age: "teen", skin: 1, hair: "messy", hairColor: "black", eyewear: "round", outfit: "jacket", outfitColor: "blue", held: "book" }),
-  P("explorer", "Explorer", ["voyage", "school"], { age: "teen", skin: 3, hair: "quiff", hairColor: "dark", eyewear: "square", outfit: "stripes", outfitColor: "red", held: "camera" }),
-  P("birthday-kid", "Birthday kid", ["birthday", "party"], { age: "kid", skin: 4, hair: "curls", hairColor: "black", expression: "grin", headwear: "party", outfit: "tee", outfitColor: "sun", held: "balloon" }),
-  P("barista", "Barista", ["handwritten", "cozy", "morning"], { skin: 6, hair: "bun", hairColor: "dark", outfit: "apron", outfitColor: "terracotta", held: "cup" }),
-  P("sweetheart", "Sweetheart", ["valentine", "anniversary", "love"], { skin: 2, hair: "wavy", hairColor: "auburn", expression: "joy", outfit: "sundress", outfitColor: "blush", held: "flowers" }),
-  P("date-night", "Date night", ["valentine", "anniversary", "wedding"], { skin: 5, hair: "side", hairColor: "black", outfit: "suit", outfitColor: "navy", held: "heart" }),
-  P("bride", "Bride", ["wedding", "bridal"], { skin: 3, hair: "bun", hairColor: "brown", expression: "joy", headwear: "flowers", outfit: "dress", outfitColor: "cream", held: "flowers" }),
-  P("groom", "Groom", ["wedding"], { skin: 7, hair: "crop", hairColor: "black", facial: "beard", outfit: "suit", outfitColor: "charcoal" }),
-  P("bridesmaid", "Bridesmaid", ["bridal", "wedding"], { skin: 8, hair: "longcurls", hairColor: "black", expression: "grin", outfit: "dress", outfitColor: "lavender", held: "flowers" }),
-  P("new-parent", "New parent", ["baby"], { skin: 4, hair: "pixie", hairColor: "dark", expression: "calm", outfit: "cardigan", outfitColor: "mint", held: "teddy" }),
-  P("little-one", "Little one", ["baby"], { age: "kid", skin: 1, hair: "pigtails", hairColor: "blonde", expression: "joy", outfit: "overalls", outfitColor: "sky", held: "teddy" }),
-  P("cozy-winter", "Cozy winter", ["christmas", "winter"], { skin: 2, hair: "long", hairColor: "ginger", headwear: "beanie", outfit: "sweater", outfitColor: "red", held: "cup" }),
-  P("gift-giver", "Gift giver", ["christmas", "birthday"], { skin: 6, hair: "afro", hairColor: "black", expression: "grin", outfit: "puffer", outfitColor: "green", held: "gift" }),
-  P("party-starter", "Party starter", ["newyear", "party"], { skin: 3, hair: "bob", hairColor: "black", eyewear: "hearts", headwear: "crown", outfit: "blazer", outfitColor: "sun", held: "wand" }),
-  P("traveler", "Traveler", ["voyage", "trip"], { skin: 5, hair: "ponytail", hairColor: "brown", eyewear: "sun", headwear: "bucket", outfit: "denim", outfitColor: "sky", held: "camera" }),
-  P("beach-day", "Beach day", ["voyage", "summer"], { skin: 4, hair: "wavy", hairColor: "blonde", eyewear: "sun", headwear: "sunhat", outfit: "sundress", outfitColor: "sun", held: "icecream" }),
-  P("pet-parent", "Pet parent", ["pets"], { skin: 2, hair: "messy", hairColor: "brown", outfit: "hoodie", outfitColor: "mint", held: "ball" }),
-  P("dog-walker", "Dog walker", ["pets", "outdoors"], { skin: 7, hair: "locs", hairColor: "black", headwear: "cap", outfit: "raincoat", outfitColor: "sun" }),
-  P("letter-writer", "Letter writer", ["handwritten", "notes"], { skin: 1, hair: "bangs", hairColor: "dark", eyewear: "round", outfit: "cardigan", outfitColor: "cream", held: "letter" }),
-  P("artist", "Artist", ["handwritten", "art"], { skin: 5, hair: "manbun", hairColor: "dark", facial: "stubble", headwear: "beret", outfit: "apron", outfitColor: "navy", held: "brush" }),
-  P("gamer", "Gamer", ["game", "pixel"], { age: "teen", skin: 6, hair: "spiky", hairColor: "blue", expression: "grin", outfit: "hoodie", outfitColor: "lavender", held: "controller" }),
-  P("game-host", "Game host", ["game"], { skin: 3, hair: "quiff", hairColor: "ginger", facial: "mustache", outfit: "shirt", outfitColor: "red", held: "cupcake" }),
-  P("pixel-pal", "Pixel pal", ["pixel", "game"], { age: "kid", skin: 8, hair: "buns", hairColor: "pink", expression: "wink", outfit: "jersey", outfitColor: "mint", held: "controller" }),
-  P("graduate", "Graduate", ["graduation", "school"], { skin: 4, hair: "long", hairColor: "black", expression: "joy", headwear: "grad", outfit: "gown", outfitColor: "navy", held: "letter" }),
-  P("teacher", "Teacher", ["school", "graduation", "handwritten"], { age: "senior", skin: 2, hair: "bob", hairColor: "grey", eyewear: "square", outfit: "cardigan", outfitColor: "terracotta", held: "book" }),
-  P("grandpa", "Grandpa", ["family", "cozy"], { age: "senior", skin: 3, hair: "horseshoe", hairColor: "grey", facial: "mustache", eyewear: "round", outfit: "sweater", outfitColor: "green", held: "cup" }),
-  P("grandma", "Grandma", ["family", "cozy"], { age: "senior", skin: 6, hair: "bun", hairColor: "platinum", expression: "joy", eyewear: "round", outfit: "cardigan", outfitColor: "lavender", held: "cupcake" }),
-  P("doctor", "Doctor", ["work", "thanks"], { skin: 5, hair: "ponytail", hairColor: "black", outfit: "labcoat", outfitColor: "sky" }),
-  P("nurse", "Nurse", ["work", "thanks"], { skin: 8, hair: "bun", hairColor: "black", outfit: "scrubs", outfitColor: "mint", held: "heart" }),
-  P("coworker", "Coworker", ["work", "farewell"], { skin: 2, hair: "side", hairColor: "brown", facial: "goatee", eyewear: "square", outfit: "blazer", outfitColor: "charcoal", held: "cup" }),
-  P("chef", "Chef", ["work", "food"], { skin: 4, hair: "crop", hairColor: "dark", facial: "beard", outfit: "apron", outfitColor: "red", held: "pizza" }),
-  P("plant-friend", "Plant friend", ["garden", "home"], { skin: 9, hair: "afro", hairColor: "dark", headwear: "headband", outfit: "overalls", outfitColor: "green", held: "plant" }),
-  P("musician", "Musician", ["music", "party"], { skin: 7, hair: "long", hairColor: "dark", facial: "stubble", outfit: "denim", outfitColor: "blue", held: "guitar" }),
-  P("sporty", "Sporty", ["sports", "outdoors"], { age: "teen", skin: 9, hair: "buzz", hairColor: "black", expression: "grin", headwear: "headband", outfit: "jersey", outfitColor: "blue", held: "ball" }),
-  P("sunny", "Sunny", ["summer", "birthday"], { age: "kid", skin: 3, hair: "braids", hairColor: "auburn", expression: "joy", headwear: "bow", outfit: "dress", outfitColor: "sun", held: "popsicle" }),
-  P("rainy-day", "Rainy day", ["cozy", "rain"], { age: "kid", skin: 5, hair: "bob", hairColor: "black", outfit: "raincoat", outfitColor: "sun", held: "teddy" }),
-  P("bestie", "Bestie", ["birthday", "friends"], { age: "teen", skin: 2, hair: "sidebraid", hairColor: "blonde", expression: "wink", outfit: "stripes", outfitColor: "navy", held: "phone" }),
-  P("dreamer", "Dreamer", ["night", "wish"], { skin: 1, hair: "longcurls", hairColor: "platinum", expression: "calm", outfit: "sweater", outfitColor: "lavender", held: "wand" }),
-  P("cool-uncle", "Cool uncle", ["family", "party"], { skin: 6, hair: "bald", facial: "beard", hairColor: "dark", eyewear: "sun", outfit: "shirt", outfitColor: "sun", held: "phone" }),
-  P("royalty", "Royalty", ["birthday", "pixel"], { age: "kid", skin: 7, hair: "curls", hairColor: "dark", expression: "grin", headwear: "crown", outfit: "suit", outfitColor: "lavender", held: "gift" }),
+  P("bookworm", "Bookworm", ["school", "handwritten", "graduation"], {
+    age: "teen",
+    skin: 1,
+    hair: "messy",
+    hairColor: "black",
+    eyewear: "round",
+    outfit: "jacket",
+    outfitColor: "blue",
+    held: "book",
+  }),
+  P("explorer", "Explorer", ["voyage", "school"], {
+    age: "teen",
+    skin: 3,
+    hair: "quiff",
+    hairColor: "dark",
+    eyewear: "square",
+    outfit: "stripes",
+    outfitColor: "red",
+    held: "camera",
+  }),
+  P("birthday-kid", "Birthday kid", ["birthday", "party"], {
+    age: "kid",
+    skin: 4,
+    hair: "curls",
+    hairColor: "black",
+    expression: "grin",
+    headwear: "party",
+    outfit: "tee",
+    outfitColor: "sun",
+    held: "balloon",
+  }),
+  P("barista", "Barista", ["handwritten", "cozy", "morning"], {
+    skin: 6,
+    hair: "bun",
+    hairColor: "dark",
+    outfit: "apron",
+    outfitColor: "terracotta",
+    held: "cup",
+  }),
+  P("sweetheart", "Sweetheart", ["valentine", "anniversary", "love"], {
+    skin: 2,
+    hair: "wavy",
+    hairColor: "auburn",
+    expression: "joy",
+    outfit: "sundress",
+    outfitColor: "blush",
+    held: "flowers",
+  }),
+  P("date-night", "Date night", ["valentine", "anniversary", "wedding"], {
+    skin: 5,
+    hair: "side",
+    hairColor: "black",
+    outfit: "suit",
+    outfitColor: "navy",
+    held: "heart",
+  }),
+  P("bride", "Bride", ["wedding", "bridal"], {
+    skin: 3,
+    hair: "bun",
+    hairColor: "brown",
+    expression: "joy",
+    headwear: "flowers",
+    outfit: "dress",
+    outfitColor: "cream",
+    held: "flowers",
+  }),
+  P("groom", "Groom", ["wedding"], {
+    skin: 7,
+    hair: "crop",
+    hairColor: "black",
+    facial: "beard",
+    outfit: "suit",
+    outfitColor: "charcoal",
+  }),
+  P("bridesmaid", "Bridesmaid", ["bridal", "wedding"], {
+    skin: 8,
+    hair: "longcurls",
+    hairColor: "black",
+    expression: "grin",
+    outfit: "dress",
+    outfitColor: "lavender",
+    held: "flowers",
+  }),
+  P("new-parent", "New parent", ["baby"], {
+    skin: 4,
+    hair: "pixie",
+    hairColor: "dark",
+    expression: "calm",
+    outfit: "cardigan",
+    outfitColor: "mint",
+    held: "teddy",
+  }),
+  P("little-one", "Little one", ["baby"], {
+    age: "kid",
+    skin: 1,
+    hair: "pigtails",
+    hairColor: "blonde",
+    expression: "joy",
+    outfit: "overalls",
+    outfitColor: "sky",
+    held: "teddy",
+  }),
+  P("cozy-winter", "Cozy winter", ["christmas", "winter"], {
+    skin: 2,
+    hair: "long",
+    hairColor: "ginger",
+    headwear: "beanie",
+    outfit: "sweater",
+    outfitColor: "red",
+    held: "cup",
+  }),
+  P("gift-giver", "Gift giver", ["christmas", "birthday"], {
+    skin: 6,
+    hair: "afro",
+    hairColor: "black",
+    expression: "grin",
+    outfit: "puffer",
+    outfitColor: "green",
+    held: "gift",
+  }),
+  P("party-starter", "Party starter", ["newyear", "party"], {
+    skin: 3,
+    hair: "bob",
+    hairColor: "black",
+    eyewear: "hearts",
+    headwear: "crown",
+    outfit: "blazer",
+    outfitColor: "sun",
+    held: "wand",
+  }),
+  P("traveler", "Traveler", ["voyage", "trip"], {
+    skin: 5,
+    hair: "ponytail",
+    hairColor: "brown",
+    eyewear: "sun",
+    headwear: "bucket",
+    outfit: "denim",
+    outfitColor: "sky",
+    held: "camera",
+  }),
+  P("beach-day", "Beach day", ["voyage", "summer"], {
+    skin: 4,
+    hair: "wavy",
+    hairColor: "blonde",
+    eyewear: "sun",
+    headwear: "sunhat",
+    outfit: "sundress",
+    outfitColor: "sun",
+    held: "icecream",
+  }),
+  P("pet-parent", "Pet parent", ["pets"], {
+    skin: 2,
+    hair: "messy",
+    hairColor: "brown",
+    outfit: "hoodie",
+    outfitColor: "mint",
+    held: "ball",
+  }),
+  P("dog-walker", "Dog walker", ["pets", "outdoors"], {
+    skin: 7,
+    hair: "locs",
+    hairColor: "black",
+    headwear: "cap",
+    outfit: "raincoat",
+    outfitColor: "sun",
+  }),
+  P("letter-writer", "Letter writer", ["handwritten", "notes"], {
+    skin: 1,
+    hair: "bangs",
+    hairColor: "dark",
+    eyewear: "round",
+    outfit: "cardigan",
+    outfitColor: "cream",
+    held: "letter",
+  }),
+  P("artist", "Artist", ["handwritten", "art"], {
+    skin: 5,
+    hair: "manbun",
+    hairColor: "dark",
+    facial: "stubble",
+    headwear: "beret",
+    outfit: "apron",
+    outfitColor: "navy",
+    held: "brush",
+  }),
+  P("gamer", "Gamer", ["game", "pixel"], {
+    age: "teen",
+    skin: 6,
+    hair: "spiky",
+    hairColor: "blue",
+    expression: "grin",
+    outfit: "hoodie",
+    outfitColor: "lavender",
+    held: "controller",
+  }),
+  P("game-host", "Game host", ["game"], {
+    skin: 3,
+    hair: "quiff",
+    hairColor: "ginger",
+    facial: "mustache",
+    outfit: "shirt",
+    outfitColor: "red",
+    held: "cupcake",
+  }),
+  P("pixel-pal", "Pixel pal", ["pixel", "game"], {
+    age: "kid",
+    skin: 8,
+    hair: "buns",
+    hairColor: "pink",
+    expression: "wink",
+    outfit: "jersey",
+    outfitColor: "mint",
+    held: "controller",
+  }),
+  P("graduate", "Graduate", ["graduation", "school"], {
+    skin: 4,
+    hair: "long",
+    hairColor: "black",
+    expression: "joy",
+    headwear: "grad",
+    outfit: "gown",
+    outfitColor: "navy",
+    held: "letter",
+  }),
+  P("teacher", "Teacher", ["school", "graduation", "handwritten"], {
+    age: "senior",
+    skin: 2,
+    hair: "bob",
+    hairColor: "grey",
+    eyewear: "square",
+    outfit: "cardigan",
+    outfitColor: "terracotta",
+    held: "book",
+  }),
+  P("grandpa", "Grandpa", ["family", "cozy"], {
+    age: "senior",
+    skin: 3,
+    hair: "horseshoe",
+    hairColor: "grey",
+    facial: "mustache",
+    eyewear: "round",
+    outfit: "sweater",
+    outfitColor: "green",
+    held: "cup",
+  }),
+  P("grandma", "Grandma", ["family", "cozy"], {
+    age: "senior",
+    skin: 6,
+    hair: "bun",
+    hairColor: "platinum",
+    expression: "joy",
+    eyewear: "round",
+    outfit: "cardigan",
+    outfitColor: "lavender",
+    held: "cupcake",
+  }),
+  P("doctor", "Doctor", ["work", "thanks"], {
+    skin: 5,
+    hair: "ponytail",
+    hairColor: "black",
+    outfit: "labcoat",
+    outfitColor: "sky",
+  }),
+  P("nurse", "Nurse", ["work", "thanks"], {
+    skin: 8,
+    hair: "bun",
+    hairColor: "black",
+    outfit: "scrubs",
+    outfitColor: "mint",
+    held: "heart",
+  }),
+  P("coworker", "Coworker", ["work", "farewell"], {
+    skin: 2,
+    hair: "side",
+    hairColor: "brown",
+    facial: "goatee",
+    eyewear: "square",
+    outfit: "blazer",
+    outfitColor: "charcoal",
+    held: "cup",
+  }),
+  P("chef", "Chef", ["work", "food"], {
+    skin: 4,
+    hair: "crop",
+    hairColor: "dark",
+    facial: "beard",
+    outfit: "apron",
+    outfitColor: "red",
+    held: "pizza",
+  }),
+  P("plant-friend", "Plant friend", ["garden", "home"], {
+    skin: 9,
+    hair: "afro",
+    hairColor: "dark",
+    headwear: "headband",
+    outfit: "overalls",
+    outfitColor: "green",
+    held: "plant",
+  }),
+  P("musician", "Musician", ["music", "party"], {
+    skin: 7,
+    hair: "long",
+    hairColor: "dark",
+    facial: "stubble",
+    outfit: "denim",
+    outfitColor: "blue",
+    held: "guitar",
+  }),
+  P("sporty", "Sporty", ["sports", "outdoors"], {
+    age: "teen",
+    skin: 9,
+    hair: "buzz",
+    hairColor: "black",
+    expression: "grin",
+    headwear: "headband",
+    outfit: "jersey",
+    outfitColor: "blue",
+    held: "ball",
+  }),
+  P("sunny", "Sunny", ["summer", "birthday"], {
+    age: "kid",
+    skin: 3,
+    hair: "braids",
+    hairColor: "auburn",
+    expression: "joy",
+    headwear: "bow",
+    outfit: "dress",
+    outfitColor: "sun",
+    held: "popsicle",
+  }),
+  P("rainy-day", "Rainy day", ["cozy", "rain"], {
+    age: "kid",
+    skin: 5,
+    hair: "bob",
+    hairColor: "black",
+    outfit: "raincoat",
+    outfitColor: "sun",
+    held: "teddy",
+  }),
+  P("bestie", "Bestie", ["birthday", "friends"], {
+    age: "teen",
+    skin: 2,
+    hair: "sidebraid",
+    hairColor: "blonde",
+    expression: "wink",
+    outfit: "stripes",
+    outfitColor: "navy",
+    held: "phone",
+  }),
+  P("dreamer", "Dreamer", ["night", "wish"], {
+    skin: 1,
+    hair: "longcurls",
+    hairColor: "platinum",
+    expression: "calm",
+    outfit: "sweater",
+    outfitColor: "lavender",
+    held: "wand",
+  }),
+  P("cool-uncle", "Cool uncle", ["family", "party"], {
+    skin: 6,
+    hair: "bald",
+    facial: "beard",
+    hairColor: "dark",
+    eyewear: "sun",
+    outfit: "shirt",
+    outfitColor: "sun",
+    held: "phone",
+  }),
+  P("royalty", "Royalty", ["birthday", "pixel"], {
+    age: "kid",
+    skin: 7,
+    hair: "curls",
+    hairColor: "dark",
+    expression: "grin",
+    headwear: "crown",
+    outfit: "suit",
+    outfitColor: "lavender",
+    held: "gift",
+  }),
 ] as const;
 
 export type PersonPreset = (typeof PEOPLE)[number];

@@ -16,13 +16,27 @@ const NOTES = [
   { who: "Mika", text: "We made you a thing. Keep scrolling." },
 ];
 
-export function GiftPeek({ kind, palette, recipient = "Ana", live }: { kind: ThemeKind; palette: Palette; recipient?: string; live: boolean }) {
+export function GiftPeek({
+  kind,
+  palette,
+  recipient = "Ana",
+  live,
+}: {
+  kind: ThemeKind;
+  palette: Palette;
+  recipient?: string;
+  live: boolean;
+}) {
   const ink = readableInk(palette.background);
   return (
     <div
       aria-hidden="true"
       className="absolute inset-0 overflow-hidden"
-      style={{ background: `radial-gradient(120% 80% at 50% 0%, ${palette.accent}22, transparent 60%), ${palette.background}`, color: ink, ...(themeFontVars(kind) as object) }}
+      style={{
+        background: `radial-gradient(120% 80% at 50% 0%, ${palette.accent}22, transparent 60%), ${palette.background}`,
+        color: ink,
+        ...(themeFontVars(kind) as object),
+      }}
     >
       <div className="mx-auto flex h-full w-full max-w-[440px] flex-col items-center px-[7%] pt-[16%] text-center">
         <motion.p
@@ -35,7 +49,10 @@ export function GiftPeek({ kind, palette, recipient = "Ana", live }: { kind: The
         </motion.p>
         <motion.h4
           className="mt-1 text-[64px] leading-none"
-          style={{ fontFamily: "var(--jb-display)", color: palette.primary === palette.background ? ink : palette.primary }}
+          style={{
+            fontFamily: "var(--jb-display)",
+            color: palette.primary === palette.background ? ink : palette.primary,
+          }}
           initial={false}
           animate={{ opacity: live ? 1 : 0, scale: live ? 1 : 0.9 }}
           transition={{ ...SPRING.soft, delay: 0.32 }}
@@ -47,9 +64,17 @@ export function GiftPeek({ kind, palette, recipient = "Ana", live }: { kind: The
             <motion.div
               key={n.who}
               className="absolute left-1/2 w-[78%] rounded-2xl p-4 text-left text-[15px] leading-snug shadow-[0_18px_30px_-20px_rgba(0,0,0,.45)]"
-              style={{ top: i * 92, marginLeft: "-39%", background: i === 1 ? palette.accent : "#FFFFFF", color: i === 1 ? readableInk(palette.accent) : "#2B2522", fontFamily: "var(--jb-text)" }}
+              style={{
+                top: i * 92,
+                marginLeft: "-39%",
+                background: i === 1 ? palette.accent : "#FFFFFF",
+                color: i === 1 ? readableInk(palette.accent) : "#2B2522",
+                fontFamily: "var(--jb-text)",
+              }}
               initial={false}
-              animate={live ? { opacity: 1, y: 0, rotate: (i - 1) * 3 } : { opacity: 0, y: 60, rotate: 0 }}
+              animate={
+                live ? { opacity: 1, y: 0, rotate: (i - 1) * 3 } : { opacity: 0, y: 60, rotate: 0 }
+              }
               transition={{ ...SPRING.wobbly, delay: 0.45 + i * 0.12 }}
             >
               {n.text}

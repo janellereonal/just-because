@@ -15,5 +15,6 @@ export const httpErrorAdapter = createSerializationAdapter({
   test: (value: unknown): value is StatusError =>
     value instanceof Error && typeof (value as { status?: unknown }).status === "number",
   toSerializable: (error: StatusError) => ({ message: error.message, status: error.status }),
-  fromSerializable: (value: { message: string; status: number }) => Object.assign(new Error(value.message), { status: value.status }),
+  fromSerializable: (value: { message: string; status: number }) =>
+    Object.assign(new Error(value.message), { status: value.status }),
 });

@@ -9,7 +9,13 @@ import { useEffect, useRef, useState } from "react";
 import { Lock, Mic, Music2, Pause, Play, RotateCw, SkipBack, SkipForward } from "lucide-react";
 import { FONT_PAIRINGS, toEmbedUrl } from "@/lib/gift";
 import { readableInk } from "@/lib/palettes";
-import { pieceLocked, useMediaUrl, usePieces, useReducedMotion, type Piece } from "@/lib/giftPieces";
+import {
+  pieceLocked,
+  useMediaUrl,
+  usePieces,
+  useReducedMotion,
+  type Piece,
+} from "@/lib/giftPieces";
 import type { FormatViewProps } from "@/components/formats/FormatView";
 import { buzz, chime } from "@/lib/play";
 

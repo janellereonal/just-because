@@ -65,8 +65,17 @@ function materials(kind: ThemeKind): Material {
         }),
         decor: (i) => (
           <>
-            <span className="absolute top-3 right-3 grid size-11 place-items-center rounded-full" style={{ background: `radial-gradient(circle, ${d.champagne} 0 18%, ${d.plum} 19% 62%, #1C1210 63%)` }} aria-hidden="true" />
-            <span className="absolute top-4 left-5 text-[10px] tracking-[0.25em] uppercase opacity-60" style={{ fontFamily: "var(--jb-text)" }}>
+            <span
+              className="absolute top-3 right-3 grid size-11 place-items-center rounded-full"
+              style={{
+                background: `radial-gradient(circle, ${d.champagne} 0 18%, ${d.plum} 19% 62%, #1C1210 63%)`,
+              }}
+              aria-hidden="true"
+            />
+            <span
+              className="absolute top-4 left-5 text-[10px] tracking-[0.25em] uppercase opacity-60"
+              style={{ fontFamily: "var(--jb-text)" }}
+            >
               Side {i % 2 ? "B" : "A"} · Track {(i % 9) + 1}
             </span>
           </>
@@ -266,15 +275,30 @@ export function NoteCard({ kind, text, author, accent, index, muted = false }: P
   return (
     <motion.article
       className={`relative p-6 ${m.pad ?? ""} ${shell.className}`}
-      style={{ ...(shell.style as object), ...(m.ink ? { color: m.ink } : {}), opacity: muted ? 0.8 : undefined, transformPerspective: 900 }}
+      style={{
+        ...(shell.style as object),
+        ...(m.ink ? { color: m.ink } : {}),
+        opacity: muted ? 0.8 : undefined,
+        transformPerspective: 900,
+      }}
       initial={enter}
-      whileInView={{ opacity: muted ? 0.8 : 1, x: 0, y: 0, rotateX: 0, scale: 1, rotate: m.rest?.(index) ?? 0 }}
+      whileInView={{
+        opacity: muted ? 0.8 : 1,
+        x: 0,
+        y: 0,
+        rotateX: 0,
+        scale: 1,
+        rotate: m.rest?.(index) ?? 0,
+      }}
       viewport={{ once: true, amount: "some", margin: "0px 0px -12% 0px" }}
       transition={{ ...(m.transition ?? SPRING.soft), delay: reduce ? 0 : (index % 2) * 0.08 }}
     >
       {m.decor?.(index)}
       <p className="relative leading-relaxed whitespace-pre-line">{text}</p>
-      <p className="sb-hand relative mt-4 text-xl" style={{ color: m.ink ? undefined : accent, opacity: m.ink ? 0.85 : 1 }}>
+      <p
+        className="sb-hand relative mt-4 text-xl"
+        style={{ color: m.ink ? undefined : accent, opacity: m.ink ? 0.85 : 1 }}
+      >
         {author}
       </p>
     </motion.article>
@@ -285,7 +309,14 @@ export function NoteCard({ kind, text, author, accent, index, muted = false }: P
 
 function Seal({ color }: { color: string }) {
   return (
-    <span className="absolute top-1/2 -right-3 grid size-9 -translate-y-1/2 place-items-center rounded-full" style={{ background: `radial-gradient(circle at 35% 30%, ${color}CC, ${color})`, boxShadow: "0 3px 6px -2px rgba(0,0,0,.4)" }} aria-hidden="true">
+    <span
+      className="absolute top-1/2 -right-3 grid size-9 -translate-y-1/2 place-items-center rounded-full"
+      style={{
+        background: `radial-gradient(circle at 35% 30%, ${color}CC, ${color})`,
+        boxShadow: "0 3px 6px -2px rgba(0,0,0,.4)",
+      }}
+      aria-hidden="true"
+    >
       <svg viewBox="0 0 24 24" className="size-4" fill="rgba(255,255,255,.75)">
         <path d="M12 21s-8-5-8-11a4.5 4.5 0 0 1 8-2.8A4.5 4.5 0 0 1 20 10c0 6-8 11-8 11z" />
       </svg>
@@ -296,8 +327,20 @@ function Seal({ color }: { color: string }) {
 function TagHole({ string, twine = false }: { string: string; twine?: boolean }) {
   return (
     <>
-      <span className="absolute top-3 left-1/2 size-3 -translate-x-1/2 rounded-full bg-[var(--gift-surface,#fff)]" style={{ boxShadow: "inset 0 1px 2px rgba(0,0,0,.35)" }} aria-hidden="true" />
-      <span className="absolute -top-8 left-1/2 h-10 w-[2px] -translate-x-1/2" style={{ background: twine ? "repeating-linear-gradient(180deg,#C9A57A 0 3px,#A8865C 3px 6px)" : string }} aria-hidden="true" />
+      <span
+        className="absolute top-3 left-1/2 size-3 -translate-x-1/2 rounded-full bg-[var(--gift-surface,#fff)]"
+        style={{ boxShadow: "inset 0 1px 2px rgba(0,0,0,.35)" }}
+        aria-hidden="true"
+      />
+      <span
+        className="absolute -top-8 left-1/2 h-10 w-[2px] -translate-x-1/2"
+        style={{
+          background: twine
+            ? "repeating-linear-gradient(180deg,#C9A57A 0 3px,#A8865C 3px 6px)"
+            : string,
+        }}
+        aria-hidden="true"
+      />
     </>
   );
 }
@@ -307,7 +350,16 @@ function Pegs() {
     <>
       <span className="absolute -top-4 right-0 left-0 h-[2px] bg-[#B9A98E]" aria-hidden="true" />
       {[22, 78].map((x) => (
-        <span key={x} className="absolute -top-6 h-8 w-[9px] -translate-x-1/2 rounded-[3px]" style={{ left: `${x}%`, background: "linear-gradient(90deg,#E9D6B2,#D6BE93)", boxShadow: "0 2px 3px rgba(0,0,0,.18)" }} aria-hidden="true" />
+        <span
+          key={x}
+          className="absolute -top-6 h-8 w-[9px] -translate-x-1/2 rounded-[3px]"
+          style={{
+            left: `${x}%`,
+            background: "linear-gradient(90deg,#E9D6B2,#D6BE93)",
+            boxShadow: "0 2px 3px rgba(0,0,0,.18)",
+          }}
+          aria-hidden="true"
+        />
       ))}
     </>
   );
@@ -325,7 +377,17 @@ function Flute({ gold }: { gold: string }) {
   );
 }
 
-function PostStamp({ i, orange, sky, ink }: { i: number; orange: string; sky: string; ink: string }) {
+function PostStamp({
+  i,
+  orange,
+  sky,
+  ink,
+}: {
+  i: number;
+  orange: string;
+  sky: string;
+  ink: string;
+}) {
   return (
     <>
       <span
@@ -333,8 +395,10 @@ function PostStamp({ i, orange, sky, ink }: { i: number; orange: string; sky: st
         style={{
           background: i % 2 ? sky : orange,
           boxShadow: "0 0 0 3px #fff",
-          WebkitMaskImage: "radial-gradient(circle 2.2px at 2.5px 2.5px, transparent 98%, #000) -2.5px -2.5px / 6px 6px",
-          maskImage: "radial-gradient(circle 2.2px at 2.5px 2.5px, transparent 98%, #000) -2.5px -2.5px / 6px 6px",
+          WebkitMaskImage:
+            "radial-gradient(circle 2.2px at 2.5px 2.5px, transparent 98%, #000) -2.5px -2.5px / 6px 6px",
+          maskImage:
+            "radial-gradient(circle 2.2px at 2.5px 2.5px, transparent 98%, #000) -2.5px -2.5px / 6px 6px",
         }}
         aria-hidden="true"
       >
@@ -344,7 +408,12 @@ function PostStamp({ i, orange, sky, ink }: { i: number; orange: string; sky: st
       </span>
       <motion.span
         className="absolute top-10 right-12 grid size-14 place-items-center rounded-full text-[7px] font-bold tracking-[0.18em] uppercase"
-        style={{ boxShadow: `inset 0 0 0 1.5px ${ink}88`, color: `${ink}AA`, fontFamily: "var(--jb-text)", rotate: -14 }}
+        style={{
+          boxShadow: `inset 0 0 0 1.5px ${ink}88`,
+          color: `${ink}AA`,
+          fontFamily: "var(--jb-text)",
+          rotate: -14,
+        }}
         aria-hidden="true"
       >
         Posted
@@ -355,8 +424,15 @@ function PostStamp({ i, orange, sky, ink }: { i: number; orange: string; sky: st
 
 function Paw({ color }: { color: string }) {
   return (
-    <svg className="absolute -top-3 -right-1 size-9 rotate-12" viewBox="0 0 24 24" aria-hidden="true">
-      <path fill={color} d="M12 13c-3 0-6 3-6 5.5S8 22 12 21s6 .5 6-2.5S15 13 12 13zM5 8.5a2.3 2.8 0 1 0 0 .1zM9 4a2.3 2.8 0 1 0 0 .1zM15 4a2.3 2.8 0 1 0 0 .1zM19 8.5a2.3 2.8 0 1 0 0 .1z" />
+    <svg
+      className="absolute -top-3 -right-1 size-9 rotate-12"
+      viewBox="0 0 24 24"
+      aria-hidden="true"
+    >
+      <path
+        fill={color}
+        d="M12 13c-3 0-6 3-6 5.5S8 22 12 21s6 .5 6-2.5S15 13 12 13zM5 8.5a2.3 2.8 0 1 0 0 .1zM9 4a2.3 2.8 0 1 0 0 .1zM15 4a2.3 2.8 0 1 0 0 .1zM19 8.5a2.3 2.8 0 1 0 0 .1z"
+      />
     </svg>
   );
 }
@@ -367,7 +443,11 @@ function Tape({ color }: { color: string }) {
     <span
       aria-hidden="true"
       className="pointer-events-none absolute -top-3 left-1/2 block h-6 w-20 -translate-x-1/2 -rotate-3"
-      style={{ background: `repeating-linear-gradient(90deg, ${color}aa 0 6px, ${color}88 6px 12px)`, boxShadow: "0 1px 2px rgba(0,0,0,.08)", clipPath: "polygon(3% 0, 97% 4%, 100% 50%, 96% 100%, 2% 96%, 0 50%)" }}
+      style={{
+        background: `repeating-linear-gradient(90deg, ${color}aa 0 6px, ${color}88 6px 12px)`,
+        boxShadow: "0 1px 2px rgba(0,0,0,.08)",
+        clipPath: "polygon(3% 0, 97% 4%, 100% 50%, 96% 100%, 2% 96%, 0 50%)",
+      }}
     />
   );
 }
@@ -376,7 +456,11 @@ function Tape({ color }: { color: string }) {
 function Suit({ color, index }: { color: string; index: number }) {
   const glyph = ["♠", "♥", "♣", "♦"][index % 4];
   return (
-    <span aria-hidden="true" className="pointer-events-none absolute top-3 right-4 text-lg leading-none" style={{ color }}>
+    <span
+      aria-hidden="true"
+      className="pointer-events-none absolute top-3 right-4 text-lg leading-none"
+      style={{ color }}
+    >
       {glyph}
     </span>
   );
@@ -385,6 +469,10 @@ function Suit({ color, index }: { color: string; index: number }) {
 /** The "more text" arrow in the corner of a pixel dialog box. */
 function PixelArrow({ color }: { color: string }) {
   return (
-    <span aria-hidden="true" className="pointer-events-none absolute right-4 bottom-3 block size-[10px] motion-safe:animate-pulse" style={{ background: color, clipPath: "polygon(0 0, 100% 0, 50% 100%)" }} />
+    <span
+      aria-hidden="true"
+      className="pointer-events-none absolute right-4 bottom-3 block size-[10px] motion-safe:animate-pulse"
+      style={{ background: color, clipPath: "polygon(0 0, 100% 0, 50% 100%)" }}
+    />
   );
 }

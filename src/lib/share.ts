@@ -17,7 +17,13 @@ export const getShareMeta = createServerFn({ method: "GET" })
   .inputValidator(z.object({ slug: z.string().trim().min(1).max(120) }))
   .handler(async ({ data }): Promise<ShareMeta | null> => {
     const [row] = await getDb()
-      .select({ customText: schema.giftSites.customText, passwordHash: schema.giftSites.passwordHash, disabledAt: schema.giftSites.disabledAt, themeName: schema.themes.name, themeCategory: schema.themes.category })
+      .select({
+        customText: schema.giftSites.customText,
+        passwordHash: schema.giftSites.passwordHash,
+        disabledAt: schema.giftSites.disabledAt,
+        themeName: schema.themes.name,
+        themeCategory: schema.themes.category,
+      })
       .from(schema.giftSites)
       .leftJoin(schema.themes, eq(schema.themes.id, schema.giftSites.themeId))
       .where(eq(schema.giftSites.slug, data.slug));
@@ -25,7 +31,11 @@ export const getShareMeta = createServerFn({ method: "GET" })
     if (!row) throw notFound();
     if (row.disabledAt) return null;
     const kind = themeKindOf({ name: row.themeName, category: row.themeCategory });
-    const name = String((row.customText as Record<string, unknown> | null)?.["recipient_name"] ?? "").trim().slice(0, 40);
+    const name = String(
+      (row.customText as Record<string, unknown> | null)?.["recipient_name"] ?? "",
+    )
+      .trim()
+      .slice(0, 40);
     return { recipient: row.passwordHash || !name ? null : name, kind };
   });
 
@@ -63,18 +73,43 @@ function tags(title: string, description: string, image: string) {
   ];
 }
 
-const known = (k: ThemeKind) => (OG_KINDS as readonly string[]).includes(k) ? k : "default";
-export const OG_KINDS = ["birthday", "valentine", "anniversary", "wedding", "bridal", "baby", "christmas", "newyear", "voyage", "pets", "handwritten", "game", "pixel", "default"] as const;
+const known = (k: ThemeKind) => ((OG_KINDS as readonly string[]).includes(k) ? k : "default");
+export const OG_KINDS = [
+  "birthday",
+  "valentine",
+  "anniversary",
+  "wedding",
+  "bridal",
+  "baby",
+  "christmas",
+  "newyear",
+  "voyage",
+  "pets",
+  "handwritten",
+  "game",
+  "pixel",
+  "default",
+] as const;
 
 export function giftShareTags(meta: ShareMeta | null | undefined) {
   const title = meta?.recipient ? `A gift for ${meta.recipient}` : "A gift for you";
-  return tags(title, "Made by the people who love you. Open it when you're ready.", `/og/gift-${known(meta?.kind ?? "default")}.jpg`);
+  return tags(
+    title,
+    "Made by the people who love you. Open it when you're ready.",
+    `/og/gift-${known(meta?.kind ?? "default")}.jpg`,
+  );
 }
 
 export function contributeShareTags(meta: ShareMeta | null | undefined) {
   const occasion = meta ? OCCASION[meta.kind] : undefined;
-  const title = meta?.recipient ? `Add a note to ${possessive(meta.recipient)} ${occasion ? `${occasion} ` : ""}gift` : "Add a note to a group gift";
-  return tags(title, "Write a few words, add a photo or a song. It takes a minute and no account.", `/og/add-${known(meta?.kind ?? "default")}.jpg`);
+  const title = meta?.recipient
+    ? `Add a note to ${possessive(meta.recipient)} ${occasion ? `${occasion} ` : ""}gift`
+    : "Add a note to a group gift";
+  return tags(
+    title,
+    "Write a few words, add a photo or a song. It takes a minute and no account.",
+    `/og/add-${known(meta?.kind ?? "default")}.jpg`,
+  );
 }
 
 export function marketingShareTags(title: string, description: string) {

@@ -182,14 +182,35 @@ export const LANDING = {
       voice: { title: "Voice notes", body: "Hear Grandma say happy birthday, again and again." },
       words: { title: "Word cloud", body: "One word each. Together it says a lot." },
       countdown: { title: "Countdown", body: "Live, in everyone's own time zone." },
-      openwhen: { title: "Open-when letters", body: "Sealed for later. Open when you miss us, or on a bad day." },
-      capsule: { title: "Time capsule", body: "Notes that stay locked until a date you pick. Even a year away." },
-      awards: { title: "Awards", body: "Friends vote. Most likely to cry at the toast wins a ribbon." },
-      quiz: { title: "Quiz", body: "How well do they know the inside jokes? Friends write the questions." },
-      map: { title: "Memory map", body: "Pins for the places that matter, joined by the route you took." },
-      coupons: { title: "Coupons", body: "One free dinner. One no-questions-asked pickup. Tear to redeem." },
+      openwhen: {
+        title: "Open-when letters",
+        body: "Sealed for later. Open when you miss us, or on a bad day.",
+      },
+      capsule: {
+        title: "Time capsule",
+        body: "Notes that stay locked until a date you pick. Even a year away.",
+      },
+      awards: {
+        title: "Awards",
+        body: "Friends vote. Most likely to cry at the toast wins a ribbon.",
+      },
+      quiz: {
+        title: "Quiz",
+        body: "How well do they know the inside jokes? Friends write the questions.",
+      },
+      map: {
+        title: "Memory map",
+        body: "Pins for the places that matter, joined by the route you took.",
+      },
+      coupons: {
+        title: "Coupons",
+        body: "One free dinner. One no-questions-asked pickup. Tear to redeem.",
+      },
       video: { title: "Videos", body: "Short clips from everyone, playing right in the gift." },
-      doodle: { title: "Doodle guestbook", body: "Draw something with your finger. It doesn't have to be good." },
+      doodle: {
+        title: "Doodle guestbook",
+        body: "Draw something with your finger. It doesn't have to be good.",
+      },
     },
     more: (n: number) => `And ${n} more, from quizzes to doodles. Turn on just the ones that fit.`,
   },
@@ -209,7 +230,21 @@ export const LANDING = {
   },
 } as const;
 
-const COUNT_WORDS = ["Zero", "One", "Two", "Three", "Four", "Five", "Six", "Seven", "Eight", "Nine", "Ten", "Eleven", "Twelve"];
+const COUNT_WORDS = [
+  "Zero",
+  "One",
+  "Two",
+  "Three",
+  "Four",
+  "Five",
+  "Six",
+  "Seven",
+  "Eight",
+  "Nine",
+  "Ten",
+  "Eleven",
+  "Twelve",
+];
 /** "Nine" for 9, "14" past twelve. Starts a sentence, so it's capitalised. */
 export function countWord(n: number): string {
   return COUNT_WORDS[n] ?? String(n);
@@ -333,7 +368,12 @@ export const COMIC_COPY = {
   closeCover: "Close the cover preview",
   featuring: (n: number) => (n > 1 ? `Featuring ${n} friends` : "A one-shot special"),
   inside: (letters: number, photos: number) =>
-    [letters ? `${letters} letter${letters === 1 ? "" : "s"}` : "", photos ? `${photos} photo${photos === 1 ? "" : "s"}` : ""].filter(Boolean).join(" · ") || "Every page by hand",
+    [
+      letters ? `${letters} letter${letters === 1 ? "" : "s"}` : "",
+      photos ? `${photos} photo${photos === 1 ? "" : "s"}` : "",
+    ]
+      .filter(Boolean)
+      .join(" · ") || "Every page by hand",
   chapters: "Chapters",
   contents: "In this issue",
   chapter: (n: number) => `Chapter ${n}`,
@@ -408,12 +448,21 @@ export const SECTIONS_PAGE = {
   title: "Everything friends can add",
   body: "Pick the ones that suit the person. Each one below is live, so open it and have a play.",
   filter: "Filter sections",
-  groups: { all: "All", words: "Words", pictures: "Photos and video", sound: "Sound", play: "Games and fun", keepsakes: "Keepsakes", holidays: "Holidays" },
+  groups: {
+    all: "All",
+    words: "Words",
+    pictures: "Photos and video",
+    sound: "Sound",
+    play: "Games and fun",
+    keepsakes: "Keepsakes",
+    holidays: "Holidays",
+  },
   openPreview: (label: string) => `Try the ${label} section`,
   tryIt: "Try it",
   close: "Close",
   live: "This is the real section with sample notes.",
-  closing: "Mix and match as many as you like. You can change them any time, even after friends start adding notes.",
+  closing:
+    "Mix and match as many as you like. You can change them any time, even after friends start adding notes.",
   cta: "Start a gift",
   link: (n: number) => `See all ${n} sections`,
 } as const;
@@ -464,8 +513,10 @@ export const PHOTOBOOTH_COPY = {
   title: "Photobooth",
   close: "Close the photobooth",
   starting: "Turning on your camera…",
-  noCamera: "We couldn't use your camera. You can still pick a photo from your device and frame it.",
-  denied: "Camera access is off for this page. Turn it on in your browser, or pick a photo from your device.",
+  noCamera:
+    "We couldn't use your camera. You can still pick a photo from your device and frame it.",
+  denied:
+    "Camera access is off for this page. Turn it on in your browser, or pick a photo from your device.",
   fromDevice: "Use a photo from your device",
   one: "One photo",
   four: "Four in a row",
@@ -496,7 +547,8 @@ export const CONCIERGE_COPY = {
   pitch: "We chase the friends, tidy the photos and put the whole gift together for you.",
   cta: "Tell us about it",
   formTitle: "We'll handle it",
-  formIntro: "A few details and we'll take it from there. No payment yet: we'll sort that out with you directly.",
+  formIntro:
+    "A few details and we'll take it from there. No payment yet: we'll sort that out with you directly.",
   fields: {
     recipient: "Who's it for?",
     occasion: "What's the occasion?",
@@ -604,7 +656,8 @@ export function friendAddLine(types: readonly string[]): string {
   const words = types.map((t) => FRIEND_PAGE.things[t]).filter((w): w is string => !!w);
   if (words.length === 0) return "";
   if (words.length === 1) return `Add ${words[0]}.`;
-  if (words.length <= 3) return `Add ${words.slice(0, -1).join(", ")} or ${words[words.length - 1]}.`;
+  if (words.length <= 3)
+    return `Add ${words.slice(0, -1).join(", ")} or ${words[words.length - 1]}.`;
   return `Add ${words.slice(0, 3).join(", ")} and more.`;
 }
 
@@ -613,20 +666,76 @@ export function friendAddLine(types: readonly string[]): string {
  * The first one is also the friend page example. `{name}` becomes ", Ana" or nothing.
  */
 export const SAMPLE_LETTERS: Record<string, [string, string, string]> = {
-  valentine: ["Happy Valentine's Day{name}. You make ordinary days feel special.", "Still my favourite person to sit next to.", "Thank you for loving me so well."],
-  birthday: ["Happy birthday{name}. Here's to your best year yet.", "Another year of you is a gift to all of us.", "Cake first, then we talk. Love you."],
-  voyage: ["Safe travels{name}. Send us a postcard from there.", "Go see everything. We'll keep your seat warm.", "Proud of you for taking the leap."],
-  christmas: ["Merry Christmas{name}. You make the season brighter.", "Thank you for every gift that wasn't wrapped.", "Here's to cocoa, carols and you."],
-  pets: ["Who's a good one{name}? You are.", "Thank you for every greeting at the door.", "Best nap buddy there ever was."],
-  newyear: ["Happy New Year{name}. Here's to your best year yet.", "So glad we got through last year together.", "Big plans, small steps. We're with you."],
-  anniversary: ["Happy anniversary{name}. Here's to many more years together.", "You two make it look easy.", "Thank you for showing us what love looks like."],
-  wedding: ["Congratulations{name}. So happy for you both.", "What a day, and what a pair.", "Wishing you a lifetime of good mornings."],
-  bridal: ["Can't wait to celebrate you{name}.", "Here's to the bride, and the best is yet to come.", "So happy for you. Save me a dance."],
-  baby: ["Welcome to the world, little one{name}.", "That little one is so lucky to have you.", "Sleep when you can. We're here for the rest."],
-  handwritten: ["I wrote this one by hand, just for you{name}.", "A few words I've been meaning to say.", "Keep this for a rainy day."],
-  game: ["You always win{name}, and I don't even mind.", "Player two, ready when you are.", "GG. Thanks for every round."],
-  pixel: ["Achievement unlocked: best friend{name}.", "Extra life, just for you.", "Press start on a great year."],
-  default: ["Thinking of you{name}, always.", "You make every room warmer.", "Thank you for always showing up."],
+  valentine: [
+    "Happy Valentine's Day{name}. You make ordinary days feel special.",
+    "Still my favourite person to sit next to.",
+    "Thank you for loving me so well.",
+  ],
+  birthday: [
+    "Happy birthday{name}. Here's to your best year yet.",
+    "Another year of you is a gift to all of us.",
+    "Cake first, then we talk. Love you.",
+  ],
+  voyage: [
+    "Safe travels{name}. Send us a postcard from there.",
+    "Go see everything. We'll keep your seat warm.",
+    "Proud of you for taking the leap.",
+  ],
+  christmas: [
+    "Merry Christmas{name}. You make the season brighter.",
+    "Thank you for every gift that wasn't wrapped.",
+    "Here's to cocoa, carols and you.",
+  ],
+  pets: [
+    "Who's a good one{name}? You are.",
+    "Thank you for every greeting at the door.",
+    "Best nap buddy there ever was.",
+  ],
+  newyear: [
+    "Happy New Year{name}. Here's to your best year yet.",
+    "So glad we got through last year together.",
+    "Big plans, small steps. We're with you.",
+  ],
+  anniversary: [
+    "Happy anniversary{name}. Here's to many more years together.",
+    "You two make it look easy.",
+    "Thank you for showing us what love looks like.",
+  ],
+  wedding: [
+    "Congratulations{name}. So happy for you both.",
+    "What a day, and what a pair.",
+    "Wishing you a lifetime of good mornings.",
+  ],
+  bridal: [
+    "Can't wait to celebrate you{name}.",
+    "Here's to the bride, and the best is yet to come.",
+    "So happy for you. Save me a dance.",
+  ],
+  baby: [
+    "Welcome to the world, little one{name}.",
+    "That little one is so lucky to have you.",
+    "Sleep when you can. We're here for the rest.",
+  ],
+  handwritten: [
+    "I wrote this one by hand, just for you{name}.",
+    "A few words I've been meaning to say.",
+    "Keep this for a rainy day.",
+  ],
+  game: [
+    "You always win{name}, and I don't even mind.",
+    "Player two, ready when you are.",
+    "GG. Thanks for every round.",
+  ],
+  pixel: [
+    "Achievement unlocked: best friend{name}.",
+    "Extra life, just for you.",
+    "Press start on a great year.",
+  ],
+  default: [
+    "Thinking of you{name}, always.",
+    "You make every room warmer.",
+    "Thank you for always showing up.",
+  ],
 };
 
 /** One sample letter, with the name filled in (or left out). */
@@ -673,7 +782,8 @@ export const GIFT_FOOTER_COPY = {
 export const REPORT_COPY = {
   link: "Report",
   title: "Report this gift",
-  intro: "Tell us what's wrong. We'll look at it, and we may pause the gift. The organiser won't see who reported it.",
+  intro:
+    "Tell us what's wrong. We'll look at it, and we may pause the gift. The organiser won't see who reported it.",
   reasons: [
     ["harassment", "Bullying or harassment"],
     ["private-info", "Shares someone's private information"],
@@ -690,7 +800,8 @@ export const REPORT_COPY = {
   cancel: "Cancel",
   close: "Close",
   pausedTitle: "This gift has been paused",
-  pausedBody: "It's been taken down while we look into a report. If it's yours, check your email or contact us.",
+  pausedBody:
+    "It's been taken down while we look into a report. If it's yours, check your email or contact us.",
   makeYourOwn: "Make your own gift",
 } as const;
 
@@ -706,8 +817,11 @@ export const UPLOAD_COPY = {
         ? "That voice note is over 5 MB. Keep it under 2 minutes."
         : "That photo is over 8 MB. Try a smaller one.",
   tooLong: (kind: "photo" | "voice" | "video") =>
-    kind === "video" ? "Videos can be up to a minute long. Try a shorter clip." : "Voice notes can be up to 2 minutes long.",
-  cantOpen: "We couldn't open that photo. Try another one, or take a screenshot of it and send that.",
+    kind === "video"
+      ? "Videos can be up to a minute long. Try a shorter clip."
+      : "Voice notes can be up to 2 minutes long.",
+  cantOpen:
+    "We couldn't open that photo. Try another one, or take a screenshot of it and send that.",
   /** Read out where a photo can't load on a gift. */
   photoMissing: "This photo couldn't load",
 };
@@ -726,7 +840,9 @@ export const CODE_COPY = {
   checking: "Checking…",
   remove: "Remove",
   applied: (code: string, label: string, plans: string[], allPlans: boolean) =>
-    label === "Free" ? `${code} applied: ${plans.join(" and ")} is free.` : `${code} applied: ${label}${allPlans ? "" : ` ${plans.join(" and ")}`}.`,
+    label === "Free"
+      ? `${code} applied: ${plans.join(" and ")} is free.`
+      : `${code} applied: ${label}${allPlans ? "" : ` ${plans.join(" and ")}`}.`,
   free: (plan: string) => `Get ${plan} free`,
 };
 
@@ -736,30 +852,42 @@ export const PRICE_COPY = {
   /** Under the plan cards, for visitors in the Philippines. */
   footerLocal: "Prices are in pesos.",
   /** Under the plan cards, for everyone else. */
-  footerAbroad: "You pay in Philippine pesos, and cards from any country work. The amount in your currency is a guide. Your bank sets the exact rate.",
+  footerAbroad:
+    "You pay in Philippine pesos, and cards from any country work. The amount in your currency is a guide. Your bank sets the exact rate.",
   /** Next to the pay button, for visitors outside the Philippines. */
-  abroadPayNote: "Paying from outside the Philippines? Use a Visa or Mastercard. It's charged in pesos, and some banks add a small fee for that.",
+  abroadPayNote:
+    "Paying from outside the Philippines? Use a Visa or Mastercard. It's charged in pesos, and some banks add a small fee for that.",
 } as const;
 
 /** Paying safely: paused gifts, paying in two tabs, refunds we owe. */
 export const PAY_SAFETY_COPY = {
-  paused: "This gift is paused, so it can't be paid for right now. Write to us if you think that's a mistake.",
-  pausedBanner: "This gift is paused, so its link doesn't open and it can't be paid for. Write to us if you think that's a mistake.",
+  paused:
+    "This gift is paused, so it can't be paid for right now. Write to us if you think that's a mistake.",
+  pausedBanner:
+    "This gift is paused, so its link doesn't open and it can't be paid for. Write to us if you think that's a mistake.",
   pausedWrap: "Paused, so it can't be wrapped up right now.",
-  planChanged: "This gift's plan changed in another tab. Have a look at the plans again before paying.",
-  paidElsewhere: "A payment for this gift just went through in another tab, so we stopped here. Have a look before paying again.",
+  planChanged:
+    "This gift's plan changed in another tab. Have a look at the plans again before paying.",
+  paidElsewhere:
+    "A payment for this gift just went through in another tab, so we stopped here. Have a look before paying again.",
   chargedTwiceTitle: "You were charged twice",
-  chargedTwice: (amount: string) => `This gift already had this plan, so nothing changed. We'll refund ${amount} within a few days.`,
-  deletedRefund: (amount: string) => `This gift was deleted before the payment came in. We'll refund ${amount} within a few days.`,
-  overpaid: (amount: string) => `You paid ${amount} more than this needed, so we'll refund ${amount} within a few days.`,
+  chargedTwice: (amount: string) =>
+    `This gift already had this plan, so nothing changed. We'll refund ${amount} within a few days.`,
+  deletedRefund: (amount: string) =>
+    `This gift was deleted before the payment came in. We'll refund ${amount} within a few days.`,
+  overpaid: (amount: string) =>
+    `You paid ${amount} more than this needed, so we'll refund ${amount} within a few days.`,
   notFoundTitle: "We couldn't find that payment",
-  notFound: "It may belong to another account. Sign in with the account that paid, or head back to your gifts.",
+  notFound:
+    "It may belong to another account. Sign in with the account that paid, or head back to your gifts.",
 };
 
 /** Discount codes whose last use is held by a checkout someone hasn't finished yet. */
 export const CODE_LIMIT_COPY = {
-  yoursElsewhere: "You started paying for another gift with this code. Finish or cancel that payment first, then try again here.",
-  allHeld: "Every use of this code is waiting on a payment right now. If one isn't finished, it frees up within a day.",
+  yoursElsewhere:
+    "You started paying for another gift with this code. Finish or cancel that payment first, then try again here.",
+  allHeld:
+    "Every use of this code is waiting on a payment right now. If one isn't finished, it frees up within a day.",
 };
 
 /** Sign-in messages (src/routes/auth.tsx). */
@@ -771,34 +899,41 @@ export const AUTH_COPY = {
 /** Starting a gift without an account (flag guestStart). */
 export const GUEST_COPY = {
   keep: "Sign in so you don't lose your gift.",
-  bannerBody: "You're making this as a guest. Sign in to share it, pay for it or open it on another device.",
+  bannerBody:
+    "You're making this as a guest. Sign in to share it, pay for it or open it on another device.",
   signIn: "Sign in",
   google: "Continue with Google",
   email: "Use email instead",
   limit: "Sign in to make more gifts. Guests can start up to 3.",
-  limitBody: "Guests can start up to 3 gifts. Sign in and they move to your account, then you can make this one too.",
+  limitBody:
+    "Guests can start up to 3 gifts. Sign in and they move to your account, then you can make this one too.",
   shareTitle: "Sign in to share it",
-  shareBody: "Your gift is saved on this device for now. Sign in and it moves to your account, so friends can add to it and it's safe if you switch phones.",
+  shareBody:
+    "Your gift is saved on this device for now. Sign in and it moves to your account, so friends can add to it and it's safe if you switch phones.",
   payTitle: "Sign in to wrap it up",
-  payBody: "We'll send the receipt and the gift link to your email. Everything you made comes with you.",
+  payBody:
+    "We'll send the receipt and the gift link to your email. Everything you made comes with you.",
   later: "Not now",
   authHeading: "Keep your gift",
   authBody: "Sign in or make an account. The gift you started moves over with everything in it.",
   starting: "Starting your gift…",
   accountTitle: "Sign in to keep your gifts",
-  accountBody: "You're a guest for now, so your gifts live on this device. Sign in or make an account and they move over with everything in them.",
+  accountBody:
+    "You're a guest for now, so your gifts live on this device. Sign in or make an account and they move over with everything in them.",
 };
 
 /** Words → Opening style: which opening plays (Oct 2026: "Classic" used to hide the style's own without saying so). */
 export const OPENING_CHOICE_COPY = {
   styleChip: (style: string) => `${style} opening`,
   styleOn: (style: string) => `They'll see the ${style} opening.`,
-  classicOn: (style: string) => `They'll see Classic instead of the ${style} opening. Switching style brings the style's own back.`,
+  classicOn: (style: string) =>
+    `They'll see Classic instead of the ${style} opening. Switching style brings the style's own back.`,
 };
 
 /** Placing stickers on the opening, in the editor's preview. */
 export const STICKER_COPY = {
-  label: (name: string, selected: boolean) => (selected ? `${name} sticker, selected` : `${name} sticker. Tap to move, resize or turn it.`),
+  label: (name: string, selected: boolean) =>
+    selected ? `${name} sticker, selected` : `${name} sticker. Tap to move, resize or turn it.`,
   picture: "Picture",
   smaller: "Smaller",
   bigger: "Bigger",
@@ -863,7 +998,8 @@ export const SAVE_COPY = {
   notSavedShort: "Not saved yet",
   offline: "Offline. We'll save when you're back",
   conflictTitle: "This gift was changed somewhere else",
-  conflictBody: "Maybe in another tab or on your phone. Load the latest version to keep editing. Your last change here wasn't saved.",
+  conflictBody:
+    "Maybe in another tab or on your phone. Load the latest version to keep editing. Your last change here wasn't saved.",
   conflictButton: "Load the latest",
   conflictLoading: "Loading…",
   pulled: "Updated with changes made somewhere else.",

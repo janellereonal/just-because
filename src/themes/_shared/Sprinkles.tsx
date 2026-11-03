@@ -26,7 +26,14 @@ export function IconGlyph({
   const clay = material !== "felt" && material !== "flat" && /^#[0-9a-f]{6}$/i.test(color);
   if (item.kind === "path" && clay)
     return (
-      <svg viewBox="0 0 24 24" width={size} height={size} className={`overflow-visible ${className}`} style={style} aria-hidden="true">
+      <svg
+        viewBox="0 0 24 24"
+        width={size}
+        height={size}
+        className={`overflow-visible ${className}`}
+        style={style}
+        aria-hidden="true"
+      >
         <defs>
           <radialGradient id={gid} cx="34%" cy="26%" r="85%">
             <stop offset="0" stopColor={mixHex(color, "#ffffff", 0.42)} />
@@ -34,16 +41,37 @@ export function IconGlyph({
             <stop offset="1" stopColor={mixHex(color, "#2b2522", 0.24)} />
           </radialGradient>
         </defs>
-        <path d={item.d} fill={mixHex(color, "#2b2522", 0.55)} opacity=".16" transform="translate(.7 1.3)" />
+        <path
+          d={item.d}
+          fill={mixHex(color, "#2b2522", 0.55)}
+          opacity=".16"
+          transform="translate(.7 1.3)"
+        />
         <path d={item.d} fill={`url(#${gid})`} />
       </svg>
     );
   if (item.kind === "path")
     return (
-      <svg viewBox="0 0 24 24" width={size} height={size} className={material ? `overflow-visible ${className}` : className} style={style} aria-hidden="true">
+      <svg
+        viewBox="0 0 24 24"
+        width={size}
+        height={size}
+        className={material ? `overflow-visible ${className}` : className}
+        style={style}
+        aria-hidden="true"
+      >
         <path d={item.d} fill={color} filter={material === "felt" ? "url(#jb-puff)" : undefined} />
         {material === "felt" ? (
-          <path d={item.d} fill="none" stroke="#fff" strokeOpacity=".6" strokeWidth=".5" strokeDasharray="1 1.1" strokeLinecap="round" transform="translate(12 12) scale(.82) translate(-12 -12)" />
+          <path
+            d={item.d}
+            fill="none"
+            stroke="#fff"
+            strokeOpacity=".6"
+            strokeWidth=".5"
+            strokeDasharray="1 1.1"
+            strokeLinecap="round"
+            transform="translate(12 12) scale(.82) translate(-12 -12)"
+          />
         ) : null}
       </svg>
     );
@@ -61,7 +89,14 @@ export function IconGlyph({
     <span
       aria-hidden="true"
       className={className}
-      style={{ fontSize: size, lineHeight: 1, color, fontWeight: 700, fontFamily: "var(--jb-display, inherit)", ...style }}
+      style={{
+        fontSize: size,
+        lineHeight: 1,
+        color,
+        fontWeight: 700,
+        fontFamily: "var(--jb-display, inherit)",
+        ...style,
+      }}
     >
       {item.kind === "emoji" ? item.char : item.text}
     </span>
@@ -95,7 +130,8 @@ export function burstSet(
   const colors = set.colors.length ? set.colors : fallbackColors;
   const layer = document.createElement("div");
   layer.setAttribute("aria-hidden", "true");
-  layer.style.cssText = "position:absolute;inset:0;pointer-events:none;overflow:visible;z-index:80;contain:layout";
+  layer.style.cssText =
+    "position:absolute;inset:0;pointer-events:none;overflow:visible;z-index:80;contain:layout";
   host.appendChild(layer);
   const n = reduce ? Math.min(4, count) : count;
   let longest = 0;
@@ -196,9 +232,14 @@ export function SprinkleField({
       rot: (r() - 0.5) * 90,
     }));
   }, [count, seed, set.id, lo, hi]);
-  const colors = set.colors.length ? set.colors : (fallbackColors ?? ["#C2366B", "#FFD166", "#FFFFFF"]);
+  const colors = set.colors.length
+    ? set.colors
+    : (fallbackColors ?? ["#C2366B", "#FFD166", "#FFFFFF"]);
   return (
-    <div className={`jb-sprinkles pointer-events-none absolute inset-0 overflow-hidden ${className}`} aria-hidden="true">
+    <div
+      className={`jb-sprinkles pointer-events-none absolute inset-0 overflow-hidden ${className}`}
+      aria-hidden="true"
+    >
       {parts.map((p) => (
         <span
           key={p.i}
@@ -217,7 +258,12 @@ export function SprinkleField({
           }
         >
           {/* Blur the glyph, not the moving span: it's baked in once and the span just slides. */}
-          <IconGlyph item={pick(set.items, p.i)} color={pick(colors, p.i)} size={p.size} style={blur ? { filter: `blur(${blur}px)`, display: "block" } : {}} />
+          <IconGlyph
+            item={pick(set.items, p.i)}
+            color={pick(colors, p.i)}
+            size={p.size}
+            style={blur ? { filter: `blur(${blur}px)`, display: "block" } : {}}
+          />
         </span>
       ))}
     </div>

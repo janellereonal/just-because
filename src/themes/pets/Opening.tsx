@@ -204,7 +204,15 @@ export function PetsOpening(p: OpeningProps) {
       >
         <Floor wood={c.oat!} />
         {/* Braided rug, a little thick, on the floorboards */}
-        <div className="absolute inset-x-[4%] bottom-[2%] h-[30%] rounded-[50%]" style={{ background: `color-mix(in srgb, ${c.terracotta} 70%, #000)`, transform: "translateY(5px)", boxShadow: "3px 10px 16px -6px rgba(60,30,15,.45)" }} aria-hidden="true" />
+        <div
+          className="absolute inset-x-[4%] bottom-[2%] h-[30%] rounded-[50%]"
+          style={{
+            background: `color-mix(in srgb, ${c.terracotta} 70%, #000)`,
+            transform: "translateY(5px)",
+            boxShadow: "3px 10px 16px -6px rgba(60,30,15,.45)",
+          }}
+          aria-hidden="true"
+        />
         <div
           className="absolute inset-x-[4%] bottom-[2%] h-[30%] overflow-hidden rounded-[50%]"
           style={{
@@ -217,9 +225,22 @@ export function PetsOpening(p: OpeningProps) {
           aria-hidden="true"
         >
           <Texture material="felt" opacity={0.4} />
-          <span className="absolute inset-0 block" style={{ background: "linear-gradient(120deg, rgba(255,245,225,.35), transparent 50%, rgba(80,30,10,.12))" }} />
+          <span
+            className="absolute inset-0 block"
+            style={{
+              background:
+                "linear-gradient(120deg, rgba(255,245,225,.35), transparent 50%, rgba(80,30,10,.12))",
+            }}
+          />
         </div>
-        <span className="absolute bottom-[13%] left-[11%] block h-2 w-8 rounded-[50%]" style={{ background: "radial-gradient(closest-side, rgba(60,30,15,.45), transparent)", transform: "translate(5px, 4px)" }} aria-hidden="true" />
+        <span
+          className="absolute bottom-[13%] left-[11%] block h-2 w-8 rounded-[50%]"
+          style={{
+            background: "radial-gradient(closest-side, rgba(60,30,15,.45), transparent)",
+            transform: "translate(5px, 4px)",
+          }}
+          aria-hidden="true"
+        />
         <span
           className="absolute bottom-[14%] left-[10%] block size-8 rounded-full"
           style={{
@@ -346,9 +367,15 @@ function PetShadow({ active }: { active: boolean }) {
     <motion.span
       aria-hidden="true"
       className="pointer-events-none absolute bottom-[-4px] left-1/2 block h-[16px] w-[62%] rounded-[50%]"
-      style={{ x: "-46%", background: "radial-gradient(closest-side, rgba(60,30,15,.42), rgba(60,30,15,.12) 70%, transparent)" }}
+      style={{
+        x: "-46%",
+        background:
+          "radial-gradient(closest-side, rgba(60,30,15,.42), rgba(60,30,15,.12) 70%, transparent)",
+      }}
       animate={active ? { scale: [1, 0.78, 1], opacity: [1, 0.6, 1] } : { scale: 1, opacity: 1 }}
-      transition={active ? { duration: 0.32, repeat: Infinity, ease: [0.3, 0, 0.7, 1] } : SPRING.soft}
+      transition={
+        active ? { duration: 0.32, repeat: Infinity, ease: [0.3, 0, 0.7, 1] } : SPRING.soft
+      }
     />
   );
 }
@@ -360,9 +387,23 @@ function PetShadow({ active }: { active: boolean }) {
  */
 function Floor({ wood }: { wood: string }) {
   return (
-    <div aria-hidden="true" className="pointer-events-none absolute top-[48%] -right-[60cqi] -left-[60cqi] h-[120cqi]" style={{ perspective: "520px", perspectiveOrigin: "50% -60%", clipPath: "inset(-12px 0 0 0)" }}>
+    <div
+      aria-hidden="true"
+      className="pointer-events-none absolute top-[48%] -right-[60cqi] -left-[60cqi] h-[120cqi]"
+      style={{
+        perspective: "520px",
+        perspectiveOrigin: "50% -60%",
+        clipPath: "inset(-12px 0 0 0)",
+      }}
+    >
       {/* Skirting board */}
-      <span className="absolute inset-x-0 top-0 block h-[10px] -translate-y-full" style={{ background: "linear-gradient(180deg, #FBF6EC, #E9DDC8)", boxShadow: "0 1px 0 rgba(80,50,20,.25), inset 0 1px 0 #fff" }} />
+      <span
+        className="absolute inset-x-0 top-0 block h-[10px] -translate-y-full"
+        style={{
+          background: "linear-gradient(180deg, #FBF6EC, #E9DDC8)",
+          boxShadow: "0 1px 0 rgba(80,50,20,.25), inset 0 1px 0 #fff",
+        }}
+      />
       <div
         className="absolute inset-x-0 top-0 h-[160%] origin-top"
         style={{
@@ -388,15 +429,20 @@ function Floor({ wood }: { wood: string }) {
               "linear-gradient(90deg, transparent 47%, rgba(0,0,0,.0) 47% 53%, transparent 53%)",
               "linear-gradient(rgba(255,246,222,.42), rgba(255,246,222,.42))",
             ].join(","),
-            WebkitMaskImage: "linear-gradient(90deg, #000 47%, transparent 47% 53%, #000 53%), linear-gradient(#000 47%, transparent 47% 53%, #000 53%)",
+            WebkitMaskImage:
+              "linear-gradient(90deg, #000 47%, transparent 47% 53%, #000 53%), linear-gradient(#000 47%, transparent 47% 53%, #000 53%)",
             WebkitMaskComposite: "source-in",
-            maskImage: "linear-gradient(90deg, #000 47%, transparent 47% 53%, #000 53%), linear-gradient(#000 47%, transparent 47% 53%, #000 53%)",
+            maskImage:
+              "linear-gradient(90deg, #000 47%, transparent 47% 53%, #000 53%), linear-gradient(#000 47%, transparent 47% 53%, #000 53%)",
             maskComposite: "intersect",
             filter: "blur(3px)",
           }}
         />
         {/* The floor darkens towards the back wall */}
-        <span className="absolute inset-0 block" style={{ background: "linear-gradient(180deg, rgba(60,35,15,.3), transparent 25%)" }} />
+        <span
+          className="absolute inset-0 block"
+          style={{ background: "linear-gradient(180deg, rgba(60,35,15,.3), transparent 25%)" }}
+        />
       </div>
     </div>
   );
@@ -445,7 +491,10 @@ function GiftBox({
     <div className="relative" style={{ width: s, height: s }}>
       <motion.div
         className="absolute inset-x-[-6%] top-0 z-[2] h-[28%] rounded-[4px]"
-        style={{ background: paper, boxShadow: "0 3px 0 rgba(0,0,0,.12), inset 0 2px 0 rgba(255,255,255,.25)" }}
+        style={{
+          background: paper,
+          boxShadow: "0 3px 0 rgba(0,0,0,.12), inset 0 2px 0 rgba(255,255,255,.25)",
+        }}
         initial={false}
         animate={open ? { y: -s * 0.7, rotate: -24, x: -s * 0.2 } : { y: 0, rotate: 0, x: 0 }}
         transition={SPRING.wobbly}
@@ -453,9 +502,15 @@ function GiftBox({
         {/* The lid's top, seen from a little above */}
         <span
           className="absolute inset-x-0 top-0 block h-[90%] origin-bottom rounded-t-[4px]"
-          style={{ background: `linear-gradient(180deg, color-mix(in srgb, ${paper} 70%, #fff), ${paper})`, transform: "translateY(-100%) perspective(160px) rotateX(58deg)" }}
+          style={{
+            background: `linear-gradient(180deg, color-mix(in srgb, ${paper} 70%, #fff), ${paper})`,
+            transform: "translateY(-100%) perspective(160px) rotateX(58deg)",
+          }}
         >
-          <span className="absolute inset-y-0 left-1/2 w-[18%] -translate-x-1/2" style={{ background: ribbon }} />
+          <span
+            className="absolute inset-y-0 left-1/2 w-[18%] -translate-x-1/2"
+            style={{ background: ribbon }}
+          />
         </span>
         <span
           className="absolute inset-y-0 left-1/2 w-[18%] -translate-x-1/2"

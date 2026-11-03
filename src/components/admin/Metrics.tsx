@@ -11,18 +11,32 @@ const RANGES = [7, 30, 90] as const;
  */
 export function Metrics() {
   const [days, setDays] = useState<(typeof RANGES)[number]>(30);
-  const { data, isLoading, error } = useQuery({ queryKey: ["metrics", days], queryFn: () => getMetrics({ data: { days } }) });
-  const pct = (v: number | null | undefined) => (v === null || v === undefined ? "None yet" : `${v}%`);
+  const { data, isLoading, error } = useQuery({
+    queryKey: ["metrics", days],
+    queryFn: () => getMetrics({ data: { days } }),
+  });
+  const pct = (v: number | null | undefined) =>
+    v === null || v === undefined ? "None yet" : `${v}%`;
   const n = (count: number, one: string, many: string) => `${count} ${count === 1 ? one : many}`;
   const hours = (h: number | null | undefined) =>
-    h === null || h === undefined ? "None yet" : h < 1 ? `${Math.round(h * 60)} min` : h < 48 ? `${Math.round(h * 10) / 10} h` : `${Math.round(h / 24)} days`;
+    h === null || h === undefined
+      ? "None yet"
+      : h < 1
+        ? `${Math.round(h * 60)} min`
+        : h < 48
+          ? `${Math.round(h * 10) / 10} h`
+          : `${Math.round(h / 24)} days`;
 
   return (
     <section className="mx-auto max-w-6xl px-5 pt-14">
       <p className="font-mono text-[11px] tracking-[0.18em] text-accent uppercase">Admin</p>
       <div className="mt-2 flex flex-wrap items-end justify-between gap-3">
         <h2 className="font-display text-3xl font-medium tracking-tight">How gifts are doing</h2>
-        <div className="flex gap-1 rounded-full bg-cream p-1 ring-1 ring-line" role="radiogroup" aria-label="Time range">
+        <div
+          className="flex gap-1 rounded-full bg-cream p-1 ring-1 ring-line"
+          role="radiogroup"
+          aria-label="Time range"
+        >
           {RANGES.map((d) => (
             <button
               key={d}
@@ -43,11 +57,31 @@ export function Metrics() {
       ) : (
         <>
           <div className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
-            <Stat label="Gifts with 5+ notes" value={pct(data.pctWith5)} detail={`${data.giftsWith5} of ${n(data.gifts, "gift", "gifts")} made`} />
-            <Stat label="Friend page to note" value={pct(data.viewToNote)} detail={`${n(data.friendNotes, "note", "notes")} from ${n(data.friendViews, "visit", "visits")}`} />
-            <Stat label="Wrapped, then paid" value={pct(data.wrapToPay)} detail={`${data.paid} of ${n(data.wrapped, "gift", "gifts")}`} />
-            <Stat label="Recipient opened it" value={pct(data.openRate)} detail={`${data.opened} of ${n(data.published, "sent gift", "sent gifts")}`} />
-            <Stat label="Sign-up to first share" value={hours(data.medianHoursToShare)} detail={`Median, ${n(data.sharers, "person", "people")}`} />
+            <Stat
+              label="Gifts with 5+ notes"
+              value={pct(data.pctWith5)}
+              detail={`${data.giftsWith5} of ${n(data.gifts, "gift", "gifts")} made`}
+            />
+            <Stat
+              label="Friend page to note"
+              value={pct(data.viewToNote)}
+              detail={`${n(data.friendNotes, "note", "notes")} from ${n(data.friendViews, "visit", "visits")}`}
+            />
+            <Stat
+              label="Wrapped, then paid"
+              value={pct(data.wrapToPay)}
+              detail={`${data.paid} of ${n(data.wrapped, "gift", "gifts")}`}
+            />
+            <Stat
+              label="Recipient opened it"
+              value={pct(data.openRate)}
+              detail={`${data.opened} of ${n(data.published, "sent gift", "sent gifts")}`}
+            />
+            <Stat
+              label="Sign-up to first share"
+              value={hours(data.medianHoursToShare)}
+              detail={`Median, ${n(data.sharers, "person", "people")}`}
+            />
           </div>
           <details className="mt-4 rounded-2xl border border-line bg-cream px-4 py-3 text-sm">
             <summary className="cursor-pointer font-medium">All events in this range</summary>
@@ -78,8 +112,8 @@ export function Metrics() {
               </tbody>
             </table>
             <p className="mt-3 text-xs text-muted">
-              Our own records only: no tracker, no cookies, no note content. Views and opens count once per browser tab, and the
-              organiser's own visits don't count.
+              Our own records only: no tracker, no cookies, no note content. Views and opens count
+              once per browser tab, and the organiser's own visits don't count.
             </p>
           </details>
         </>

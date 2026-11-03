@@ -4,7 +4,14 @@
 const sparticuz = require("@sparticuz/chromium").default;
 const { chromium } = require("playwright-core");
 const { useLocalFonts } = require("./fonts.cjs");
-const [base = "http://localhost:8080", out = "/tmp/sheet", w = "390", h = "844", only = "", parts = "1,2,3"] = process.argv.slice(2);
+const [
+  base = "http://localhost:8080",
+  out = "/tmp/sheet",
+  w = "390",
+  h = "844",
+  only = "",
+  parts = "1,2,3",
+] = process.argv.slice(2);
 
 // style id -> [opening query, body format, kind for the body's look]
 const STYLES = {
@@ -34,7 +41,12 @@ const STYLES = {
 const launch = async () =>
   chromium.launch({
     executablePath: await sparticuz.executablePath(),
-    args: [...sparticuz.args.filter((a) => !a.startsWith("--use-gl") && !a.startsWith("--use-angle")), "--use-gl=angle", "--use-angle=swiftshader", "--enable-unsafe-swiftshader"],
+    args: [
+      ...sparticuz.args.filter((a) => !a.startsWith("--use-gl") && !a.startsWith("--use-angle")),
+      "--use-gl=angle",
+      "--use-angle=swiftshader",
+      "--enable-unsafe-swiftshader",
+    ],
     headless: true,
   });
 (async () => {
@@ -48,7 +60,11 @@ const launch = async () =>
     ];
     for (const [tag, url, wait, full] of shots.filter(([t]) => parts.split(",").includes(t[0]))) {
       const b = await launch();
-      const ctx = await b.newContext({ viewport: { width: +w, height: +h }, deviceScaleFactor: 1, hasTouch: +w < 700 });
+      const ctx = await b.newContext({
+        viewport: { width: +w, height: +h },
+        deviceScaleFactor: 1,
+        hasTouch: +w < 700,
+      });
       await useLocalFonts(ctx);
       await ctx.addInitScript((SOUND) => {
         try {
@@ -60,12 +76,20 @@ const launch = async () =>
       const errs = [];
       page.on("pageerror", (e) => errs.push(e.message.slice(0, 160)));
       page.on("console", (m) => {
-        if (m.type() === "error" && !/ERR_TUNNEL|fontshare|Failed to load resource/.test(m.text())) errs.push(m.text().slice(0, 160));
+        if (m.type() === "error" && !/ERR_TUNNEL|fontshare|Failed to load resource/.test(m.text()))
+          errs.push(m.text().slice(0, 160));
       });
-      await page.goto(url, { waitUntil: "load", timeout: 90000 }).catch((e) => errs.push("goto " + e.message.slice(0, 80)));
+      await page
+        .goto(url, { waitUntil: "load", timeout: 90000 })
+        .catch((e) => errs.push("goto " + e.message.slice(0, 80)));
       await page.waitForTimeout(wait);
-      await page.screenshot({ path: `${out}/${id}-${tag}.png`, timeout: 30000 }).catch((e) => errs.push("shot " + e.message.slice(0, 60)));
-      if (full) await page.screenshot({ path: `${out}/${id}-4-body-full.png`, fullPage: true, timeout: 30000 }).catch((e) => errs.push("full " + e.message.slice(0, 60)));
+      await page
+        .screenshot({ path: `${out}/${id}-${tag}.png`, timeout: 30000 })
+        .catch((e) => errs.push("shot " + e.message.slice(0, 60)));
+      if (full)
+        await page
+          .screenshot({ path: `${out}/${id}-4-body-full.png`, fullPage: true, timeout: 30000 })
+          .catch((e) => errs.push("full " + e.message.slice(0, 60)));
       console.log(id, tag, errs.length ? "ERR " + errs.slice(0, 3).join(" | ") : "ok");
       await b.close();
     }

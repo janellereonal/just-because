@@ -59,7 +59,12 @@ function within<T>(work: Promise<T>, ms: number): Promise<T> {
 }
 
 /** Draws the photo at most `side` px on its longest side (never bigger) and saves it as WebP. */
-async function encode(bitmap: ImageBitmap, side: number, quality: number, alpha = false): Promise<Blob | null> {
+async function encode(
+  bitmap: ImageBitmap,
+  side: number,
+  quality: number,
+  alpha = false,
+): Promise<Blob | null> {
   const scale = Math.min(1, side / Math.max(bitmap.width, bitmap.height));
   const w = Math.max(1, Math.round(bitmap.width * scale));
   const h = Math.max(1, Math.round(bitmap.height * scale));
@@ -70,15 +75,25 @@ async function encode(bitmap: ImageBitmap, side: number, quality: number, alpha 
   if (!ctx) return null;
   ctx.imageSmoothingQuality = "high";
   ctx.drawImage(bitmap, 0, 0, w, h);
-  const webp = await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, "image/webp", quality));
+  const webp = await new Promise<Blob | null>((resolve) =>
+    canvas.toBlob(resolve, "image/webp", quality),
+  );
   // Older Safari can't write WebP and quietly hands back a PNG: use a JPEG then. A JPEG would
   // turn see-through parts (cut-out people, stickers) black, so those keep the original.
   if (webp && webp.type === "image/webp" && webp.size > 0) return webp;
   if (alpha) return null;
-  return await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, "image/jpeg", quality + 0.05));
+  return await new Promise<Blob | null>((resolve) =>
+    canvas.toBlob(resolve, "image/jpeg", quality + 0.05),
+  );
 }
 
-export type PreparedPhoto = { file: File; thumb: File | null; before: number; after: number; compressed: boolean };
+export type PreparedPhoto = {
+  file: File;
+  thumb: File | null;
+  before: number;
+  after: number;
+  compressed: boolean;
+};
 
 /**
  * Makes a photo ready to store: longest side 1600 px, WebP at 80% quality, the right way up,
@@ -87,7 +102,13 @@ export type PreparedPhoto = { file: File; thumb: File | null; before: number; af
  * or takes over 20 seconds, the original file is used (the 8 MB limit still applies).
  */
 export async function preparePhoto(file: File): Promise<PreparedPhoto> {
-  const same: PreparedPhoto = { file, thumb: null, before: file.size, after: file.size, compressed: false };
+  const same: PreparedPhoto = {
+    file,
+    thumb: null,
+    before: file.size,
+    after: file.size,
+    compressed: false,
+  };
   if (typeof createImageBitmap === "undefined") return same;
   // A .heic the system didn't even give a type to is one this browser can't open: say so now.
   if (!file.type && isHeic(file)) throw new UploadError(UPLOAD_COPY.heic);
@@ -117,7 +138,13 @@ async function shrink(file: File, same: PreparedPhoto): Promise<PreparedPhoto> {
   bitmap.close?.();
   if (!main || main.size === 0) return same;
   const base = file.name.replace(/\.[^.]+$/, "").slice(0, 60) || "photo";
-  const thumbOf = (b: Blob | null) => (b ? new File([b], `${base}-thumb.${b.type === "image/webp" ? "webp" : "jpg"}`, { type: b.type, lastModified: Date.now() }) : null);
+  const thumbOf = (b: Blob | null) =>
+    b
+      ? new File([b], `${base}-thumb.${b.type === "image/webp" ? "webp" : "jpg"}`, {
+          type: b.type,
+          lastModified: Date.now(),
+        })
+      : null;
   // A small PNG that wouldn't get any smaller: keep what they picked. JPEGs and HEICs are
   // always redrawn, since those carry the camera's EXIF data (GPS location included).
   if (alpha && main.size >= file.size) return { ...same, thumb: thumbOf(small) };
@@ -166,7 +193,12 @@ export async function checkMedia(file: File): Promise<string | null> {
 
 export type UploadStage = "preparing" | "uploading";
 
-async function send(file: File, kind: UploadKind, targetId: string, media: MediaKind): Promise<string> {
+async function send(
+  file: File,
+  kind: UploadKind,
+  targetId: string,
+  media: MediaKind,
+): Promise<string> {
   const folder = kind === "theme" ? "themes" : "gifts";
   const pathname = `${folder}/${targetId}/${kind === "calendar" ? "calendar-" : kind === "intro" ? "intro-" : ""}${safeName(file.name)}`;
   if (import.meta.env.DEV || import.meta.env["VITE_DEV_UPLOADS"] === "1") {
@@ -177,7 +209,10 @@ async function send(file: File, kind: UploadKind, targetId: string, media: Media
     form.set("media", media);
     const res = await fetch("/api/upload", { method: "POST", body: form });
     const json = (await res.json().catch(() => ({}))) as { url?: string; error?: string };
-    if (!res.ok || !json.url) throw new UploadError(friendlyUploadError(json.error, kind === "contribution" ? media : undefined));
+    if (!res.ok || !json.url)
+      throw new UploadError(
+        friendlyUploadError(json.error, kind === "contribution" ? media : undefined),
+      );
     return json.url;
   }
   if (import.meta.env["VITE_MEDIA_STORAGE_PROVIDER"] === "r2") {
@@ -188,7 +223,10 @@ async function send(file: File, kind: UploadKind, targetId: string, media: Media
     form.set("media", media);
     const res = await fetch("/api/upload", { method: "POST", body: form });
     const json = (await res.json().catch(() => ({}))) as { url?: string; error?: string };
-    if (!res.ok || !json.url) throw new UploadError(friendlyUploadError(json.error, kind === "contribution" ? media : undefined));
+    if (!res.ok || !json.url)
+      throw new UploadError(
+        friendlyUploadError(json.error, kind === "contribution" ? media : undefined),
+      );
     return json.url;
   }
   try {
@@ -201,7 +239,12 @@ async function send(file: File, kind: UploadKind, targetId: string, media: Media
     });
     return blob.url;
   } catch (error) {
-    throw new UploadError(friendlyUploadError(error instanceof Error ? error.message : "", kind === "contribution" ? media : undefined));
+    throw new UploadError(
+      friendlyUploadError(
+        error instanceof Error ? error.message : "",
+        kind === "contribution" ? media : undefined,
+      ),
+    );
   }
 }
 
@@ -219,7 +262,8 @@ export async function uploadMedia(
 ): Promise<{ url: string; thumbUrl: string | null }> {
   // The section decides what the file should be: an image picked for a voice note is refused here
   // (and again by the server), not stored as a voice note that can't play.
-  if (opts.expect && !fileFits(original, opts.expect)) throw new UploadError(NOTE_RULES_COPY.wrongFile(opts.expect));
+  if (opts.expect && !fileFits(original, opts.expect))
+    throw new UploadError(NOTE_RULES_COPY.wrongFile(opts.expect));
   const media = opts.expect ?? mediaKindOf(original);
   let file = original;
   let thumb: File | null = null;
@@ -239,17 +283,25 @@ export async function uploadMedia(
 }
 
 /** Uploads a file and returns its URL (photos are compressed first). */
-export async function uploadFile(original: File, kind: UploadKind, targetId: string, opts: { onStage?: (stage: UploadStage) => void } = {}): Promise<string> {
+export async function uploadFile(
+  original: File,
+  kind: UploadKind,
+  targetId: string,
+  opts: { onStage?: (stage: UploadStage) => void } = {},
+): Promise<string> {
   return (await uploadMedia(original, kind, targetId, opts)).url;
 }
 
 /** Turns what the upload service says into something a person can act on. */
 export function friendlyUploadError(raw: string | undefined, expected?: MediaKind): string {
   const m = (raw ?? "").toLowerCase();
-  if (/too large|maximum|size/.test(m)) return "That file is too big. Try a smaller photo or a shorter clip.";
+  if (/too large|maximum|size/.test(m))
+    return "That file is too big. Try a smaller photo or a shorter clip.";
   if (expected && /type|not allowed/.test(m)) return NOTE_RULES_COPY.wrongFile(expected);
-  if (/type|content.?type|not allowed/.test(m)) return "That kind of file can't go in a gift. Photos (JPG or PNG), voice notes and short videos work.";
+  if (/type|content.?type|not allowed/.test(m))
+    return "That kind of file can't go in a gift. Photos (JPG or PNG), voice notes and short videos work.";
   if (/couldn't find|not found/.test(m)) return "We couldn't find this gift. The link may be old.";
-  if (/network|fetch|failed to fetch|offline/.test(m)) return "The upload didn't go through. Check your connection and try again.";
+  if (/network|fetch|failed to fetch|offline/.test(m))
+    return "The upload didn't go through. Check your connection and try again.";
   return "That file couldn't be uploaded. Please try again.";
 }

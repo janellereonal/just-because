@@ -14,10 +14,24 @@ export default defineTheme({
   effects: ["snow", "sparks"],
   sound: "frost",
   slots: ["recipient", "date"],
-  palette: { background: "#1E2B3A", ink: "#F4F1EC", surface: "#6B4A33", accent: "#E39A3B", accent2: "#2F5D46" },
+  palette: {
+    background: "#1E2B3A",
+    ink: "#F4F1EC",
+    surface: "#6B4A33",
+    accent: "#E39A3B",
+    accent2: "#2F5D46",
+  },
   fonts: {
-    display: { family: '"Fraunces", Georgia, serif', source: "google", query: "Fraunces:ital,opsz,wght@0,9..144,500;0,9..144,700;1,9..144,500" },
-    text: { family: '"DM Sans", system-ui, sans-serif', source: "google", query: "DM+Sans:wght@400;500;700" },
+    display: {
+      family: '"Fraunces", Georgia, serif',
+      source: "google",
+      query: "Fraunces:ital,opsz,wght@0,9..144,500;0,9..144,700;1,9..144,500",
+    },
+    text: {
+      family: '"DM Sans", system-ui, sans-serif',
+      source: "google",
+      query: "DM+Sans:wght@400;500;700",
+    },
   },
   categories: ["Holidays"],
   regions: { available: ["global"] },
@@ -27,7 +41,12 @@ export default defineTheme({
   occasion: {
     defaultFormat: "scrapbook",
     sections: ["letters", "photobooth", "songs", "countdown"],
-    prompts: ["occasion.cabin.prompt1", "occasion.cabin.prompt2", "occasion.cabin.prompt3", "occasion.cabin.prompt4"],
+    prompts: [
+      "occasion.cabin.prompt1",
+      "occasion.cabin.prompt2",
+      "occasion.cabin.prompt3",
+      "occasion.cabin.prompt4",
+    ],
     heading: "occasion.cabin.heading",
     greeting: "occasion.cabin.greeting",
   },

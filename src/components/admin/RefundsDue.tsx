@@ -15,8 +15,9 @@ export function RefundsDue() {
     <section className="mx-auto max-w-6xl px-5 pt-10">
       <h2 className="font-display text-2xl font-medium tracking-tight">Refunds to make</h2>
       <p className="mt-1 text-sm text-muted">
-        {data.length} {data.length === 1 ? "payment" : "payments"}, {formatPeso(total)} in all. Refund each in the PayMongo dashboard: Payments, search the
-        payment id, Refund. The buyer was told it's coming within a few days.
+        {data.length} {data.length === 1 ? "payment" : "payments"}, {formatPeso(total)} in all.
+        Refund each in the PayMongo dashboard: Payments, search the payment id, Refund. The buyer
+        was told it's coming within a few days.
       </p>
       <div className="mt-4 overflow-x-auto rounded-2xl border border-line bg-[#FDF3F0]">
         <table className="w-full text-left text-xs">
@@ -36,11 +37,20 @@ export function RefundsDue() {
                 <td className="px-3 py-2 whitespace-nowrap">{new Date(r.at).toLocaleString()}</td>
                 <td className="px-3 py-2 font-medium whitespace-nowrap">{formatPeso(r.amount)}</td>
                 <td className="px-3 py-2 whitespace-nowrap">
-                  {r.paid != null ? formatPeso(r.paid) : "?"} {r.tier ? `· ${getTier(r.tier)?.name ?? r.tier} ${r.kind ?? ""}` : ""}
+                  {r.paid != null ? formatPeso(r.paid) : "?"}{" "}
+                  {r.tier ? `· ${getTier(r.tier)?.name ?? r.tier} ${r.kind ?? ""}` : ""}
                 </td>
                 <td className="px-3 py-2">{r.why}</td>
                 <td className="px-3 py-2 font-mono break-all">{r.paymentId ?? "?"}</td>
-                <td className="px-3 py-2">{r.slug ? <a className="underline underline-offset-2" href={`/g/${r.slug}`}>{r.slug}</a> : "deleted"}</td>
+                <td className="px-3 py-2">
+                  {r.slug ? (
+                    <a className="underline underline-offset-2" href={`/g/${r.slug}`}>
+                      {r.slug}
+                    </a>
+                  ) : (
+                    "deleted"
+                  )}
+                </td>
               </tr>
             ))}
           </tbody>

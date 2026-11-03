@@ -12,7 +12,10 @@ import { AUTH_COPY, GUEST_COPY } from "@/copy/strings";
 
 /** Only same-site paths, so the link can't send anyone elsewhere after signing in. */
 function safeNext(value: unknown): string | undefined {
-  return typeof value === "string" && value.startsWith("/") && !value.startsWith("//") && !value.startsWith("/\\")
+  return typeof value === "string" &&
+    value.startsWith("/") &&
+    !value.startsWith("//") &&
+    !value.startsWith("/\\")
     ? value
     : undefined;
 }
@@ -28,7 +31,8 @@ export const Route = createFileRoute("/auth")({
     return next ? { next } : {};
   },
   head: () => ({
-    meta: [NOINDEX, 
+    meta: [
+      NOINDEX,
       { title: "Sign in | Just Because" },
       {
         name: "description",
@@ -62,7 +66,9 @@ function AuthPage() {
   async function resend() {
     if (!sentTo) return;
     setBusy(true);
-    await authClient.sendVerificationEmail({ email: sentTo.email, callbackURL: after }).catch(() => null);
+    await authClient
+      .sendVerificationEmail({ email: sentTo.email, callbackURL: after })
+      .catch(() => null);
     setBusy(false);
     setResent(true);
   }
@@ -103,7 +109,11 @@ function AuthPage() {
       });
       setBusy(false);
       if (error) {
-        toast.error(error.status === 429 ? tooMany(error.message) : (error.message ?? "Couldn't create that account."));
+        toast.error(
+          error.status === 429
+            ? tooMany(error.message)
+            : (error.message ?? "Couldn't create that account."),
+        );
         return;
       }
       if (options?.email) {
@@ -139,7 +149,9 @@ function AuthPage() {
         <div className="rise card-paper p-6 sm:p-9">
           {sentTo ? (
             <div className="text-center">
-              <h1 className="font-display text-3xl font-semibold tracking-tight">Check your inbox</h1>
+              <h1 className="font-display text-3xl font-semibold tracking-tight">
+                Check your inbox
+              </h1>
               <p className="mx-auto mt-3 max-w-sm text-[15px] text-ink/70">
                 {sentTo.kind === "verify"
                   ? `We sent an email to ${sentTo.email}. Tap the link inside to confirm it's you.`
@@ -147,10 +159,13 @@ function AuthPage() {
               </p>
               {sentTo.kind === "verify" ? (
                 <p className="mx-auto mt-3 max-w-sm text-sm text-ink/60">
-                  Already have an account with this email? Then the email tells you that instead, and you can just sign in.
+                  Already have an account with this email? Then the email tells you that instead,
+                  and you can just sign in.
                 </p>
               ) : null}
-              <p className="mx-auto mt-3 max-w-sm text-sm text-ink/60">Can't find it? Check Spam or Promotions. It can take a minute.</p>
+              <p className="mx-auto mt-3 max-w-sm text-sm text-ink/60">
+                Can't find it? Check Spam or Promotions. It can take a minute.
+              </p>
               <div className="mt-6 flex flex-col items-center gap-2">
                 {sentTo.kind === "verify" ? (
                   <button
@@ -181,19 +196,19 @@ function AuthPage() {
                 {isGuest && mode !== "forgot"
                   ? GUEST_COPY.authHeading
                   : mode === "signin"
-                  ? "Welcome back"
-                  : mode === "signup"
-                    ? "Start a gift"
-                    : "Forgot your password?"}
+                    ? "Welcome back"
+                    : mode === "signup"
+                      ? "Start a gift"
+                      : "Forgot your password?"}
               </h1>
               <p className="mt-2 text-[15px] text-ink/65">
                 {isGuest && mode !== "forgot"
                   ? GUEST_COPY.authBody
                   : mode === "signin"
-                  ? "Sign in to keep working on your gifts."
-                  : mode === "signup"
-                    ? "Make an account to start a gift. Your friends won't need one."
-                    : "We'll email you a link to set a new one."}
+                    ? "Sign in to keep working on your gifts."
+                    : mode === "signup"
+                      ? "Make an account to start a gift. Your friends won't need one."
+                      : "We'll email you a link to set a new one."}
               </p>
 
               {options?.google && mode !== "forgot" ? (
@@ -225,63 +240,63 @@ function AuthPage() {
               )}
 
               {!options?.google || emailOpen || mode === "forgot" ? (
-              <>
-              <form onSubmit={handleEmail} className="space-y-3">
-                {mode === "signup" ? (
-                  <input
-                    type="text"
-                    value={name}
-                    onChange={(e) => setName(e.target.value)}
-                    placeholder="Your name"
-                    aria-label="Your name"
-                    autoComplete="name"
-                    className="w-full rounded-2xl border border-line bg-paper px-4 py-3.5 text-[15px] outline-none transition-colors focus:border-accent focus:bg-white"
-                  />
-                ) : null}
-                <input
-                  type="email"
-                  required
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  placeholder="you@example.com"
-                  aria-label="Email"
-                  className="w-full rounded-2xl border border-line bg-paper px-4 py-3.5 text-[15px] outline-none transition-colors focus:border-accent focus:bg-white"
-                />
-                {mode !== "forgot" ? (
-                  <input
-                    type="password"
-                    required
-                    minLength={6}
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    placeholder="Password"
-                    aria-label="Password"
-                    autoComplete={mode === "signup" ? "new-password" : "current-password"}
-                    className="w-full rounded-2xl border border-line bg-paper px-4 py-3.5 text-[15px] outline-none transition-colors focus:border-accent focus:bg-white"
-                  />
-                ) : null}
-                <button
-                  type="submit"
-                  disabled={busy}
-                  className={`squish w-full rounded-full px-5 py-3.5 text-[15px] font-semibold transition-colors disabled:opacity-60 ${options?.google ? "bg-ink text-cream hover:bg-ink/90" : "bg-accent text-cream hover:bg-accent/90"}`}
-                >
-                  {mode === "signin"
-                    ? "Sign in"
-                    : mode === "signup"
-                      ? "Create account"
-                      : "Send me a reset link"}
-                </button>
-              </form>
+                <>
+                  <form onSubmit={handleEmail} className="space-y-3">
+                    {mode === "signup" ? (
+                      <input
+                        type="text"
+                        value={name}
+                        onChange={(e) => setName(e.target.value)}
+                        placeholder="Your name"
+                        aria-label="Your name"
+                        autoComplete="name"
+                        className="w-full rounded-2xl border border-line bg-paper px-4 py-3.5 text-[15px] outline-none transition-colors focus:border-accent focus:bg-white"
+                      />
+                    ) : null}
+                    <input
+                      type="email"
+                      required
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      placeholder="you@example.com"
+                      aria-label="Email"
+                      className="w-full rounded-2xl border border-line bg-paper px-4 py-3.5 text-[15px] outline-none transition-colors focus:border-accent focus:bg-white"
+                    />
+                    {mode !== "forgot" ? (
+                      <input
+                        type="password"
+                        required
+                        minLength={6}
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                        placeholder="Password"
+                        aria-label="Password"
+                        autoComplete={mode === "signup" ? "new-password" : "current-password"}
+                        className="w-full rounded-2xl border border-line bg-paper px-4 py-3.5 text-[15px] outline-none transition-colors focus:border-accent focus:bg-white"
+                      />
+                    ) : null}
+                    <button
+                      type="submit"
+                      disabled={busy}
+                      className={`squish w-full rounded-full px-5 py-3.5 text-[15px] font-semibold transition-colors disabled:opacity-60 ${options?.google ? "bg-ink text-cream hover:bg-ink/90" : "bg-accent text-cream hover:bg-accent/90"}`}
+                    >
+                      {mode === "signin"
+                        ? "Sign in"
+                        : mode === "signup"
+                          ? "Create account"
+                          : "Send me a reset link"}
+                    </button>
+                  </form>
 
-              {mode === "signin" && options?.email ? (
-                <button
-                  onClick={() => setMode("forgot")}
-                  className="mt-3 w-full text-center text-xs text-muted transition-colors hover:text-ink"
-                >
-                  Forgot your password?
-                </button>
-              ) : null}
-              </>
+                  {mode === "signin" && options?.email ? (
+                    <button
+                      onClick={() => setMode("forgot")}
+                      className="mt-3 w-full text-center text-xs text-muted transition-colors hover:text-ink"
+                    >
+                      Forgot your password?
+                    </button>
+                  ) : null}
+                </>
               ) : null}
 
               <button

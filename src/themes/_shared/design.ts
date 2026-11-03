@@ -20,15 +20,40 @@ export type FontSpec = {
 };
 
 export type PaletteKey =
-  | "rose" | "cream" | "oxblood" | "gold" | "linen"
-  | "espresso" | "champagne" | "plum" | "walnut" | "glow"
-  | "butter" | "bubblegum" | "cobalt" | "mint"
-  | "ivory" | "sage" | "paper" | "ink"
-  | "blue" | "blush" | "oat"
-  | "pine" | "cranberry" | "snow"
-  | "navy" | "silver" | "violet" | "night"
-  | "sky" | "kraft" | "orange"
-  | "peach" | "terracotta" | "tennis";
+  | "rose"
+  | "cream"
+  | "oxblood"
+  | "gold"
+  | "linen"
+  | "espresso"
+  | "champagne"
+  | "plum"
+  | "walnut"
+  | "glow"
+  | "butter"
+  | "bubblegum"
+  | "cobalt"
+  | "mint"
+  | "ivory"
+  | "sage"
+  | "paper"
+  | "ink"
+  | "blue"
+  | "blush"
+  | "oat"
+  | "pine"
+  | "cranberry"
+  | "snow"
+  | "navy"
+  | "silver"
+  | "violet"
+  | "night"
+  | "sky"
+  | "kraft"
+  | "orange"
+  | "peach"
+  | "terracotta"
+  | "tennis";
 export type ThemePalette = Partial<Record<PaletteKey, string>>;
 
 export type ThemeDesign = {
@@ -63,7 +88,10 @@ const fs = (family: string, query: string, fallback = "sans-serif"): FontSpec =>
   query,
 });
 
-const FRAUNCES = g("Fraunces", "Fraunces:ital,opsz,wght,SOFT@0,9..144,300..900,0..100;1,9..144,300..900,0..100");
+const FRAUNCES = g(
+  "Fraunces",
+  "Fraunces:ital,opsz,wght,SOFT@0,9..144,300..900,0..100;1,9..144,300..900,0..100",
+);
 const SATOSHI = fs("Satoshi", "satoshi@400,500,700");
 const INTER_TIGHT = g("Inter Tight", "Inter+Tight:wght@400;500;600", "sans-serif");
 const CORMORANT = g("Cormorant Garamond", "Cormorant+Garamond:ital,wght@0,400..700;1,400..700");
@@ -76,7 +104,13 @@ export const THEME_DESIGNS: Record<ThemeKind, ThemeDesign> = {
     gesture: "Press and hold the seal",
     display: FRAUNCES,
     text: g("Instrument Sans", "Instrument+Sans:wght@400..700", "sans-serif"),
-    palette: { rose: "#B4335A", cream: "#F6EEE3", oxblood: "#5E1424", gold: "#C9A24A", linen: "#EDE3D4" },
+    palette: {
+      rose: "#B4335A",
+      cream: "#F6EEE3",
+      oxblood: "#5E1424",
+      gold: "#C9A24A",
+      linen: "#EDE3D4",
+    },
     accessory: "bow",
     defaultCharacter: null,
     defaultIconSet: "hearts",
@@ -89,7 +123,13 @@ export const THEME_DESIGNS: Record<ThemeKind, ThemeDesign> = {
     gesture: "Drag the needle onto the record",
     display: g("Gloock", "Gloock"),
     text: SATOSHI,
-    palette: { espresso: "#2B1D18", champagne: "#E9D6B0", plum: "#8E6A80", walnut: "#4A2F24", glow: "#FFCF8A" },
+    palette: {
+      espresso: "#2B1D18",
+      champagne: "#E9D6B0",
+      plum: "#8E6A80",
+      walnut: "#4A2F24",
+      glow: "#FFCF8A",
+    },
     accessory: "rose",
     defaultCharacter: null,
     defaultIconSet: "stars",
@@ -102,7 +142,13 @@ export const THEME_DESIGNS: Record<ThemeKind, ThemeDesign> = {
     gesture: "Blow out the candles",
     display: g("Caprasimo", "Caprasimo", "serif"),
     text: SATOSHI,
-    palette: { butter: "#FFE9A3", bubblegum: "#FF7EB6", cobalt: "#2D4BD6", mint: "#8DE3C6", cream: "#FFF8E6" },
+    palette: {
+      butter: "#FFE9A3",
+      bubblegum: "#FF7EB6",
+      cobalt: "#2D4BD6",
+      mint: "#8DE3C6",
+      cream: "#FFF8E6",
+    },
     accessory: "party-hat",
     defaultCharacter: "bear",
     defaultIconSet: "confetti",
@@ -115,7 +161,13 @@ export const THEME_DESIGNS: Record<ThemeKind, ThemeDesign> = {
     gesture: "Slide the card out",
     display: CORMORANT,
     text: INTER_TIGHT,
-    palette: { ivory: "#FBF7EE", sage: "#9DB08F", gold: "#C9A55C", paper: "#F3EDE1", ink: "#3B3A33" },
+    palette: {
+      ivory: "#FBF7EE",
+      sage: "#9DB08F",
+      gold: "#C9A55C",
+      paper: "#F3EDE1",
+      ink: "#3B3A33",
+    },
     accessory: "veil",
     defaultCharacter: null,
     defaultIconSet: "florals",
@@ -128,7 +180,13 @@ export const THEME_DESIGNS: Record<ThemeKind, ThemeDesign> = {
     gesture: "Slide the card out",
     display: CORMORANT,
     text: INTER_TIGHT,
-    palette: { ivory: "#FCF3F0", sage: "#E0A9A3", gold: "#C9A55C", paper: "#F8ECE8", ink: "#4A3A3A" },
+    palette: {
+      ivory: "#FCF3F0",
+      sage: "#E0A9A3",
+      gold: "#C9A55C",
+      paper: "#F8ECE8",
+      ink: "#4A3A3A",
+    },
     accessory: "veil",
     defaultCharacter: null,
     defaultIconSet: "florals",
@@ -139,9 +197,19 @@ export const THEME_DESIGNS: Record<ThemeKind, ThemeDesign> = {
     name: "Baby Shower",
     object: "A mobile above a crib",
     gesture: "Pull the string",
-    display: g("Bricolage Grotesque", "Bricolage+Grotesque:opsz,wdth,wght@12..96,75..100,200..800", "sans-serif"),
+    display: g(
+      "Bricolage Grotesque",
+      "Bricolage+Grotesque:opsz,wdth,wght@12..96,75..100,200..800",
+      "sans-serif",
+    ),
     text: g("DM Sans", "DM+Sans:opsz,wght@9..40,400..700", "sans-serif"),
-    palette: { blue: "#AFCDEB", butter: "#FBE7A1", blush: "#F4BFC8", oat: "#F3ECE0", ink: "#3D4660" },
+    palette: {
+      blue: "#AFCDEB",
+      butter: "#FBE7A1",
+      blush: "#F4BFC8",
+      oat: "#F3ECE0",
+      ink: "#3D4660",
+    },
     accessory: "bonnet",
     defaultCharacter: "duck",
     defaultIconSet: "stars",
@@ -154,7 +222,13 @@ export const THEME_DESIGNS: Record<ThemeKind, ThemeDesign> = {
     gesture: "Pull the ribbon",
     display: g("Young Serif", "Young+Serif"),
     text: fs("Erode", "erode@400,500,600", "serif"),
-    palette: { pine: "#1F4D3A", cranberry: "#A3203A", gold: "#E2B95B", snow: "#F7F4EE", paper: "#B8283F" },
+    palette: {
+      pine: "#1F4D3A",
+      cranberry: "#A3203A",
+      gold: "#E2B95B",
+      snow: "#F7F4EE",
+      paper: "#B8283F",
+    },
     accessory: "scarf",
     defaultCharacter: null,
     defaultIconSet: "snowflakes",
@@ -167,7 +241,13 @@ export const THEME_DESIGNS: Record<ThemeKind, ThemeDesign> = {
     gesture: "Hold to count down",
     display: fs("Clash Display", "clash-display@200,300,400,500,600,700"),
     text: fs("Boska", "boska@400,500,700", "serif"),
-    palette: { navy: "#10152E", gold: "#E5C26B", silver: "#C9CED8", violet: "#8E7CF0", night: "#070A1A" },
+    palette: {
+      navy: "#10152E",
+      gold: "#E5C26B",
+      silver: "#C9CED8",
+      violet: "#8E7CF0",
+      night: "#070A1A",
+    },
     accessory: "crown",
     defaultCharacter: null,
     defaultIconSet: "stars",
@@ -180,7 +260,13 @@ export const THEME_DESIGNS: Record<ThemeKind, ThemeDesign> = {
     gesture: "Tear along the dotted line",
     display: fs("Zodiak", "zodiak@400,700", "serif"),
     text: g("Space Mono", "Space+Mono:wght@400;700", "monospace"),
-    palette: { sky: "#8EC0E8", kraft: "#C9A57A", cream: "#F6F0E4", orange: "#F2652E", ink: "#22303F" },
+    palette: {
+      sky: "#8EC0E8",
+      kraft: "#C9A57A",
+      cream: "#F6F0E4",
+      orange: "#F2652E",
+      ink: "#22303F",
+    },
     accessory: "pilot-cap",
     defaultCharacter: null,
     defaultIconSet: "stars",
@@ -193,7 +279,13 @@ export const THEME_DESIGNS: Record<ThemeKind, ThemeDesign> = {
     gesture: "Pet them",
     display: fs("Cabinet Grotesk", "cabinet-grotesk@500,700,800"),
     text: fs("Sentient", "sentient@400,500", "serif"),
-    palette: { oat: "#F1E8D8", peach: "#F6B48F", terracotta: "#C0582F", tennis: "#D9E35A", ink: "#3A2A22" },
+    palette: {
+      oat: "#F1E8D8",
+      peach: "#F6B48F",
+      terracotta: "#C0582F",
+      tennis: "#D9E35A",
+      ink: "#3A2A22",
+    },
     accessory: "bandana",
     defaultCharacter: "dog",
     defaultIconSet: "paws",
@@ -207,7 +299,13 @@ export const THEME_DESIGNS: Record<ThemeKind, ThemeDesign> = {
     gesture: "Unfold the note",
     display: g("Kalam", "Kalam:wght@300;400;700", "cursive"),
     text: g("Patrick Hand", "Patrick+Hand", "cursive"),
-    palette: { paper: "#FBF6EA", ink: "#2A3A6B", kraft: "#C9A57A", rose: "#C2536B", linen: "#EFE6D2" },
+    palette: {
+      paper: "#FBF6EA",
+      ink: "#2A3A6B",
+      kraft: "#C9A57A",
+      rose: "#C2536B",
+      linen: "#EFE6D2",
+    },
     accessory: null,
     defaultCharacter: null,
     defaultIconSet: "notes",
@@ -221,7 +319,14 @@ export const THEME_DESIGNS: Record<ThemeKind, ThemeDesign> = {
     gesture: "Roll the dice",
     display: g("Bungee", "Bungee", "sans-serif"),
     text: g("Outfit", "Outfit:wght@400..700", "sans-serif"),
-    palette: { navy: "#22305E", butter: "#FFD34E", cranberry: "#E2463F", mint: "#3BB98A", cream: "#FFF6E5", sky: "#57A7E8" },
+    palette: {
+      navy: "#22305E",
+      butter: "#FFD34E",
+      cranberry: "#E2463F",
+      mint: "#3BB98A",
+      cream: "#FFF6E5",
+      sky: "#57A7E8",
+    },
     accessory: "party-hat",
     defaultCharacter: "frog",
     defaultIconSet: "game",
@@ -235,7 +340,14 @@ export const THEME_DESIGNS: Record<ThemeKind, ThemeDesign> = {
     gesture: "Press start",
     display: g("Press Start 2P", "Press+Start+2P", "monospace"),
     text: g("Pixelify Sans", "Pixelify+Sans:wght@400..700", "monospace"),
-    palette: { night: "#1B1640", violet: "#7A5CFF", mint: "#3DF2B0", bubblegum: "#FF5DA2", butter: "#FFE45C", snow: "#F4F1FF" },
+    palette: {
+      night: "#1B1640",
+      violet: "#7A5CFF",
+      mint: "#3DF2B0",
+      bubblegum: "#FF5DA2",
+      butter: "#FFE45C",
+      snow: "#F4F1FF",
+    },
     accessory: "crown",
     defaultCharacter: null,
     defaultIconSet: "pixels",
@@ -248,7 +360,13 @@ export const THEME_DESIGNS: Record<ThemeKind, ThemeDesign> = {
     gesture: "Pull the ribbon",
     display: FRAUNCES,
     text: g("DM Sans", "DM+Sans:opsz,wght@9..40,400..700", "sans-serif"),
-    palette: { pine: "#B5623E", cranberry: "#C2366B", gold: "#E9C9B6", snow: "#FBF8F2", paper: "#C2366B" },
+    palette: {
+      pine: "#B5623E",
+      cranberry: "#C2366B",
+      gold: "#E9C9B6",
+      snow: "#FBF8F2",
+      paper: "#C2366B",
+    },
     accessory: null,
     defaultCharacter: "mascot",
     defaultIconSet: "confetti",
@@ -267,7 +385,11 @@ export function castFor(
   const d = designFor(kind);
   const set = iconSet ?? ({ id: d.defaultIconSet } as IconSetSetting);
   return {
-    character: character ?? ((d.defaultCharacter ? { type: "library", id: d.defaultCharacter, accessory: true } : { type: "none" }) as CharacterSetting),
+    character:
+      character ??
+      ((d.defaultCharacter
+        ? { type: "library", id: d.defaultCharacter, accessory: true }
+        : { type: "none" }) as CharacterSetting),
     iconSet: set,
     accessory: d.accessory,
     /** Which sprinkle wanders around the gift (-1: none). */

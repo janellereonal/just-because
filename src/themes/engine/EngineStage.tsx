@@ -142,18 +142,27 @@ function EngineBody(b: {
   useEffect(() => {
     if (!b.autoplay || b.paused) return;
     const timer = window.setTimeout(() => {
-      void animate(gesture.progress, 0.9, { duration: 1.4, ease: [0.4, 0, 0.2, 1] }).then(() => gesture.complete());
+      void animate(gesture.progress, 0.9, { duration: 1.4, ease: [0.4, 0, 0.2, 1] }).then(() =>
+        gesture.complete(),
+      );
     }, 900);
     return () => window.clearTimeout(timer);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [b.autoplay, b.paused]);
 
   const Obj = objectFor(def);
-  const label = gesture.done && stay ? t("opening.openGift") : b.buttonText || t(def.button ?? "opening.open");
+  const label =
+    gesture.done && stay ? t("opening.openGift") : b.buttonText || t(def.button ?? "opening.open");
   return (
     <div
       className="relative flex size-full flex-col items-center justify-center pt-[clamp(44px,11cqi,72px)] pb-[clamp(96px,22cqi,120px)] [container-type:size]"
-      style={{ ["--jb-display" as string]: def.fonts.display.family, ["--jb-text" as string]: def.fonts.text.family, fontFamily: "var(--jb-text)" } as React.CSSProperties}
+      style={
+        {
+          ["--jb-display" as string]: def.fonts.display.family,
+          ["--jb-text" as string]: def.fonts.text.family,
+          fontFamily: "var(--jb-text)",
+        } as React.CSSProperties
+      }
     >
       <Suspense fallback={null}>
         <Obj

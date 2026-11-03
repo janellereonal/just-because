@@ -10,11 +10,15 @@ describe("redactUrl", () => {
     expect(redactUrl("/checkout/abc?cancelled=1")).toBe("/checkout/:id");
   });
   test("query strings go, except campaign tags", () => {
-    expect(redactUrl("https://justbecause.site/?open=1&utm_source=ig&ref=x")).toBe("https://justbecause.site/?utm_source=ig");
+    expect(redactUrl("https://justbecause.site/?open=1&utm_source=ig&ref=x")).toBe(
+      "https://justbecause.site/?utm_source=ig",
+    );
     expect(redactUrl("/g/ana?open=1")).toBe("/g/:id");
   });
   test("public pages and plain strings are left alone", () => {
-    expect(redactUrl("https://justbecause.site/example/ana")).toBe("https://justbecause.site/example/ana");
+    expect(redactUrl("https://justbecause.site/example/ana")).toBe(
+      "https://justbecause.site/example/ana",
+    );
     expect(redactUrl("/styles")).toBe("/styles");
   });
   test("links inside the clicked element's HTML are cut too", () => {
@@ -25,11 +29,18 @@ describe("redactUrl", () => {
 
 describe("redactProps", () => {
   test("only URL-like properties change, including $set_once", () => {
-    const out = redactProps({ $current_url: "https://x.site/g/ana", $pathname: "/g/ana", plan: "sweet", $set_once: { $initial_current_url: "https://x.site/contribute/ana" } });
+    const out = redactProps({
+      $current_url: "https://x.site/g/ana",
+      $pathname: "/g/ana",
+      plan: "sweet",
+      $set_once: { $initial_current_url: "https://x.site/contribute/ana" },
+    });
     expect(out.$current_url).toBe("https://x.site/g/:id");
     expect(out.$pathname).toBe("/g/:id");
     expect(out.plan).toBe("sweet");
-    expect((out.$set_once as Record<string, string>).$initial_current_url).toBe("https://x.site/contribute/:id");
+    expect((out.$set_once as Record<string, string>).$initial_current_url).toBe(
+      "https://x.site/contribute/:id",
+    );
   });
 });
 

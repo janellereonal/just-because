@@ -3,7 +3,6 @@ import { SECTION_COPY, sampleLetter } from "@/copy/strings";
 import { isNewSection } from "@/lib/sections";
 import type { ThemeKind } from "@/lib/themeKind";
 
-
 const NEW_EXAMPLE: Record<string, { glyph: string; line: string }> = {
   openwhen: { glyph: "✉", line: "Open when you can't sleep" },
   capsule: { glyph: "⧗", line: "Sealed for 364 days" },
@@ -57,7 +56,10 @@ export function ModuleExample({
           className="aspect-[4/3] w-full rounded-md"
           style={{ backgroundColor: `${tone.ink}14` }}
         />
-        <div className="mt-2 h-1.5 w-2/3 rounded-full" style={{ backgroundColor: `${tone.ink}1f` }} />
+        <div
+          className="mt-2 h-1.5 w-2/3 rounded-full"
+          style={{ backgroundColor: `${tone.ink}1f` }}
+        />
       </Frame>
     );
   }
@@ -140,10 +142,35 @@ export function ModuleExample({
     return (
       <Frame tone={tone}>
         <div className="relative mx-auto h-28 w-24">
-          <div className="absolute bottom-0 left-1/2 h-5 w-3 -translate-x-1/2" style={{ backgroundColor: tone.ink }} />
-          <div className="absolute inset-x-1 top-1 h-24" style={{ backgroundColor: tone.ink, clipPath: "polygon(50% 0, 100% 100%, 0 100%)", opacity: 0.82 }} />
-          {[[48, 22, "★"], [29, 54, "♥"], [66, 62, "●"]].map(([left, top, glyph]) => (
-            <span key={String(glyph)} className="absolute grid size-5 place-items-center rounded-full text-[9px]" style={{ left: `${left}%`, top: `${top}%`, backgroundColor: tone.bg, color: tone.accent }}>{glyph}</span>
+          <div
+            className="absolute bottom-0 left-1/2 h-5 w-3 -translate-x-1/2"
+            style={{ backgroundColor: tone.ink }}
+          />
+          <div
+            className="absolute inset-x-1 top-1 h-24"
+            style={{
+              backgroundColor: tone.ink,
+              clipPath: "polygon(50% 0, 100% 100%, 0 100%)",
+              opacity: 0.82,
+            }}
+          />
+          {[
+            [48, 22, "★"],
+            [29, 54, "♥"],
+            [66, 62, "●"],
+          ].map(([left, top, glyph]) => (
+            <span
+              key={String(glyph)}
+              className="absolute grid size-5 place-items-center rounded-full text-[9px]"
+              style={{
+                left: `${left}%`,
+                top: `${top}%`,
+                backgroundColor: tone.bg,
+                color: tone.accent,
+              }}
+            >
+              {glyph}
+            </span>
           ))}
         </div>
       </Frame>
@@ -153,8 +180,14 @@ export function ModuleExample({
     const ex = NEW_EXAMPLE[type]!;
     return (
       <Frame tone={tone}>
-        <p className="flex items-center gap-2 text-[12px] font-semibold" style={{ color: tone.accent }}>
-          <span className="grid size-6 place-items-center rounded-full text-[12px]" style={{ background: `${tone.accent}22` }}>
+        <p
+          className="flex items-center gap-2 text-[12px] font-semibold"
+          style={{ color: tone.accent }}
+        >
+          <span
+            className="grid size-6 place-items-center rounded-full text-[12px]"
+            style={{ background: `${tone.accent}22` }}
+          >
             {ex.glyph}
           </span>
           {SECTION_COPY[type].title}
@@ -179,4 +212,3 @@ export function ModuleExample({
     </Frame>
   );
 }
-

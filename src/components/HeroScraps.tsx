@@ -9,9 +9,26 @@ type Scrap = {
 };
 
 const SCRAPS: Scrap[] = [
-  { kind: "polaroid", className: "right-[3%] bottom-[7%] max-sm:right-[2%] max-sm:bottom-[2%] max-sm:scale-90", rotate: 8, label: "us, at the beach", color: "linear-gradient(160deg,#D9E8FB,#E6DCF7 55%,#FBD3DC)" },
-  { kind: "note", className: "bottom-[6%] left-[48%] max-lg:hidden", rotate: -7, label: "Happy birthday, Kath. Love you lots.", color: "#FFE8B0" },
-  { kind: "envelope", className: "top-[44%] right-[1.5%] max-lg:hidden", rotate: -12, color: "#D5F0E3" },
+  {
+    kind: "polaroid",
+    className: "right-[3%] bottom-[7%] max-sm:right-[2%] max-sm:bottom-[2%] max-sm:scale-90",
+    rotate: 8,
+    label: "us, at the beach",
+    color: "linear-gradient(160deg,#D9E8FB,#E6DCF7 55%,#FBD3DC)",
+  },
+  {
+    kind: "note",
+    className: "bottom-[6%] left-[48%] max-lg:hidden",
+    rotate: -7,
+    label: "Happy birthday, Kath. Love you lots.",
+    color: "#FFE8B0",
+  },
+  {
+    kind: "envelope",
+    className: "top-[44%] right-[1.5%] max-lg:hidden",
+    rotate: -12,
+    color: "#D5F0E3",
+  },
 ];
 
 const FLUTTER = ["#FBD3DC", "#E6DCF7", "#D5F0E3", "#FFE8B0", "#D9E8FB", "#FFDCCB"];
@@ -31,9 +48,23 @@ export function HeroScraps({ heroRef }: { heroRef: React.RefObject<HTMLElement |
     const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     const coarse = window.matchMedia("(pointer: coarse)").matches;
 
-    type State = { el: HTMLDivElement; rot: number; tx: number; ty: number; vx: number; vy: number; rx: number; ry: number; drag: { id: number; x: number; y: number } | null };
+    type State = {
+      el: HTMLDivElement;
+      rot: number;
+      tx: number;
+      ty: number;
+      vx: number;
+      vy: number;
+      rx: number;
+      ry: number;
+      drag: { id: number; x: number; y: number } | null;
+    };
     const items: State[] = refs.current
-      .map((el, i): State | null => (el ? { el, rot: SCRAPS[i]!.rotate, tx: 0, ty: 0, vx: 0, vy: 0, rx: 0, ry: 0, drag: null } : null))
+      .map((el, i): State | null =>
+        el
+          ? { el, rot: SCRAPS[i]!.rotate, tx: 0, ty: 0, vx: 0, vy: 0, rx: 0, ry: 0, drag: null }
+          : null,
+      )
       .filter((s): s is State => !!s);
 
     let px = -1;
@@ -70,7 +101,12 @@ export function HeroScraps({ heroRef }: { heroRef: React.RefObject<HTMLElement |
           s.ty += s.vy;
         }
         draw(s);
-        if (Math.abs(s.tx) + Math.abs(s.ty) + Math.abs(s.vx) + Math.abs(s.vy) > 0.2 || Math.abs(s.rx - trx) + Math.abs(s.ry - try_) > 0.1 || s.drag) moving = true;
+        if (
+          Math.abs(s.tx) + Math.abs(s.ty) + Math.abs(s.vx) + Math.abs(s.vy) > 0.2 ||
+          Math.abs(s.rx - trx) + Math.abs(s.ry - try_) > 0.1 ||
+          s.drag
+        )
+          moving = true;
       }
       if (moving && running) raf = requestAnimationFrame(tick);
     };
@@ -177,7 +213,10 @@ export function HeroScraps({ heroRef }: { heroRef: React.RefObject<HTMLElement |
               {s.label}
             </div>
           ) : (
-            <div className="relative h-[58px] w-[86px] overflow-hidden rounded-[8px] shadow-[0_14px_30px_-16px_rgba(43,37,34,0.5)]" style={{ background: s.color }}>
+            <div
+              className="relative h-[58px] w-[86px] overflow-hidden rounded-[8px] shadow-[0_14px_30px_-16px_rgba(43,37,34,0.5)]"
+              style={{ background: s.color }}
+            >
               <span className="absolute inset-x-0 top-0 h-[38px] origin-top bg-white/45 [clip-path:polygon(0_0,100%_0,50%_100%)]" />
               <span className="absolute top-[26px] left-1/2 size-3 -translate-x-1/2 rounded-full bg-accent/80" />
             </div>
@@ -189,7 +228,9 @@ export function HeroScraps({ heroRef }: { heroRef: React.RefObject<HTMLElement |
 }
 
 function Tape() {
-  return <span className="absolute -top-2 left-1/2 z-10 h-4 w-11 -translate-x-1/2 -rotate-3 rounded-[2px] bg-white/60 shadow-sm backdrop-blur-[1px]" />;
+  return (
+    <span className="absolute -top-2 left-1/2 z-10 h-4 w-11 -translate-x-1/2 -rotate-3 rounded-[2px] bg-white/60 shadow-sm backdrop-blur-[1px]" />
+  );
 }
 
 /** A few scraps and confetti flutter down the screen (fixed, gone in ~2.5s). */
@@ -223,10 +264,18 @@ function flutter() {
     const anim = bit.animate(
       [
         { transform: "translate(0,0) rotate(0deg)", opacity: 1 },
-        { transform: `translate(${sway}px, ${fall * 0.5}px) rotate(${spin / 2}deg)`, opacity: 1, offset: 0.5 },
+        {
+          transform: `translate(${sway}px, ${fall * 0.5}px) rotate(${spin / 2}deg)`,
+          opacity: 1,
+          offset: 0.5,
+        },
         { transform: `translate(${-sway * 0.4}px, ${fall}px) rotate(${spin}deg)`, opacity: 0 },
       ],
-      { duration: 1800 + Math.random() * 900, delay: Math.random() * 400, easing: "cubic-bezier(.3,.2,.4,1)" },
+      {
+        duration: 1800 + Math.random() * 900,
+        delay: Math.random() * 400,
+        easing: "cubic-bezier(.3,.2,.4,1)",
+      },
     );
     anim.onfinish = () => bit.remove();
   }

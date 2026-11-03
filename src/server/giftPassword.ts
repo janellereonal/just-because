@@ -35,13 +35,17 @@ export async function verifyPassword(password: string, stored: string): Promise<
 function serverSecret() {
   const explicit = process.env["BETTER_AUTH_SECRET"];
   if (explicit) return explicit;
-  return createHash("sha256").update(`just-because-auth:${process.env["DATABASE_URL"] ?? ""}`).digest("hex");
+  return createHash("sha256")
+    .update(`just-because-auth:${process.env["DATABASE_URL"] ?? ""}`)
+    .digest("hex");
 }
 
 const cookieName = (siteId: string) => `jb_gift_${siteId.replace(/-/g, "")}`;
 
 function unlockToken(siteId: string, passwordHash: string) {
-  return createHmac("sha256", serverSecret()).update(`gift-unlock:${siteId}:${passwordHash}`).digest("base64url");
+  return createHmac("sha256", serverSecret())
+    .update(`gift-unlock:${siteId}:${passwordHash}`)
+    .digest("base64url");
 }
 
 /** Does this gift ask for a password right now? Only when one is set AND the plan includes it. */

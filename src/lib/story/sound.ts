@@ -7,7 +7,15 @@ import { playCandle, soundContext } from "@/lib/play";
 
 type Ctx = BaseAudioContext;
 
-function tone(ctx: Ctx, at: number, f0: number, f1: number, dur: number, peak: number, type: OscillatorType = "sine") {
+function tone(
+  ctx: Ctx,
+  at: number,
+  f0: number,
+  f1: number,
+  dur: number,
+  peak: number,
+  type: OscillatorType = "sine",
+) {
   const o = ctx.createOscillator();
   const g = ctx.createGain();
   o.type = type;

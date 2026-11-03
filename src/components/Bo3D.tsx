@@ -113,7 +113,11 @@ export function Bo3D({
   return (
     <div
       ref={wrapRef}
-      className={className && /\b(absolute|fixed)\b/.test(className) ? className : `relative ${className ?? ""}`}
+      className={
+        className && /\b(absolute|fixed)\b/.test(className)
+          ? className
+          : `relative ${className ?? ""}`
+      }
       {...(label ? { role: "img", "aria-label": label } : { "aria-hidden": true })}
     >
       <canvas
@@ -122,7 +126,9 @@ export function Bo3D({
         className={`absolute inset-0 block size-full transition-opacity duration-700 ${ready ? "opacity-100" : "opacity-0"}`}
       />
       {!ready && placeholder ? (
-        <div className={`absolute inset-0 grid place-items-center ${failed ? "" : "animate-pulse"}`}>
+        <div
+          className={`absolute inset-0 grid place-items-center ${failed ? "" : "animate-pulse"}`}
+        >
           <Bo pose={failed ? "hello" : "idle"} size={150} />
         </div>
       ) : null}

@@ -103,7 +103,16 @@ export default function Bo({ pose = "hello", size = 160, className, animateKey, 
   const label = title ?? "Bo, the Just Because gift mascot";
   return (
     <span className={`bo-root ${className ?? ""}`} style={{ width: size, height: size }}>
-      <img key={animateKey} src={src(still)} alt={label} width={size} height={size} draggable={false} decoding="async" className={MOTION[pose]} />
+      <img
+        key={animateKey}
+        src={src(still)}
+        alt={label}
+        width={size}
+        height={size}
+        draggable={false}
+        decoding="async"
+        className={MOTION[pose]}
+      />
     </span>
   );
 }

@@ -81,12 +81,48 @@ export type StyleInfo = {
 };
 
 export const STYLES: StyleInfo[] = [
-  { id: "cake", origin: "theme", looks: [{ id: "cake", theme: "Happy Birthday" }], body: "scrapbook", mood: "party" },
-  { id: "love-letter", origin: "theme", looks: [{ id: "wax", theme: "Valentine's" }], body: "storybook", mood: "calm" },
-  { id: "boarding-pass", origin: "theme", looks: [{ id: "pass", theme: "Bon Voyage" }], body: "scrapbook", mood: "easy" },
-  { id: "gift-box", origin: "theme", looks: [{ id: "box", theme: "Christmas" }], body: "scrapbook", mood: "party" },
-  { id: "countdown", origin: "theme", looks: [{ id: "dial", theme: "New Year" }], body: "stars", mood: "party" },
-  { id: "record-player", origin: "theme", looks: [{ id: "vinyl", theme: "Anniversary" }], body: "storybook", mood: "calm" },
+  {
+    id: "cake",
+    origin: "theme",
+    looks: [{ id: "cake", theme: "Happy Birthday" }],
+    body: "scrapbook",
+    mood: "party",
+  },
+  {
+    id: "love-letter",
+    origin: "theme",
+    looks: [{ id: "wax", theme: "Valentine's" }],
+    body: "storybook",
+    mood: "calm",
+  },
+  {
+    id: "boarding-pass",
+    origin: "theme",
+    looks: [{ id: "pass", theme: "Bon Voyage" }],
+    body: "scrapbook",
+    mood: "easy",
+  },
+  {
+    id: "gift-box",
+    origin: "theme",
+    looks: [{ id: "box", theme: "Christmas" }],
+    body: "scrapbook",
+    mood: "party",
+  },
+  {
+    id: "countdown",
+    origin: "theme",
+    looks: [{ id: "dial", theme: "New Year" }],
+    body: "stars",
+    mood: "party",
+  },
+  {
+    id: "record-player",
+    origin: "theme",
+    looks: [{ id: "vinyl", theme: "Anniversary" }],
+    body: "storybook",
+    mood: "calm",
+  },
   {
     id: "invitation",
     origin: "theme",
@@ -97,10 +133,34 @@ export const STYLES: StyleInfo[] = [
     body: "storybook",
     mood: "calm",
   },
-  { id: "crib-mobile", origin: "theme", looks: [{ id: "nursery", theme: "Baby Shower" }], body: "scrapbook", mood: "calm" },
-  { id: "fetch", origin: "theme", looks: [{ id: "pet", theme: "Pets" }], body: "bento", mood: "easy" },
-  { id: "board-game", origin: "theme", looks: [{ id: "board", theme: "Game Night" }], body: "hunt", mood: "party" },
-  { id: "arcade", origin: "theme", looks: [{ id: "console", theme: "Pixel" }], body: "bento", mood: "party" },
+  {
+    id: "crib-mobile",
+    origin: "theme",
+    looks: [{ id: "nursery", theme: "Baby Shower" }],
+    body: "scrapbook",
+    mood: "calm",
+  },
+  {
+    id: "fetch",
+    origin: "theme",
+    looks: [{ id: "pet", theme: "Pets" }],
+    body: "bento",
+    mood: "easy",
+  },
+  {
+    id: "board-game",
+    origin: "theme",
+    looks: [{ id: "board", theme: "Game Night" }],
+    body: "hunt",
+    mood: "party",
+  },
+  {
+    id: "arcade",
+    origin: "theme",
+    looks: [{ id: "console", theme: "Pixel" }],
+    body: "bento",
+    mood: "party",
+  },
   {
     id: "handwritten",
     origin: "theme",
@@ -111,7 +171,13 @@ export const STYLES: StyleInfo[] = [
     oldBodies: ["zine"],
     mood: "calm",
   },
-  { id: "winter-window", origin: "theme", looks: [{ id: "cabin", theme: "Winter Cabin Christmas" }], body: "scrapbook", mood: "calm" },
+  {
+    id: "winter-window",
+    origin: "theme",
+    looks: [{ id: "cabin", theme: "Winter Cabin Christmas" }],
+    body: "scrapbook",
+    mood: "calm",
+  },
   {
     id: "care-package",
     origin: "theme",
@@ -122,8 +188,20 @@ export const STYLES: StyleInfo[] = [
     body: "scrapbook",
     mood: "easy",
   },
-  { id: "parol", origin: "theme", looks: [{ id: "star", theme: "Parol Christmas" }], body: "scrapbook", mood: "calm" },
-  { id: "debut", origin: "theme", looks: [{ id: "curtain", theme: "Debut" }], body: "storybook", mood: "party" },
+  {
+    id: "parol",
+    origin: "theme",
+    looks: [{ id: "star", theme: "Parol Christmas" }],
+    body: "scrapbook",
+    mood: "calm",
+  },
+  {
+    id: "debut",
+    origin: "theme",
+    looks: [{ id: "curtain", theme: "Debut" }],
+    body: "storybook",
+    mood: "party",
+  },
   { id: "scrapbook", origin: "layout", looks: [], body: "scrapbook", mood: "easy" },
   { id: "storybook", origin: "layout", looks: [], body: "storybook", mood: "calm" },
   { id: "comic", origin: "layout", looks: [], body: "comic", mood: "easy" },
@@ -166,7 +244,11 @@ export function bodyFor(style: StyleInfo): GiftFormat {
 }
 
 /** Which look a new gift gets: the one made for its occasion, else the first. */
-export function lookFor(style: StyleInfo, occasion?: OccasionId | null, lookId?: string | null): StyleLook | null {
+export function lookFor(
+  style: StyleInfo,
+  occasion?: OccasionId | null,
+  lookId?: string | null,
+): StyleLook | null {
   if (!style.looks.length) return null;
   if (lookId) {
     const picked = style.looks.find((l) => l.id === lookId);
@@ -184,7 +266,10 @@ export function lookFor(style: StyleInfo, occasion?: OccasionId | null, lookId?:
  * then the rest in their usual order. Calm occasions push party styles last.
  * With no occasion, the usual order.
  */
-export function stylesForOccasion(occasion: OccasionId | null | undefined, list: StyleInfo[] = STYLES): StyleInfo[] {
+export function stylesForOccasion(
+  occasion: OccasionId | null | undefined,
+  list: StyleInfo[] = STYLES,
+): StyleInfo[] {
   if (!occasion) return [...list];
   const info = occasionInfo(occasion);
   const rank = new Map(info.styles.map((id, i) => [id, i]));
@@ -217,9 +302,15 @@ export function fitsOccasion(style: StyleInfo, occasion: OccasionId | null | und
 }
 
 /** The styles for an occasion (sorted, best first), and the rest, for "Show other styles". */
-export function splitForOccasion(occasion: OccasionId | null | undefined, list: StyleInfo[] = STYLES) {
+export function splitForOccasion(
+  occasion: OccasionId | null | undefined,
+  list: StyleInfo[] = STYLES,
+) {
   const sorted = stylesForOccasion(occasion, list);
-  return { fits: sorted.filter((s) => fitsOccasion(s, occasion)), others: sorted.filter((s) => !fitsOccasion(s, occasion)) };
+  return {
+    fits: sorted.filter((s) => fitsOccasion(s, occasion)),
+    others: sorted.filter((s) => !fitsOccasion(s, occasion)),
+  };
 }
 
 type ThemeLike = { name?: string | null; category?: string | null } | null | undefined;
@@ -253,7 +344,12 @@ export function styleForLegacy(theme: ThemeLike, format: GiftFormat): StyleInfo 
   const name = (theme?.name ?? "").trim().toLowerCase();
   if (!name) return STYLES.find((s) => s.origin === "layout" && s.body === format) ?? null;
   return (
-    STYLES.find((s) => s.origin === "theme" && s.looks.some((l) => l.theme.toLowerCase() === name) && (s.body === format || s.fallbackBody === format || !!s.oldBodies?.includes(format))) ?? null
+    STYLES.find(
+      (s) =>
+        s.origin === "theme" &&
+        s.looks.some((l) => l.theme.toLowerCase() === name) &&
+        (s.body === format || s.fallbackBody === format || !!s.oldBodies?.includes(format)),
+    ) ?? null
   );
 }
 

@@ -61,7 +61,10 @@ export const Route = createFileRoute("/_authenticated/create")({
     sections: typeof search["sections"] === "string" ? search["sections"] : undefined,
     /** Styles (flag `styles`): ?style=cake&occasion=birthday from the gallery. */
     style: isStyleId(search["style"]) ? search["style"] : undefined,
-    occasion: isOccasionId(search["occasion"]) && !occasionInfo(search["occasion"]).groupOnly ? search["occasion"] : undefined,
+    occasion:
+      isOccasionId(search["occasion"]) && !occasionInfo(search["occasion"]).groupOnly
+        ? search["occasion"]
+        : undefined,
   }),
   head: () => ({
     meta: [
@@ -97,19 +100,30 @@ function CreatePage() {
 
 function ThemeCreatePage() {
   const navigate = useNavigate();
-  const { theme: themeFromUrl, format: formatFromUrl, from: fromUrl, sections: sectionsFromUrl } = Route.useSearch();
+  const {
+    theme: themeFromUrl,
+    format: formatFromUrl,
+    from: fromUrl,
+    sections: sectionsFromUrl,
+  } = Route.useSearch();
   const { data: rawThemes = [] } = useQuery({
     queryKey: ["themes", "published"],
     queryFn: () => fetchThemes(false),
   });
-  const { data: country = null } = useQuery({ queryKey: ["visitor-country"], queryFn: () => getVisitorCountry(), staleTime: Infinity, enabled: needsCountry(rawThemes) });
+  const { data: country = null } = useQuery({
+    queryKey: ["visitor-country"],
+    queryFn: () => getVisitorCountry(),
+    staleTime: Infinity,
+    enabled: needsCountry(rawThemes),
+  });
   const themes = useMemo(() => orderThemes(rawThemes, country), [rawThemes, country]);
 
   // New organisers (no gifts yet) see a short guide first, once. Shares the dashboard's cache.
   const guideOn = isFlagOn("newUserGuide");
   const { data: mySites } = useQuery({
     queryKey: ["my-sites"],
-    queryFn: async () => (await listMySites()).map((row) => normalizeSite(row as Record<string, unknown>)),
+    queryFn: async () =>
+      (await listMySites()).map((row) => normalizeSite(row as Record<string, unknown>)),
     enabled: guideOn,
   });
   const [guide, setGuide] = useState(false);
@@ -122,8 +136,12 @@ function ThemeCreatePage() {
   const [themeId, setThemeId] = useState<string | undefined>(themeFromUrl);
   const [format, setFormat] = useState<GiftFormat>(formatFromUrl ?? "scrapbook");
   // Sections tried on the theme page come along and count as the creator's own pick.
-  const fromThemePage = (sectionsFromUrl ?? "").split(",").filter((t): t is ModuleType => MODULES.some((m) => m.type === t));
-  const [selected, setSelected] = useState<ModuleType[]>(fromThemePage.length ? fromThemePage : ["letters", "photobooth"]);
+  const fromThemePage = (sectionsFromUrl ?? "")
+    .split(",")
+    .filter((t): t is ModuleType => MODULES.some((m) => m.type === t));
+  const [selected, setSelected] = useState<ModuleType[]>(
+    fromThemePage.length ? fromThemePage : ["letters", "photobooth"],
+  );
   const [touched, setTouched] = useState(fromThemePage.length > 0);
   const [previewed, setPreviewed] = useState<ModuleType>("letters");
   const [busy, setBusy] = useState(false);
@@ -181,7 +199,9 @@ function ThemeCreatePage() {
     .map((t) => pool.find((m) => m.type === t))
     .filter((m): m is (typeof pool)[number] => !!m);
   const firstFive = ordered.slice(0, 5).map((m) => m.type);
-  const listed = showMore ? ordered : ordered.filter((m) => firstFive.includes(m.type) || selected.includes(m.type));
+  const listed = showMore
+    ? ordered
+    : ordered.filter((m) => firstFive.includes(m.type) || selected.includes(m.type));
   const hidden = ordered.filter((m) => !listed.includes(m));
 
   // Pre-select the theme's suggested modules until the creator edits the list.
@@ -205,7 +225,9 @@ function ThemeCreatePage() {
       return;
     }
     if ((solo ? selected.filter((t) => t !== "tree") : selected).length === 0) {
-      toast.error(solo ? "Pick at least one thing you'll add." : "Pick at least one thing friends can add.");
+      toast.error(
+        solo ? "Pick at least one thing you'll add." : "Pick at least one thing friends can add.",
+      );
       return;
     }
     creating.current = true;
@@ -238,7 +260,11 @@ function ThemeCreatePage() {
       creating.current = false;
       setBusy(false);
       const msg = error instanceof Error ? error.message : "";
-      toast.error(msg && msg.length < 160 && !/fetch|network/i.test(msg) ? msg : "Couldn't create that gift. Please try again.");
+      toast.error(
+        msg && msg.length < 160 && !/fetch|network/i.test(msg)
+          ? msg
+          : "Couldn't create that gift. Please try again.",
+      );
       return;
     }
     creating.current = false;
@@ -263,7 +289,9 @@ function ThemeCreatePage() {
     <div className="min-h-screen bg-paper text-ink">
       <SiteHeader />
       <BoBuddy followFocus intro={false} />
-      <AnimatePresence>{guide ? <NewUserGuide onClose={() => setGuide(false)} /> : null}</AnimatePresence>
+      <AnimatePresence>
+        {guide ? <NewUserGuide onClose={() => setGuide(false)} /> : null}
+      </AnimatePresence>
       <section className="mx-auto max-w-3xl px-4 pt-14 pb-28 sm:px-5">
         <div className="relative pr-24 sm:pr-0">
           <p className="font-mono text-[11px] tracking-[0.18em] text-accent uppercase">New gift</p>
@@ -284,7 +312,11 @@ function ThemeCreatePage() {
               : "Takes a minute. You can change everything later, even after friends start adding notes."}
           </p>
           {guideOn ? (
-            <button type="button" onClick={() => setGuide(true)} className="mt-2 text-sm font-medium text-accent underline underline-offset-4">
+            <button
+              type="button"
+              onClick={() => setGuide(true)}
+              className="mt-2 text-sm font-medium text-accent underline underline-offset-4"
+            >
               {GUIDE_COPY.reopen}
             </button>
           ) : null}
@@ -293,7 +325,11 @@ function ThemeCreatePage() {
         <form onSubmit={handleCreate} className="mt-10 space-y-5" data-bo-zone>
           <div className="card-paper relative p-5 sm:p-7">
             {step(1, "Who's it from?", "You can switch this later.")}
-            <div className="mt-5 grid gap-2.5 sm:grid-cols-2" role="radiogroup" aria-label="Who's it from">
+            <div
+              className="mt-5 grid gap-2.5 sm:grid-cols-2"
+              role="radiogroup"
+              aria-label="Who's it from"
+            >
               {(
                 [
                   {
@@ -326,11 +362,16 @@ function ThemeCreatePage() {
                     }}
                     className={`squish relative flex items-start gap-3.5 rounded-2xl p-4 text-left transition-shadow ${o.tint} ${on ? "shadow-[0_0_0_2px_var(--accent)]" : "shadow-[0_0_0_1px_var(--line)] hover:shadow-[0_0_0_1px_var(--accent)]"}`}
                   >
-                    <span aria-hidden className="grid size-11 shrink-0 place-items-center rounded-2xl bg-white/80 text-2xl">
+                    <span
+                      aria-hidden
+                      className="grid size-11 shrink-0 place-items-center rounded-2xl bg-white/80 text-2xl"
+                    >
                       {o.art}
                     </span>
                     <span className="min-w-0">
-                      <span className="block font-display text-lg leading-tight font-semibold">{o.title}</span>
+                      <span className="block font-display text-lg leading-tight font-semibold">
+                        {o.title}
+                      </span>
                       <span className="mt-1 block text-sm text-ink/65">{o.copy}</span>
                     </span>
                     {on ? (
@@ -351,7 +392,11 @@ function ThemeCreatePage() {
             >
               <span className="sticky top-[46vh] block h-px w-24" data-bo-perch data-bo-x="0.5" />
             </span>
-            {step(2, "Who's it for?", "Their first name, or what you call them. Two names work too.")}
+            {step(
+              2,
+              "Who's it for?",
+              "Their first name, or what you call them. Two names work too.",
+            )}
             <label htmlFor="gift-for" className="sr-only">
               Who's it for
             </label>
@@ -370,7 +415,11 @@ function ThemeCreatePage() {
               <span className="font-display text-base text-ink">
                 {occasionTitle(activeTheme, recipient.trim() || (solo ? "Sam" : "Ana"))}
               </span>
-              {recipient.trim() ? null : <span className="ml-1.5 font-mono text-[10px] tracking-[0.12em] uppercase">(example)</span>}
+              {recipient.trim() ? null : (
+                <span className="ml-1.5 font-mono text-[10px] tracking-[0.12em] uppercase">
+                  (example)
+                </span>
+              )}
               . You can change it later.
             </p>
           </div>
@@ -510,7 +559,9 @@ function ThemeCreatePage() {
                           </span>
                           <span className="block text-xs text-ink/60">
                             {mod.blurb}
-                            {mod.source === "creator" && !solo ? " You set this one up yourself." : ""}
+                            {mod.source === "creator" && !solo
+                              ? " You set this one up yourself."
+                              : ""}
                           </span>
                         </button>
                         <button
@@ -528,7 +579,11 @@ function ThemeCreatePage() {
                       </div>
                       {active ? (
                         <div className="mt-2 md:hidden">
-                          <SectionPreview type={mod.type} theme={activeTheme} palette={defaultPalette} />
+                          <SectionPreview
+                            type={mod.type}
+                            theme={activeTheme}
+                            palette={defaultPalette}
+                          />
                         </div>
                       ) : null}
                     </div>
@@ -542,7 +597,12 @@ function ThemeCreatePage() {
                   >
                     More
                     <span className="block text-xs font-normal text-ink/60">
-                      {hidden.length} more sections: {hidden.slice(0, 4).map((m) => m.label.toLowerCase()).join(", ")}…
+                      {hidden.length} more sections:{" "}
+                      {hidden
+                        .slice(0, 4)
+                        .map((m) => m.label.toLowerCase())
+                        .join(", ")}
+                      …
                     </span>
                   </button>
                 ) : null}
@@ -559,22 +619,33 @@ function ThemeCreatePage() {
                   <SectionPreview type={previewed} theme={activeTheme} palette={defaultPalette} />
                 </div>
                 <p className="mt-3 text-xs text-ink/55">
-                  {activeTheme ? `How it looks in ${activeTheme.name}, with sample notes. Try it, it works.` : "How it looks on the finished gift, with sample notes. Try it, it works."}
+                  {activeTheme
+                    ? `How it looks in ${activeTheme.name}, with sample notes. Try it, it works.`
+                    : "How it looks on the finished gift, with sample notes. Try it, it works."}
                 </p>
               </div>
             </div>
           </div>
 
           <div className="mb-6">
-            <ConciergeOffer recipient={recipient.trim()} occasion={OCCASION_NAMES[themeKindOf(activeTheme)] ?? ""} />
+            <ConciergeOffer
+              recipient={recipient.trim()}
+              occasion={OCCASION_NAMES[themeKindOf(activeTheme)] ?? ""}
+            />
           </div>
 
           <div className="sticky bottom-4 z-20">
             <div className="flex items-center justify-between gap-4 rounded-full bg-ink/95 py-2 pr-2 pl-6 text-cream shadow-[0_20px_50px_-20px_rgba(43,37,34,.6)] backdrop-blur">
               <span className="min-w-0 leading-tight">
-                {activeTheme ? <span className="block truncate text-[11px] text-cream/70">{activeTheme.name}{solo ? " · Just me" : ""}</span> : null}
+                {activeTheme ? (
+                  <span className="block truncate text-[11px] text-cream/70">
+                    {activeTheme.name}
+                    {solo ? " · Just me" : ""}
+                  </span>
+                ) : null}
                 <span className="block truncate text-sm">
-                  {formatInfo(format).title} · {selected.length} {selected.length === 1 ? "section" : "sections"}
+                  {formatInfo(format).title} · {selected.length}{" "}
+                  {selected.length === 1 ? "section" : "sections"}
                   {!activeTheme && solo ? " · Just me" : ""}
                 </span>
               </span>

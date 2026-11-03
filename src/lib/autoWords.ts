@@ -26,8 +26,14 @@ export function followAutoWords(
   const name = site.custom_text.recipient_name?.trim() ?? "";
   // The heading is made two ways: with the name ("Happy birthday, Ana") or without ("Happy birthday").
   const pairs: [string, string][] = [
-    [occasionTitle(before.theme, name, before.occasion), occasionTitle(after.theme, name, after.occasion)],
-    [giftWords(before.theme, before.occasion).occasion, giftWords(after.theme, after.occasion).occasion],
+    [
+      occasionTitle(before.theme, name, before.occasion),
+      occasionTitle(after.theme, name, after.occasion),
+    ],
+    [
+      giftWords(before.theme, before.occasion).occasion,
+      giftWords(after.theme, after.occasion).occasion,
+    ],
   ];
   const swap = (value: string | undefined) => {
     const v = value?.trim();
@@ -44,8 +50,16 @@ export function followAutoWords(
   if (title) out.title = title;
 
   // Section titles we'd fill in, in case one was saved as is.
-  const oldTitles = defaultTitles(site.custom_text, themeKindOf(before.theme), before.occasion) as Record<string, string>;
-  const newTitles = defaultTitles(site.custom_text, themeKindOf(after.theme), after.occasion) as Record<string, string>;
+  const oldTitles = defaultTitles(
+    site.custom_text,
+    themeKindOf(before.theme),
+    before.occasion,
+  ) as Record<string, string>;
+  const newTitles = defaultTitles(
+    site.custom_text,
+    themeKindOf(after.theme),
+    after.occasion,
+  ) as Record<string, string>;
   for (const [key, old] of Object.entries(oldTitles)) {
     if (key === "heading") continue;
     const v = (site.custom_text as Record<string, string | undefined>)[key]?.trim();
@@ -61,5 +75,8 @@ export function followAutoWords(
  * so the editor can save them as automatic (soft) changes that never clash with a typed one.
  */
 export function autoWordKeys(words: { title?: string; custom_text?: CustomText }): string[] {
-  return [...(words.title !== undefined ? ["title"] : []), ...Object.keys(words.custom_text ?? {}).map((k) => `custom_text.${k}`)];
+  return [
+    ...(words.title !== undefined ? ["title"] : []),
+    ...Object.keys(words.custom_text ?? {}).map((k) => `custom_text.${k}`),
+  ];
 }

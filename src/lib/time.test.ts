@@ -1,5 +1,11 @@
 import { describe, expect, test } from "bun:test";
-import { dayStartedSomewhere, describeWait, formatMomentWithYear, msToLocalMidnight, splitWait } from "./time";
+import {
+  dayStartedSomewhere,
+  describeWait,
+  formatMomentWithYear,
+  msToLocalMidnight,
+  splitWait,
+} from "./time";
 
 const DAY = 86400000;
 const now = new Date(2026, 9, 18, 14, 0).getTime();
@@ -32,7 +38,11 @@ describe("formatMomentWithYear", () => {
 
 describe("splitWait", () => {
   test("days, hours and minutes", () => {
-    expect(splitWait(now + 2 * DAY + 3 * 3600000 + 4 * 60000, now)).toEqual({ days: 2, hours: 3, minutes: 4 });
+    expect(splitWait(now + 2 * DAY + 3 * 3600000 + 4 * 60000, now)).toEqual({
+      days: 2,
+      hours: 3,
+      minutes: 4,
+    });
     expect(splitWait(now - 1000, now)).toEqual({ days: 0, hours: 0, minutes: 0 });
   });
 });

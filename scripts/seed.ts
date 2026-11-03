@@ -76,25 +76,138 @@ const ids = new Map(palettes.map(([name], i) => [name, P(i + 1)]));
 // The sixth value is the status a NEW row starts with. Drafts are only visible to admins until
 // they're published in /admin (Theme library); an existing row's status is never changed here.
 const themes: [string, string, string, string[], string[], ("published" | "draft")?][] = [
-  ["Valentine's", "Romance", "Soft blush and deep rose for the people you adore.", ["letters", "photobooth", "songs"], ["Wax Seal", "Blush", "Deep Romance", "Berry"]],
-  ["Happy Birthday", "Celebration", "Confetti-bright layouts for another trip around the sun.", ["letters", "photobooth", "countdown"], ["Party Butter", "Confetti", "Pastel Party", "Citrus"]],
-  ["Bon Voyage", "Farewell", "A warm send-off for someone moving on.", ["letters", "voice", "photobooth"], ["Departure", "Golden Hour", "Soft Goodbye", "Sky"]],
-  ["Christmas", "Season", "Pine, ribbon and candlelight for the holidays.", ["countdown", "calendar", "photobooth", "tree"], ["Pine & Cranberry", "Classic Christmas", "Cozy Cabin", "Midnight Gold"]],
-  ["Pets", "Companions", "For the furry ones who make the house a home.", ["photobooth", "wordcloud", "letters"], ["Tennis Ball", "Sunny", "Lavender Paws", "Peach Fuzz"]],
-  ["New Year", "New year", "Midnight and gold for fresh beginnings.", ["countdown", "wordcloud", "photobooth"], ["Midnight Toast", "Midnight Gold", "Sparkle", "Monochrome"]],
-  ["Anniversary", "Milestone", "Champagne and clay for the years you have shared.", ["letters", "photobooth", "countdown"], ["Vinyl Night", "Timeless", "Rose Gold", "Just Because"]],
-  ["Weddings", "Wedding", "Ivory, sage and soft gold for the big day.", ["letters", "photobooth", "songs"], ["Ivory Gold", "Ivory Sage", "Blush Bloom", "Matcha"]],
-  ["Bridal Shower", "Shower", "Blush, peach and sage for the bride-to-be and her people.", ["letters", "photobooth", "wordcloud", "countdown"], ["Blush Bloom", "Peach Fuzz", "Ivory Sage"]],
-  ["Baby Shower", "Shower", "Powder blue, butter and blush for the little one on the way.", ["letters", "photobooth", "wordcloud", "countdown"], ["Nursery", "Sunny", "Sky"]],
-  ["Handwritten", "Any occasion", "Ink on paper, folded in four. For any occasion that needs a few real words.", ["letters", "openwhen", "capsule", "photobooth"], ["Fountain Pen", "Love Note", "Kraft Paper"]],
-  ["Game Night", "Any occasion", "Dice, tokens and a board, for the friend who always wins.", ["letters", "quiz", "superlatives", "photobooth"], ["Tabletop", "Green Table", "Felt Table"]],
-  ["Pixel", "Any occasion", "Eight-bit hearts and coins on a little console. Press start.", ["letters", "quiz", "superlatives", "photobooth"], ["Pixel Night", "Bubblegum", "Handheld"]],
+  [
+    "Valentine's",
+    "Romance",
+    "Soft blush and deep rose for the people you adore.",
+    ["letters", "photobooth", "songs"],
+    ["Wax Seal", "Blush", "Deep Romance", "Berry"],
+  ],
+  [
+    "Happy Birthday",
+    "Celebration",
+    "Confetti-bright layouts for another trip around the sun.",
+    ["letters", "photobooth", "countdown"],
+    ["Party Butter", "Confetti", "Pastel Party", "Citrus"],
+  ],
+  [
+    "Bon Voyage",
+    "Farewell",
+    "A warm send-off for someone moving on.",
+    ["letters", "voice", "photobooth"],
+    ["Departure", "Golden Hour", "Soft Goodbye", "Sky"],
+  ],
+  [
+    "Christmas",
+    "Season",
+    "Pine, ribbon and candlelight for the holidays.",
+    ["countdown", "calendar", "photobooth", "tree"],
+    ["Pine & Cranberry", "Classic Christmas", "Cozy Cabin", "Midnight Gold"],
+  ],
+  [
+    "Pets",
+    "Companions",
+    "For the furry ones who make the house a home.",
+    ["photobooth", "wordcloud", "letters"],
+    ["Tennis Ball", "Sunny", "Lavender Paws", "Peach Fuzz"],
+  ],
+  [
+    "New Year",
+    "New year",
+    "Midnight and gold for fresh beginnings.",
+    ["countdown", "wordcloud", "photobooth"],
+    ["Midnight Toast", "Midnight Gold", "Sparkle", "Monochrome"],
+  ],
+  [
+    "Anniversary",
+    "Milestone",
+    "Champagne and clay for the years you have shared.",
+    ["letters", "photobooth", "countdown"],
+    ["Vinyl Night", "Timeless", "Rose Gold", "Just Because"],
+  ],
+  [
+    "Weddings",
+    "Wedding",
+    "Ivory, sage and soft gold for the big day.",
+    ["letters", "photobooth", "songs"],
+    ["Ivory Gold", "Ivory Sage", "Blush Bloom", "Matcha"],
+  ],
+  [
+    "Bridal Shower",
+    "Shower",
+    "Blush, peach and sage for the bride-to-be and her people.",
+    ["letters", "photobooth", "wordcloud", "countdown"],
+    ["Blush Bloom", "Peach Fuzz", "Ivory Sage"],
+  ],
+  [
+    "Baby Shower",
+    "Shower",
+    "Powder blue, butter and blush for the little one on the way.",
+    ["letters", "photobooth", "wordcloud", "countdown"],
+    ["Nursery", "Sunny", "Sky"],
+  ],
+  [
+    "Handwritten",
+    "Any occasion",
+    "Ink on paper, folded in four. For any occasion that needs a few real words.",
+    ["letters", "openwhen", "capsule", "photobooth"],
+    ["Fountain Pen", "Love Note", "Kraft Paper"],
+  ],
+  [
+    "Game Night",
+    "Any occasion",
+    "Dice, tokens and a board, for the friend who always wins.",
+    ["letters", "quiz", "superlatives", "photobooth"],
+    ["Tabletop", "Green Table", "Felt Table"],
+  ],
+  [
+    "Pixel",
+    "Any occasion",
+    "Eight-bit hearts and coins on a little console. Press start.",
+    ["letters", "quiz", "superlatives", "photobooth"],
+    ["Pixel Night", "Bubblegum", "Handheld"],
+  ],
   // Built on the theme engine (src/themes/engine). Drafts until an admin publishes them.
-  ["Winter Cabin Christmas", "Season", "Wipe the frost off a cabin window to find a warm room, a fire, and a tree hung with everyone's notes.", ["letters", "photobooth", "songs", "countdown"], ["Fireside", "Snowy Pine", "Pine & Cranberry"], "draft"],
-  ["Care Package", "Family", "A parcel from far away. Peel the tape and the notes come out as things packed inside.", ["letters", "photobooth", "voice", "songs"], ["Kraft Mail", "Air Mail", "Kraft Paper"], "draft"],
-  ["Balikbayan Box", "Family", "A box from home, taped and marked, with pasalubong inside from everyone who misses them.", ["letters", "photobooth", "voice", "songs"], ["Homeward", "Kraft Mail", "Golden Hour"], "draft"],
-  ["Parol Christmas", "Season", "A capiz parol where every note lights part of the star. Turn on Simbang Gabi for one a night.", ["letters", "photobooth", "songs", "voice"], ["Parol Night", "Capiz", "Midnight Gold"], "draft"],
-  ["Debut", "Birthday", "A curtain, 18 candles and 18 roses. Each candle holds a wish for their eighteenth.", ["letters", "photobooth", "songs", "voice", "superlatives"], ["Debut Rose", "Debut Night", "Blush Bloom"], "draft"],
+  [
+    "Winter Cabin Christmas",
+    "Season",
+    "Wipe the frost off a cabin window to find a warm room, a fire, and a tree hung with everyone's notes.",
+    ["letters", "photobooth", "songs", "countdown"],
+    ["Fireside", "Snowy Pine", "Pine & Cranberry"],
+    "draft",
+  ],
+  [
+    "Care Package",
+    "Family",
+    "A parcel from far away. Peel the tape and the notes come out as things packed inside.",
+    ["letters", "photobooth", "voice", "songs"],
+    ["Kraft Mail", "Air Mail", "Kraft Paper"],
+    "draft",
+  ],
+  [
+    "Balikbayan Box",
+    "Family",
+    "A box from home, taped and marked, with pasalubong inside from everyone who misses them.",
+    ["letters", "photobooth", "voice", "songs"],
+    ["Homeward", "Kraft Mail", "Golden Hour"],
+    "draft",
+  ],
+  [
+    "Parol Christmas",
+    "Season",
+    "A capiz parol where every note lights part of the star. Turn on Simbang Gabi for one a night.",
+    ["letters", "photobooth", "songs", "voice"],
+    ["Parol Night", "Capiz", "Midnight Gold"],
+    "draft",
+  ],
+  [
+    "Debut",
+    "Birthday",
+    "A curtain, 18 candles and 18 roses. Each candle holds a wish for their eighteenth.",
+    ["letters", "photobooth", "songs", "voice", "superlatives"],
+    ["Debut Rose", "Debut Night", "Blush Bloom"],
+    "draft",
+  ],
 ];
 
 await sql.begin(async (tx) => {
@@ -118,7 +231,10 @@ await sql.begin(async (tx) => {
     await tx`update themes set name = ${to} where name = ${from}
              and not exists (select 1 from themes where name = ${to})`;
   }
-  for (const [i, [name, category, description, modules, paletteNames, status = "published"]] of themes.entries()) {
+  for (const [
+    i,
+    [name, category, description, modules, paletteNames, status = "published"],
+  ] of themes.entries()) {
     const suggested = paletteNames.map((n) => ids.get(n)!);
     const [existing] = await tx`select id from themes where name = ${name}`;
     if (existing) {

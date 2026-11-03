@@ -13,6 +13,11 @@ export const Route = createFileRoute("/contribute/$slug")({
     }),
   }),
   head: ({ loaderData }) => ({ meta: [NOINDEX, ...contributeShareTags(loaderData?.share)] }),
-  notFoundComponent: () => <PageNotFound message="This gift link doesn't lead anywhere. Double-check the link you were sent." showHeader={false} />,
+  notFoundComponent: () => (
+    <PageNotFound
+      message="This gift link doesn't lead anywhere. Double-check the link you were sent."
+      showHeader={false}
+    />
+  ),
   component: lazyRouteComponent(() => import("@/pages/ContributePage")),
 });

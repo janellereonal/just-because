@@ -58,7 +58,14 @@ if (apply && !local && !process.env["BLOB_READ_WRITE_TOKEN"]) {
 
 const sql = postgres(dbUrl, { max: 2, prepare: false });
 
-type Row = { table: "contributions" | "calendar_entries"; id: string; site_id: string; media_url: string; module: string; data: Record<string, unknown> | null };
+type Row = {
+  table: "contributions" | "calendar_entries";
+  id: string;
+  site_id: string;
+  media_url: string;
+  module: string;
+  data: Record<string, unknown> | null;
+};
 
 async function load(): Promise<Row[]> {
   const site = onlySite ? sql`and site_id = ${onlySite}` : sql``;
@@ -88,7 +95,10 @@ async function fetchBytes(url: string): Promise<{ bytes: Buffer; type: string } 
   if (!/^https:\/\//.test(url)) return null;
   const res = await fetch(url);
   if (!res.ok) return null;
-  return { bytes: Buffer.from(await res.arrayBuffer()), type: res.headers.get("content-type") ?? "" };
+  return {
+    bytes: Buffer.from(await res.arrayBuffer()),
+    type: res.headers.get("content-type") ?? "",
+  };
 }
 
 async function store(row: Row, bytes: Buffer, suffix: string): Promise<string> {
@@ -118,7 +128,15 @@ let before = 0;
 let after = 0;
 let changed = 0;
 let skipped = 0;
-const log: Array<{ table: string; id: string; old: string; new: string; thumb?: string; before: number; after: number }> = [];
+const log: Array<{
+  table: string;
+  id: string;
+  old: string;
+  new: string;
+  thumb?: string;
+  before: number;
+  after: number;
+}> = [];
 
 for (const row of rows) {
   const got = await fetchBytes(row.media_url).catch(() => null);
@@ -126,7 +144,9 @@ for (const row of rows) {
     skipped++;
     continue;
   }
-  const meta = await sharp(got.bytes).metadata().catch(() => null);
+  const meta = await sharp(got.bytes)
+    .metadata()
+    .catch(() => null);
   // Voice notes, videos, GIFs and anything sharp can't read stay as they are.
   if (!meta || !meta.width || !meta.height || meta.format === "gif" || (meta.pages ?? 1) > 1) {
     skipped++;
@@ -137,7 +157,11 @@ for (const row of rows) {
     skipped++;
     continue;
   }
-  const out = await sharp(got.bytes).rotate().resize({ width: MAX_SIDE, height: MAX_SIDE, fit: "inside", withoutEnlargement: true }).webp({ quality: QUALITY }).toBuffer();
+  const out = await sharp(got.bytes)
+    .rotate()
+    .resize({ width: MAX_SIDE, height: MAX_SIDE, fit: "inside", withoutEnlargement: true })
+    .webp({ quality: QUALITY })
+    .toBuffer();
   if (out.length >= got.bytes.length && !meta.exif) {
     skipped++;
     continue;
@@ -145,12 +169,23 @@ for (const row of rows) {
   const booth = row.table === "contributions" && row.module === "photobooth";
   const thumb =
     booth && !row.data?.["thumb"]
-      ? await sharp(got.bytes).rotate().resize({ width: THUMB_SIDE, height: THUMB_SIDE, fit: "inside", withoutEnlargement: true }).webp({ quality: THUMB_QUALITY }).toBuffer()
+      ? await sharp(got.bytes)
+          .rotate()
+          .resize({
+            width: THUMB_SIDE,
+            height: THUMB_SIDE,
+            fit: "inside",
+            withoutEnlargement: true,
+          })
+          .webp({ quality: THUMB_QUALITY })
+          .toBuffer()
       : null;
   before += got.bytes.length;
   after += out.length;
   changed++;
-  console.log(`${row.table === "contributions" ? "note" : "day "} ${row.id.slice(0, 8)}  ${meta.width}x${meta.height} ${meta.format}  ${mb(got.bytes.length)} -> ${mb(out.length)}${thumb ? `  (+ ${Math.round(thumb.length / 1024)} KB small copy)` : ""}`);
+  console.log(
+    `${row.table === "contributions" ? "note" : "day "} ${row.id.slice(0, 8)}  ${meta.width}x${meta.height} ${meta.format}  ${mb(got.bytes.length)} -> ${mb(out.length)}${thumb ? `  (+ ${Math.round(thumb.length / 1024)} KB small copy)` : ""}`,
+  );
   if (!apply) continue;
 
   const newUrl = await store(row, out, "");
@@ -161,14 +196,27 @@ for (const row of rows) {
   } else {
     await sql`update calendar_entries set media_url = ${newUrl} where id = ${row.id} and media_url = ${row.media_url}`;
   }
-  log.push({ table: row.table, id: row.id, old: row.media_url, new: newUrl, ...(thumbUrl ? { thumb: thumbUrl } : {}), before: got.bytes.length, after: out.length });
+  log.push({
+    table: row.table,
+    id: row.id,
+    old: row.media_url,
+    new: newUrl,
+    ...(thumbUrl ? { thumb: thumbUrl } : {}),
+    before: got.bytes.length,
+    after: out.length,
+  });
 }
 
-console.log(`\n${changed} photos ${apply ? "made smaller" : "would get smaller"}: ${mb(before)} -> ${mb(after)} (saves ${mb(before - after)}). ${skipped} skipped.`);
+console.log(
+  `\n${changed} photos ${apply ? "made smaller" : "would get smaller"}: ${mb(before)} -> ${mb(after)} (saves ${mb(before - after)}). ${skipped} skipped.`,
+);
 if (apply && log.length) {
   const dir = path.join(ROOT, "tools/op");
   await mkdir(dir, { recursive: true });
-  const file = path.join(dir, `compress-log-${new Date().toISOString().replace(/[:.]/g, "-")}.json`);
+  const file = path.join(
+    dir,
+    `compress-log-${new Date().toISOString().replace(/[:.]/g, "-")}.json`,
+  );
   await writeFile(file, JSON.stringify(log, null, 2));
   console.log(`Undo list: ${file}`);
 }

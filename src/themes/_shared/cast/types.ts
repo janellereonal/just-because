@@ -35,7 +35,14 @@ export type CharacterSetting =
    * A person from the builder. `preset` names the ready-made one it started
    * from; `image_url` is the still baked in the editor (see cast/person.ts).
    */
-  | { type: "person"; person: PersonConfig; preset?: string; image_url?: string; accessory?: boolean; name_tag?: string }
+  | {
+      type: "person";
+      person: PersonConfig;
+      preset?: string;
+      image_url?: string;
+      accessory?: boolean;
+      name_tag?: string;
+    }
   /** No character: the object tells the story on its own. */
   | { type: "none"; accessory?: boolean; name_tag?: string };
 
@@ -58,11 +65,14 @@ export function normalizeCharacter(value: unknown): CharacterSetting | null {
   if (!value || typeof value !== "object" || Array.isArray(value)) return null;
   const v = value as Record<string, unknown>;
   const name =
-    typeof v["name_tag"] === "string" && v["name_tag"].trim() ? v["name_tag"].trim().slice(0, 24) : undefined;
+    typeof v["name_tag"] === "string" && v["name_tag"].trim()
+      ? v["name_tag"].trim().slice(0, 24)
+      : undefined;
   const accessory = v["accessory"] === false ? false : true;
   if (v["type"] === "none") return { type: "none" };
   if (v["type"] === "person") {
-    const preset = typeof v["preset"] === "string" && presetById(v["preset"]) ? v["preset"] : undefined;
+    const preset =
+      typeof v["preset"] === "string" && presetById(v["preset"]) ? v["preset"] : undefined;
     return {
       type: "person",
       person: normalizePerson(v["person"] ?? (preset ? presetById(preset)!.person : undefined)),
@@ -73,7 +83,12 @@ export function normalizeCharacter(value: unknown): CharacterSetting | null {
     };
   }
   if (v["type"] === "upload" && isSafeMediaUrl(v["upload_url"])) {
-    return { type: "upload", upload_url: v["upload_url"], accessory, ...(name ? { name_tag: name } : {}) };
+    return {
+      type: "upload",
+      upload_url: v["upload_url"],
+      accessory,
+      ...(name ? { name_tag: name } : {}),
+    };
   }
   if (v["type"] === "library" && typeof v["id"] === "string" && /^[a-z0-9-]{1,24}$/.test(v["id"])) {
     const c = (v["colors"] ?? {}) as Record<string, unknown>;

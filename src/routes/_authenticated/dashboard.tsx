@@ -57,7 +57,17 @@ function status(site: GiftSite) {
   return { label: "Collecting notes", tone: "bg-pink text-ink" };
 }
 
-function GiftCard({ site, index, theme, counts }: { site: GiftSite; index: number; theme: Theme | null; counts: NoteCounts | null }) {
+function GiftCard({
+  site,
+  index,
+  theme,
+  counts,
+}: {
+  site: GiftSite;
+  index: number;
+  theme: Theme | null;
+  counts: NoteCounts | null;
+}) {
   const queryClient = useQueryClient();
   const { isGuest } = useAuth();
   const [askSignIn, setAskSignIn] = useState(false);
@@ -122,7 +132,12 @@ function GiftCard({ site, index, theme, counts }: { site: GiftSite; index: numbe
               <Link2 className="size-4" /> Invite link
             </button>
           ) : null}
-          <GuestSignInDialog open={askSignIn} onOpenChange={setAskSignIn} title={GUEST_COPY.shareTitle} body={GUEST_COPY.shareBody} />
+          <GuestSignInDialog
+            open={askSignIn}
+            onOpenChange={setAskSignIn}
+            title={GUEST_COPY.shareTitle}
+            body={GUEST_COPY.shareBody}
+          />
           {site.status === "published" ? (
             <a
               href={`/g/${site.slug}`}
@@ -147,7 +162,10 @@ function GiftCard({ site, index, theme, counts }: { site: GiftSite; index: numbe
                   This gift has a paid plan, so it stays. You can unpublish it from the editor.
                 </p>
               ) : (
-                <DropdownMenuItem className="text-[#B4322E] focus:text-[#B4322E]" onSelect={() => setConfirming(true)}>
+                <DropdownMenuItem
+                  className="text-[#B4322E] focus:text-[#B4322E]"
+                  onSelect={() => setConfirming(true)}
+                >
                   <Trash2 /> Delete gift
                 </DropdownMenuItem>
               )}
@@ -179,7 +197,11 @@ function GiftCard({ site, index, theme, counts }: { site: GiftSite; index: numbe
                     await queryClient.invalidateQueries({ queryKey: ["my-sites"] });
                   })
                   .catch((err: unknown) => {
-                    toast.error(err instanceof Error && err.message.length < 160 ? err.message : "Couldn't delete that gift.");
+                    toast.error(
+                      err instanceof Error && err.message.length < 160
+                        ? err.message
+                        : "Couldn't delete that gift.",
+                    );
                   })
                   .finally(() => setDeleting(false));
               }}
@@ -198,10 +220,17 @@ function Dashboard() {
     queryKey: ["my-sites"],
     queryFn: async () => {
       const data = await listMySites();
-      return data.map((row) => Object.assign(normalizeSite(row as Record<string, unknown>), { counts: (row.note_counts ?? null) as NoteCounts | null }));
+      return data.map((row) =>
+        Object.assign(normalizeSite(row as Record<string, unknown>), {
+          counts: (row.note_counts ?? null) as NoteCounts | null,
+        }),
+      );
     },
   });
-  const { data: themes = [] } = useQuery({ queryKey: ["themes", "published"], queryFn: () => fetchThemes(false) });
+  const { data: themes = [] } = useQuery({
+    queryKey: ["themes", "published"],
+    queryFn: () => fetchThemes(false),
+  });
   const empty = !isLoading && sites.length === 0;
 
   return (
@@ -268,7 +297,8 @@ function Dashboard() {
                   No gifts yet. Who's it for?
                 </h2>
                 <p className="mt-3 max-w-md text-ink/70">
-                  Pick a {isFlagOn("styles") ? "style" : "theme"}, share one link with friends, and watch the notes roll in.
+                  Pick a {isFlagOn("styles") ? "style" : "theme"}, share one link with friends, and
+                  watch the notes roll in.
                 </p>
                 <Link
                   to="/create"
@@ -280,7 +310,9 @@ function Dashboard() {
             </div>
             <ol className="grid gap-3">
               {[
-                isFlagOn("styles") ? [t("picker.occasion.title"), t("guide.style.dashboard")] : ["Pick a theme", "Birthday, send-off, wedding, or just because."],
+                isFlagOn("styles")
+                  ? [t("picker.occasion.title"), t("guide.style.dashboard")]
+                  : ["Pick a theme", "Birthday, send-off, wedding, or just because."],
                 ["Share the invite link", "No sign-up for them. Notes wait for you."],
                 ["Wrap it up", "Approve the notes, pick a plan, send one link."],
               ].map(([t, b], i) => (
@@ -299,7 +331,13 @@ function Dashboard() {
         ) : (
           <div className="mt-10 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
             {sites.map((site, i) => (
-              <GiftCard key={site.id} site={site} counts={site.counts} index={i} theme={themes.find((t) => t.id === site.theme_id) ?? null} />
+              <GiftCard
+                key={site.id}
+                site={site}
+                counts={site.counts}
+                index={i}
+                theme={themes.find((t) => t.id === site.theme_id) ?? null}
+              />
             ))}
             <Link
               to="/create"

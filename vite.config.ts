@@ -10,7 +10,11 @@ import { existsSync, readdirSync } from "node:fs";
 function modelFiles(dir = "public/models", base = "/models"): string[] {
   if (!existsSync(dir)) return [];
   return readdirSync(dir, { withFileTypes: true }).flatMap((d) =>
-    d.isDirectory() ? modelFiles(`${dir}/${d.name}`, `${base}/${d.name}`) : d.name.endsWith(".glb") ? [`${base}/${d.name}`] : [],
+    d.isDirectory()
+      ? modelFiles(`${dir}/${d.name}`, `${base}/${d.name}`)
+      : d.name.endsWith(".glb")
+        ? [`${base}/${d.name}`]
+        : [],
   );
 }
 

@@ -1,5 +1,11 @@
 import { t } from "@/i18n";
-import { childOccasions, occasionInfo, occasionName, topOccasions, type OccasionId } from "@/lib/occasions";
+import {
+  childOccasions,
+  occasionInfo,
+  occasionName,
+  topOccasions,
+  type OccasionId,
+} from "@/lib/occasions";
 
 /**
  * Quick chips for what the gift is for. Optional: tap the picked chip again to clear it.
@@ -18,7 +24,9 @@ export function OccasionChips({
   open?: OccasionId | null;
   onOpen?: (parent: OccasionId | null) => void;
 }) {
-  const parentOfValue = value ? (occasionInfo(value).parent ?? (childOccasions(value).length ? value : null)) : null;
+  const parentOfValue = value
+    ? (occasionInfo(value).parent ?? (childOccasions(value).length ? value : null))
+    : null;
   const open = openProp !== undefined ? openProp : parentOfValue;
   const chip = (id: OccasionId, sub = false) => {
     const info = occasionInfo(id);
@@ -44,22 +52,40 @@ export function OccasionChips({
           else if (!info.parent) onOpen?.(null);
         }}
         className={`squish shrink-0 rounded-full px-3.5 py-2 text-sm font-medium transition-colors ${
-          on ? "bg-ink text-cream" : expanded ? "bg-pink/70 text-ink shadow-[0_0_0_1px_var(--accent)]" : sub ? "bg-white/80 text-ink shadow-[0_0_0_1px_var(--line)] hover:bg-white" : "bg-paper text-ink shadow-[0_0_0_1px_var(--line)] hover:bg-white"
+          on
+            ? "bg-ink text-cream"
+            : expanded
+              ? "bg-pink/70 text-ink shadow-[0_0_0_1px_var(--accent)]"
+              : sub
+                ? "bg-white/80 text-ink shadow-[0_0_0_1px_var(--line)] hover:bg-white"
+                : "bg-paper text-ink shadow-[0_0_0_1px_var(--line)] hover:bg-white"
         }`}
       >
         {occasionName(id)}
-        {childOccasions(id).length ? <span aria-hidden className="ml-1 opacity-60">{open === id ? "▴" : "▾"}</span> : null}
+        {childOccasions(id).length ? (
+          <span aria-hidden className="ml-1 opacity-60">
+            {open === id ? "▴" : "▾"}
+          </span>
+        ) : null}
       </button>
     );
   };
   const kids = open ? childOccasions(open) : [];
   return (
     <div>
-      <div className="flex flex-wrap gap-2" role="radiogroup" aria-label={t("picker.occasion.label")}>
+      <div
+        className="flex flex-wrap gap-2"
+        role="radiogroup"
+        aria-label={t("picker.occasion.label")}
+      >
         {topOccasions().map((o) => chip(o.id))}
       </div>
       {kids.length ? (
-        <div className="mt-2.5 flex flex-wrap gap-2 rounded-2xl bg-pink/30 p-2.5" role="radiogroup" aria-label={occasionName(open!)}>
+        <div
+          className="mt-2.5 flex flex-wrap gap-2 rounded-2xl bg-pink/30 p-2.5"
+          role="radiogroup"
+          aria-label={occasionName(open!)}
+        >
           {kids.map((o) => chip(o.id, true))}
         </div>
       ) : null}

@@ -1,17 +1,35 @@
 import { describe, expect, test } from "bun:test";
-import { MAX_FRIENDS, STORY_ANIMALS, shortName, storyAccessory, storyCast, storySeats } from "./cast";
+import {
+  MAX_FRIENDS,
+  STORY_ANIMALS,
+  shortName,
+  storyAccessory,
+  storyCast,
+  storySeats,
+} from "./cast";
 
 describe("storyCast", () => {
   test("one character per friend, never the same animal twice", () => {
-    const { friends, total, extra } = storyCast(["Jo", "Ben", "Aiko", "Sam", "Lola", "Rafa", "Dee"]);
+    const { friends, total, extra } = storyCast([
+      "Jo",
+      "Ben",
+      "Aiko",
+      "Sam",
+      "Lola",
+      "Rafa",
+      "Dee",
+    ]);
     expect(friends).toHaveLength(7);
     expect(new Set(friends.map((f) => f.animal)).size).toBe(7);
     expect(total).toBe(7);
     expect(extra).toBe(0);
-    for (const f of friends) expect(STORY_ANIMALS).toContain(f.animal as (typeof STORY_ANIMALS)[number]);
+    for (const f of friends)
+      expect(STORY_ANIMALS).toContain(f.animal as (typeof STORY_ANIMALS)[number]);
   });
   test("the same friend is the same animal every time", () => {
-    expect(storyCast(["Jo", "Ben"]).friends.map((f) => f.animal)).toEqual(storyCast(["Jo", "Ben"]).friends.map((f) => f.animal));
+    expect(storyCast(["Jo", "Ben"]).friends.map((f) => f.animal)).toEqual(
+      storyCast(["Jo", "Ben"]).friends.map((f) => f.animal),
+    );
   });
   test("names are de-duplicated and counted, extras are not drawn", () => {
     const names = ["Jo", "jo ", "Ben", ...Array.from({ length: 12 }, (_, i) => `Friend ${i}`)];

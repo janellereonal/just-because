@@ -147,10 +147,14 @@ export function FormatPicker({
                 {f.isNew ? <span className="fmt-new">New</span> : null}
                 {!allowed ? (
                   <span className="fmt-lock">
-                    <Lock className="size-3" /> {formatPlanTag(f.id) ? `${formatPlanTag(f.id)} plan` : "Bigger plan"}
+                    <Lock className="size-3" />{" "}
+                    {formatPlanTag(f.id) ? `${formatPlanTag(f.id)} plan` : "Bigger plan"}
                   </span>
                 ) : formatPlanTag(f.id) ? (
-                  <span className="fmt-plan" title={`Needs the ${formatPlanTag(f.id)} plan or higher`}>
+                  <span
+                    className="fmt-plan"
+                    title={`Needs the ${formatPlanTag(f.id)} plan or higher`}
+                  >
                     {formatPlanTag(f.id)} plan
                   </span>
                 ) : null}

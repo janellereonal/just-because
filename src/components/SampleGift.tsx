@@ -18,7 +18,22 @@ import type { StyleId } from "@/lib/styles";
 import { buildPreviewSite, sampleFor } from "@/components/ThemeLivePreview";
 
 /** The sections worth showing off, in the order they read best. */
-const SHOWCASE: ModuleType[] = ["letters", "photobooth", "songs", "voice", "superlatives", "wordcloud", "quiz", "map", "openwhen", "capsule", "coupons", "video", "doodle", "countdown"];
+const SHOWCASE: ModuleType[] = [
+  "letters",
+  "photobooth",
+  "songs",
+  "voice",
+  "superlatives",
+  "wordcloud",
+  "quiz",
+  "map",
+  "openwhen",
+  "capsule",
+  "coupons",
+  "video",
+  "doodle",
+  "countdown",
+];
 
 export function showcaseSections(theme: Theme): ModuleType[] {
   const kind = themeKindOf(theme);
@@ -43,11 +58,22 @@ export function SampleGift({
   showCover?: boolean;
 }) {
   const site = useMemo(
-    () => ({ ...buildPreviewSite(theme, palette), ...(format ? { format } : {}), ...(styleId ? { style: styleId } : {}) }),
+    () => ({
+      ...buildPreviewSite(theme, palette),
+      ...(format ? { format } : {}),
+      ...(styleId ? { style: styleId } : {}),
+    }),
     [theme, palette, format, styleId],
   );
   const modules: SiteModule[] = useMemo(
-    () => showcaseSections(theme).map((type, i) => ({ id: `show-${i}-${type}`, site_id: site.id, module_type: type, price: 0, enabled: true })),
+    () =>
+      showcaseSections(theme).map((type, i) => ({
+        id: `show-${i}-${type}`,
+        site_id: site.id,
+        module_type: type,
+        price: 0,
+        enabled: true,
+      })),
     [theme, site.id],
   );
   const kind = themeKindOf(theme);
@@ -58,5 +84,16 @@ export function SampleGift({
     const have = new Set(demo.notes.map((n) => n.module_type));
     return [...demo.notes, ...base.filter((n) => !have.has(n.module_type))];
   }, [theme, site.id, demo]);
-  return <FormatView site={site} theme={theme} palette={palette} modules={modules} contributions={notes} calendarEntries={demo?.calendar} sample showCover={showCover} />;
+  return (
+    <FormatView
+      site={site}
+      theme={theme}
+      palette={palette}
+      modules={modules}
+      contributions={notes}
+      calendarEntries={demo?.calendar}
+      sample
+      showCover={showCover}
+    />
+  );
 }

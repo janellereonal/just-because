@@ -1,7 +1,13 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { NOINDEX } from "@/lib/seo";
 import { Character } from "@/themes/_shared/cast/Character";
-import { DEFAULT_PERSON, HAIRS, PEOPLE, SKIN_TONES, type PersonConfig } from "@/themes/_shared/cast/person";
+import {
+  DEFAULT_PERSON,
+  HAIRS,
+  PEOPLE,
+  SKIN_TONES,
+  type PersonConfig,
+} from "@/themes/_shared/cast/person";
 
 /**
  * Dev only.
@@ -17,7 +23,10 @@ export const Route = createFileRoute("/dev/people")({
     age: typeof s["age"] === "string" ? s["age"] : undefined,
     hairColor: typeof s["hairColor"] === "string" ? s["hairColor"] : undefined,
     only: typeof s["only"] === "string" ? s["only"] : undefined,
-    size: typeof s["size"] === "string" || typeof s["size"] === "number" ? Number(s["size"]) : undefined,
+    size:
+      typeof s["size"] === "string" || typeof s["size"] === "number"
+        ? Number(s["size"])
+        : undefined,
     skins: typeof s["skins"] === "string" ? s["skins"] : undefined,
   }),
   component: DevPeople,
@@ -27,7 +36,12 @@ function DevPeople() {
   const { grid, age, hairColor, only, size: sizeParam, skins: skinsParam } = Route.useSearch();
   const size = sizeParam && sizeParam > 40 ? sizeParam : 88;
   const hairs = only ? HAIRS.filter((h) => only.split(",").includes(h.id)) : HAIRS;
-  const skins = skinsParam ? skinsParam.split(",").map(Number).filter((n) => n >= 0 && n < SKIN_TONES.length) : SKIN_TONES.map((_, i) => i);
+  const skins = skinsParam
+    ? skinsParam
+        .split(",")
+        .map(Number)
+        .filter((n) => n >= 0 && n < SKIN_TONES.length)
+    : SKIN_TONES.map((_, i) => i);
   if (!import.meta.env.DEV) return null;
   if (grid === "hair") {
     const base: PersonConfig = {
@@ -40,7 +54,10 @@ function DevPeople() {
     };
     return (
       <div className="min-h-screen bg-[#F4EEE3] p-4">
-        <div className="grid gap-1" style={{ gridTemplateColumns: `90px repeat(${skins.length}, ${size + 4}px)` }}>
+        <div
+          className="grid gap-1"
+          style={{ gridTemplateColumns: `90px repeat(${skins.length}, ${size + 4}px)` }}
+        >
           <span />
           {skins.map((i) => (
             <span key={i} className="flex items-center justify-center gap-1 font-mono text-[10px]">
@@ -52,7 +69,13 @@ function DevPeople() {
             <Row key={h.id} label={h.label}>
               {skins.map((skin) => (
                 <div key={skin} data-cell className="grid place-items-center rounded-xl bg-white">
-                  <Character setting={{ type: "person", person: { ...base, hair: h.id, skin } }} size={size} live={false} follow={false} showName={false} />
+                  <Character
+                    setting={{ type: "person", person: { ...base, hair: h.id, skin } }}
+                    size={size}
+                    live={false}
+                    follow={false}
+                    showName={false}
+                  />
                 </div>
               ))}
             </Row>
@@ -65,7 +88,13 @@ function DevPeople() {
     <div className="grid min-h-screen grid-cols-5 gap-4 bg-[#F4EEE3] p-6">
       {PEOPLE.map((p) => (
         <div key={p.id} className="grid place-items-center rounded-3xl bg-white p-3">
-          <Character setting={{ type: "person", person: p.person, preset: p.id }} size={200} live={false} follow={false} showName={false} />
+          <Character
+            setting={{ type: "person", person: p.person, preset: p.id }}
+            size={200}
+            live={false}
+            follow={false}
+            showName={false}
+          />
           <p className="mt-1 text-sm">{p.name}</p>
         </div>
       ))}

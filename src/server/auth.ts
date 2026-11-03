@@ -6,7 +6,13 @@ import { anonymous } from "better-auth/plugins";
 import { APIError, createAuthMiddleware, isAPIError } from "better-auth/api";
 import { and, eq } from "drizzle-orm";
 import { getDb, schema } from "./db";
-import { emailEnabled, existingAccountEmail, resetPasswordEmail, siteUrl, verifyEmail } from "./email";
+import {
+  emailEnabled,
+  existingAccountEmail,
+  resetPasswordEmail,
+  siteUrl,
+  verifyEmail,
+} from "./email";
 import { claimGuestGifts, GUEST_EMAIL_DOMAIN } from "./guests";
 import { isFlagOn } from "@/config/flags";
 import { clearWrongPasswords, recordWrongPassword, requestIp, signInBlocked } from "./signInLimit";
@@ -124,7 +130,12 @@ function createAuth() {
             if (!owner || owner.verified) return;
             await db
               .delete(schema.account)
-              .where(and(eq(schema.account.userId, account.userId), eq(schema.account.providerId, "credential")));
+              .where(
+                and(
+                  eq(schema.account.userId, account.userId),
+                  eq(schema.account.providerId, "credential"),
+                ),
+              );
             await db.delete(schema.session).where(eq(schema.session.userId, account.userId));
           },
         },
@@ -141,13 +152,17 @@ function createAuth() {
     },
     plugins: [
       // Guests (flag guestStart): a real session before an account. Their gifts move over on sign-in.
-      ...(isFlagOn("guestStart") ? [anonymous({
-        emailDomainName: GUEST_EMAIL_DOMAIN,
-        generateName: () => "Guest",
-        onLinkAccount: async ({ anonymousUser, newUser }) => {
-          await claimGuestGifts(anonymousUser.user.id, newUser.user.id);
-        },
-      })] : []),
+      ...(isFlagOn("guestStart")
+        ? [
+            anonymous({
+              emailDomainName: GUEST_EMAIL_DOMAIN,
+              generateName: () => "Guest",
+              onLinkAccount: async ({ anonymousUser, newUser }) => {
+                await claimGuestGifts(anonymousUser.user.id, newUser.user.id);
+              },
+            }),
+          ]
+        : []),
       tanstackStartCookies(),
     ],
   });

@@ -66,12 +66,14 @@ describe("CoverageGrid", () => {
 describe("AngleTracker", () => {
   test("a full circle completes a 360 target", () => {
     const t = new AngleTracker(360);
-    for (let a = 0; a <= 360; a += 10) t.feed(Math.cos((a * Math.PI) / 180) * 50, Math.sin((a * Math.PI) / 180) * 50);
+    for (let a = 0; a <= 360; a += 10)
+      t.feed(Math.cos((a * Math.PI) / 180) * 50, Math.sin((a * Math.PI) / 180) * 50);
     expect(t.progress).toBeCloseTo(1, 1);
   });
   test("one-way ignores turning back", () => {
     const t = new AngleTracker(360, 1);
-    for (let a = 90; a >= 0; a -= 10) t.feed(Math.cos((a * Math.PI) / 180) * 50, Math.sin((a * Math.PI) / 180) * 50);
+    for (let a = 90; a >= 0; a -= 10)
+      t.feed(Math.cos((a * Math.PI) / 180) * 50, Math.sin((a * Math.PI) / 180) * 50);
     expect(t.progress).toBe(0);
   });
   test("ignores readings at the centre", () => {

@@ -222,7 +222,8 @@ export function chime(kind: ChimeKind = "pop") {
   }
 }
 
-type Texture = "crack" | "crunch" | "rip" | "thunk" | "needle" | "fizz" | "purr" | "breath" | "paper";
+type Texture =
+  "crack" | "crunch" | "rip" | "thunk" | "needle" | "fizz" | "purr" | "breath" | "paper";
 
 /** The shared audio context, or null while sound is off. For the theme engine's sound packs. */
 export function soundContext() {
@@ -233,7 +234,8 @@ function ctxNow() {
   if (typeof window === "undefined" || !soundOn()) return null;
   try {
     const Ctor =
-      window.AudioContext ?? (window as unknown as { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
+      window.AudioContext ??
+      (window as unknown as { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
     if (!Ctor) return null;
     audio ??= new Ctor();
     void audio.resume();
@@ -251,7 +253,12 @@ const CANDLE_NOTES = [784, 880, 1047, 1175, 1319, 1568, 1760, 2093, 2349, 2637];
  * music-box tink on top. No noise at all (noise is what made the old one sound like a shot).
  * `index` picks the note, so blowing out a row of candles plays a rising tune.
  */
-export function playCandle(ctx: BaseAudioContext, at: number, index = 0, dest: AudioNode = ctx.destination) {
+export function playCandle(
+  ctx: BaseAudioContext,
+  at: number,
+  index = 0,
+  dest: AudioNode = ctx.destination,
+) {
   const f = CANDLE_NOTES[index % CANDLE_NOTES.length]!;
   // The drop: starts lower and slides up quickly, like a bubble popping.
   const drop = ctx.createOscillator();
@@ -294,7 +301,17 @@ export function foley(kind: Texture) {
   const ctx = ctxNow();
   if (!ctx) return;
   try {
-    const spec: Record<Texture, { dur: number; type: BiquadFilterType; freq: number; q: number; gain: number; grains?: number }> = {
+    const spec: Record<
+      Texture,
+      {
+        dur: number;
+        type: BiquadFilterType;
+        freq: number;
+        q: number;
+        gain: number;
+        grains?: number;
+      }
+    > = {
       crack: { dur: 0.16, type: "bandpass", freq: 2400, q: 0.9, gain: 0.5, grains: 3 },
       crunch: { dur: 0.32, type: "bandpass", freq: 1500, q: 0.7, gain: 0.35, grains: 6 },
       rip: { dur: 0.55, type: "highpass", freq: 1800, q: 0.6, gain: 0.25, grains: 14 },
@@ -370,7 +387,8 @@ export function buzz(pattern: number | number[] = 12) {
   try {
     if (typeof navigator === "undefined" || !("vibrate" in navigator)) return;
     // Browsers refuse (and log an error) until the person has tapped the page.
-    const ua = (navigator as Navigator & { userActivation?: { hasBeenActive: boolean } }).userActivation;
+    const ua = (navigator as Navigator & { userActivation?: { hasBeenActive: boolean } })
+      .userActivation;
     if (ua && !ua.hasBeenActive) return;
     navigator.vibrate(pattern);
   } catch {

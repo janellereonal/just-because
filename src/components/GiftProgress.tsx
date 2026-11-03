@@ -44,9 +44,15 @@ export function GiftProgress({
       const found: Mark[] = [];
       root.querySelectorAll<HTMLElement>("section[data-section]").forEach((el) => {
         const label = el.querySelector("h2")?.textContent?.trim();
-        if (label && el.offsetHeight > 0) found.push({ id: el.dataset["section"] ?? label, label, el });
+        if (label && el.offsetHeight > 0)
+          found.push({ id: el.dataset["section"] ?? label, label, el });
       });
-      setMarks((prev) => (prev.length === found.length && prev.every((m, i) => m.el === found[i]?.el && m.label === found[i]?.label) ? prev : found));
+      setMarks((prev) =>
+        prev.length === found.length &&
+        prev.every((m, i) => m.el === found[i]?.el && m.label === found[i]?.label)
+          ? prev
+          : found,
+      );
       let current: string | null = null;
       for (const m of found) if (m.el.getBoundingClientRect().top <= vh * 0.4) current = m.id;
       setActive(current);
@@ -80,7 +86,11 @@ export function GiftProgress({
       >
         <div
           className="h-full origin-left rounded-r-full"
-          style={{ background: accent, transform: `scaleX(${p})`, transition: reduce ? undefined : "transform 120ms linear" }}
+          style={{
+            background: accent,
+            transform: `scaleX(${p})`,
+            transition: reduce ? undefined : "transform 120ms linear",
+          }}
         />
       </div>
 
@@ -96,7 +106,9 @@ export function GiftProgress({
               <button
                 key={m.id}
                 type="button"
-                onClick={() => m.el.scrollIntoView({ behavior: reduce ? "auto" : "smooth", block: "start" })}
+                onClick={() =>
+                  m.el.scrollIntoView({ behavior: reduce ? "auto" : "smooth", block: "start" })
+                }
                 aria-label={m.label}
                 aria-current={isActive ? "true" : undefined}
                 className="group flex items-center gap-2 outline-none"

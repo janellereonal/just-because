@@ -20,7 +20,8 @@ let loading: Promise<PostHog | null> | null = null;
 const queue: ((ph: PostHog) => void)[] = [];
 
 /** Photos, videos and drawings people uploaded never appear in recordings. */
-const BLOCKED_MEDIA = 'img[src*="blob.vercel-storage.com"], img[src^="blob:"], img[src*="dev-uploads"], video, audio, canvas[data-private], [data-private]';
+const BLOCKED_MEDIA =
+  'img[src*="blob.vercel-storage.com"], img[src^="blob:"], img[src*="dev-uploads"], video, audio, canvas[data-private], [data-private]';
 
 function run(fn: (ph: PostHog) => void) {
   if (client) fn(client);

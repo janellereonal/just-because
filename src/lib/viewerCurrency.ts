@@ -9,7 +9,28 @@
 import { useEffect, useState } from "react";
 import { perUsdDisplayRates } from "@/config/pricing";
 
-const EURO = new Set(["AT", "BE", "CY", "DE", "EE", "ES", "FI", "FR", "GR", "HR", "IE", "IT", "LT", "LU", "LV", "MT", "NL", "PT", "SI", "SK"]);
+const EURO = new Set([
+  "AT",
+  "BE",
+  "CY",
+  "DE",
+  "EE",
+  "ES",
+  "FI",
+  "FR",
+  "GR",
+  "HR",
+  "IE",
+  "IT",
+  "LT",
+  "LU",
+  "LV",
+  "MT",
+  "NL",
+  "PT",
+  "SI",
+  "SK",
+]);
 
 const REGION_CURRENCY: Record<string, string> = {
   US: "USD",
@@ -40,7 +61,10 @@ export function currencyForRegion(region: string | null | undefined): string {
 }
 
 /** Pure, for tests: the time zone and browser languages decide. */
-export function detectViewerMoney(timeZone: string | undefined, languages: readonly string[]): ViewerMoney {
+export function detectViewerMoney(
+  timeZone: string | undefined,
+  languages: readonly string[],
+): ViewerMoney {
   if (timeZone === "Asia/Manila") return { local: true, currency: "PHP" };
   for (const lang of languages) {
     try {

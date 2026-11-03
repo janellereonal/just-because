@@ -7,7 +7,11 @@
  */
 export type NoteCounts = { inGift: number; waiting: number; hidden: number };
 
-type Countable = { status: string; by_owner?: boolean | undefined; author_name?: string | null | undefined };
+type Countable = {
+  status: string;
+  by_owner?: boolean | undefined;
+  author_name?: string | null | undefined;
+};
 
 export function countNotes(rows: readonly Countable[]): NoteCounts {
   const out: NoteCounts = { inGift: 0, waiting: 0, hidden: 0 };
@@ -37,5 +41,10 @@ export function noteSummary(c: NoteCounts): string {
 
 /** How many different friends have added something. The organiser isn't a friend here. */
 export function friendsIn(rows: readonly Countable[]): number {
-  return new Set(rows.filter((r) => !r.by_owner).map((r) => (r.author_name ?? "").trim().toLowerCase()).filter(Boolean)).size;
+  return new Set(
+    rows
+      .filter((r) => !r.by_owner)
+      .map((r) => (r.author_name ?? "").trim().toLowerCase())
+      .filter(Boolean),
+  ).size;
 }

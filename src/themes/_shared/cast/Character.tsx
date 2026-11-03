@@ -1,7 +1,19 @@
 import { forwardRef, useEffect, useId, useImperativeHandle, useRef, useState } from "react";
-import { animate, motion, useMotionValue, useSpring, useTransform, type MotionValue } from "motion/react";
+import {
+  animate,
+  motion,
+  useMotionValue,
+  useSpring,
+  useTransform,
+  type MotionValue,
+} from "motion/react";
 import { reducedMotion } from "@/lib/play";
-import { ACCESSORIES, CLAY_IMAGE, characterById, type CharacterSpec } from "@/themes/_shared/cast/library";
+import {
+  ACCESSORIES,
+  CLAY_IMAGE,
+  characterById,
+  type CharacterSpec,
+} from "@/themes/_shared/cast/library";
 import type { AccessoryId, CharacterHandle, CharacterSetting } from "@/themes/_shared/cast/types";
 import { personFace, personKey, presetById, type PersonConfig } from "@/themes/_shared/cast/person";
 
@@ -54,7 +66,8 @@ function useBody(follow: boolean, rootRef: React.RefObject<HTMLDivElement | null
     await new Promise((r) => setTimeout(r, 90));
     void animate(sx, 0.9, { type: "spring", stiffness: 500, damping: 18 });
     void animate(sy, 1.14, { type: "spring", stiffness: 500, damping: 18 });
-    if (spins) void animate(rot, rot.get() + 360 * spins, { type: "spring", stiffness: 120, damping: 14 });
+    if (spins)
+      void animate(rot, rot.get() + 360 * spins, { type: "spring", stiffness: 120, damping: 14 });
     await animate(y, -height, { type: "spring", stiffness: 380, damping: 17 });
     void animate(sx, 1, { type: "spring", stiffness: 300, damping: 12 });
     void animate(sy, 1, { type: "spring", stiffness: 300, damping: 12 });
@@ -111,10 +124,13 @@ function useBlink(sleepy: boolean) {
       t = window.setTimeout(
         () => {
           setClosed(true);
-          window.setTimeout(() => {
-            setClosed(false);
-            loop();
-          }, sleepy ? 420 : 130);
+          window.setTimeout(
+            () => {
+              setClosed(false);
+              loop();
+            },
+            sleepy ? 420 : 130,
+          );
         },
         (sleepy ? 1600 : 2400) + Math.random() * 2600,
       );
@@ -152,7 +168,20 @@ export type CharacterProps = {
  * become die-cut stickers with the same motion.
  */
 export const Character = forwardRef<CharacterHandle, CharacterProps>(function Character(
-  { setting, accessory = null, size = 140, follow = true, live = true, blush = false, sleepy = false, showName = true, className = "", style, onTap, label },
+  {
+    setting,
+    accessory = null,
+    size = 140,
+    follow = true,
+    live = true,
+    blush = false,
+    sleepy = false,
+    showName = true,
+    className = "",
+    style,
+    onTap,
+    label,
+  },
   ref,
 ) {
   const rootRef = useRef<HTMLDivElement | null>(null);
@@ -167,7 +196,11 @@ export const Character = forwardRef<CharacterHandle, CharacterProps>(function Ch
   const breathe = useMotionValue(1);
   useEffect(() => {
     if (!live || reducedMotion()) return;
-    const a = animate(breathe, [1, 1.025, 1], { duration: 3.2, repeat: Infinity, ease: "easeInOut" });
+    const a = animate(breathe, [1, 1.025, 1], {
+      duration: 3.2,
+      repeat: Infinity,
+      ease: "easeInOut",
+    });
     return () => a.stop();
   }, [live, breathe]);
   const syAll = useTransform([body.sy, breathe], ([a, b]) => (a as number) * (b as number));
@@ -184,7 +217,11 @@ export const Character = forwardRef<CharacterHandle, CharacterProps>(function Ch
         spec={personSpec(setting.person)}
         image={personSrc}
         colors={undefined}
-        accessory={personFace(setting.person).ownHat && wearing && ACCESSORIES[wearing].slot === "head" ? null : wearing}
+        accessory={
+          personFace(setting.person).ownHat && wearing && ACCESSORIES[wearing].slot === "head"
+            ? null
+            : wearing
+        }
         lx={body.lx}
         ly={body.ly}
         closed={closed || body.mood === "sad"}
@@ -210,7 +247,8 @@ export const Character = forwardRef<CharacterHandle, CharacterProps>(function Ch
       />
     );
 
-  if (setting.type === "none") return <div ref={rootRef} aria-hidden="true" style={{ width: 0, height: 0 }} />;
+  if (setting.type === "none")
+    return <div ref={rootRef} aria-hidden="true" style={{ width: 0, height: 0 }} />;
 
   return (
     <div
@@ -291,7 +329,11 @@ function Drawn({
     skin: colors?.skin ?? spec.colors.skin,
   };
   // The clay still is rendered in the character's own colors; recolored ones stay drawn.
-  const own = !spec.body || (["primary", "secondary", "skin"] as const).every((k) => c[k].toLowerCase() === spec.colors[k].toLowerCase());
+  const own =
+    !spec.body ||
+    (["primary", "secondary", "skin"] as const).every(
+      (k) => c[k].toLowerCase() === spec.colors[k].toLowerCase(),
+    );
   const clay = own ? spec.clay : undefined;
   const f = clay ?? spec;
   const px = useTransform(lx, (v) => v * f.eyes.size * 0.55);
@@ -321,7 +363,16 @@ function Drawn({
         <g transform={`translate(${anchor.x} ${anchor.y}) scale(${s})`}>{acc.draw()}</g>
       ) : null}
       {image !== undefined ? (
-        image ? <image href={image} x={CLAY_IMAGE.x} y={CLAY_IMAGE.y} width={CLAY_IMAGE.size} height={CLAY_IMAGE.size} preserveAspectRatio="xMidYMid meet" /> : null
+        image ? (
+          <image
+            href={image}
+            x={CLAY_IMAGE.x}
+            y={CLAY_IMAGE.y}
+            width={CLAY_IMAGE.size}
+            height={CLAY_IMAGE.size}
+            preserveAspectRatio="xMidYMid meet"
+          />
+        ) : null
       ) : clay ? (
         <image
           href={`/clay/${spec.id}${size > 132 ? "" : "@256"}.webp`}
@@ -350,31 +401,52 @@ function Drawn({
             ))}
           </>
         ) : null}
-        {(clay?.hideEyes || (image !== undefined && !image) ? [] : [f.eyes.l, f.eyes.r]).map(([ex, ey], i) =>
-          happy || (i === 1 && mood === "idle" && expr === "wink") ? (
-            <path key={i} d={`M${ex - 4.5} ${ey + 1}q4.5-6 9 0`} stroke={ink} strokeWidth="2.4" fill="none" strokeLinecap="round" />
-          ) : calm ? (
-            <path key={i} d={`M${ex - 4.5} ${ey - 1}q4.5 5 9 0`} stroke={ink} strokeWidth="2.2" fill="none" strokeLinecap="round" />
-          ) : (
-            <g key={i}>
-              <motion.ellipse
-                cx={ex}
-                cy={ey}
-                rx={f.eyes.size * (wow ? 1.15 : 1)}
-                ry={f.eyes.size * (wow ? 1.3 : 1.12)}
-                fill={ink}
-                // Squash around the eye's own centre. (Motion measures SVG origins from the
-                // shape's own box, so an origin in viewBox px put the pivot far below the
-                // face, and every blink slid the eyes down to the floor.)
-                style={{ x: px, y: py, originX: 0.5, originY: 0.5, transformBox: "fill-box" }}
-                animate={{ scaleY: closed ? 0.08 : lid }}
-                transition={{ type: "spring", stiffness: 700, damping: 30 }}
+        {(clay?.hideEyes || (image !== undefined && !image) ? [] : [f.eyes.l, f.eyes.r]).map(
+          ([ex, ey], i) =>
+            happy || (i === 1 && mood === "idle" && expr === "wink") ? (
+              <path
+                key={i}
+                d={`M${ex - 4.5} ${ey + 1}q4.5-6 9 0`}
+                stroke={ink}
+                strokeWidth="2.4"
+                fill="none"
+                strokeLinecap="round"
               />
-              {!closed ? (
-                <motion.circle cx={ex + f.eyes.size * 0.38} cy={ey - f.eyes.size * 0.5} r={f.eyes.size * 0.32} fill="#fff" style={{ x: px, y: py }} />
-              ) : null}
-            </g>
-          ),
+            ) : calm ? (
+              <path
+                key={i}
+                d={`M${ex - 4.5} ${ey - 1}q4.5 5 9 0`}
+                stroke={ink}
+                strokeWidth="2.2"
+                fill="none"
+                strokeLinecap="round"
+              />
+            ) : (
+              <g key={i}>
+                <motion.ellipse
+                  cx={ex}
+                  cy={ey}
+                  rx={f.eyes.size * (wow ? 1.15 : 1)}
+                  ry={f.eyes.size * (wow ? 1.3 : 1.12)}
+                  fill={ink}
+                  // Squash around the eye's own centre. (Motion measures SVG origins from the
+                  // shape's own box, so an origin in viewBox px put the pivot far below the
+                  // face, and every blink slid the eyes down to the floor.)
+                  style={{ x: px, y: py, originX: 0.5, originY: 0.5, transformBox: "fill-box" }}
+                  animate={{ scaleY: closed ? 0.08 : lid }}
+                  transition={{ type: "spring", stiffness: 700, damping: 30 }}
+                />
+                {!closed ? (
+                  <motion.circle
+                    cx={ex + f.eyes.size * 0.38}
+                    cy={ey - f.eyes.size * 0.5}
+                    r={f.eyes.size * 0.32}
+                    fill="#fff"
+                    style={{ x: px, y: py }}
+                  />
+                ) : null}
+              </g>
+            ),
         )}
         {f.mouth && !(image !== undefined && !image) ? (
           <path
@@ -384,12 +456,12 @@ function Drawn({
                 : grin && !happy
                   ? `M${f.mouth[0] - 6} ${f.mouth[1] - 2}q6 9 12 0z`
                   : mood === "sad"
-                ? `M${f.mouth[0] - 5} ${f.mouth[1] + 2}q5-5 10 0`
-                : mood === "anticipate"
-                  ? `M${f.mouth[0] - 3} ${f.mouth[1]}a3 3 0 1 0 6 0a3 3 0 1 0-6 0`
-                  : happy
-                    ? `M${f.mouth[0] - 7} ${f.mouth[1] - 2}q7 10 14 0z`
-                    : `M${f.mouth[0] - 5} ${f.mouth[1] - 1}q5 5 10 0`
+                    ? `M${f.mouth[0] - 5} ${f.mouth[1] + 2}q5-5 10 0`
+                    : mood === "anticipate"
+                      ? `M${f.mouth[0] - 3} ${f.mouth[1]}a3 3 0 1 0 6 0a3 3 0 1 0-6 0`
+                      : happy
+                        ? `M${f.mouth[0] - 7} ${f.mouth[1] - 2}q7 10 14 0z`
+                        : `M${f.mouth[0] - 5} ${f.mouth[1] - 1}q5 5 10 0`
             }
             stroke={ink}
             strokeWidth="2.4"
@@ -422,7 +494,11 @@ function Sticker({ url, accessory }: { url: string; accessory: AccessoryId | nul
         }}
       />
       {acc ? (
-        <svg viewBox="0 0 120 120" className="pointer-events-none absolute inset-0 size-full overflow-visible" aria-hidden="true">
+        <svg
+          viewBox="0 0 120 120"
+          className="pointer-events-none absolute inset-0 size-full overflow-visible"
+          aria-hidden="true"
+        >
           <g transform={`translate(60 ${acc.slot === "neck" ? 98 : 14}) scale(.8)`}>{acc.draw()}</g>
         </svg>
       ) : null}
@@ -439,7 +515,14 @@ function personSpec(p: PersonConfig): CharacterSpec {
   let spec = specCache.get(key);
   if (!spec) {
     const f = personFace(p);
-    spec = { id: `person-${key}`, name: "Person", category: "Little people", colors: { primary: "#FFFFFF", secondary: "#FFFFFF", skin: "#FFFFFF" }, ...f, clay: f };
+    spec = {
+      id: `person-${key}`,
+      name: "Person",
+      category: "Little people",
+      colors: { primary: "#FFFFFF", secondary: "#FFFFFF", skin: "#FFFFFF" },
+      ...f,
+      clay: f,
+    };
     specCache.set(key, spec);
   }
   return spec;
@@ -481,7 +564,10 @@ export function renderPersonLive(p: PersonConfig, px = 360): Promise<string> {
  * Where a person's still comes from: the baked upload, else the preset's file
  * (when it hasn't been changed), else a render in the browser.
  */
-function usePersonImage(setting: Extract<CharacterSetting, { type: "person" }> | null, size: number): string | null {
+function usePersonImage(
+  setting: Extract<CharacterSetting, { type: "person" }> | null,
+  size: number,
+): string | null {
   const key = setting ? personKey(setting.person) : "";
   const preset = setting?.preset ? presetById(setting.preset) : undefined;
   const fixed = !setting
@@ -492,7 +578,9 @@ function usePersonImage(setting: Extract<CharacterSetting, { type: "person" }> |
         ? `/clay/people/${preset.id}${size > 132 ? "" : "@256"}.webp`
         : null;
   const px = size > 132 ? 360 : size > 72 ? 200 : 128;
-  const [live, setLive] = useState<string | null>(() => (setting && !fixed ? (liveCache.get(`${key}@${px}`) ?? null) : null));
+  const [live, setLive] = useState<string | null>(() =>
+    setting && !fixed ? (liveCache.get(`${key}@${px}`) ?? null) : null,
+  );
   useEffect(() => {
     if (!setting || fixed) return;
     let alive = true;

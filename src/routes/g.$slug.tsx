@@ -13,6 +13,11 @@ export const Route = createFileRoute("/g/$slug")({
     }),
   }),
   head: ({ loaderData }) => ({ meta: [NOINDEX, ...giftShareTags(loaderData?.share)] }),
-  notFoundComponent: () => <PageNotFound message="This gift link doesn't lead anywhere. It may be old, or the gift may have been removed." showHeader={false} />,
+  notFoundComponent: () => (
+    <PageNotFound
+      message="This gift link doesn't lead anywhere. It may be old, or the gift may have been removed."
+      showHeader={false}
+    />
+  ),
   component: lazyRouteComponent(() => import("@/pages/GiftPage")),
 });

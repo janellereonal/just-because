@@ -1,7 +1,13 @@
 import { describe, expect, test } from "bun:test";
 import { orderThemes } from "./themeOrder";
 
-const list = ["Happy Birthday", "Care Package", "Weddings", "Balikbayan Box", "Parol Christmas"].map((name) => ({ name }));
+const list = [
+  "Happy Birthday",
+  "Care Package",
+  "Weddings",
+  "Balikbayan Box",
+  "Parol Christmas",
+].map((name) => ({ name }));
 const names = (c: string | null) => orderThemes(list, c).map((t) => t.name);
 
 describe("orderThemes", () => {
@@ -16,6 +22,12 @@ describe("orderThemes", () => {
     expect(n.slice(0, 2).sort()).toEqual(["Balikbayan Box", "Parol Christmas"]);
   });
   test("unknown country keeps the usual order", () => {
-    expect(names(null)).toEqual(["Happy Birthday", "Care Package", "Weddings", "Balikbayan Box", "Parol Christmas"]);
+    expect(names(null)).toEqual([
+      "Happy Birthday",
+      "Care Package",
+      "Weddings",
+      "Balikbayan Box",
+      "Parol Christmas",
+    ]);
   });
 });

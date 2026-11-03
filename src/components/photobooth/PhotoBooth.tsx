@@ -120,7 +120,9 @@ export function PhotoBooth({
   const [fontReady, setFontReady] = useState(false);
   useEffect(() => {
     let alive = true;
-    void (document.fonts?.load(`600 64px ${font}`) ?? Promise.resolve()).finally(() => alive && setFontReady(true));
+    void (document.fonts?.load(`600 64px ${font}`) ?? Promise.resolve()).finally(
+      () => alive && setFontReady(true),
+    );
     return () => {
       alive = false;
     };
@@ -248,9 +250,15 @@ export function PhotoBooth({
                   style={{ transform: "scaleX(-1)", opacity: camera === "on" ? 1 : 0 }}
                 />
                 {mode === 4 && camera === "on" ? (
-                  <div aria-hidden className="pointer-events-none absolute inset-0 grid grid-cols-2 grid-rows-2">
+                  <div
+                    aria-hidden
+                    className="pointer-events-none absolute inset-0 grid grid-cols-2 grid-rows-2"
+                  >
                     {[0, 1, 2, 3].map((i) => (
-                      <span key={i} className={`border border-white/25 ${taking === i + 1 ? "bg-white/10" : ""}`} />
+                      <span
+                        key={i}
+                        className={`border border-white/25 ${taking === i + 1 ? "bg-white/10" : ""}`}
+                      />
                     ))}
                   </div>
                 ) : null}
@@ -259,7 +267,11 @@ export function PhotoBooth({
                     <div>
                       <Camera className="mx-auto size-8 opacity-70" aria-hidden />
                       <p className="mt-3 text-sm leading-relaxed opacity-85">
-                        {camera === "starting" ? C.starting : camera === "denied" ? C.denied : C.noCamera}
+                        {camera === "starting"
+                          ? C.starting
+                          : camera === "denied"
+                            ? C.denied
+                            : C.noCamera}
                       </p>
                     </div>
                   </div>
@@ -314,9 +326,21 @@ export function PhotoBooth({
         <div className="w-full max-w-[420px] lg:pt-2">
           {!editing ? (
             <>
-              <div className={`flex justify-center gap-2 lg:justify-start ${camera === "denied" || camera === "none" ? "hidden" : ""}`} role="radiogroup" aria-label={C.title}>
+              <div
+                className={`flex justify-center gap-2 lg:justify-start ${camera === "denied" || camera === "none" ? "hidden" : ""}`}
+                role="radiogroup"
+                aria-label={C.title}
+              >
                 {([1, 4] as const).map((m) => (
-                  <button key={m} type="button" role="radio" aria-checked={mode === m} disabled={taking !== null} onClick={() => setMode(m)} className={chip(mode === m)}>
+                  <button
+                    key={m}
+                    type="button"
+                    role="radio"
+                    aria-checked={mode === m}
+                    disabled={taking !== null}
+                    onClick={() => setMode(m)}
+                    className={chip(mode === m)}
+                  >
                     {m === 1 ? C.one : C.four}
                   </button>
                 ))}
@@ -328,7 +352,12 @@ export function PhotoBooth({
                   style={{ background: palette.accent, color: ink }}
                 >
                   <ImagePlus className="size-5" aria-hidden /> {C.fromDevice}
-                  <input type="file" accept="image/*" className="sr-only" onChange={(e) => fromDevice(e.target.files?.[0])} />
+                  <input
+                    type="file"
+                    accept="image/*"
+                    className="sr-only"
+                    onChange={(e) => fromDevice(e.target.files?.[0])}
+                  />
                 </label>
               ) : (
                 <>
@@ -348,7 +377,12 @@ export function PhotoBooth({
                   <label className="mt-5 flex cursor-pointer items-center justify-center gap-2 text-sm underline underline-offset-4 opacity-85 hover:opacity-100 lg:justify-start">
                     <ImagePlus className="size-4" aria-hidden />
                     {C.fromDevice}
-                    <input type="file" accept="image/*" className="sr-only" onChange={(e) => fromDevice(e.target.files?.[0])} />
+                    <input
+                      type="file"
+                      accept="image/*"
+                      className="sr-only"
+                      onChange={(e) => fromDevice(e.target.files?.[0])}
+                    />
                   </label>
                 </>
               )}
@@ -356,9 +390,20 @@ export function PhotoBooth({
           ) : (
             <>
               <p className="text-sm font-medium">{C.framesLabel}</p>
-              <div className="mt-2 flex flex-wrap gap-2" role="radiogroup" aria-label={C.framesLabel}>
+              <div
+                className="mt-2 flex flex-wrap gap-2"
+                role="radiogroup"
+                aria-label={C.framesLabel}
+              >
                 {FRAMES.map((f) => (
-                  <button key={f.id} type="button" role="radio" aria-checked={frame === f.id} onClick={() => setFrame(f.id)} className={chip(frame === f.id)}>
+                  <button
+                    key={f.id}
+                    type="button"
+                    role="radio"
+                    aria-checked={frame === f.id}
+                    onClick={() => setFrame(f.id)}
+                    className={chip(frame === f.id)}
+                  >
                     {f.name}
                   </button>
                 ))}
@@ -387,8 +432,13 @@ export function PhotoBooth({
                 >
                   {busy ? C.making : C.use}
                 </button>
-                <button type="button" onClick={retake} className="inline-flex min-h-12 items-center gap-2 rounded-full bg-white/10 px-5 text-sm font-medium hover:bg-white/20">
-                  <RotateCcw className="size-4" aria-hidden /> {camera === "on" || camera === "starting" ? C.retake : C.startOver}
+                <button
+                  type="button"
+                  onClick={retake}
+                  className="inline-flex min-h-12 items-center gap-2 rounded-full bg-white/10 px-5 text-sm font-medium hover:bg-white/20"
+                >
+                  <RotateCcw className="size-4" aria-hidden />{" "}
+                  {camera === "on" || camera === "starting" ? C.retake : C.startOver}
                 </button>
               </div>
             </>

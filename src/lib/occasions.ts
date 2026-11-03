@@ -70,7 +70,17 @@ export type OccasionInfo = {
 export const OCCASIONS: OccasionInfo[] = [
   {
     id: "birthday",
-    styles: ["cake", "debut", "board-game", "arcade", "scrapbook", "bento", "zine", "scratch", "hunt"],
+    styles: [
+      "cake",
+      "debut",
+      "board-game",
+      "arcade",
+      "scrapbook",
+      "bento",
+      "zine",
+      "scratch",
+      "hunt",
+    ],
     sections: ["letters", "photobooth", "wordcloud", "voice", "countdown", "superlatives"],
     bo: "birthday",
   },
@@ -239,7 +249,16 @@ export const OCCASIONS: OccasionInfo[] = [
   },
   {
     id: "just-because",
-    styles: ["love-letter", "handwritten", "care-package", "board-game", "arcade", "scrapbook", "scratch", "hunt"],
+    styles: [
+      "love-letter",
+      "handwritten",
+      "care-package",
+      "board-game",
+      "arcade",
+      "scrapbook",
+      "scratch",
+      "hunt",
+    ],
     sections: ["letters", "photobooth", "songs", "voice", "wordcloud"],
     bo: "default",
   },
@@ -287,7 +306,15 @@ export function occasionName(id: OccasionId): string {
 }
 
 /** Names of a day or festival keep their capitals mid-sentence ("for Eid", "for Valentine's Day"). */
-const PROPER_NAMES: ReadonlySet<OccasionId> = new Set(["valentines", "christmas", "new-year", "lunar-new-year", "eid", "diwali", "hanukkah"]);
+const PROPER_NAMES: ReadonlySet<OccasionId> = new Set([
+  "valentines",
+  "christmas",
+  "new-year",
+  "lunar-new-year",
+  "eid",
+  "diwali",
+  "hanukkah",
+]);
 
 /** The occasion's name inside a sentence: "for Christmas", but "for bridal shower". */
 export function occasionInSentence(id: OccasionId): string {

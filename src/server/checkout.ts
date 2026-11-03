@@ -17,7 +17,14 @@
  */
 import { and, desc, eq, sql } from "drizzle-orm";
 import { PAY_SAFETY_COPY } from "@/copy/strings";
-import { applyPaidEvent, logPayment, quote, quoteExtend, reconcileOrder, type Quote } from "./billing";
+import {
+  applyPaidEvent,
+  logPayment,
+  quote,
+  quoteExtend,
+  reconcileOrder,
+  type Quote,
+} from "./billing";
 import { getDb, schema } from "./db";
 import { cleanCode } from "./discounts";
 import { track } from "./events";
@@ -51,7 +58,9 @@ async function providerFor(name: string) {
 }
 
 function lineItem(site: Site, q: Quote) {
-  const recipient = ((site.customText as { recipient_name?: string } | null)?.recipient_name ?? "").trim() || site.title;
+  const recipient =
+    ((site.customText as { recipient_name?: string } | null)?.recipient_name ?? "").trim() ||
+    site.title;
   const itemName =
     q.kind === "upgrade"
       ? `Upgrade to ${q.tier.name}`
@@ -68,7 +77,11 @@ function lineItem(site: Site, q: Quote) {
 }
 
 /** Saves the order and opens a checkout for it. The amount always comes from the quote. */
-export async function openCheckout(user: Buyer, siteId: string, req: CheckoutRequest): Promise<{ orderId: string; checkoutUrl: string }> {
+export async function openCheckout(
+  user: Buyer,
+  siteId: string,
+  req: CheckoutRequest,
+): Promise<{ orderId: string; checkoutUrl: string }> {
   const db = getDb();
   const step: Step = await db.transaction(async (tx) => {
     await tx.execute(sql`select pg_advisory_xact_lock(hashtext(${`checkout:${siteId}`}))`);
@@ -87,9 +100,13 @@ export async function openCheckout(user: Buyer, siteId: string, req: CheckoutReq
     const code = req.kind === "plan" ? cleanCode(req.code ?? "").toLowerCase() : "";
     if (code) await tx.execute(sql`select pg_advisory_xact_lock(hashtext(${`code:${code}`}))`);
 
-    const q = req.kind === "extend" ? quoteExtend(site) : await quote(site, req.tier, { code: req.code ?? null, userId: user.id, db: tx });
+    const q =
+      req.kind === "extend"
+        ? quoteExtend(site)
+        : await quote(site, req.tier, { code: req.code ?? null, userId: user.id, db: tx });
     // The picker showed first-plan prices but the gift was paid for meanwhile (or the other way round).
-    if (req.kind === "plan" && req.expect && req.expect !== q.kind) throw new HttpError(409, PAY_SAFETY_COPY.planChanged);
+    if (req.kind === "plan" && req.expect && req.expect !== q.kind)
+      throw new HttpError(409, PAY_SAFETY_COPY.planChanged);
     const free = q.amount === 0 && !!q.discount;
     const providerName = free ? "free" : "paymongo";
 
@@ -145,7 +162,9 @@ export async function openCheckout(user: Buyer, siteId: string, req: CheckoutReq
     const { siteUrl } = await import("./email");
     const base = siteUrl();
     try {
-      const checkout = await (await providerFor("paymongo")).createCheckout({
+      const checkout = await (
+        await providerFor("paymongo")
+      ).createCheckout({
         orderId: order!.id,
         siteId: site.id,
         amount: q.amount,
@@ -160,7 +179,13 @@ export async function openCheckout(user: Buyer, siteId: string, req: CheckoutReq
         .update(schema.orders)
         .set({ providerCheckoutId: checkout.checkoutId, updatedAt: new Date() })
         .where(eq(schema.orders.id, order!.id));
-      return { kind: "redirect", orderId: order!.id, checkoutUrl: checkout.checkoutUrl, isNew: true, quote: q };
+      return {
+        kind: "redirect",
+        orderId: order!.id,
+        checkoutUrl: checkout.checkoutUrl,
+        isNew: true,
+        quote: q,
+      };
     } catch (error) {
       // Rolls back the order too: nothing was opened, so there's nothing to keep.
       console.error("[payments] createCheckout failed", error);
@@ -180,9 +205,24 @@ export async function openCheckout(user: Buyer, siteId: string, req: CheckoutReq
   // A free code: no payment page. Opened through the same path as a paid order, so the use
   // is counted once and the gift opens exactly as if it had been paid.
   const checkoutId = `free_${step.orderId}`;
-  await applyPaidEvent({ eventId: checkoutId, eventType: "free_code", checkoutId, orderId: step.orderId, paymentId: null, amountPaid: 0 }, "free", "confirm");
-  const [after] = await db.select({ status: schema.orders.status }).from(schema.orders).where(eq(schema.orders.id, step.orderId));
-  if (after?.status !== "paid") throw new HttpError(400, "That code was just used up. You can still pick a plan without it.");
+  await applyPaidEvent(
+    {
+      eventId: checkoutId,
+      eventType: "free_code",
+      checkoutId,
+      orderId: step.orderId,
+      paymentId: null,
+      amountPaid: 0,
+    },
+    "free",
+    "confirm",
+  );
+  const [after] = await db
+    .select({ status: schema.orders.status })
+    .from(schema.orders)
+    .where(eq(schema.orders.id, step.orderId));
+  if (after?.status !== "paid")
+    throw new HttpError(400, "That code was just used up. You can still pick a plan without it.");
   return { orderId: step.orderId, checkoutUrl: `/checkout/${step.orderId}` };
 }
 
@@ -203,10 +243,15 @@ async function closeOthers(tx: Tx, open: Order[], keepId: string | null): Promis
         continue;
       }
       if (result === "open") {
-        await logPayment("billing", "expire failed", `couldn't close order ${o.id}'s checkout before opening a new one; if both are paid, the second is flagged for a refund`, {
-          checkoutId: o.providerCheckoutId,
-          orderId: o.id,
-        });
+        await logPayment(
+          "billing",
+          "expire failed",
+          `couldn't close order ${o.id}'s checkout before opening a new one; if both are paid, the second is flagged for a refund`,
+          {
+            checkoutId: o.providerCheckoutId,
+            orderId: o.id,
+          },
+        );
       }
     }
     // A late payment on it still counts (applyPaidEvent takes expired orders too).

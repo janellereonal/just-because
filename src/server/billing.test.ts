@@ -19,24 +19,47 @@ const userId = `${tag}-user`;
 const checkouts: string[] = [];
 
 async function newGift(status = "draft", tier: string | null = null) {
-  const [site] = await db.getDb().insert(db.schema.giftSites).values({ creatorId: userId, title: `${tag} gift`, slug: `${tag}-${Math.random().toString(36).slice(2, 8)}`, status, tier }).returning();
+  const [site] = await db
+    .getDb()
+    .insert(db.schema.giftSites)
+    .values({
+      creatorId: userId,
+      title: `${tag} gift`,
+      slug: `${tag}-${Math.random().toString(36).slice(2, 8)}`,
+      status,
+      tier,
+    })
+    .returning();
   return site!;
 }
 
-async function newOrder(siteId: string, opts: { kind?: string; tier?: string; amount?: number; status?: string } = {}) {
+async function newOrder(
+  siteId: string,
+  opts: { kind?: string; tier?: string; amount?: number; status?: string } = {},
+) {
   const checkoutId = `cs_${tag}${Math.random().toString(36).slice(2, 8)}`;
   checkouts.push(checkoutId);
   const [order] = await db
     .getDb()
     .insert(db.schema.orders)
-    .values({ siteId, ownerId: userId, kind: opts.kind ?? "publish", tier: opts.tier ?? "celebration", amount: opts.amount ?? 59900, status: opts.status ?? "pending", providerCheckoutId: checkoutId })
+    .values({
+      siteId,
+      ownerId: userId,
+      kind: opts.kind ?? "publish",
+      tier: opts.tier ?? "celebration",
+      amount: opts.amount ?? 59900,
+      status: opts.status ?? "pending",
+      providerCheckoutId: checkoutId,
+    })
     .returning();
   fake.add(checkoutId, order!.amount, order!.id);
   return order!;
 }
 
-const siteOf = async (id: string) => (await db.getDb().select().from(db.schema.giftSites).where(eq(db.schema.giftSites.id, id)))[0]!;
-const orderOf = async (id: string) => (await db.getDb().select().from(db.schema.orders).where(eq(db.schema.orders.id, id)))[0]!;
+const siteOf = async (id: string) =>
+  (await db.getDb().select().from(db.schema.giftSites).where(eq(db.schema.giftSites.id, id)))[0]!;
+const orderOf = async (id: string) =>
+  (await db.getDb().select().from(db.schema.orders).where(eq(db.schema.orders.id, id)))[0]!;
 
 beforeAll(async () => {
   if (!local) return;
@@ -46,7 +69,10 @@ beforeAll(async () => {
   db = await import("./db");
   billing = await import("./billing");
   provider = (await import("./payments")).getProvider("paymongo");
-  await db.getDb().insert(db.schema.user).values({ id: userId, name: "Billing Test", email: `${tag}@example.test` });
+  await db
+    .getDb()
+    .insert(db.schema.user)
+    .values({ id: userId, name: "Billing Test", email: `${tag}@example.test` });
 });
 
 afterAll(async () => {
@@ -57,11 +83,18 @@ afterAll(async () => {
   await g.delete(db.schema.orders).where(inArray(db.schema.orders.providerCheckoutId, checkouts));
   await g.delete(db.schema.paymentLog).where(inArray(db.schema.paymentLog.checkoutId, checkouts));
   await g.delete(db.schema.webhookEvents).where(like(db.schema.webhookEvents.id, `%${tag}%`));
-  await g.delete(db.schema.orders).where(like(db.schema.orders.discountCode, `${tag.toUpperCase()}%`));
-  await g.delete(db.schema.discountCodes).where(like(db.schema.discountCodes.code, `${tag.toUpperCase()}%`));
+  await g
+    .delete(db.schema.orders)
+    .where(like(db.schema.orders.discountCode, `${tag.toUpperCase()}%`));
+  await g
+    .delete(db.schema.discountCodes)
+    .where(like(db.schema.discountCodes.code, `${tag.toUpperCase()}%`));
 });
 
-async function newCode(suffix: string, values: Partial<typeof import("./db").schema.discountCodes.$inferInsert> = {}) {
+async function newCode(
+  suffix: string,
+  values: Partial<typeof import("./db").schema.discountCodes.$inferInsert> = {},
+) {
   const [row] = await db
     .getDb()
     .insert(db.schema.discountCodes)
@@ -69,7 +102,14 @@ async function newCode(suffix: string, values: Partial<typeof import("./db").sch
     .returning();
   return row!;
 }
-const codeOf = async (id: string) => (await db.getDb().select().from(db.schema.discountCodes).where(eq(db.schema.discountCodes.id, id)))[0]!;
+const codeOf = async (id: string) =>
+  (
+    await db
+      .getDb()
+      .select()
+      .from(db.schema.discountCodes)
+      .where(eq(db.schema.discountCodes.id, id))
+  )[0]!;
 
 d("discount codes", () => {
   test("a percent code lowers the quote, ignores case, and counts once only when paid", async () => {
@@ -80,7 +120,11 @@ d("discount codes", () => {
     expect(q.discount?.off).toBe(6000);
     // Checkout started but not paid: no use counted.
     const order = await newOrder(site.id, { tier: "sweet", amount: q.amount });
-    await db.getDb().update(db.schema.orders).set({ discountCodeId: code.id, discountCode: code.code, discountAmount: q.discount!.off }).where(eq(db.schema.orders.id, order.id));
+    await db
+      .getDb()
+      .update(db.schema.orders)
+      .set({ discountCodeId: code.id, discountCode: code.code, discountAmount: q.discount!.off })
+      .where(eq(db.schema.orders.id, order.id));
     expect((await codeOf(code.id)).usedCount).toBe(0);
     fake.pay(order.providerCheckoutId!);
     const paid = (await provider.checkPaid(order.providerCheckoutId!))!;
@@ -90,7 +134,9 @@ d("discount codes", () => {
     expect((await codeOf(code.id)).usedCount).toBe(1);
     // Max one per person by default.
     const other = await newGift();
-    await expect(billing.quote(other, "sweet", { code: code.code, userId })).rejects.toThrow("already used");
+    await expect(billing.quote(other, "sweet", { code: code.code, userId })).rejects.toThrow(
+      "already used",
+    );
   });
 
   test("codes that are off, ended, used up or for another plan are refused", async () => {
@@ -99,11 +145,21 @@ d("discount codes", () => {
     const ended = await newCode("END", { expiresAt: new Date(Date.now() - 1000) });
     const used = await newCode("USED", { maxUses: 1, usedCount: 1 });
     const sweetOnly = await newCode("SWT", { type: "free", value: 0, plans: ["sweet"] });
-    await expect(billing.quote(site, "sweet", { code: off.code, userId })).rejects.toThrow("isn't working");
-    await expect(billing.quote(site, "sweet", { code: ended.code, userId })).rejects.toThrow("ended");
-    await expect(billing.quote(site, "sweet", { code: used.code, userId })).rejects.toThrow("used up");
-    await expect(billing.quote(site, "keepsake", { code: sweetOnly.code, userId })).rejects.toThrow("Sweet plan");
-    await expect(billing.quote(site, "sweet", { code: "NOPE-NOT-A-CODE", userId })).rejects.toThrow("don't know");
+    await expect(billing.quote(site, "sweet", { code: off.code, userId })).rejects.toThrow(
+      "isn't working",
+    );
+    await expect(billing.quote(site, "sweet", { code: ended.code, userId })).rejects.toThrow(
+      "ended",
+    );
+    await expect(billing.quote(site, "sweet", { code: used.code, userId })).rejects.toThrow(
+      "used up",
+    );
+    await expect(billing.quote(site, "keepsake", { code: sweetOnly.code, userId })).rejects.toThrow(
+      "Sweet plan",
+    );
+    await expect(billing.quote(site, "sweet", { code: "NOPE-NOT-A-CODE", userId })).rejects.toThrow(
+      "don't know",
+    );
     expect((await billing.quote(site, "sweet", { code: sweetOnly.code, userId })).amount).toBe(0);
   });
 
@@ -114,8 +170,31 @@ d("discount codes", () => {
       const id = crypto.randomUUID();
       const checkoutId = `free_${id}`;
       checkouts.push(checkoutId);
-      await db.getDb().insert(db.schema.orders).values({ id, siteId: site.id, ownerId: userId, kind: "publish", tier: "sweet", amount: 0, provider: "free", providerCheckoutId: checkoutId, discountCodeId: code.id, discountCode: code.code, discountAmount: 29900 });
-      await billing.applyPaidEvent({ eventId: checkoutId, eventType: "free_code", checkoutId, orderId: id, paymentId: null, amountPaid: 0 }, "free", "confirm");
+      await db.getDb().insert(db.schema.orders).values({
+        id,
+        siteId: site.id,
+        ownerId: userId,
+        kind: "publish",
+        tier: "sweet",
+        amount: 0,
+        provider: "free",
+        providerCheckoutId: checkoutId,
+        discountCodeId: code.id,
+        discountCode: code.code,
+        discountAmount: 29900,
+      });
+      await billing.applyPaidEvent(
+        {
+          eventId: checkoutId,
+          eventType: "free_code",
+          checkoutId,
+          orderId: id,
+          paymentId: null,
+          amountPaid: 0,
+        },
+        "free",
+        "confirm",
+      );
       return { site: await siteOf(site.id), order: await orderOf(id) };
     };
     const [a, b] = await Promise.all([open(), open()]);
@@ -138,13 +217,19 @@ d("paying for a gift", () => {
     const paid = (await provider.checkPaid(order.providerCheckoutId!))!;
     expect(await billing.applyPaidEvent(paid, "paymongo", "webhook")).toContain("published");
     expect(await billing.applyPaidEvent(paid, "paymongo", "webhook")).toContain("already paid");
-    expect(await billing.applyPaidEvent({ ...paid, eventId: "evt_other" }, "paymongo", "webhook")).toContain("already paid");
+    expect(
+      await billing.applyPaidEvent({ ...paid, eventId: "evt_other" }, "paymongo", "webhook"),
+    ).toContain("already paid");
     const s = await siteOf(site.id);
     expect(s.status).toBe("published");
     expect(s.tier).toBe("celebration");
     expect(s.expiresAt).not.toBeNull();
     expect((await orderOf(order.id)).status).toBe("paid");
-    const events = await db.getDb().select().from(db.schema.webhookEvents).where(like(db.schema.webhookEvents.id, `%${order.providerCheckoutId}%`));
+    const events = await db
+      .getDb()
+      .select()
+      .from(db.schema.webhookEvents)
+      .where(like(db.schema.webhookEvents.id, `%${order.providerCheckoutId}%`));
     expect(events.length).toBe(1);
   });
 
@@ -162,9 +247,14 @@ d("paying for a gift", () => {
   test("a payment in another currency doesn't open it (₱599 is not $599)", async () => {
     const site = await newGift();
     const order = await newOrder(site.id);
-    fake.pay(order.providerCheckoutId!, undefined, { currency: "USD", source: { type: "card", country: "US" } });
+    fake.pay(order.providerCheckoutId!, undefined, {
+      currency: "USD",
+      source: { type: "card", country: "US" },
+    });
     const paid = (await provider.checkPaid(order.providerCheckoutId!))!;
-    expect(await billing.applyPaidEvent(paid, "paymongo", "webhook")).toContain("paid in USD, expected PHP");
+    expect(await billing.applyPaidEvent(paid, "paymongo", "webhook")).toContain(
+      "paid in USD, expected PHP",
+    );
     expect((await siteOf(site.id)).status).toBe("draft");
     expect((await orderOf(order.id)).status).toBe("pending");
   });
@@ -172,10 +262,17 @@ d("paying for a gift", () => {
   test("a foreign card is recorded on the purchase event, for the admin numbers", async () => {
     const site = await newGift();
     const order = await newOrder(site.id);
-    fake.pay(order.providerCheckoutId!, undefined, { currency: "PHP", source: { type: "card", brand: "visa", country: "US" } });
+    fake.pay(order.providerCheckoutId!, undefined, {
+      currency: "PHP",
+      source: { type: "card", brand: "visa", country: "US" },
+    });
     const paid = (await provider.checkPaid(order.providerCheckoutId!))!;
     expect(await billing.applyPaidEvent(paid, "paymongo", "webhook")).toContain("published");
-    const [ev] = await db.getDb().select().from(db.schema.events).where(eq(db.schema.events.siteId, site.id));
+    const [ev] = await db
+      .getDb()
+      .select()
+      .from(db.schema.events)
+      .where(eq(db.schema.events.siteId, site.id));
     const props = ev?.props as Record<string, unknown> | undefined;
     expect(props?.["method"]).toBe("card");
     expect(props?.["card_origin"]).toBe("foreign");
@@ -199,15 +296,27 @@ d("paying for a gift", () => {
     fake.pay(first.providerCheckoutId!);
     fake.pay(second.providerCheckoutId!);
     await billing.reconcileOrder(first, "confirm", 0);
-    const msg = await billing.applyPaidEvent((await provider.checkPaid(second.providerCheckoutId!))!, "paymongo", "webhook");
+    const msg = await billing.applyPaidEvent(
+      (await provider.checkPaid(second.providerCheckoutId!))!,
+      "paymongo",
+      "webhook",
+    );
     expect(msg).toContain("Needs a refund");
-    const log = await db.getDb().select().from(db.schema.paymentLog).where(eq(db.schema.paymentLog.checkoutId, second.providerCheckoutId!));
+    const log = await db
+      .getDb()
+      .select()
+      .from(db.schema.paymentLog)
+      .where(eq(db.schema.paymentLog.checkoutId, second.providerCheckoutId!));
     expect(log.some((l) => l.outcome.includes("refund"))).toBe(true);
     // Not reported as a plain "paid": the order says it's owed back, with the whole amount.
     expect((await orderOf(second.id)).status).toBe("refund_pending");
     expect((await billing.refundsDue([second.id])).get(second.id)).toBe(second.amount);
     // Reported again (webhook retry, confirm page): nothing more happens, still one refund line.
-    await billing.applyPaidEvent({ ...(await provider.checkPaid(second.providerCheckoutId!))!, eventId: "evt_retry" }, "paymongo", "webhook");
+    await billing.applyPaidEvent(
+      { ...(await provider.checkPaid(second.providerCheckoutId!))!, eventId: "evt_retry" },
+      "paymongo",
+      "webhook",
+    );
     expect(await billing.reconcileOrder(await orderOf(second.id), "confirm", 0)).toBe(true);
     expect((await billing.refundsDue([second.id])).get(second.id)).toBe(second.amount);
     expect((await siteOf(site.id)).tier).toBe("celebration");
@@ -222,12 +331,19 @@ d("paying for a gift", () => {
     fake.pay(keepsake.providerCheckoutId!);
     await billing.reconcileOrder(sweet, "confirm", 0);
     const sweetEnd = (await siteOf(site.id)).expiresAt!;
-    const msg = await billing.applyPaidEvent((await provider.checkPaid(keepsake.providerCheckoutId!))!, "paymongo", "webhook");
+    const msg = await billing.applyPaidEvent(
+      (await provider.checkPaid(keepsake.providerCheckoutId!))!,
+      "paymongo",
+      "webhook",
+    );
     expect(msg).toContain("upgraded");
     const s = await siteOf(site.id);
     expect(s.tier).toBe("keepsake");
     // Keepsake runs 36 months, Sweet 3: 33 more months on top of Sweet's end date.
-    const months = (s.expiresAt!.getUTCFullYear() - sweetEnd.getUTCFullYear()) * 12 + s.expiresAt!.getUTCMonth() - sweetEnd.getUTCMonth();
+    const months =
+      (s.expiresAt!.getUTCFullYear() - sweetEnd.getUTCFullYear()) * 12 +
+      s.expiresAt!.getUTCMonth() -
+      sweetEnd.getUTCMonth();
     expect(months).toBe(33);
     expect((await orderOf(keepsake.id)).status).toBe("paid");
     // ₱999 + ₱299 paid for a ₱999 plan: ₱299 goes back.
@@ -251,7 +367,11 @@ d("paying for a gift", () => {
     const site = await newGift("published", "sweet");
     const a = await newOrder(site.id, { kind: "upgrade", tier: "celebration", amount: 30000 });
     const b = await newOrder(site.id, { kind: "upgrade", tier: "celebration", amount: 30000 });
-    await db.getDb().update(db.schema.orders).set({ fromTier: "sweet" }).where(inArray(db.schema.orders.id, [a.id, b.id]));
+    await db
+      .getDb()
+      .update(db.schema.orders)
+      .set({ fromTier: "sweet" })
+      .where(inArray(db.schema.orders.id, [a.id, b.id]));
     fake.pay(a.providerCheckoutId!);
     fake.pay(b.providerCheckoutId!);
     await billing.reconcileOrder(a, "confirm", 0);
@@ -268,12 +388,20 @@ d("paying for a gift", () => {
     const site = await newGift("published", "sweet");
     const a = await newOrder(site.id, { kind: "upgrade", tier: "keepsake", amount: 70000 });
     const b = await newOrder(site.id, { kind: "upgrade", tier: "celebration", amount: 30000 });
-    await db.getDb().update(db.schema.orders).set({ fromTier: "sweet" }).where(inArray(db.schema.orders.id, [a.id, b.id]));
+    await db
+      .getDb()
+      .update(db.schema.orders)
+      .set({ fromTier: "sweet" })
+      .where(inArray(db.schema.orders.id, [a.id, b.id]));
     fake.pay(b.providerCheckoutId!);
     fake.pay(a.providerCheckoutId!);
     await billing.reconcileOrder(b, "confirm", 0);
     expect((await siteOf(site.id)).tier).toBe("celebration");
-    const msg = await billing.applyPaidEvent((await provider.checkPaid(a.providerCheckoutId!))!, "paymongo", "webhook");
+    const msg = await billing.applyPaidEvent(
+      (await provider.checkPaid(a.providerCheckoutId!))!,
+      "paymongo",
+      "webhook",
+    );
     expect(msg).toContain("from celebration");
     expect((await siteOf(site.id)).tier).toBe("keepsake");
     expect((await orderOf(a.id)).status).toBe("paid");
@@ -284,10 +412,18 @@ d("paying for a gift", () => {
 
   test("a paid gift that has been paused still gets what was paid for, and stays paused", async () => {
     const site = await newGift();
-    await db.getDb().update(db.schema.giftSites).set({ disabledAt: new Date() }).where(eq(db.schema.giftSites.id, site.id));
+    await db
+      .getDb()
+      .update(db.schema.giftSites)
+      .set({ disabledAt: new Date() })
+      .where(eq(db.schema.giftSites.id, site.id));
     const order = await newOrder(site.id);
     fake.pay(order.providerCheckoutId!);
-    const msg = await billing.applyPaidEvent((await provider.checkPaid(order.providerCheckoutId!))!, "paymongo", "webhook");
+    const msg = await billing.applyPaidEvent(
+      (await provider.checkPaid(order.providerCheckoutId!))!,
+      "paymongo",
+      "webhook",
+    );
     expect(msg).toContain("paused");
     const s = await siteOf(site.id);
     expect(s.tier).toBe("celebration");
@@ -297,9 +433,17 @@ d("paying for a gift", () => {
   test("a paused gift can't be quoted for any plan or an extension", async () => {
     const draft = await newGift();
     const paidGift = await newGift("published", "sweet");
-    await db.getDb().update(db.schema.giftSites).set({ disabledAt: new Date() }).where(inArray(db.schema.giftSites.id, [draft.id, paidGift.id]));
-    await expect(billing.quote(await siteOf(draft.id), "keepsake", { userId })).rejects.toThrow("paused");
-    await expect(billing.quote(await siteOf(paidGift.id), "keepsake", { userId })).rejects.toThrow("paused");
+    await db
+      .getDb()
+      .update(db.schema.giftSites)
+      .set({ disabledAt: new Date() })
+      .where(inArray(db.schema.giftSites.id, [draft.id, paidGift.id]));
+    await expect(billing.quote(await siteOf(draft.id), "keepsake", { userId })).rejects.toThrow(
+      "paused",
+    );
+    await expect(billing.quote(await siteOf(paidGift.id), "keepsake", { userId })).rejects.toThrow(
+      "paused",
+    );
     expect(() => billing.quoteExtend({ ...paidGift, disabledAt: new Date() })).toThrow("paused");
   });
 

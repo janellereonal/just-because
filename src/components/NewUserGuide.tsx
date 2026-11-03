@@ -38,7 +38,11 @@ export function NewUserGuide({ onClose }: { onClose: () => void }) {
   const [dir, setDir] = useState(1);
   const nextRef = useRef<HTMLButtonElement | null>(null);
   // With styles on, the first step talks about styles instead of themes.
-  const steps = isFlagOn("styles") ? C.steps.map((s, i) => (i === 0 ? { ...s, title: t("guide.style.title"), body: t("guide.style.body") } : s)) : C.steps;
+  const steps = isFlagOn("styles")
+    ? C.steps.map((s, i) =>
+        i === 0 ? { ...s, title: t("guide.style.title"), body: t("guide.style.body") } : s,
+      )
+    : C.steps;
   const step = steps[at]!;
   const last = at === steps.length - 1;
 
@@ -69,7 +73,6 @@ export function NewUserGuide({ onClose }: { onClose: () => void }) {
       window.removeEventListener("keydown", key);
       document.body.style.overflow = prev;
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   return (
@@ -93,10 +96,19 @@ export function NewUserGuide({ onClose }: { onClose: () => void }) {
       >
         <div className="flex items-start justify-between gap-3 px-6 pt-6">
           <div>
-            <p className="font-mono text-[11px] tracking-[0.18em] text-accent uppercase">{C.kicker}</p>
-            <h2 className="mt-1 font-display text-2xl leading-tight font-semibold text-balance">{C.title}</h2>
+            <p className="font-mono text-[11px] tracking-[0.18em] text-accent uppercase">
+              {C.kicker}
+            </p>
+            <h2 className="mt-1 font-display text-2xl leading-tight font-semibold text-balance">
+              {C.title}
+            </h2>
           </div>
-          <button type="button" onClick={close} aria-label={C.close} className="grid size-10 shrink-0 place-items-center rounded-full bg-cream hover:bg-pink/50">
+          <button
+            type="button"
+            onClick={close}
+            aria-label={C.close}
+            className="grid size-10 shrink-0 place-items-center rounded-full bg-cream hover:bg-pink/50"
+          >
             <X className="size-4" />
           </button>
         </div>
@@ -119,13 +131,19 @@ export function NewUserGuide({ onClose }: { onClose: () => void }) {
               </div>
               <div className="mt-5 flex items-start gap-4">
                 <div className="min-w-0 flex-1">
-                  <p className="font-mono text-xs tracking-[0.16em] text-accent">{C.stepOf(at + 1, steps.length)}</p>
-                  <h3 className="mt-1 font-display text-xl leading-tight font-semibold">{step.title}</h3>
+                  <p className="font-mono text-xs tracking-[0.16em] text-accent">
+                    {C.stepOf(at + 1, steps.length)}
+                  </p>
+                  <h3 className="mt-1 font-display text-xl leading-tight font-semibold">
+                    {step.title}
+                  </h3>
                   <p className="mt-2 text-[15px] leading-relaxed text-ink/70">{step.body}</p>
                 </div>
                 {at !== 3 ? (
                   <div className="hidden shrink-0 flex-col items-center sm:flex" aria-hidden>
-                    <span className="mb-1 max-w-[120px] rounded-2xl bg-cream px-3 py-1.5 text-center text-xs leading-snug">{step.bo}</span>
+                    <span className="mb-1 max-w-[120px] rounded-2xl bg-cream px-3 py-1.5 text-center text-xs leading-snug">
+                      {step.bo}
+                    </span>
                     <Bo pose={POSES[at] ?? "idle"} size={64} />
                   </div>
                 ) : null}
@@ -150,11 +168,19 @@ export function NewUserGuide({ onClose }: { onClose: () => void }) {
           </div>
           <div className="flex items-center gap-2">
             {at > 0 ? (
-              <button type="button" onClick={() => go(at - 1)} className="min-h-11 rounded-full px-4 text-sm font-medium text-ink/70 hover:bg-cream">
+              <button
+                type="button"
+                onClick={() => go(at - 1)}
+                className="min-h-11 rounded-full px-4 text-sm font-medium text-ink/70 hover:bg-cream"
+              >
                 {C.back}
               </button>
             ) : (
-              <button type="button" onClick={close} className="min-h-11 rounded-full px-4 text-sm font-medium text-ink/70 hover:bg-cream">
+              <button
+                type="button"
+                onClick={close}
+                className="min-h-11 rounded-full px-4 text-sm font-medium text-ink/70 hover:bg-cream"
+              >
                 {C.skip}
               </button>
             )}

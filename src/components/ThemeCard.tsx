@@ -76,9 +76,17 @@ export function ThemeCard({ theme, onSelect, footer, variant = "phone" }: Props)
         className={`relative block w-full overflow-hidden rounded-[22px] text-left ${onSelect ? "cursor-pointer" : ""} focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-accent`}
         style={{ backgroundColor: stage }}
       >
-        <span aria-hidden="true" className="pointer-events-none absolute -top-10 -right-8 size-32 rounded-full bg-white/45" />
-        <span aria-hidden="true" className="pointer-events-none absolute -bottom-12 -left-10 size-36 rounded-full bg-white/35" />
-        <div className={`relative mx-auto ${variant === "phone" ? "w-[66%] pt-6 pb-0" : "w-[72%] pt-5 pb-0"}`}>
+        <span
+          aria-hidden="true"
+          className="pointer-events-none absolute -top-10 -right-8 size-32 rounded-full bg-white/45"
+        />
+        <span
+          aria-hidden="true"
+          className="pointer-events-none absolute -bottom-12 -left-10 size-36 rounded-full bg-white/35"
+        />
+        <div
+          className={`relative mx-auto ${variant === "phone" ? "w-[66%] pt-6 pb-0" : "w-[72%] pt-5 pb-0"}`}
+        >
           <div
             className={`overflow-hidden rounded-t-[26px] border-[5px] border-b-0 border-ink bg-ink shadow-[0_18px_40px_-18px_rgba(43,37,34,0.55)] transition-transform duration-500 group-hover:-translate-y-1.5 ${
               variant === "phone" ? "aspect-[9/15.5]" : "aspect-[9/12]"
@@ -96,16 +104,23 @@ export function ThemeCard({ theme, onSelect, footer, variant = "phone" }: Props)
       <div className="flex flex-1 flex-col px-2 pt-3 pb-1">
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0">
-            <p className="font-mono text-[10px] tracking-[0.16em] text-muted uppercase">{theme.category}</p>
+            <p className="font-mono text-[10px] tracking-[0.16em] text-muted uppercase">
+              {theme.category}
+            </p>
             <h3 className="font-display text-xl font-semibold tracking-tight">{theme.name}</h3>
           </div>
           {palettes.length > 0 ? (
-            <div className="flex shrink-0 -space-x-1.5 pt-1" aria-label={`${palettes.length} color palettes`}>
+            <div
+              className="flex shrink-0 -space-x-1.5 pt-1"
+              aria-label={`${palettes.length} color palettes`}
+            >
               {palettes.slice(0, 3).map((p, i) => (
                 <span
                   key={i}
                   className="size-6 rounded-full ring-2 ring-white"
-                  style={{ background: `conic-gradient(${p.background} 0 50%, ${p.accent} 50% 75%, ${p.primary} 75%)` }}
+                  style={{
+                    background: `conic-gradient(${p.background} 0 50%, ${p.accent} 50% 75%, ${p.primary} 75%)`,
+                  }}
                 />
               ))}
             </div>

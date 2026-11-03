@@ -35,7 +35,14 @@ function soft(hex: string, amount: number) {
   return `#${ch.map((c) => c.toString(16).padStart(2, "0")).join("")}`;
 }
 
-const WHISPERS = ["story.whisper.1", "story.whisper.2", "story.whisper.3", "story.whisper.4", "story.whisper.5", "story.whisper.6"] as const;
+const WHISPERS = [
+  "story.whisper.1",
+  "story.whisper.2",
+  "story.whisper.3",
+  "story.whisper.4",
+  "story.whisper.5",
+  "story.whisper.6",
+] as const;
 
 export function FriendsArrive({
   names,
@@ -179,7 +186,9 @@ export function FriendsArrive({
     if (phase !== "whisper") return;
     setBubble(null);
     const speakers = friends.map((_, i) => i).filter((i) => i !== lateIndex);
-    const order = [...speakers].sort(() => Math.random() - 0.5).slice(0, Math.min(3, speakers.length));
+    const order = [...speakers]
+      .sort(() => Math.random() - 0.5)
+      .slice(0, Math.min(3, speakers.length));
     const lines = [...WHISPERS].sort(() => Math.random() - 0.5);
     order.forEach((who, k) => {
       later(250 + k * 1050, () => {
@@ -226,10 +235,24 @@ export function FriendsArrive({
     storySound.shout();
     buzz([10, 40, 16, 40, 24]);
     refs.current.forEach((r, i) => later(i * 60, () => r?.celebrate()));
-    const colors = [soft(palette.primary, 0.2), soft(palette.accent, 0.2), "#F4C26B", "#E9C9B6", "#9FC6B0"];
+    const colors = [
+      soft(palette.primary, 0.2),
+      soft(palette.accent, 0.2),
+      "#F4C26B",
+      "#E9C9B6",
+      "#9FC6B0",
+    ];
     spots.current.forEach((el, i) => {
       const r = el?.getBoundingClientRect();
-      if (r) later(i * 50, () => burst(hostRef.current, r.left + r.width / 2, r.top + r.height * 0.3, { colors, count: 14, spread: 1.3, up: true }));
+      if (r)
+        later(i * 50, () =>
+          burst(hostRef.current, r.left + r.width / 2, r.top + r.height * 0.3, {
+            colors,
+            count: 14,
+            spread: 1.3,
+            up: true,
+          }),
+        );
     });
     later(2600, () => go("shout", "leaving"), true);
   }
@@ -324,7 +347,13 @@ export function FriendsArrive({
   const boxColor = soft(palette.primary, 0.7);
   const boxSide = soft(palette.primary, 0.58);
   const ribbon = soft(palette.accent, 0.45);
-  const flags = [soft(palette.primary, 0.55), "#F3DFA6", soft(palette.accent, 0.5), "#E9C9B6", "#BFD9C6"];
+  const flags = [
+    soft(palette.primary, 0.55),
+    "#F3DFA6",
+    soft(palette.accent, 0.5),
+    "#E9C9B6",
+    "#BFD9C6",
+  ];
 
   const title =
     phase === "box"
@@ -344,7 +373,14 @@ export function FriendsArrive({
           ? t("story.shout.friends", { n: total })
           : t("story.shout.some")
       : "";
-  const label = total > 0 ? (name ? t("story.label", { n: total, name }) : t("story.labelNoName", { n: total })) : name ? t("story.labelFor", { name }) : "";
+  const label =
+    total > 0
+      ? name
+        ? t("story.label", { n: total, name })
+        : t("story.labelNoName", { n: total })
+      : name
+        ? t("story.labelFor", { name })
+        : "";
 
   return (
     <motion.div
@@ -365,8 +401,19 @@ export function FriendsArrive({
       <style>{`@keyframes jb-flag{0%,100%{transform:rotate(-4deg)}50%{transform:rotate(4deg)}}@keyframes jb-glow{0%,100%{opacity:.55}50%{opacity:.9}}`}</style>
 
       {/* Bunting */}
-      <svg aria-hidden="true" className="pointer-events-none absolute inset-x-0 top-0" width={w} height={90} viewBox={`0 0 ${w} 90`}>
-        <path d={`M -10 14 Q ${w / 2} 64 ${w + 10} 14`} fill="none" stroke="#C9B8A6" strokeWidth="1.5" />
+      <svg
+        aria-hidden="true"
+        className="pointer-events-none absolute inset-x-0 top-0"
+        width={w}
+        height={90}
+        viewBox={`0 0 ${w} 90`}
+      >
+        <path
+          d={`M -10 14 Q ${w / 2} 64 ${w + 10} 14`}
+          fill="none"
+          stroke="#C9B8A6"
+          strokeWidth="1.5"
+        />
         {Array.from({ length: Math.ceil(w / 46) }, (_, i) => {
           const x = 14 + i * 46;
           const tt = x / w;
@@ -376,7 +423,11 @@ export function FriendsArrive({
               key={i}
               d={`M ${x - 13} ${y} L ${x + 13} ${y} L ${x} ${y + 26} Z`}
               fill={flags[i % flags.length]}
-              style={{ transformOrigin: `${x}px ${y}px`, transformBox: "view-box", animation: `jb-flag ${2.6 + (i % 3) * 0.4}s ease-in-out ${i * 0.15}s infinite` }}
+              style={{
+                transformOrigin: `${x}px ${y}px`,
+                transformBox: "view-box",
+                animation: `jb-flag ${2.6 + (i % 3) * 0.4}s ease-in-out ${i * 0.15}s infinite`,
+              }}
             />
           );
         })}
@@ -384,7 +435,11 @@ export function FriendsArrive({
 
       {/* Words */}
       <div className="pointer-events-none absolute inset-x-0 top-[72px] z-20 px-6 text-center sm:top-[84px]">
-        {label ? <p className="font-mono text-[11px] tracking-[0.14em] text-[#2B2522]/60 uppercase">{label}</p> : null}
+        {label ? (
+          <p className="font-mono text-[11px] tracking-[0.14em] text-[#2B2522]/60 uppercase">
+            {label}
+          </p>
+        ) : null}
         <AnimatePresence mode="wait">
           <motion.h2
             key={title}
@@ -392,22 +447,50 @@ export function FriendsArrive({
             initial={{ opacity: 0, y: 10, scale: phase === "shout" ? 0.6 : 1 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: -8 }}
-            transition={phase === "shout" ? { type: "spring", stiffness: 380, damping: 12 } : { duration: 0.35 }}
+            transition={
+              phase === "shout"
+                ? { type: "spring", stiffness: 380, damping: 12 }
+                : { duration: 0.35 }
+            }
             className={`mx-auto mt-2 max-w-[18ch] font-display leading-[1.05] font-medium tracking-tight ${phase === "shout" || phase === "leaving" ? "text-[clamp(3rem,13vw,5.5rem)]" : "text-[clamp(1.7rem,6.4vw,2.6rem)]"}`}
           >
             {title}
           </motion.h2>
         </AnimatePresence>
         {sub ? (
-          <motion.p initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.25 }} className="mt-2 text-[15px] text-[#2B2522]/70">
+          <motion.p
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.25 }}
+            className="mt-2 text-[15px] text-[#2B2522]/70"
+          >
             {sub}
           </motion.p>
         ) : null}
       </div>
 
       {/* Floor light and shadow */}
-      <div aria-hidden="true" className="pointer-events-none absolute left-1/2 -translate-x-1/2 rounded-[50%]" style={{ top: floor - 40, width: Math.min(w * 0.95, 680), height: 120, background: "radial-gradient(closest-side, rgba(255,255,255,.75), rgba(255,255,255,0))", animation: "jb-glow 4s ease-in-out infinite" }} />
-      <div aria-hidden="true" className="pointer-events-none absolute left-1/2 -translate-x-1/2 rounded-[50%]" style={{ top: floor - 10, width: Math.min(w * 0.8, 560), height: 34, background: "radial-gradient(closest-side, rgba(70,48,36,.16), rgba(70,48,36,0))" }} />
+      <div
+        aria-hidden="true"
+        className="pointer-events-none absolute left-1/2 -translate-x-1/2 rounded-[50%]"
+        style={{
+          top: floor - 40,
+          width: Math.min(w * 0.95, 680),
+          height: 120,
+          background: "radial-gradient(closest-side, rgba(255,255,255,.75), rgba(255,255,255,0))",
+          animation: "jb-glow 4s ease-in-out infinite",
+        }}
+      />
+      <div
+        aria-hidden="true"
+        className="pointer-events-none absolute left-1/2 -translate-x-1/2 rounded-[50%]"
+        style={{
+          top: floor - 10,
+          width: Math.min(w * 0.8, 560),
+          height: 34,
+          background: "radial-gradient(closest-side, rgba(70,48,36,.16), rgba(70,48,36,0))",
+        }}
+      />
 
       {/* The box */}
       <motion.button
@@ -416,7 +499,13 @@ export function FriendsArrive({
         disabled={opened}
         onClick={knock}
         className="absolute left-1/2 z-[5] cursor-pointer outline-none focus-visible:ring-2 focus-visible:ring-[#2B2522]/40 disabled:cursor-default"
-        style={{ width: bw, height: bh + 60, marginLeft: -bw / 2, top: boxTop - 60, transformOrigin: "50% 100%" }}
+        style={{
+          width: bw,
+          height: bh + 60,
+          marginLeft: -bw / 2,
+          top: boxTop - 60,
+          transformOrigin: "50% 100%",
+        }}
         animate={
           opened
             ? { y: boxBottom - floor, scale: 0.84 }
@@ -435,13 +524,30 @@ export function FriendsArrive({
         }
         key={`box-${knocks}`}
       >
-        <svg viewBox="0 -60 200 210" width={bw} height={bh + 60} overflow="visible" aria-hidden="true">
+        <svg
+          viewBox="0 -60 200 210"
+          width={bw}
+          height={bh + 60}
+          overflow="visible"
+          aria-hidden="true"
+        >
           {/* inside, seen when the lid lifts */}
           <rect x="6" y="38" width="188" height="14" rx="4" fill="#5A4436" opacity=".75" />
           {phase === "peek" ? (
             <g>
               {[84, 116].map((cx) => (
-                <motion.g key={cx} initial={{ scaleY: 0 }} animate={{ scaleY: [0, 1, 1, 0.1, 1] }} transition={{ duration: 1.6, times: [0, 0.15, 0.7, 0.75, 0.8], repeat: Infinity, repeatDelay: 0.6 }} style={{ transformOrigin: `${cx}px 44px`, transformBox: "view-box" }}>
+                <motion.g
+                  key={cx}
+                  initial={{ scaleY: 0 }}
+                  animate={{ scaleY: [0, 1, 1, 0.1, 1] }}
+                  transition={{
+                    duration: 1.6,
+                    times: [0, 0.15, 0.7, 0.75, 0.8],
+                    repeat: Infinity,
+                    repeatDelay: 0.6,
+                  }}
+                  style={{ transformOrigin: `${cx}px 44px`, transformBox: "view-box" }}
+                >
                   <circle cx={cx} cy="44" r="5" fill="#fff" />
                   <circle cx={cx + 1} cy="45" r="2.6" fill="#2B2522" />
                 </motion.g>
@@ -465,22 +571,45 @@ export function FriendsArrive({
                   ? { y: [-20, -9], rotate: [-4, -2] }
                   : { y: 0 }
             }
-            transition={opened ? { duration: 0.9, times: [0, 0.4, 1], ease: "easeOut" } : { type: "spring", stiffness: 300, damping: 12 }}
+            transition={
+              opened
+                ? { duration: 0.9, times: [0, 0.4, 1], ease: "easeOut" }
+                : { type: "spring", stiffness: 300, damping: 12 }
+            }
           >
             <rect x="0" y="22" width="200" height="28" rx="8" fill={boxColor} />
             <rect x="0" y="40" width="200" height="10" rx="4" fill="#000" opacity=".06" />
             <rect x="88" y="22" width="24" height="28" fill={ribbon} />
             <ellipse cx="80" cy="12" rx="22" ry="13" fill={ribbon} transform="rotate(-18 80 12)" />
             <ellipse cx="120" cy="12" rx="22" ry="13" fill={ribbon} transform="rotate(18 120 12)" />
-            <ellipse cx="80" cy="12" rx="10" ry="5" fill="#000" opacity=".08" transform="rotate(-18 80 12)" />
-            <ellipse cx="120" cy="12" rx="10" ry="5" fill="#000" opacity=".08" transform="rotate(18 120 12)" />
+            <ellipse
+              cx="80"
+              cy="12"
+              rx="10"
+              ry="5"
+              fill="#000"
+              opacity=".08"
+              transform="rotate(-18 80 12)"
+            />
+            <ellipse
+              cx="120"
+              cy="12"
+              rx="10"
+              ry="5"
+              fill="#000"
+              opacity=".08"
+              transform="rotate(18 120 12)"
+            />
             <circle cx="100" cy="20" r="9" fill={soft(palette.accent, 0.25)} />
           </motion.g>
         </svg>
       </motion.button>
 
       {/* The friends (the whole group squashes while you hold) */}
-      <motion.div className="pointer-events-none absolute inset-0 z-10" style={{ scaleY: squashY, scaleX: squashX, x: shiver, transformOrigin: `50% ${floor}px` }}>
+      <motion.div
+        className="pointer-events-none absolute inset-0 z-10"
+        style={{ scaleY: squashY, scaleX: squashX, x: shiver, transformOrigin: `50% ${floor}px` }}
+      >
         {friends.map((f, i) => {
           const seat = seats[i]!;
           const launched = i < out;
@@ -505,8 +634,20 @@ export function FriendsArrive({
                   : reduced.current
                     ? { opacity: 1, x: 0, y: 0, scale: 1, rotate: 0 }
                     : i === lateIndex
-                      ? { opacity: [0, 1, 1, 1], x: [fromX, fromX * 0.5, 0, 0], y: [fromY, peak, 0, 0], scale: [0.3, 1, 1, 1], rotate: [0, dir * 300, dir * 380, 0] }
-                      : { opacity: [0, 1, 1], x: [fromX, fromX * 0.45, 0], y: [fromY, peak, 0], scale: [0.3, 1, 1], rotate: [0, dir * 180, dir * 360] }
+                      ? {
+                          opacity: [0, 1, 1, 1],
+                          x: [fromX, fromX * 0.5, 0, 0],
+                          y: [fromY, peak, 0, 0],
+                          scale: [0.3, 1, 1, 1],
+                          rotate: [0, dir * 300, dir * 380, 0],
+                        }
+                      : {
+                          opacity: [0, 1, 1],
+                          x: [fromX, fromX * 0.45, 0],
+                          y: [fromY, peak, 0],
+                          scale: [0.3, 1, 1],
+                          rotate: [0, dir * 180, dir * 360],
+                        }
               }
               transition={
                 !launched
@@ -514,7 +655,11 @@ export function FriendsArrive({
                   : reduced.current
                     ? { duration: 0.3 }
                     : i === lateIndex
-                      ? { duration: 1.25, times: [0, 0.45, 0.8, 1], ease: ["easeOut", "easeIn", "easeOut"] }
+                      ? {
+                          duration: 1.25,
+                          times: [0, 0.45, 0.8, 1],
+                          ease: ["easeOut", "easeIn", "easeOut"],
+                        }
                       : { duration: 0.78, times: [0, 0.45, 1], ease: ["easeOut", "easeIn"] }
               }
               onAnimationComplete={() => launched && landedOne(i)}
@@ -532,7 +677,9 @@ export function FriendsArrive({
                   storySound.babble(2, 900 + i * 50);
                   buzz(6);
                 }}
-                label={f.name ? t("story.friendAria", { name: f.name }) : t("story.friendAriaNoName")}
+                label={
+                  f.name ? t("story.friendAria", { name: f.name }) : t("story.friendAriaNoName")
+                }
               />
             </motion.div>
           );
@@ -552,10 +699,23 @@ export function FriendsArrive({
                 className="pointer-events-none absolute z-[6]"
                 style={{ left: w / 2 + dx - 20, top: boxBottom - bh * 0.84 }}
                 initial={{ y: 40, opacity: 0, rotate: 0 }}
-                animate={{ y: -h, opacity: [0, 1, 1, 1], rotate: [0, i % 2 ? 6 : -6, i % 2 ? -4 : 4, 0] }}
-                transition={{ duration: 3.4 + (i % 3) * 0.5, delay: 0.15 + i * 0.12, ease: [0.3, 0, 0.6, 1] }}
+                animate={{
+                  y: -h,
+                  opacity: [0, 1, 1, 1],
+                  rotate: [0, i % 2 ? 6 : -6, i % 2 ? -4 : 4, 0],
+                }}
+                transition={{
+                  duration: 3.4 + (i % 3) * 0.5,
+                  delay: 0.15 + i * 0.12,
+                  ease: [0.3, 0, 0.6, 1],
+                }}
               >
-                <path d="M20 46 C 18 60, 24 70, 19 90" fill="none" stroke="#B9A796" strokeWidth="1" />
+                <path
+                  d="M20 46 C 18 60, 24 70, 19 90"
+                  fill="none"
+                  stroke="#B9A796"
+                  strokeWidth="1"
+                />
                 <ellipse cx="20" cy="22" rx="17" ry="21" fill={fill} />
                 <ellipse cx="14" cy="14" rx="4" ry="6" fill="#fff" opacity=".45" />
                 <path d="M17 43 L23 43 L20 47 Z" fill={fill} />
@@ -584,23 +744,35 @@ export function FriendsArrive({
             }
           >
             {bubble.text}
-            <span aria-hidden="true" className="absolute -bottom-1.5 left-1/2 size-3 -translate-x-1/2 rotate-45 bg-white" />
+            <span
+              aria-hidden="true"
+              className="absolute -bottom-1.5 left-1/2 size-3 -translate-x-1/2 rotate-45 bg-white"
+            />
           </motion.div>
         ) : null}
       </AnimatePresence>
 
       {/* Hint and buttons */}
-      <div className="absolute inset-x-0 z-40 flex flex-col items-center gap-3 px-6" style={{ top: floor + 44 }}>
+      <div
+        className="absolute inset-x-0 z-40 flex flex-col items-center gap-3 px-6"
+        style={{ top: floor + 44 }}
+      >
         {phase === "box" || phase === "peek" ? (
           <>
             <p className="text-[15px] text-[#2B2522]/70">{t("story.box.hint")}</p>
-            <button type="button" onClick={knock} className="squish min-h-11 rounded-full bg-[#2B2522] px-6 text-sm font-medium text-[#FBF8F2]">
+            <button
+              type="button"
+              onClick={knock}
+              className="squish min-h-11 rounded-full bg-[#2B2522] px-6 text-sm font-medium text-[#FBF8F2]"
+            >
               {t("story.box.button")}
             </button>
           </>
         ) : phase === "ready" ? (
           <>
-            <p className="text-[15px] text-[#2B2522]/70">{tapHint ? t("story.ready.keep") : t("story.ready.hint")}</p>
+            <p className="text-[15px] text-[#2B2522]/70">
+              {tapHint ? t("story.ready.keep") : t("story.ready.hint")}
+            </p>
             <button
               type="button"
               aria-label={t("story.ready.aria")}
@@ -615,8 +787,25 @@ export function FriendsArrive({
               style={{ touchAction: "none", WebkitTouchCallout: "none" }}
             >
               <svg className="absolute inset-0 -rotate-90" viewBox="0 0 80 80" aria-hidden="true">
-                <circle cx="40" cy="40" r="36" fill="none" stroke="rgba(251,248,242,.18)" strokeWidth="4" />
-                <motion.circle cx="40" cy="40" r="36" fill="none" stroke={soft(palette.accent, 0.3)} strokeWidth="4" strokeLinecap="round" strokeDasharray={226} style={{ strokeDashoffset: dash }} />
+                <circle
+                  cx="40"
+                  cy="40"
+                  r="36"
+                  fill="none"
+                  stroke="rgba(251,248,242,.18)"
+                  strokeWidth="4"
+                />
+                <motion.circle
+                  cx="40"
+                  cy="40"
+                  r="36"
+                  fill="none"
+                  stroke={soft(palette.accent, 0.3)}
+                  strokeWidth="4"
+                  strokeLinecap="round"
+                  strokeDasharray={226}
+                  style={{ strokeDashoffset: dash }}
+                />
               </svg>
               <span className="relative">{t("story.ready.button")}</span>
             </button>
@@ -634,7 +823,11 @@ export function FriendsArrive({
         >
           {sound ? <Volume2 className="size-4" /> : <VolumeX className="size-4" />}
         </button>
-        <button type="button" onClick={onDone} className="min-h-10 rounded-full bg-white/70 px-4 text-sm font-medium text-[#2B2522] backdrop-blur">
+        <button
+          type="button"
+          onClick={onDone}
+          className="min-h-10 rounded-full bg-white/70 px-4 text-sm font-medium text-[#2B2522] backdrop-blur"
+        >
           {t("story.skip")}
         </button>
       </div>

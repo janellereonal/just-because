@@ -29,9 +29,7 @@ export default defineConfig({
         },
         {
           text: "Run it now",
-          items: [
-            { text: "Home network preview", link: "/hosting/home-network" },
-          ],
+          items: [{ text: "Home network preview", link: "/hosting/home-network" }],
         },
         {
           text: "Deploy later",
@@ -43,15 +41,11 @@ export default defineConfig({
         },
         {
           text: "Operate",
-          items: [
-            { text: "Updates and troubleshooting", link: "/hosting/operations" },
-          ],
+          items: [{ text: "Updates and troubleshooting", link: "/hosting/operations" }],
         },
       ],
     },
     search: { provider: "local" },
-    socialLinks: [
-      { icon: "github", link: "https://github.com/janellereonal/just-because" },
-    ],
+    socialLinks: [{ icon: "github", link: "https://github.com/janellereonal/just-because" }],
   },
 });

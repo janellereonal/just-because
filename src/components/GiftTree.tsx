@@ -148,7 +148,11 @@ export function GiftTree({
             {visible.map((item, index) => {
               const [bx, by] = HANGS[index] ?? HANGS[0]!;
               // "Only the recipient" ornaments come with their words only on the finished gift.
-              const locked = item.sealed || item.locked || (item.visibility === "recipient" && !item.text_content) || dateLocked;
+              const locked =
+                item.sealed ||
+                item.locked ||
+                (item.visibility === "recipient" && !item.text_content) ||
+                dateLocked;
               const w = 18;
               return (
                 <motion.button
@@ -312,7 +316,9 @@ export function GiftTree({
               ) : (
                 <>
                   {open.visibility === "recipient" ? (
-                    <p className="mb-2 font-mono text-[11px] tracking-[0.18em] uppercase opacity-60">{TREE_COPY.justForYou}</p>
+                    <p className="mb-2 font-mono text-[11px] tracking-[0.18em] uppercase opacity-60">
+                      {TREE_COPY.justForYou}
+                    </p>
                   ) : null}
                   <p className="text-[17px] leading-relaxed whitespace-pre-line [overflow-wrap:anywhere]">
                     {open.text_content}

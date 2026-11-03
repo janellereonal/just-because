@@ -11,7 +11,14 @@ import balikbayanBox from "./themes/balikbayan-box/theme";
 import parol from "./themes/parol/theme";
 import debut from "./themes/debut/theme";
 
-export const ENGINE_THEMES: ThemeDefinition[] = [winterCabin, carePackage, balikbayanBox, parol, debut, kraftParcel];
+export const ENGINE_THEMES: ThemeDefinition[] = [
+  winterCabin,
+  carePackage,
+  balikbayanBox,
+  parol,
+  debut,
+  kraftParcel,
+];
 
 export function engineTheme(id: string): ThemeDefinition | undefined {
   return ENGINE_THEMES.find((t) => t.id === id);
@@ -26,5 +33,7 @@ export function engineThemeForName(name: string | null | undefined): ThemeDefini
 
 /** Themes a visitor can pick in production: live ones, plus drafts whose flag is on. */
 export function liveEngineThemes(flags: Record<string, boolean> = {}): ThemeDefinition[] {
-  return ENGINE_THEMES.filter((t) => t.status === "live" || (t.status === "draft" && !!t.flag && flags[t.flag]));
+  return ENGINE_THEMES.filter(
+    (t) => t.status === "live" || (t.status === "draft" && !!t.flag && flags[t.flag]),
+  );
 }

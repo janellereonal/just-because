@@ -4,7 +4,13 @@ import { getAuth } from "./auth";
 import { getDb, schema } from "./db";
 
 /** `isGuest`: started a gift without an account yet (flag guestStart). */
-export type SessionUser = { id: string; email: string; name: string; isAdmin: boolean; isGuest: boolean };
+export type SessionUser = {
+  id: string;
+  email: string;
+  name: string;
+  isAdmin: boolean;
+  isGuest: boolean;
+};
 
 /** The signed-in person for this request, or null. */
 export async function currentUser(): Promise<SessionUser | null> {
@@ -58,11 +64,16 @@ export async function requireAdmin(): Promise<SessionUser> {
 export async function requireSiteOwner(siteId: string) {
   const user = await requireUser();
   const [site] = await getDb()
-    .select({ id: schema.giftSites.id, creatorId: schema.giftSites.creatorId, status: schema.giftSites.status })
+    .select({
+      id: schema.giftSites.id,
+      creatorId: schema.giftSites.creatorId,
+      status: schema.giftSites.status,
+    })
     .from(schema.giftSites)
     .where(eq(schema.giftSites.id, siteId));
   if (!site) throw new HttpError(404, "We couldn't find that gift.");
-  if (site.creatorId !== user.id && !user.isAdmin) throw new HttpError(403, "That gift isn't yours.");
+  if (site.creatorId !== user.id && !user.isAdmin)
+    throw new HttpError(403, "That gift isn't yours.");
   return { user, site };
 }
 

@@ -232,7 +232,12 @@ export function IntroDesigner({
         </label>
         {isFlagOn("friendsIntro") ? (
           <label className="flex items-start gap-3 rounded-xl border border-line bg-cream p-3">
-            <input type="checkbox" className="mt-0.5" checked={settings.friends !== false} onChange={(e) => set({ friends: e.target.checked ? undefined : false })} />
+            <input
+              type="checkbox"
+              className="mt-0.5"
+              checked={settings.friends !== false}
+              onChange={(e) => set({ friends: e.target.checked ? undefined : false })}
+            />
             <span className="text-sm">
               {t("story.option")}
               <span className="mt-0.5 block text-xs text-muted">{t("story.optionHint")}</span>
@@ -241,7 +246,12 @@ export function IntroDesigner({
         ) : null}
         {offers.includes("simbang") ? (
           <label className="flex items-start gap-3 rounded-xl border border-line bg-cream p-3">
-            <input type="checkbox" className="mt-0.5" checked={settings.simbang === true} onChange={(e) => set({ simbang: e.target.checked || undefined })} />
+            <input
+              type="checkbox"
+              className="mt-0.5"
+              checked={settings.simbang === true}
+              onChange={(e) => set({ simbang: e.target.checked || undefined })}
+            />
             <span className="text-sm">{t("theme.parol.simbangOption")}</span>
           </label>
         ) : null}
@@ -267,10 +277,18 @@ export function IntroDesigner({
           </button>
         </div>
         <p className="mt-2 text-xs text-muted">
-          {styleName ? <span className="block font-medium text-ink">{classic ? OPENING_CHOICE_COPY.classicOn(styleName) : OPENING_CHOICE_COPY.styleOn(styleName)}</span> : null}
+          {styleName ? (
+            <span className="block font-medium text-ink">
+              {classic
+                ? OPENING_CHOICE_COPY.classicOn(styleName)
+                : OPENING_CHOICE_COPY.styleOn(styleName)}
+            </span>
+          ) : null}
           {classic
             ? `A 3D scene, stickers and a button. ${STICKER_COPY.hint}`
-            : isFlagOn("styles") ? t("picker.style.ownObject") : "The theme's own object, opened with a gesture."}
+            : isFlagOn("styles")
+              ? t("picker.style.ownObject")
+              : "The theme's own object, opened with a gesture."}
         </p>
       </Group>
 
@@ -292,7 +310,9 @@ export function IntroDesigner({
               );
             })}
           </div>
-          <p className="mt-2 text-xs text-muted">{t(`letter.choice.${settings.letter ?? "seal"}Hint`)}</p>
+          <p className="mt-2 text-xs text-muted">
+            {t(`letter.choice.${settings.letter ?? "seal"}Hint`)}
+          </p>
         </Group>
       ) : null}
 
@@ -309,7 +329,9 @@ export function IntroDesigner({
                 title={isFlagOn("styles") ? t("picker.style.fromStyle") : "From the theme"}
               >
                 <img src={themeStillUrl(kind)} alt="" className="size-full object-contain" />
-                <span className="sr-only">{isFlagOn("styles") ? t("picker.style.fromStyle") : "From the theme"}</span>
+                <span className="sr-only">
+                  {isFlagOn("styles") ? t("picker.style.fromStyle") : "From the theme"}
+                </span>
               </button>
               {THEME_KINDS.filter((k) => k !== kind && k !== "default").map((k) => (
                 <button
@@ -386,10 +408,7 @@ export function IntroDesigner({
             ) : null}
           </Group>
 
-          <Group
-            title="Stickers"
-            hint={`Up to ${MAX_INTRO_STICKERS}. ${STICKER_COPY.hint}`}
-          >
+          <Group title="Stickers" hint={`Up to ${MAX_INTRO_STICKERS}. ${STICKER_COPY.hint}`}>
             <div className="flex flex-wrap gap-1.5">
               {STICKER_EMOJIS.map((e) => (
                 <button
@@ -489,7 +508,11 @@ export function IntroDesigner({
                     <Shuffle className="size-3" /> Shuffle
                   </button>
                   {onUndoStickers ? (
-                    <button type="button" onClick={onUndoStickers} className="inline-flex items-center gap-1 text-xs font-medium underline">
+                    <button
+                      type="button"
+                      onClick={onUndoStickers}
+                      className="inline-flex items-center gap-1 text-xs font-medium underline"
+                    >
                       <Undo2 className="size-3" /> {STICKER_COPY.undo}
                     </button>
                   ) : null}
@@ -606,7 +629,6 @@ export function IntroDesigner({
           </Group>
         </>
       ) : null}
-
 
       {classic ? (
         <>

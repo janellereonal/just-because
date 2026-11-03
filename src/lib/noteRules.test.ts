@@ -1,12 +1,21 @@
 import { describe, expect, test } from "bun:test";
 import { NOTE_RULES_COPY } from "@/copy/strings";
-import { clearlyNot, fileFits, hasWord, isGiftMedia, isSongLink, mediaKindFor, noteProblem } from "./noteRules";
+import {
+  clearlyNot,
+  fileFits,
+  hasWord,
+  isGiftMedia,
+  isSongLink,
+  mediaKindFor,
+  noteProblem,
+} from "./noteRules";
 import { sectionFields } from "./sections";
 import { giftShareUrl } from "./track";
 
 const SITE = "3f2c1b7a-1111-4222-8333-944455556666";
 const OTHER = "9a8b7c6d-1111-4222-8333-944455556666";
-const blob = (site: string, name: string) => `https://abc123xyz.public.blob.vercel-storage.com/gifts/${site}/${name}`;
+const blob = (site: string, name: string) =>
+  `https://abc123xyz.public.blob.vercel-storage.com/gifts/${site}/${name}`;
 const dev = (site: string, name: string) => `/api/dev-uploads/1792349587239-gifts_${site}_${name}`;
 
 describe("song links", () => {
@@ -55,8 +64,10 @@ describe("files", () => {
   test("each section takes its own kind", () => {
     expect(mediaKindFor("voice")).toBe("voice");
     expect(mediaKindFor("video")).toBe("video");
-    for (const t of ["photobooth", "capsule", "map", "doodle"]) expect(mediaKindFor(t)).toBe("photo");
-    for (const t of ["letters", "songs", "wordcloud", "tree", "quiz"]) expect(mediaKindFor(t)).toBeNull();
+    for (const t of ["photobooth", "capsule", "map", "doodle"])
+      expect(mediaKindFor(t)).toBe("photo");
+    for (const t of ["letters", "songs", "wordcloud", "tree", "quiz"])
+      expect(mediaKindFor(t)).toBeNull();
   });
   test("an image is not a voice note or a video", () => {
     const png = { type: "image/png", name: "me.png" };
@@ -76,9 +87,13 @@ describe("files", () => {
     expect(isGiftMedia(dev(SITE, "me.webp"), SITE)).toBe(true);
     expect(isGiftMedia(blob(OTHER, "me.webp"), SITE)).toBe(false);
     expect(isGiftMedia(dev(OTHER, "me.webp"), SITE)).toBe(false);
-    expect(isGiftMedia(`https://abc.public.blob.vercel-storage.com/themes/${SITE}/x.png`, SITE)).toBe(false);
+    expect(
+      isGiftMedia(`https://abc.public.blob.vercel-storage.com/themes/${SITE}/x.png`, SITE),
+    ).toBe(false);
     expect(isGiftMedia(`https://evil.com/gifts/${SITE}/x.png`, SITE)).toBe(false);
-    expect(isGiftMedia(`https://abc.public.blob.vercel-storage.com.evil.com/gifts/${SITE}/x.png`, SITE)).toBe(false);
+    expect(
+      isGiftMedia(`https://abc.public.blob.vercel-storage.com.evil.com/gifts/${SITE}/x.png`, SITE),
+    ).toBe(false);
     expect(isGiftMedia(blob(SITE, "x.png"), "")).toBe(false);
   });
   test("R2 URLs must use the configured host and this gift's folder", () => {
@@ -87,7 +102,9 @@ describe("files", () => {
     try {
       expect(isGiftMedia(`https://media.example.com/gifts/${SITE}/photo.webp`, SITE)).toBe(true);
       expect(isGiftMedia(`https://media.example.com/gifts/${OTHER}/photo.webp`, SITE)).toBe(false);
-      expect(isGiftMedia(`https://media.example.com.evil.test/gifts/${SITE}/photo.webp`, SITE)).toBe(false);
+      expect(
+        isGiftMedia(`https://media.example.com.evil.test/gifts/${SITE}/photo.webp`, SITE),
+      ).toBe(false);
     } finally {
       import.meta.env["VITE_R2_PUBLIC_URL"] = previous;
     }
@@ -105,48 +122,91 @@ describe("files", () => {
 describe("noteProblem (what the server checks)", () => {
   const base = { textContent: null, externalLink: null, mediaUrl: null };
   test("songs", () => {
-    expect(noteProblem("songs", { ...base, externalLink: "javascript:alert(1)" }, SITE)).toBe(NOTE_RULES_COPY.songLink);
+    expect(noteProblem("songs", { ...base, externalLink: "javascript:alert(1)" }, SITE)).toBe(
+      NOTE_RULES_COPY.songLink,
+    );
     expect(noteProblem("songs", base, SITE)).toBe(NOTE_RULES_COPY.songLink);
     expect(noteProblem("songs", { ...base, externalLink: "https://youtu.be/x1" }, SITE)).toBeNull();
   });
   test("other links must be https", () => {
-    expect(noteProblem("letters", { ...base, textContent: "hi", externalLink: "javascript:alert(1)" }, SITE)).toBe(NOTE_RULES_COPY.badLink);
+    expect(
+      noteProblem(
+        "letters",
+        { ...base, textContent: "hi", externalLink: "javascript:alert(1)" },
+        SITE,
+      ),
+    ).toBe(NOTE_RULES_COPY.badLink);
     expect(noteProblem("letters", { ...base, textContent: "hi" }, SITE)).toBeNull();
   });
   test("word cloud", () => {
-    expect(noteProblem("wordcloud", { ...base, textContent: ",,," }, SITE)).toBe(NOTE_RULES_COPY.noWord);
+    expect(noteProblem("wordcloud", { ...base, textContent: ",,," }, SITE)).toBe(
+      NOTE_RULES_COPY.noWord,
+    );
     expect(noteProblem("wordcloud", { ...base, textContent: "kind" }, SITE)).toBeNull();
   });
   test("files", () => {
-    expect(noteProblem("voice", { ...base, mediaUrl: blob(SITE, "me.png") }, SITE)).toBe(NOTE_RULES_COPY.wrongFile("voice"));
-    expect(noteProblem("video", { ...base, mediaUrl: dev(SITE, "me.png") }, SITE)).toBe(NOTE_RULES_COPY.wrongFile("video"));
+    expect(noteProblem("voice", { ...base, mediaUrl: blob(SITE, "me.png") }, SITE)).toBe(
+      NOTE_RULES_COPY.wrongFile("voice"),
+    );
+    expect(noteProblem("video", { ...base, mediaUrl: dev(SITE, "me.png") }, SITE)).toBe(
+      NOTE_RULES_COPY.wrongFile("video"),
+    );
     expect(noteProblem("voice", { ...base, mediaUrl: blob(SITE, "memo.m4a") }, SITE)).toBeNull();
-    expect(noteProblem("photobooth", { ...base, mediaUrl: blob(OTHER, "me.webp") }, SITE)).toBe(NOTE_RULES_COPY.notThisGift);
-    expect(noteProblem("photobooth", { ...base, mediaUrl: "https://example.com/me.webp" }, SITE)).toBe(NOTE_RULES_COPY.notThisGift);
-    expect(noteProblem("letters", { ...base, textContent: "hi", mediaUrl: blob(SITE, "me.webp") }, SITE)).toBe(NOTE_RULES_COPY.noFileHere);
+    expect(noteProblem("photobooth", { ...base, mediaUrl: blob(OTHER, "me.webp") }, SITE)).toBe(
+      NOTE_RULES_COPY.notThisGift,
+    );
+    expect(
+      noteProblem("photobooth", { ...base, mediaUrl: "https://example.com/me.webp" }, SITE),
+    ).toBe(NOTE_RULES_COPY.notThisGift);
+    expect(
+      noteProblem("letters", { ...base, textContent: "hi", mediaUrl: blob(SITE, "me.webp") }, SITE),
+    ).toBe(NOTE_RULES_COPY.noFileHere);
     // Re-saving a note keeps the file it already had (older notes may live elsewhere).
-    expect(noteProblem("photobooth", { ...base, mediaUrl: "https://old.example/me.jpg" }, SITE, "https://old.example/me.jpg")).toBeNull();
+    expect(
+      noteProblem(
+        "photobooth",
+        { ...base, mediaUrl: "https://old.example/me.jpg" },
+        SITE,
+        "https://old.example/me.jpg",
+      ),
+    ).toBeNull();
   });
 });
 
 test("the organiser sees every extra field of a newer note", () => {
-  expect(sectionFields("quiz", { question: "Where did we meet?", answer: "Cebu", wrong: ["Manila", "Davao"] })).toEqual([
+  expect(
+    sectionFields("quiz", {
+      question: "Where did we meet?",
+      answer: "Cebu",
+      wrong: ["Manila", "Davao"],
+    }),
+  ).toEqual([
     { field: "question", value: "Where did we meet?" },
     { field: "answer", value: "Cebu" },
     { field: "wrong", value: "Manila, Davao" },
   ]);
-  expect(sectionFields("superlatives", { award: "Best laugh" })).toEqual([{ field: "award", value: "Best laugh" }]);
+  expect(sectionFields("superlatives", { award: "Best laugh" })).toEqual([
+    { field: "award", value: "Best laugh" },
+  ]);
   expect(sectionFields("coupons", { title: "Dinner", fine_print: "Fridays" })).toEqual([
     { field: "coupon", value: "Dinner" },
     { field: "fine_print", value: "Fridays" },
   ]);
-  expect(sectionFields("openwhen", { when: "you miss home" })).toEqual([{ field: "when", value: "you miss home" }]);
-  expect(sectionFields("map", { place: "Siargao" })).toEqual([{ field: "place", value: "Siargao" }]);
-  expect(sectionFields("capsule", { unlock_at: "2027-10-19T00:00:00.000Z" })).toEqual([{ field: "unlock_at", value: "2027-10-19T00:00:00.000Z" }]);
+  expect(sectionFields("openwhen", { when: "you miss home" })).toEqual([
+    { field: "when", value: "you miss home" },
+  ]);
+  expect(sectionFields("map", { place: "Siargao" })).toEqual([
+    { field: "place", value: "Siargao" },
+  ]);
+  expect(sectionFields("capsule", { unlock_at: "2027-10-19T00:00:00.000Z" })).toEqual([
+    { field: "unlock_at", value: "2027-10-19T00:00:00.000Z" },
+  ]);
   expect(sectionFields("letters", null)).toEqual([]);
   expect(sectionFields("video", {})).toEqual([]);
 });
 
 test("Share copies the clean gift link", () => {
-  expect(giftShareUrl("ana-bday", "https://justbecause.site")).toBe("https://justbecause.site/g/ana-bday");
+  expect(giftShareUrl("ana-bday", "https://justbecause.site")).toBe(
+    "https://justbecause.site/g/ana-bday",
+  );
 });

@@ -105,7 +105,13 @@ export function SkinDecor({
               } as React.CSSProperties
             }
           >
-            {icons ? <IconGlyph item={pick(icons.items, i)} color={pick(tint, p.hue)} size={Math.round(12 * p.size + 6)} /> : null}
+            {icons ? (
+              <IconGlyph
+                item={pick(icons.items, i)}
+                color={pick(tint, p.hue)}
+                size={Math.round(12 * p.size + 6)}
+              />
+            ) : null}
           </i>
         ))}
       </div>

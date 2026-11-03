@@ -10,19 +10,34 @@ import { authClient } from "@/lib/auth-client";
 import { getAuthOptions } from "@/lib/api";
 import { useAuth } from "@/hooks/useAuth";
 import { GUEST_COPY } from "@/copy/strings";
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 function here() {
-  return typeof window === "undefined" ? "/dashboard" : `${window.location.pathname}${window.location.search}`;
+  return typeof window === "undefined"
+    ? "/dashboard"
+    : `${window.location.pathname}${window.location.search}`;
 }
 
 /** Google first (one tap, and it moves the gift over), then email. */
 function SignInButtons({ compact = false }: { compact?: boolean }) {
-  const { data: options } = useQuery({ queryKey: ["auth-options"], queryFn: () => getAuthOptions() });
+  const { data: options } = useQuery({
+    queryKey: ["auth-options"],
+    queryFn: () => getAuthOptions(),
+  });
   const [busy, setBusy] = useState(false);
   async function google() {
     setBusy(true);
-    const { error } = await authClient.signIn.social({ provider: "google", callbackURL: here(), errorCallbackURL: "/auth" });
+    const { error } = await authClient.signIn.social({
+      provider: "google",
+      callbackURL: here(),
+      errorCallbackURL: "/auth",
+    });
     if (error) {
       setBusy(false);
       toast.error("Google sign-in didn't work. Please try again.");
@@ -56,7 +71,10 @@ export function GuestBanner() {
   const { isGuest } = useAuth();
   if (!isGuest) return null;
   return (
-    <div role="status" className="flex flex-wrap items-center justify-between gap-3 border-b border-accent/30 bg-accent/10 px-4 py-2.5 text-sm">
+    <div
+      role="status"
+      className="flex flex-wrap items-center justify-between gap-3 border-b border-accent/30 bg-accent/10 px-4 py-2.5 text-sm"
+    >
       <span>
         <b>{GUEST_COPY.keep}</b> {GUEST_COPY.bannerBody}
       </span>
@@ -76,12 +94,24 @@ export function GuestSignInCard({ title, body }: { title: string; body: string }
   );
 }
 
-export function GuestSignInDialog({ open, onOpenChange, title, body }: { open: boolean; onOpenChange: (open: boolean) => void; title: string; body: string }) {
+export function GuestSignInDialog({
+  open,
+  onOpenChange,
+  title,
+  body,
+}: {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  title: string;
+  body: string;
+}) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-md bg-paper">
         <DialogHeader>
-          <DialogTitle className="font-display text-2xl font-medium tracking-tight">{title}</DialogTitle>
+          <DialogTitle className="font-display text-2xl font-medium tracking-tight">
+            {title}
+          </DialogTitle>
           <DialogDescription>{body}</DialogDescription>
         </DialogHeader>
         <SignInButtons />

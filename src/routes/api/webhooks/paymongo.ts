@@ -41,7 +41,12 @@ export const Route = createFileRoute("/api/webhooks/paymongo")({
             return Response.json({ error: "rejected" }, { status: outcome.malformed ? 400 : 401 });
           }
           if (outcome.kind === "ignored") {
-            if (underLogLimit()) await logPayment("webhook", outcome.eventType || "unknown", `ignored (${outcome.eventId || "no id"})`);
+            if (underLogLimit())
+              await logPayment(
+                "webhook",
+                outcome.eventType || "unknown",
+                `ignored (${outcome.eventId || "no id"})`,
+              );
             return Response.json({ ok: true });
           }
           if (outcome.kind === "check") {
@@ -55,20 +60,35 @@ export const Route = createFileRoute("/api/webhooks/paymongo")({
             const [order] = await getDb()
               .select()
               .from(schema.orders)
-              .where(and(eq(schema.orders.providerCheckoutId, outcome.checkoutId), notInArray(schema.orders.status, [...SETTLED_STATUSES])));
+              .where(
+                and(
+                  eq(schema.orders.providerCheckoutId, outcome.checkoutId),
+                  notInArray(schema.orders.status, [...SETTLED_STATUSES]),
+                ),
+              );
             if (!order) {
-              await logPayment("webhook", "hint", `${outcome.reason}; no unpaid order, skipped`, { checkoutId: outcome.checkoutId });
+              await logPayment("webhook", "hint", `${outcome.reason}; no unpaid order, skipped`, {
+                checkoutId: outcome.checkoutId,
+              });
               return Response.json({ ok: true });
             }
             const paid = await reconcileOrder(order, "webhook", 0);
-            if (!paid) await logPayment("webhook", "hint", `${outcome.reason}; PayMongo says not paid yet`, { checkoutId: outcome.checkoutId, orderId: order.id });
+            if (!paid)
+              await logPayment("webhook", "hint", `${outcome.reason}; PayMongo says not paid yet`, {
+                checkoutId: outcome.checkoutId,
+                orderId: order.id,
+              });
             return Response.json({ ok: true });
           }
           await applyPaidEvent(outcome.event, provider.name, "webhook");
           return Response.json({ ok: true });
         } catch (error) {
           console.error("[payments] webhook failed", error);
-          await logPayment("webhook", "error", error instanceof Error ? error.message : String(error));
+          await logPayment(
+            "webhook",
+            "error",
+            error instanceof Error ? error.message : String(error),
+          );
           return Response.json({ error: "failed" }, { status: 500 });
         }
       },

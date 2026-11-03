@@ -447,7 +447,12 @@ function OpenCapsule({ item, at, m }: { item: ViewContribution; at: string; m: M
         {SECTION_COPY.capsule.openedLine} {at ? formatDay(at) : ""}
       </span>
       {media ? (
-        <img src={media} alt="" className="mb-3 aspect-[4/3] w-full rounded-xl object-cover" onError={onPhotoError} />
+        <img
+          src={media}
+          alt=""
+          className="mb-3 aspect-[4/3] w-full rounded-xl object-cover"
+          onError={onPhotoError}
+        />
       ) : null}
       <p className="leading-relaxed whitespace-pre-line">{item.text_content}</p>
       <p className="sb-hand mt-3 text-lg" style={{ color: m.accent }}>
@@ -678,17 +683,51 @@ function MemoryMap(p: Common) {
         className="relative aspect-[4/3] overflow-hidden rounded-[22px]"
         style={{ background: m.paper, boxShadow: "0 18px 32px -24px rgba(0,0,0,.5)" }}
       >
-        <svg viewBox="0 0 400 300" className="absolute inset-0 size-full" aria-hidden="true" preserveAspectRatio="none">
+        <svg
+          viewBox="0 0 400 300"
+          className="absolute inset-0 size-full"
+          aria-hidden="true"
+          preserveAspectRatio="none"
+        >
           <rect width="400" height="300" fill={m.dark ? "#ffffff08" : `${m.accent2}22`} />
           {Array.from({ length: 9 }, (_, k) => (
-            <path key={k} d={`M0 ${20 + k * 34} q 50 -6 100 0 t 100 0 t 100 0 t 100 0`} fill="none" stroke={m.ink} strokeOpacity=".05" strokeWidth="1" />
+            <path
+              key={k}
+              d={`M0 ${20 + k * 34} q 50 -6 100 0 t 100 0 t 100 0 t 100 0`}
+              fill="none"
+              stroke={m.ink}
+              strokeOpacity=".05"
+              strokeWidth="1"
+            />
           ))}
           {/* Land: soft, hand-cut shapes */}
-          <path d="M-10 70C30 40 90 46 120 70s40 70 10 96-80 20-110 50-30 40-30 40V70z" fill={m.paper} stroke={m.ink} strokeOpacity=".12" />
-          <path d="M150 30c40-20 110-14 140 10s20 60 60 70 70 40 50 80-80 30-110 60-90 50-120 20-10-60-40-90-30-120 20-150z" fill={m.paper} stroke={m.ink} strokeOpacity=".12" />
-          <path d="M40 230c20-14 60-10 70 10s-10 40-40 44-50-30-30-54z" fill={m.paper} stroke={m.ink} strokeOpacity=".12" />
+          <path
+            d="M-10 70C30 40 90 46 120 70s40 70 10 96-80 20-110 50-30 40-30 40V70z"
+            fill={m.paper}
+            stroke={m.ink}
+            strokeOpacity=".12"
+          />
+          <path
+            d="M150 30c40-20 110-14 140 10s20 60 60 70 70 40 50 80-80 30-110 60-90 50-120 20-10-60-40-90-30-120 20-150z"
+            fill={m.paper}
+            stroke={m.ink}
+            strokeOpacity=".12"
+          />
+          <path
+            d="M40 230c20-14 60-10 70 10s-10 40-40 44-50-30-30-54z"
+            fill={m.paper}
+            stroke={m.ink}
+            strokeOpacity=".12"
+          />
           {Array.from({ length: 26 }, (_, k) => (
-            <circle key={k} cx={20 + hash01("t" + k, 3) * 360} cy={20 + hash01("t" + k, 4) * 260} r="1.6" fill={m.ink} opacity=".1" />
+            <circle
+              key={k}
+              cx={20 + hash01("t" + k, 3) * 360}
+              cy={20 + hash01("t" + k, 4) * 260}
+              r="1.6"
+              fill={m.ink}
+              opacity=".1"
+            />
           ))}
           {/* The route through every pin, drawn as you arrive */}
           {pins.length > 1 ? (
@@ -709,7 +748,15 @@ function MemoryMap(p: Common) {
           <g transform="translate(360 262)" opacity=".55">
             <circle r="16" fill="none" stroke={m.ink} strokeOpacity=".4" />
             <path d="M0-14l4 14-4 14-4-14z" fill={m.accent} />
-            <text y="-19" textAnchor="middle" fontSize="8" fill={m.ink} fontFamily="var(--jb-text, sans-serif)">N</text>
+            <text
+              y="-19"
+              textAnchor="middle"
+              fontSize="8"
+              fill={m.ink}
+              fontFamily="var(--jb-text, sans-serif)"
+            >
+              N
+            </text>
           </g>
         </svg>
         {pins.map(({ it, place, x, y }, k) => (
@@ -733,11 +780,22 @@ function MemoryMap(p: Common) {
             <span
               className="mb-0.5 max-w-[120px] truncate rounded-full px-2 py-0.5 text-[10px] font-semibold shadow-sm"
               // Pins near an edge lean their label inwards so it never gets cut off on narrow screens.
-              style={{ transform: `translateX(${(50 - x) * 0.8}%)`, background: active === it.id ? m.accent : m.paper, color: active === it.id ? (m.dark ? m.paper : "#fff") : m.ink }}
+              style={{
+                transform: `translateX(${(50 - x) * 0.8}%)`,
+                background: active === it.id ? m.accent : m.paper,
+                color: active === it.id ? (m.dark ? m.paper : "#fff") : m.ink,
+              }}
             >
               {place}
             </span>
-            <MapPin className="size-7 drop-shadow" style={{ color: active === it.id ? m.accent : m.ink, fill: active === it.id ? m.accent2 : m.paper }} aria-hidden="true" />
+            <MapPin
+              className="size-7 drop-shadow"
+              style={{
+                color: active === it.id ? m.accent : m.ink,
+                fill: active === it.id ? m.accent2 : m.paper,
+              }}
+              aria-hidden="true"
+            />
           </motion.button>
         ))}
       </div>

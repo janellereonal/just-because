@@ -33,7 +33,21 @@ import {
 } from "./core/progress";
 import { haptic, playSound, type SoundName } from "./sound";
 
-export const GESTURES = ["tear", "peel", "pull", "untie", "blow", "shake", "scratch", "hold", "slide", "spin", "unfold", "pop", "wipe"] as const;
+export const GESTURES = [
+  "tear",
+  "peel",
+  "pull",
+  "untie",
+  "blow",
+  "shake",
+  "scratch",
+  "hold",
+  "slide",
+  "spin",
+  "unfold",
+  "pop",
+  "wipe",
+] as const;
 export type GestureKind = (typeof GESTURES)[number];
 
 type DragSpec = { axis: DragAxis; direction: 1 | -1 };
@@ -109,7 +123,11 @@ export type Gesture = {
   stage: number;
   reduced: boolean;
   /** Spread onto the object. */
-  bind: React.HTMLAttributes<HTMLElement> & { tabIndex: number; role: string; "aria-label": string };
+  bind: React.HTMLAttributes<HTMLElement> & {
+    tabIndex: number;
+    role: string;
+    "aria-label": string;
+  };
   /** Finish now (the plain button). */
   complete: () => void;
   /** Set progress from the theme's own targets (lighting panels one by one, say). Completes at the threshold. */
@@ -170,7 +188,8 @@ export function useGesture(kind: GestureKind, options: GestureOptions): Gesture 
     (p: number, opts2: { animateTo?: boolean } = {}) => {
       if (doneRef.current) return;
       const o = opts.current;
-      if (opts2.animateTo && !reduced) void animate(progress, p, { type: "spring", stiffness: 260, damping: 26 });
+      if (opts2.animateTo && !reduced)
+        void animate(progress, p, { type: "spring", stiffness: 260, damping: 26 });
       else progress.set(p);
       o.onProgress?.(p);
       const now = performance.now();
@@ -207,7 +226,15 @@ export function useGesture(kind: GestureKind, options: GestureOptions): Gesture 
   const distance = options.distance ?? 160;
   const steps = Math.max(1, options.steps ?? 2);
   const holdMs = options.holdMs ?? 1100;
-  const pointer = useRef<{ id: number; x: number; y: number; base: number; moved: boolean; u: number; v: number } | null>(null);
+  const pointer = useRef<{
+    id: number;
+    x: number;
+    y: number;
+    base: number;
+    moved: boolean;
+    u: number;
+    v: number;
+  } | null>(null);
   const holdTimer = useRef<{ raf: number; start: number } | null>(null);
 
   const stopHold = useCallback(() => {
@@ -262,7 +289,11 @@ export function useGesture(kind: GestureKind, options: GestureOptions): Gesture 
 
   const local = (e: React.PointerEvent) => {
     const r = (e.currentTarget as HTMLElement).getBoundingClientRect();
-    return { u: (e.clientX - r.left) / Math.max(1, r.width), v: (e.clientY - r.top) / Math.max(1, r.height), r };
+    return {
+      u: (e.clientX - r.left) / Math.max(1, r.width),
+      v: (e.clientY - r.top) / Math.max(1, r.height),
+      r,
+    };
   };
 
   const onPointerDown = (e: React.PointerEvent) => {
@@ -273,7 +304,15 @@ export function useGesture(kind: GestureKind, options: GestureOptions): Gesture 
       /* fine */
     }
     const { u, v } = local(e);
-    pointer.current = { id: e.pointerId, x: e.clientX, y: e.clientY, base: progress.get(), moved: false, u, v };
+    pointer.current = {
+      id: e.pointerId,
+      x: e.clientX,
+      y: e.clientY,
+      base: progress.get(),
+      moved: false,
+      u,
+      v,
+    };
     if (kind === "hold") {
       e.preventDefault();
       startHold();
@@ -301,7 +340,9 @@ export function useGesture(kind: GestureKind, options: GestureOptions): Gesture 
       }
     } else if (kind === "spin") {
       const r = (e.currentTarget as HTMLElement).getBoundingClientRect();
-      report(trackers.angle.feed(e.clientX - (r.left + r.width / 2), e.clientY - (r.top + r.height / 2)));
+      report(
+        trackers.angle.feed(e.clientX - (r.left + r.width / 2), e.clientY - (r.top + r.height / 2)),
+      );
     } else if (kind === "scratch" || kind === "wipe") {
       const { u, v } = local(e);
       const radius = opts.current.brush ?? (kind === "wipe" ? 0.14 : 0.08);
@@ -395,8 +436,12 @@ export function useGesture(kind: GestureKind, options: GestureOptions): Gesture 
     }
     setMicState("asking");
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: false, noiseSuppression: false } });
-      const Ctor = window.AudioContext ?? (window as unknown as { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
+      const stream = await navigator.mediaDevices.getUserMedia({
+        audio: { echoCancellation: false, noiseSuppression: false },
+      });
+      const Ctor =
+        window.AudioContext ??
+        (window as unknown as { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
       if (!Ctor) throw new Error("no audio");
       const ctx = new Ctor();
       const src = ctx.createMediaStreamSource(stream);
@@ -435,7 +480,9 @@ export function useGesture(kind: GestureKind, options: GestureOptions): Gesture 
       setMotionState("unsupported");
       return;
     }
-    const DME = window.DeviceMotionEvent as unknown as { requestPermission?: () => Promise<string> };
+    const DME = window.DeviceMotionEvent as unknown as {
+      requestPermission?: () => Promise<string>;
+    };
     try {
       if (DME.requestPermission) {
         setMotionState("asking");
@@ -445,7 +492,9 @@ export function useGesture(kind: GestureKind, options: GestureOptions): Gesture 
         const a = ev.acceleration ?? ev.accelerationIncludingGravity;
         if (!a) return;
         const grav = ev.acceleration ? 0 : 9.8;
-        report(trackers.shake.feed(a.x ?? 0, a.y ?? 0, Math.abs(a.z ?? 0) - grav, performance.now()));
+        report(
+          trackers.shake.feed(a.x ?? 0, a.y ?? 0, Math.abs(a.z ?? 0) - grav, performance.now()),
+        );
         if (doneRef.current) motionStop.current?.();
       };
       window.addEventListener("devicemotion", onMotion);
@@ -487,7 +536,12 @@ export function useGesture(kind: GestureKind, options: GestureOptions): Gesture 
       onKeyDown,
       onKeyUp,
       onContextMenu: (e) => kind === "hold" && e.preventDefault(),
-      style: { touchAction: kind === "scratch" || kind === "wipe" || kind === "spin" || drag ? "none" : "manipulation" },
+      style: {
+        touchAction:
+          kind === "scratch" || kind === "wipe" || kind === "spin" || drag
+            ? "none"
+            : "manipulation",
+      },
     },
     complete: finish,
     setProgress: (p: number) => report(Math.max(0, Math.min(1, p)), { animateTo: true }),

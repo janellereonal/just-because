@@ -43,13 +43,19 @@ export const WHOLE_FIELDS = [
 ] as const;
 
 /** JSON columns saved key by key, so two places changing different keys both keep theirs. */
-export const KEYED_FIELDS = ["custom_text", "custom_colors", "intro_settings", "format_settings"] as const;
+export const KEYED_FIELDS = [
+  "custom_text",
+  "custom_colors",
+  "intro_settings",
+  "format_settings",
+] as const;
 
 export type WholeField = (typeof WHOLE_FIELDS)[number];
 export type KeyedField = (typeof KEYED_FIELDS)[number];
 export type Flat = Record<string, unknown>;
 
-const isObject = (v: unknown): v is Record<string, unknown> => !!v && typeof v === "object" && !Array.isArray(v);
+const isObject = (v: unknown): v is Record<string, unknown> =>
+  !!v && typeof v === "object" && !Array.isArray(v);
 
 /** Empty, null and missing all mean "nothing here". */
 export function isBlank(v: unknown) {
@@ -137,7 +143,12 @@ export function toPatch(keys: string[], flat: Flat): Record<string, unknown> {
  * them. A field that already holds the new value isn't a clash (a retry of a
  * save that went through, or two tabs making the same change).
  */
-export function findConflicts(current: Flat, base: Flat, patch: Flat, opts: { skip?: readonly string[]; alt?: Flat } = {}): string[] {
+export function findConflicts(
+  current: Flat,
+  base: Flat,
+  patch: Flat,
+  opts: { skip?: readonly string[]; alt?: Flat } = {},
+): string[] {
   const clashes: string[] = [];
   for (const key of Object.keys(patch)) {
     if (opts.skip?.includes(key) || !(key in base)) continue;
@@ -167,7 +178,10 @@ export function checkSave(
 }
 
 /** A patch without some flat keys (`custom_text.heading`, `title`...). */
-export function withoutKeys<T extends Record<string, unknown>>(patch: T, keys: readonly string[]): T {
+export function withoutKeys<T extends Record<string, unknown>>(
+  patch: T,
+  keys: readonly string[],
+): T {
   const out: Record<string, unknown> = { ...patch };
   for (const key of keys) {
     const dot = key.indexOf(".");
@@ -194,13 +208,24 @@ export function withoutKeys<T extends Record<string, unknown>>(patch: T, keys: r
  *   change to them. Then it's a clash: `known` stays old, so the next save is refused
  *   instead of overwriting.
  */
-export function rebase(opts: { draft: Flat; sent: Flat; known: Flat; server: Flat; saved?: ReadonlySet<string> }) {
+export function rebase(opts: {
+  draft: Flat;
+  sent: Flat;
+  known: Flat;
+  server: Flat;
+  saved?: ReadonlySet<string>;
+}) {
   const draft = { ...opts.draft };
   const sent = { ...opts.sent };
   const known = { ...opts.known };
   const pulled: string[] = [];
   const clashes: string[] = [];
-  const keys = new Set([...Object.keys(draft), ...Object.keys(sent), ...Object.keys(known), ...Object.keys(opts.server)]);
+  const keys = new Set([
+    ...Object.keys(draft),
+    ...Object.keys(sent),
+    ...Object.keys(known),
+    ...Object.keys(opts.server),
+  ]);
   for (const k of keys) {
     const fresh = opts.server[k];
     if (opts.saved?.has(k) || same(fresh, opts.known[k])) {

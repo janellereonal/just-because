@@ -30,7 +30,13 @@ import { normalizeIntroSettings } from "@/lib/intro";
 import { dayStartedSomewhere } from "@/lib/time";
 import { normalizeCharacter } from "@/themes/_shared/cast/types";
 import { normalizeIconSetting } from "@/themes/_shared/iconSets";
-import { NEW_SECTION_TYPES, SECTION_NEEDS, capsuleLocked, isNewSection, normalizeSectionData } from "@/lib/sections";
+import {
+  NEW_SECTION_TYPES,
+  SECTION_NEEDS,
+  capsuleLocked,
+  isNewSection,
+  normalizeSectionData,
+} from "@/lib/sections";
 import { isGiftMedia, noteProblem } from "@/lib/noteRules";
 import { createServerFn } from "@tanstack/react-start";
 import { and, asc, desc, eq, inArray, ne, or, sql } from "drizzle-orm";
@@ -48,7 +54,14 @@ import {
   upgradeOptions,
   withRoom,
 } from "@/server/billing";
-import { TIERS, LEGACY_TIER, discountLabel as discountLabelOf, getTier, hasFeature, tierAllowsLook } from "@/config/pricing";
+import {
+  TIERS,
+  LEGACY_TIER,
+  discountLabel as discountLabelOf,
+  getTier,
+  hasFeature,
+  tierAllowsLook,
+} from "@/config/pricing";
 import {
   clearTries,
   hashPassword,
@@ -79,8 +92,23 @@ const MODULE_TYPES = [
   "tree",
   ...NEW_SECTION_TYPES,
 ] as const;
-const GUEST_TYPES = ["letters", "photobooth", "songs", "wordcloud", "voice", "tree", ...NEW_SECTION_TYPES] as const;
-const OWNER_NOTE_TYPES = ["letters", "photobooth", "songs", "wordcloud", "voice", ...NEW_SECTION_TYPES] as const;
+const GUEST_TYPES = [
+  "letters",
+  "photobooth",
+  "songs",
+  "wordcloud",
+  "voice",
+  "tree",
+  ...NEW_SECTION_TYPES,
+] as const;
+const OWNER_NOTE_TYPES = [
+  "letters",
+  "photobooth",
+  "songs",
+  "wordcloud",
+  "voice",
+  ...NEW_SECTION_TYPES,
+] as const;
 
 /** Clean `data` for a section and check it has what it needs. Throws a friendly 400. */
 /** A small copy of a photo we stored for this gift (Vercel Blob, or a local dev upload), or null. */
@@ -89,7 +117,13 @@ function ownThumb(value: unknown, siteId: string): string | null {
   return isGiftMedia(value, siteId) ? value : null;
 }
 
-function sectionPayload(type: string, raw: unknown, text: string | null, media: string | null, siteId = ""): Record<string, unknown> | null {
+function sectionPayload(
+  type: string,
+  raw: unknown,
+  text: string | null,
+  media: string | null,
+  siteId = "",
+): Record<string, unknown> | null {
   // Photos: a booth photo has its frame and words drawn in (gifts show it whole), and most
   // photos come with a small copy for grids and previews.
   if (type === "photobooth") {
@@ -102,17 +136,31 @@ function sectionPayload(type: string, raw: unknown, text: string | null, media: 
   }
   if (!isNewSection(type)) return null;
   const clean = normalizeSectionData(type, raw);
-  if (!clean) throw new HttpError(400, "Something's missing in that note. Check the fields and try again.");
+  if (!clean)
+    throw new HttpError(400, "Something's missing in that note. Check the fields and try again.");
   const needs = SECTION_NEEDS[type];
-  if (needs.text === "required" && !text?.trim()) throw new HttpError(400, "Write a few words first.");
+  if (needs.text === "required" && !text?.trim())
+    throw new HttpError(400, "Write a few words first.");
   if (needs.media === "required" && !media) throw new HttpError(400, "Add the file first.");
   return clean;
 }
 
 /** Public rows: a time capsule that hasn't opened keeps its words and pictures on the server. */
-function sealCapsule<T extends { moduleType: string; data: unknown; textContent: string | null; mediaUrl: string | null }>(row: T): T {
+function sealCapsule<
+  T extends {
+    moduleType: string;
+    data: unknown;
+    textContent: string | null;
+    mediaUrl: string | null;
+  },
+>(row: T): T {
   if (row.moduleType !== "capsule" || !capsuleLocked(row.data)) return row;
-  return { ...row, textContent: null, mediaUrl: null, data: { ...(row.data as object), locked: true } };
+  return {
+    ...row,
+    textContent: null,
+    mediaUrl: null,
+    data: { ...(row.data as object), locked: true },
+  };
 }
 
 /**
@@ -120,7 +168,14 @@ function sealCapsule<T extends { moduleType: string; data: unknown; textContent:
  * started somewhere (UTC+14). Date and position stay, so the grid still draws; the
  * browser opens each door at the viewer's own midnight and refetches then.
  */
-function sealDoor<T extends { entryDate: string; textContent: string | null; mediaUrl: string | null; externalLink: string | null }>(row: T, now: number) {
+function sealDoor<
+  T extends {
+    entryDate: string;
+    textContent: string | null;
+    mediaUrl: string | null;
+    externalLink: string | null;
+  },
+>(row: T, now: number) {
   if (dayStartedSomewhere(row.entryDate, now)) return { ...row, locked: false };
   return { ...row, textContent: null, mediaUrl: null, externalLink: null, locked: true };
 }
@@ -130,13 +185,34 @@ function treeSealed(site: { treeRevealDate: string | null }, now = Date.now()) {
   return !!site.treeRevealDate && !dayStartedSomewhere(site.treeRevealDate, now);
 }
 const ORNAMENT_KEYS = [
-  "bauble", "star", "stocking", "candy-cane", "snowman", "gingerbread", "bell", "wreath",
-  "mitten", "snow-globe", "gift", "heart", "candy", "cookie", "pinecone", "angel",
+  "bauble",
+  "star",
+  "stocking",
+  "candy-cane",
+  "snowman",
+  "gingerbread",
+  "bell",
+  "wreath",
+  "mitten",
+  "snow-globe",
+  "gift",
+  "heart",
+  "candy",
+  "cookie",
+  "pinecone",
+  "angel",
 ] as const;
 
 type Json = string | number | boolean | null | Json[] | { [key: string]: Json };
 const json: z.ZodType<Json> = z.lazy(() =>
-  z.union([z.string(), z.number(), z.boolean(), z.null(), z.array(json), z.record(z.string(), json)]),
+  z.union([
+    z.string(),
+    z.number(),
+    z.boolean(),
+    z.null(),
+    z.array(json),
+    z.record(z.string(), json),
+  ]),
 );
 const jsonObject = z.record(z.string(), json);
 
@@ -146,7 +222,13 @@ const link = z.string().max(2000).nullable();
 const mediaUrl = z
   .string()
   .max(2000)
-  .refine((v) => /^https:\/\/[a-z0-9-]+\.public\.blob\.vercel-storage\.com\//i.test(v) || isR2HostUrl(v) || v.startsWith("/api/dev-uploads/"), "Bad media URL")
+  .refine(
+    (v) =>
+      /^https:\/\/[a-z0-9-]+\.public\.blob\.vercel-storage\.com\//i.test(v) ||
+      isR2HostUrl(v) ||
+      v.startsWith("/api/dev-uploads/"),
+    "Bad media URL",
+  )
   .nullable();
 
 /** The same checks the friend page makes (song links, words, the right kind of file from this gift), as a friendly 400. */
@@ -210,7 +292,10 @@ export const setThemeStatus = createServerFn({ method: "POST" })
   .inputValidator(z.object({ id, status: z.enum(["published", "draft"]) }))
   .handler(async ({ data }) => {
     await requireAdmin();
-    await getDb().update(schema.themes).set({ status: data.status }).where(eq(schema.themes.id, data.id));
+    await getDb()
+      .update(schema.themes)
+      .set({ status: data.status })
+      .where(eq(schema.themes.id, data.id));
     return { ok: true };
   });
 
@@ -257,7 +342,10 @@ function siteRow(site: SiteRecord, opts: { owner: boolean }) {
  * and whether the visitor owns it, or null.
  */
 async function canViewGift(siteId: string, opts: { allowSharedNotes?: boolean } = {}) {
-  const [site] = await getDb().select().from(schema.giftSites).where(eq(schema.giftSites.id, siteId));
+  const [site] = await getDb()
+    .select()
+    .from(schema.giftSites)
+    .where(eq(schema.giftSites.id, siteId));
   if (!site) return null;
   const user = await currentUser();
   if (site.disabledAt && !user?.isAdmin) return null;
@@ -292,7 +380,10 @@ export const deleteAccount = createServerFn({ method: "POST" })
     void data;
     const user = await requireUser();
     const db = getDb();
-    const gifts = await db.select({ id: schema.giftSites.id }).from(schema.giftSites).where(eq(schema.giftSites.creatorId, user.id));
+    const gifts = await db
+      .select({ id: schema.giftSites.id })
+      .from(schema.giftSites)
+      .where(eq(schema.giftSites.creatorId, user.id));
     // Rows first (orders keep their record with the gift and owner set to null), then the files.
     await db.delete(schema.user).where(eq(schema.user.id, user.id));
     const { deleteGiftMedia } = await import("@/server/uploads");
@@ -308,22 +399,34 @@ export const getSiteBySlug = createServerFn({ method: "GET" })
   .inputValidator(z.object({ slug: z.string().min(1).max(120) }))
   .handler(async ({ data }) => {
     rateLimit(`slug:${clientIp()}`, 240, 60_000, READ_LIMIT);
-    const [row] = await getDb().select().from(schema.giftSites).where(eq(schema.giftSites.slug, data.slug));
+    const [row] = await getDb()
+      .select()
+      .from(schema.giftSites)
+      .where(eq(schema.giftSites.slug, data.slug));
     if (!row) return null;
     return siteRow(row, { owner: isOwnerOf(await currentUser(), row) });
   });
 
 /** The recipient enters the gift's password. Right answer: remembered on this browser. */
 export const unlockGift = createServerFn({ method: "POST" })
-  .inputValidator(z.object({ slug: z.string().min(1).max(120), password: z.string().min(1).max(200) }))
+  .inputValidator(
+    z.object({ slug: z.string().min(1).max(120), password: z.string().min(1).max(200) }),
+  )
   .handler(async ({ data }) => {
-    const [site] = await getDb().select().from(schema.giftSites).where(eq(schema.giftSites.slug, data.slug));
-    if (!site || !site.passwordHash || !needsPassword(site)) return { ok: true as const, error: null };
+    const [site] = await getDb()
+      .select()
+      .from(schema.giftSites)
+      .where(eq(schema.giftSites.slug, data.slug));
+    if (!site || !site.passwordHash || !needsPassword(site))
+      return { ok: true as const, error: null };
     const { getRequest } = await import("@tanstack/react-start/server");
     const ip = getRequest()?.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? "local";
     const key = `${site.id}:${ip}`;
     if (tooManyTries(key)) {
-      return { ok: false as const, error: "Too many tries. Please wait a few minutes and try again." };
+      return {
+        ok: false as const,
+        error: "Too many tries. Please wait a few minutes and try again.",
+      };
     }
     if (!(await verifyPassword(data.password, site.passwordHash))) {
       return { ok: false as const, error: "That's not it. Check with whoever sent you the link." };
@@ -347,14 +450,20 @@ export const setGiftPassword = createServerFn({ method: "POST" })
   )
   .handler(async ({ data }) => {
     await requireSiteOwner(data.siteId);
-    const [site] = await getDb().select().from(schema.giftSites).where(eq(schema.giftSites.id, data.siteId));
+    const [site] = await getDb()
+      .select()
+      .from(schema.giftSites)
+      .where(eq(schema.giftSites.id, data.siteId));
     if (!site) throw new HttpError(404, "We couldn't find that gift.");
     // Unpaid drafts may set one ahead of time; it only takes effect on a plan that includes it.
     if (data.password !== null && site.tier && !hasFeature(site.tier, "passwordProtection")) {
       throw new HttpError(403, "Passwords come with Celebration and Keepsake. Upgrade to add one.");
     }
     const passwordHash = data.password === null ? null : await hashPassword(data.password);
-    await getDb().update(schema.giftSites).set({ passwordHash }).where(eq(schema.giftSites.id, site.id));
+    await getDb()
+      .update(schema.giftSites)
+      .set({ passwordHash })
+      .where(eq(schema.giftSites.id, site.id));
     return { ok: true, passwordSet: passwordHash !== null };
   });
 
@@ -362,7 +471,10 @@ export const getSiteById = createServerFn({ method: "GET" })
   .inputValidator(z.object({ id }))
   .handler(async ({ data }) => {
     const user = await requireUser();
-    const [row] = await getDb().select().from(schema.giftSites).where(eq(schema.giftSites.id, data.id));
+    const [row] = await getDb()
+      .select()
+      .from(schema.giftSites)
+      .where(eq(schema.giftSites.id, data.id));
     if (!row) return null;
     if (row.creatorId !== user.id && !user.isAdmin) return null;
     return siteRow(row, { owner: true });
@@ -414,21 +526,30 @@ async function randomSlug(length = 12) {
 async function uniqueSlug() {
   for (let i = 0; i < 5; i++) {
     const slug = await randomSlug();
-    const [taken] = await getDb().select({ id: schema.giftSites.id }).from(schema.giftSites).where(eq(schema.giftSites.slug, slug));
+    const [taken] = await getDb()
+      .select({ id: schema.giftSites.id })
+      .from(schema.giftSites)
+      .where(eq(schema.giftSites.slug, slug));
     if (!taken) return slug;
   }
   return randomSlug(16);
 }
 
 /** An occasion a gift can be saved with ("Holidays" is only a chip that opens up into the real ones). */
-const occasionField = z.enum(OCCASION_IDS).refine((o) => !occasionInfo(o).groupOnly, "Pick the holiday it's for.");
+const occasionField = z
+  .enum(OCCASION_IDS)
+  .refine((o) => !occasionInfo(o).groupOnly, "Pick the holiday it's for.");
 
 /**
  * The theme row a style wears (its opening, colors, fonts and cast), looked up on the
  * server by name so the browser can't pick a mismatched one. Layout styles wear none.
  * Draft themes (not published in /admin yet) are only for admins.
  */
-async function themeForStyle(style: StyleInfo, occasion: OccasionId | null | undefined, lookId: string | null | undefined) {
+async function themeForStyle(
+  style: StyleInfo,
+  occasion: OccasionId | null | undefined,
+  lookId: string | null | undefined,
+) {
   const look = lookFor(style, occasion, lookId);
   if (!look) return null;
   const [row] = await getDb()
@@ -436,7 +557,8 @@ async function themeForStyle(style: StyleInfo, occasion: OccasionId | null | und
     .from(schema.themes)
     .where(eq(schema.themes.name, look.theme));
   if (!row) throw new HttpError(422, "That style isn't available right now.");
-  if (row.status !== "published" && !(await currentUser())?.isAdmin) throw new HttpError(422, "That style isn't available yet.");
+  if (row.status !== "published" && !(await currentUser())?.isAdmin)
+    throw new HttpError(422, "That style isn't available yet.");
   return row.id;
 }
 
@@ -449,7 +571,12 @@ export const createSite = createServerFn({ method: "POST" })
     z.object({
       title: z.string().trim().min(1).max(200),
       /** Who it's for. The title is made from it, and it fills "for Ana" on the gift. */
-      recipientName: z.string().trim().min(1, "Add the name of who it's for.").max(LIMITS.recipientName, tooLong("their name", LIMITS.recipientName)).optional(),
+      recipientName: z
+        .string()
+        .trim()
+        .min(1, "Add the name of who it's for.")
+        .max(LIMITS.recipientName, tooLong("their name", LIMITS.recipientName))
+        .optional(),
       themeId: id.nullable(),
       format: z.enum(FORMAT_IDS),
       /** The style. When set, the server picks the layout and the theme it wears. */
@@ -459,7 +586,10 @@ export const createSite = createServerFn({ method: "POST" })
       occasion: occasionField.nullable().optional(),
       paletteId: id.nullable(),
       customColors: paletteShape,
-      treeRevealDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).nullable(),
+      treeRevealDate: z
+        .string()
+        .regex(/^\d{4}-\d{2}-\d{2}$/)
+        .nullable(),
       modules: z.array(z.enum(MODULE_TYPES)).min(1),
       fontChoice: z.enum(FONT_CHOICE_IDS).optional(),
       /** Just from the creator: no friends link, they add every note. */
@@ -470,7 +600,8 @@ export const createSite = createServerFn({ method: "POST" })
     const user = await requireUser();
     if (user.isGuest) {
       const { GUEST_GIFT_LIMIT, giftCount } = await import("@/server/guests");
-      if ((await giftCount(user.id)) >= GUEST_GIFT_LIMIT) throw new HttpError(401, GUEST_COPY.limit);
+      if ((await giftCount(user.id)) >= GUEST_GIFT_LIMIT)
+        throw new HttpError(401, GUEST_COPY.limit);
     }
     const db = getDb();
     // A double tap on "Create" makes one gift, not two: the same title from the
@@ -488,9 +619,16 @@ export const createSite = createServerFn({ method: "POST" })
       .orderBy(desc(schema.giftSites.createdAt))
       .limit(1);
     if (recent) return { id: recent.id };
-    rateLimit(`create:${user.id}`, 30, 60 * 60_000, "That's a lot of new gifts in a short time. Take a breather and try again in a bit.");
+    rateLimit(
+      `create:${user.id}`,
+      30,
+      60 * 60_000,
+      "That's a lot of new gifts in a short time. Take a breather and try again in a bit.",
+    );
     const style = data.style ? styleInfo(data.style) : null;
-    const themeId = style ? await themeForStyle(style, data.occasion, data.styleLook) : data.themeId;
+    const themeId = style
+      ? await themeForStyle(style, data.occasion, data.styleLook)
+      : data.themeId;
     const format: GiftFormat = style ? bodyFor(style) : data.format;
     const slug = await uniqueSlug();
     const made = await db.transaction(async (tx) => {
@@ -504,7 +642,10 @@ export const createSite = createServerFn({ method: "POST" })
           ...(style ? { style: style.id } : {}),
           ...(data.occasion ? { occasion: data.occasion } : {}),
           slug,
-          customText: { heading: data.title, ...(data.recipientName ? { recipient_name: data.recipientName } : {}) },
+          customText: {
+            heading: data.title,
+            ...(data.recipientName ? { recipient_name: data.recipientName } : {}),
+          },
           paletteId: data.paletteId,
           customColors: data.customColors,
           treeRevealDate: data.treeRevealDate,
@@ -518,11 +659,18 @@ export const createSite = createServerFn({ method: "POST" })
         .values(unique.map((type) => ({ siteId: site!.id, moduleType: type, price: "0" })));
       return { id: site!.id };
     });
-    await track("gift_created", { siteId: made.id, userId: user.id, props: { solo: data.solo ?? false } });
+    await track("gift_created", {
+      siteId: made.id,
+      userId: user.id,
+      props: { solo: data.solo ?? false },
+    });
     return made;
   });
 
-const date = z.string().regex(/^\d{4}-\d{2}-\d{2}$/).nullable();
+const date = z
+  .string()
+  .regex(/^\d{4}-\d{2}-\d{2}$/)
+  .nullable();
 
 /** Keyed JSON fields in a patch: one entry per key, null removes it. */
 const keyedPatch = z.record(z.string().max(60), json);
@@ -546,14 +694,23 @@ export const updateSite = createServerFn({ method: "POST" })
         title: z.string().trim().min(1).max(200).optional(),
         custom_text: z.record(z.string().max(60), z.string().max(20000).nullable()).optional(),
         custom_colors: z
-          .object({ background: z.string().max(40).nullable(), primary: z.string().max(40).nullable(), accent: z.string().max(40).nullable() })
+          .object({
+            background: z.string().max(40).nullable(),
+            primary: z.string().max(40).nullable(),
+            accent: z.string().max(40).nullable(),
+          })
           .partial()
           .optional(),
         font_choice: z.enum(FONT_CHOICE_IDS).optional(),
         countdown_date: date.optional(),
         countdown_at: z.string().datetime({ offset: true }).nullable().optional(),
         calendar_locked: z.boolean().optional(),
-        intro_text: z.string().trim().max(LIMITS.greeting, tooLong("the greeting", LIMITS.greeting)).nullable().optional(),
+        intro_text: z
+          .string()
+          .trim()
+          .max(LIMITS.greeting, tooLong("the greeting", LIMITS.greeting))
+          .nullable()
+          .optional(),
         background_style: z.enum(["paper", "clean", "formal", "gradient"]).optional(),
         tree_reveal_date: date.optional(),
         palette_id: id.nullable().optional(),
@@ -583,11 +740,16 @@ export const updateSite = createServerFn({ method: "POST" })
     let p = data.patch;
     const softKeys = data.soft ?? [];
     const patchKeys = new Set(Object.keys(flatten(p as Record<string, unknown>)));
-    if (softKeys.some((k) => !patchKeys.has(k))) throw new HttpError(400, "Something got mixed up. Refresh the page and try again.");
+    if (softKeys.some((k) => !patchKeys.has(k)))
+      throw new HttpError(400, "Something got mixed up. Refresh the page and try again.");
     let skipped: string[] = [];
     const saved = await getDb().transaction(async (tx) => {
       // Locked until this save is written, so two tabs saving at once can't both pass the check.
-      const [site] = await tx.select().from(schema.giftSites).where(eq(schema.giftSites.id, data.id)).for("update");
+      const [site] = await tx
+        .select()
+        .from(schema.giftSites)
+        .where(eq(schema.giftSites.id, data.id))
+        .for("update");
       if (!site) throw new HttpError(404, "We couldn't find that gift.");
 
       // Never overwrite a change this editor hasn't seen. A new style brings its own layout, so that isn't checked twice.
@@ -599,7 +761,9 @@ export const updateSite = createServerFn({ method: "POST" })
         { skip: p.style ? ["format"] : [], alt: flatten(data.base_alt ?? {}), soft: softKeys },
       );
       if (check.clashes.length) {
-        console.info(`[editor] refused a stale save on gift ${site.id}: ${check.clashes.join(", ")}`);
+        console.info(
+          `[editor] refused a stale save on gift ${site.id}: ${check.clashes.join(", ")}`,
+        );
         throw new HttpError(409, SAVE_COPY.serverConflict);
       }
       skipped = check.skipped;
@@ -617,7 +781,8 @@ export const updateSite = createServerFn({ method: "POST" })
             continue;
           }
           const max = customTextLimit(k);
-          if ([...t].length > max) throw new HttpError(422, tooLong(FIELD_NAMES[k] ?? "that title", max));
+          if ([...t].length > max)
+            throw new HttpError(422, tooLong(FIELD_NAMES[k] ?? "that title", max));
           text[k] = t;
         }
         set.customText = text;
@@ -625,15 +790,28 @@ export const updateSite = createServerFn({ method: "POST" })
       if (p.custom_colors) set.customColors = mergeKeys(site.customColors, p.custom_colors);
       if (p.format_settings) set.formatSettings = mergeKeys(site.formatSettings, p.format_settings);
       // The opening: cleaned server side, only known keys, hex colors, safe upload URLs.
-      if (p.intro_settings) set.introSettings = normalizeIntroSettings(mergeKeys(normalizeIntroSettings(site.introSettings), p.intro_settings));
-      if (p.character !== undefined) set.character = p.character ? normalizeCharacter(p.character) : null;
-      if (p.icon_set !== undefined) set.iconSet = p.icon_set ? normalizeIconSetting(p.icon_set) : null;
-      for (const [k, v] of [["formatSettings", set.formatSettings], ["introSettings", set.introSettings]] as const) {
-        if (v !== undefined && JSON.stringify(v).length > MAX_SETTINGS_JSON) throw new HttpError(400, k === "introSettings" ? "That opening has too much in it." : "That has too much in it.");
+      if (p.intro_settings)
+        set.introSettings = normalizeIntroSettings(
+          mergeKeys(normalizeIntroSettings(site.introSettings), p.intro_settings),
+        );
+      if (p.character !== undefined)
+        set.character = p.character ? normalizeCharacter(p.character) : null;
+      if (p.icon_set !== undefined)
+        set.iconSet = p.icon_set ? normalizeIconSetting(p.icon_set) : null;
+      for (const [k, v] of [
+        ["formatSettings", set.formatSettings],
+        ["introSettings", set.introSettings],
+      ] as const) {
+        if (v !== undefined && JSON.stringify(v).length > MAX_SETTINGS_JSON)
+          throw new HttpError(
+            400,
+            k === "introSettings" ? "That opening has too much in it." : "That has too much in it.",
+          );
       }
       if (p.font_choice !== undefined) set.fontChoice = p.font_choice;
       if (p.countdown_date !== undefined) set.countdownDate = p.countdown_date;
-      if (p.countdown_at !== undefined) set.countdownAt = p.countdown_at ? new Date(p.countdown_at) : null;
+      if (p.countdown_at !== undefined)
+        set.countdownAt = p.countdown_at ? new Date(p.countdown_at) : null;
       if (p.calendar_locked !== undefined) set.calendarLocked = p.calendar_locked;
       if (p.intro_text !== undefined) set.introText = p.intro_text;
       if (p.background_style !== undefined) set.backgroundStyle = p.background_style;
@@ -651,7 +829,9 @@ export const updateSite = createServerFn({ method: "POST" })
       let style = site.style;
       if (p.style) {
         const info = styleInfo(p.style);
-        const keepBody = site.style === info.id && (site.format === info.body || site.format === info.fallbackBody);
+        const keepBody =
+          site.style === info.id &&
+          (site.format === info.body || site.format === info.fallbackBody);
         format = keepBody ? format : bodyFor(info);
         style = info.id;
         set.themeId = await themeForStyle(info, occasion, p.style_look);
@@ -661,7 +841,12 @@ export const updateSite = createServerFn({ method: "POST" })
       } else if (p.format !== undefined && p.format !== site.format) {
         format = p.format;
         if (site.style) style = null;
-      } else if (p.occasion !== undefined && p.occasion !== site.occasion && site.style && isStyleId(site.style)) {
+      } else if (
+        p.occasion !== undefined &&
+        p.occasion !== site.occasion &&
+        site.style &&
+        isStyleId(site.style)
+      ) {
         set.themeId = await themeForStyle(styleInfo(site.style), occasion, null);
       }
       const lookChanged = format !== site.format || style !== site.style;
@@ -669,7 +854,8 @@ export const updateSite = createServerFn({ method: "POST" })
         set.format = format;
         set.style = style;
         const tier = getTier(site.tier);
-        if (tier && !tierAllowsLook(tier, format, style)) throw new HttpError(400, `${tier.name} doesn't include that format. Upgrade to use it.`);
+        if (tier && !tierAllowsLook(tier, format, style))
+          throw new HttpError(400, `${tier.name} doesn't include that format. Upgrade to use it.`);
       }
 
       // Going live needs a paid plan. The first publish happens in the payment webhook;
@@ -682,14 +868,19 @@ export const updateSite = createServerFn({ method: "POST" })
           const reopenTier = getTier(site.tier);
           if (reopenTier) {
             const blocker = tierBlocker(reopenTier, await siteUsage(site.id), format, style);
-            if (blocker) throw new HttpError(409, `${blocker} Upgrade, or hide a few, to reopen it.`);
+            if (blocker)
+              throw new HttpError(409, `${blocker} Upgrade, or hide a few, to reopen it.`);
           }
         }
         set.status = p.status;
       }
 
       if (Object.keys(set).length === 0) return site;
-      const [row] = await tx.update(schema.giftSites).set(set).where(eq(schema.giftSites.id, site.id)).returning();
+      const [row] = await tx
+        .update(schema.giftSites)
+        .set(set)
+        .where(eq(schema.giftSites.id, site.id))
+        .returning();
       return row!;
     });
     return { ok: true, site: siteRow(saved, { owner: true }), skipped };
@@ -697,7 +888,10 @@ export const updateSite = createServerFn({ method: "POST" })
 
 /** A JSON object with some keys replaced; null removes a key. */
 function mergeKeys(current: unknown, patch: Record<string, unknown>): Record<string, Json> {
-  const out: Record<string, unknown> = current && typeof current === "object" && !Array.isArray(current) ? { ...(current as Record<string, unknown>) } : {};
+  const out: Record<string, unknown> =
+    current && typeof current === "object" && !Array.isArray(current)
+      ? { ...(current as Record<string, unknown>) }
+      : {};
   for (const [k, v] of Object.entries(patch)) {
     if (v === null || v === undefined) delete out[k];
     else out[k] = v;
@@ -717,7 +911,11 @@ export const deleteSite = createServerFn({ method: "POST" })
       .where(and(eq(schema.orders.siteId, data.id), eq(schema.orders.status, "paid")))
       .limit(1);
     // A friendly 409, not a 500, when it was paid for in another tab after this page loaded.
-    if (paid) throw new HttpError(409, "This gift has a paid plan, so it stays. You can unpublish it from the editor.");
+    if (paid)
+      throw new HttpError(
+        409,
+        "This gift has a paid plan, so it stays. You can unpublish it from the editor.",
+      );
     await db.delete(schema.giftSites).where(eq(schema.giftSites.id, data.id));
     // Every photo, voice note and picture stored for it goes too.
     const { deleteGiftMedia } = await import("@/server/uploads");
@@ -748,13 +946,20 @@ export const setModuleEnabled = createServerFn({ method: "POST" })
       const on = await getDb()
         .select({ type: schema.siteModules.moduleType })
         .from(schema.siteModules)
-        .where(and(eq(schema.siteModules.siteId, data.siteId), eq(schema.siteModules.enabled, true)));
+        .where(
+          and(eq(schema.siteModules.siteId, data.siteId), eq(schema.siteModules.enabled, true)),
+        );
       if (on.length <= 1 && on.some((m) => m.type === data.moduleType))
         throw new HttpError(409, "A gift needs at least one section. Turn another one on first.");
     }
     await getDb()
       .insert(schema.siteModules)
-      .values({ siteId: data.siteId, moduleType: data.moduleType, enabled: data.enabled, price: "0" })
+      .values({
+        siteId: data.siteId,
+        moduleType: data.moduleType,
+        enabled: data.enabled,
+        price: "0",
+      })
       .onConflictDoUpdate({
         target: [schema.siteModules.siteId, schema.siteModules.moduleType],
         set: { enabled: data.enabled },
@@ -816,7 +1021,11 @@ export const listContributions = createServerFn({ method: "GET" })
     // Ornaments wait for the tree's reveal date (the owner always sees them).
     const treeLocked = !view.owner && treeSealed(view.site);
     return rows.map((r) =>
-      toRow(treeLocked && r.moduleType === "tree" ? { ...r, textContent: null, locked: true } : sealCapsule(r)),
+      toRow(
+        treeLocked && r.moduleType === "tree"
+          ? { ...r, textContent: null, locked: true }
+          : sealCapsule(r),
+      ),
     );
   });
 
@@ -824,10 +1033,14 @@ export const listContributions = createServerFn({ method: "GET" })
 export const listSealedContributions = createServerFn({ method: "GET" })
   .inputValidator(z.object({ siteId: id }))
   .handler(async ({ data }) => {
-    const [site] = await getDb().select().from(schema.giftSites).where(eq(schema.giftSites.id, data.siteId));
+    const [site] = await getDb()
+      .select()
+      .from(schema.giftSites)
+      .where(eq(schema.giftSites.id, data.siteId));
     if (!site) return [];
     // Behind a password, even friends' names wait for it (same gate as the notes).
-    if (needsPassword(site) && !isUnlocked(site) && !isOwnerOf(await currentUser(), site)) return [];
+    if (needsPassword(site) && !isUnlocked(site) && !isOwnerOf(await currentUser(), site))
+      return [];
     const rows = await getDb()
       .select({
         id: c.id,
@@ -873,7 +1086,9 @@ export const listPublicTreeOrnaments = createServerFn({ method: "GET" })
       .from(c)
       .where(and(eq(c.siteId, data.siteId), eq(c.moduleType, "tree"), eq(c.status, "approved")))
       .orderBy(asc(c.createdAt));
-    return rows.map((row) => toRow({ ...row, textContent: locked ? null : row.textContent, locked }));
+    return rows.map((row) =>
+      toRow({ ...row, textContent: locked ? null : row.textContent, locked }),
+    );
   });
 
 export const submitContribution = createServerFn({ method: "POST" })
@@ -883,7 +1098,11 @@ export const submitContribution = createServerFn({ method: "POST" })
       editToken: id,
       siteId: id,
       moduleType: z.enum(GUEST_TYPES),
-      authorName: z.string().trim().min(1, "Add your name so they know who it's from.").max(LIMITS.friendName, tooLong("your name", LIMITS.friendName)),
+      authorName: z
+        .string()
+        .trim()
+        .min(1, "Add your name so they know who it's from.")
+        .max(LIMITS.friendName, tooLong("your name", LIMITS.friendName)),
       textContent: shortText,
       mediaUrl,
       externalLink: link,
@@ -899,47 +1118,92 @@ export const submitContribution = createServerFn({ method: "POST" })
     const db = getDb();
     data.textContent = data.textContent?.trim() || null;
     const textMax = noteTextLimit(data.moduleType);
-    if (data.textContent && [...data.textContent].length > textMax) throw new HttpError(422, tooLong(data.moduleType === "wordcloud" ? "your word" : "your note", textMax));
-    const sectionData = sectionPayload(data.moduleType, data.data, data.textContent, data.mediaUrl, data.siteId);
+    if (data.textContent && [...data.textContent].length > textMax)
+      throw new HttpError(
+        422,
+        tooLong(data.moduleType === "wordcloud" ? "your word" : "your note", textMax),
+      );
+    const sectionData = sectionPayload(
+      data.moduleType,
+      data.data,
+      data.textContent,
+      data.mediaUrl,
+      data.siteId,
+    );
     checkNote(data.moduleType, data, data.siteId);
-    const [site] = await db.select().from(schema.giftSites).where(eq(schema.giftSites.id, data.siteId));
+    const [site] = await db
+      .select()
+      .from(schema.giftSites)
+      .where(eq(schema.giftSites.id, data.siteId));
     if (!site) throw new HttpError(404, "We couldn't find that gift.");
-    if (site.disabledAt) throw new HttpError(403, "This gift has been paused, so it isn't taking notes right now.");
-    if (site.solo) throw new HttpError(403, "This gift is just from one person, so it isn't taking notes from friends.");
+    if (site.disabledAt)
+      throw new HttpError(403, "This gift has been paused, so it isn't taking notes right now.");
+    if (site.solo)
+      throw new HttpError(
+        403,
+        "This gift is just from one person, so it isn't taking notes from friends.",
+      );
     // The same note sent twice (fast taps, a retry after a dropped connection) is saved once.
-    const [already] = await db.select({ siteId: c.siteId, editToken: c.editToken }).from(c).where(eq(c.id, data.id));
+    const [already] = await db
+      .select({ siteId: c.siteId, editToken: c.editToken })
+      .from(c)
+      .where(eq(c.id, data.id));
     if (already) {
-      if (already.siteId === data.siteId && already.editToken === data.editToken) return { ok: true as const, full: null };
+      if (already.siteId === data.siteId && already.editToken === data.editToken)
+        return { ok: true as const, full: null };
       throw new HttpError(409, "Something got mixed up. Refresh the page and try again.");
     }
-    rateLimit(`note:ip:${clientIp()}`, 30, 10 * 60_000, "You're adding notes very quickly. Wait a few minutes and try again.");
-    rateLimit(`note:gift:${data.siteId}`, 200, 60 * 60_000, "This gift is getting a lot of notes right now. Try again in a little while.");
+    rateLimit(
+      `note:ip:${clientIp()}`,
+      30,
+      10 * 60_000,
+      "You're adding notes very quickly. Wait a few minutes and try again.",
+    );
+    rateLimit(
+      `note:gift:${data.siteId}`,
+      200,
+      60 * 60_000,
+      "This gift is getting a lot of notes right now. Try again in a little while.",
+    );
     const deviceId = data.deviceId ?? null;
     const [module] = await db
       .select({ enabled: schema.siteModules.enabled })
       .from(schema.siteModules)
-      .where(and(eq(schema.siteModules.siteId, data.siteId), eq(schema.siteModules.moduleType, data.moduleType)));
+      .where(
+        and(
+          eq(schema.siteModules.siteId, data.siteId),
+          eq(schema.siteModules.moduleType, data.moduleType),
+        ),
+      );
     if (!module?.enabled) throw new HttpError(400, "That section isn't open on this gift.");
     // Paid plans have caps. Tell the friend kindly instead of failing. Checked and saved under one
     // lock, so friends sending at the same moment can't pass the cap together.
     const saved = await withRoom(data.siteId, async (tx, _site, room) => {
-      const fits = await room({ authorName: data.authorName, moduleType: data.moduleType, deviceId });
-      if (!fits.ok) return fits;
-      const rows = await tx.insert(c).values({
-        id: data.id,
-        siteId: data.siteId,
-        moduleType: data.moduleType,
+      const fits = await room({
         authorName: data.authorName,
-        textContent: data.textContent,
-        mediaUrl: data.mediaUrl,
-        externalLink: data.externalLink,
-        status: "pending",
-        ornamentKey: data.moduleType === "tree" ? (data.ornamentKey ?? "bauble") : null,
-        visibility: data.moduleType === "tree" ? data.visibility : "public",
-        editToken: data.editToken,
+        moduleType: data.moduleType,
         deviceId,
-        data: sectionData,
-      }).onConflictDoNothing({ target: c.id }).returning({ id: c.id });
+      });
+      if (!fits.ok) return fits;
+      const rows = await tx
+        .insert(c)
+        .values({
+          id: data.id,
+          siteId: data.siteId,
+          moduleType: data.moduleType,
+          authorName: data.authorName,
+          textContent: data.textContent,
+          mediaUrl: data.mediaUrl,
+          externalLink: data.externalLink,
+          status: "pending",
+          ornamentKey: data.moduleType === "tree" ? (data.ornamentKey ?? "bauble") : null,
+          visibility: data.moduleType === "tree" ? data.visibility : "public",
+          editToken: data.editToken,
+          deviceId,
+          data: sectionData,
+        })
+        .onConflictDoNothing({ target: c.id })
+        .returning({ id: c.id });
       return { ok: true as const, inserted: rows };
     });
     if (!saved.ok) return { ok: false as const, full: saved.reason };
@@ -947,7 +1211,10 @@ export const submitContribution = createServerFn({ method: "POST" })
     // Two identical requests at the same moment: only the first one notifies.
     if (inserted.length) {
       await notifyNewNote(data.siteId, data.authorName).catch((e) => console.error("[notify]", e));
-      await track("note_added", { siteId: data.siteId, props: { type: data.moduleType, by_owner: false } });
+      await track("note_added", {
+        siteId: data.siteId,
+        props: { type: data.moduleType, by_owner: false },
+      });
     }
     return { ok: true as const, full: null };
   });
@@ -963,7 +1230,11 @@ export const saveOwnerNote = createServerFn({ method: "POST" })
       id,
       siteId: id,
       moduleType: z.enum(OWNER_NOTE_TYPES),
-      authorName: z.string().trim().min(1, "Add your name so they know who it's from.").max(LIMITS.friendName, tooLong("your name", LIMITS.friendName)),
+      authorName: z
+        .string()
+        .trim()
+        .min(1, "Add your name so they know who it's from.")
+        .max(LIMITS.friendName, tooLong("your name", LIMITS.friendName)),
       textContent: shortText,
       mediaUrl,
       externalLink: link,
@@ -974,8 +1245,18 @@ export const saveOwnerNote = createServerFn({ method: "POST" })
     const { user } = await requireSiteOwner(data.siteId);
     data.textContent = data.textContent?.trim() || null;
     const textMax = noteTextLimit(data.moduleType);
-    if (data.textContent && [...data.textContent].length > textMax) throw new HttpError(422, tooLong(data.moduleType === "wordcloud" ? "the word" : "the note", textMax));
-    const sectionData = sectionPayload(data.moduleType, data.data, data.textContent, data.mediaUrl, data.siteId);
+    if (data.textContent && [...data.textContent].length > textMax)
+      throw new HttpError(
+        422,
+        tooLong(data.moduleType === "wordcloud" ? "the word" : "the note", textMax),
+      );
+    const sectionData = sectionPayload(
+      data.moduleType,
+      data.data,
+      data.textContent,
+      data.mediaUrl,
+      data.siteId,
+    );
     const db = getDb();
     checkNote(data.moduleType, data, data.siteId, await savedMedia(data.id, data.siteId));
     const [existing] = await db
@@ -1000,7 +1281,11 @@ export const saveOwnerNote = createServerFn({ method: "POST" })
     }
     // The owner isn't a friend, so only the photo cap applies to their notes.
     const saved = await withRoom(data.siteId, async (tx, _site, room) => {
-      const fits = await room({ authorName: data.authorName, moduleType: data.moduleType, byOwner: true });
+      const fits = await room({
+        authorName: data.authorName,
+        moduleType: data.moduleType,
+        byOwner: true,
+      });
       if (!fits.ok) return fits;
       // Turn the section on if it isn't yet, so the note actually shows.
       await tx
@@ -1026,7 +1311,11 @@ export const saveOwnerNote = createServerFn({ method: "POST" })
       return { ok: true as const };
     });
     if (!saved.ok) return { ok: false as const, full: saved.reason };
-    await track("note_added", { siteId: data.siteId, userId: user.id, props: { type: data.moduleType, by_owner: true } });
+    await track("note_added", {
+      siteId: data.siteId,
+      userId: user.id,
+      props: { type: data.moduleType, by_owner: true },
+    });
     return { ok: true as const, full: null };
   });
 
@@ -1035,7 +1324,10 @@ export const getGiftRoom = createServerFn({ method: "GET" })
   .inputValidator(z.object({ siteId: id }))
   .handler(async ({ data }) => {
     rateLimit(`room:${clientIp()}`, 240, 60_000, READ_LIMIT);
-    const [site] = await getDb().select().from(schema.giftSites).where(eq(schema.giftSites.id, data.siteId));
+    const [site] = await getDb()
+      .select()
+      .from(schema.giftSites)
+      .where(eq(schema.giftSites.id, data.siteId));
     if (!site) return { ended: false, contributorsFull: false, photosFull: false };
     const tier = getTier(site.tier);
     if (site.status !== "published" || !tier) {
@@ -1061,7 +1353,10 @@ function guestsSignInFirst(user: { isGuest: boolean }) {
 
 async function ownedSite(siteId: string) {
   const { user } = await requireSiteOwner(siteId);
-  const [site] = await getDb().select().from(schema.giftSites).where(eq(schema.giftSites.id, siteId));
+  const [site] = await getDb()
+    .select()
+    .from(schema.giftSites)
+    .where(eq(schema.giftSites.id, siteId));
   if (!site) throw new HttpError(404, "We couldn't find that gift.");
   return { user, site };
 }
@@ -1079,7 +1374,12 @@ export const getBilling = createServerFn({ method: "GET" })
     const usage = await siteUsage(site.id);
     const tier = getTier(site.tier);
     const [latest] = await getDb()
-      .select({ id: schema.orders.id, status: schema.orders.status, tier: schema.orders.tier, kind: schema.orders.kind })
+      .select({
+        id: schema.orders.id,
+        status: schema.orders.status,
+        tier: schema.orders.tier,
+        kind: schema.orders.kind,
+      })
       .from(schema.orders)
       .where(eq(schema.orders.siteId, site.id))
       .orderBy(desc(schema.orders.createdAt))
@@ -1093,7 +1393,10 @@ export const getBilling = createServerFn({ method: "GET" })
       usage,
       limits: tier ? { contributors: tier.contributors.cap, photos: tier.photos.cap } : null,
       /** Each tier and why it doesn't fit (null = fits). */
-      fit: TIERS.map((t) => ({ id: t.id, blocker: tierBlocker(t, usage, site.format, site.style) })),
+      fit: TIERS.map((t) => ({
+        id: t.id,
+        blocker: tierBlocker(t, usage, site.format, site.style),
+      })),
       upgrades: upgradeOptions(site.tier).map((t) => ({
         id: t.id,
         amount: t.amount - (tier?.amount ?? 0),
@@ -1122,7 +1425,12 @@ export const startCheckout = createServerFn({ method: "POST" })
     const { user, site } = await ownedSite(data.siteId);
     guestsSignInFirst(user);
     const { openCheckout } = await import("@/server/checkout");
-    return openCheckout(user, site.id, { kind: "plan", tier: data.tier, code: data.code?.trim() || null, expect: data.expect });
+    return openCheckout(user, site.id, {
+      kind: "plan",
+      tier: data.tier,
+      code: data.code?.trim() || null,
+      expect: data.expect,
+    });
   });
 
 /**
@@ -1135,16 +1443,25 @@ export const previewDiscountCode = createServerFn({ method: "POST" })
     const { user, site } = await ownedSite(data.siteId);
     guestsSignInFirst(user);
     const { codeProblem, findCode, priceWith, tooManyTries } = await import("@/server/discounts");
-    if (tooManyTries(user.id)) return { ok: false as const, message: "That's a lot of codes. Try again in a few minutes." };
-    if (getTier(site.tier)) return { ok: false as const, message: "Codes work when you first pick a plan." };
+    if (tooManyTries(user.id))
+      return { ok: false as const, message: "That's a lot of codes. Try again in a few minutes." };
+    if (getTier(site.tier))
+      return { ok: false as const, message: "Codes work when you first pick a plan." };
     const code = await findCode(data.code);
     const general = await codeProblem(code, null, user.id, undefined, { siteId: site.id });
-    if (general || !code) return { ok: false as const, message: general ?? "We don't know that code." };
+    if (general || !code)
+      return { ok: false as const, message: general ?? "We don't know that code." };
     const plans = await Promise.all(
       TIERS.map(async (t) => {
         const problem = await codeProblem(code, t, user.id, undefined, { siteId: site.id });
         const p = priceWith(code, t.amount);
-        return { id: t.id, applies: !problem, amount: problem ? t.amount : p.amount, was: t.amount, free: !problem && p.amount === 0 };
+        return {
+          id: t.id,
+          applies: !problem,
+          amount: problem ? t.amount : p.amount,
+          was: t.amount,
+          free: !problem && p.amount === 0,
+        };
       }),
     );
     return { ok: true as const, code: code.code, label: discountLabelOf(code), plans };
@@ -1163,7 +1480,8 @@ export const startExtendCheckout = createServerFn({ method: "POST" })
 async function ownedOrder(orderId: string) {
   const user = await requireUser();
   const [order] = await getDb().select().from(schema.orders).where(eq(schema.orders.id, orderId));
-  if (!order || (order.ownerId !== user.id && !user.isAdmin)) throw new HttpError(404, "We couldn't find that payment.");
+  if (!order || (order.ownerId !== user.id && !user.isAdmin))
+    throw new HttpError(404, "We couldn't find that payment.");
   return order;
 }
 
@@ -1181,22 +1499,49 @@ export const getOrderStatus = createServerFn({ method: "GET" })
   .inputValidator(z.object({ orderId: id }))
   .handler(async ({ data }) => {
     const user = await requireUser();
-    const { isSettled, isExpired: ended, reconcileOrder, refundsDue } = await import("@/server/billing");
+    const {
+      isSettled,
+      isExpired: ended,
+      reconcileOrder,
+      refundsDue,
+    } = await import("@/server/billing");
     const load = async () => {
-      const [row] = await getDb().select().from(schema.orders).where(eq(schema.orders.id, data.orderId));
+      const [row] = await getDb()
+        .select()
+        .from(schema.orders)
+        .where(eq(schema.orders.id, data.orderId));
       return row && (row.ownerId === user.id || user.isAdmin) ? row : null;
     };
     let order = await load();
-    if (!order) return { id: data.orderId, status: "missing" as const, kind: null, tier: null, amount: 0, refund: 0, site: null };
+    if (!order)
+      return {
+        id: data.orderId,
+        status: "missing" as const,
+        kind: null,
+        tier: null,
+        amount: 0,
+        refund: 0,
+        site: null,
+      };
     if (!isSettled(order.status)) {
       await reconcileOrder(order, "confirm", 5000);
       order = (await load()) ?? order;
     }
     /** Money we owe back on this order: all of it if it bought nothing, or what was paid over the price. */
     const refund = (await refundsDue([order.id])).get(order.id) ?? 0;
-    const base = { id: order.id, status: order.status, kind: order.kind, tier: order.tier, amount: order.amount, refund };
+    const base = {
+      id: order.id,
+      status: order.status,
+      kind: order.kind,
+      tier: order.tier,
+      amount: order.amount,
+      refund,
+    };
     if (!order.siteId) return { ...base, site: null };
-    const [site] = await getDb().select().from(schema.giftSites).where(eq(schema.giftSites.id, order.siteId));
+    const [site] = await getDb()
+      .select()
+      .from(schema.giftSites)
+      .where(eq(schema.giftSites.id, order.siteId));
     if (!site) return { ...base, site: null };
     return {
       ...base,
@@ -1208,7 +1553,9 @@ export const getOrderStatus = createServerFn({ method: "GET" })
         /** The gift's plan now, so "Try again" offers what it can really buy (first plan, upgrade or extend). */
         tier: site.tier,
         ended: ended(site),
-        recipient: ((site.customText as { recipient_name?: string } | null)?.recipient_name ?? "").trim() || null,
+        recipient:
+          ((site.customText as { recipient_name?: string } | null)?.recipient_name ?? "").trim() ||
+          null,
       },
     };
   });
@@ -1281,17 +1628,34 @@ const codeInput = z.object({
 export const listDiscountCodes = createServerFn({ method: "GET" }).handler(async () => {
   await requireAdmin();
   const db = getDb();
-  const codes = await db.select().from(schema.discountCodes).orderBy(desc(schema.discountCodes.createdAt));
+  const codes = await db
+    .select()
+    .from(schema.discountCodes)
+    .orderBy(desc(schema.discountCodes.createdAt));
   const o = schema.orders;
   const recent = await db
-    .select({ id: o.id, code: o.discountCode, tier: o.tier, amount: o.amount, off: o.discountAmount, at: o.updatedAt, siteId: o.siteId, slug: schema.giftSites.slug })
+    .select({
+      id: o.id,
+      code: o.discountCode,
+      tier: o.tier,
+      amount: o.amount,
+      off: o.discountAmount,
+      at: o.updatedAt,
+      siteId: o.siteId,
+      slug: schema.giftSites.slug,
+    })
     .from(o)
     .leftJoin(schema.giftSites, eq(schema.giftSites.id, o.siteId))
     .where(and(eq(o.status, "paid"), sql`${o.discountCode} is not null`))
     .orderBy(desc(o.updatedAt))
     .limit(30);
   return {
-    codes: codes.map((c) => ({ ...c, expiresAt: c.expiresAt?.toISOString() ?? null, createdAt: c.createdAt.toISOString(), label: discountLabelOf(c) })),
+    codes: codes.map((c) => ({
+      ...c,
+      expiresAt: c.expiresAt?.toISOString() ?? null,
+      createdAt: c.createdAt.toISOString(),
+      label: discountLabelOf(c),
+    })),
     recent: recent.map((r) => ({ ...r, at: r.at.toISOString() })),
   };
 });
@@ -1300,17 +1664,25 @@ export const createDiscountCode = createServerFn({ method: "POST" })
   .inputValidator(codeInput)
   .handler(async ({ data }) => {
     const user = await requireAdmin();
-    if (data.type === "percent" && (data.value < 1 || data.value > 100)) throw new HttpError(400, "Percent off has to be between 1 and 100.");
-    if (data.type === "fixed" && data.value < 1) throw new HttpError(400, "Say how many pesos off.");
+    if (data.type === "percent" && (data.value < 1 || data.value > 100))
+      throw new HttpError(400, "Percent off has to be between 1 and 100.");
+    if (data.type === "fixed" && data.value < 1)
+      throw new HttpError(400, "Say how many pesos off.");
     const { findCode } = await import("@/server/discounts");
-    if (await findCode(data.code)) throw new HttpError(400, "There's already a code with that name.");
+    if (await findCode(data.code))
+      throw new HttpError(400, "There's already a code with that name.");
     const [row] = await getDb()
       .insert(schema.discountCodes)
       .values({
         code: data.code.toUpperCase(),
         type: data.type,
         // Fixed amounts are typed in pesos and stored in centavos.
-        value: data.type === "free" ? 0 : data.type === "fixed" ? Math.round(data.value * 100) : Math.round(data.value),
+        value:
+          data.type === "free"
+            ? 0
+            : data.type === "fixed"
+              ? Math.round(data.value * 100)
+              : Math.round(data.value),
         plans: data.plans,
         maxUses: data.maxUses,
         maxPerUser: data.maxPerUser,
@@ -1324,14 +1696,22 @@ export const createDiscountCode = createServerFn({ method: "POST" })
 
 /** Admin: turn a code off or on, or change when it ends. Uses already counted stay. */
 export const updateDiscountCode = createServerFn({ method: "POST" })
-  .inputValidator(z.object({ id, active: z.boolean().optional(), expiresAt: z.string().datetime().nullable().optional() }))
+  .inputValidator(
+    z.object({
+      id,
+      active: z.boolean().optional(),
+      expiresAt: z.string().datetime().nullable().optional(),
+    }),
+  )
   .handler(async ({ data }) => {
     await requireAdmin();
     await getDb()
       .update(schema.discountCodes)
       .set({
         ...(data.active !== undefined ? { active: data.active } : {}),
-        ...(data.expiresAt !== undefined ? { expiresAt: data.expiresAt ? new Date(data.expiresAt) : null } : {}),
+        ...(data.expiresAt !== undefined
+          ? { expiresAt: data.expiresAt ? new Date(data.expiresAt) : null }
+          : {}),
       })
       .where(eq(schema.discountCodes.id, data.id));
     return { ok: true };
@@ -1340,7 +1720,11 @@ export const updateDiscountCode = createServerFn({ method: "POST" })
 /** Admin: the latest payment signals and what we did with each (webhooks, checks, the daily job). */
 export const listPaymentLog = createServerFn({ method: "GET" }).handler(async () => {
   await requireAdmin();
-  const rows = await getDb().select().from(schema.paymentLog).orderBy(desc(schema.paymentLog.at)).limit(60);
+  const rows = await getDb()
+    .select()
+    .from(schema.paymentLog)
+    .orderBy(desc(schema.paymentLog.at))
+    .limit(60);
   return rows.map((r) => ({ ...r, at: r.at.toISOString() }));
 });
 
@@ -1368,7 +1752,13 @@ export const getPaymentsSetup = createServerFn({ method: "GET" }).handler(async 
   const { siteUrl } = await import("@/server/email");
   const { enabledPaymentMethods } = await import("@/config/pricing");
   const key = process.env["PAYMONGO_SECRET_KEY"] ?? "";
-  const mode = key.startsWith("sk_test_") ? "test" : key.startsWith("sk_live_") ? "live" : key ? "unknown" : "missing";
+  const mode = key.startsWith("sk_test_")
+    ? "test"
+    : key.startsWith("sk_live_")
+      ? "live"
+      : key
+        ? "unknown"
+        : "missing";
   const [counts] = await getDb()
     .select({
       paid: sql<number>`(count(*) filter (where ${schema.orders.status} = 'paid'))::int`,
@@ -1384,12 +1774,18 @@ export const getPaymentsSetup = createServerFn({ method: "GET" }).handler(async 
     })
     .from(schema.events)
     .where(eq(schema.events.name, "plan_purchased"));
-  let webhooks: { url: string; events: string[]; status: string; livemode: boolean }[] | null = null;
+  let webhooks: { url: string; events: string[]; status: string; livemode: boolean }[] | null =
+    null;
   let webhooksError: string | null = null;
   if (mode === "test" || (mode === "live" && process.env["PAYMONGO_ALLOW_LIVE"] === "true")) {
     try {
       const { listWebhooks } = await import("@/server/payments/paymongo");
-      webhooks = (await listWebhooks()).map(({ url, events, status, livemode }) => ({ url, events, status, livemode }));
+      webhooks = (await listWebhooks()).map(({ url, events, status, livemode }) => ({
+        url,
+        events,
+        status,
+        livemode,
+      }));
     } catch (error) {
       console.error("[payments] listing webhooks failed", error);
       webhooksError = "We couldn't ask PayMongo for its webhooks.";
@@ -1401,17 +1797,23 @@ export const getPaymentsSetup = createServerFn({ method: "GET" }).handler(async 
     liveAllowed: process.env["PAYMONGO_ALLOW_LIVE"] === "true",
     webhooks,
     webhooksError,
-    webhookReady:
-      !!webhooks?.some(
-        (w) => w.url === webhookUrl && w.status === "enabled" && w.events.includes("checkout_session.payment.paid"),
-      ),
+    webhookReady: !!webhooks?.some(
+      (w) =>
+        w.url === webhookUrl &&
+        w.status === "enabled" &&
+        w.events.includes("checkout_session.payment.paid"),
+    ),
     webhookSecretSet: !!process.env["PAYMONGO_WEBHOOK_SECRET"],
     appBaseUrlSet: !!process.env["APP_BASE_URL"],
     webhookUrl,
     methods: enabledPaymentMethods,
     paidOrders: counts?.paid ?? 0,
     pendingOrders: counts?.pending ?? 0,
-    cardPayments: { local: cards?.local ?? 0, foreign: cards?.foreign ?? 0, unknown: cards?.unknown ?? 0 },
+    cardPayments: {
+      local: cards?.local ?? 0,
+      foreign: cards?.foreign ?? 0,
+      unknown: cards?.unknown ?? 0,
+    },
   };
 });
 
@@ -1422,11 +1824,16 @@ export const setupPaymongoWebhook = createServerFn({ method: "POST" }).handler(a
   const { ensureWebhook } = await import("@/server/payments/paymongo");
   try {
     const { action, webhook } = await ensureWebhook(`${siteUrl()}/api/webhooks/paymongo`);
-    console.info(`[payments] webhook setup: ${action} (${webhook.livemode ? "live" : "test"}, ${webhook.status})`);
+    console.info(
+      `[payments] webhook setup: ${action} (${webhook.livemode ? "live" : "test"}, ${webhook.status})`,
+    );
     return { ok: true, action };
   } catch (error) {
     console.error("[payments] webhook setup failed", error);
-    throw new HttpError(502, "PayMongo didn't accept that. Check the secret key in Vercel and try again.");
+    throw new HttpError(
+      502,
+      "PayMongo didn't accept that. Check the secret key in Vercel and try again.",
+    );
   }
 });
 
@@ -1454,10 +1861,17 @@ export const setCustomSlug = createServerFn({ method: "POST" })
       .select({ id: schema.giftSites.id })
       .from(schema.giftSites)
       .where(eq(schema.giftSites.slug, data.slug));
-    const takenError = { ok: false, slug: site.slug, error: "That link name is taken. Try another." };
+    const takenError = {
+      ok: false,
+      slug: site.slug,
+      error: "That link name is taken. Try another.",
+    };
     if (taken) return takenError;
     try {
-      await getDb().update(schema.giftSites).set({ slug: data.slug }).where(eq(schema.giftSites.id, site.id));
+      await getDb()
+        .update(schema.giftSites)
+        .set({ slug: data.slug })
+        .where(eq(schema.giftSites.id, site.id));
     } catch (error) {
       // Two gifts asking for the same name at the same moment: the second one loses, kindly.
       const { isUniqueViolation } = await import("@/server/db/errors");
@@ -1479,7 +1893,12 @@ async function savedMedia(contributionId: string, siteId: string) {
 async function ownDraftContribution(contributionId: string, token: string) {
   const db = getDb();
   const [row] = await db
-    .select({ id: c.id, siteId: c.siteId, moduleType: c.moduleType, status: schema.giftSites.status })
+    .select({
+      id: c.id,
+      siteId: c.siteId,
+      moduleType: c.moduleType,
+      status: schema.giftSites.status,
+    })
     .from(c)
     .innerJoin(schema.giftSites, eq(schema.giftSites.id, c.siteId))
     .where(and(eq(c.id, contributionId), eq(c.editToken, token)));
@@ -1504,8 +1923,18 @@ export const updateOwnContribution = createServerFn({ method: "POST" })
     if (!row) return { ok: false };
     data.textContent = data.textContent?.trim() || null;
     const textMax = noteTextLimit(row.moduleType as never);
-    if (data.textContent && [...data.textContent].length > textMax) throw new HttpError(422, tooLong("your note", textMax));
-    const sectionData = data.data !== undefined ? sectionPayload(row.moduleType, data.data, data.textContent, data.mediaUrl ?? "keep", row.siteId) : undefined;
+    if (data.textContent && [...data.textContent].length > textMax)
+      throw new HttpError(422, tooLong("your note", textMax));
+    const sectionData =
+      data.data !== undefined
+        ? sectionPayload(
+            row.moduleType,
+            data.data,
+            data.textContent,
+            data.mediaUrl ?? "keep",
+            row.siteId,
+          )
+        : undefined;
     checkNote(row.moduleType, data, row.siteId);
     // The organiser's call stands: hidden stays hidden, approved stays in the gift (and they hear it changed).
     const { saveFriendEdit } = await import("@/server/notes");
@@ -1524,7 +1953,10 @@ export const deleteOwnContribution = createServerFn({ method: "POST" })
   .handler(async ({ data }) => {
     const row = await ownDraftContribution(data.id, data.token);
     if (!row) return { ok: false };
-    const gone = await getDb().delete(c).where(eq(c.id, data.id)).returning({ media: c.mediaUrl, data: c.data });
+    const gone = await getDb()
+      .delete(c)
+      .where(eq(c.id, data.id))
+      .returning({ media: c.mediaUrl, data: c.data });
     const { deleteMedia } = await import("@/server/uploads");
     await deleteMedia(gone.flatMap((r) => [r.media, ...mediaInData(r.data)]));
     return { ok: true };
@@ -1533,7 +1965,12 @@ export const deleteOwnContribution = createServerFn({ method: "POST" })
 /** Stored files a newer section keeps in `data` (a capsule photo, a doodle...). */
 function mediaInData(data: unknown): string[] {
   if (!data || typeof data !== "object") return [];
-  return Object.values(data as Record<string, unknown>).filter((v): v is string => typeof v === "string" && (/^(https:\/\/[\w.-]+\.public\.blob\.vercel-storage\.com\/|\/api\/dev-uploads\/)/.test(v) || isR2HostUrl(v)));
+  return Object.values(data as Record<string, unknown>).filter(
+    (v): v is string =>
+      typeof v === "string" &&
+      (/^(https:\/\/[\w.-]+\.public\.blob\.vercel-storage\.com\/|\/api\/dev-uploads\/)/.test(v) ||
+        isR2HostUrl(v)),
+  );
 }
 
 function isR2HostUrl(value: string) {
@@ -1543,7 +1980,11 @@ function isR2HostUrl(value: string) {
     const url = new URL(value);
     const base = new URL(allowed);
     const basePath = base.pathname.replace(/\/$/, "");
-    return url.protocol === "https:" && url.origin === base.origin && (!basePath || url.pathname.startsWith(`${basePath}/`));
+    return (
+      url.protocol === "https:" &&
+      url.origin === base.origin &&
+      (!basePath || url.pathname.startsWith(`${basePath}/`))
+    );
   } catch {
     return false;
   }
@@ -1562,7 +2003,10 @@ async function contributionSite(contributionIds: string[]) {
 
 export const setContributionStatus = createServerFn({ method: "POST" })
   .inputValidator(
-    z.object({ ids: z.array(id).min(1).max(500), status: z.enum(["pending", "approved", "hidden"]) }),
+    z.object({
+      ids: z.array(id).min(1).max(500),
+      status: z.enum(["pending", "approved", "hidden"]),
+    }),
   )
   .handler(async ({ data }) => {
     const siteId = await contributionSite(data.ids);
@@ -1574,11 +2018,24 @@ export const setContributionStatus = createServerFn({ method: "POST" })
     // Showing hidden items again counts towards the plan, like a new note would, under the same
     // lock as friends sending notes so the two can't pass the cap together.
     await withRoom(siteId, async (tx, _site, room) => {
-      const hidden = await tx.select().from(c).where(and(inArray(c.id, data.ids), eq(c.status, "hidden")));
+      const hidden = await tx
+        .select()
+        .from(c)
+        .where(and(inArray(c.id, data.ids), eq(c.status, "hidden")));
       for (const row of hidden) {
-        const fits = await room({ authorName: row.authorName, moduleType: row.moduleType, deviceId: row.deviceId, byOwner: row.byOwner });
+        const fits = await room({
+          authorName: row.authorName,
+          moduleType: row.moduleType,
+          deviceId: row.deviceId,
+          byOwner: row.byOwner,
+        });
         if (!fits.ok && fits.reason !== "ended") {
-          throw new HttpError(409, fits.reason === "photos" ? "This gift has all the photos its plan holds. Upgrade to show more." : "This gift has all the friends its plan holds. Upgrade to show more.");
+          throw new HttpError(
+            409,
+            fits.reason === "photos"
+              ? "This gift has all the photos its plan holds. Upgrade to show more."
+              : "This gift has all the friends its plan holds. Upgrade to show more.",
+          );
         }
         await tx.update(c).set({ status: data.status }).where(eq(c.id, row.id));
       }
@@ -1591,7 +2048,10 @@ export const deleteContributions = createServerFn({ method: "POST" })
   .inputValidator(z.object({ ids: z.array(id).min(1).max(500) }))
   .handler(async ({ data }) => {
     await requireSiteOwner(await contributionSite(data.ids));
-    const gone = await getDb().delete(c).where(inArray(c.id, data.ids)).returning({ media: c.mediaUrl, data: c.data });
+    const gone = await getDb()
+      .delete(c)
+      .where(inArray(c.id, data.ids))
+      .returning({ media: c.mediaUrl, data: c.data });
     const { deleteMedia } = await import("@/server/uploads");
     await deleteMedia(gone.flatMap((r) => [r.media, ...mediaInData(r.data)]));
     return { ok: true };
@@ -1604,7 +2064,10 @@ export const deleteContributions = createServerFn({ method: "POST" })
 export const listCalendarEntries = createServerFn({ method: "GET" })
   .inputValidator(z.object({ siteId: id }))
   .handler(async ({ data }) => {
-    const [site] = await getDb().select().from(schema.giftSites).where(eq(schema.giftSites.id, data.siteId));
+    const [site] = await getDb()
+      .select()
+      .from(schema.giftSites)
+      .where(eq(schema.giftSites.id, data.siteId));
     if (!site) return [];
     const owner = isOwnerOf(await currentUser(), site);
     // Behind a password, the calendar's surprises wait for the password too.
@@ -1674,21 +2137,35 @@ export const submitConciergeRequest = createServerFn({ method: "POST" })
   .inputValidator(
     z.object({
       siteId: id.nullable(),
-      recipient: z.string().trim().min(1, "Add who it's for.").max(LIMITS.recipientName, tooLong("their name", LIMITS.recipientName)),
+      recipient: z
+        .string()
+        .trim()
+        .min(1, "Add who it's for.")
+        .max(LIMITS.recipientName, tooLong("their name", LIMITS.recipientName)),
       occasion: z.string().trim().min(1, "Add the occasion.").max(80, tooLong("the occasion", 80)),
       deadline: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Pick the day it needs to be ready."),
       friends: z.number().int().min(1, "About how many friends?").max(1000),
-      contact: z.string().trim().min(3, "Tell us how to reach you.").max(160, tooLong("how to reach you", 160)),
+      contact: z
+        .string()
+        .trim()
+        .min(3, "Tell us how to reach you.")
+        .max(160, tooLong("how to reach you", 160)),
       timeZone: z.string().trim().min(1).max(64),
       notes: z.string().trim().max(1500, tooLong("the notes", 1500)).optional(),
     }),
   )
   .handler(async ({ data }) => {
     const user = await requireUser();
-    rateLimit(`concierge:${user.id}`, 5, 24 * 60 * 60_000, "You've sent a few requests today. We'll be in touch soon.");
+    rateLimit(
+      `concierge:${user.id}`,
+      5,
+      24 * 60 * 60_000,
+      "You've sent a few requests today. We'll be in touch soon.",
+    );
     if (data.siteId) await requireSiteOwner(data.siteId);
     const today = new Date().toISOString().slice(0, 10);
-    if (data.deadline < today) throw new HttpError(422, "That day has already passed. Pick a day from today on.");
+    if (data.deadline < today)
+      throw new HttpError(422, "That day has already passed. Pick a day from today on.");
     const [row] = await getDb()
       .insert(schema.conciergeRequests)
       .values({
@@ -1707,7 +2184,12 @@ export const submitConciergeRequest = createServerFn({ method: "POST" })
     const { conciergeRequestEmail, siteUrl } = await import("@/server/email");
     const to = process.env["CONCIERGE_EMAIL"]
       ? [process.env["CONCIERGE_EMAIL"]]
-      : (await getDb().select({ email: schema.user.email }).from(schema.user).where(eq(schema.user.isAdmin, true))).map((a) => a.email);
+      : (
+          await getDb()
+            .select({ email: schema.user.email })
+            .from(schema.user)
+            .where(eq(schema.user.isAdmin, true))
+        ).map((a) => a.email);
     for (const email of to)
       await conciergeRequestEmail({
         to: email,
@@ -1783,7 +2265,11 @@ export const trackClientEvent = createServerFn({ method: "POST" })
       return { ok: false };
     }
     const [site] = await getDb()
-      .select({ id: schema.giftSites.id, creatorId: schema.giftSites.creatorId, status: schema.giftSites.status })
+      .select({
+        id: schema.giftSites.id,
+        creatorId: schema.giftSites.creatorId,
+        status: schema.giftSites.status,
+      })
       .from(schema.giftSites)
       .where(eq(schema.giftSites.id, data.siteId));
     if (!site) return { ok: false };
@@ -1791,9 +2277,14 @@ export const trackClientEvent = createServerFn({ method: "POST" })
     const isOwner = !!me && me.id === site.creatorId;
     // Shares are the organiser's; views and opens only count when it isn't them looking.
     if (data.name === "invite_shared" && !isOwner) return { ok: false };
-    if (data.name !== "invite_shared" && data.name !== "make_your_own_clicked" && isOwner) return { ok: false };
+    if (data.name !== "invite_shared" && data.name !== "make_your_own_clicked" && isOwner)
+      return { ok: false };
     if (data.name === "gift_opened" && site.status !== "published") return { ok: false };
-    await track(data.name, { siteId: site.id, userId: me?.id ?? null, ...(data.props ? { props: data.props } : {}) });
+    await track(data.name, {
+      siteId: site.id,
+      userId: me?.id ?? null,
+      ...(data.props ? { props: data.props } : {}),
+    });
     return { ok: true };
   });
 
@@ -1820,7 +2311,11 @@ export const getMetrics = createServerFn({ method: "GET" })
       .from(schema.giftSites)
       .where(sql`${schema.giftSites.createdAt} > ${since}`);
     const counts = await db
-      .select({ name: ev.name, n: sql<number>`count(*)::int`, sites: sql<number>`count(distinct ${ev.siteId})::int` })
+      .select({
+        name: ev.name,
+        n: sql<number>`count(*)::int`,
+        sites: sql<number>`count(distinct ${ev.siteId})::int`,
+      })
       .from(ev)
       .where(sql`${ev.createdAt} > ${since}`)
       .groupBy(ev.name);
@@ -1828,14 +2323,22 @@ export const getMetrics = createServerFn({ method: "GET" })
     const friendNotes = await db
       .select({ n: sql<number>`count(*)::int` })
       .from(ev)
-      .where(and(eq(ev.name, "note_added"), sql`${ev.createdAt} > ${since}`, sql`coalesce((${ev.props}->>'by_owner')::boolean, false) = false`));
+      .where(
+        and(
+          eq(ev.name, "note_added"),
+          sql`${ev.createdAt} > ${since}`,
+          sql`coalesce((${ev.props}->>'by_owner')::boolean, false) = false`,
+        ),
+      );
     // Wrapped gifts that were then paid for (the first plan, not upgrades).
     const [wrapPay] = await db
       .select({
         wrapped: sql<number>`count(distinct w.site_id)::int`,
         paid: sql<number>`count(distinct p.site_id)::int`,
       })
-      .from(sql`events w left join events p on p.site_id = w.site_id and p.name = 'plan_purchased' and p.props->>'kind' = 'publish'`)
+      .from(
+        sql`events w left join events p on p.site_id = w.site_id and p.name = 'plan_purchased' and p.props->>'kind' = 'publish'`,
+      )
       .where(sql`w.name = 'gift_wrapped' and w.created_at > ${since}`);
     // Gifts published in the window that the recipient opened at least once.
     const [opens] = await db
@@ -1870,7 +2373,9 @@ export const getMetrics = createServerFn({ method: "GET" })
       openRate: pct(opens?.opened ?? 0, opens?.published ?? 0),
       medianHoursToShare: median(hours),
       sharers: hours.length,
-      events: counts.map((r) => ({ name: r.name, count: r.n, gifts: r.sites })).sort((a, b) => a.name.localeCompare(b.name)),
+      events: counts
+        .map((r) => ({ name: r.name, count: r.n, gifts: r.sites }))
+        .sort((a, b) => a.name.localeCompare(b.name)),
     };
   });
 
@@ -1879,7 +2384,15 @@ export const getMetrics = createServerFn({ method: "GET" })
  * country the gift was made from). Sorted by paid conversion: this decides which themes to build more of.
  */
 export const getThemeMetrics = createServerFn({ method: "GET" })
-  .inputValidator(z.object({ days: z.number().int().min(1).max(365), region: z.string().regex(/^[A-Z]{2}$/).nullable() }))
+  .inputValidator(
+    z.object({
+      days: z.number().int().min(1).max(365),
+      region: z
+        .string()
+        .regex(/^[A-Z]{2}$/)
+        .nullable(),
+    }),
+  )
   .handler(async ({ data }) => {
     await requireAdmin();
     const db = getDb();
@@ -1917,7 +2430,9 @@ export const getThemeMetrics = createServerFn({ method: "GET" })
     const regions = await db.execute<{ region: string }>(sql`
       select distinct props->>'region' as region from events
       where created_at > ${since} and props ? 'region' order by 1`);
-    const themes = await db.select({ id: schema.themes.id, name: schema.themes.name }).from(schema.themes);
+    const themes = await db
+      .select({ id: schema.themes.id, name: schema.themes.name })
+      .from(schema.themes);
     const nameOf = new Map(themes.map((t) => [t.id, t.name]));
     const rate = (a: number, b: number) => (b > 0 ? Math.round((a / b) * 1000) / 10 : null);
     const list = [...rows].map((r) => ({

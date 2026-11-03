@@ -2,7 +2,15 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { GuestBanner, GuestSignInCard } from "@/components/GuestPrompt";
 import { GUEST_COPY, OCCASION_NAMES, PAY_SAFETY_COPY, SAVE_COPY } from "@/copy/strings";
 import { useGiftSaver, type SaveState } from "@/hooks/useGiftSaver";
-import { bodyFor, lookFor, resolveStyle, styleForLegacy, styleInfo, styleTitle, type StyleId } from "@/lib/styles";
+import {
+  bodyFor,
+  lookFor,
+  resolveStyle,
+  styleForLegacy,
+  styleInfo,
+  styleTitle,
+  type StyleId,
+} from "@/lib/styles";
 import { isQuietOccasion, occasionName, type OccasionId } from "@/lib/occasions";
 import { autoWordKeys, followAutoWords } from "@/lib/autoWords";
 import { OccasionChips } from "@/components/styles/OccasionChips";
@@ -78,7 +86,12 @@ import { PageError, PageLoading, PageNotFound } from "@/components/PageStates";
 import { PalettePicker, paletteNameFor } from "@/components/PalettePicker";
 import { usePalettes } from "@/hooks/usePalettes";
 import { Button } from "@/components/ui/button";
-import { comicSettingDefaults, normalizeComicSettings, orderedComicIds, type ComicSettings } from "@/lib/comic";
+import {
+  comicSettingDefaults,
+  normalizeComicSettings,
+  orderedComicIds,
+  type ComicSettings,
+} from "@/lib/comic";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -116,7 +129,6 @@ import {
 
 const FRIEND_TINTS = ["#F7D9C4", "#D8E4DC", "#E6DCF2", "#F5E3B3", "#D9E6F2"];
 
-
 /** The opening's settings with a new sticker list (no list at all when it's empty). */
 function withStickers(settings: IntroSettings, stickers: IntroSticker[]): IntroSettings {
   const { stickers: _old, ...rest } = settings;
@@ -128,8 +140,6 @@ function initials(name: string) {
   if (parts.length === 0) return "?";
   return (parts[0]![0]! + (parts[1]?.[0] ?? "")).toUpperCase();
 }
-
-
 
 /** The editor's four steps, plus Gift settings (format, sections, who it's from). */
 type SectionKey = "words" | "look" | "notes" | "wrap" | "settings";
@@ -180,7 +190,6 @@ const SECTION_TITLES: Record<SectionKey, string> = {
   settings: "Gift settings",
 };
 
-
 /** A titled group inside a step. Touching it can switch what the preview shows. */
 function StepGroup({
   title,
@@ -219,12 +228,21 @@ function SaveLabel({ state, under = false }: { state: SaveState; under?: boolean
   if (state === "saving" || state === "saved") {
     if (under) return null;
     return (
-      <span role="status" aria-live="polite" className="hidden shrink-0 font-mono text-[10px] tracking-[0.1em] text-muted uppercase sm:inline">
+      <span
+        role="status"
+        aria-live="polite"
+        className="hidden shrink-0 font-mono text-[10px] tracking-[0.1em] text-muted uppercase sm:inline"
+      >
         {state === "saving" ? SAVE_COPY.saving : SAVE_COPY.saved}
       </span>
     );
   }
-  const full = state === "offline" ? SAVE_COPY.offline : state === "conflict" ? SAVE_COPY.notSaved : SAVE_COPY.retrying;
+  const full =
+    state === "offline"
+      ? SAVE_COPY.offline
+      : state === "conflict"
+        ? SAVE_COPY.notSaved
+        : SAVE_COPY.retrying;
   return (
     <span
       role="status"
@@ -311,7 +329,9 @@ function SiteDashboard() {
   const [touched, setTouched] = useState<ReadonlySet<SectionKey>>(() => new Set());
   useEffect(() => {
     try {
-      const saved = JSON.parse(window.localStorage.getItem(`jb:touched:${id}`) ?? "[]") as SectionKey[];
+      const saved = JSON.parse(
+        window.localStorage.getItem(`jb:touched:${id}`) ?? "[]",
+      ) as SectionKey[];
       if (Array.isArray(saved) && saved.length) setTouched(new Set(saved));
     } catch {
       /* private mode: start fresh */
@@ -379,9 +399,11 @@ function SiteDashboard() {
   const [zoom, setZoom] = useState<number | null>(null); // null = Fit
   // On phones the preview fills the screen, so Bo sits this one out instead of covering it.
   const roomForBo = useMinWidth(900);
-  const [selected, setSelected] = useState<{ field: keyof CustomText; top: number; left: number } | null>(
-    null,
-  );
+  const [selected, setSelected] = useState<{
+    field: keyof CustomText;
+    top: number;
+    left: number;
+  } | null>(null);
   const [photoUrls, setPhotoUrls] = useState<string[]>([]);
   const fieldRefs = useRef<Record<string, HTMLElement | null>>({});
   const canvasRef = useRef<HTMLDivElement | null>(null);
@@ -395,12 +417,18 @@ function SiteDashboard() {
   // Styles (flag `styles`): a style picked here shows its look straight away, before the save
   // brings back the new theme row. Older gifts (no style) keep their saved theme.
   const stylesOn = isFlagOn("styles");
-  const { data: publishedThemes = [], isPending: themesLoading } = useQuery({ queryKey: ["themes", "published"], queryFn: () => fetchThemes(false), enabled: stylesOn });
-  const draftLook = stylesOn && draft?.style ? lookFor(styleInfo(draft.style), draft.occasion) : null;
+  const { data: publishedThemes = [], isPending: themesLoading } = useQuery({
+    queryKey: ["themes", "published"],
+    queryFn: () => fetchThemes(false),
+    enabled: stylesOn,
+  });
+  const draftLook =
+    stylesOn && draft?.style ? lookFor(styleInfo(draft.style), draft.occasion) : null;
   const theme =
     stylesOn && draft?.style
       ? draftLook
-        ? (publishedThemes.find((x) => x.name === draftLook.theme) ?? (savedTheme?.name === draftLook.theme ? savedTheme : null))
+        ? (publishedThemes.find((x) => x.name === draftLook.theme) ??
+          (savedTheme?.name === draftLook.theme ? savedTheme : null))
         : null
       : savedTheme;
   const engineTheme = engineThemeForName(theme?.name);
@@ -506,13 +534,17 @@ function SiteDashboard() {
     return names;
   }, [contributions]);
 
-
   // One set of numbers for the top bar, the Notes badge, Wrap it up and My gifts.
   const counts = countNotes(contributions);
   // Adding your own note in the Notes step counts as working on it.
   const inGiftBefore = useRef<number | null>(null);
   useEffect(() => {
-    if (inGiftBefore.current !== null && counts.inGift > inGiftBefore.current && section === "notes") touch("notes");
+    if (
+      inGiftBefore.current !== null &&
+      counts.inGift > inGiftBefore.current &&
+      section === "notes"
+    )
+      touch("notes");
     inGiftBefore.current = counts.inGift;
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [counts.inGift]);
@@ -591,7 +623,6 @@ function SiteDashboard() {
   const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(shareMessage)}`;
   const messengerUrl = `https://www.facebook.com/dialog/send?link=${encodeURIComponent(contributeUrl)}&redirect_uri=${encodeURIComponent(contributeUrl)}&app_id=291494419107518`;
 
-
   /** `soft`: fields this change makes by itself (not typed); see useGiftSaver. */
   function patch(update: Partial<GiftSite>, soft?: string[]) {
     setDraft((prev) => (prev ? { ...prev, ...update } : prev), { soft });
@@ -607,7 +638,9 @@ function SiteDashboard() {
   /** Cast changes: shown at once in the preview, saved with everything else. */
   function patchCast(next: Cast) {
     touch(section);
-    setDraft((prev) => (prev ? { ...prev, character: next.character, icon_set: next.icon_set } : prev));
+    setDraft((prev) =>
+      prev ? { ...prev, character: next.character, icon_set: next.icon_set } : prev,
+    );
   }
 
   /** Sticker changes from the preview canvas (move, resize, turn, delete, bring to front). */
@@ -636,17 +669,29 @@ function SiteDashboard() {
 
   /** Renaming in the top bar changes the heading too, so there's one name. */
   function rename(value: string) {
-    setDraft((prev) => (prev ? { ...prev, title: value, custom_text: { ...prev.custom_text, heading: value } } : prev));
+    setDraft((prev) =>
+      prev ? { ...prev, title: value, custom_text: { ...prev.custom_text, heading: value } } : prev,
+    );
   }
 
   function patchComic(update: Partial<ComicSettings>) {
-    setDraft((prev) => prev ? { ...prev, format_settings: { ...normalizeComicSettings(prev.format_settings), ...update } } : prev);
+    setDraft((prev) =>
+      prev
+        ? {
+            ...prev,
+            format_settings: { ...normalizeComicSettings(prev.format_settings), ...update },
+          }
+        : prev,
+    );
   }
 
   function moveComicPanel(itemId: string, direction: -1 | 1) {
     if (!draft) return;
     const settings = normalizeComicSettings(draft.format_settings);
-    const current = orderedComicIds(contributions.map((item) => item.id), settings.panel_order);
+    const current = orderedComicIds(
+      contributions.map((item) => item.id),
+      settings.panel_order,
+    );
     const index = current.indexOf(itemId);
     const target = index + direction;
     if (index < 0 || target < 0 || target >= current.length) return;
@@ -675,8 +720,11 @@ function SiteDashboard() {
     trackEvent("invite_shared", id, { channel: "copy" });
     void navigator.clipboard.writeText(contributeUrl);
     const who = draft?.custom_text.recipient_name?.trim();
-    toast.success(who ? `Invite link copied. Send it to ${who}'s friends.` : "Invite link copied. Send it to friends.");
-
+    toast.success(
+      who
+        ? `Invite link copied. Send it to ${who}'s friends.`
+        : "Invite link copied. Send it to friends.",
+    );
   }
 
   function copyLiveLink() {
@@ -688,13 +736,23 @@ function SiteDashboard() {
    * Approve or hide one or more notes. A toast offers Undo, which puts each note back where it was.
    * `undoing` skips the toast for the undo itself.
    */
-  async function setStatus(ids: string | string[], status: Contribution["status"], undoing = false) {
+  async function setStatus(
+    ids: string | string[],
+    status: Contribution["status"],
+    undoing = false,
+  ) {
     const list = Array.isArray(ids) ? ids : [ids];
-    const before = new Map(contributions.filter((c) => list.includes(c.id)).map((c) => [c.id, c.status]));
+    const before = new Map(
+      contributions.filter((c) => list.includes(c.id)).map((c) => [c.id, c.status]),
+    );
     const ok = await setContributionStatus({ data: { ids: list, status } })
       .then(() => true)
       .catch((err: unknown) => {
-        toast.error(err instanceof Error && err.message.length < 160 ? err.message : "Couldn't update that note.");
+        toast.error(
+          err instanceof Error && err.message.length < 160
+            ? err.message
+            : "Couldn't update that note.",
+        );
         return false;
       });
     if (!ok) return;
@@ -702,16 +760,23 @@ function SiteDashboard() {
     await queryClient.invalidateQueries({ queryKey: ["contributions", id] });
     if (undoing) return;
     const what = list.length === 1 ? "Note" : `${list.length} notes`;
-    toast.success(status === "approved" ? `${what} added to the gift.` : status === "hidden" ? `${what} hidden.` : `${what} moved back.`, {
-      action: {
-        label: "Undo",
-        onClick: () => {
-          const groups = new Map<Contribution["status"], string[]>();
-          for (const [cid, prev] of before) groups.set(prev, [...(groups.get(prev) ?? []), cid]);
-          for (const [prev, gids] of groups) void setStatus(gids, prev, true);
+    toast.success(
+      status === "approved"
+        ? `${what} added to the gift.`
+        : status === "hidden"
+          ? `${what} hidden.`
+          : `${what} moved back.`,
+      {
+        action: {
+          label: "Undo",
+          onClick: () => {
+            const groups = new Map<Contribution["status"], string[]>();
+            for (const [cid, prev] of before) groups.set(prev, [...(groups.get(prev) ?? []), cid]);
+            for (const [prev, gids] of groups) void setStatus(gids, prev, true);
+          },
         },
       },
-    });
+    );
   }
 
   async function removeNote(contributionId: string) {
@@ -734,7 +799,9 @@ function SiteDashboard() {
         toast.error("A gift needs at least one section. Turn another one on first.");
         return;
       }
-      const inIt = contributions.filter((c) => c.module_type === moduleType && c.status !== "hidden").length;
+      const inIt = contributions.filter(
+        (c) => c.module_type === moduleType && c.status !== "hidden",
+      ).length;
       if (inIt > 0 && !confirmed) {
         setOffAsk(moduleType);
         return;
@@ -744,7 +811,11 @@ function SiteDashboard() {
     await setModuleEnabled({
       data: { siteId: id, moduleType: moduleType as ModuleType, enabled },
     }).catch((err: unknown) =>
-      toast.error(err instanceof Error && err.message.length < 160 ? err.message : "Couldn't update that section."),
+      toast.error(
+        err instanceof Error && err.message.length < 160
+          ? err.message
+          : "Couldn't update that section.",
+      ),
     );
     queryClient.invalidateQueries({ queryKey: ["modules", id] });
   }
@@ -844,10 +915,16 @@ function SiteDashboard() {
             >
               Share
             </button>
-            <a href={liveUrl} className="rounded-full border border-line bg-cream px-6 py-3 text-sm font-medium">
+            <a
+              href={liveUrl}
+              className="rounded-full border border-line bg-cream px-6 py-3 text-sm font-medium"
+            >
               Open gift
             </a>
-            <button onClick={() => setPublishSuccess(false)} className="rounded-full border border-line bg-cream px-6 py-3 text-sm font-medium">
+            <button
+              onClick={() => setPublishSuccess(false)}
+              className="rounded-full border border-line bg-cream px-6 py-3 text-sm font-medium"
+            >
               Back to editing
             </button>
           </div>
@@ -870,7 +947,8 @@ function SiteDashboard() {
   };
   const readyToWrap = stepDone.words && stepDone.notes;
   /** The rail's checks: done, and the organiser has actually been there. A sent gift is done everywhere. */
-  const railDone = (key: SectionKey) => stepDone[key] && (draft.status === "published" || touched.has(key));
+  const railDone = (key: SectionKey) =>
+    stepDone[key] && (draft.status === "published" || touched.has(key));
   const titledModules = MODULES.filter((mod) => isOn(mod.type) && MODULE_TITLE_FIELD[mod.type]);
   const friendNotes = contributions.filter((c) => !c.by_owner);
 
@@ -886,13 +964,19 @@ function SiteDashboard() {
   function themeFor(styleId: StyleId | null, occasion: OccasionId | null) {
     if (!styleId) return savedTheme;
     const look = lookFor(styleInfo(styleId), occasion);
-    return look ? (publishedThemes.find((x) => x.name === look.theme) ?? { name: look.theme }) : null;
+    return look
+      ? (publishedThemes.find((x) => x.name === look.theme) ?? { name: look.theme })
+      : null;
   }
 
   /** A new occasion. Words we filled in for the old one (the heading) follow; typed words stay. */
   function switchOccasion(next: OccasionId | null) {
     if (!draft) return;
-    const auto = followAutoWords(draft, { theme, occasion: draft.occasion }, { theme: themeFor(draft.style, next), occasion: next });
+    const auto = followAutoWords(
+      draft,
+      { theme, occasion: draft.occasion },
+      { theme: themeFor(draft.style, next), occasion: next },
+    );
     patch({ occasion: next, ...auto }, autoWordKeys(auto));
   }
 
@@ -906,16 +990,31 @@ function SiteDashboard() {
     const info = styleInfo(next);
     const look = lookFor(info, draft.occasion ?? null);
     const lookTheme = look ? publishedThemes.find((x) => x.name === look.theme) : undefined;
-    const pal = lookTheme ? palettesQuery.data?.find((p) => p.id === lookTheme.suggested_palette_ids[0]) : undefined;
+    const pal = lookTheme
+      ? palettesQuery.data?.find((p) => p.id === lookTheme.suggested_palette_ids[0])
+      : undefined;
     const { opening: _classic, ...intro } = draft.intro_settings;
-    const auto = followAutoWords(draft, { theme, occasion: draft.occasion }, { theme: themeFor(next, draft.occasion), occasion: draft.occasion });
+    const auto = followAutoWords(
+      draft,
+      { theme, occasion: draft.occasion },
+      { theme: themeFor(next, draft.occasion), occasion: draft.occasion },
+    );
     patch(
       {
         style: next,
         format: bodyFor(info),
         intro_settings: intro,
         ...auto,
-        ...(pal ? { palette_id: pal.id, custom_colors: { background: pal.background, primary: pal.primary, accent: pal.accent } } : {}),
+        ...(pal
+          ? {
+              palette_id: pal.id,
+              custom_colors: {
+                background: pal.background,
+                primary: pal.primary,
+                accent: pal.accent,
+              },
+            }
+          : {}),
       },
       // The words we filled in and the opening reset follow along; if another tab changed them, theirs stays.
       [...autoWordKeys(auto), "intro_settings.opening"],
@@ -976,7 +1075,11 @@ function SiteDashboard() {
     words: (
       <div className="space-y-5">
         {usesIntro ? (
-          <StepGroup title="Opening screen" hint="The first thing they see." onActivate={() => setCanvasView("intro")}>
+          <StepGroup
+            title="Opening screen"
+            hint="The first thing they see."
+            onActivate={() => setCanvasView("intro")}
+          >
             <IntroDesigner
               siteId={id}
               settings={draft.intro_settings}
@@ -1020,13 +1123,29 @@ function SiteDashboard() {
             {fieldInput("heading", "Heading", { placeholder: titles.heading })}
             {fieldInput("recipient_name", "Who it's for", { placeholder: "Their name" })}
             {themeKindOf(theme) === "birthday" && !engineTheme && isFlagOn("birthdayAge")
-              ? fieldInput("turning", t("birthday.turning"), { placeholder: "30", hint: t("birthday.turningHint"), numeric: true })
+              ? fieldInput("turning", t("birthday.turning"), {
+                  placeholder: "30",
+                  hint: t("birthday.turningHint"),
+                  numeric: true,
+                })
               : null}
-            {engineTheme?.slots.includes("place") ? fieldInput("to_place", t("editor.toPlace"), { placeholder: "Lisbon, Portugal", hint: t("editor.toPlaceHint") }) : null}
-            {engineTheme?.slots.includes("senderPlace") ? fieldInput("from_place", t("editor.fromPlace"), { placeholder: "Manila, Philippines", hint: t("editor.fromPlaceHint") }) : null}
+            {engineTheme?.slots.includes("place")
+              ? fieldInput("to_place", t("editor.toPlace"), {
+                  placeholder: "Lisbon, Portugal",
+                  hint: t("editor.toPlaceHint"),
+                })
+              : null}
+            {engineTheme?.slots.includes("senderPlace")
+              ? fieldInput("from_place", t("editor.fromPlace"), {
+                  placeholder: "Manila, Philippines",
+                  hint: t("editor.fromPlaceHint"),
+                })
+              : null}
             {fieldInput("intro_message", "Message under the title", {
               long: true,
-              placeholder: solo ? "I made this just for you. Take your time." : "We all got together to make you something.",
+              placeholder: solo
+                ? "I made this just for you. Take your time."
+                : "We all got together to make you something.",
             })}
           </div>
         </StepGroup>
@@ -1037,9 +1156,13 @@ function SiteDashboard() {
                 const titleField = MODULE_TITLE_FIELD[mod.type]!;
                 return (
                   <div key={mod.type} className="space-y-3">
-                    {fieldInput(titleField, mod.type === "countdown" ? "Counting down to" : mod.label, {
-                      placeholder: (titles as Record<string, string>)[titleField] ?? mod.label,
-                    })}
+                    {fieldInput(
+                      titleField,
+                      mod.type === "countdown" ? "Counting down to" : mod.label,
+                      {
+                        placeholder: (titles as Record<string, string>)[titleField] ?? mod.label,
+                      },
+                    )}
                   </div>
                 );
               })}
@@ -1049,39 +1172,47 @@ function SiteDashboard() {
         {isOn("countdown") || isOn("tree") || isOn("capsule") ? (
           <StepGroup title="Dates" onActivate={() => setCanvasView("gift")}>
             <div className="space-y-3">
-                  {isOn("countdown") ? (
-                    <label className="block">
-                      <span className="text-xs text-muted">Countdown: date and time</span>
-                      <input
-                        type="datetime-local"
-                        value={toLocalInput(countdownTarget(draft))}
-                        onChange={(e) => {
-                          const v = e.target.value;
-                          patch(v ? { countdown_at: new Date(v).toISOString(), countdown_date: v.slice(0, 10) } : { countdown_at: null, countdown_date: null });
-                        }}
-                        className="mt-1 w-full rounded-xl border border-line bg-cream px-3 py-2.5 text-sm outline-none focus:border-accent"
-                      />
-                      <span className="mt-1 block text-[11px] text-muted">
-                        In your time ({viewerZone().replace(/_/g, " ")}). Everyone sees it in their own.
-                      </span>
-                    </label>
-                  ) : null}
-                  {isOn("tree") ? (
-                    <label className="block">
-                      <span className="text-xs text-muted">Tree: the day the ornaments open</span>
-                      <input
-                        type="date"
-                        value={draft.tree_reveal_date ?? ""}
-                        onChange={(e) => patch({ tree_reveal_date: e.target.value || null })}
-                        className="mt-1 w-full rounded-xl border border-line bg-cream px-3 py-2.5 text-sm outline-none focus:border-accent"
-                      />
-                    </label>
-                  ) : null}
-                  {isOn("capsule") ? (
-                    <p className="rounded-xl bg-cream px-3 py-2.5 text-xs text-muted">
-                      Time capsule: each friend picks when their own note opens, from an hour to 25 years away.
-                    </p>
-                  ) : null}
+              {isOn("countdown") ? (
+                <label className="block">
+                  <span className="text-xs text-muted">Countdown: date and time</span>
+                  <input
+                    type="datetime-local"
+                    value={toLocalInput(countdownTarget(draft))}
+                    onChange={(e) => {
+                      const v = e.target.value;
+                      patch(
+                        v
+                          ? {
+                              countdown_at: new Date(v).toISOString(),
+                              countdown_date: v.slice(0, 10),
+                            }
+                          : { countdown_at: null, countdown_date: null },
+                      );
+                    }}
+                    className="mt-1 w-full rounded-xl border border-line bg-cream px-3 py-2.5 text-sm outline-none focus:border-accent"
+                  />
+                  <span className="mt-1 block text-[11px] text-muted">
+                    In your time ({viewerZone().replace(/_/g, " ")}). Everyone sees it in their own.
+                  </span>
+                </label>
+              ) : null}
+              {isOn("tree") ? (
+                <label className="block">
+                  <span className="text-xs text-muted">Tree: the day the ornaments open</span>
+                  <input
+                    type="date"
+                    value={draft.tree_reveal_date ?? ""}
+                    onChange={(e) => patch({ tree_reveal_date: e.target.value || null })}
+                    className="mt-1 w-full rounded-xl border border-line bg-cream px-3 py-2.5 text-sm outline-none focus:border-accent"
+                  />
+                </label>
+              ) : null}
+              {isOn("capsule") ? (
+                <p className="rounded-xl bg-cream px-3 py-2.5 text-xs text-muted">
+                  Time capsule: each friend picks when their own note opens, from an hour to 25
+                  years away.
+                </p>
+              ) : null}
             </div>
           </StepGroup>
         ) : null}
@@ -1098,7 +1229,13 @@ function SiteDashboard() {
       <div className="space-y-5">
         <StepGroup title="Palette" onActivate={() => setCanvasView("gift")}>
           <PalettePicker
-            {...(stylesOn ? { suggestedLabel: draft.style ? t("picker.style.paletteFor", { style: styleTitle(draft.style) }) : t("picker.style.paletteDefault") } : {})}
+            {...(stylesOn
+              ? {
+                  suggestedLabel: draft.style
+                    ? t("picker.style.paletteFor", { style: styleTitle(draft.style) })
+                    : t("picker.style.paletteDefault"),
+                }
+              : {})}
             theme={theme}
             part="suggested"
             value={{ palette_id: draft.palette_id, colors: paletteNow }}
@@ -1115,11 +1252,18 @@ function SiteDashboard() {
                 aria-pressed={draft.background_style === bk}
                 title={BACKGROUND_STYLES[bk].hint}
                 className={`squish rounded-xl border p-1.5 text-center transition-colors ${
-                  draft.background_style === bk ? "border-accent bg-accent/8" : "border-line bg-cream"
+                  draft.background_style === bk
+                    ? "border-accent bg-accent/8"
+                    : "border-line bg-cream"
                 }`}
               >
-                <span className="block h-9 w-full rounded-lg ring-1 ring-ink/10" style={backgroundCss(bk, paletteNow)} />
-                <span className="mt-1.5 block truncate text-[11px] font-medium">{BACKGROUND_STYLES[bk].label}</span>
+                <span
+                  className="block h-9 w-full rounded-lg ring-1 ring-ink/10"
+                  style={backgroundCss(bk, paletteNow)}
+                />
+                <span className="mt-1.5 block truncate text-[11px] font-medium">
+                  {BACKGROUND_STYLES[bk].label}
+                </span>
               </button>
             ))}
           </div>
@@ -1140,13 +1284,22 @@ function SiteDashboard() {
                 onPointerEnter={() => loadPairingFonts(...FONT_CHOICES)}
                 aria-pressed={draft.font_choice === fk}
                 className={`squish grid min-w-0 justify-items-center gap-0.5 rounded-xl border px-1.5 pt-2 pb-1.5 transition-colors ${
-                  draft.font_choice === fk ? "border-accent bg-accent/8" : "border-line bg-cream hover:bg-glass/80"
+                  draft.font_choice === fk
+                    ? "border-accent bg-accent/8"
+                    : "border-line bg-cream hover:bg-glass/80"
                 }`}
               >
-                <span className="text-xl leading-none" style={{ fontFamily: FONT_PAIRINGS[fk].heading }} aria-hidden="true">
+                <span
+                  className="text-xl leading-none"
+                  style={{ fontFamily: FONT_PAIRINGS[fk].heading }}
+                  aria-hidden="true"
+                >
                   Aa
                 </span>
-                <span className="w-full truncate text-center text-[11px] text-ink/75" style={{ fontFamily: FONT_PAIRINGS[fk].body }}>
+                <span
+                  className="w-full truncate text-center text-[11px] text-ink/75"
+                  style={{ fontFamily: FONT_PAIRINGS[fk].body }}
+                >
                   {FONT_PAIRINGS[fk].label}
                 </span>
               </button>
@@ -1176,22 +1329,36 @@ function SiteDashboard() {
           className="flex w-full items-center gap-3 rounded-xl border border-dashed border-ink/20 px-3 py-2.5 text-left hover:bg-cream"
         >
           <span className="min-w-0 flex-1">
-            <span className="block text-sm font-medium">{customizeLook ? "Fewer options" : "Customize"}</span>
+            <span className="block text-sm font-medium">
+              {customizeLook ? "Fewer options" : "Customize"}
+            </span>
             {customizeLook ? null : (
-              <span className="block text-xs text-muted">Any color, more characters, your own picture, sprinkles, a wanderer</span>
+              <span className="block text-xs text-muted">
+                Any color, more characters, your own picture, sprinkles, a wanderer
+              </span>
             )}
           </span>
-          <ChevronDown className={`size-4 shrink-0 transition-transform ${customizeLook ? "rotate-180" : ""}`} />
+          <ChevronDown
+            className={`size-4 shrink-0 transition-transform ${customizeLook ? "rotate-180" : ""}`}
+          />
         </button>
         {customizeLook ? (
           <>
             <StepGroup title="Colors" onActivate={() => setCanvasView("gift")}>
               <PalettePicker
-                {...(stylesOn ? { suggestedLabel: draft.style ? t("picker.style.paletteFor", { style: styleTitle(draft.style) }) : t("picker.style.paletteDefault") } : {})}
+                {...(stylesOn
+                  ? {
+                      suggestedLabel: draft.style
+                        ? t("picker.style.paletteFor", { style: styleTitle(draft.style) })
+                        : t("picker.style.paletteDefault"),
+                    }
+                  : {})}
                 theme={theme}
                 part="more"
                 value={{ palette_id: draft.palette_id, colors: paletteNow }}
-                onChange={(next) => patch({ palette_id: next.palette_id, custom_colors: next.colors })}
+                onChange={(next) =>
+                  patch({ palette_id: next.palette_id, custom_colors: next.colors })
+                }
                 photoUrls={photoUrls}
               />
             </StepGroup>
@@ -1216,39 +1383,52 @@ function SiteDashboard() {
     notes: (
       <div className="space-y-5">
         {!solo ? (
-          <StepGroup title="Invite friends" hint="Friends add their notes, photos and songs through this link. No account needed.">
+          <StepGroup
+            title="Invite friends"
+            hint="Friends add their notes, photos and songs through this link. No account needed."
+          >
             {isGuest ? (
               <GuestSignInCard title={GUEST_COPY.shareTitle} body={GUEST_COPY.shareBody} />
             ) : (
-            <>
-            <div className="flex items-center gap-2">
-              <input
-                readOnly
-                value={contributeUrl}
-                onFocus={(e) => e.currentTarget.select()}
-                aria-label="Invite link"
-                className="min-w-0 flex-1 rounded-lg border border-line bg-cream px-2 py-2 font-mono text-[11px]"
-              />
-              <Button size="sm" className="rounded-full" onClick={copyContributeLink}>
-                <LinkIcon />
-                Copy
-              </Button>
-            </div>
-            <div className="mt-2 flex gap-2">
-              <Button variant="outline" size="sm" className="flex-1 rounded-full" asChild>
-                <a href={messengerUrl} target="_blank" rel="noreferrer" onClick={() => trackEvent("invite_shared", id, { channel: "messenger" })}>
-                  <MessageCircle />
-                  Messenger
-                </a>
-              </Button>
-              <Button variant="outline" size="sm" className="flex-1 rounded-full" asChild>
-                <a href={whatsappUrl} target="_blank" rel="noreferrer" onClick={() => trackEvent("invite_shared", id, { channel: "whatsapp" })}>
-                  <Send />
-                  WhatsApp
-                </a>
-              </Button>
-            </div>
-            </>
+              <>
+                <div className="flex items-center gap-2">
+                  <input
+                    readOnly
+                    value={contributeUrl}
+                    onFocus={(e) => e.currentTarget.select()}
+                    aria-label="Invite link"
+                    className="min-w-0 flex-1 rounded-lg border border-line bg-cream px-2 py-2 font-mono text-[11px]"
+                  />
+                  <Button size="sm" className="rounded-full" onClick={copyContributeLink}>
+                    <LinkIcon />
+                    Copy
+                  </Button>
+                </div>
+                <div className="mt-2 flex gap-2">
+                  <Button variant="outline" size="sm" className="flex-1 rounded-full" asChild>
+                    <a
+                      href={messengerUrl}
+                      target="_blank"
+                      rel="noreferrer"
+                      onClick={() => trackEvent("invite_shared", id, { channel: "messenger" })}
+                    >
+                      <MessageCircle />
+                      Messenger
+                    </a>
+                  </Button>
+                  <Button variant="outline" size="sm" className="flex-1 rounded-full" asChild>
+                    <a
+                      href={whatsappUrl}
+                      target="_blank"
+                      rel="noreferrer"
+                      onClick={() => trackEvent("invite_shared", id, { channel: "whatsapp" })}
+                    >
+                      <Send />
+                      WhatsApp
+                    </a>
+                  </Button>
+                </div>
+              </>
             )}
           </StepGroup>
         ) : null}
@@ -1257,7 +1437,11 @@ function SiteDashboard() {
             compact
             siteId={id}
             recipient={draft.custom_text.recipient_name?.trim() ?? ""}
-            occasion={stylesOn && draft.occasion ? occasionName(draft.occasion) : (OCCASION_NAMES[themeKindOf(theme)] ?? "")}
+            occasion={
+              stylesOn && draft.occasion
+                ? occasionName(draft.occasion)
+                : (OCCASION_NAMES[themeKindOf(theme)] ?? "")
+            }
           />
         ) : null}
         <StepGroup
@@ -1292,11 +1476,18 @@ function SiteDashboard() {
             aside={
               pending.length > 0 ? (
                 <span className="flex items-center gap-2">
-                  <span className="rounded-full bg-accent px-2 py-0.5 text-[11px] font-medium text-cream">{waitingLabel(counts.waiting)}</span>
+                  <span className="rounded-full bg-accent px-2 py-0.5 text-[11px] font-medium text-cream">
+                    {waitingLabel(counts.waiting)}
+                  </span>
                   {pending.length > 1 ? (
                     <button
                       type="button"
-                      onClick={() => void setStatus(pending.map((p) => p.id), "approved")}
+                      onClick={() =>
+                        void setStatus(
+                          pending.map((p) => p.id),
+                          "approved",
+                        )
+                      }
                       className="rounded-full border border-line bg-paper px-2.5 py-0.5 text-[11px] font-medium hover:bg-cream"
                     >
                       Approve all
@@ -1334,7 +1525,9 @@ function SiteDashboard() {
               {
                 key: "who",
                 done: stepDone.words,
-                label: draft.custom_text.recipient_name?.trim() ? `For ${draft.custom_text.recipient_name.trim()}` : "Who it's for",
+                label: draft.custom_text.recipient_name?.trim()
+                  ? `For ${draft.custom_text.recipient_name.trim()}`
+                  : "Who it's for",
                 fix: "Add their name",
                 run: () => openField("recipient_name"),
               },
@@ -1346,7 +1539,10 @@ function SiteDashboard() {
                 run: () => goTo("notes"),
               },
             ].map((row) => (
-              <li key={row.key} className="flex items-center gap-3 rounded-xl border border-line bg-cream px-3 py-2.5">
+              <li
+                key={row.key}
+                className="flex items-center gap-3 rounded-xl border border-line bg-cream px-3 py-2.5"
+              >
                 <span
                   className={`grid size-6 shrink-0 place-items-center rounded-full ${row.done ? "bg-[#4E8A62] text-cream" : "border border-dashed border-ink/30"}`}
                   aria-hidden="true"
@@ -1355,20 +1551,31 @@ function SiteDashboard() {
                 </span>
                 <span className="min-w-0 flex-1 truncate text-sm">{row.label}</span>
                 {row.done ? null : (
-                  <button type="button" onClick={row.run} className="shrink-0 text-xs font-medium text-accent underline underline-offset-2">
+                  <button
+                    type="button"
+                    onClick={row.run}
+                    className="shrink-0 text-xs font-medium text-accent underline underline-offset-2"
+                  >
                     {row.fix}
                   </button>
                 )}
               </li>
             ))}
           </ul>
-          <p className="mt-2 text-xs text-muted">Everything else is optional. Friends can keep adding notes after it's sent.</p>
+          <p className="mt-2 text-xs text-muted">
+            Everything else is optional. Friends can keep adding notes after it's sent.
+          </p>
         </StepGroup>
         <GiftPasswordSetting
           siteId={id}
           tier={billing?.tier ?? null}
           passwordSet={site?.password_set ?? false}
-          canUpgrade={draft.status === "published" && !!billing && billing.upgrades.length > 0 && !billing.ended}
+          canUpgrade={
+            draft.status === "published" &&
+            !!billing &&
+            billing.upgrades.length > 0 &&
+            !billing.ended
+          }
           onUpgrade={() => setPlanPicker("upgrade")}
         />
         {draft.status === "published" ? (
@@ -1398,16 +1605,18 @@ function SiteDashboard() {
               }}
             >
               <Gift />
-              {hasPlan ? `Send it to ${draft.custom_text.recipient_name?.trim() || "them"}` : "Wrap it up"}
+              {hasPlan
+                ? `Send it to ${draft.custom_text.recipient_name?.trim() || "them"}`
+                : "Wrap it up"}
             </Button>
             <p className="mt-2 text-center text-xs text-muted">
               {billing?.paused
                 ? PAY_SAFETY_COPY.pausedWrap
                 : !readyToWrap
-                ? "Tick the two things above first."
-                : hasPlan
-                  ? `Already paid for (${planSummary(billing)}). You can unpublish any time.`
-                  : "Next you pick a plan. It opens for them once it's paid."}
+                  ? "Tick the two things above first."
+                  : hasPlan
+                    ? `Already paid for (${planSummary(billing)}). You can unpublish any time.`
+                    : "Next you pick a plan. It opens for them once it's paid."}
             </p>
           </div>
         )}
@@ -1419,7 +1628,11 @@ function SiteDashboard() {
     settings: (
       <div className="space-y-5">
         <StepGroup title="Who's it from?">
-          <div className="grid grid-cols-2 gap-1 rounded-full bg-cream p-1 ring-1 ring-line" role="radiogroup" aria-label="Who's it from">
+          <div
+            className="grid grid-cols-2 gap-1 rounded-full bg-cream p-1 ring-1 ring-line"
+            role="radiogroup"
+            aria-label="Who's it from"
+          >
             {(
               [
                 [false, "Me and friends"],
@@ -1433,7 +1646,10 @@ function SiteDashboard() {
                 aria-checked={solo === v}
                 onClick={() => {
                   patch({ solo: v });
-                  boSay(v ? "Just from you. Sweet." : "Friends can join in now.", v ? "love" : "happy");
+                  boSay(
+                    v ? "Just from you. Sweet." : "Friends can join in now.",
+                    v ? "love" : "happy",
+                  );
                 }}
                 className={`rounded-full py-2 text-xs font-semibold transition-colors ${solo === v ? "bg-ink text-cream" : "text-muted hover:text-ink"}`}
               >
@@ -1442,10 +1658,15 @@ function SiteDashboard() {
             ))}
           </div>
           <p className="mt-2 text-xs text-muted">
-            {solo ? "You make every page. There's no invite link." : "Friends add theirs through the invite link. You can add yours too."}
+            {solo
+              ? "You make every page. There's no invite link."
+              : "Friends add theirs through the invite link. You can add yours too."}
           </p>
         </StepGroup>
-        <StepGroup title={stylesOn ? t("picker.style.label") : "How it opens"} hint={stylesOn ? t("picker.style.hint") : "Same notes, a different way to open them."}>
+        <StepGroup
+          title={stylesOn ? t("picker.style.label") : "How it opens"}
+          hint={stylesOn ? t("picker.style.hint") : "Same notes, a different way to open them."}
+        >
           {stylesOn ? (
             <>
               <p className="text-xs font-medium text-muted">{t("picker.occasion.title")}</p>
@@ -1454,21 +1675,37 @@ function SiteDashboard() {
                   value={draft.occasion}
                   onChange={(next) => {
                     switchOccasion(next);
-                    if (next) boSay(`${occasionName(next)}. I'll put the best styles first.`, "happy");
+                    if (next)
+                      boSay(`${occasionName(next)}. I'll put the best styles first.`, "happy");
                   }}
                   {...(occasionRow !== undefined ? { open: occasionRow } : {})}
                   onOpen={setOccasionRow}
                 />
               </div>
               {styleAsk ? (
-                <div className="sticky top-0 z-10 mt-4 rounded-xl border border-accent/40 bg-[#FBEDE6] p-3 shadow-sm" role="alertdialog" aria-label={t("picker.style.label")}>
-                  <p className="text-sm font-medium">{t("picker.style.switchTitle", { style: styleTitle(styleAsk) })}</p>
+                <div
+                  className="sticky top-0 z-10 mt-4 rounded-xl border border-accent/40 bg-[#FBEDE6] p-3 shadow-sm"
+                  role="alertdialog"
+                  aria-label={t("picker.style.label")}
+                >
+                  <p className="text-sm font-medium">
+                    {t("picker.style.switchTitle", { style: styleTitle(styleAsk) })}
+                  </p>
                   <p className="mt-1 text-xs text-muted">{t("picker.style.switchBody")}</p>
                   <div className="mt-3 flex gap-2">
-                    <Button size="sm" className="rounded-full" onClick={() => switchStyle(styleAsk)}>
+                    <Button
+                      size="sm"
+                      className="rounded-full"
+                      onClick={() => switchStyle(styleAsk)}
+                    >
                       {t("picker.style.switch")}
                     </Button>
-                    <Button size="sm" variant="outline" className="rounded-full" onClick={() => setStyleAsk(null)}>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="rounded-full"
+                      onClick={() => setStyleAsk(null)}
+                    >
                       {t("picker.style.keep")}
                     </Button>
                   </div>
@@ -1481,7 +1718,11 @@ function SiteDashboard() {
                   onChange={(next) => {
                     if (next !== draft.style) setStyleAsk(next);
                   }}
-                  available={(s) => s.id === draft.style || s.looks.length === 0 || s.looks.some((l) => publishedThemes.some((x) => x.name === l.theme))}
+                  available={(s) =>
+                    s.id === draft.style ||
+                    s.looks.length === 0 ||
+                    s.looks.some((l) => publishedThemes.some((x) => x.name === l.theme))
+                  }
                   isAllowed={(s) => !planTier || tierAllowsLook(planTier, bodyFor(s), s.id)}
                   loading={themesLoading}
                   current={
@@ -1489,21 +1730,31 @@ function SiteDashboard() {
                       ? null
                       : (() => {
                           const match = styleForLegacy(savedTheme, draft.format);
-                          const layout = styleInfo(draft.format === "handwritten" ? "handwritten" : draft.format);
+                          const layout = styleInfo(
+                            draft.format === "handwritten" ? "handwritten" : draft.format,
+                          );
                           return {
-                            title: match ? styleTitle(match.id) : `${savedTheme?.name ? `${savedTheme.name} · ` : ""}${formatInfo(draft.format).title}`,
+                            title: match
+                              ? styleTitle(match.id)
+                              : `${savedTheme?.name ? `${savedTheme.name} · ` : ""}${formatInfo(draft.format).title}`,
                             art: <StyleArt style={match ?? layout} occasion={draft.occasion} />,
                           };
                         })()
                   }
                 />
               </div>
-              {draft.style ? null : <p className="mt-2 text-xs text-muted">{t("picker.style.currentHint")}</p>}
+              {draft.style ? null : (
+                <p className="mt-2 text-xs text-muted">{t("picker.style.currentHint")}</p>
+              )}
               {planTier && planTier.formats.length < FORMATS.length ? (
                 <p className="mt-3 text-xs text-muted">
                   {t("picker.style.planNote")}{" "}
                   {billing && billing.upgrades.length > 0 ? (
-                    <button type="button" className="text-accent underline underline-offset-2" onClick={() => setPlanPicker("upgrade")}>
+                    <button
+                      type="button"
+                      className="text-accent underline underline-offset-2"
+                      onClick={() => setPlanPicker("upgrade")}
+                    >
                       {t("picker.style.upgrade")}
                     </button>
                   ) : null}
@@ -1512,62 +1763,200 @@ function SiteDashboard() {
             </>
           ) : (
             <>
-          {formatAsk ? (
-            <div className="sticky top-0 z-10 mb-3 rounded-xl border border-accent/40 bg-[#FBEDE6] p-3 shadow-sm" role="alertdialog" aria-label="Switch format">
-              <p className="text-sm font-medium">Switch to {formatInfo(formatAsk).title}?</p>
-              <p className="mt-1 text-xs text-muted">
-                Your notes, words and colors stay. Only the way it opens changes
-                {draft.format === "comic" ? ". The comic's cover and panel order are kept in case you switch back." : "."}
-              </p>
-              <div className="mt-3 flex gap-2">
-                <Button
-                  size="sm"
-                  className="rounded-full"
-                  onClick={() => {
-                    patch({ format: formatAsk });
-                    setFormatAsk(null);
-                    if (formatAsk === "comic") {
-                      boReact("bam");
-                      boSay("BAM.", "surprised");
-                    }
-                  }}
+              {formatAsk ? (
+                <div
+                  className="sticky top-0 z-10 mb-3 rounded-xl border border-accent/40 bg-[#FBEDE6] p-3 shadow-sm"
+                  role="alertdialog"
+                  aria-label="Switch format"
                 >
-                  Switch
-                </Button>
-                <Button size="sm" variant="outline" className="rounded-full" onClick={() => setFormatAsk(null)}>
-                  Keep {formatInfo(draft.format).title}
-                </Button>
-              </div>
-            </div>
-          ) : null}
-          <FormatPicker
-            value={draft.format}
-            onChange={chooseFormat}
-            isAllowed={(format) => !planTier || planTier.formats.includes(format)}
-            compact
-          />
-          {planTier && planTier.formats.length < FORMATS.length ? (
-            <p className="mt-3 text-xs text-muted">
-              {planTier.name} includes {planTier.formats.map((f) => formatInfo(f).title).join(" and ")}.{" "}
-              {billing && billing.upgrades.length > 0 ? (
-                <button type="button" className="text-accent underline underline-offset-2" onClick={() => setPlanPicker("upgrade")}>
-                  Upgrade for every format.
-                </button>
+                  <p className="text-sm font-medium">Switch to {formatInfo(formatAsk).title}?</p>
+                  <p className="mt-1 text-xs text-muted">
+                    Your notes, words and colors stay. Only the way it opens changes
+                    {draft.format === "comic"
+                      ? ". The comic's cover and panel order are kept in case you switch back."
+                      : "."}
+                  </p>
+                  <div className="mt-3 flex gap-2">
+                    <Button
+                      size="sm"
+                      className="rounded-full"
+                      onClick={() => {
+                        patch({ format: formatAsk });
+                        setFormatAsk(null);
+                        if (formatAsk === "comic") {
+                          boReact("bam");
+                          boSay("BAM.", "surprised");
+                        }
+                      }}
+                    >
+                      Switch
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="rounded-full"
+                      onClick={() => setFormatAsk(null)}
+                    >
+                      Keep {formatInfo(draft.format).title}
+                    </Button>
+                  </div>
+                </div>
               ) : null}
-            </p>
-          ) : null}
+              <FormatPicker
+                value={draft.format}
+                onChange={chooseFormat}
+                isAllowed={(format) => !planTier || planTier.formats.includes(format)}
+                compact
+              />
+              {planTier && planTier.formats.length < FORMATS.length ? (
+                <p className="mt-3 text-xs text-muted">
+                  {planTier.name} includes{" "}
+                  {planTier.formats.map((f) => formatInfo(f).title).join(" and ")}.{" "}
+                  {billing && billing.upgrades.length > 0 ? (
+                    <button
+                      type="button"
+                      className="text-accent underline underline-offset-2"
+                      onClick={() => setPlanPicker("upgrade")}
+                    >
+                      Upgrade for every format.
+                    </button>
+                  ) : null}
+                </p>
+              ) : null}
             </>
           )}
           <div className="mt-4 space-y-4">
-        {draft.format === "comic" ? (
-          <>
-            <label className="block"><span className="text-xs text-muted">Cover title</span><input value={normalizeComicSettings(draft.format_settings).cover_title ?? ""} maxLength={LIMITS.comicCover} onChange={(event) => patchComic({ cover_title: event.target.value })} placeholder={`THE AMAZING ${(draft.custom_text.recipient_name || "YOU").toUpperCase()}`} className="mt-1 w-full rounded-xl border border-line bg-cream px-3 py-2.5 text-sm outline-none focus:border-accent" /></label>
-            <label className="block"><span className="text-xs text-muted">Cover subtitle</span><input value={normalizeComicSettings(draft.format_settings).cover_subtitle ?? ""} maxLength={LIMITS.comicCover} onChange={(event) => patchComic({ cover_subtitle: event.target.value })} placeholder={comicSettingDefaults(draft.custom_text.recipient_name, themeKindOf(theme)).cover_subtitle} className="mt-1 w-full rounded-xl border border-line bg-cream px-3 py-2.5 text-sm outline-none focus:border-accent" /></label>
-            <label className="flex items-start gap-3 rounded-xl border border-line bg-cream p-3"><input type="checkbox" checked={normalizeComicSettings(draft.format_settings).two_worlds === true} onChange={(event) => patchComic({ two_worlds: event.target.checked })} className="mt-0.5" /><span><span className="block text-sm font-medium">Two Worlds</span><span className="block text-xs text-muted">Let readers switch between two comic backdrops.</span></span></label>
-            {normalizeComicSettings(draft.format_settings).two_worlds ? <div className="grid gap-3"><label><span className="text-xs text-muted">First world</span><input value={normalizeComicSettings(draft.format_settings).world_one ?? ""} maxLength={LIMITS.sectionTitle} onChange={(event) => patchComic({ world_one: event.target.value })} placeholder="HERO WORLD" className="mt-1 w-full rounded-xl border border-line bg-cream px-3 py-2.5 text-sm" /></label><label><span className="text-xs text-muted">Second world</span><input value={normalizeComicSettings(draft.format_settings).world_two ?? ""} maxLength={LIMITS.sectionTitle} onChange={(event) => patchComic({ world_two: event.target.value })} placeholder="OHANA WORLD" className="mt-1 w-full rounded-xl border border-line bg-cream px-3 py-2.5 text-sm" /></label></div> : null}
-            <div><p className="text-sm font-medium">Panel organizer</p><p className="mt-1 text-xs text-muted">Reorder panels or move one into another chapter.</p><div className="mt-3 space-y-2">{orderedComicIds(contributions.map((item) => item.id), normalizeComicSettings(draft.format_settings).panel_order).map((itemId, index, orderedIds) => { const item = contributions.find((entry) => entry.id === itemId); if (!item) return null; const settings = normalizeComicSettings(draft.format_settings); const chapter = settings.chapter_overrides?.[item.id] ?? item.module_type; return <div key={item.id} className="rounded-xl border border-line bg-cream p-3"><div className="flex items-center gap-2"><span className="min-w-0 flex-1 truncate text-sm font-medium">{item.author_name}</span><Button type="button" size="icon" variant="ghost" disabled={index === 0} onClick={() => moveComicPanel(item.id, -1)} aria-label="Move panel up">↑</Button><Button type="button" size="icon" variant="ghost" disabled={index === orderedIds.length - 1} onClick={() => moveComicPanel(item.id, 1)} aria-label="Move panel down">↓</Button></div><select value={chapter} onChange={(event) => patchComic({ chapter_overrides: { ...settings.chapter_overrides, [item.id]: event.target.value } })} className="mt-2 w-full rounded-lg border border-line bg-paper px-2 py-2 text-xs">{MODULES.map((module) => <option key={module.type} value={module.type}>{module.label}</option>)}</select></div>; })}</div></div>
-          </>
-        ) : stylesOn ? null : <p className="text-xs text-muted">{formatInfo(draft.format).about}</p>}
+            {draft.format === "comic" ? (
+              <>
+                <label className="block">
+                  <span className="text-xs text-muted">Cover title</span>
+                  <input
+                    value={normalizeComicSettings(draft.format_settings).cover_title ?? ""}
+                    maxLength={LIMITS.comicCover}
+                    onChange={(event) => patchComic({ cover_title: event.target.value })}
+                    placeholder={`THE AMAZING ${(draft.custom_text.recipient_name || "YOU").toUpperCase()}`}
+                    className="mt-1 w-full rounded-xl border border-line bg-cream px-3 py-2.5 text-sm outline-none focus:border-accent"
+                  />
+                </label>
+                <label className="block">
+                  <span className="text-xs text-muted">Cover subtitle</span>
+                  <input
+                    value={normalizeComicSettings(draft.format_settings).cover_subtitle ?? ""}
+                    maxLength={LIMITS.comicCover}
+                    onChange={(event) => patchComic({ cover_subtitle: event.target.value })}
+                    placeholder={
+                      comicSettingDefaults(draft.custom_text.recipient_name, themeKindOf(theme))
+                        .cover_subtitle
+                    }
+                    className="mt-1 w-full rounded-xl border border-line bg-cream px-3 py-2.5 text-sm outline-none focus:border-accent"
+                  />
+                </label>
+                <label className="flex items-start gap-3 rounded-xl border border-line bg-cream p-3">
+                  <input
+                    type="checkbox"
+                    checked={normalizeComicSettings(draft.format_settings).two_worlds === true}
+                    onChange={(event) => patchComic({ two_worlds: event.target.checked })}
+                    className="mt-0.5"
+                  />
+                  <span>
+                    <span className="block text-sm font-medium">Two Worlds</span>
+                    <span className="block text-xs text-muted">
+                      Let readers switch between two comic backdrops.
+                    </span>
+                  </span>
+                </label>
+                {normalizeComicSettings(draft.format_settings).two_worlds ? (
+                  <div className="grid gap-3">
+                    <label>
+                      <span className="text-xs text-muted">First world</span>
+                      <input
+                        value={normalizeComicSettings(draft.format_settings).world_one ?? ""}
+                        maxLength={LIMITS.sectionTitle}
+                        onChange={(event) => patchComic({ world_one: event.target.value })}
+                        placeholder="HERO WORLD"
+                        className="mt-1 w-full rounded-xl border border-line bg-cream px-3 py-2.5 text-sm"
+                      />
+                    </label>
+                    <label>
+                      <span className="text-xs text-muted">Second world</span>
+                      <input
+                        value={normalizeComicSettings(draft.format_settings).world_two ?? ""}
+                        maxLength={LIMITS.sectionTitle}
+                        onChange={(event) => patchComic({ world_two: event.target.value })}
+                        placeholder="OHANA WORLD"
+                        className="mt-1 w-full rounded-xl border border-line bg-cream px-3 py-2.5 text-sm"
+                      />
+                    </label>
+                  </div>
+                ) : null}
+                <div>
+                  <p className="text-sm font-medium">Panel organizer</p>
+                  <p className="mt-1 text-xs text-muted">
+                    Reorder panels or move one into another chapter.
+                  </p>
+                  <div className="mt-3 space-y-2">
+                    {orderedComicIds(
+                      contributions.map((item) => item.id),
+                      normalizeComicSettings(draft.format_settings).panel_order,
+                    ).map((itemId, index, orderedIds) => {
+                      const item = contributions.find((entry) => entry.id === itemId);
+                      if (!item) return null;
+                      const settings = normalizeComicSettings(draft.format_settings);
+                      const chapter = settings.chapter_overrides?.[item.id] ?? item.module_type;
+                      return (
+                        <div key={item.id} className="rounded-xl border border-line bg-cream p-3">
+                          <div className="flex items-center gap-2">
+                            <span className="min-w-0 flex-1 truncate text-sm font-medium">
+                              {item.author_name}
+                            </span>
+                            <Button
+                              type="button"
+                              size="icon"
+                              variant="ghost"
+                              disabled={index === 0}
+                              onClick={() => moveComicPanel(item.id, -1)}
+                              aria-label="Move panel up"
+                            >
+                              ↑
+                            </Button>
+                            <Button
+                              type="button"
+                              size="icon"
+                              variant="ghost"
+                              disabled={index === orderedIds.length - 1}
+                              onClick={() => moveComicPanel(item.id, 1)}
+                              aria-label="Move panel down"
+                            >
+                              ↓
+                            </Button>
+                          </div>
+                          <select
+                            value={chapter}
+                            onChange={(event) =>
+                              patchComic({
+                                chapter_overrides: {
+                                  ...settings.chapter_overrides,
+                                  [item.id]: event.target.value,
+                                },
+                              })
+                            }
+                            className="mt-2 w-full rounded-lg border border-line bg-paper px-2 py-2 text-xs"
+                          >
+                            {MODULES.map((module) => (
+                              <option key={module.type} value={module.type}>
+                                {module.label}
+                              </option>
+                            ))}
+                          </select>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              </>
+            ) : stylesOn ? null : (
+              <p className="text-xs text-muted">{formatInfo(draft.format).about}</p>
+            )}
           </div>
         </StepGroup>
         <StepGroup title="Sections" hint="What friends can add, and what the gift shows.">
@@ -1577,52 +1966,59 @@ function SiteDashboard() {
               .sort((a, b) => Number(isOn(b.type)) - Number(isOn(a.type)))
               .map((mod) => {
                 const on = isOn(mod.type);
-                const inIt = contributions.filter((c) => c.module_type === mod.type && c.status !== "hidden").length;
+                const inIt = contributions.filter(
+                  (c) => c.module_type === mod.type && c.status !== "hidden",
+                ).length;
                 return (
                   <div key={mod.type}>
-                  <div
-                    className={`flex items-center justify-between gap-3 rounded-xl border px-3 py-2.5 transition-colors ${
-                      on ? "border-accent bg-accent/8" : "border-line bg-cream"
-                    }`}
-                  >
-                    <span className="text-sm font-medium">{mod.label}</span>
-                    <button
-                      type="button"
-                      role="switch"
-                      aria-checked={on}
-                      aria-label={mod.label}
-                      onClick={() => void toggleModule(mod.type, !on)}
-                      className={`rounded-full px-3 py-1.5 font-mono text-[10px] tracking-[0.12em] uppercase ${
-                        on ? "bg-ink text-cream" : "border border-line bg-paper text-muted"
+                    <div
+                      className={`flex items-center justify-between gap-3 rounded-xl border px-3 py-2.5 transition-colors ${
+                        on ? "border-accent bg-accent/8" : "border-line bg-cream"
                       }`}
                     >
-                      {on ? "On" : "Add"}
-                    </button>
-                  </div>
-                  {offAsk === mod.type ? (
-                    <div role="alert" className="mt-1.5 rounded-xl border border-line bg-paper p-3">
-                      <p className="text-sm font-medium">
-                        Turn off {mod.label}? It has {inIt} {inIt === 1 ? "note" : "notes"}.
-                      </p>
-                      <p className="mt-1 text-xs text-muted">They're kept, just not shown. Turn it back on any time to bring them back.</p>
-                      <div className="mt-2 flex gap-2">
-                        <button
-                          type="button"
-                          onClick={() => void toggleModule(mod.type, false, true)}
-                          className="rounded-full bg-ink px-3.5 py-1.5 text-xs font-medium text-cream"
-                        >
-                          Turn it off
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => setOffAsk(null)}
-                          className="rounded-full border border-line px-3.5 py-1.5 text-xs font-medium"
-                        >
-                          Keep it on
-                        </button>
-                      </div>
+                      <span className="text-sm font-medium">{mod.label}</span>
+                      <button
+                        type="button"
+                        role="switch"
+                        aria-checked={on}
+                        aria-label={mod.label}
+                        onClick={() => void toggleModule(mod.type, !on)}
+                        className={`rounded-full px-3 py-1.5 font-mono text-[10px] tracking-[0.12em] uppercase ${
+                          on ? "bg-ink text-cream" : "border border-line bg-paper text-muted"
+                        }`}
+                      >
+                        {on ? "On" : "Add"}
+                      </button>
                     </div>
-                  ) : null}
+                    {offAsk === mod.type ? (
+                      <div
+                        role="alert"
+                        className="mt-1.5 rounded-xl border border-line bg-paper p-3"
+                      >
+                        <p className="text-sm font-medium">
+                          Turn off {mod.label}? It has {inIt} {inIt === 1 ? "note" : "notes"}.
+                        </p>
+                        <p className="mt-1 text-xs text-muted">
+                          They're kept, just not shown. Turn it back on any time to bring them back.
+                        </p>
+                        <div className="mt-2 flex gap-2">
+                          <button
+                            type="button"
+                            onClick={() => void toggleModule(mod.type, false, true)}
+                            className="rounded-full bg-ink px-3.5 py-1.5 text-xs font-medium text-cream"
+                          >
+                            Turn it off
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setOffAsk(null)}
+                            className="rounded-full border border-line px-3.5 py-1.5 text-xs font-medium"
+                          >
+                            Keep it on
+                          </button>
+                        </div>
+                      </div>
+                    ) : null}
                   </div>
                 );
               })}
@@ -1631,7 +2027,9 @@ function SiteDashboard() {
               onClick={() => setMoreSections((v) => !v)}
               className="w-full rounded-xl border border-dashed border-line px-3 py-2.5 text-left text-sm font-medium hover:bg-cream"
             >
-              {moreSections ? "Show only the ones that are on" : `Add more (${MODULES.filter((mod) => !isOn(mod.type)).length})`}
+              {moreSections
+                ? "Show only the ones that are on"
+                : `Add more (${MODULES.filter((mod) => !isOn(mod.type)).length})`}
             </button>
             <label className="flex items-start gap-3 rounded-xl border border-line bg-cream p-3">
               <input
@@ -1641,9 +2039,12 @@ function SiteDashboard() {
                 className="mt-0.5"
               />
               <span>
-                <span className="block text-sm font-medium">Let friends read each other's notes</span>
+                <span className="block text-sm font-medium">
+                  Let friends read each other's notes
+                </span>
                 <span className="block text-xs text-muted">
-                  Off by default. Notes marked "Only {draft.custom_text.recipient_name || "the recipient"}" always stay sealed.
+                  Off by default. Notes marked "Only{" "}
+                  {draft.custom_text.recipient_name || "the recipient"}" always stay sealed.
                 </span>
               </span>
             </label>
@@ -1692,7 +2093,9 @@ function SiteDashboard() {
             >
               {done ? <Check className="size-4" aria-label="done" /> : i + 1}
             </span>
-            <span className={`text-[11px] leading-tight whitespace-nowrap ${active ? "font-semibold text-ink" : ""}`}>
+            <span
+              className={`text-[11px] leading-tight whitespace-nowrap ${active ? "font-semibold text-ink" : ""}`}
+            >
               {SECTION_TITLES[key]}
             </span>
             {key === "notes" && counts.waiting > 0 ? (
@@ -1789,10 +2192,24 @@ function SiteDashboard() {
     />
   );
   const fullScreenGift = (
-    <FormatView key={draft.format === "comic" ? (previewOpened ? "comic-reader" : "comic-cover") : draft.format} site={draft} theme={theme} palette={paletteNow} modules={modules} contributions={approved} calendarEntries={calendarEntries} showCover={!previewOpened} sample showShare />
+    <FormatView
+      key={
+        draft.format === "comic" ? (previewOpened ? "comic-reader" : "comic-cover") : draft.format
+      }
+      site={draft}
+      theme={theme}
+      palette={paletteNow}
+      modules={modules}
+      contributions={approved}
+      calendarEntries={calendarEntries}
+      showCover={!previewOpened}
+      sample
+      showShare
+    />
   );
 
-  const showIntroInCanvas = canvasView === "intro" && (section === "words" || section === "look") && usesIntro;
+  const showIntroInCanvas =
+    canvasView === "intro" && (section === "words" || section === "look") && usesIntro;
   const canvasIntro = (
     <GiftIntro
       key={`canvas-intro-${introCanvasKey}`}
@@ -1841,8 +2258,26 @@ function SiteDashboard() {
         {device === "laptop" ? (
           // Side room so Bo stands next to the laptop, never on top of its frame.
           <div className="flex h-full items-center justify-center min-[900px]:px-20">
-            <DevicePreview device="laptop" fit="contain" overlay={showIntroInCanvas ? canvasIntro : null}>
-              <FormatView site={draft} theme={theme} palette={paletteNow} modules={modules} contributions={approved} calendarEntries={calendarEntries} sample placeholderName highlightField={focusField} onEditField={(field) => { openField(field); selectInPreview(field); }} />
+            <DevicePreview
+              device="laptop"
+              fit="contain"
+              overlay={showIntroInCanvas ? canvasIntro : null}
+            >
+              <FormatView
+                site={draft}
+                theme={theme}
+                palette={paletteNow}
+                modules={modules}
+                contributions={approved}
+                calendarEntries={calendarEntries}
+                sample
+                placeholderName
+                highlightField={focusField}
+                onEditField={(field) => {
+                  openField(field);
+                  selectInPreview(field);
+                }}
+              />
             </DevicePreview>
           </div>
         ) : (
@@ -1851,11 +2286,27 @@ function SiteDashboard() {
               className="relative h-full w-full max-w-[390px] overflow-hidden rounded-[28px] border border-line bg-cream shadow-xl"
               style={{
                 contain: "layout paint",
-                ...(zoom ? { transform: `scale(${zoom / 100})`, transformOrigin: "top center" } : {}),
+                ...(zoom
+                  ? { transform: `scale(${zoom / 100})`, transformOrigin: "top center" }
+                  : {}),
               }}
             >
               <div className="h-full overflow-y-auto overscroll-contain">
-                 <FormatView site={draft} theme={theme} palette={paletteNow} modules={modules} contributions={approved} calendarEntries={calendarEntries} sample placeholderName highlightField={focusField} onEditField={(field) => { openField(field); selectInPreview(field); }} />
+                <FormatView
+                  site={draft}
+                  theme={theme}
+                  palette={paletteNow}
+                  modules={modules}
+                  contributions={approved}
+                  calendarEntries={calendarEntries}
+                  sample
+                  placeholderName
+                  highlightField={focusField}
+                  onEditField={(field) => {
+                    openField(field);
+                    selectInPreview(field);
+                  }}
+                />
               </div>
               {showIntroInCanvas ? canvasIntro : null}
             </div>
@@ -1909,7 +2360,11 @@ function SiteDashboard() {
             onChange={(e) => setZoom(Number(e.target.value))}
             className="hidden w-28 accent-[#C2366B] min-[900px]:block"
           />
-          {zoom ? <span className="hidden w-9 text-right text-[11px] text-muted tabular-nums min-[900px]:block">{zoom}%</span> : null}
+          {zoom ? (
+            <span className="hidden w-9 text-right text-[11px] text-muted tabular-nums min-[900px]:block">
+              {zoom}%
+            </span>
+          ) : null}
           <button
             type="button"
             onClick={() => setZoom(null)}
@@ -1937,78 +2392,85 @@ function SiteDashboard() {
     </div>
   );
 
-
   return (
     <div className="flex h-[100dvh] flex-col overflow-hidden bg-paper text-ink">
       {roomForBo ? <BoBuddy followFocus celebrate intro={false} /> : null}
-      <header data-bo-avoid className="flex h-16 shrink-0 items-center justify-between gap-3 border-b border-line bg-paper px-3 sm:px-4">
+      <header
+        data-bo-avoid
+        className="flex h-16 shrink-0 items-center justify-between gap-3 border-b border-line bg-paper px-3 sm:px-4"
+      >
         <div className="flex min-w-0 flex-col justify-center gap-0.5">
-        <div className="group flex min-w-0 items-center gap-2">
-          <Link to="/dashboard" className="shrink-0 text-xs text-muted hover:text-ink">
-            ← All gifts
-          </Link>
-          <span className="text-line">·</span>
-          {renaming ? (
-            <input
-              autoFocus
-              value={draft.title}
-              maxLength={LIMITS.heading}
-              aria-label="Gift name"
-              onChange={(e) => rename(e.target.value)}
-              onBlur={() => setRenaming(false)}
-              onKeyDown={(e) => {
-                if (e.key === "Enter" || e.key === "Escape") setRenaming(false);
-              }}
-              className="min-w-0 flex-1 rounded-lg border border-accent bg-cream px-2 py-1 font-display text-base outline-none"
-            />
-          ) : (
-            <button
-              type="button"
-              onClick={() => setRenaming(true)}
-              title="Click to rename"
-              className="flex min-w-0 items-center gap-1 truncate font-display text-base font-medium hover:text-accent sm:text-lg"
-            >
-              <span className="truncate">{draft.title}</span>
-              <Pencil className="size-3.5 shrink-0 text-muted opacity-0 transition-opacity group-hover:opacity-100" />
-            </button>
-          )}
-          <SaveLabel state={saveState} />
-        </div>
-        <div className="flex min-w-0 items-center gap-2 text-[11px] text-muted">
-          <SaveLabel state={saveState} under />
-          {stylesOn ? (
-            draft.style || draft.occasion ? (
-              <span className="shrink-0 rounded-full px-2 py-0.5 font-medium" style={{ background: paletteNow.accent + "33", color: "#2B2522" }}>
-                {draft.style ? styleTitle(draft.style) : occasionName(draft.occasion!)}
+          <div className="group flex min-w-0 items-center gap-2">
+            <Link to="/dashboard" className="shrink-0 text-xs text-muted hover:text-ink">
+              ← All gifts
+            </Link>
+            <span className="text-line">·</span>
+            {renaming ? (
+              <input
+                autoFocus
+                value={draft.title}
+                maxLength={LIMITS.heading}
+                aria-label="Gift name"
+                onChange={(e) => rename(e.target.value)}
+                onBlur={() => setRenaming(false)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" || e.key === "Escape") setRenaming(false);
+                }}
+                className="min-w-0 flex-1 rounded-lg border border-accent bg-cream px-2 py-1 font-display text-base outline-none"
+              />
+            ) : (
+              <button
+                type="button"
+                onClick={() => setRenaming(true)}
+                title="Click to rename"
+                className="flex min-w-0 items-center gap-1 truncate font-display text-base font-medium hover:text-accent sm:text-lg"
+              >
+                <span className="truncate">{draft.title}</span>
+                <Pencil className="size-3.5 shrink-0 text-muted opacity-0 transition-opacity group-hover:opacity-100" />
+              </button>
+            )}
+            <SaveLabel state={saveState} />
+          </div>
+          <div className="flex min-w-0 items-center gap-2 text-[11px] text-muted">
+            <SaveLabel state={saveState} under />
+            {stylesOn ? (
+              draft.style || draft.occasion ? (
+                <span
+                  className="shrink-0 rounded-full px-2 py-0.5 font-medium"
+                  style={{ background: paletteNow.accent + "33", color: "#2B2522" }}
+                >
+                  {draft.style ? styleTitle(draft.style) : occasionName(draft.occasion!)}
+                </span>
+              ) : null
+            ) : theme?.name ? (
+              <span
+                className="shrink-0 rounded-full px-2 py-0.5 font-medium"
+                style={{ background: paletteNow.accent + "33", color: "#2B2522" }}
+              >
+                {theme.name}
               </span>
-            ) : null
-          ) : theme?.name ? (
-            <span
-              className="shrink-0 rounded-full px-2 py-0.5 font-medium"
-              style={{ background: paletteNow.accent + "33", color: "#2B2522" }}
-            >
-              {theme.name}
-            </span>
-          ) : null}
-          {draft.custom_text.recipient_name?.trim() ? (
-            <span className="truncate">for {draft.custom_text.recipient_name}</span>
-          ) : (
-            <button
-              type="button"
-              onClick={() => openField("recipient_name")}
-              className="truncate rounded-full bg-accent/12 px-2 py-0.5 font-medium text-accent hover:bg-accent/20"
-            >
-              Who's it for? Add their name
-            </button>
-          )}
-          {daysToGo !== null ? <span className="shrink-0">· {daysToGo}</span> : null}
-        </div>
+            ) : null}
+            {draft.custom_text.recipient_name?.trim() ? (
+              <span className="truncate">for {draft.custom_text.recipient_name}</span>
+            ) : (
+              <button
+                type="button"
+                onClick={() => openField("recipient_name")}
+                className="truncate rounded-full bg-accent/12 px-2 py-0.5 font-medium text-accent hover:bg-accent/20"
+              >
+                Who's it for? Add their name
+              </button>
+            )}
+            {daysToGo !== null ? <span className="shrink-0">· {daysToGo}</span> : null}
+          </div>
         </div>
         <div className="flex shrink-0 items-center gap-2">
           <span
             role="status"
             aria-live="polite"
-            title={friends.length > 0 ? `From ${friends.join(", ")}` : "Friends' notes show up here"}
+            title={
+              friends.length > 0 ? `From ${friends.join(", ")}` : "Friends' notes show up here"
+            }
             className="hidden h-7 items-center gap-1.5 rounded-full bg-ink/[.05] pr-2.5 pl-1.5 text-[11px] font-medium text-muted min-[900px]:flex"
           >
             {friends.length > 0 ? (
@@ -2028,7 +2490,6 @@ function SiteDashboard() {
             )}
             <span className="tabular-nums">{noteSummary(counts)}</span>
           </span>
-
 
           <Button
             variant="outline"
@@ -2097,13 +2558,19 @@ function SiteDashboard() {
                 </DropdownMenuItem>
                 <DropdownMenuItem onSelect={copyLiveLink}>Copy gift link</DropdownMenuItem>
                 {canRenameLink(billing?.tier ?? null) ? (
-                  <DropdownMenuItem onSelect={() => setLinkNameOpen(true)}>Change link name</DropdownMenuItem>
+                  <DropdownMenuItem onSelect={() => setLinkNameOpen(true)}>
+                    Change link name
+                  </DropdownMenuItem>
                 ) : null}
                 {billing && billing.upgrades.length > 0 && !billing.ended && !billing.paused ? (
-                  <DropdownMenuItem onSelect={() => setPlanPicker("upgrade")}>Upgrade plan</DropdownMenuItem>
+                  <DropdownMenuItem onSelect={() => setPlanPicker("upgrade")}>
+                    Upgrade plan
+                  </DropdownMenuItem>
                 ) : null}
                 {billing?.extend && !billing.paused ? (
-                  <DropdownMenuItem onSelect={() => setExtendOpen(true)}>Extend this gift</DropdownMenuItem>
+                  <DropdownMenuItem onSelect={() => setExtendOpen(true)}>
+                    Extend this gift
+                  </DropdownMenuItem>
                 ) : null}
                 <DropdownMenuItem onSelect={() => void unpublish()}>Unpublish</DropdownMenuItem>
                 {planSummary(billing) ? (
@@ -2120,7 +2587,6 @@ function SiteDashboard() {
             </Button>
           )}
         </div>
-
       </header>
       {saveState === "conflict" ? (
         <ChangedElsewhere
@@ -2132,7 +2598,11 @@ function SiteDashboard() {
         />
       ) : null}
       <GuestBanner />
-      <PlanBanner billing={billing} onUpgrade={() => setPlanPicker("upgrade")} onExtend={() => setExtendOpen(true)} />
+      <PlanBanner
+        billing={billing}
+        onUpgrade={() => setPlanPicker("upgrade")}
+        onExtend={() => setExtendOpen(true)}
+      />
       <ExtendDialog siteId={id} open={extendOpen} onOpenChange={setExtendOpen} />
       <PlanPickerDialog
         siteId={id}
@@ -2183,7 +2653,11 @@ function SiteDashboard() {
       <div className="min-[900px]:hidden">{rail(false)}</div>
       {/* Room under the preview for the sheet, so the phone preview shrinks to fit above it. */}
       {sheetOpen ? (
-        <div aria-hidden="true" className="shrink-0 min-[900px]:hidden" style={{ height: `calc(${Math.min(sheetH, 60)}dvh - 64px)` }} />
+        <div
+          aria-hidden="true"
+          className="shrink-0 min-[900px]:hidden"
+          style={{ height: `calc(${Math.min(sheetH, 60)}dvh - 64px)` }}
+        />
       ) : null}
       {sheetOpen ? (
         <div className="pointer-events-none fixed inset-x-0 bottom-0 z-50 flex items-end min-[900px]:hidden">
@@ -2219,9 +2693,19 @@ function SiteDashboard() {
         </div>
       ) : null}
 
-
       {introPreview && draft.format === "comic" ? (
-        <ComicIssueView key="comic-cover-preview" site={draft} modules={modules} contributions={approved} calendarEntries={calendarEntries} palette={paletteNow} kind={themeKindOf(theme)} showCover sample onClose={() => setIntroPreview(false)} />
+        <ComicIssueView
+          key="comic-cover-preview"
+          site={draft}
+          modules={modules}
+          contributions={approved}
+          calendarEntries={calendarEntries}
+          palette={paletteNow}
+          kind={themeKindOf(theme)}
+          showCover
+          sample
+          onClose={() => setIntroPreview(false)}
+        />
       ) : introPreview ? (
         <GiftIntro
           style={introStyleForTheme(theme?.name)}
@@ -2246,11 +2730,23 @@ function SiteDashboard() {
         <div className="fixed inset-0 z-[70] bg-paper text-ink">
           <div className="absolute inset-x-0 top-0 z-[80] border-b border-line bg-cream/95 px-3 py-2 shadow-sm backdrop-blur-xl">
             <div className="mx-auto flex max-w-5xl flex-wrap items-center justify-between gap-2">
-              <span className="min-w-0 truncate text-sm">{draft.custom_text.recipient_name?.trim() ? <>Previewing as <strong>{draft.custom_text.recipient_name.trim()}</strong></> : "Previewing the gift"}</span>
+              <span className="min-w-0 truncate text-sm">
+                {draft.custom_text.recipient_name?.trim() ? (
+                  <>
+                    Previewing as <strong>{draft.custom_text.recipient_name.trim()}</strong>
+                  </>
+                ) : (
+                  "Previewing the gift"
+                )}
+              </span>
               <div className="flex items-center gap-2">
                 <DeviceToggle value={device} onChange={setDevice} size="sm" />
-                <Button variant="outline" size="sm" onClick={() => setPreviewOpened(false)}>Replay intro</Button>
-                <Button size="sm" onClick={() => setFullPreview(false)}>Back to editing</Button>
+                <Button variant="outline" size="sm" onClick={() => setPreviewOpened(false)}>
+                  Replay intro
+                </Button>
+                <Button size="sm" onClick={() => setFullPreview(false)}>
+                  Back to editing
+                </Button>
               </div>
             </div>
           </div>
@@ -2268,8 +2764,13 @@ function SiteDashboard() {
                 </DevicePreview>
               </div>
             ) : (
-              <div className="relative mx-auto h-[calc(100dvh-110px)] w-full max-w-[390px] overflow-hidden rounded-[28px] border border-line shadow-xl sm:h-[calc(100dvh-78px)]" style={{ contain: "layout paint" }}>
-                <div className="absolute inset-0 overflow-y-auto overscroll-contain">{fullScreenGift}</div>
+              <div
+                className="relative mx-auto h-[calc(100dvh-110px)] w-full max-w-[390px] overflow-hidden rounded-[28px] border border-line shadow-xl sm:h-[calc(100dvh-78px)]"
+                style={{ contain: "layout paint" }}
+              >
+                <div className="absolute inset-0 overflow-y-auto overscroll-contain">
+                  {fullScreenGift}
+                </div>
                 {!previewOpened && formatInfo(draft.format).usesIntro ? fullScreenIntro : null}
               </div>
             )}
@@ -2412,11 +2913,15 @@ function CalendarEditor({
               key={iso}
               onClick={() => selectDate(iso)}
               className={`grid aspect-square place-items-center rounded-lg border text-xs transition-colors ${
-                date === iso ? "border-accent bg-accent/12" : "border-line bg-cream hover:bg-glass/70"
+                date === iso
+                  ? "border-accent bg-accent/12"
+                  : "border-line bg-cream hover:bg-glass/70"
               }`}
             >
               <span>{Number(iso.slice(8, 10))}</span>
-              {filled.has(iso) ? <span className="mt-0.5 block size-1.5 rounded-full bg-accent" /> : null}
+              {filled.has(iso) ? (
+                <span className="mt-0.5 block size-1.5 rounded-full bg-accent" />
+              ) : null}
             </button>
           ) : (
             <span key={`empty-${i}`} />

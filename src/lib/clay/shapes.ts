@@ -43,7 +43,13 @@ export function mesh(g: THREE.BufferGeometry, m: THREE.Material) {
 }
 
 /** An ellipsoid: width, height and depth in box units, centered at (x, y, z). */
-export function blob(at: V3, size: V3, color: string, rot: V3 = [0, 0, 0], opts?: Parameters<typeof clay>[1]) {
+export function blob(
+  at: V3,
+  size: V3,
+  color: string,
+  rot: V3 = [0, 0, 0],
+  opts?: Parameters<typeof clay>[1],
+) {
   const o = mesh(new THREE.SphereGeometry(0.5, 72, 54), clay(color, opts));
   o.position.copy(W(...at));
   o.scale.set(...size);
@@ -55,7 +61,14 @@ export function blob(at: V3, size: V3, color: string, rot: V3 = [0, 0, 0], opts?
  * An egg/bean body: round on top, wide and a little flat at the bottom, the
  * shape most of the figures share. `bulge` pushes the widest point down.
  */
-export function egg(at: V3, w: number, h: number, d: number, color: string, { bulge = 0.18, flat = 0.22 } = {}) {
+export function egg(
+  at: V3,
+  w: number,
+  h: number,
+  d: number,
+  color: string,
+  { bulge = 0.18, flat = 0.22 } = {},
+) {
   const pts: THREE.Vector2[] = [];
   const N = 64;
   for (let i = 0; i <= N; i++) {
@@ -101,7 +114,14 @@ export function cone(at: V3, w: number, h: number, d: number, color: string, til
 }
 
 /** A torus (cup handle, rings). */
-export function torus(at: V3, R: number, r: number, color: string, rot: V3 = [0, 0, 0], arc = Math.PI * 2) {
+export function torus(
+  at: V3,
+  R: number,
+  r: number,
+  color: string,
+  rot: V3 = [0, 0, 0],
+  arc = Math.PI * 2,
+) {
   const o = mesh(new THREE.TorusGeometry(R, r, 28, 72, arc), clay(color));
   o.position.copy(W(...at));
   o.rotation.set(rot[0], rot[1], -rot[2]);
@@ -109,9 +129,22 @@ export function torus(at: V3, R: number, r: number, color: string, rot: V3 = [0,
 }
 
 /** A pillowy extrusion of a 2D outline (box coords, y down). */
-export function pillow(outline: [number, number][], depth: number, color: string, z = 0, bevel = 4) {
+export function pillow(
+  outline: [number, number][],
+  depth: number,
+  color: string,
+  z = 0,
+  bevel = 4,
+) {
   const s = new THREE.Shape(outline.map(([x, y]) => new THREE.Vector2(x - 60, 60 - y)));
-  const g = new THREE.ExtrudeGeometry(s, { depth, bevelEnabled: true, bevelThickness: bevel, bevelSize: bevel * 0.9, bevelSegments: 12, curveSegments: 48 });
+  const g = new THREE.ExtrudeGeometry(s, {
+    depth,
+    bevelEnabled: true,
+    bevelThickness: bevel,
+    bevelSize: bevel * 0.9,
+    bevelSegments: 12,
+    curveSegments: 48,
+  });
   g.translate(0, 0, z - depth / 2);
   const merged = mergeVertices(g);
   merged.computeVertexNormals();
@@ -122,11 +155,29 @@ export function pillow(outline: [number, number][], depth: number, color: string
 export function fluff(
   center: V3,
   radii: V3,
-  { count, size, color, seed = 1, front = 0.15, from = 0, to = Math.PI * 2, rows = 1 }: { count: number; size: [number, number]; color: string; seed?: number; front?: number; from?: number; to?: number; rows?: number },
+  {
+    count,
+    size,
+    color,
+    seed = 1,
+    front = 0.15,
+    from = 0,
+    to = Math.PI * 2,
+    rows = 1,
+  }: {
+    count: number;
+    size: [number, number];
+    color: string;
+    seed?: number;
+    front?: number;
+    from?: number;
+    to?: number;
+    rows?: number;
+  },
 ) {
   const g = new THREE.Group();
   let s = seed * 9301 + 49297;
-  const rnd = () => ((s = (s * 9301 + 49297) % 233280) / 233280);
+  const rnd = () => (s = (s * 9301 + 49297) % 233280) / 233280;
   for (let r = 0; r < rows; r++) {
     for (let i = 0; i < count; i++) {
       const a = from + ((to - from) * (i + rnd() * 0.6)) / count;
@@ -187,10 +238,14 @@ export function curl(at: V3, r: number, color: string, lift = 1) {
   );
 }
 
-export type ClayRecipe = (c: { primary: string; secondary: string; skin: string }) => THREE.Object3D[];
+export type ClayRecipe = (c: {
+  primary: string;
+  secondary: string;
+  skin: string;
+}) => THREE.Object3D[];
 
-export const feet = (y: number, color: string, xs = [46, 74], size: V3 = [17, 10, 16]) => xs.map((x) => blob([x, y, 10], size, color));
-
+export const feet = (y: number, color: string, xs = [46, 74], size: V3 = [17, 10, 16]) =>
+  xs.map((x) => blob([x, y, 10], size, color));
 
 export function shade(hex: string, amt: number) {
   const n = parseInt(hex.slice(1), 16);
@@ -200,10 +255,22 @@ export function shade(hex: string, amt: number) {
   return `#${((1 << 24) | (r << 16) | (g << 8) | b).toString(16).slice(1)}`;
 }
 
-
 /** A lathe (pots, cups, candles): profile points [radius, y] in -0.5..0.5, scaled to w x h x d. */
-export function lathe(profile: [number, number][], at: V3, size: V3, color: string, tiltX = 0, opts?: Parameters<typeof clay>[1]) {
-  const o = mesh(new THREE.LatheGeometry(profile.map(([r, y]) => new THREE.Vector2(Math.max(0.0001, r), y)), 96), clay(color, opts));
+export function lathe(
+  profile: [number, number][],
+  at: V3,
+  size: V3,
+  color: string,
+  tiltX = 0,
+  opts?: Parameters<typeof clay>[1],
+) {
+  const o = mesh(
+    new THREE.LatheGeometry(
+      profile.map(([r, y]) => new THREE.Vector2(Math.max(0.0001, r), y)),
+      96,
+    ),
+    clay(color, opts),
+  );
   o.position.copy(W(...at));
   o.scale.set(...size);
   o.rotation.x = tiltX;
@@ -211,7 +278,14 @@ export function lathe(profile: [number, number][], at: V3, size: V3, color: stri
 }
 
 /** A rounded box (robots, cameras, suitcases). */
-export function rbox(at: V3, size: V3, radius: number, color: string, rot: V3 = [0, 0, 0], opts?: Parameters<typeof clay>[1]) {
+export function rbox(
+  at: V3,
+  size: V3,
+  radius: number,
+  color: string,
+  rot: V3 = [0, 0, 0],
+  opts?: Parameters<typeof clay>[1],
+) {
   const [w, h, d] = size;
   const r = Math.min(radius, w / 2, h / 2, d / 2) - 0.01;
   const s = new THREE.Shape();
@@ -221,7 +295,14 @@ export function rbox(at: V3, size: V3, radius: number, color: string, rot: V3 = 
   s.absarc(-x0, y0, r, Math.PI * 1.5, Math.PI * 2, false);
   s.absarc(-x0, -y0, r, 0, Math.PI * 0.5, false);
   s.absarc(x0, -y0, r, Math.PI * 0.5, Math.PI, false);
-  const g = new THREE.ExtrudeGeometry(s, { depth: Math.max(0.01, d - 2 * r), bevelEnabled: true, bevelThickness: r, bevelSize: r * 0.98, bevelSegments: 10, curveSegments: 24 });
+  const g = new THREE.ExtrudeGeometry(s, {
+    depth: Math.max(0.01, d - 2 * r),
+    bevelEnabled: true,
+    bevelThickness: r,
+    bevelSize: r * 0.98,
+    bevelSegments: 10,
+    curveSegments: 24,
+  });
   g.translate(0, 0, -(d - 2 * r) / 2);
   const merged = mergeVertices(g);
   merged.computeVertexNormals();
@@ -232,7 +313,14 @@ export function rbox(at: V3, size: V3, radius: number, color: string, rot: V3 = 
 }
 
 /** A rounded star or flower outline (points, inner radius ratio). */
-export function starOutline(cx: number, cy: number, R: number, k: number, points = 5, rot = -Math.PI / 2): [number, number][] {
+export function starOutline(
+  cx: number,
+  cy: number,
+  R: number,
+  k: number,
+  points = 5,
+  rot = -Math.PI / 2,
+): [number, number][] {
   const out: [number, number][] = [];
   const N = points * 2;
   for (let i = 0; i < N * 6; i++) {

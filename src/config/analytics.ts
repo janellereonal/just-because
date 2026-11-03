@@ -14,15 +14,26 @@
  * - Links to a gift (/g/..., /contribute/...) are cut down to "/g/:id" before
  *   anything leaves the browser, so PostHog never holds a working gift link.
  */
-export const POSTHOG_KEY = ((import.meta.env["VITE_POSTHOG_KEY"] as string | undefined) ?? "").trim();
-export const POSTHOG_REGION: "us" | "eu" = (import.meta.env["VITE_POSTHOG_REGION"] as string | undefined) === "eu" ? "eu" : "us";
+export const POSTHOG_KEY = (
+  (import.meta.env["VITE_POSTHOG_KEY"] as string | undefined) ?? ""
+).trim();
+export const POSTHOG_REGION: "us" | "eu" =
+  (import.meta.env["VITE_POSTHOG_REGION"] as string | undefined) === "eu" ? "eu" : "us";
 
 export const analyticsEnabled = () => POSTHOG_KEY.startsWith("phc_");
 
 /** Where PostHog receives events and serves its scripts, per region. */
 export const POSTHOG_HOSTS = {
-  us: { api: "https://us.i.posthog.com", assets: "https://us-assets.i.posthog.com", ui: "https://us.posthog.com" },
-  eu: { api: "https://eu.i.posthog.com", assets: "https://eu-assets.i.posthog.com", ui: "https://eu.posthog.com" },
+  us: {
+    api: "https://us.i.posthog.com",
+    assets: "https://us-assets.i.posthog.com",
+    ui: "https://us.posthog.com",
+  },
+  eu: {
+    api: "https://eu.i.posthog.com",
+    assets: "https://eu-assets.i.posthog.com",
+    ui: "https://eu.posthog.com",
+  },
 } as const;
 
 /** Our own path PostHog's browser library talks to (src/routes/ingest.$.ts). */
@@ -58,7 +69,8 @@ export function redactProps<T extends Record<string, unknown>>(props: T): T {
   const out: Record<string, unknown> = { ...props };
   for (const [k, v] of Object.entries(out)) {
     if (typeof v === "string" && URLISH.test(k)) out[k] = redactUrl(v);
-    else if ((k === "$set" || k === "$set_once") && v && typeof v === "object") out[k] = redactProps(v as Record<string, unknown>);
+    else if ((k === "$set" || k === "$set_once") && v && typeof v === "object")
+      out[k] = redactProps(v as Record<string, unknown>);
   }
   return out as T;
 }

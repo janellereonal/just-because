@@ -165,14 +165,26 @@ export function hash01(s: string, salt = 0) {
   return ((h >>> 0) % 10000) / 10000;
 }
 
-export type SectionField = "when" | "award" | "question" | "answer" | "wrong" | "coupon" | "fine_print" | "place" | "unlock_at";
+export type SectionField =
+  | "when"
+  | "award"
+  | "question"
+  | "answer"
+  | "wrong"
+  | "coupon"
+  | "fine_print"
+  | "place"
+  | "unlock_at";
 
 /**
  * Every extra field a newer section's note carries, in reading order, for the
  * organiser to check before approving (the note's own words and file are shown
  * separately). Labels live in REVIEW_COPY.
  */
-export function sectionFields(type: string, data: unknown): { field: SectionField; value: string }[] {
+export function sectionFields(
+  type: string,
+  data: unknown,
+): { field: SectionField; value: string }[] {
   const d = (data && typeof data === "object" ? data : {}) as Record<string, unknown>;
   const s = (k: string) => (typeof d[k] === "string" ? (d[k] as string).trim() : "");
   const out: { field: SectionField; value: string }[] = [];
@@ -192,7 +204,12 @@ export function sectionFields(type: string, data: unknown): { field: SectionFiel
     case "quiz":
       add("question", s("question"));
       add("answer", s("answer"));
-      add("wrong", (Array.isArray(d["wrong"]) ? d["wrong"] : []).filter((w): w is string => typeof w === "string" && !!w.trim()).join(", "));
+      add(
+        "wrong",
+        (Array.isArray(d["wrong"]) ? d["wrong"] : [])
+          .filter((w): w is string => typeof w === "string" && !!w.trim())
+          .join(", "),
+      );
       break;
     case "map":
       add("place", s("place"));

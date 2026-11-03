@@ -62,7 +62,10 @@ export const EVENT_PROPS: Record<EventName, Record<string, readonly string[] | "
 };
 
 /** Keep only known labels; free-form values (an empty list) are cut to 40 safe characters. */
-export function cleanProps(name: EventName, raw: Record<string, unknown> | undefined): Record<string, string | boolean> {
+export function cleanProps(
+  name: EventName,
+  raw: Record<string, unknown> | undefined,
+): Record<string, string | boolean> {
   const allowed = EVENT_PROPS[name];
   const out: Record<string, string | boolean> = {};
   for (const [k, rule] of Object.entries(allowed)) {
@@ -91,7 +94,10 @@ async function visitorRegion(): Promise<string | null> {
 }
 
 /** Theme, format and region for an event about a gift, so the admin page can compare themes. */
-async function giftContext(siteId: string | null | undefined, withRegion: boolean): Promise<Record<string, string>> {
+async function giftContext(
+  siteId: string | null | undefined,
+  withRegion: boolean,
+): Promise<Record<string, string>> {
   const out: Record<string, string> = {};
   const region = withRegion ? await visitorRegion() : null;
   if (region) out["region"] = region;
@@ -112,13 +118,20 @@ export async function track(
   try {
     // Every event about a gift also gets its theme, format and the visitor's country. Payments arrive
     // from PayMongo's servers, so they carry no region (the organiser's comes from gift_created).
-    const props = { ...cleanProps(name, opts.props), ...(await giftContext(opts.siteId, name !== "plan_purchased")) };
+    const props = {
+      ...cleanProps(name, opts.props),
+      ...(await giftContext(opts.siteId, name !== "plan_purchased")),
+    };
     await getDb()
       .insert(schema.events)
       .values({ name, siteId: opts.siteId ?? null, userId: opts.userId ?? null, props });
     // Browser events already reach PostHog from the browser; only copy the server's own.
     if (!(CLIENT_EVENTS as readonly string[]).includes(name)) {
-      await captureServerEvent(name, { userId: opts.userId ?? null, siteId: opts.siteId ?? null, props });
+      await captureServerEvent(name, {
+        userId: opts.userId ?? null,
+        siteId: opts.siteId ?? null,
+        props,
+      });
     }
   } catch (error) {
     console.error("[events] couldn't record", name, error instanceof Error ? error.message : error);

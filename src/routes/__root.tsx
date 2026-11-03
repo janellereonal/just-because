@@ -26,15 +26,24 @@ function NotFoundComponent() {
       <div className="max-w-md text-center">
         <img src="/bo/surprise.webp" alt="" width={150} height={150} className="mx-auto" />
         <p className="mt-2 font-mono text-[11px] tracking-[0.18em] text-accent uppercase">404</p>
-        <h1 className="mt-2 font-display text-4xl font-semibold tracking-tight">Nothing in this box</h1>
+        <h1 className="mt-2 font-display text-4xl font-semibold tracking-tight">
+          Nothing in this box
+        </h1>
         <p className="mt-3 text-ink/65">
-          This page doesn't exist. If someone sent you a gift link, check that it was copied in full.
+          This page doesn't exist. If someone sent you a gift link, check that it was copied in
+          full.
         </p>
         <div className="mt-7 flex flex-wrap justify-center gap-3">
-          <Link to="/" className="squish inline-flex min-h-12 items-center rounded-full bg-ink px-6 text-sm font-semibold text-cream">
+          <Link
+            to="/"
+            className="squish inline-flex min-h-12 items-center rounded-full bg-ink px-6 text-sm font-semibold text-cream"
+          >
             Go home
           </Link>
-          <Link to={galleryLink().to} className="squish inline-flex min-h-12 items-center rounded-full bg-pink px-6 text-sm font-semibold">
+          <Link
+            to={galleryLink().to}
+            className="squish inline-flex min-h-12 items-center rounded-full bg-pink px-6 text-sm font-semibold"
+          >
             {galleryLink().see}
           </Link>
         </div>
@@ -84,7 +93,10 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
       { name: "author", content: "Just Because" },
-      ...marketingShareTags("Just Because | One gift from everyone who loves them", "Make one gift together. Friends add letters, photos, songs and voice notes from their phones, and they open it all at once."),
+      ...marketingShareTags(
+        "Just Because | One gift from everyone who loves them",
+        "Make one gift together. Friends add letters, photos, songs and voice notes from their phones, and they open it all at once.",
+      ),
     ],
     links: [
       {

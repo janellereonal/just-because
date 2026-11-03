@@ -32,7 +32,11 @@ function CheckoutStatusPage() {
     void cancelOrder({ data: { orderId } }).catch(() => undefined);
   }, [cancelled, orderId]);
 
-  const { data: order, error, refetch } = useQuery({
+  const {
+    data: order,
+    error,
+    refetch,
+  } = useQuery({
     queryKey: ["order", orderId],
     queryFn: () => getOrderStatus({ data: { orderId } }),
     // "Missing" isn't an error (someone else's order); real errors get a retry button, not a spinner.
@@ -42,7 +46,8 @@ function CheckoutStatusPage() {
       const status = query.state.data?.status;
       if (status === "paid" || status === "refund_pending" || status === "missing") return false;
       // After a cancel or a timeout, keep an eye out for a minute: they may have paid in another tab.
-      if (cancelled || status === "failed" || status === "expired") return Date.now() - started < 60_000 ? 5000 : false;
+      if (cancelled || status === "failed" || status === "expired")
+        return Date.now() - started < 60_000 ? 5000 : false;
       if (status && status !== "pending") return false;
       return 2000;
     },
@@ -50,13 +55,21 @@ function CheckoutStatusPage() {
 
   useEffect(() => {
     if (order?.status !== "pending") return;
-    const t = window.setTimeout(() => setSlow(true), Math.max(0, PATIENCE_MS - (Date.now() - started)));
+    const t = window.setTimeout(
+      () => setSlow(true),
+      Math.max(0, PATIENCE_MS - (Date.now() - started)),
+    );
     return () => window.clearTimeout(t);
   }, [order?.status, started]);
 
   // Confetti once, when the payment is confirmed (not when we owe money back).
   useEffect(() => {
-    if (order?.status === "paid" && !order.refund && !window.matchMedia("(prefers-reduced-motion: reduce)").matches) setParty(true);
+    if (
+      order?.status === "paid" &&
+      !order.refund &&
+      !window.matchMedia("(prefers-reduced-motion: reduce)").matches
+    )
+      setParty(true);
   }, [order?.status, order?.refund]);
 
   // A late payment landed while "Try again" was open: nothing more to pay here.
@@ -65,7 +78,12 @@ function CheckoutStatusPage() {
   }, [order?.status]);
 
   if (error) {
-    return <PageError message="We couldn't check this payment just now." onRetry={() => void refetch()} />;
+    return (
+      <PageError
+        message="We couldn't check this payment just now."
+        onRetry={() => void refetch()}
+      />
+    );
   }
   if (!order) return <PageLoading label="Confirming your payment…" />;
   if (order.status === "missing") {
@@ -75,9 +93,14 @@ function CheckoutStatusPage() {
         <div className="grid min-h-[75vh] place-items-center px-4 py-10 text-center">
           <div className="rise w-full max-w-xl rounded-[36px] bg-cream px-6 py-10 sm:px-12">
             <Bo pose="idle" size={150} />
-            <h1 className="mt-3 font-display text-3xl font-medium tracking-tight">{PAY_SAFETY_COPY.notFoundTitle}</h1>
+            <h1 className="mt-3 font-display text-3xl font-medium tracking-tight">
+              {PAY_SAFETY_COPY.notFoundTitle}
+            </h1>
             <p className="mx-auto mt-2 max-w-[42ch] text-ink/70">{PAY_SAFETY_COPY.notFound}</p>
-            <Link to="/dashboard" className="squish mt-6 inline-block rounded-full bg-white/80 px-6 py-3 text-sm font-medium">
+            <Link
+              to="/dashboard"
+              className="squish mt-6 inline-block rounded-full bg-white/80 px-6 py-3 text-sm font-medium"
+            >
               Back to my gifts
             </Link>
           </div>
@@ -89,11 +112,14 @@ function CheckoutStatusPage() {
   const tier = getTier(order.tier);
   const editorUrl = order.site ? `/sites/${order.site.id}` : "/dashboard";
   const liveUrl =
-    order.site && typeof window !== "undefined" ? `${window.location.origin}/g/${order.site.slug}` : "";
+    order.site && typeof window !== "undefined"
+      ? `${window.location.origin}/g/${order.site.slug}`
+      : "";
   const paid = order.status === "paid";
   const owed = order.status === "refund_pending";
   // Cancel only counts while the order is still unpaid; a late payment still wins.
-  const stopped = !paid && !owed && (order.status === "failed" || order.status === "expired" || !!cancelled);
+  const stopped =
+    !paid && !owed && (order.status === "failed" || order.status === "expired" || !!cancelled);
   // "Try again" offers what the gift can buy now, whatever this order was.
   const site = order.site;
   const planNow = site && getTier(site.tier) && !site.ended ? "upgrade" : "publish";
@@ -112,7 +138,10 @@ function CheckoutStatusPage() {
             : PAY_SAFETY_COPY.deletedRefund(formatPeso(order.refund || order.amount))}
         </p>
         <div className="mt-6 flex flex-wrap justify-center gap-3">
-          <Link to={editorUrl} className="squish rounded-full bg-white/80 px-6 py-3 text-sm font-medium">
+          <Link
+            to={editorUrl}
+            className="squish rounded-full bg-white/80 px-6 py-3 text-sm font-medium"
+          >
             {site ? "Back to the editor" : "Back to my gifts"}
           </Link>
         </div>
@@ -136,7 +165,9 @@ function CheckoutStatusPage() {
         </p>
         {order.refund > 0 ? (
           <p className="mx-auto mt-2 max-w-[42ch] rounded-2xl bg-white/70 px-4 py-3 text-ink/80">
-            {order.site ? PAY_SAFETY_COPY.overpaid(formatPeso(order.refund)) : PAY_SAFETY_COPY.deletedRefund(formatPeso(order.refund))}
+            {order.site
+              ? PAY_SAFETY_COPY.overpaid(formatPeso(order.refund))
+              : PAY_SAFETY_COPY.deletedRefund(formatPeso(order.refund))}
           </p>
         ) : null}
         {order.kind === "extend" && order.site?.expiresAt ? (
@@ -152,7 +183,9 @@ function CheckoutStatusPage() {
         ) : null}
         {order.kind === "publish" && liveUrl ? (
           <div className="mt-7 flex items-center gap-2 rounded-full bg-white/85 p-1.5 pl-5">
-            <span className="min-w-0 flex-1 truncate text-left font-mono text-xs text-muted">{liveUrl}</span>
+            <span className="min-w-0 flex-1 truncate text-left font-mono text-xs text-muted">
+              {liveUrl}
+            </span>
             <button
               type="button"
               onClick={() => {
@@ -167,11 +200,17 @@ function CheckoutStatusPage() {
         ) : null}
         <div className="mt-5 flex flex-wrap justify-center gap-3">
           {order.kind === "publish" && liveUrl ? (
-            <a href={liveUrl} className="squish rounded-full bg-accent px-6 py-3 text-sm font-semibold text-cream">
+            <a
+              href={liveUrl}
+              className="squish rounded-full bg-accent px-6 py-3 text-sm font-semibold text-cream"
+            >
               Open the gift
             </a>
           ) : null}
-          <Link to={editorUrl} className="squish rounded-full bg-white/80 px-6 py-3 text-sm font-medium">
+          <Link
+            to={editorUrl}
+            className="squish rounded-full bg-white/80 px-6 py-3 text-sm font-medium"
+          >
             Back to the editor
           </Link>
         </div>
@@ -199,7 +238,10 @@ function CheckoutStatusPage() {
               Try again
             </button>
           ) : null}
-          <Link to={editorUrl} className="squish rounded-full bg-white/80 px-6 py-3 text-sm font-medium">
+          <Link
+            to={editorUrl}
+            className="squish rounded-full bg-white/80 px-6 py-3 text-sm font-medium"
+          >
             Back to the editor
           </Link>
         </div>
@@ -211,7 +253,9 @@ function CheckoutStatusPage() {
         <div className="bo-bob inline-block">
           <Bo pose="idle" size={150} />
         </div>
-        <h1 className="mt-3 font-display text-3xl font-medium tracking-tight">Confirming your payment…</h1>
+        <h1 className="mt-3 font-display text-3xl font-medium tracking-tight">
+          Confirming your payment…
+        </h1>
         <p className="mx-auto mt-2 max-w-[42ch] text-ink/70">
           {slow
             ? "This is taking longer than usual. If you paid, you'll get an email once it's confirmed, and the gift opens on its own. You can close this page."
@@ -233,8 +277,13 @@ function CheckoutStatusPage() {
     <div className="min-h-screen bg-paper text-ink">
       <SiteHeader />
       <div className="grid min-h-[75vh] place-items-center px-4 py-10 text-center">
-        <div className={`rise relative w-full max-w-xl overflow-hidden rounded-[36px] px-6 py-10 sm:px-12 ${paid ? "bg-mint" : stopped || owed ? "bg-butter" : "bg-pink"}`}>
-          <span aria-hidden className="absolute -top-16 -right-12 size-56 rounded-full bg-white/45 blur-2xl" />
+        <div
+          className={`rise relative w-full max-w-xl overflow-hidden rounded-[36px] px-6 py-10 sm:px-12 ${paid ? "bg-mint" : stopped || owed ? "bg-butter" : "bg-pink"}`}
+        >
+          <span
+            aria-hidden
+            className="absolute -top-16 -right-12 size-56 rounded-full bg-white/45 blur-2xl"
+          />
           <div className="relative">{body}</div>
         </div>
       </div>
@@ -245,7 +294,9 @@ function CheckoutStatusPage() {
               key={i}
               style={{
                 left: `${(i * 37) % 100}%`,
-                background: ["#C2366B", "#FFE8B0", "#D5F0E3", "#D9E8FB", "#E6DCF7", "#FBD3DC"][i % 6],
+                background: ["#C2366B", "#FFE8B0", "#D5F0E3", "#D9E8FB", "#E6DCF7", "#FBD3DC"][
+                  i % 6
+                ],
                 animationDelay: `${(i % 12) * 70}ms`,
                 animationDuration: `${1500 + ((i * 53) % 900)}ms`,
               }}

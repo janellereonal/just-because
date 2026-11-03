@@ -7,8 +7,20 @@ import { POSTHOG_HOSTS, POSTHOG_REGION, analyticsEnabled } from "@/config/analyt
  * Scripts (/ingest/static, /ingest/array) come from PostHog's asset host; events go
  * to its API host. Returns 404 when PostHog is off.
  */
-const FORWARD_REQUEST_HEADERS = ["content-type", "content-encoding", "user-agent", "accept", "accept-language"];
-const DROP_RESPONSE_HEADERS = ["content-encoding", "content-length", "transfer-encoding", "connection", "set-cookie"];
+const FORWARD_REQUEST_HEADERS = [
+  "content-type",
+  "content-encoding",
+  "user-agent",
+  "accept",
+  "accept-language",
+];
+const DROP_RESPONSE_HEADERS = [
+  "content-encoding",
+  "content-length",
+  "transfer-encoding",
+  "connection",
+  "set-cookie",
+];
 
 async function forward(request: Request, splat: string | undefined): Promise<Response> {
   if (!analyticsEnabled()) return new Response("Not found", { status: 404 });
@@ -24,14 +36,17 @@ async function forward(request: Request, splat: string | undefined): Promise<Res
     if (v) headers.set(h, v);
   }
   // PostHog works out the visitor's country from this; it never reaches our database.
-  const ip = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || request.headers.get("x-real-ip");
+  const ip =
+    request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
+    request.headers.get("x-real-ip");
   if (ip) headers.set("x-forwarded-for", ip);
 
   try {
     const upstream = await fetch(url, {
       method: request.method,
       headers,
-      body: request.method === "GET" || request.method === "HEAD" ? null : await request.arrayBuffer(),
+      body:
+        request.method === "GET" || request.method === "HEAD" ? null : await request.arrayBuffer(),
       signal: AbortSignal.timeout(10_000),
     });
     const out = new Headers(upstream.headers);

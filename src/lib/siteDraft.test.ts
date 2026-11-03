@@ -1,6 +1,17 @@
 import { describe, expect, test } from "bun:test";
 import { normalizeSite } from "./gift";
-import { applyFlat, canonicalFields, changedKeys, checkSave, findConflicts, flatten, rebase, same, toPatch, withoutKeys } from "./siteDraft";
+import {
+  applyFlat,
+  canonicalFields,
+  changedKeys,
+  checkSave,
+  findConflicts,
+  flatten,
+  rebase,
+  same,
+  toPatch,
+  withoutKeys,
+} from "./siteDraft";
 
 /** A stored gift row as the server sends it (snake_case). */
 const row = {
@@ -23,7 +34,10 @@ const row = {
   countdown_at: "2026-12-01T10:00:00.000Z",
   calendar_locked: false,
   intro_text: null,
-  intro_settings: { stickers: [{ id: "s1", emoji: "🎈", x: 0.2, y: 0.3, r: 0, s: 1 }], button_text: "Open" },
+  intro_settings: {
+    stickers: [{ id: "s1", emoji: "🎈", x: 0.2, y: 0.3, r: 0, s: 1 }],
+    button_text: "Open",
+  },
   solo: false,
   character: null,
   icon_set: null,
@@ -67,8 +81,15 @@ describe("flatten", () => {
 
 describe("toPatch", () => {
   test("rebuilds nested fields and sends blanks as null", () => {
-    const flat = { title: "Hi", "custom_text.heading": "Hi", "custom_text.footer_note": "", palette_id: undefined };
-    expect(toPatch(["title", "custom_text.heading", "custom_text.footer_note", "palette_id"], flat)).toEqual({
+    const flat = {
+      title: "Hi",
+      "custom_text.heading": "Hi",
+      "custom_text.footer_note": "",
+      palette_id: undefined,
+    };
+    expect(
+      toPatch(["title", "custom_text.heading", "custom_text.footer_note", "palette_id"], flat),
+    ).toEqual({
       title: "Hi",
       custom_text: { heading: "Hi", footer_note: null },
       palette_id: null,
@@ -97,12 +118,23 @@ describe("findConflicts", () => {
   });
   test("a value still on its way from this tab counts as seen", () => {
     const cur = { ...current, "custom_text.heading": "ab" };
-    expect(findConflicts(cur, { "custom_text.heading": "a" }, { "custom_text.heading": "abc" })).toEqual(["custom_text.heading"]);
-    expect(findConflicts(cur, { "custom_text.heading": "a" }, { "custom_text.heading": "abc" }, { alt: { "custom_text.heading": "ab" } })).toEqual([]);
+    expect(
+      findConflicts(cur, { "custom_text.heading": "a" }, { "custom_text.heading": "abc" }),
+    ).toEqual(["custom_text.heading"]);
+    expect(
+      findConflicts(
+        cur,
+        { "custom_text.heading": "a" },
+        { "custom_text.heading": "abc" },
+        { alt: { "custom_text.heading": "ab" } },
+      ),
+    ).toEqual([]);
   });
   test("fields without a base and skipped fields aren't checked", () => {
     expect(findConflicts(current, {}, { style: "comic" })).toEqual([]);
-    expect(findConflicts(current, { format: "zine" }, { format: "storybook" }, { skip: ["format"] })).toEqual([]);
+    expect(
+      findConflicts(current, { format: "zine" }, { format: "storybook" }, { skip: ["format"] }),
+    ).toEqual([]);
   });
 });
 
@@ -112,21 +144,40 @@ describe("checkSave (soft keys)", () => {
   const base = { occasion: "birthday", "custom_text.heading": "Happy birthday, Kai" };
   const patch = { occasion: "thank-you", "custom_text.heading": "Thank you, Kai" };
   test("a soft key changed elsewhere is skipped and the rest saves", () => {
-    expect(checkSave(current, base, patch, { soft: ["custom_text.heading"] })).toEqual({ clashes: [], skipped: ["custom_text.heading"] });
+    expect(checkSave(current, base, patch, { soft: ["custom_text.heading"] })).toEqual({
+      clashes: [],
+      skipped: ["custom_text.heading"],
+    });
   });
   test("a soft key nobody else touched saves", () => {
-    expect(checkSave(flatten(row), base, patch, { soft: ["custom_text.heading"] })).toEqual({ clashes: [], skipped: [] });
+    expect(checkSave(flatten(row), base, patch, { soft: ["custom_text.heading"] })).toEqual({
+      clashes: [],
+      skipped: [],
+    });
   });
   test("the same change typed (not soft) is still refused", () => {
-    expect(checkSave(current, base, patch)).toEqual({ clashes: ["custom_text.heading"], skipped: [] });
+    expect(checkSave(current, base, patch)).toEqual({
+      clashes: ["custom_text.heading"],
+      skipped: [],
+    });
     expect(findConflicts(current, base, patch)).toEqual(["custom_text.heading"]);
   });
   test("a soft key doesn't excuse a hard clash elsewhere in the save", () => {
     const cur = { ...current, occasion: "anniversary" };
-    expect(checkSave(cur, base, patch, { soft: ["custom_text.heading"] })).toEqual({ clashes: ["occasion"], skipped: ["custom_text.heading"] });
+    expect(checkSave(cur, base, patch, { soft: ["custom_text.heading"] })).toEqual({
+      clashes: ["occasion"],
+      skipped: ["custom_text.heading"],
+    });
   });
   test("skipped keys are taken out of the patch", () => {
-    const out = withoutKeys({ occasion: "thank-you", title: "Thank you", custom_text: { heading: "Thank you, Kai", footer_note: "x" } }, ["custom_text.heading", "title"]);
+    const out = withoutKeys(
+      {
+        occasion: "thank-you",
+        title: "Thank you",
+        custom_text: { heading: "Thank you, Kai", footer_note: "x" },
+      },
+      ["custom_text.heading", "title"],
+    );
     expect(out).toEqual({ occasion: "thank-you", custom_text: { footer_note: "x" } });
   });
 });
@@ -168,7 +219,11 @@ describe("rebase", () => {
   test("a soft key the server skipped is pulled in, not left unsaved", () => {
     // Sent "Thank you, Kai" as soft; the server kept the other tab's heading. Not in `saved`.
     const draft = { ...base, occasion: "thank-you", "custom_text.heading": "Thank you, Kai" };
-    const server = { ...base, occasion: "thank-you", "custom_text.heading": "Happy birthday, Kai!" };
+    const server = {
+      ...base,
+      occasion: "thank-you",
+      "custom_text.heading": "Happy birthday, Kai!",
+    };
     const r = rebase({ draft, sent: draft, known: base, server, saved: new Set(["occasion"]) });
     expect(r.draft["custom_text.heading"]).toBe("Happy birthday, Kai!");
     expect(r.sent["custom_text.heading"]).toBe("Happy birthday, Kai!");
@@ -187,9 +242,20 @@ describe("rebase", () => {
 describe("applyFlat", () => {
   test("puts flat fields back on a gift", () => {
     const site = normalizeSite(row);
-    const flat = { ...flatten(site as unknown as Record<string, unknown>), "custom_text.footer_note": "Love", style: "comic" };
-    const out = applyFlat(site as unknown as Record<string, unknown>, flat) as unknown as typeof site;
-    expect(out.custom_text).toEqual({ heading: "Happy birthday, Kai", recipient_name: "Kai", footer_note: "Love" });
+    const flat = {
+      ...flatten(site as unknown as Record<string, unknown>),
+      "custom_text.footer_note": "Love",
+      style: "comic",
+    };
+    const out = applyFlat(
+      site as unknown as Record<string, unknown>,
+      flat,
+    ) as unknown as typeof site;
+    expect(out.custom_text).toEqual({
+      heading: "Happy birthday, Kai",
+      recipient_name: "Kai",
+      footer_note: "Love",
+    });
     expect(out.style).toBe("comic");
     expect(out.slug).toBe("abc");
     expect(out.intro_settings.stickers?.length).toBe(1);

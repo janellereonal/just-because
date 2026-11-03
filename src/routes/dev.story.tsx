@@ -10,7 +10,19 @@ import { FriendsArrive } from "@/components/story/FriendsArrive";
  * /dev/story?n=9&kind=christmas      more friends than fit, Christmas scarves
  * /dev/story?auto=1                  plays itself
  */
-const NAMES = ["Jo", "Maria Clara", "Ben", "Aiko", "Sam", "Lola Nena", "Rafa", "Dee", "Kit", "Pia", "Tom"];
+const NAMES = [
+  "Jo",
+  "Maria Clara",
+  "Ben",
+  "Aiko",
+  "Sam",
+  "Lola Nena",
+  "Rafa",
+  "Dee",
+  "Kit",
+  "Pia",
+  "Tom",
+];
 
 export const Route = createFileRoute("/dev/story")({
   head: () => ({ meta: [NOINDEX] }),
@@ -31,7 +43,11 @@ function DevStory() {
   if (done)
     return (
       <div className="grid min-h-screen place-items-center bg-paper">
-        <button type="button" className="rounded-full bg-ink px-5 py-3 text-cream" onClick={() => (setDone(false), setRun(run + 1))}>
+        <button
+          type="button"
+          className="rounded-full bg-ink px-5 py-3 text-cream"
+          onClick={() => (setDone(false), setRun(run + 1))}
+        >
           Play again
         </button>
       </div>

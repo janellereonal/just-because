@@ -47,7 +47,9 @@ export function SectionPreview({
     return { ...s, custom_text: { ...s.custom_text, recipient_name: name } };
   }, [t, pal, name]);
   const notes = useMemo(() => sampleNotes(name, site.id), [name, site.id]);
-  const modules: SiteModule[] = [{ id: `pv-${type}`, site_id: site.id, module_type: type, price: 0, enabled: true }];
+  const modules: SiteModule[] = [
+    { id: `pv-${type}`, site_id: site.id, module_type: type, price: 0, enabled: true },
+  ];
   const contributions = notes.filter((c) => c.module_type === type);
 
   return (
@@ -65,7 +67,14 @@ export function SectionPreview({
           className="max-h-[min(520px,62vh)] overflow-x-hidden overflow-y-auto overscroll-contain [scrollbar-width:thin]"
         >
           <Live3DContext.Provider value={false}>
-            <GiftSiteView site={site} theme={t} modules={modules} contributions={contributions} sample sectionsOnly />
+            <GiftSiteView
+              site={site}
+              theme={t}
+              modules={modules}
+              contributions={contributions}
+              sample
+              sectionsOnly
+            />
           </Live3DContext.Provider>
         </motion.div>
       </AnimatePresence>

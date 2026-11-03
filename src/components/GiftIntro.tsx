@@ -12,7 +12,14 @@ import type { Palette } from "@/lib/themes";
 import { TactileOpening, hasTactileOpening } from "@/themes/TactileOpening";
 import type { CharacterSetting } from "@/themes/_shared/cast/types";
 import type { IconSetSetting } from "@/themes/_shared/iconSets";
-import { INTRO_COPY, stickerBoxCss, stickerFontCss, type IntroSettings, type IntroSticker, type IntroStyle } from "@/lib/intro";
+import {
+  INTRO_COPY,
+  stickerBoxCss,
+  stickerFontCss,
+  type IntroSettings,
+  type IntroSticker,
+  type IntroStyle,
+} from "@/lib/intro";
 import { StickerCanvas } from "@/components/StickerCanvas";
 import {
   KIND_BURST,
@@ -550,9 +557,17 @@ function ClassicIntro({
       {bg.type === "theme" ? <SkinDecor kind={kind} /> : <SkinParticles kind={kind} />}
 
       {onStickersChange ? (
-        <StickerCanvas stickers={s.stickers ?? []} host={rootRef} onChange={onStickersChange} onUndo={onStickersUndo} canUndo={canUndoStickers} />
+        <StickerCanvas
+          stickers={s.stickers ?? []}
+          host={rootRef}
+          onChange={onStickersChange}
+          onUndo={onStickersUndo}
+          canUndo={canUndoStickers}
+        />
       ) : (
-        (s.stickers ?? []).map((st) => <Sticker key={st.id} sticker={st} host={rootRef} interactive={playful} colors={colors} />)
+        (s.stickers ?? []).map((st) => (
+          <Sticker key={st.id} sticker={st} host={rootRef} interactive={playful} colors={colors} />
+        ))
       )}
 
       {playful ? (
@@ -723,11 +738,24 @@ type GiftIntroProps = React.ComponentProps<typeof ClassicIntro> & {
  * record, a cake…); "classic" in the intro settings keeps the earlier 3D one.
  */
 export function GiftIntro(props: GiftIntroProps) {
-  const { character, iconSet, contributors, themeName, notes, slots, themeOptions, age, calm, giftStyle, ...rest } = props;
+  const {
+    character,
+    iconSet,
+    contributors,
+    themeName,
+    notes,
+    slots,
+    themeOptions,
+    age,
+    calm,
+    giftStyle,
+    ...rest
+  } = props;
   const kind = props.kind ?? STYLE_KIND[props.style];
   const s = props.settings ?? {};
   const engine = !!engineThemeForName(themeName);
-  if (s.opening === "classic" || (!engine && !hasTactileOpening(kind))) return <ClassicIntro {...rest} />;
+  if (s.opening === "classic" || (!engine && !hasTactileOpening(kind)))
+    return <ClassicIntro {...rest} />;
   return (
     <TactileOpening
       kind={kind}

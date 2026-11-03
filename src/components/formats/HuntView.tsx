@@ -203,9 +203,7 @@ export function HuntView({
     () => data.notes.filter((p) => !p.sealed || p.kind !== "word"),
     [data.notes],
   );
-  const openable = boxes.filter(
-    (p) => !pieceLocked(p) && !p.sealed,
-  );
+  const openable = boxes.filter((p) => !pieceLocked(p) && !p.sealed);
   const done = openable.filter((p) => opened.has(p.id)).length;
   const total = openable.length;
   const pct = total ? done / total : 0;

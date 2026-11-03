@@ -40,14 +40,29 @@ type Session = {
   cancelUrl?: string;
 };
 
-export function sign(secret: string, body: string, t = Math.floor(Date.now() / 1000), live = false) {
+export function sign(
+  secret: string,
+  body: string,
+  t = Math.floor(Date.now() / 1000),
+  live = false,
+) {
   const sig = createHmac("sha256", secret).update(`${t}.${body}`).digest("hex");
   return `t=${t},${live ? "te=,li=" : "te="}${sig}${live ? "" : ",li="}`;
 }
 
-export function paidEventBody(checkoutId: string, eventId = `evt_${Math.random().toString(36).slice(2, 12)}`) {
+export function paidEventBody(
+  checkoutId: string,
+  eventId = `evt_${Math.random().toString(36).slice(2, 12)}`,
+) {
   return JSON.stringify({
-    data: { id: eventId, attributes: { type: "checkout_session.payment.paid", livemode: false, data: { id: checkoutId, attributes: {} } } },
+    data: {
+      id: eventId,
+      attributes: {
+        type: "checkout_session.payment.paid",
+        livemode: false,
+        data: { id: checkoutId, attributes: {} },
+      },
+    },
   });
 }
 
@@ -59,7 +74,14 @@ export function startFakePaymongo(port = 0) {
       const url = new URL(req.url);
       if (req.method === "POST" && url.pathname === "/v1/checkout_sessions") {
         const body = (await req.json()) as {
-          data: { attributes: { line_items: { amount: number; name?: string; description?: string }[]; reference_number: string; success_url?: string; cancel_url?: string } };
+          data: {
+            attributes: {
+              line_items: { amount: number; name?: string; description?: string }[];
+              reference_number: string;
+              success_url?: string;
+              cancel_url?: string;
+            };
+          };
         };
         const a = body.data.attributes;
         const id = `cs_${Math.random().toString(36).slice(2, 14)}`;
@@ -80,14 +102,30 @@ export function startFakePaymongo(port = 0) {
       const m = /^\/v1\/checkout_sessions\/([\w]+)$/.exec(url.pathname);
       if (req.method === "GET" && m) {
         const s = sessions.get(m[1]!);
-        return s ? Response.json(view(s)) : Response.json({ errors: [{ detail: "not found" }] }, { status: 404 });
+        return s
+          ? Response.json(view(s))
+          : Response.json({ errors: [{ detail: "not found" }] }, { status: 404 });
       }
       const expire = /^\/v1\/checkout_sessions\/([\w]+)\/expire$/.exec(url.pathname);
       if (req.method === "POST" && expire) {
         const s = sessions.get(expire[1]!);
         if (!s) return Response.json({ errors: [{ detail: "not found" }] }, { status: 404 });
         // Like PayMongo: a paid or already expired session can't be expired.
-        if (s.paid || s.expired || s.busy) return Response.json({ errors: [{ detail: s.paid ? "already paid" : s.expired ? "already expired" : "payment in progress" }] }, { status: 400 });
+        if (s.paid || s.expired || s.busy)
+          return Response.json(
+            {
+              errors: [
+                {
+                  detail: s.paid
+                    ? "already paid"
+                    : s.expired
+                      ? "already expired"
+                      : "payment in progress",
+                },
+              ],
+            },
+            { status: 400 },
+          );
         s.expired = true;
         return Response.json(view(s));
       }
@@ -95,20 +133,30 @@ export function startFakePaymongo(port = 0) {
       if (req.method === "GET" && page) {
         const s = sessions.get(page[1]!);
         if (!s) return new Response("no such session", { status: 404 });
-        return new Response(payPage(s), { headers: { "content-type": "text/html; charset=utf-8" } });
+        return new Response(payPage(s), {
+          headers: { "content-type": "text/html; charset=utf-8" },
+        });
       }
       const pay = /^\/_test\/pay\/([\w]+)$/.exec(url.pathname);
       if (req.method === "POST" && pay) {
         const s = sessions.get(pay[1]!);
         if (!s) return new Response("no such session", { status: 404 });
-        if (s.expired) return Response.json({ error: "This checkout has expired." }, { status: 400 });
+        if (s.expired)
+          return Response.json({ error: "This checkout has expired." }, { status: 400 });
         const amount = Number(url.searchParams.get("amount") ?? s.amount);
         s.paid += amount;
         const target = process.env["WEBHOOK_TARGET"];
         if (target) {
           const body = paidEventBody(s.id);
           const secret = process.env["PAYMONGO_WEBHOOK_SECRET"];
-          await fetch(target, { method: "POST", body, headers: { "content-type": "application/json", ...(secret ? { "paymongo-signature": sign(secret, body) } : {}) } });
+          await fetch(target, {
+            method: "POST",
+            body,
+            headers: {
+              "content-type": "application/json",
+              ...(secret ? { "paymongo-signature": sign(secret, body) } : {}),
+            },
+          });
         }
         return Response.json({ ok: true, paid: s.paid });
       }
@@ -143,7 +191,9 @@ function view(s: Session) {
         livemode: false,
         reference_number: s.orderId,
         metadata: { order_id: s.orderId },
-        payments: s.paid ? [{ id: `pay_${s.id}`, attributes: { amount: s.paid, status: "paid", ...s.details } }] : [],
+        payments: s.paid
+          ? [{ id: `pay_${s.id}`, attributes: { amount: s.paid, status: "paid", ...s.details } }]
+          : [],
       },
     },
   };

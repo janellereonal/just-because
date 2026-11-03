@@ -24,16 +24,29 @@ export const Route = createFileRoute("/dev/format")({
 
 function DevFormat() {
   const { kind, format, p, cover } = Route.useSearch();
-  const { data: themes = [] } = useQuery({ queryKey: ["themes", false], queryFn: () => fetchThemes(false) });
+  const { data: themes = [] } = useQuery({
+    queryKey: ["themes", false],
+    queryFn: () => fetchThemes(false),
+  });
   const { data: all = [] } = usePalettes();
   if (!import.meta.env.DEV) return null;
   const theme = themes.find((t) => themeKindOf(t) === kind);
-  if (!theme) return <p className="p-6">No theme for {kind} (loaded {themes.length})</p>;
+  if (!theme)
+    return (
+      <p className="p-6">
+        No theme for {kind} (loaded {themes.length})
+      </p>
+    );
   const pal = themePalettes(theme, all)[p] ?? themePalettes(theme, all)[0];
   if (!pal) return <p className="p-6">Loading palettes…</p>;
   return (
     <div className="min-h-dvh [container:gift/inline-size]">
-      <SampleGift theme={theme} palette={{ background: pal.background, primary: pal.primary, accent: pal.accent }} format={format} showCover={cover} />
+      <SampleGift
+        theme={theme}
+        palette={{ background: pal.background, primary: pal.primary, accent: pal.accent }}
+        format={format}
+        showCover={cover}
+      />
     </div>
   );
 }

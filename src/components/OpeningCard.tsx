@@ -24,14 +24,20 @@ import { themePalettes, usePalettes } from "@/hooks/usePalettes";
 import { SHOWCASE_COPY } from "@/copy/strings";
 import type { GiftFormat } from "@/lib/formats";
 
-const FALLBACK: Palette = { background: "#FBF8F2", primary: "#2B2522", accent: "#B5623E" } as Palette;
+const FALLBACK: Palette = {
+  background: "#FBF8F2",
+  primary: "#2B2522",
+  accent: "#B5623E",
+} as Palette;
 
 /** The theme's first curated palette (themes keep them in a separate table now). */
 function useThemePalette(theme: Theme | null): Palette {
   const { data: all = [] } = usePalettes();
   if (!theme) return FALLBACK;
   const p = themePalettes(theme, all)[0];
-  return p ? { background: p.background, primary: p.primary, accent: p.accent } : (theme.palettes[0] ?? FALLBACK);
+  return p
+    ? { background: p.background, primary: p.primary, accent: p.accent }
+    : (theme.palettes[0] ?? FALLBACK);
 }
 const STAGE_W = 390;
 const STAGE_H = 600;
@@ -64,7 +70,9 @@ export function OpeningCard({
   const design = designFor(kind);
   // Themes built on the theme engine describe themselves.
   const engine = engineThemeForName(theme.name);
-  const gestureLine = engine ? t(engine.hint ?? (`gesture.${engine.gesture}.label` as MessageKey)) : design.gesture;
+  const gestureLine = engine
+    ? t(engine.hint ?? (`gesture.${engine.gesture}.label` as MessageKey))
+    : design.gesture;
   const objectLine = engine ? engine.object : design.object;
   const palette = useThemePalette(theme);
   const playing = useIsPlaying(theme.id);
@@ -89,7 +97,10 @@ export function OpeningCard({
   useEffect(() => {
     const el = ref.current;
     if (!el || !window.matchMedia("(hover: none)").matches) return;
-    const io = new IntersectionObserver(([e]) => (e && e.intersectionRatio > 0.7 ? claimPreview(theme.id) : releasePreview(theme.id)), { threshold: [0, 0.7, 1] });
+    const io = new IntersectionObserver(
+      ([e]) => (e && e.intersectionRatio > 0.7 ? claimPreview(theme.id) : releasePreview(theme.id)),
+      { threshold: [0, 0.7, 1] },
+    );
     io.observe(el);
     return () => io.disconnect();
   }, [theme.id]);
@@ -136,7 +147,11 @@ export function OpeningCard({
       }}
       onFocus={() => claimPreview(theme.id)}
     >
-      <div ref={frame} className="relative overflow-hidden rounded-[22px]" style={{ aspectRatio: `${STAGE_W} / ${STAGE_H}`, contain: "layout paint" }}>
+      <div
+        ref={frame}
+        className="relative overflow-hidden rounded-[22px]"
+        style={{ aspectRatio: `${STAGE_W} / ${STAGE_H}`, contain: "layout paint" }}
+      >
         {/* Drawn at phone size, then scaled to the card, so every theme is framed the same. */}
         <div
           className="pointer-events-none absolute top-0 left-0 origin-top-left [container:gift/inline-size]"
@@ -169,10 +184,24 @@ export function OpeningCard({
           {gestureLine}
         </span>
       </div>
-      <div className="flex flex-1 flex-col px-2 pt-3 pb-1" style={engine ? ({ ["--jb-display" as string]: engine.fonts.display.family } as React.CSSProperties) : themeFontVars(kind)}>
-        <h3 className="flex flex-wrap items-center gap-x-2 text-[1.6rem] leading-tight" style={{ fontFamily: "var(--jb-display)" }}>
+      <div
+        className="flex flex-1 flex-col px-2 pt-3 pb-1"
+        style={
+          engine
+            ? ({ ["--jb-display" as string]: engine.fonts.display.family } as React.CSSProperties)
+            : themeFontVars(kind)
+        }
+      >
+        <h3
+          className="flex flex-wrap items-center gap-x-2 text-[1.6rem] leading-tight"
+          style={{ fontFamily: "var(--jb-display)" }}
+        >
           {title ?? theme.name}
-          {tag ? <span className="fmt-rec font-sans" style={{ fontFamily: "var(--font-sans, inherit)" }}>{tag}</span> : null}
+          {tag ? (
+            <span className="fmt-rec font-sans" style={{ fontFamily: "var(--font-sans, inherit)" }}>
+              {tag}
+            </span>
+          ) : null}
         </h3>
         <p className="mt-0.5 text-sm text-muted">{line ?? objectLine}</p>
         <button
@@ -264,7 +293,12 @@ export function OpeningPreviewModal({
                     {SHOWCASE_COPY.chip}
                   </motion.span>
                   <div className="relative -mt-7 pb-28">
-                    <SampleGift theme={theme} palette={palette} {...(format ? { format } : {})} {...(styleId ? { styleId } : {})} />
+                    <SampleGift
+                      theme={theme}
+                      palette={palette}
+                      {...(format ? { format } : {})}
+                      {...(styleId ? { styleId } : {})}
+                    />
                   </div>
                 </motion.div>
               ) : null}
@@ -310,11 +344,19 @@ export function OpeningPreviewModal({
                   >
                     {SHOWCASE_COPY.again}
                   </button>
-                  <button type="button" onClick={() => onUse(theme)} className="squish min-h-11 flex-1 rounded-full bg-accent px-4 text-[15px] font-medium whitespace-nowrap text-cream">
+                  <button
+                    type="button"
+                    onClick={() => onUse(theme)}
+                    className="squish min-h-11 flex-1 rounded-full bg-accent px-4 text-[15px] font-medium whitespace-nowrap text-cream"
+                  >
                     {useLabel ?? SHOWCASE_COPY.use}
                   </button>
                   {onSample ? (
-                    <button type="button" onClick={() => onSample(theme)} className="min-h-11 shrink-0 rounded-full px-2.5 text-[12.5px] font-medium whitespace-nowrap text-ink/75 hover:bg-ink/5 hover:text-ink">
+                    <button
+                      type="button"
+                      onClick={() => onSample(theme)}
+                      className="min-h-11 shrink-0 rounded-full px-2.5 text-[12.5px] font-medium whitespace-nowrap text-ink/75 hover:bg-ink/5 hover:text-ink"
+                    >
                       {SHOWCASE_COPY.details}
                     </button>
                   ) : null}

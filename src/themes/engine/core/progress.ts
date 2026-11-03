@@ -17,7 +17,13 @@ export type DragAxis = "x" | "y" | "diagonal";
  * measured along (direction, direction), so +1 is towards the bottom right.
  * Movement the other way counts as zero, never negative.
  */
-export function dragProgress(dx: number, dy: number, axis: DragAxis, direction: 1 | -1, distance: number): number {
+export function dragProgress(
+  dx: number,
+  dy: number,
+  axis: DragAxis,
+  direction: 1 | -1,
+  distance: number,
+): number {
   if (distance <= 0) return 1;
   let along: number;
   if (axis === "x") along = dx * direction;
@@ -77,7 +83,8 @@ export class CoverageGrid {
   stroke(u0: number, v0: number, u1: number, v1: number, radius: number): number {
     const len = Math.hypot(u1 - u0, v1 - v0);
     const steps = Math.max(1, Math.ceil(len / Math.max(0.002, radius * 0.5)));
-    for (let s = 1; s <= steps; s++) this.brush(u0 + ((u1 - u0) * s) / steps, v0 + ((v1 - v0) * s) / steps, radius);
+    for (let s = 1; s <= steps; s++)
+      this.brush(u0 + ((u1 - u0) * s) / steps, v0 + ((v1 - v0) * s) / steps, radius);
     return this.progress;
   }
 
@@ -98,7 +105,10 @@ export class AngleTracker {
   private last: number | null = null;
   total = 0;
 
-  constructor(private readonly target = 360, private readonly oneWay: 1 | -1 | 0 = 0) {}
+  constructor(
+    private readonly target = 360,
+    private readonly oneWay: 1 | -1 | 0 = 0,
+  ) {}
 
   /** Feed a pointer position relative to the centre. Returns progress 0..1. */
   feed(x: number, y: number): number {
@@ -148,7 +158,10 @@ export class BlowDetector {
   private floor = 0.01;
   private heard = 0;
 
-  constructor(private readonly needMs = 900, private readonly margin = 0.06) {}
+  constructor(
+    private readonly needMs = 900,
+    private readonly margin = 0.06,
+  ) {}
 
   /** Feed one level reading taken `dtMs` after the last. Returns progress 0..1. */
   feed(level: number, dtMs: number): number {
@@ -183,7 +196,11 @@ export class ShakeDetector {
   private shakes = 0;
   private lastAt = -Infinity;
 
-  constructor(private readonly need = 5, private readonly threshold = 14, private readonly gapMs = 160) {}
+  constructor(
+    private readonly need = 5,
+    private readonly threshold = 14,
+    private readonly gapMs = 160,
+  ) {}
 
   feed(x: number, y: number, z: number, atMs: number): number {
     const mag = Math.hypot(x, y, z);

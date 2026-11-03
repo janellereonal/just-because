@@ -16,7 +16,14 @@ export function emailEnabled() {
   return Boolean(process.env["RESEND_API_KEY"] && process.env["EMAIL_FROM"]);
 }
 
-type Mail = { to: string; subject: string; heading: string; body: string[]; button?: { label: string; url: string }; footnote?: string };
+type Mail = {
+  to: string;
+  subject: string;
+  heading: string;
+  body: string[];
+  button?: { label: string; url: string };
+  footnote?: string;
+};
 
 const C = {
   paper: "#FBF8F2",
@@ -28,12 +35,18 @@ const C = {
 };
 
 function escape(text: string) {
-  return text.replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]!);
+  return text.replace(
+    /[&<>"]/g,
+    (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]!,
+  );
 }
 
 function render(mail: Mail) {
   const paragraphs = mail.body
-    .map((p) => `<p style="margin:0 0 14px;font-size:15px;line-height:1.6;color:${C.ink}">${escape(p)}</p>`)
+    .map(
+      (p) =>
+        `<p style="margin:0 0 14px;font-size:15px;line-height:1.6;color:${C.ink}">${escape(p)}</p>`,
+    )
     .join("");
   const button = mail.button
     ? `<p style="margin:22px 0 8px"><a href="${escape(mail.button.url)}" style="display:inline-block;background:${C.terracotta};color:#fff;text-decoration:none;font-weight:600;font-size:15px;padding:12px 22px;border-radius:999px">${escape(mail.button.label)}</a></p>
@@ -56,7 +69,13 @@ function render(mail: Mail) {
 }
 
 function plainText(mail: Mail) {
-  return [mail.heading, "", ...mail.body, mail.button ? `\n${mail.button.label}: ${mail.button.url}` : "", mail.footnote ?? ""]
+  return [
+    mail.heading,
+    "",
+    ...mail.body,
+    mail.button ? `\n${mail.button.label}: ${mail.button.url}` : "",
+    mail.footnote ?? "",
+  ]
     .join("\n")
     .trim();
 }
@@ -103,7 +122,9 @@ export function verifyEmail(to: string, name: string, url: string) {
     to,
     subject: "Confirm your email for Just Because",
     heading: `Hi ${name || "there"}, one quick step`,
-    body: ["Tap the button to confirm this is your email. Then you can start making gifts for the people you love."],
+    body: [
+      "Tap the button to confirm this is your email. Then you can start making gifts for the people you love.",
+    ],
     button: { label: "Confirm my email", url },
     footnote: "If you didn't sign up for Just Because, you can ignore this email.",
   });
@@ -130,7 +151,9 @@ export function resetPasswordEmail(to: string, name: string, url: string) {
     to,
     subject: "Reset your Just Because password",
     heading: "Let's get you back in",
-    body: [`Hi ${name || "there"}, someone (hopefully you) asked to reset your password. The link works for one hour.`],
+    body: [
+      `Hi ${name || "there"}, someone (hopefully you) asked to reset your password. The link works for one hour.`,
+    ],
     button: { label: "Choose a new password", url },
     footnote: "If you didn't ask for this, you can ignore it. Your password stays the same.",
   });
@@ -153,7 +176,11 @@ export function newNoteEmail(opts: {
       heading: `${opts.authorName} changed their note`,
       body: [
         "You'd already added it to the gift, so the new version shows there now. Take a look, and hide it if anything's off.",
-        ...(opts.pendingCount > 0 ? [`You also have ${opts.pendingCount} ${opts.pendingCount === 1 ? "note" : "notes"} waiting for a look.`] : []),
+        ...(opts.pendingCount > 0
+          ? [
+              `You also have ${opts.pendingCount} ${opts.pendingCount === 1 ? "note" : "notes"} waiting for a look.`,
+            ]
+          : []),
       ],
       button: { label: "Review notes", url: opts.editorUrl },
       footnote: "We send at most one of these every 30 minutes per gift, so your inbox stays calm.",
@@ -174,12 +201,19 @@ export function newNoteEmail(opts: {
   });
 }
 
-export function giftLiveEmail(opts: { to: string; recipient: string; liveUrl: string; editorUrl: string }) {
+export function giftLiveEmail(opts: {
+  to: string;
+  recipient: string;
+  liveUrl: string;
+  editorUrl: string;
+}) {
   return sendMail({
     to: opts.to,
     subject: `${opts.recipient}'s gift is ready to open`,
     heading: `${opts.recipient}'s gift is wrapped up`,
-    body: [`Everything everyone added is in one place now. Send the link to ${opts.recipient} whenever you're ready.`],
+    body: [
+      `Everything everyone added is in one place now. Send the link to ${opts.recipient} whenever you're ready.`,
+    ],
     button: { label: "Open the gift", url: opts.liveUrl },
     footnote: `Need to change something? You can still edit it here: ${opts.editorUrl}`,
   });
@@ -214,12 +248,23 @@ export function conciergeRequestEmail(opts: {
 }
 
 /** A visitor reported a gift. Goes to every admin. */
-export function reportEmail(opts: { to: string; slug: string; reason: string; details: string | null; page: string; adminUrl: string }) {
+export function reportEmail(opts: {
+  to: string;
+  slug: string;
+  reason: string;
+  details: string | null;
+  page: string;
+  adminUrl: string;
+}) {
   return sendMail({
     to: opts.to,
     subject: `Gift reported: ${opts.reason}`,
     heading: "Someone reported a gift",
-    body: [`Reason: ${opts.reason}`, `Gift: /g/${opts.slug} (reported from the ${opts.page} page)`, ...(opts.details ? [`Details: ${opts.details}`] : [])],
+    body: [
+      `Reason: ${opts.reason}`,
+      `Gift: /g/${opts.slug} (reported from the ${opts.page} page)`,
+      ...(opts.details ? [`Details: ${opts.details}`] : []),
+    ],
     button: { label: "Review it in admin", url: opts.adminUrl },
   });
 }
@@ -238,7 +283,11 @@ export function receiptEmail(opts: {
   editorUrl: string;
 }) {
   const what =
-    opts.kind === "publish" ? `${opts.planName} plan` : opts.kind === "upgrade" ? `Upgrade to ${opts.planName}` : `${opts.planName}, more time`;
+    opts.kind === "publish"
+      ? `${opts.planName} plan`
+      : opts.kind === "upgrade"
+        ? `Upgrade to ${opts.planName}`
+        : `${opts.planName}, more time`;
   const heading =
     opts.kind === "publish"
       ? `${opts.recipient}'s gift is wrapped up`
@@ -247,10 +296,15 @@ export function receiptEmail(opts: {
         : `${opts.recipient}'s gift is open for longer`;
   return sendMail({
     to: opts.to,
-    subject: opts.kind === "publish" ? `Receipt: ${opts.recipient}'s gift is ready to open` : `Receipt for ${opts.recipient}'s gift`,
+    subject:
+      opts.kind === "publish"
+        ? `Receipt: ${opts.recipient}'s gift is ready to open`
+        : `Receipt for ${opts.recipient}'s gift`,
     heading,
     body: [
-      opts.kind === "publish" ? `Thank you. Everything everyone added is in one place now. Send the link to ${opts.recipient} whenever you're ready.` : "Thank you. Here's your receipt.",
+      opts.kind === "publish"
+        ? `Thank you. Everything everyone added is in one place now. Send the link to ${opts.recipient} whenever you're ready.`
+        : "Thank you. Here's your receipt.",
       `Gift: ${opts.recipient}'s gift`,
       `Paid: ${opts.amount} for ${what}, on ${opts.paidOn}`,
       ...(opts.openUntil ? [`Open until: ${opts.openUntil}`] : []),
@@ -262,7 +316,13 @@ export function receiptEmail(opts: {
 }
 
 /** Two weeks before a plan ends. */
-export function expiryReminderEmail(opts: { to: string; recipient: string; endsOn: string; editorUrl: string; liveUrl: string }) {
+export function expiryReminderEmail(opts: {
+  to: string;
+  recipient: string;
+  endsOn: string;
+  editorUrl: string;
+  liveUrl: string;
+}) {
   return sendMail({
     to: opts.to,
     subject: `${opts.recipient}'s gift closes on ${opts.endsOn}`,

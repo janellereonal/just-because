@@ -44,7 +44,8 @@ export function themeKindOf(
   // Style themes first: they can be used for any occasion, so their names win.
   if (key.includes("handwritten") || key.includes("hand-written")) return "handwritten";
   if (key.includes("pixel") || key.includes("8-bit") || key.includes("arcade")) return "pixel";
-  if (key.includes("game night") || key.includes("board game") || /\bgame\b/.test(key)) return "game";
+  if (key.includes("game night") || key.includes("board game") || /\bgame\b/.test(key))
+    return "game";
   if (key.includes("valentine") || key.includes("romance")) return "valentine";
   if (key.includes("birthday") || key.includes("debut")) return "birthday";
   if (key.includes("voyage") || key.includes("farewell") || key.includes("despidida"))

@@ -3,19 +3,55 @@
  * y = 112, faces are live SVG on top (see `clay` in cast/library.tsx), and
  * noses, beaks and muzzles are modelled here.
  */
-import { blob, cone, egg, feet, fluff, GLOSS, limb, shade, tube, type ClayRecipe, type V3 } from "@/lib/clay/shapes";
+import {
+  blob,
+  cone,
+  egg,
+  feet,
+  fluff,
+  GLOSS,
+  limb,
+  shade,
+  tube,
+  type ClayRecipe,
+  type V3,
+} from "@/lib/clay/shapes";
 
 /** A cone pointing outwards from (cx, cy) at angle `a` (box coords, y down). */
-function spike(cx: number, cy: number, r: number, a: number, len: number, w: number, color: string, z = 0) {
+function spike(
+  cx: number,
+  cy: number,
+  r: number,
+  a: number,
+  len: number,
+  w: number,
+  color: string,
+  z = 0,
+) {
   const x = cx + Math.cos(a) * r;
   const y = cy + Math.sin(a) * r;
   // cone() points up; its tilt turns it clockwise (box coords).
   const tilt = a + Math.PI / 2;
-  return cone([x + Math.cos(a) * len * 0.35, y + Math.sin(a) * len * 0.35, z], w, len, w * 0.8, color, tilt);
+  return cone(
+    [x + Math.cos(a) * len * 0.35, y + Math.sin(a) * len * 0.35, z],
+    w,
+    len,
+    w * 0.8,
+    color,
+    tilt,
+  );
 }
 
 /** Points along a flat spiral on the front of a dome (snail shells). */
-function spiral(cx: number, cy: number, z: number, r0: number, r1: number, turns: number, depth: number): V3[] {
+function spiral(
+  cx: number,
+  cy: number,
+  z: number,
+  r0: number,
+  r1: number,
+  turns: number,
+  depth: number,
+): V3[] {
   const pts: V3[] = [];
   const N = 40;
   for (let i = 0; i <= N; i++) {
@@ -23,7 +59,11 @@ function spiral(cx: number, cy: number, z: number, r0: number, r1: number, turns
     const a = -Math.PI / 2 + t * turns * Math.PI * 2;
     const r = r0 + (r1 - r0) * t;
     const k = Math.min(1, r / r0);
-    pts.push([cx + Math.cos(a) * r, cy + Math.sin(a) * r, z + depth * Math.sqrt(Math.max(0, 1 - k * k * 0.85))]);
+    pts.push([
+      cx + Math.cos(a) * r,
+      cy + Math.sin(a) * r,
+      z + depth * Math.sqrt(Math.max(0, 1 - k * k * 0.85)),
+    ]);
   }
   return pts;
 }
@@ -197,7 +237,9 @@ export const ANIMALS: Record<string, ClayRecipe> = {
       3,
       c.primary,
     ),
-    ...[-1.95, -1.6, -1.25, -0.9, -0.55, -0.2].map((a, i) => spike(64, 74, 33, a, 15 - Math.abs(i - 2) * 1.2, 10, c.secondary, -10)),
+    ...[-1.95, -1.6, -1.25, -0.9, -0.55, -0.2].map((a, i) =>
+      spike(64, 74, 33, a, 15 - Math.abs(i - 2) * 1.2, 10, c.secondary, -10),
+    ),
     egg([60, 72, 0], 72, 74, 60, c.primary),
     blob([60, 90, 17], [40, 32, 22], c.skin),
     blob([29, 86, 10], [10, 14, 10], c.primary, [0, 0, 0.5]),
@@ -237,7 +279,13 @@ export const ANIMALS: Record<string, ClayRecipe> = {
     blob([46, 106, 4], [10, 14, 10], INK),
     blob([74, 106, 4], [10, 14, 10], INK),
     egg([60, 74, 0], 74, 70, 60, c.primary),
-    fluff([60, 74, 0], [34, 30, 26], { count: 18, size: [18, 24], color: c.primary, seed: 21, front: 0.05 }),
+    fluff([60, 74, 0], [34, 30, 26], {
+      count: 18,
+      size: [18, 24],
+      color: c.primary,
+      seed: 21,
+      front: 0.05,
+    }),
     fluff([60, 40, 10], [12, 6, 6], { count: 6, size: [13, 16], color: c.primary, seed: 8 }),
     egg([60, 74, 20], 40, 40, 24, c.secondary, { bulge: 0.05 }),
   ],

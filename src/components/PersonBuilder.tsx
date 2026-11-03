@@ -44,7 +44,8 @@ const TABS: { key: PartKey; label: string }[] = [
 
 export function randomPerson(): PersonConfig {
   const any = <T,>(list: readonly T[]) => list[Math.floor(Math.random() * list.length)]!;
-  const part = (k: (typeof PERSON_PARTS)[number]["key"]) => any(PERSON_PARTS.find((p) => p.key === k)!.options as readonly { id: string }[]).id;
+  const part = (k: (typeof PERSON_PARTS)[number]["key"]) =>
+    any(PERSON_PARTS.find((p) => p.key === k)!.options as readonly { id: string }[]).id;
   const facial = Math.random() < 0.3 ? part("facial") : "none";
   return {
     age: part("age") as PersonConfig["age"],
@@ -96,9 +97,14 @@ export function PersonBuilder({
         const { personFile } = await import("@/lib/clay/scene");
         const blob = await personFile(person, 512);
         const ext = blob.type === "image/webp" ? "webp" : "png";
-        const url = await uploadFile(new File([blob], `person-${key}.${ext}`, { type: blob.type }), "intro", siteId);
+        const url = await uploadFile(
+          new File([blob], `person-${key}.${ext}`, { type: blob.type }),
+          "intro",
+          siteId,
+        );
         // Only keep it if they haven't changed anything since.
-        if (personKey(latest.current.person) === key && !latest.current.image_url) onChange({ ...latest.current, image_url: url });
+        if (personKey(latest.current.person) === key && !latest.current.image_url)
+          onChange({ ...latest.current, image_url: url });
       } catch {
         /* The browser render still shows; we try again on the next change. */
       }
@@ -109,18 +115,32 @@ export function PersonBuilder({
 
   const options = useMemo(() => {
     if (tab === "skin") return null;
-    return PERSON_PARTS.find((p) => p.key === tab)!.options as readonly { id: string; label: string }[];
+    return PERSON_PARTS.find((p) => p.key === tab)!.options as readonly {
+      id: string;
+      label: string;
+    }[];
   }, [tab]);
 
   return (
     <div>
       <div className="flex items-center justify-between gap-2">
-        <button type="button" onClick={onBack} className="inline-flex items-center gap-1 text-xs font-medium text-muted hover:text-ink">
+        <button
+          type="button"
+          onClick={onBack}
+          className="inline-flex items-center gap-1 text-xs font-medium text-muted hover:text-ink"
+        >
           <ChevronLeft className="size-3.5" aria-hidden="true" /> {CAST_COPY.allCharacters}
         </button>
         <button
           type="button"
-          onClick={() => onChange({ type: "person", person: randomPerson(), accessory: value.accessory ?? true, ...(value.name_tag ? { name_tag: value.name_tag } : {}) })}
+          onClick={() =>
+            onChange({
+              type: "person",
+              person: randomPerson(),
+              accessory: value.accessory ?? true,
+              ...(value.name_tag ? { name_tag: value.name_tag } : {}),
+            })
+          }
           className="inline-flex items-center gap-1.5 rounded-full border border-line bg-cream px-3 py-1.5 text-xs font-medium hover:bg-glass/80"
         >
           <Shuffle className="size-3.5" aria-hidden="true" /> {CAST_COPY.surprise}
@@ -131,7 +151,9 @@ export function PersonBuilder({
         <Character setting={value} accessory={accessory} size={150} live follow showName={false} />
       </div>
 
-      <p className="mt-4 font-mono text-[10px] tracking-[0.18em] text-muted uppercase">{CAST_COPY.startFrom}</p>
+      <p className="mt-4 font-mono text-[10px] tracking-[0.18em] text-muted uppercase">
+        {CAST_COPY.startFrom}
+      </p>
       <div className="-mx-1 mt-2 flex gap-2 overflow-x-auto px-1 pb-1 [scrollbar-width:none]">
         {PEOPLE.map((p) => {
           const on = value.preset === p.id && isPreset;
@@ -139,19 +161,38 @@ export function PersonBuilder({
             <button
               key={p.id}
               type="button"
-              onClick={() => onChange({ type: "person", person: p.person, preset: p.id, accessory: value.accessory ?? true, ...(value.name_tag ? { name_tag: value.name_tag } : {}) })}
+              onClick={() =>
+                onChange({
+                  type: "person",
+                  person: p.person,
+                  preset: p.id,
+                  accessory: value.accessory ?? true,
+                  ...(value.name_tag ? { name_tag: value.name_tag } : {}),
+                })
+              }
               aria-pressed={on}
               title={p.name}
               className={`grid shrink-0 place-items-center rounded-2xl border p-1 ${on ? "border-accent bg-accent/8" : "border-line bg-cream hover:bg-glass/80"}`}
             >
-              <img src={`/clay/people/${p.id}@256.webp`} alt="" loading="lazy" width={52} height={52} className="size-[52px]" />
+              <img
+                src={`/clay/people/${p.id}@256.webp`}
+                alt=""
+                loading="lazy"
+                width={52}
+                height={52}
+                className="size-[52px]"
+              />
               <span className="max-w-[60px] truncate text-[10px]">{p.name}</span>
             </button>
           );
         })}
       </div>
 
-      <div role="tablist" aria-label={CAST_COPY.makePerson} className="-mx-1 mt-4 flex gap-1.5 overflow-x-auto px-1 pb-1 [scrollbar-width:none]">
+      <div
+        role="tablist"
+        aria-label={CAST_COPY.makePerson}
+        className="-mx-1 mt-4 flex gap-1.5 overflow-x-auto px-1 pb-1 [scrollbar-width:none]"
+      >
         {TABS.map((t) => (
           <button
             key={t.key}
@@ -168,11 +209,34 @@ export function PersonBuilder({
 
       <div className="mt-3">
         {tab === "skin" ? (
-          <Swatches label={CAST_COPY.skin} colors={SKIN_TONES.map((hex, i) => ({ id: String(i), hex, label: `${CAST_COPY.skin} ${i + 1}` }))} value={String(person.skin)} onPick={(id) => set({ skin: Number(id) })} />
+          <Swatches
+            label={CAST_COPY.skin}
+            colors={SKIN_TONES.map((hex, i) => ({
+              id: String(i),
+              hex,
+              label: `${CAST_COPY.skin} ${i + 1}`,
+            }))}
+            value={String(person.skin)}
+            onPick={(id) => set({ skin: Number(id) })}
+          />
         ) : (
           <>
-            {tab === "hair" ? <Swatches label={CAST_COPY.hairColor} colors={HAIR_COLORS} value={person.hairColor} onPick={(id) => set({ hairColor: id as PersonConfig["hairColor"] })} /> : null}
-            {tab === "outfit" ? <Swatches label={CAST_COPY.outfitColor} colors={OUTFIT_COLORS} value={person.outfitColor} onPick={(id) => set({ outfitColor: id as PersonConfig["outfitColor"] })} /> : null}
+            {tab === "hair" ? (
+              <Swatches
+                label={CAST_COPY.hairColor}
+                colors={HAIR_COLORS}
+                value={person.hairColor}
+                onPick={(id) => set({ hairColor: id as PersonConfig["hairColor"] })}
+              />
+            ) : null}
+            {tab === "outfit" ? (
+              <Swatches
+                label={CAST_COPY.outfitColor}
+                colors={OUTFIT_COLORS}
+                value={person.outfitColor}
+                onPick={(id) => set({ outfitColor: id as PersonConfig["outfitColor"] })}
+              />
+            ) : null}
             <div className="mt-2 grid grid-cols-4 gap-1.5">
               {options!.map((o) => {
                 const variant = { ...person, [tab]: o.id } as PersonConfig;
@@ -187,11 +251,26 @@ export function PersonBuilder({
                     className={`grid place-items-center overflow-hidden rounded-2xl border px-0.5 pt-1 pb-1.5 transition-colors ${on ? "border-accent bg-accent/8" : "border-line bg-cream hover:bg-glass/80"}`}
                   >
                     <span className="relative block size-14 overflow-hidden">
-                      <span className="absolute inset-0 block" style={HEAD_PARTS.has(tab) ? { transform: "scale(1.7)", transformOrigin: "50% 22%" } : undefined}>
-                        <Character setting={{ type: "person", person: variant }} size={56} live={false} follow={false} showName={false} />
+                      <span
+                        className="absolute inset-0 block"
+                        style={
+                          HEAD_PARTS.has(tab)
+                            ? { transform: "scale(1.7)", transformOrigin: "50% 22%" }
+                            : undefined
+                        }
+                      >
+                        <Character
+                          setting={{ type: "person", person: variant }}
+                          size={56}
+                          live={false}
+                          follow={false}
+                          showName={false}
+                        />
                       </span>
                     </span>
-                    <span className="w-full truncate px-0.5 text-center text-[10.5px] leading-tight">{o.label}</span>
+                    <span className="w-full truncate px-0.5 text-center text-[10.5px] leading-tight">
+                      {o.label}
+                    </span>
                   </motion.button>
                 );
               })}
@@ -203,7 +282,17 @@ export function PersonBuilder({
   );
 }
 
-function Swatches({ label, colors, value, onPick }: { label: string; colors: readonly { id: string; hex: string; label: string }[]; value: string; onPick: (id: string) => void }) {
+function Swatches({
+  label,
+  colors,
+  value,
+  onPick,
+}: {
+  label: string;
+  colors: readonly { id: string; hex: string; label: string }[];
+  value: string;
+  onPick: (id: string) => void;
+}) {
   return (
     <div>
       <p className="text-xs text-muted">{label}</p>
@@ -217,7 +306,13 @@ function Swatches({ label, colors, value, onPick }: { label: string; colors: rea
             aria-pressed={value === c.id}
             onClick={() => onPick(c.id)}
             className="size-7 rounded-full"
-            style={{ background: c.hex, boxShadow: value === c.id ? "0 0 0 2px #FBF8F2, 0 0 0 4px #2B2522" : "inset 0 0 0 1px rgba(0,0,0,.12)" }}
+            style={{
+              background: c.hex,
+              boxShadow:
+                value === c.id
+                  ? "0 0 0 2px #FBF8F2, 0 0 0 4px #2B2522"
+                  : "inset 0 0 0 1px rgba(0,0,0,.12)",
+            }}
           />
         ))}
       </div>
@@ -225,4 +320,8 @@ function Swatches({ label, colors, value, onPick }: { label: string; colors: rea
   );
 }
 
-export const NEW_PERSON: PersonSetting = { type: "person", person: DEFAULT_PERSON, accessory: true };
+export const NEW_PERSON: PersonSetting = {
+  type: "person",
+  person: DEFAULT_PERSON,
+  accessory: true,
+};

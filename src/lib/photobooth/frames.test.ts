@@ -1,5 +1,15 @@
 import { describe, expect, test } from "bun:test";
-import { FRAMES, OUT_H, OUT_W, coverCrop, fitMessage, isDark, messageBox, photoSlots, photoWindow } from "@/lib/photobooth/frames";
+import {
+  FRAMES,
+  OUT_H,
+  OUT_W,
+  coverCrop,
+  fitMessage,
+  isDark,
+  messageBox,
+  photoSlots,
+  photoWindow,
+} from "@/lib/photobooth/frames";
 
 // A fake measure: every character is 0.55 of the font size wide.
 const measure = (line: string, size: number) => [...line].length * size * 0.55;
@@ -37,7 +47,10 @@ describe("photobooth frames", () => {
   });
 
   test("short messages stay big on one line", () => {
-    expect(fitMessage("Happy birthday", 900, measure)).toEqual({ lines: ["Happy birthday"], size: 76 });
+    expect(fitMessage("Happy birthday", 900, measure)).toEqual({
+      lines: ["Happy birthday"],
+      size: 76,
+    });
     expect(fitMessage("   ", 900, measure).lines).toEqual([]);
   });
 

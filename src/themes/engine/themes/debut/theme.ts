@@ -18,10 +18,24 @@ export default defineTheme({
   effects: ["petals", "sparks"],
   sound: "fabric",
   slots: ["recipient", "date"],
-  palette: { background: "#2A1A22", ink: "#FBF3EA", surface: "#B8707A", accent: "#D9B46A", accent2: "#E9C9B6" },
+  palette: {
+    background: "#2A1A22",
+    ink: "#FBF3EA",
+    surface: "#B8707A",
+    accent: "#D9B46A",
+    accent2: "#E9C9B6",
+  },
   fonts: {
-    display: { family: '"Cormorant Garamond", Georgia, serif', source: "google", query: "Cormorant+Garamond:ital,wght@0,500;0,600;1,500;1,600" },
-    text: { family: '"DM Sans", system-ui, sans-serif', source: "google", query: "DM+Sans:wght@400;500;700" },
+    display: {
+      family: '"Cormorant Garamond", Georgia, serif',
+      source: "google",
+      query: "Cormorant+Garamond:ital,wght@0,500;0,600;1,500;1,600",
+    },
+    text: {
+      family: '"DM Sans", system-ui, sans-serif',
+      source: "google",
+      query: "DM+Sans:wght@400;500;700",
+    },
   },
   categories: ["Birthdays", "Milestones"],
   regions: { available: ["global"], featured: ["PH"] },
@@ -31,10 +45,23 @@ export default defineTheme({
   occasion: {
     defaultFormat: "storybook",
     sections: ["letters", "photobooth", "songs", "voice", "superlatives"],
-    prompts: ["occasion.debut.prompt1", "occasion.debut.prompt2", "occasion.debut.prompt3", "occasion.debut.prompt4", "occasion.debut.prompt5"],
+    prompts: [
+      "occasion.debut.prompt1",
+      "occasion.debut.prompt2",
+      "occasion.debut.prompt3",
+      "occasion.debut.prompt4",
+      "occasion.debut.prompt5",
+    ],
     heading: "occasion.debut.heading",
     greeting: "occasion.debut.greeting",
   },
-  strings: ["theme.debut.hint", "theme.debut.light", "theme.debut.lightAll", "theme.debut.treasures", "theme.debut.candle", "theme.debut.rose"],
+  strings: [
+    "theme.debut.hint",
+    "theme.debut.light",
+    "theme.debut.lightAll",
+    "theme.debut.treasures",
+    "theme.debut.candle",
+    "theme.debut.rose",
+  ],
   status: "live",
 });

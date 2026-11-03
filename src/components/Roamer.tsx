@@ -10,7 +10,15 @@ import { chime } from "@/lib/play";
  * look across, and hops when you tap it. Fixed to the visible screen; inside a
  * preview frame (contain: paint) it stays inside the frame. Still under reduced motion.
  */
-export function Roamer({ icons, index, size = 34 }: { icons: IconSet; index: number; size?: number }) {
+export function Roamer({
+  icons,
+  index,
+  size = 34,
+}: {
+  icons: IconSet;
+  index: number;
+  size?: number;
+}) {
   const boxRef = useRef<HTMLDivElement | null>(null);
   const hostRef = useRef<HTMLDivElement | null>(null);
   const x = useMotionValue(-80);
@@ -43,7 +51,11 @@ export function Roamer({ icons, index, size = 34 }: { icons: IconSet; index: num
       // Mostly along the left or right edge; now and then across the middle.
       const across = Math.random() < 0.1;
       const side = Math.random() < 0.5 ? 0 : 1;
-      const tx = across ? w * (0.2 + Math.random() * 0.6) : side ? w - size - 10 - Math.random() * w * 0.08 : 10 + Math.random() * w * 0.08;
+      const tx = across
+        ? w * (0.2 + Math.random() * 0.6)
+        : side
+          ? w - size - 10 - Math.random() * w * 0.08
+          : 10 + Math.random() * w * 0.08;
       const ty = 70 + Math.random() * Math.max(40, h - 170);
       return { tx, ty };
     };
@@ -92,14 +104,27 @@ export function Roamer({ icons, index, size = 34 }: { icons: IconSet; index: num
   const yAll = useTransform(() => y.get() + bobY.get() + hop.get());
 
   function tap() {
-    void animate(hop, [0, -36, 0], { duration: 0.55, times: [0, 0.4, 1], ease: ["easeOut", "easeIn"] });
+    void animate(hop, [0, -36, 0], {
+      duration: 0.55,
+      times: [0, 0.4, 1],
+      ease: ["easeOut", "easeIn"],
+    });
     chime("boop");
     const r = hostRef.current?.getBoundingClientRect();
-    if (r) burstSet(boxRef.current, r.left + r.width / 2, r.top + r.height / 2, icons, { count: 8, spread: 0.7, up: true });
+    if (r)
+      burstSet(boxRef.current, r.left + r.width / 2, r.top + r.height / 2, icons, {
+        count: 8,
+        spread: 0.7,
+        up: true,
+      });
   }
 
   return (
-    <div ref={boxRef} aria-hidden="true" className="pointer-events-none fixed inset-0 z-[6] overflow-hidden">
+    <div
+      ref={boxRef}
+      aria-hidden="true"
+      className="pointer-events-none fixed inset-0 z-[6] overflow-hidden"
+    >
       <motion.div
         ref={hostRef}
         className="pointer-events-auto absolute top-0 left-0 cursor-pointer"
@@ -113,10 +138,17 @@ export function Roamer({ icons, index, size = 34 }: { icons: IconSet; index: num
   );
 }
 
-const BUSY = "button, a, input, textarea, select, label, [role=button], [role=link], h1, h2, h3, h4, p, li, img, video, canvas, iframe, figure, blockquote";
+const BUSY =
+  "button, a, input, textarea, select, label, [role=button], [role=link], h1, h2, h3, h4, p, li, img, video, canvas, iframe, figure, blockquote";
 
 /** True when nothing a person reads or taps sits under the icon at (tx, ty) inside the box. */
-function isClearSpot(box: HTMLElement, self: HTMLElement | null, tx: number, ty: number, size: number): boolean {
+function isClearSpot(
+  box: HTMLElement,
+  self: HTMLElement | null,
+  tx: number,
+  ty: number,
+  size: number,
+): boolean {
   if (typeof document === "undefined") return true;
   const r = box.getBoundingClientRect();
   const pad = 6;
@@ -135,7 +167,8 @@ function isClearSpot(box: HTMLElement, self: HTMLElement | null, tx: number, ty:
       if (el === box || (self && self.contains(el))) continue;
       if (el.closest(BUSY)) return false;
       // Words in a plain div or span count too.
-      if ([...el.childNodes].some((n) => n.nodeType === 3 && (n.textContent ?? "").trim())) return false;
+      if ([...el.childNodes].some((n) => n.nodeType === 3 && (n.textContent ?? "").trim()))
+        return false;
     }
   }
   return true;

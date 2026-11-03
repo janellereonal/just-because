@@ -26,8 +26,14 @@ export async function claimGuestGifts(guestId: string, userId: string): Promise<
       .set({ creatorId: userId })
       .where(eq(schema.giftSites.creatorId, guestId))
       .returning({ id: schema.giftSites.id });
-    await tx.update(schema.orders).set({ ownerId: userId }).where(eq(schema.orders.ownerId, guestId));
-    await tx.update(schema.conciergeRequests).set({ userId }).where(eq(schema.conciergeRequests.userId, guestId));
+    await tx
+      .update(schema.orders)
+      .set({ ownerId: userId })
+      .where(eq(schema.orders.ownerId, guestId));
+    await tx
+      .update(schema.conciergeRequests)
+      .set({ userId })
+      .where(eq(schema.conciergeRequests.userId, guestId));
     await tx.update(schema.events).set({ userId }).where(eq(schema.events.userId, guestId));
     return moved.length;
   });

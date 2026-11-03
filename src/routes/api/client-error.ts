@@ -27,7 +27,13 @@ export const Route = createFileRoute("/api/client-error")({
           const r = report.parse(JSON.parse(text));
           console.error(
             "[client-error]",
-            JSON.stringify({ message: scrub(r.message), where: r.where, path: scrub(r.path), stack: scrub(r.stack ?? ""), ua: r.ua }),
+            JSON.stringify({
+              message: scrub(r.message),
+              where: r.where,
+              path: scrub(r.path),
+              stack: scrub(r.stack ?? ""),
+              ua: r.ua,
+            }),
           );
         } catch {
           /* bad or rate-limited report: drop it */

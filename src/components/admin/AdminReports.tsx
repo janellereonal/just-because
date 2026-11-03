@@ -8,9 +8,13 @@ const reasonLabel = (r: string) => REPORT_COPY.reasons.find(([k]) => k === r)?.[
 
 export function AdminReports() {
   const qc = useQueryClient();
-  const { data: reports = [] } = useQuery({ queryKey: ["admin-reports"], queryFn: () => listReports() });
+  const { data: reports = [] } = useQuery({
+    queryKey: ["admin-reports"],
+    queryFn: () => listReports(),
+  });
   const toggle = useMutation({
-    mutationFn: (v: { siteId: string; disabled: boolean }) => setGiftDisabled({ data: { ...v, reason: v.disabled ? "Paused after a report" : null } }),
+    mutationFn: (v: { siteId: string; disabled: boolean }) =>
+      setGiftDisabled({ data: { ...v, reason: v.disabled ? "Paused after a report" : null } }),
     onSuccess: (_, v) => {
       void qc.invalidateQueries({ queryKey: ["admin-reports"] });
       toast.success(v.disabled ? "Gift paused." : "Gift is open again.");
@@ -30,18 +34,27 @@ export function AdminReports() {
       {reports.length === 0 ? <p className="mt-2 text-sm text-muted">No reports yet.</p> : null}
       <div className="mt-4 space-y-2">
         {reports.map((r) => (
-          <div key={r.id} className={`flex flex-wrap items-center gap-3 rounded-2xl border border-line bg-white p-4 text-sm ${r.resolvedAt ? "opacity-60" : ""}`}>
+          <div
+            key={r.id}
+            className={`flex flex-wrap items-center gap-3 rounded-2xl border border-line bg-white p-4 text-sm ${r.resolvedAt ? "opacity-60" : ""}`}
+          >
             <div className="min-w-0 flex-1">
               <p className="font-medium">
                 {reasonLabel(r.reason)} ·{" "}
-                <a href={`/g/${r.slug}`} target="_blank" rel="noreferrer" className="underline underline-offset-2">
+                <a
+                  href={`/g/${r.slug}`}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="underline underline-offset-2"
+                >
                   /g/{r.slug}
                 </a>
                 {r.title ? <span className="text-muted"> ({r.title})</span> : null}
               </p>
               {r.details ? <p className="mt-1 text-muted">{r.details}</p> : null}
               <p className="mt-1 text-xs text-muted">
-                From the {r.page} page · {new Date(r.createdAt).toLocaleString()} {r.disabledAt ? "· Paused" : ""} {r.resolvedAt ? "· Resolved" : ""}
+                From the {r.page} page · {new Date(r.createdAt).toLocaleString()}{" "}
+                {r.disabledAt ? "· Paused" : ""} {r.resolvedAt ? "· Resolved" : ""}
               </p>
             </div>
             {r.siteId ? (
@@ -54,7 +67,11 @@ export function AdminReports() {
               </button>
             ) : null}
             {!r.resolvedAt ? (
-              <button type="button" onClick={() => dismiss.mutate(r.id)} className="rounded-full border border-line px-4 py-2">
+              <button
+                type="button"
+                onClick={() => dismiss.mutate(r.id)}
+                className="rounded-full border border-line px-4 py-2"
+              >
                 Dismiss
               </button>
             ) : null}

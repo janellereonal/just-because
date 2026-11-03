@@ -38,13 +38,27 @@ export function StyleArt({ style, occasion }: { style: StyleInfo; occasion?: Occ
   if (look) {
     const theme = { name: look.theme, category: "" };
     return (
-      <span className="absolute inset-0 grid place-items-center" style={{ background: stageColorFor(theme) }} aria-hidden>
-        <img src={themeStillUrl(themeKindOf(theme))} alt="" loading="lazy" draggable={false} className="h-full w-full object-cover" />
+      <span
+        className="absolute inset-0 grid place-items-center"
+        style={{ background: stageColorFor(theme) }}
+        aria-hidden
+      >
+        <img
+          src={themeStillUrl(themeKindOf(theme))}
+          alt=""
+          loading="lazy"
+          draggable={false}
+          className="h-full w-full object-cover"
+        />
       </span>
     );
   }
   return (
-    <span className="absolute inset-0 grid place-items-center" style={{ background: LAYOUT_STAGE[style.body] ?? LAYOUT_STAGE["scrapbook"] }} aria-hidden>
+    <span
+      className="absolute inset-0 grid place-items-center"
+      style={{ background: LAYOUT_STAGE[style.body] ?? LAYOUT_STAGE["scrapbook"] }}
+      aria-hidden
+    >
       <FormatMini id={style.body} />
     </span>
   );
@@ -89,15 +103,30 @@ export function StylePicker({
   const [more, setMore] = useState(false);
   useEffect(() => setMore(false), [occasion]);
   const picked = value ? pool.find((s) => s.id === value) : undefined;
-  const filtered = occasion ? [...fits, ...(picked && !fits.includes(picked) ? [picked] : []), ...(more ? others.filter((s) => s !== picked) : [])] : stylesForOccasion(null, pool);
+  const filtered = occasion
+    ? [
+        ...fits,
+        ...(picked && !fits.includes(picked) ? [picked] : []),
+        ...(more ? others.filter((s) => s !== picked) : []),
+      ]
+    : stylesForOccasion(null, pool);
   const list = filtered;
   const pickedAt = value ? list.findIndex((s) => s.id === value) : -1;
   const shown = occasion || all || pickedAt >= first ? list : list.slice(0, first);
   if (loading) {
     return (
-      <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-3" aria-busy="true" aria-label={t("picker.style.label")}>
+      <div
+        className="grid grid-cols-2 gap-2.5 sm:grid-cols-3"
+        aria-busy="true"
+        aria-label={t("picker.style.label")}
+      >
         {Array.from({ length: first }, (_, i) => (
-          <div key={i} data-style-placeholder className="fmt-card style-card pointer-events-none" aria-hidden>
+          <div
+            key={i}
+            data-style-placeholder
+            className="fmt-card style-card pointer-events-none"
+            aria-hidden
+          >
             <span className="fmt-stage animate-pulse bg-ink/5" />
             <span className="block px-3 pt-2.5 pb-3">
               <span className="block h-3.5 w-2/3 rounded-full bg-ink/10" />
@@ -118,7 +147,9 @@ export function StylePicker({
             <span className="fmt-stage">{current.art}</span>
             <span className="block px-3 pt-2.5 pb-3">
               <span className="block text-sm font-semibold">{current.title}</span>
-              <span className="mt-0.5 block text-xs leading-snug text-muted">{t("picker.style.current")}</span>
+              <span className="mt-0.5 block text-xs leading-snug text-muted">
+                {t("picker.style.current")}
+              </span>
             </span>
           </div>
         ) : null}
@@ -127,8 +158,19 @@ export function StylePicker({
           const allowed = isAllowed ? isAllowed(s) : true;
           const plan = stylePlanTag(s.id);
           return (
-            <label key={s.id} data-style={s.id} className={`fmt-card style-card group ${active ? "is-active" : ""} ${allowed ? "" : "is-locked"}`}>
-              <input className="sr-only" type="radio" name="style" checked={active} disabled={!allowed} onChange={() => onChange(s.id)} />
+            <label
+              key={s.id}
+              data-style={s.id}
+              className={`fmt-card style-card group ${active ? "is-active" : ""} ${allowed ? "" : "is-locked"}`}
+            >
+              <input
+                className="sr-only"
+                type="radio"
+                name="style"
+                checked={active}
+                disabled={!allowed}
+                onChange={() => onChange(s.id)}
+              />
               <span className="fmt-stage">
                 <StyleArt style={s} occasion={occasion} />
                 {!allowed ? (
@@ -142,20 +184,32 @@ export function StylePicker({
               <span className="block px-3 pt-2.5 pb-3">
                 <span className="flex flex-wrap items-center gap-x-1.5 gap-y-1 text-sm font-semibold">
                   {styleTitle(s.id)}
-                  {isRecommended(s.id, occasion) ? <span className="fmt-rec">{t("picker.style.recommended")}</span> : null}
+                  {isRecommended(s.id, occasion) ? (
+                    <span className="fmt-rec">{t("picker.style.recommended")}</span>
+                  ) : null}
                 </span>
-                <span className="mt-0.5 block text-xs leading-snug text-muted">{styleCopy(s.id)}</span>
+                <span className="mt-0.5 block text-xs leading-snug text-muted">
+                  {styleCopy(s.id)}
+                </span>
               </span>
             </label>
           );
         })}
       </div>
       {occasion && others.length > 0 ? (
-        <button type="button" onClick={() => setMore((v) => !v)} className="mt-3 w-full rounded-2xl border border-dashed border-ink/20 px-4 py-3 text-sm font-medium hover:bg-paper">
+        <button
+          type="button"
+          onClick={() => setMore((v) => !v)}
+          className="mt-3 w-full rounded-2xl border border-dashed border-ink/20 px-4 py-3 text-sm font-medium hover:bg-paper"
+        >
           {more ? t("picker.style.hideOthers") : t("picker.style.showOthers", { n: others.length })}
         </button>
       ) : !occasion && list.length > first && pickedAt < first ? (
-        <button type="button" onClick={() => setAll((v) => !v)} className="mt-3 w-full rounded-2xl border border-dashed border-ink/20 px-4 py-3 text-sm font-medium hover:bg-paper">
+        <button
+          type="button"
+          onClick={() => setAll((v) => !v)}
+          className="mt-3 w-full rounded-2xl border border-dashed border-ink/20 px-4 py-3 text-sm font-medium hover:bg-paper"
+        >
           {all ? t("picker.style.showFewer") : t("picker.style.showAll", { n: list.length })}
         </button>
       ) : null}

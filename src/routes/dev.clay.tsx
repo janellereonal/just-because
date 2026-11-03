@@ -9,7 +9,9 @@ import { PEOPLE } from "@/themes/_shared/cast/person";
  * calls window.__clay(id, px) to save the stills into public/clay/.
  */
 export const Route = createFileRoute("/dev/clay")({
-  head: () => ({ meta: [NOINDEX] }), component: DevClay });
+  head: () => ({ meta: [NOINDEX] }),
+  component: DevClay,
+});
 
 function DevClay() {
   const [shots, setShots] = useState<{ id: string; url: string }[]>([]);
@@ -17,13 +19,31 @@ function DevClay() {
     if (!import.meta.env.DEV) return;
     let alive = true;
     void import("@/lib/clay/scene").then(({ CLAY, renderClay, renderPerson }) => {
-      const w = window as unknown as { __clay?: (id: string, px?: number) => string; __clayIds?: string[]; __person?: (id: string, px?: number) => string; __peopleIds?: string[] };
-      w.__clay = (id, px) => renderClay(id, CHARACTERS.find((c) => c.id === id)?.colors ?? { primary: "#FFFFFF", secondary: "#FFFFFF", skin: "#FFFFFF" }, px);
+      const w = window as unknown as {
+        __clay?: (id: string, px?: number) => string;
+        __clayIds?: string[];
+        __person?: (id: string, px?: number) => string;
+        __peopleIds?: string[];
+      };
+      w.__clay = (id, px) =>
+        renderClay(
+          id,
+          CHARACTERS.find((c) => c.id === id)?.colors ?? {
+            primary: "#FFFFFF",
+            secondary: "#FFFFFF",
+            skin: "#FFFFFF",
+          },
+          px,
+        );
       w.__person = (id, px) => renderPerson(PEOPLE.find((p) => p.id === id)!.person, px);
       w.__peopleIds = PEOPLE.map((p) => p.id);
       w.__clayIds = Object.keys(CLAY);
       if (!alive) return;
-      setShots(Object.keys(CLAY).filter((id) => !/^(orn-|xtree)/.test(id)).map((id) => ({ id, url: w.__clay!(id, 320) })));
+      setShots(
+        Object.keys(CLAY)
+          .filter((id) => !/^(orn-|xtree)/.test(id))
+          .map((id) => ({ id, url: w.__clay!(id, 320) })),
+      );
     });
     return () => {
       alive = false;

@@ -21,7 +21,19 @@ const ON_PURPOSE: Record<string, string> = {
 const TOL_FIND = 6; // how far apart a "twin" may be and still count as one (box units)
 const TOL_OK = 0.35; // anything closer than this is symmetric
 
-type Part = { i: number; x: number; y: number; z: number; sx: number; sy: number; sz: number; rz: number; ry: number; color: string; kind: string };
+type Part = {
+  i: number;
+  x: number;
+  y: number;
+  z: number;
+  sx: number;
+  sy: number;
+  sz: number;
+  rz: number;
+  ry: number;
+  color: string;
+  kind: string;
+};
 
 function parts(obj: THREE.Object3D): Part[] {
   const out: Part[] = [];
@@ -38,7 +50,19 @@ function parts(obj: THREE.Object3D): Part[] {
     const bb = m.geometry.boundingBox!.clone().applyMatrix4(m.matrixWorld);
     const c = bb.getCenter(new THREE.Vector3());
     const mat = m.material as THREE.MeshPhysicalMaterial;
-    out.push({ i: out.length, x: c.x + 60, y: 60 - c.y, z: c.z, sx: s.x, sy: s.y, sz: s.z, rz: e.z, ry: e.y, color: mat.color?.getHexString() ?? "?", kind: m.geometry.type });
+    out.push({
+      i: out.length,
+      x: c.x + 60,
+      y: 60 - c.y,
+      z: c.z,
+      sx: s.x,
+      sy: s.y,
+      sz: s.z,
+      rz: e.z,
+      ry: e.y,
+      color: mat.color?.getHexString() ?? "?",
+      kind: m.geometry.type,
+    });
   });
   return out;
 }
@@ -57,13 +81,16 @@ for (const [id, recipe] of Object.entries(CLAY)) {
   const ps = parts(g);
   const notes: string[] = [];
   // Face itself: eyes level, cheeks mirrored, mouth on the center line.
-  if (Math.abs(face.eyes.l[1] - face.eyes.r[1]) > 0.01) notes.push(`eyes not level: ${face.eyes.l[1]} vs ${face.eyes.r[1]}`);
+  if (Math.abs(face.eyes.l[1] - face.eyes.r[1]) > 0.01)
+    notes.push(`eyes not level: ${face.eyes.l[1]} vs ${face.eyes.r[1]}`);
   if (face.cheeks) {
     const cAxis = (face.cheeks.l[0] + face.cheeks.r[0]) / 2;
-    if (Math.abs(cAxis - axis) > 0.01) notes.push(`cheeks centered on ${f(cAxis)}, eyes on ${f(axis)}`);
+    if (Math.abs(cAxis - axis) > 0.01)
+      notes.push(`cheeks centered on ${f(cAxis)}, eyes on ${f(axis)}`);
     if (Math.abs(face.cheeks.l[1] - face.cheeks.r[1]) > 0.01) notes.push(`cheeks not level`);
   }
-  if (face.mouth && Math.abs(face.mouth[0] - axis) > 0.01) notes.push(`mouth at x ${face.mouth[0]}, eyes centered on ${f(axis)}`);
+  if (face.mouth && Math.abs(face.mouth[0] - axis) > 0.01)
+    notes.push(`mouth at x ${face.mouth[0]}, eyes centered on ${f(axis)}`);
   // Parts with a near-mirror twin that isn't exact.
   const used = new Set<number>();
   // Fluff (sheep wool, Shih Tzu coats) is many jittered clumps of one color on purpose: skip it.
@@ -85,7 +112,11 @@ for (const [id, recipe] of Object.entries(CLAY)) {
     }
     if (!best || bestD > TOL_FIND) continue;
     used.add(a.i).add(best.i);
-    const size = Math.max(Math.abs(a.sx - best.sx), Math.abs(a.sy - best.sy), Math.abs(a.sz - best.sz));
+    const size = Math.max(
+      Math.abs(a.sx - best.sx),
+      Math.abs(a.sy - best.sy),
+      Math.abs(a.sz - best.sz),
+    );
     const tilt = Math.abs(a.rz + best.rz);
     if (bestD > TOL_OK || size > 0.05 || tilt > 0.02) {
       const [l, r] = a.x < best.x ? [a, best] : [best, a];

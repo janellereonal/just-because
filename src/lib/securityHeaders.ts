@@ -5,7 +5,9 @@
  * add it to CSP below and test the page.
  */
 const BLOB = "https://*.public.blob.vercel-storage.com";
-const R2_PUBLIC = import.meta.env["VITE_R2_PUBLIC_URL"] ? new URL(import.meta.env["VITE_R2_PUBLIC_URL"]).origin : "";
+const R2_PUBLIC = import.meta.env["VITE_R2_PUBLIC_URL"]
+  ? new URL(import.meta.env["VITE_R2_PUBLIC_URL"]).origin
+  : "";
 export const CSP = [
   "default-src 'self'",
   // TanStack Start puts the hydration data in inline scripts.
@@ -28,12 +30,25 @@ export const BASE_HEADERS: Record<string, string> = {
   "X-Content-Type-Options": "nosniff",
   "Referrer-Policy": "strict-origin-when-cross-origin",
   // Mic for voice notes and the birthday candles, camera for video notes and photos.
-  "Permissions-Policy": "microphone=(self), camera=(self), geolocation=(), payment=(), usb=(), interest-cohort=()",
+  "Permissions-Policy":
+    "microphone=(self), camera=(self), geolocation=(), payment=(), usb=(), interest-cohort=()",
   "X-Frame-Options": "DENY",
 };
 
 /** Private pages: never in search results. */
-export const PRIVATE_PATHS = [/^\/g\//, /^\/contribute\//, /^\/sites\//, /^\/dashboard/, /^\/dev\//, /^\/auth/, /^\/admin/, /^\/checkout\//, /^\/create/, /^\/reset-password/, /^\/account/];
+export const PRIVATE_PATHS = [
+  /^\/g\//,
+  /^\/contribute\//,
+  /^\/sites\//,
+  /^\/dashboard/,
+  /^\/dev\//,
+  /^\/auth/,
+  /^\/admin/,
+  /^\/checkout\//,
+  /^\/create/,
+  /^\/reset-password/,
+  /^\/account/,
+];
 export const isPrivatePath = (path: string) => PRIVATE_PATHS.some((r) => r.test(path));
 
 export function withSecurityHeaders(request: Request, response: Response): Response {
@@ -43,5 +58,9 @@ export function withSecurityHeaders(request: Request, response: Response): Respo
   const type = headers.get("content-type") ?? "";
   if (type.includes("text/html")) headers.set("Content-Security-Policy", CSP);
   if (isPrivatePath(path)) headers.set("X-Robots-Tag", "noindex, nofollow, noarchive");
-  return new Response(response.body, { status: response.status, statusText: response.statusText, headers });
+  return new Response(response.body, {
+    status: response.status,
+    statusText: response.statusText,
+    headers,
+  });
 }

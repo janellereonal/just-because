@@ -37,7 +37,14 @@ export const SOUND_PACKS = {
 export type SoundPackName = keyof typeof SOUND_PACKS;
 
 /** Noise through a moving filter: tape squeaks up, ribbon swishes, glass squeaks. */
-function sweep(from: number, to: number, dur: number, gain: number, q = 4, type: BiquadFilterType = "bandpass") {
+function sweep(
+  from: number,
+  to: number,
+  dur: number,
+  gain: number,
+  q = 4,
+  type: BiquadFilterType = "bandpass",
+) {
   const ctx = soundContext();
   if (!ctx) return;
   try {

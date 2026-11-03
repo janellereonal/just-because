@@ -26,13 +26,16 @@ export type IconSet = {
  * What a gift stores in `icon_set`. `roam` picks one of the set's icons to wander around the gift
  * (its index), or -1 for none; left out, the theme decides (see ThemeDesign.roam).
  */
-export type IconSetSetting = ({ id: string } | { custom: string[]; physics?: Physics }) & { roam?: number };
+export type IconSetSetting = ({ id: string } | { custom: string[]; physics?: Physics }) & {
+  roam?: number;
+};
 
 const P = (d: string): IconItem => ({ kind: "path", d });
 
 const HEART = "M12 21s-8-5-8-11a4.5 4.5 0 0 1 8-2.8A4.5 4.5 0 0 1 20 10c0 6-8 11-8 11z";
 const STAR = "M12 2l2.9 6.6 7.1.6-5.4 4.7 1.6 7L12 17.3 5.8 20.9l1.6-7L2 9.2l7.1-.6z";
-const SPARKLE = "M12 2c.7 5.2 2.8 7.6 10 10-7.2 2.4-9.3 4.8-10 10-.7-5.2-2.8-7.6-10-10 7.2-2.4 9.3-4.8 10-10z";
+const SPARKLE =
+  "M12 2c.7 5.2 2.8 7.6 10 10-7.2 2.4-9.3 4.8-10 10-.7-5.2-2.8-7.6-10-10 7.2-2.4 9.3-4.8 10-10z";
 const MOON = "M19.5 15.2A8.5 8.5 0 1 1 8.8 4.5a6.8 6.8 0 0 0 10.7 10.7z";
 const DOT = "M12 7a5 5 0 1 1 0 10 5 5 0 0 1 0-10z";
 const PAW =
@@ -62,7 +65,8 @@ const TULIP =
 /* Handwritten: ink, envelopes, a kiss. */
 const INK_DROP = "M12 3c3 4.5 6 7.6 6 11a6 6 0 0 1-12 0c0-3.4 3-6.5 6-11z";
 const ENVELOPE = "M3 6h18v12H3zM5 7.5L12 12.5L19 7.5L18.3 6.9L12 11.2L5.7 6.9z";
-const KISS = "M5 6.4L6.4 5L12 10.6L17.6 5L19 6.4L13.4 12L19 17.6L17.6 19L12 13.4L6.4 19L5 17.6L10.6 12z";
+const KISS =
+  "M5 6.4L6.4 5L12 10.6L17.6 5L19 6.4L13.4 12L19 17.6L17.6 19L12 13.4L6.4 19L5 17.6L10.6 12z";
 /* Game night: a die (pips cut out by winding), a meeple, a token, a spade. */
 const DIE =
   "M7 4h10a3 3 0 0 1 3 3v10a3 3 0 0 1-3 3H7a3 3 0 0 1-3-3V7a3 3 0 0 1 3-3zM8.5 6.9a1.6 1.6 0 1 0 0 3.2a1.6 1.6 0 1 0 0-3.2zM12 10.4a1.6 1.6 0 1 0 0 3.2a1.6 1.6 0 1 0 0-3.2zM15.5 13.9a1.6 1.6 0 1 0 0 3.2a1.6 1.6 0 1 0 0-3.2z";
@@ -70,12 +74,17 @@ const MEEPLE =
   "M12 3a3 3 0 0 1 3 3c0 1-.4 1.7-1 2.3 3.2.6 7 1.8 7 3.7 0 1.3-2.2 1.6-4 1.5l3 6.5h-5.5L12 16l-2.5 4H4l3-6.5c-1.8.1-4-.2-4-1.5 0-1.9 3.8-3.1 7-3.7-.6-.6-1-1.3-1-2.3a3 3 0 0 1 3-3z";
 const TOKEN =
   "M12 4a8 8 0 1 1 0 16a8 8 0 1 1 0-16zM12 6.4a5.6 5.6 0 1 0 0 11.2a5.6 5.6 0 1 0 0-11.2zM12 8.4a3.6 3.6 0 1 1 0 7.2a3.6 3.6 0 1 1 0-7.2z";
-const SPADE = "M12 3c3 3.6 8 6.4 8 10.2a4 4 0 0 1-6.6 3l1.1 4.8h-5l1.1-4.8a4 4 0 0 1-6.6-3C4 9.4 9 6.6 12 3z";
+const SPADE =
+  "M12 3c3 3.6 8 6.4 8 10.2a4 4 0 0 1-6.6 3l1.1 4.8h-5l1.1-4.8a4 4 0 0 1-6.6-3C4 9.4 9 6.6 12 3z";
 /* Pixel: drawn on a grid, square corners on purpose. */
-const PX_HEART = "M4.5 4.5h5v2.5h-5zM14.5 4.5h5v2.5h-5zM2 7h20v2.5h-20zM2 9.5h20v2.5h-20zM4.5 12h15v2.5h-15zM7 14.5h10v2.5h-10zM9.5 17h5v2.5h-5z";
-const PX_COIN = "M7 3.25h10v2.5h-10zM4.5 5.75h15v2.5h-15zM2 8.25h20v2.5h-20zM2 10.75h20v2.5h-20zM2 13.25h20v2.5h-20zM4.5 15.75h15v2.5h-15zM7 18.25h10v2.5h-10z";
-const PX_STAR = "M10.6 3.6h2.8v2.8h-2.8zM7.8 6.4h8.4v2.8h-8.4zM2.2 9.2h19.6v2.8h-19.6zM5 12h14v2.8h-14zM7.8 14.8h2.8v2.8h-2.8zM13.4 14.8h2.8v2.8h-2.8zM5 17.6h2.8v2.8h-2.8zM16.2 17.6h2.8v2.8h-2.8z";
-const PX_BLOCK = "M3 3h18v3h-18zM3 6h3v3h-3zM18 6h3v3h-3zM3 9h3v3h-3zM9 9h6v3h-6zM18 9h3v3h-3zM3 12h3v3h-3zM9 12h6v3h-6zM18 12h3v3h-3zM3 15h3v3h-3zM18 15h3v3h-3zM3 18h18v3h-18z";
+const PX_HEART =
+  "M4.5 4.5h5v2.5h-5zM14.5 4.5h5v2.5h-5zM2 7h20v2.5h-20zM2 9.5h20v2.5h-20zM4.5 12h15v2.5h-15zM7 14.5h10v2.5h-10zM9.5 17h5v2.5h-5z";
+const PX_COIN =
+  "M7 3.25h10v2.5h-10zM4.5 5.75h15v2.5h-15zM2 8.25h20v2.5h-20zM2 10.75h20v2.5h-20zM2 13.25h20v2.5h-20zM4.5 15.75h15v2.5h-15zM7 18.25h10v2.5h-10z";
+const PX_STAR =
+  "M10.6 3.6h2.8v2.8h-2.8zM7.8 6.4h8.4v2.8h-8.4zM2.2 9.2h19.6v2.8h-19.6zM5 12h14v2.8h-14zM7.8 14.8h2.8v2.8h-2.8zM13.4 14.8h2.8v2.8h-2.8zM5 17.6h2.8v2.8h-2.8zM16.2 17.6h2.8v2.8h-2.8z";
+const PX_BLOCK =
+  "M3 3h18v3h-18zM3 6h3v3h-3zM18 6h3v3h-3zM3 9h3v3h-3zM9 9h6v3h-6zM18 9h3v3h-3zM3 12h3v3h-3zM9 12h6v3h-6zM18 12h3v3h-3zM3 15h3v3h-3zM18 15h3v3h-3zM3 18h18v3h-18z";
 
 export const ICON_SETS: IconSet[] = [
   {
@@ -144,7 +153,10 @@ export const ICON_SETS: IconSet[] = [
   {
     id: "emoji",
     name: "Emoji",
-    items: ["💖", "✨", "🎉", "🌸", "⭐", "🍀", "🎈", "🫶"].map((char) => ({ kind: "emoji" as const, char })),
+    items: ["💖", "✨", "🎉", "🌸", "⭐", "🍀", "🎈", "🫶"].map((char) => ({
+      kind: "emoji" as const,
+      char,
+    })),
     colors: [],
     physics: "float",
   },
@@ -170,7 +182,8 @@ export function normalizeIconSetting(value: unknown): IconSetSetting | null {
   const v = value as Record<string, unknown>;
   const r = Number(v["roam"]);
   const roam = Number.isInteger(r) && r >= -1 && r < 8 ? { roam: r } : {};
-  if (typeof v["id"] === "string" && ICON_SETS.some((s) => s.id === v["id"])) return { id: v["id"], ...roam };
+  if (typeof v["id"] === "string" && ICON_SETS.some((s) => s.id === v["id"]))
+    return { id: v["id"], ...roam };
   if (Array.isArray(v["custom"])) {
     const custom = v["custom"]
       .slice(0, MAX_CUSTOM_ICONS)
@@ -203,23 +216,36 @@ export function initialsOf(name: string) {
 /** Turns a gift's setting into a ready-to-draw icon set. */
 export function resolveIconSet(
   setting: IconSetSetting | null | undefined,
-  { recipient = "", palette }: { recipient?: string; palette?: { primary: string; accent: string } } = {},
+  {
+    recipient = "",
+    palette,
+  }: { recipient?: string; palette?: { primary: string; accent: string } } = {},
 ): IconSet {
-  const giftColors = palette ? [palette.accent, palette.primary, "#FFFFFF"] : ["#C2366B", "#B5623E", "#FFFFFF"];
+  const giftColors = palette
+    ? [palette.accent, palette.primary, "#FFFFFF"]
+    : ["#C2366B", "#B5623E", "#FFFFFF"];
   if (setting && "custom" in setting) {
     return {
       id: "custom",
       name: "Yours",
-      items: setting.custom.map((x) => (isSafeMediaUrl(x) ? { kind: "image", url: x } : { kind: "emoji", char: x })),
+      items: setting.custom.map((x) =>
+        isSafeMediaUrl(x) ? { kind: "image", url: x } : { kind: "emoji", char: x },
+      ),
       colors: [],
       physics: setting.physics ?? "float",
     };
   }
-  const base = ICON_SETS.find((s) => s.id === (setting as { id?: string } | null)?.id) ?? ICON_SETS[0]!;
+  const base =
+    ICON_SETS.find((s) => s.id === (setting as { id?: string } | null)?.id) ?? ICON_SETS[0]!;
   if (base.id === "initials") {
     return {
       ...base,
-      items: [{ kind: "text", text: initialsOf(recipient) }, P(HEART), { kind: "text", text: initialsOf(recipient) }, P(SPARKLE)],
+      items: [
+        { kind: "text", text: initialsOf(recipient) },
+        P(HEART),
+        { kind: "text", text: initialsOf(recipient) },
+        P(SPARKLE),
+      ],
       colors: giftColors,
     };
   }
@@ -242,7 +268,12 @@ export function mixHex(a: string, b: string, t: number) {
   return `#${((ch(16) << 16) | (ch(8) << 8) | ch(0)).toString(16).padStart(6, "0")}`;
 }
 
-export function iconElement(item: IconItem, color: string, size: number, font = "inherit"): HTMLElement {
+export function iconElement(
+  item: IconItem,
+  color: string,
+  size: number,
+  font = "inherit",
+): HTMLElement {
   if (item.kind === "path") {
     const span = document.createElement("span");
     span.style.cssText = `display:block;width:${size}px;height:${size}px`;

@@ -45,7 +45,13 @@ function useRope(
   useEffect(() => {
     if (!live) return;
     const a = anchor();
-    if (!pts.current.length) pts.current = Array.from({ length: LINKS }, (_, i) => ({ x: a.x + i * 3, y: a.y + i * SEG, px: a.x + i * 3, py: a.y + i * SEG }));
+    if (!pts.current.length)
+      pts.current = Array.from({ length: LINKS }, (_, i) => ({
+        x: a.x + i * 3,
+        y: a.y + i * SEG,
+        px: a.x + i * 3,
+        py: a.y + i * SEG,
+      }));
     let lastA = { x: NaN, y: NaN };
     const step = () => {
       const p = pts.current;
@@ -89,7 +95,11 @@ function useRope(
       for (const q of p) moving ||= Math.abs(q.x - q.px) + Math.abs(q.y - q.py) > 0.05;
       if (moving || grab.current) {
         lastA = a2;
-        draw(p.map((q, i) => `${i ? "L" : "M"}${q.x.toFixed(1)} ${q.y.toFixed(1)}`).join(" "), p[p.length - 1]!, a2);
+        draw(
+          p.map((q, i) => `${i ? "L" : "M"}${q.x.toFixed(1)} ${q.y.toFixed(1)}`).join(" "),
+          p[p.length - 1]!,
+          a2,
+        );
       }
       if (still) {
         // Let the rope settle for a moment, then stop: nothing moves in a paused preview.
@@ -130,7 +140,10 @@ export function ChristmasOpening(p: OpeningProps) {
     const k = knotRef.current?.getBoundingClientRect();
     const s = svgRef.current?.getBoundingClientRect();
     if (!k || !s || !s.width) return { x: 120, y: 52 };
-    return { x: ((k.left + k.width / 2 - s.left) / s.width) * VB, y: ((k.top + k.height / 2 - s.top) / s.height) * VB };
+    return {
+      x: ((k.left + k.width / 2 - s.left) / s.width) * VB,
+      y: ((k.top + k.height / 2 - s.top) / s.height) * VB,
+    };
   }
   const rope = useRope(
     () => {
@@ -143,7 +156,10 @@ export function ChristmasOpening(p: OpeningProps) {
         el?.setAttribute("cx", end.x.toFixed(1));
         el?.setAttribute("cy", end.y.toFixed(1));
       });
-      bowRef.current?.setAttribute("transform", `translate(${(a.x - 7 - 120).toFixed(1)} ${(a.y - 9 - 44).toFixed(1)})`);
+      bowRef.current?.setAttribute(
+        "transform",
+        `translate(${(a.x - 7 - 120).toFixed(1)} ${(a.y - 9 - 44).toFixed(1)})`,
+      );
     },
     !untied,
     p.paused,
@@ -162,7 +178,13 @@ export function ChristmasOpening(p: OpeningProps) {
   useEffect(() => {
     if (beat === 4) {
       const r = boxRef.current?.getBoundingClientRect();
-      if (r) burstSet(p.hostRef.current, r.left + r.width / 2, r.top + r.height * 0.45, p.iconSet, { colors: [c.gold!, "#fff", c.cranberry!], count: 28, spread: 1.8, up: true });
+      if (r)
+        burstSet(p.hostRef.current, r.left + r.width / 2, r.top + r.height * 0.45, p.iconSet, {
+          colors: [c.gold!, "#fff", c.cranberry!],
+          count: 28,
+          spread: 1.8,
+          up: true,
+        });
       melody([659, 659, 659, 0, 659, 659, 659, 0, 659, 784, 523, 587, 659], 0.16, "sine", 0.05);
       h.success();
     }
@@ -248,22 +270,41 @@ export function ChristmasOpening(p: OpeningProps) {
       folds.forEach((f) => f.jump(paperOpen ? -62 : 0));
       return;
     }
-    const timers = folds.map((f, i) => window.setTimeout(() => f.set(paperOpen ? -62 : 0), paperOpen ? i * 70 : 0));
+    const timers = folds.map((f, i) =>
+      window.setTimeout(() => f.set(paperOpen ? -62 : 0), paperOpen ? i * 70 : 0),
+    );
     return () => timers.forEach(window.clearTimeout);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [paperOpen]);
 
   return (
     <div className="relative flex w-full flex-col items-center">
-      <div className="relative z-[3] h-[clamp(60px,17cqi,100px)] text-center" style={{ color: ink }}>
+      <div
+        className="relative z-[3] h-[clamp(60px,17cqi,100px)] text-center"
+        style={{ color: ink }}
+      >
         {glow ? (
-          <motion.div initial={{ y: 26, opacity: 0, scale: 0.9 }} animate={{ y: 0, opacity: 1, scale: 1 }} transition={SPRING.wobbly}>
+          <motion.div
+            initial={{ y: 26, opacity: 0, scale: 0.9 }}
+            animate={{ y: 0, opacity: 1, scale: 1 }}
+            transition={SPRING.wobbly}
+          >
             <Greeting text={p.greeting} className="text-[clamp(2rem,11cqi,3.4rem)]" />
           </motion.div>
         ) : null}
       </div>
 
-      <Layer depth={9} className="relative mt-[min(4cqi,18px)]" style={{ width: "min(66cqi, 300px)", aspectRatio: "1", ["--s" as string]: "calc(min(66cqi, 300px) * .58)" } as React.CSSProperties}>
+      <Layer
+        depth={9}
+        className="relative mt-[min(4cqi,18px)]"
+        style={
+          {
+            width: "min(66cqi, 300px)",
+            aspectRatio: "1",
+            ["--s" as string]: "calc(min(66cqi, 300px) * .58)",
+          } as React.CSSProperties
+        }
+      >
         <div ref={boxRef} className="absolute inset-0">
           {/* Warm light from inside, and slow rays once it's open */}
           <motion.div
@@ -272,7 +313,9 @@ export function ChristmasOpening(p: OpeningProps) {
             initial={false}
             animate={{ opacity: paperOpen ? 1 : 0, scale: glow ? 1.15 : 0.9 }}
             transition={SPRING.soft}
-            style={{ background: `radial-gradient(closest-side, #FFF2C2, ${c.gold}88 40%, transparent 75%)` }}
+            style={{
+              background: `radial-gradient(closest-side, #FFF2C2, ${c.gold}88 40%, transparent 75%)`,
+            }}
           />
           <motion.div
             aria-hidden="true"
@@ -287,17 +330,41 @@ export function ChristmasOpening(p: OpeningProps) {
             }}
           />
 
-          <Object3D pose={{ x: -19, y: -27 }} strength={13} perspective={1250} className="absolute top-[34%] left-[21%] aspect-square w-[58%]">
+          <Object3D
+            pose={{ x: -19, y: -27 }}
+            strength={13}
+            perspective={1250}
+            className="absolute top-[34%] left-[21%] aspect-square w-[58%]"
+          >
             {/* Shadow on the floor, away from the light */}
             <span
               aria-hidden="true"
               className="pointer-events-none absolute inset-[-14%] block rounded-[16%]"
-              style={{ transform: "rotateX(90deg) translateZ(calc(var(--s) / -2 - 1px)) translate(12%, -10%)", background: "rgba(0,0,0,.42)", filter: "blur(14px)" }}
+              style={{
+                transform:
+                  "rotateX(90deg) translateZ(calc(var(--s) / -2 - 1px)) translate(12%, -10%)",
+                background: "rgba(0,0,0,.42)",
+                filter: "blur(14px)",
+              }}
             />
             {/* The floor of the box, inside */}
-            <span aria-hidden="true" className="pointer-events-none absolute inset-0 block overflow-hidden" style={{ transform: "rotateX(90deg) translateZ(calc(var(--s) / -2))", background: "#F2E6D3" }}>
+            <span
+              aria-hidden="true"
+              className="pointer-events-none absolute inset-0 block overflow-hidden"
+              style={{
+                transform: "rotateX(90deg) translateZ(calc(var(--s) / -2))",
+                background: "#F2E6D3",
+              }}
+            >
               <Texture material="card" />
-              <motion.span className="absolute inset-0 block" initial={false} animate={{ opacity: paperOpen ? 1 : 0 }} style={{ background: `radial-gradient(closest-side, #FFF6D8, ${c.gold}66 60%, transparent)` }} />
+              <motion.span
+                className="absolute inset-0 block"
+                initial={false}
+                animate={{ opacity: paperOpen ? 1 : 0 }}
+                style={{
+                  background: `radial-gradient(closest-side, #FFF6D8, ${c.gold}66 60%, transparent)`,
+                }}
+              />
             </span>
             {/* Light standing up out of the box */}
             <motion.span
@@ -306,22 +373,51 @@ export function ChristmasOpening(p: OpeningProps) {
               initial={false}
               animate={{ opacity: paperOpen ? 0.9 : 0 }}
               transition={{ duration: 0.6 }}
-              style={{ background: "radial-gradient(closest-side, rgba(255,246,214,.95), rgba(255,226,150,.4) 50%, transparent)" }}
+              style={{
+                background:
+                  "radial-gradient(closest-side, rgba(255,246,214,.95), rgba(255,226,150,.4) 50%, transparent)",
+              }}
             />
 
             {/* Four sides: front, right, back, left. Each falls open around its bottom edge. */}
             {[0, 90, 180, -90].map((turn, i) => (
-              <Side key={turn} turn={turn} fold={folds[i]!} pattern={pattern} ribbon={ribbon} bandsOff={bandsOff} />
+              <Side
+                key={turn}
+                turn={turn}
+                fold={folds[i]!}
+                pattern={pattern}
+                ribbon={ribbon}
+                bandsOff={bandsOff}
+              />
             ))}
 
             {/* The lid sits over the top */}
-            <Lid off={lidOff} pattern={pattern} ribbon={ribbon} bandsOff={bandsOff} knotRef={knotRef} reduced={p.reduced} />
+            <Lid
+              off={lidOff}
+              pattern={pattern}
+              ribbon={ribbon}
+              bandsOff={bandsOff}
+              knotRef={knotRef}
+              reduced={p.reduced}
+            />
           </Object3D>
 
           {/* Bow + the pullable ribbon end (a rope), drawn flat over the box */}
-          <svg ref={svgRef} viewBox={`0 0 ${VB} ${VB}`} className="absolute inset-0 z-[7] size-full overflow-visible" aria-hidden={untied}>
+          <svg
+            ref={svgRef}
+            viewBox={`0 0 ${VB} ${VB}`}
+            className="absolute inset-0 z-[7] size-full overflow-visible"
+            aria-hidden={untied}
+          >
             <g ref={bowRef}>
-              <motion.g initial={false} animate={bandsOff ? { scale: 0.2, opacity: 0, y: -40 } : { scale: 1, opacity: 1, y: 0 }} transition={SPRING.snappy} style={{ originX: "120px", originY: "44px" }}>
+              <motion.g
+                initial={false}
+                animate={
+                  bandsOff ? { scale: 0.2, opacity: 0, y: -40 } : { scale: 1, opacity: 1, y: 0 }
+                }
+                transition={SPRING.snappy}
+                style={{ originX: "120px", originY: "44px" }}
+              >
                 <defs>
                   <linearGradient id={`bow${uid}`} x1="0" y1="0" x2="0.4" y2="1">
                     <stop offset="0" stopColor="#FBE7AE" />
@@ -334,19 +430,64 @@ export function ChristmasOpening(p: OpeningProps) {
                     <stop offset="1" stopColor="#7E5D1C" />
                   </radialGradient>
                 </defs>
-                <path d="M120 44c-18-30-58-30-52-6 4 14 30 12 52 6zM120 44c18-30 58-30 52-6-4 14-30 12-52 6z" fill="rgba(0,0,0,.22)" transform="translate(2.5 4)" />
-                <path d="M120 44c-18-30-58-30-52-6 4 14 30 12 52 6zM120 44c18-30 58-30 52-6-4 14-30 12-52 6z" fill={`url(#bow${uid})`} />
-                <path d="M78 30c6-6 18-6 26 2M162 30c-6-6-18-6-26 2" fill="none" stroke="#FFF4CF" strokeOpacity=".7" strokeWidth="2" strokeLinecap="round" />
-                <path d="M120 44c-18-30-58-30-52-6 4 14 30 12 52 6zM120 44c18-30 58-30 52-6-4 14-30 12-52 6z" fill="none" stroke="#9C7426" strokeWidth="1.5" />
-                <path d="M120 44c-6 12-16 26-26 34M120 44c6 14 10 20 12 14" stroke="#9C7426" strokeWidth="2" fill="none" />
+                <path
+                  d="M120 44c-18-30-58-30-52-6 4 14 30 12 52 6zM120 44c18-30 58-30 52-6-4 14-30 12-52 6z"
+                  fill="rgba(0,0,0,.22)"
+                  transform="translate(2.5 4)"
+                />
+                <path
+                  d="M120 44c-18-30-58-30-52-6 4 14 30 12 52 6zM120 44c18-30 58-30 52-6-4 14-30 12-52 6z"
+                  fill={`url(#bow${uid})`}
+                />
+                <path
+                  d="M78 30c6-6 18-6 26 2M162 30c-6-6-18-6-26 2"
+                  fill="none"
+                  stroke="#FFF4CF"
+                  strokeOpacity=".7"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                />
+                <path
+                  d="M120 44c-18-30-58-30-52-6 4 14 30 12 52 6zM120 44c18-30 58-30 52-6-4 14-30 12-52 6z"
+                  fill="none"
+                  stroke="#9C7426"
+                  strokeWidth="1.5"
+                />
+                <path
+                  d="M120 44c-6 12-16 26-26 34M120 44c6 14 10 20 12 14"
+                  stroke="#9C7426"
+                  strokeWidth="2"
+                  fill="none"
+                />
                 <circle cx="120" cy="44" r="9" fill={`url(#knot${uid})`} />
               </motion.g>
             </g>
             {!untied ? (
               <>
-                <path ref={(el) => void (ropeRefs.current[0] = el)} stroke="rgba(0,0,0,.16)" strokeWidth="12" strokeLinecap="round" fill="none" transform="translate(3 5)" />
-                <path ref={(el) => void (ropeRefs.current[1] = el)} stroke={ribbon} strokeWidth="9" strokeLinecap="round" fill="none" />
-                <path ref={(el) => void (ropeRefs.current[2] = el)} stroke="#F4D98F" strokeWidth="3" strokeLinecap="round" fill="none" opacity=".6" transform="translate(-1 -1.2)" />
+                <path
+                  ref={(el) => void (ropeRefs.current[0] = el)}
+                  stroke="rgba(0,0,0,.16)"
+                  strokeWidth="12"
+                  strokeLinecap="round"
+                  fill="none"
+                  transform="translate(3 5)"
+                />
+                <path
+                  ref={(el) => void (ropeRefs.current[1] = el)}
+                  stroke={ribbon}
+                  strokeWidth="9"
+                  strokeLinecap="round"
+                  fill="none"
+                />
+                <path
+                  ref={(el) => void (ropeRefs.current[2] = el)}
+                  stroke="#F4D98F"
+                  strokeWidth="3"
+                  strokeLinecap="round"
+                  fill="none"
+                  opacity=".6"
+                  transform="translate(-1 -1.2)"
+                />
                 <circle
                   ref={(el) => void (endRefs.current[0] = el)}
                   r="22"
@@ -363,18 +504,39 @@ export function ChristmasOpening(p: OpeningProps) {
                     }
                   }}
                 />
-                {p.interactive && !p.paused ? <circle ref={(el) => void (endRefs.current[1] = el)} r="12" fill="none" stroke="#fff" strokeWidth="2" className="jb-ring-svg" /> : null}
+                {p.interactive && !p.paused ? (
+                  <circle
+                    ref={(el) => void (endRefs.current[1] = el)}
+                    r="12"
+                    fill="none"
+                    stroke="#fff"
+                    strokeWidth="2"
+                    className="jb-ring-svg"
+                  />
+                ) : null}
               </>
             ) : null}
           </svg>
         </div>
         <div className="absolute -right-[22%] bottom-[-4%] z-[8]">
-          <Character ref={cast} setting={p.character} accessory={p.accessory} size={86} live={!p.paused} showName={false} />
+          <Character
+            ref={cast}
+            setting={p.character}
+            accessory={p.accessory}
+            size={86}
+            live={!p.paused}
+            showName={false}
+          />
         </div>
       </Layer>
 
       <div className="mt-[min(10cqi,45px)] h-11">
-        <FallbackButton onClick={untie} color={ink} ink={ink} hidden={untied || !p.interactive || p.paused}>
+        <FallbackButton
+          onClick={untie}
+          color={ink}
+          ink={ink}
+          hidden={untied || !p.interactive || p.paused}
+        >
           {p.buttonText}
         </FallbackButton>
       </div>
@@ -384,7 +546,8 @@ export function ChristmasOpening(p: OpeningProps) {
 
 const HALF = "calc(var(--s) / 2)";
 const NEG_HALF = "calc(var(--s) / -2)";
-const BAND = (ribbon: string, dir: "90deg" | "180deg") => `linear-gradient(${dir}, #B98A2E, ${ribbon} 22%, #F4D98F 50%, ${ribbon} 78%, #B98A2E)`;
+const BAND = (ribbon: string, dir: "90deg" | "180deg") =>
+  `linear-gradient(${dir}, #B98A2E, ${ribbon} 22%, #F4D98F 50%, ${ribbon} 78%, #B98A2E)`;
 
 /** World normal of a side before it falls: front faces the viewer. */
 function sideNormal(turn: number): [number, number, number] {
@@ -393,25 +556,70 @@ function sideNormal(turn: number): [number, number, number] {
 }
 
 /** One side of the box: wrapping paper outside, plain card inside. */
-function Side({ turn, fold, pattern, ribbon, bandsOff }: { turn: number; fold: MotionValue<number>; pattern: string; ribbon: string; bandsOff: boolean }) {
-  const transform = useTransform(fold, (f) => `rotateY(${turn}deg) translateZ(${HALF}) translateY(${HALF}) rotateX(${f.toFixed(2)}deg) translateY(${NEG_HALF})`);
+function Side({
+  turn,
+  fold,
+  pattern,
+  ribbon,
+  bandsOff,
+}: {
+  turn: number;
+  fold: MotionValue<number>;
+  pattern: string;
+  ribbon: string;
+  bandsOff: boolean;
+}) {
+  const transform = useTransform(
+    fold,
+    (f) =>
+      `rotateY(${turn}deg) translateZ(${HALF}) translateY(${HALF}) rotateX(${f.toFixed(2)}deg) translateY(${NEG_HALF})`,
+  );
   return (
     <motion.div className="absolute inset-0" style={{ transform, transformStyle: "preserve-3d" }}>
       {/* Outside */}
-      <span className="absolute inset-0 block overflow-hidden" style={{ background: pattern, backfaceVisibility: "hidden", boxShadow: "inset 0 -14px 24px -16px rgba(0,0,0,.35)" }}>
+      <span
+        className="absolute inset-0 block overflow-hidden"
+        style={{
+          background: pattern,
+          backfaceVisibility: "hidden",
+          boxShadow: "inset 0 -14px 24px -16px rgba(0,0,0,.35)",
+        }}
+      >
         <Texture material="paper" opacity={0.35} />
         {/* Ribbon: across the middle, and down the middle on the front and back */}
-        <motion.span className="absolute inset-x-0 top-1/2 block h-[13%] -translate-y-1/2" style={{ background: BAND(ribbon, "180deg"), boxShadow: "0 2px 3px rgba(0,0,0,.25)" }} initial={false} animate={bandsOff ? { scaleX: 0, opacity: 0 } : { scaleX: 1, opacity: 1 }} transition={SPRING.snappy} />
+        <motion.span
+          className="absolute inset-x-0 top-1/2 block h-[13%] -translate-y-1/2"
+          style={{ background: BAND(ribbon, "180deg"), boxShadow: "0 2px 3px rgba(0,0,0,.25)" }}
+          initial={false}
+          animate={bandsOff ? { scaleX: 0, opacity: 0 } : { scaleX: 1, opacity: 1 }}
+          transition={SPRING.snappy}
+        />
         {turn === 0 || turn === 180 ? (
-          <motion.span className="absolute inset-y-0 left-1/2 block w-[13%] -translate-x-1/2" style={{ background: BAND(ribbon, "90deg"), boxShadow: "2px 0 3px rgba(0,0,0,.2)" }} initial={false} animate={bandsOff ? { scaleY: 0, opacity: 0 } : { scaleY: 1, opacity: 1 }} transition={SPRING.snappy} />
+          <motion.span
+            className="absolute inset-y-0 left-1/2 block w-[13%] -translate-x-1/2"
+            style={{ background: BAND(ribbon, "90deg"), boxShadow: "2px 0 3px rgba(0,0,0,.2)" }}
+            initial={false}
+            animate={bandsOff ? { scaleY: 0, opacity: 0 } : { scaleY: 1, opacity: 1 }}
+            transition={SPRING.snappy}
+          />
         ) : null}
         <Sheen strength={0.55} angle={105} width={20} travel={45} />
         <FaceLight normal={sideNormal(turn)} max={0.6} ambient={0.32} />
       </span>
       {/* Inside */}
-      <span className="absolute inset-0 block overflow-hidden" style={{ background: "#F4EBDD", backfaceVisibility: "hidden", transform: "rotateY(180deg)" }}>
+      <span
+        className="absolute inset-0 block overflow-hidden"
+        style={{
+          background: "#F4EBDD",
+          backfaceVisibility: "hidden",
+          transform: "rotateY(180deg)",
+        }}
+      >
         <Texture material="card" />
-        <span className="absolute inset-0 block" style={{ background: "linear-gradient(0deg, rgba(120,80,30,.18), transparent 60%)" }} />
+        <span
+          className="absolute inset-0 block"
+          style={{ background: "linear-gradient(0deg, rgba(120,80,30,.18), transparent 60%)" }}
+        />
         <FaceLight normal={[0, -1, 0]} max={0.4} ambient={0.5} />
       </span>
     </motion.div>
@@ -439,25 +647,47 @@ function Lid({
   const W = 1.08;
   const top = `translateY(calc(var(--s) * ${-0.5 - lh * 0.3}))`;
   const sideY = `translateY(calc(var(--s) * ${-0.5 + lh * 0.2}))`;
-  const fade = { opacity: off ? 0 : 1, transition: { delay: off && !reduced ? 0.35 : 0, duration: 0.3 } };
+  const fade = {
+    opacity: off ? 0 : 1,
+    transition: { delay: off && !reduced ? 0.35 : 0, duration: 0.3 },
+  };
   return (
     <motion.div
       className="absolute inset-0"
       style={{ transformStyle: "preserve-3d" }}
       initial={false}
-      animate={off ? { y: -190, x: 46, rotateZ: 24, rotateX: -24 } : { y: 0, x: 0, rotateZ: 0, rotateX: 0 }}
+      animate={
+        off ? { y: -190, x: 46, rotateZ: 24, rotateX: -24 } : { y: 0, x: 0, rotateZ: 0, rotateX: 0 }
+      }
       transition={SPRING.heavy}
     >
       {/* Top */}
       <motion.span
         className="absolute block overflow-hidden"
-        style={{ inset: `${((1 - W) / 2) * 100}%`, transform: `${top} rotateX(90deg)`, background: pattern, boxShadow: "inset 0 0 0 1px rgba(255,255,255,.12)" }}
+        style={{
+          inset: `${((1 - W) / 2) * 100}%`,
+          transform: `${top} rotateX(90deg)`,
+          background: pattern,
+          boxShadow: "inset 0 0 0 1px rgba(255,255,255,.12)",
+        }}
         initial={false}
         animate={fade}
       >
         <Texture material="paper" opacity={0.35} />
-        <motion.span className="absolute inset-x-0 top-1/2 block h-[12%] -translate-y-1/2" style={{ background: BAND(ribbon, "180deg") }} initial={false} animate={bandsOff ? { scaleX: 0, opacity: 0 } : { scaleX: 1, opacity: 1 }} transition={SPRING.snappy} />
-        <motion.span className="absolute inset-y-0 left-1/2 block w-[12%] -translate-x-1/2" style={{ background: BAND(ribbon, "90deg") }} initial={false} animate={bandsOff ? { scaleY: 0, opacity: 0 } : { scaleY: 1, opacity: 1 }} transition={SPRING.snappy} />
+        <motion.span
+          className="absolute inset-x-0 top-1/2 block h-[12%] -translate-y-1/2"
+          style={{ background: BAND(ribbon, "180deg") }}
+          initial={false}
+          animate={bandsOff ? { scaleX: 0, opacity: 0 } : { scaleX: 1, opacity: 1 }}
+          transition={SPRING.snappy}
+        />
+        <motion.span
+          className="absolute inset-y-0 left-1/2 block w-[12%] -translate-x-1/2"
+          style={{ background: BAND(ribbon, "90deg") }}
+          initial={false}
+          animate={bandsOff ? { scaleY: 0, opacity: 0 } : { scaleY: 1, opacity: 1 }}
+          transition={SPRING.snappy}
+        />
         {/* The knot sits in the middle: the bow and the rope follow it */}
         <span ref={knotRef} className="absolute top-1/2 left-1/2 block size-px" />
         <Sheen strength={0.7} angle={120} width={18} travel={40} />
@@ -481,7 +711,13 @@ function Lid({
           initial={false}
           animate={fade}
         >
-          <motion.span className="absolute inset-y-0 left-1/2 block w-[12%] -translate-x-1/2" style={{ background: BAND(ribbon, "90deg") }} initial={false} animate={bandsOff ? { scaleY: 0, opacity: 0 } : { scaleY: 1, opacity: 1 }} transition={SPRING.snappy} />
+          <motion.span
+            className="absolute inset-y-0 left-1/2 block w-[12%] -translate-x-1/2"
+            style={{ background: BAND(ribbon, "90deg") }}
+            initial={false}
+            animate={bandsOff ? { scaleY: 0, opacity: 0 } : { scaleY: 1, opacity: 1 }}
+            transition={SPRING.snappy}
+          />
           <FaceLight normal={sideNormal(turn)} max={0.6} ambient={0.32} />
         </motion.span>
       ))}

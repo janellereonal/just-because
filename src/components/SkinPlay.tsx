@@ -104,7 +104,12 @@ export function useSkinPlay(
         }, 2600);
         caught.current += 1;
         const n = caught.current;
-        if (icons) burstSet(root, e.clientX, e.clientY, icons, { colors, count: reduce ? 3 : 10, spread: 0.6 });
+        if (icons)
+          burstSet(root, e.clientX, e.clientY, icons, {
+            colors,
+            count: reduce ? 3 : 10,
+            spread: 0.6,
+          });
         else
           burst(root, e.clientX, e.clientY, {
             shape: KIND_BURST[kind],
@@ -133,7 +138,8 @@ export function useSkinPlay(
           { duration: 700, easing: "cubic-bezier(.3,1.5,.5,1)" },
         );
         if (icons) burstSet(root, e.clientX, e.clientY, icons, { colors, count: 6, spread: 0.4 });
-        else burst(root, e.clientX, e.clientY, { shape: "sparkles", colors, count: 6, spread: 0.4 });
+        else
+          burst(root, e.clientX, e.clientY, { shape: "sparkles", colors, count: 6, spread: 0.4 });
         chime("chime");
         buzz(6);
       }
@@ -234,7 +240,11 @@ export function WishCandles({
       const y = r.top - 120;
       if (icons) {
         burstSet(hostRef.current, x, y, icons, { colors, count: 34, spread: 2 });
-        window.setTimeout(() => burstSet(hostRef.current, x, y, icons, { colors, count: 16, spread: 1.4, up: true }), 200);
+        window.setTimeout(
+          () =>
+            burstSet(hostRef.current, x, y, icons, { colors, count: 16, spread: 1.4, up: true }),
+          200,
+        );
       } else {
         burst(hostRef.current, x, y, { shape: "confetti", colors, count: 40, spread: 2 });
         window.setTimeout(

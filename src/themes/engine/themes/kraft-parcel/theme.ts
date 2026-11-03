@@ -18,10 +18,24 @@ export default defineTheme({
   effects: ["sparks"],
   sound: "cardboard",
   slots: ["recipient", "place", "senderPlace", "monogram", "date"],
-  palette: { background: "#EFE6D8", ink: "#3B2A1E", surface: "#C89B65", accent: "#B5623E", accent2: "#2F5D50" },
+  palette: {
+    background: "#EFE6D8",
+    ink: "#3B2A1E",
+    surface: "#C89B65",
+    accent: "#B5623E",
+    accent2: "#2F5D50",
+  },
   fonts: {
-    display: { family: '"Fraunces", Georgia, serif', source: "google", query: "Fraunces:opsz,wght@9..144,500;9..144,700" },
-    text: { family: '"DM Sans", system-ui, sans-serif', source: "google", query: "DM+Sans:wght@400;500;700" },
+    display: {
+      family: '"Fraunces", Georgia, serif',
+      source: "google",
+      query: "Fraunces:opsz,wght@9..144,500;9..144,700",
+    },
+    text: {
+      family: '"DM Sans", system-ui, sans-serif',
+      source: "google",
+      query: "DM+Sans:wght@400;500;700",
+    },
   },
   categories: ["Family", "Just because"],
   regions: { available: ["global"] },

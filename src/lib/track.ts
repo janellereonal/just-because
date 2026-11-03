@@ -19,9 +19,18 @@ type ClientEvent =
   | "theme_shared";
 
 /** Sent at most once per gift per tab session. */
-const ONCE = new Set<ClientEvent>(["friend_page_viewed", "gift_opened", "theme_opening_started", "theme_opening_completed"]);
+const ONCE = new Set<ClientEvent>([
+  "friend_page_viewed",
+  "gift_opened",
+  "theme_opening_started",
+  "theme_opening_completed",
+]);
 
-export function trackEvent(name: ClientEvent, siteId: string, props?: Record<string, string | boolean>) {
+export function trackEvent(
+  name: ClientEvent,
+  siteId: string,
+  props?: Record<string, string | boolean>,
+) {
   if (typeof window === "undefined") return;
   if (ONCE.has(name)) {
     const key = `jb:ev:${name}:${siteId}`;
@@ -32,7 +41,9 @@ export function trackEvent(name: ClientEvent, siteId: string, props?: Record<str
       /* private mode: send it anyway */
     }
   }
-  void trackClientEvent({ data: { name, siteId, ...(props ? { props } : {}) } }).catch(() => undefined);
+  void trackClientEvent({ data: { name, siteId, ...(props ? { props } : {}) } }).catch(
+    () => undefined,
+  );
   captureEvent(name, { site_id: siteId, ...props });
 }
 

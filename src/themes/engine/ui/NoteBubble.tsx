@@ -68,14 +68,26 @@ export function NoteBubble({
             >
               <X className="size-4" />
             </button>
-            {title ? <p className="mb-1.5 text-[10px] font-semibold tracking-[0.2em] uppercase opacity-60">{title}</p> : null}
-            {note.media && /\.(webp|jpe?g|png|gif|avif)(\?|$)|blob\.vercel|dev-uploads/i.test(note.media) ? (
-              <img src={note.media} alt={t("slot.photo.alt", { name: note.author })} className="mb-3 aspect-[4/3] w-full rounded-[3px] object-cover" />
+            {title ? (
+              <p className="mb-1.5 text-[10px] font-semibold tracking-[0.2em] uppercase opacity-60">
+                {title}
+              </p>
+            ) : null}
+            {note.media &&
+            /\.(webp|jpe?g|png|gif|avif)(\?|$)|blob\.vercel|dev-uploads/i.test(note.media) ? (
+              <img
+                src={note.media}
+                alt={t("slot.photo.alt", { name: note.author })}
+                className="mb-3 aspect-[4/3] w-full rounded-[3px] object-cover"
+              />
             ) : null}
             {note.text ? (
               <p
                 className="max-h-[11.5em] overflow-hidden text-[15px] leading-relaxed whitespace-pre-line [overflow-wrap:anywhere]"
-                style={{ fontFamily: font, maskImage: "linear-gradient(180deg,#000 80%,transparent)" }}
+                style={{
+                  fontFamily: font,
+                  maskImage: "linear-gradient(180deg,#000 80%,transparent)",
+                }}
               >
                 {note.text}
               </p>

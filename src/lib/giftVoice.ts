@@ -8,7 +8,8 @@ export function giftVoice(solo: boolean | undefined) {
         solo: true,
         sample: "Sample, replaced when you add your own",
         empty: (what: string) => `Your notes will show up here as ${what}.`,
-        intro: (name: string) => `I made this just for you${name ? `, ${name}` : ""}. Take your time.`,
+        intro: (name: string) =>
+          `I made this just for you${name ? `, ${name}` : ""}. Take your time.`,
         signoff: "With love, always",
       }
     : {

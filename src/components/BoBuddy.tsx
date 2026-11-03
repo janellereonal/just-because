@@ -9,7 +9,11 @@ import type { MascotController, MascotOptions } from "@/lib/mascot/controller";
  * with data-bo-perch as you scroll. Decorative only: hidden from screen readers
  * and never in the way of clicks.
  */
-export function BoBuddy({ followFocus = false, celebrate = false, intro = true }: MascotOptions = {}) {
+export function BoBuddy({
+  followFocus = false,
+  celebrate = false,
+  intro = true,
+}: MascotOptions = {}) {
   const wrapRef = useRef<HTMLDivElement | null>(null);
   const layerRef = useRef<HTMLDivElement | null>(null);
   const ctrlRef = useRef<MascotController | null>(null);
@@ -28,7 +32,8 @@ export function BoBuddy({ followFocus = false, celebrate = false, intro = true }
       if (!alive) return;
       ctrlRef.current = new MascotController(wrap, layer, { followFocus, celebrate, intro });
       ctrlRef.current.setScene(sceneRef.current);
-      if (import.meta.env.DEV) (window as unknown as { __bo?: MascotController }).__bo = ctrlRef.current;
+      if (import.meta.env.DEV)
+        (window as unknown as { __bo?: MascotController }).__bo = ctrlRef.current;
     });
     return () => {
       alive = false;
@@ -41,8 +46,15 @@ export function BoBuddy({ followFocus = false, celebrate = false, intro = true }
 
   if (!mounted) return null;
   return createPortal(
-    <div ref={layerRef} aria-hidden="true" className="pointer-events-none absolute top-0 left-0 z-30 h-0 w-0">
-      <div ref={wrapRef} className="absolute top-0 left-0 h-[124px] w-[112px] opacity-0 will-change-transform max-sm:h-[78px] max-sm:w-[70px]">
+    <div
+      ref={layerRef}
+      aria-hidden="true"
+      className="pointer-events-none absolute top-0 left-0 z-30 h-0 w-0"
+    >
+      <div
+        ref={wrapRef}
+        className="absolute top-0 left-0 h-[124px] w-[112px] opacity-0 will-change-transform max-sm:h-[78px] max-sm:w-[70px]"
+      >
         <Bo3D
           className="absolute inset-0"
           framing="buddy"

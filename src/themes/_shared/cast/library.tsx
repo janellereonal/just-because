@@ -80,7 +80,15 @@ const fluffy = (c: Colors, ears: "long" | "fox", face: string) => (
     )}
     {Array.from({ length: 14 }, (_, i) => {
       const a = (i / 14) * Math.PI * 2;
-      return <circle key={i} cx={60 + Math.cos(a) * 33} cy={70 + Math.sin(a) * 31} r="11" fill={c.primary} />;
+      return (
+        <circle
+          key={i}
+          cx={60 + Math.cos(a) * 33}
+          cy={70 + Math.sin(a) * 31}
+          r="11"
+          fill={c.primary}
+        />
+      );
     })}
     <ellipse cx="60" cy="72" rx="34" ry="34" fill={c.primary} />
     <ellipse cx="60" cy="78" rx="22" ry="18" fill={face} />
@@ -112,7 +120,10 @@ export const CHARACTERS: CharacterSpec[] = [
         <rect x="55" y="48" width="10" height="60" fill={c.secondary} />
         <rect x="17" y="36" width="86" height="19" rx="8" fill={c.secondary} />
         <rect x="17" y="36" width="86" height="7" rx="3.5" fill="#fff" opacity=".25" />
-        <path d="M60 36c-6-14-24-16-22-5 1 6 13 6 22 5zM60 36c6-14 24-16 22-5-1 6-13 6-22 5z" fill={c.secondary} />
+        <path
+          d="M60 36c-6-14-24-16-22-5 1 6 13 6 22 5zM60 36c6-14 24-16 22-5-1 6-13 6-22 5z"
+          fill={c.secondary}
+        />
         <circle cx="60" cy="35" r="4.5" fill={shade(c.secondary, -25)} />
         <ellipse cx="44" cy="109" rx="7" ry="4" fill={shade(c.secondary, -20)} />
         <ellipse cx="76" cy="109" rx="7" ry="4" fill={shade(c.secondary, -20)} />
@@ -135,7 +146,13 @@ export const CHARACTERS: CharacterSpec[] = [
         {/* Tail, wagging behind */}
         <g className="jb-wag" style={{ transformOrigin: "82px 96px" }}>
           <path d="M80 98c10-2 18-10 20-22 1-5 6-4 6 1-1 15-11 26-24 27z" fill={c.primary} />
-          <path d="M101 76c1-4 5-4 5 1" stroke={shade(c.primary, 30)} strokeWidth="3" strokeLinecap="round" fill="none" />
+          <path
+            d="M101 76c1-4 5-4 5 1"
+            stroke={shade(c.primary, 30)}
+            strokeWidth="3"
+            strokeLinecap="round"
+            fill="none"
+          />
         </g>
         {/* Body, sitting */}
         <ellipse cx="60" cy="95" rx="26" ry="19" fill={c.primary} />
@@ -144,18 +161,57 @@ export const CHARACTERS: CharacterSpec[] = [
         {/* Front paws */}
         <ellipse cx="49" cy="110" rx="8.5" ry="5.5" fill={c.skin} />
         <ellipse cx="71" cy="110" rx="8.5" ry="5.5" fill={c.skin} />
-        <path d="M46 109v3M49 109v3.5M52 109v3M68 109v3M71 109v3.5M74 109v3" stroke={shade(c.primary, -45)} strokeWidth="1.2" strokeLinecap="round" opacity=".5" />
+        <path
+          d="M46 109v3M49 109v3.5M52 109v3M68 109v3M71 109v3.5M74 109v3"
+          stroke={shade(c.primary, -45)}
+          strokeWidth="1.2"
+          strokeLinecap="round"
+          opacity=".5"
+        />
         {/* Head */}
-        <path d="M26 52c0-22 15-34 34-34s34 12 34 34c0 20-15 32-34 32S26 72 26 52z" fill={c.primary} />
+        <path
+          d="M26 52c0-22 15-34 34-34s34 12 34 34c0 20-15 32-34 32S26 72 26 52z"
+          fill={c.primary}
+        />
         <ellipse cx="74" cy="48" rx="11" ry="10" fill={shade(c.primary, -22)} opacity=".55" />
         {/* Floppy ears */}
-        <path d="M30 30c-10 2-17 14-16 30 1 10 7 16 13 13 6-3 7-14 8-24 1-9-1-17-5-19z" fill={c.secondary} />
-        <path d="M90 30c10 2 17 14 16 30-1 10-7 16-13 13-6-3-7-14-8-24-1-9 1-17 5-19z" fill={c.secondary} />
-        <path d="M27 40c-5 5-7 14-6 22" stroke={shade(c.secondary, 30)} strokeWidth="2" strokeLinecap="round" fill="none" opacity=".5" />
-        <path d="M93 40c5 5 7 14 6 22" stroke={shade(c.secondary, 30)} strokeWidth="2" strokeLinecap="round" fill="none" opacity=".5" />
-        <path d="M26 52c0-22 15-34 34-34s34 12 34 34c0 20-15 32-34 32S26 72 26 52z" fill="url(#jb-sheen)" />
+        <path
+          d="M30 30c-10 2-17 14-16 30 1 10 7 16 13 13 6-3 7-14 8-24 1-9-1-17-5-19z"
+          fill={c.secondary}
+        />
+        <path
+          d="M90 30c10 2 17 14 16 30-1 10-7 16-13 13-6-3-7-14-8-24-1-9 1-17 5-19z"
+          fill={c.secondary}
+        />
+        <path
+          d="M27 40c-5 5-7 14-6 22"
+          stroke={shade(c.secondary, 30)}
+          strokeWidth="2"
+          strokeLinecap="round"
+          fill="none"
+          opacity=".5"
+        />
+        <path
+          d="M93 40c5 5 7 14 6 22"
+          stroke={shade(c.secondary, 30)}
+          strokeWidth="2"
+          strokeLinecap="round"
+          fill="none"
+          opacity=".5"
+        />
+        <path
+          d="M26 52c0-22 15-34 34-34s34 12 34 34c0 20-15 32-34 32S26 72 26 52z"
+          fill="url(#jb-sheen)"
+        />
         {/* Brows */}
-        <path d="M42 40q4-3 8 0M70 40q4-3 8 0" stroke={shade(c.primary, -55)} strokeWidth="1.8" strokeLinecap="round" fill="none" opacity=".55" />
+        <path
+          d="M42 40q4-3 8 0M70 40q4-3 8 0"
+          stroke={shade(c.primary, -55)}
+          strokeWidth="1.8"
+          strokeLinecap="round"
+          fill="none"
+          opacity=".55"
+        />
         {/* Muzzle and nose */}
         <ellipse cx="60" cy="67" rx="16" ry="11.5" fill={c.skin} />
         <path d="M54 61c0-3 3-4 6-4s6 1 6 4-3 5-6 5-6-2-6-5z" fill="#2B2522" />
@@ -168,7 +224,13 @@ export const CHARACTERS: CharacterSpec[] = [
     cheeks: { l: [38, 64], r: [82, 64] },
     head: { x: 60, y: 22, w: 62 },
     neck: { x: 60, y: 82, w: 48 },
-    clay: { eyes: { l: [47, 66], r: [73, 66], size: 4 }, mouth: [60, 87], cheeks: { l: [37, 76], r: [83, 76] }, head: { x: 60, y: 36, w: 50 }, neck: { x: 60, y: 94, w: 50 } },
+    clay: {
+      eyes: { l: [47, 66], r: [73, 66], size: 4 },
+      mouth: [60, 87],
+      cheeks: { l: [37, 76], r: [83, 76] },
+      head: { x: 60, y: 36, w: 50 },
+      neck: { x: 60, y: 94, w: 50 },
+    },
   },
   {
     id: "tzu-mal",
@@ -181,7 +243,13 @@ export const CHARACTERS: CharacterSpec[] = [
     cheeks: { l: [39, 80], r: [81, 80] },
     head: { x: 60, y: 24, w: 36 },
     neck: { x: 60, y: 100, w: 52 },
-    clay: { eyes: { l: [48, 70], r: [72, 70], size: 4.4 }, mouth: [60, 89], cheeks: { l: [39, 80], r: [81, 80] }, head: { x: 60, y: 24, w: 36 }, neck: { x: 60, y: 100, w: 52 } },
+    clay: {
+      eyes: { l: [48, 70], r: [72, 70], size: 4.4 },
+      mouth: [60, 89],
+      cheeks: { l: [39, 80], r: [81, 80] },
+      head: { x: 60, y: 24, w: 36 },
+      neck: { x: 60, y: 100, w: 52 },
+    },
   },
   {
     id: "tzu-pom",
@@ -194,7 +262,13 @@ export const CHARACTERS: CharacterSpec[] = [
     cheeks: { l: [39, 78], r: [81, 78] },
     head: { x: 60, y: 34, w: 50 },
     neck: { x: 60, y: 100, w: 54 },
-    clay: { eyes: { l: [48, 68], r: [72, 68], size: 4.2 }, mouth: [60, 87], cheeks: { l: [39, 78], r: [81, 78] }, head: { x: 60, y: 34, w: 50 }, neck: { x: 60, y: 100, w: 54 } },
+    clay: {
+      eyes: { l: [48, 68], r: [72, 68], size: 4.2 },
+      mouth: [60, 87],
+      cheeks: { l: [39, 78], r: [81, 78] },
+      head: { x: 60, y: 34, w: 50 },
+      neck: { x: 60, y: 100, w: 54 },
+    },
   },
   {
     id: "cat",
@@ -206,8 +280,21 @@ export const CHARACTERS: CharacterSpec[] = [
         {floor}
         {/* Tail curling up */}
         <g className="jb-wag" style={{ transformOrigin: "80px 104px" }}>
-          <path d="M78 106c14 2 24-4 26-16 2-10-4-18-10-16" stroke={c.primary} strokeWidth="9" strokeLinecap="round" fill="none" />
-          <path d="M98 80c-2-3-4-4-6-4" stroke={shade(c.primary, -30)} strokeWidth="9" strokeLinecap="round" fill="none" opacity=".45" />
+          <path
+            d="M78 106c14 2 24-4 26-16 2-10-4-18-10-16"
+            stroke={c.primary}
+            strokeWidth="9"
+            strokeLinecap="round"
+            fill="none"
+          />
+          <path
+            d="M98 80c-2-3-4-4-6-4"
+            stroke={shade(c.primary, -30)}
+            strokeWidth="9"
+            strokeLinecap="round"
+            fill="none"
+            opacity=".45"
+          />
         </g>
         <path d="M36 112c-3-22 8-34 24-34s27 12 24 34z" fill={c.primary} />
         <path d="M50 88c3 8 17 8 20 0 2 10-1 20-10 21-9-1-12-11-10-21z" fill={c.secondary} />
@@ -221,12 +308,36 @@ export const CHARACTERS: CharacterSpec[] = [
         <path d="M86 34l-2-17-13 10z" fill="#F7B8C0" />
         {/* Head */}
         <ellipse cx="60" cy="54" rx="36" ry="30" fill={c.primary} />
-        <path d="M52 27l2 9M60 25v10M68 27l-2 9" stroke={shade(c.primary, -40)} strokeWidth="3" strokeLinecap="round" opacity=".6" />
-        <path d="M24 56l9 1M25 64l8-3M96 56l-9 1M95 64l-8-3" stroke={shade(c.primary, -40)} strokeWidth="2.6" strokeLinecap="round" opacity=".5" />
+        <path
+          d="M52 27l2 9M60 25v10M68 27l-2 9"
+          stroke={shade(c.primary, -40)}
+          strokeWidth="3"
+          strokeLinecap="round"
+          opacity=".6"
+        />
+        <path
+          d="M24 56l9 1M25 64l8-3M96 56l-9 1M95 64l-8-3"
+          stroke={shade(c.primary, -40)}
+          strokeWidth="2.6"
+          strokeLinecap="round"
+          opacity=".5"
+        />
         <ellipse cx="60" cy="54" rx="36" ry="30" fill="url(#jb-sheen)" />
         <path d="M46 70c2-8 26-8 28 0-2 8-26 8-28 0z" fill={c.secondary} />
-        <path d="M57 63h6l-3 3.5z" fill="#E86F7E" strokeLinejoin="round" stroke="#E86F7E" strokeWidth="1.5" />
-        <path d="M30 66l-14-2M30 71l-13 4M90 66l14-2M90 71l13 4" stroke="#2B2522" strokeWidth="1.3" strokeLinecap="round" opacity=".45" />
+        <path
+          d="M57 63h6l-3 3.5z"
+          fill="#E86F7E"
+          strokeLinejoin="round"
+          stroke="#E86F7E"
+          strokeWidth="1.5"
+        />
+        <path
+          d="M30 66l-14-2M30 71l-13 4M90 66l14-2M90 71l13 4"
+          stroke="#2B2522"
+          strokeWidth="1.3"
+          strokeLinecap="round"
+          opacity=".45"
+        />
       </>
     ),
     eyes: { l: [46, 52], r: [74, 52], size: 5 },
@@ -234,7 +345,13 @@ export const CHARACTERS: CharacterSpec[] = [
     cheeks: { l: [36, 64], r: [84, 64] },
     head: { x: 60, y: 22, w: 64 },
     neck: { x: 60, y: 84, w: 44 },
-    clay: { eyes: { l: [47, 68], r: [73, 68], size: 4 }, mouth: [60, 88], cheeks: { l: [37, 78], r: [83, 78] }, head: { x: 60, y: 40, w: 48 }, neck: { x: 60, y: 97, w: 52 } },
+    clay: {
+      eyes: { l: [47, 68], r: [73, 68], size: 4 },
+      mouth: [60, 88],
+      cheeks: { l: [37, 78], r: [83, 78] },
+      head: { x: 60, y: 40, w: 48 },
+      neck: { x: 60, y: 97, w: 52 },
+    },
   },
   {
     id: "bunny",
@@ -267,7 +384,13 @@ export const CHARACTERS: CharacterSpec[] = [
     cheeks: { l: [38, 66], r: [82, 66] },
     head: { x: 60, y: 30, w: 56 },
     neck: { x: 60, y: 84, w: 44 },
-    clay: { eyes: { l: [48, 72], r: [72, 72], size: 3.8 }, mouth: [60, 89], cheeks: { l: [39, 82], r: [81, 82] }, head: { x: 60, y: 44, w: 40 }, neck: { x: 60, y: 98, w: 50 } },
+    clay: {
+      eyes: { l: [48, 72], r: [72, 72], size: 3.8 },
+      mouth: [60, 89],
+      cheeks: { l: [39, 82], r: [81, 82] },
+      head: { x: 60, y: 44, w: 40 },
+      neck: { x: 60, y: 98, w: 50 },
+    },
   },
   {
     id: "bear",
@@ -300,7 +423,13 @@ export const CHARACTERS: CharacterSpec[] = [
     cheeks: { l: [36, 64], r: [84, 64] },
     head: { x: 60, y: 24, w: 62 },
     neck: { x: 60, y: 84, w: 48 },
-    clay: { eyes: { l: [47, 66], r: [73, 66], size: 4 }, mouth: [60, 89], cheeks: { l: [37, 77], r: [83, 77] }, head: { x: 60, y: 38, w: 50 }, neck: { x: 60, y: 98, w: 52 } },
+    clay: {
+      eyes: { l: [47, 66], r: [73, 66], size: 4 },
+      mouth: [60, 89],
+      cheeks: { l: [37, 77], r: [83, 77] },
+      head: { x: 60, y: 38, w: 50 },
+      neck: { x: 60, y: 98, w: 52 },
+    },
   },
   {
     id: "duck",
@@ -313,14 +442,28 @@ export const CHARACTERS: CharacterSpec[] = [
         <ellipse cx="50" cy="111" rx="8" ry="3.5" fill={c.secondary} />
         <ellipse cx="70" cy="111" rx="8" ry="3.5" fill={c.secondary} />
         <ellipse cx="60" cy="93" rx="30" ry="20" fill={c.primary} />
-        <path d="M30 92c-6-6-6-14 0-14 6 2 8 10 6 16zM90 92c6-6 6-14 0-14-6 2-8 10-6 16z" fill={shade(c.primary, -18)} />
+        <path
+          d="M30 92c-6-6-6-14 0-14 6 2 8 10 6 16zM90 92c6-6 6-14 0-14-6 2-8 10-6 16z"
+          fill={shade(c.primary, -18)}
+        />
         <ellipse cx="60" cy="97" rx="16" ry="11" fill={c.skin} />
         <ellipse cx="60" cy="93" rx="30" ry="20" fill="url(#jb-sheen)" />
         <circle cx="60" cy="52" r="31" fill={c.primary} />
         <circle cx="60" cy="52" r="31" fill="url(#jb-sheen)" />
-        <path d="M56 22c-3-9 5-12 7-5 3-7 11-3 6 3" fill="none" stroke={c.primary} strokeWidth="4.5" strokeLinecap="round" />
+        <path
+          d="M56 22c-3-9 5-12 7-5 3-7 11-3 6 3"
+          fill="none"
+          stroke={c.primary}
+          strokeWidth="4.5"
+          strokeLinecap="round"
+        />
         <path d="M46 63c4-5 24-5 28 0-2 7-26 7-28 0z" fill={c.secondary} />
-        <path d="M47 63c6 2 20 2 26 0" stroke={shade(c.secondary, -35)} strokeWidth="1.4" fill="none" />
+        <path
+          d="M47 63c6 2 20 2 26 0"
+          stroke={shade(c.secondary, -35)}
+          strokeWidth="1.4"
+          fill="none"
+        />
       </>
     ),
     eyes: { l: [47, 50], r: [73, 50], size: 4.8 },
@@ -328,7 +471,13 @@ export const CHARACTERS: CharacterSpec[] = [
     cheeks: { l: [36, 60], r: [84, 60] },
     head: { x: 60, y: 22, w: 58 },
     neck: { x: 60, y: 80, w: 48 },
-    clay: { eyes: { l: [46, 62], r: [74, 62], size: 4 }, mouth: null, cheeks: { l: [36, 72], r: [84, 72] }, head: { x: 60, y: 36, w: 44 }, neck: { x: 60, y: 96, w: 52 } },
+    clay: {
+      eyes: { l: [46, 62], r: [74, 62], size: 4 },
+      mouth: null,
+      cheeks: { l: [36, 72], r: [84, 72] },
+      head: { x: 60, y: 36, w: 44 },
+      neck: { x: 60, y: 96, w: 52 },
+    },
   },
   {
     id: "frog",
@@ -359,7 +508,14 @@ export const CHARACTERS: CharacterSpec[] = [
     blush: GREEN_BLUSH,
     head: { x: 60, y: 20, w: 74 },
     neck: { x: 60, y: 84, w: 50 },
-    clay: { eyes: { l: [38, 40], r: [82, 40], size: 4.4 }, mouth: [60, 76], cheeks: { l: [33, 80], r: [87, 80] }, blush: GREEN_BLUSH, head: { x: 60, y: 28, w: 70 }, neck: { x: 60, y: 99, w: 58 } },
+    clay: {
+      eyes: { l: [38, 40], r: [82, 40], size: 4.4 },
+      mouth: [60, 76],
+      cheeks: { l: [33, 80], r: [87, 80] },
+      blush: GREEN_BLUSH,
+      head: { x: 60, y: 28, w: 70 },
+      neck: { x: 60, y: 99, w: 58 },
+    },
   },
   {
     id: "person",
@@ -373,13 +529,25 @@ export const CHARACTERS: CharacterSpec[] = [
         <path d="M30 114c0-20 13-28 30-28s30 8 30 28z" fill="url(#jb-sheen)" />
         <path d="M52 86l8 9 8-9" fill="#fff" opacity=".9" />
         <rect x="54" y="78" width="12" height="10" rx="4" fill={shade(c.skin, -18)} />
-        <path d="M24 62c-2-26 15-40 36-40s38 14 36 40c-2 8-4 10-6 12l-2-10c-6-6-14-12-28-12-12 0-22 4-30 12l-2 10c-2-2-4-4-4-12z" fill={c.secondary} />
+        <path
+          d="M24 62c-2-26 15-40 36-40s38 14 36 40c-2 8-4 10-6 12l-2-10c-6-6-14-12-28-12-12 0-22 4-30 12l-2 10c-2-2-4-4-4-12z"
+          fill={c.secondary}
+        />
         <ellipse cx="60" cy="56" rx="29" ry="28" fill={c.skin} />
         <ellipse cx="60" cy="56" rx="29" ry="28" fill="url(#jb-sheen)" />
-        <path d="M31 50c4-16 16-24 29-24s25 8 29 24c-8-6-14-12-18-18-6 8-22 14-40 18z" fill={c.secondary} />
+        <path
+          d="M31 50c4-16 16-24 29-24s25 8 29 24c-8-6-14-12-18-18-6 8-22 14-40 18z"
+          fill={c.secondary}
+        />
         <ellipse cx="31" cy="60" rx="4" ry="6" fill={c.skin} />
         <ellipse cx="89" cy="60" rx="4" ry="6" fill={c.skin} />
-        <path d="M58 64q2 3 4 0" stroke={shade(c.skin, -50)} strokeWidth="1.5" fill="none" strokeLinecap="round" />
+        <path
+          d="M58 64q2 3 4 0"
+          stroke={shade(c.skin, -50)}
+          strokeWidth="1.5"
+          fill="none"
+          strokeLinecap="round"
+        />
       </>
     ),
     eyes: { l: [49, 56], r: [71, 56], size: 4.2 },
@@ -387,7 +555,13 @@ export const CHARACTERS: CharacterSpec[] = [
     cheeks: { l: [41, 66], r: [79, 66] },
     head: { x: 60, y: 22, w: 58 },
     neck: { x: 60, y: 86, w: 44 },
-    clay: { eyes: { l: [49, 64], r: [71, 64], size: 3.8 }, mouth: [60, 75], cheeks: { l: [41, 71], r: [79, 71] }, head: { x: 60, y: 24, w: 60 }, neck: { x: 60, y: 86, w: 44 } },
+    clay: {
+      eyes: { l: [49, 64], r: [71, 64], size: 3.8 },
+      mouth: [60, 75],
+      cheeks: { l: [41, 71], r: [79, 71] },
+      head: { x: 60, y: 24, w: 60 },
+      neck: { x: 60, y: 86, w: 44 },
+    },
   },
   {
     id: "cup",
@@ -401,11 +575,23 @@ export const CHARACTERS: CharacterSpec[] = [
         <path d="M88 60c16 0 16 26 0 26" fill="none" stroke={c.primary} strokeWidth="8" />
         <path d="M88 60c16 0 16 26 0 26" fill="none" stroke="#000" strokeWidth="8" opacity=".06" />
         <path d="M24 46h68l-6 58a8 8 0 0 1-8 7H38a8 8 0 0 1-8-7z" fill={c.primary} />
-        <path d="M27 96h62l-1 8a8 8 0 0 1-8 7H38a8 8 0 0 1-8-7z" fill={shade(c.secondary, 40)} opacity=".45" />
+        <path
+          d="M27 96h62l-1 8a8 8 0 0 1-8 7H38a8 8 0 0 1-8-7z"
+          fill={shade(c.secondary, 40)}
+          opacity=".45"
+        />
         <path d="M24 46h68l-6 58a8 8 0 0 1-8 7H38a8 8 0 0 1-8-7z" fill="url(#jb-sheen)" />
         <ellipse cx="58" cy="46" rx="34" ry="6" fill={c.secondary} />
         <path d="M50 46c4-3 12-3 16 0" stroke="#fff" strokeWidth="1.6" fill="none" opacity=".6" />
-        <path d="M46 34c-4-6 4-8 0-14M60 32c-4-6 4-8 0-14M74 34c-4-6 4-8 0-14" stroke={shade(c.secondary, 60)} strokeWidth="3" strokeLinecap="round" fill="none" opacity=".55" className="jb-steam" />
+        <path
+          d="M46 34c-4-6 4-8 0-14M60 32c-4-6 4-8 0-14M74 34c-4-6 4-8 0-14"
+          stroke={shade(c.secondary, 60)}
+          strokeWidth="3"
+          strokeLinecap="round"
+          fill="none"
+          opacity=".55"
+          className="jb-steam"
+        />
       </>
     ),
     eyes: { l: [47, 72], r: [69, 72], size: 4.5 },
@@ -413,7 +599,13 @@ export const CHARACTERS: CharacterSpec[] = [
     cheeks: { l: [38, 82], r: [78, 82] },
     head: { x: 58, y: 40, w: 64 },
     neck: { x: 58, y: 100, w: 52 },
-    clay: { eyes: { l: [47, 78], r: [69, 78], size: 3.8 }, mouth: [58, 88], cheeks: { l: [39, 84], r: [77, 84] }, head: { x: 58, y: 46, w: 62 }, neck: { x: 58, y: 106, w: 54 } },
+    clay: {
+      eyes: { l: [47, 78], r: [69, 78], size: 3.8 },
+      mouth: [58, 88],
+      cheeks: { l: [39, 84], r: [77, 84] },
+      head: { x: 58, y: 46, w: 62 },
+      neck: { x: 58, y: 106, w: 54 },
+    },
   },
   {
     id: "plant",
@@ -423,8 +615,17 @@ export const CHARACTERS: CharacterSpec[] = [
     body: (c) => (
       <>
         {floor}
-        <path d="M60 58C40 50 30 30 38 16c12 6 22 22 22 42zM60 58c20-8 30-28 22-42-12 6-22 22-22 42zM60 58c-3-18 0-34 0-44 6 12 6 30 0 44z" fill={c.primary} />
-        <path d="M60 58C44 50 37 34 40 22M60 58c16-8 23-24 20-36" stroke={shade(c.primary, -30)} strokeWidth="1.5" fill="none" opacity=".5" />
+        <path
+          d="M60 58C40 50 30 30 38 16c12 6 22 22 22 42zM60 58c20-8 30-28 22-42-12 6-22 22-22 42zM60 58c-3-18 0-34 0-44 6 12 6 30 0 44z"
+          fill={c.primary}
+        />
+        <path
+          d="M60 58C44 50 37 34 40 22M60 58c16-8 23-24 20-36"
+          stroke={shade(c.primary, -30)}
+          strokeWidth="1.5"
+          fill="none"
+          opacity=".5"
+        />
         <path d="M30 58h60l-7 50a6 6 0 0 1-6 5H43a6 6 0 0 1-6-5z" fill={c.secondary} />
         <path d="M30 58h60l-7 50a6 6 0 0 1-6 5H43a6 6 0 0 1-6-5z" fill="url(#jb-sheen)" />
         <rect x="26" y="54" width="68" height="12" rx="4" fill={shade(c.secondary, 15)} />
@@ -436,7 +637,13 @@ export const CHARACTERS: CharacterSpec[] = [
     cheeks: { l: [40, 92], r: [80, 92] },
     head: { x: 60, y: 12, w: 40 },
     neck: { x: 60, y: 62, w: 70 },
-    clay: { eyes: { l: [49, 82], r: [71, 82], size: 3.8 }, mouth: [60, 92], cheeks: { l: [41, 88], r: [79, 88] }, head: { x: 60, y: 18, w: 40 }, neck: { x: 60, y: 62, w: 66 } },
+    clay: {
+      eyes: { l: [49, 82], r: [71, 82], size: 3.8 },
+      mouth: [60, 92],
+      cheeks: { l: [41, 88], r: [79, 88] },
+      head: { x: 60, y: 18, w: 40 },
+      neck: { x: 60, y: 62, w: 66 },
+    },
   },
   {
     id: "cloud",
@@ -466,7 +673,13 @@ export const CHARACTERS: CharacterSpec[] = [
     cheeks: { l: [39, 84], r: [81, 84] },
     head: { x: 60, y: 38, w: 54 },
     neck: { x: 60, y: 100, w: 60 },
-    clay: { eyes: { l: [50, 76], r: [70, 76], size: 3.8 }, mouth: [60, 85], cheeks: { l: [41, 82], r: [79, 82] }, head: { x: 60, y: 44, w: 48 }, neck: { x: 60, y: 100, w: 60 } },
+    clay: {
+      eyes: { l: [50, 76], r: [70, 76], size: 3.8 },
+      mouth: [60, 85],
+      cheeks: { l: [41, 82], r: [79, 82] },
+      head: { x: 60, y: 44, w: 48 },
+      neck: { x: 60, y: 100, w: 60 },
+    },
   },
   {
     id: "moon",
@@ -489,7 +702,14 @@ export const CHARACTERS: CharacterSpec[] = [
     cheeks: { l: [36, 78], r: [84, 78] },
     head: { x: 60, y: 26, w: 66 },
     neck: { x: 60, y: 106, w: 56 },
-    clay: { eyes: { l: [33, 73], r: [47, 73], size: 3.4 }, mouth: [40, 82], cheeks: { l: [28, 82], r: [52, 82] }, blush: { size: 0.75 }, head: { x: 53, y: 32, w: 40 }, neck: { x: 53, y: 104, w: 40 } },
+    clay: {
+      eyes: { l: [33, 73], r: [47, 73], size: 3.4 },
+      mouth: [40, 82],
+      cheeks: { l: [28, 82], r: [52, 82] },
+      blush: { size: 0.75 },
+      head: { x: 53, y: 32, w: 40 },
+      neck: { x: 53, y: 104, w: 40 },
+    },
   },
   ...CLAY_CAST,
 ];
@@ -521,14 +741,22 @@ export const characterById = (id: string) => CHARACTERS.find((c) => c.id === id)
  * Costumes, drawn around (0,0) = the anchor point, sized for an 80-wide head.
  * Head pieces sit on `spec.head`; neck pieces on `spec.neck`.
  */
-export const ACCESSORIES: Record<AccessoryId, { slot: "head" | "neck"; name: string; draw: () => React.ReactNode }> = {
+export const ACCESSORIES: Record<
+  AccessoryId,
+  { slot: "head" | "neck"; name: string; draw: () => React.ReactNode }
+> = {
   "party-hat": {
     slot: "head",
     name: "Party hat",
     draw: () => (
       <g transform="rotate(-12)">
         <path d="M-16 2L0-40 16 2z" fill="#2D4BD6" />
-        <path d="M-11-10L-6-23M-4 0l7-22M5 1l5-15" stroke="#FFD166" strokeWidth="3.5" strokeLinecap="round" />
+        <path
+          d="M-11-10L-6-23M-4 0l7-22M5 1l5-15"
+          stroke="#FFD166"
+          strokeWidth="3.5"
+          strokeLinecap="round"
+        />
         <ellipse cx="0" cy="2" rx="17" ry="4" fill="#1F36A8" />
         <circle cx="0" cy="-42" r="6" fill="#FF7EB6" />
       </g>
@@ -551,7 +779,12 @@ export const ACCESSORIES: Record<AccessoryId, { slot: "head" | "neck"; name: str
       <g transform="translate(24 8)">
         <path d="M-2 4c-10 4-12 14-6 16" stroke="#5E8C61" strokeWidth="3" fill="none" />
         <circle r="9" fill="#C24A6A" />
-        <path d="M-5-2a6 6 0 0 1 10 0M-6 3a7 7 0 0 0 12 0" stroke="#8E2246" strokeWidth="1.8" fill="none" />
+        <path
+          d="M-5-2a6 6 0 0 1 10 0M-6 3a7 7 0 0 0 12 0"
+          stroke="#8E2246"
+          strokeWidth="1.8"
+          fill="none"
+        />
       </g>
     ),
   },
@@ -561,7 +794,13 @@ export const ACCESSORIES: Record<AccessoryId, { slot: "head" | "neck"; name: str
     draw: () => (
       <g>
         <path d="M-30 4C-34 30-42 58-48 82H48C42 58 34 30 30 4z" fill="#FFFFFF" opacity=".42" />
-        <path d="M-28 2c10-8 46-8 56 0" stroke="#fff" strokeWidth="5" strokeLinecap="round" fill="none" />
+        <path
+          d="M-28 2c10-8 46-8 56 0"
+          stroke="#fff"
+          strokeWidth="5"
+          strokeLinecap="round"
+          fill="none"
+        />
         {[-18, -6, 6, 18].map((x) => (
           <circle key={x} cx={x} cy={-3} r="2.6" fill="#F3E3B3" />
         ))}
@@ -583,8 +822,18 @@ export const ACCESSORIES: Record<AccessoryId, { slot: "head" | "neck"; name: str
     name: "Bonnet",
     draw: () => (
       <g>
-        <path d="M-36 14c0-28 16-40 36-40s36 12 36 40c-10-8-22-12-36-12s-26 4-36 12z" fill="#AFCDEB" />
-        <path d="M-36 14c10-8 22-12 36-12s26 4 36 12" stroke="#fff" strokeWidth="4" fill="none" strokeDasharray="1 6" strokeLinecap="round" />
+        <path
+          d="M-36 14c0-28 16-40 36-40s36 12 36 40c-10-8-22-12-36-12s-26 4-36 12z"
+          fill="#AFCDEB"
+        />
+        <path
+          d="M-36 14c10-8 22-12 36-12s26 4 36 12"
+          stroke="#fff"
+          strokeWidth="4"
+          fill="none"
+          strokeDasharray="1 6"
+          strokeLinecap="round"
+        />
         <path d="M-30 16l-6 30M30 16l6 30" stroke="#F4BFC8" strokeWidth="4" strokeLinecap="round" />
       </g>
     ),

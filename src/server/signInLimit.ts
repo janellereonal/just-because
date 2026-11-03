@@ -28,9 +28,11 @@ function count(key: string, now: number): number {
 
 function bump(key: string, now: number) {
   const entry = failures.get(key);
-  if (!entry || now - entry.since >= SIGN_IN_LIMITS.windowMs) failures.set(key, { n: 1, since: now });
+  if (!entry || now - entry.since >= SIGN_IN_LIMITS.windowMs)
+    failures.set(key, { n: 1, since: now });
   else entry.n += 1;
-  if (++writes % 500 === 0) for (const [k, v] of failures) if (now - v.since >= SIGN_IN_LIMITS.windowMs) failures.delete(k);
+  if (++writes % 500 === 0)
+    for (const [k, v] of failures) if (now - v.since >= SIGN_IN_LIMITS.windowMs) failures.delete(k);
 }
 
 const emailKey = (email: string) => `email:${email.trim().toLowerCase()}`;
@@ -59,6 +61,7 @@ export function resetSignInLimits() {
 
 /** The visitor's IP from the platform header (Vercel sets x-forwarded-for to the real client). */
 export function requestIp(headers: Headers | null | undefined): string | null {
-  const raw = headers?.get("x-forwarded-for")?.split(",")[0]?.trim() || headers?.get("x-real-ip")?.trim();
+  const raw =
+    headers?.get("x-forwarded-for")?.split(",")[0]?.trim() || headers?.get("x-real-ip")?.trim();
   return raw || null;
 }

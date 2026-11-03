@@ -23,12 +23,18 @@ describe("note counts", () => {
 describe("friend page line", () => {
   test("built from the sections that are on", () => {
     expect(friendAddLine(["letters"])).toBe("Add a note.");
-    expect(friendAddLine(["letters", "photobooth", "songs"])).toBe("Add a note, a photo or a song.");
-    expect(friendAddLine(["letters", "photobooth", "songs", "voice"])).toBe("Add a note, a photo, a song and more.");
+    expect(friendAddLine(["letters", "photobooth", "songs"])).toBe(
+      "Add a note, a photo or a song.",
+    );
+    expect(friendAddLine(["letters", "photobooth", "songs", "voice"])).toBe(
+      "Add a note, a photo, a song and more.",
+    );
     expect(friendAddLine([])).toBe("");
   });
   test("sample letters match the occasion", () => {
-    expect(sampleLetter("birthday", 0, "Ana")).toBe("Happy birthday, Ana. Here's to your best year yet.");
+    expect(sampleLetter("birthday", 0, "Ana")).toBe(
+      "Happy birthday, Ana. Here's to your best year yet.",
+    );
     expect(sampleLetter("nonsense", 1)).toBe("You make every room warmer.");
   });
 });

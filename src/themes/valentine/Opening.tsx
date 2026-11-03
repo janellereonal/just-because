@@ -12,9 +12,25 @@ import { Character } from "@/themes/_shared/cast/Character";
 import type { CharacterHandle } from "@/themes/_shared/cast/types";
 import { Greeting, type OpeningProps } from "@/themes/_shared/opening";
 import type { ThemePalette } from "@/themes/_shared/design";
-import { FallbackButton, Layer, SPRING, useBeats, useHaptics, useHold } from "@/themes/_shared/stage";
+import {
+  FallbackButton,
+  Layer,
+  SPRING,
+  useBeats,
+  useHaptics,
+  useHold,
+} from "@/themes/_shared/stage";
 import { burstSet } from "@/themes/_shared/Sprinkles";
-import { Extrude, FloorShadow, LightShaft, Object3D, Sheen, TEXTURE_SOFT, Texture, rim } from "@/themes/_shared/light";
+import {
+  Extrude,
+  FloorShadow,
+  LightShaft,
+  Object3D,
+  Sheen,
+  TEXTURE_SOFT,
+  Texture,
+  rim,
+} from "@/themes/_shared/light";
 import { chime, foley, melody } from "@/lib/play";
 
 export function ValentineOpening(p: OpeningProps) {
@@ -33,7 +49,12 @@ export function ValentineOpening(p: OpeningProps) {
     h.thud();
     cast.current?.celebrate();
     const r = sealRef.current?.getBoundingClientRect();
-    if (r) burstSet(p.hostRef.current, r.left + r.width / 2, r.top + r.height / 2, p.iconSet, { colors: [c.gold!, c.rose!, "#fff"], count: 14, spread: 0.7 });
+    if (r)
+      burstSet(p.hostRef.current, r.left + r.width / 2, r.top + r.height / 2, p.iconSet, {
+        colors: [c.gold!, c.rose!, "#fff"],
+        count: 14,
+        spread: 0.7,
+      });
   }
   const hold = useHold(1100, crack, p.interactive && !p.paused && !cracked);
 
@@ -43,7 +64,13 @@ export function ValentineOpening(p: OpeningProps) {
     if (beat === 3) melody([659, 784, 988, 1319], 0.16);
     if (beat === 4) {
       const r = p.hostRef.current?.getBoundingClientRect();
-      if (r) burstSet(p.hostRef.current, r.left + r.width / 2, r.top + r.height * 0.42, p.iconSet, { colors: [c.rose!, c.gold!, "#F7B2C4"], count: 30, spread: 1.8, up: true });
+      if (r)
+        burstSet(p.hostRef.current, r.left + r.width / 2, r.top + r.height * 0.42, p.iconSet, {
+          colors: [c.rose!, c.gold!, "#F7B2C4"],
+          count: 30,
+          spread: 1.8,
+          up: true,
+        });
       h.success();
     }
     if (beat === 5) p.onOpen();
@@ -82,141 +109,319 @@ export function ValentineOpening(p: OpeningProps) {
         <LightShaft strength={0.55} motes={9} />
       </Layer>
 
-      <Layer depth={10} className="relative" style={{ width: "min(84cqi, 380px)", aspectRatio: "1.42" }}>
+      <Layer
+        depth={10}
+        className="relative"
+        style={{ width: "min(84cqi, 380px)", aspectRatio: "1.42" }}
+      >
         {/* Lying on the linen, seen from a little above. The envelope is one
             flat sheet in a real 3D space, with paper thickness under it. */}
-        <Object3D pose={{ x: 13, y: -3, z: -1.5 }} strength={9} settle={rise} className="absolute inset-0">
-        <div className="absolute inset-0" style={{ transform: "translateZ(-22px)", transformStyle: "preserve-3d" }}>
-          <FloorShadow lift={rise ? 0.25 : 0} tint="70,32,30" depth={4} radius={8} className="inset-[2%_3%_1%_3%]" />
-        </div>
-        <Extrude depth={5} color="#D9C8AF" edge="#C9B596" radius={6} />
-        <div className="absolute inset-0" style={{ perspective: 900 }}>
-        {/* The character peeks over the top edge, behind the envelope. */}
-        <motion.div
-          className="absolute right-[8%]"
-          style={{ bottom: "86%", zIndex: cracked ? 3 : 0 }}
-          initial={{ y: 70 }}
-          animate={{ y: p.paused ? 4 : cracked ? 0 : [64, 2, 2, 64] }}
-          transition={cracked || p.paused ? SPRING.wobbly : { duration: 5, times: [0, 0.18, 0.7, 1], repeat: Infinity, repeatDelay: 1.2, ease: [0.34, 1.56, 0.64, 1] }}
+        <Object3D
+          pose={{ x: 13, y: -3, z: -1.5 }}
+          strength={9}
+          settle={rise}
+          className="absolute inset-0"
         >
-          <Character ref={cast} setting={p.character} accessory={p.accessory} size={92} blush live={!p.paused} showName={false} />
-        </motion.div>
-
-        {/* Back of the envelope */}
-        <div className="absolute inset-0 z-[1] overflow-hidden rounded-[6px]" style={{ background: c.cream, boxShadow: rim(0.9) }}>
-          {/* The liner shows inside once the flap is up */}
-          <div className="absolute inset-x-[3%] top-[2%] h-[56%]" style={{ ...liner(c), clipPath: "polygon(0 0, 100% 0, 50% 100%)", opacity: 0.9 }} />
-          <div className="absolute inset-0 rounded-[6px]" style={{ background: `linear-gradient(180deg, ${c.oxblood}38, transparent 60%)` }} />
-          <Texture material="paper" opacity={0.55} />
-        </div>
-
-        {/* The letter */}
-        <motion.div
-          className="absolute inset-x-[7%] z-[2]"
-          style={{ top: "8%", height: "84%", transformStyle: "preserve-3d" }}
-          animate={{ y: rise ? "-58%" : "0%", scale: unfold ? 1.06 : 1, zIndex: rise ? 6 : 2 }}
-          transition={{ ...SPRING.heavy, zIndex: { delay: rise ? 0.35 : 0 } }}
-        >
-          <div className="absolute inset-0 rounded-[3px] bg-[#FFFDF8]" style={{ boxShadow: `${rim(0.6)}, 3px 10px 22px -12px rgba(60,20,30,.45)`, backgroundImage: "repeating-linear-gradient(transparent 0 23px, rgba(180,51,90,.08) 23px 24px)" }}>
-            <Texture material="paper" opacity={0.45} />
-            {/* The pocket's shadow on the letter, until it's out */}
-            <motion.span aria-hidden="true" className="pointer-events-none absolute inset-x-0 bottom-0 block h-1/2" style={{ background: "linear-gradient(0deg, rgba(70,30,30,.22), transparent)" }} animate={{ opacity: rise ? 0 : 1 }} transition={{ duration: 0.5 }} />
-            {/* Light raking across the sheet */}
-            <span aria-hidden="true" className="pointer-events-none absolute inset-0 block" style={{ background: "linear-gradient(125deg, rgba(255,255,255,.55), transparent 38%, transparent 70%, rgba(80,40,30,.06))" }} />
-            <div className="flex h-full flex-col items-center justify-center px-[8%] text-center" style={{ color: c.oxblood }}>
-              <motion.div animate={{ opacity: unfold ? 1 : 0, y: unfold ? 0 : 10 }} transition={{ ...SPRING.soft, delay: unfold ? 0.25 : 0 }}>
-                <Greeting text={p.greeting} className="text-[clamp(1.9rem,10.5cqi,3.2rem)]" style={{ fontStyle: "italic", fontWeight: 500 }} />
-                <span className="mt-3 block text-[12px] tracking-[0.2em] uppercase opacity-70">{p.badge}</span>
-              </motion.div>
-            </div>
+          <div
+            className="absolute inset-0"
+            style={{ transform: "translateZ(-22px)", transformStyle: "preserve-3d" }}
+          >
+            <FloorShadow
+              lift={rise ? 0.25 : 0}
+              tint="70,32,30"
+              depth={4}
+              radius={8}
+              className="inset-[2%_3%_1%_3%]"
+            />
           </div>
-          {/* The fold: the top half of the letter flips down to show the words. */}
-          <motion.div
-            className="absolute inset-x-0 top-0 h-1/2 origin-bottom rounded-t-[3px]"
-            style={{ background: "linear-gradient(180deg,#FBF4EA,#EFE2CF)", backfaceVisibility: "hidden", boxShadow: "inset 0 -12px 18px -12px rgba(60,20,30,.4), inset 0 1px 0 rgba(255,255,255,.8)" }}
-            animate={{ rotateX: unfold ? -178 : 0, opacity: unfold ? 0 : 1 }}
-            transition={{ rotateX: SPRING.heavy, opacity: { delay: unfold ? 0.45 : 0, duration: 0.2 } }}
-          />
-        </motion.div>
-
-        {/* Front pocket: three folded panels */}
-        <div className="pointer-events-none absolute inset-0 z-[4]">
-          <div className="absolute inset-0 overflow-hidden rounded-[6px]" style={{ background: `linear-gradient(100deg, #FBF5EC, ${c.cream} 60%)`, clipPath: "polygon(0 0, 52% 56%, 0 100%)" }}>
-            <Texture material="paper" opacity={0.5} />
-          </div>
-          <div className="absolute inset-0 overflow-hidden rounded-[6px]" style={{ background: `linear-gradient(260deg, #E3D4BE, ${c.cream} 70%)`, clipPath: "polygon(100% 0, 48% 56%, 100% 100%)" }}>
-            <Texture material="paper" opacity={0.5} />
-          </div>
-          {/* The bottom panel overlaps the sides: a soft shadow along its folded edges */}
-          <div className="absolute inset-0" style={{ background: "rgba(80,40,30,.16)", clipPath: "polygon(0 100%, 50% 43%, 100% 100%)", filter: "blur(3px)" }} />
-          <div className="absolute inset-0 overflow-hidden rounded-[6px]" style={{ background: `linear-gradient(0deg, ${c.cream}, #F4EADC)`, clipPath: "polygon(0 100%, 50% 46%, 100% 100%)" }}>
-            <Texture material="paper" opacity={0.5} />
-            <Sheen strength={0.55} angle={120} width={30} />
-          </div>
-          <div className="absolute inset-0" style={{ background: "linear-gradient(115deg, rgba(255,255,255,.4), transparent 40%)", clipPath: "polygon(0 100%, 50% 46%, 100% 100%)" }} />
-        </div>
-
-        {/* The flap */}
-        <motion.div
-          className="absolute inset-x-0 top-0 origin-top"
-          style={{ height: "58%", transformStyle: "preserve-3d" }}
-          animate={{ rotateX: flapOpen ? 178 : 0, zIndex: flapOpen ? 1 : 5 }}
-          transition={{ rotateX: SPRING.heavy, zIndex: { delay: flapOpen ? 0.18 : 0 } }}
-        >
-          {/* Its shadow on the pocket */}
-          <motion.div className="absolute inset-0" style={{ background: "rgba(70,30,25,.22)", clipPath: "polygon(1% 2%, 99% 2%, 51% 100%)", filter: "blur(4px)", x: 2, y: 5 }} animate={{ opacity: flapOpen ? 0 : 1 }} transition={{ duration: 0.2 }} />
-          <div className="absolute inset-0 overflow-hidden" style={{ background: "linear-gradient(170deg,#FBF4EA,#E8D9C3)", clipPath: "polygon(0 0, 100% 0, 50% 100%)", backfaceVisibility: "hidden" }}>
-            <Texture material="paper" opacity={0.55} />
-            <Sheen strength={0.6} angle={105} width={24} />
-          </div>
-          <div className="absolute inset-0" style={{ ...liner(c), clipPath: "polygon(0 0, 100% 0, 50% 100%)", transform: "rotateX(180deg)", backfaceVisibility: "hidden" }} />
-        </motion.div>
-
-        {/* The wax seal */}
-        <div
-          ref={sealRef}
-          className="absolute left-1/2 z-[7] grid -translate-x-1/2 -translate-y-1/2 place-items-center"
-          style={{ top: "57%", width: "min(25cqi, 104px)", aspectRatio: "1" }}
-        >
-          {!cracked ? (
-            <motion.button
-              type="button"
-              aria-label="Press and hold the wax seal to open"
-              disabled={!p.interactive || p.paused}
-              className="relative grid size-full touch-none place-items-center rounded-full outline-none focus-visible:ring-4 focus-visible:ring-white/70"
-              {...hold.handlers}
-              animate={{ scale: 1 - hold.progress * 0.08, rotate: hold.progress > 0 ? [0, -2, 2, 0] : 0 }}
-              transition={{ scale: SPRING.snappy, rotate: { duration: 0.18, repeat: hold.progress > 0 ? Infinity : 0 } }}
-              whileHover={{ scale: 1.04 }}
+          <Extrude depth={5} color="#D9C8AF" edge="#C9B596" radius={6} />
+          <div className="absolute inset-0" style={{ perspective: 900 }}>
+            {/* The character peeks over the top edge, behind the envelope. */}
+            <motion.div
+              className="absolute right-[8%]"
+              style={{ bottom: "86%", zIndex: cracked ? 3 : 0 }}
+              initial={{ y: 70 }}
+              animate={{ y: p.paused ? 4 : cracked ? 0 : [64, 2, 2, 64] }}
+              transition={
+                cracked || p.paused
+                  ? SPRING.wobbly
+                  : {
+                      duration: 5,
+                      times: [0, 0.18, 0.7, 1],
+                      repeat: Infinity,
+                      repeatDelay: 1.2,
+                      ease: [0.34, 1.56, 0.64, 1],
+                    }
+              }
             >
-              <WaxSeal color={c.rose!} dark={c.oxblood!} />
-              <svg viewBox="0 0 100 100" className="pointer-events-none absolute -inset-[14%] size-[128%] -rotate-90" aria-hidden="true">
-                <circle cx="50" cy="50" r="46" fill="none" stroke={c.gold} strokeWidth="2.5" strokeLinecap="round" strokeDasharray={ring} strokeDashoffset={ring * (1 - hold.progress)} opacity={hold.progress > 0 ? 1 : 0} />
-              </svg>
-            </motion.button>
-          ) : (
-            <>
-              {[-1, 1].map((side) => (
-                <motion.div
-                  key={side}
-                  className="absolute inset-0"
-                  style={{ clipPath: side < 0 ? "polygon(0 0, 54% 0, 44% 38%, 58% 62%, 46% 100%, 0 100%)" : "polygon(54% 0, 100% 0, 100% 100%, 46% 100%, 58% 62%, 44% 38%)" }}
-                  initial={{ x: 0, y: 0, rotate: 0, opacity: 1 }}
-                  animate={{ x: side * 46, y: 120, rotate: side * 38, opacity: 0 }}
-                  transition={{ x: SPRING.snappy, rotate: SPRING.snappy, y: { type: "spring", stiffness: 60, damping: 12, mass: 1.4 }, opacity: { delay: 0.5, duration: 0.3 } }}
+              <Character
+                ref={cast}
+                setting={p.character}
+                accessory={p.accessory}
+                size={92}
+                blush
+                live={!p.paused}
+                showName={false}
+              />
+            </motion.div>
+
+            {/* Back of the envelope */}
+            <div
+              className="absolute inset-0 z-[1] overflow-hidden rounded-[6px]"
+              style={{ background: c.cream, boxShadow: rim(0.9) }}
+            >
+              {/* The liner shows inside once the flap is up */}
+              <div
+                className="absolute inset-x-[3%] top-[2%] h-[56%]"
+                style={{ ...liner(c), clipPath: "polygon(0 0, 100% 0, 50% 100%)", opacity: 0.9 }}
+              />
+              <div
+                className="absolute inset-0 rounded-[6px]"
+                style={{ background: `linear-gradient(180deg, ${c.oxblood}38, transparent 60%)` }}
+              />
+              <Texture material="paper" opacity={0.55} />
+            </div>
+
+            {/* The letter */}
+            <motion.div
+              className="absolute inset-x-[7%] z-[2]"
+              style={{ top: "8%", height: "84%", transformStyle: "preserve-3d" }}
+              animate={{ y: rise ? "-58%" : "0%", scale: unfold ? 1.06 : 1, zIndex: rise ? 6 : 2 }}
+              transition={{ ...SPRING.heavy, zIndex: { delay: rise ? 0.35 : 0 } }}
+            >
+              <div
+                className="absolute inset-0 rounded-[3px] bg-[#FFFDF8]"
+                style={{
+                  boxShadow: `${rim(0.6)}, 3px 10px 22px -12px rgba(60,20,30,.45)`,
+                  backgroundImage:
+                    "repeating-linear-gradient(transparent 0 23px, rgba(180,51,90,.08) 23px 24px)",
+                }}
+              >
+                <Texture material="paper" opacity={0.45} />
+                {/* The pocket's shadow on the letter, until it's out */}
+                <motion.span
+                  aria-hidden="true"
+                  className="pointer-events-none absolute inset-x-0 bottom-0 block h-1/2"
+                  style={{ background: "linear-gradient(0deg, rgba(70,30,30,.22), transparent)" }}
+                  animate={{ opacity: rise ? 0 : 1 }}
+                  transition={{ duration: 0.5 }}
+                />
+                {/* Light raking across the sheet */}
+                <span
+                  aria-hidden="true"
+                  className="pointer-events-none absolute inset-0 block"
+                  style={{
+                    background:
+                      "linear-gradient(125deg, rgba(255,255,255,.55), transparent 38%, transparent 70%, rgba(80,40,30,.06))",
+                  }}
+                />
+                <div
+                  className="flex h-full flex-col items-center justify-center px-[8%] text-center"
+                  style={{ color: c.oxblood }}
+                >
+                  <motion.div
+                    animate={{ opacity: unfold ? 1 : 0, y: unfold ? 0 : 10 }}
+                    transition={{ ...SPRING.soft, delay: unfold ? 0.25 : 0 }}
+                  >
+                    <Greeting
+                      text={p.greeting}
+                      className="text-[clamp(1.9rem,10.5cqi,3.2rem)]"
+                      style={{ fontStyle: "italic", fontWeight: 500 }}
+                    />
+                    <span className="mt-3 block text-[12px] tracking-[0.2em] uppercase opacity-70">
+                      {p.badge}
+                    </span>
+                  </motion.div>
+                </div>
+              </div>
+              {/* The fold: the top half of the letter flips down to show the words. */}
+              <motion.div
+                className="absolute inset-x-0 top-0 h-1/2 origin-bottom rounded-t-[3px]"
+                style={{
+                  background: "linear-gradient(180deg,#FBF4EA,#EFE2CF)",
+                  backfaceVisibility: "hidden",
+                  boxShadow:
+                    "inset 0 -12px 18px -12px rgba(60,20,30,.4), inset 0 1px 0 rgba(255,255,255,.8)",
+                }}
+                animate={{ rotateX: unfold ? -178 : 0, opacity: unfold ? 0 : 1 }}
+                transition={{
+                  rotateX: SPRING.heavy,
+                  opacity: { delay: unfold ? 0.45 : 0, duration: 0.2 },
+                }}
+              />
+            </motion.div>
+
+            {/* Front pocket: three folded panels */}
+            <div className="pointer-events-none absolute inset-0 z-[4]">
+              <div
+                className="absolute inset-0 overflow-hidden rounded-[6px]"
+                style={{
+                  background: `linear-gradient(100deg, #FBF5EC, ${c.cream} 60%)`,
+                  clipPath: "polygon(0 0, 52% 56%, 0 100%)",
+                }}
+              >
+                <Texture material="paper" opacity={0.5} />
+              </div>
+              <div
+                className="absolute inset-0 overflow-hidden rounded-[6px]"
+                style={{
+                  background: `linear-gradient(260deg, #E3D4BE, ${c.cream} 70%)`,
+                  clipPath: "polygon(100% 0, 48% 56%, 100% 100%)",
+                }}
+              >
+                <Texture material="paper" opacity={0.5} />
+              </div>
+              {/* The bottom panel overlaps the sides: a soft shadow along its folded edges */}
+              <div
+                className="absolute inset-0"
+                style={{
+                  background: "rgba(80,40,30,.16)",
+                  clipPath: "polygon(0 100%, 50% 43%, 100% 100%)",
+                  filter: "blur(3px)",
+                }}
+              />
+              <div
+                className="absolute inset-0 overflow-hidden rounded-[6px]"
+                style={{
+                  background: `linear-gradient(0deg, ${c.cream}, #F4EADC)`,
+                  clipPath: "polygon(0 100%, 50% 46%, 100% 100%)",
+                }}
+              >
+                <Texture material="paper" opacity={0.5} />
+                <Sheen strength={0.55} angle={120} width={30} />
+              </div>
+              <div
+                className="absolute inset-0"
+                style={{
+                  background: "linear-gradient(115deg, rgba(255,255,255,.4), transparent 40%)",
+                  clipPath: "polygon(0 100%, 50% 46%, 100% 100%)",
+                }}
+              />
+            </div>
+
+            {/* The flap */}
+            <motion.div
+              className="absolute inset-x-0 top-0 origin-top"
+              style={{ height: "58%", transformStyle: "preserve-3d" }}
+              animate={{ rotateX: flapOpen ? 178 : 0, zIndex: flapOpen ? 1 : 5 }}
+              transition={{ rotateX: SPRING.heavy, zIndex: { delay: flapOpen ? 0.18 : 0 } }}
+            >
+              {/* Its shadow on the pocket */}
+              <motion.div
+                className="absolute inset-0"
+                style={{
+                  background: "rgba(70,30,25,.22)",
+                  clipPath: "polygon(1% 2%, 99% 2%, 51% 100%)",
+                  filter: "blur(4px)",
+                  x: 2,
+                  y: 5,
+                }}
+                animate={{ opacity: flapOpen ? 0 : 1 }}
+                transition={{ duration: 0.2 }}
+              />
+              <div
+                className="absolute inset-0 overflow-hidden"
+                style={{
+                  background: "linear-gradient(170deg,#FBF4EA,#E8D9C3)",
+                  clipPath: "polygon(0 0, 100% 0, 50% 100%)",
+                  backfaceVisibility: "hidden",
+                }}
+              >
+                <Texture material="paper" opacity={0.55} />
+                <Sheen strength={0.6} angle={105} width={24} />
+              </div>
+              <div
+                className="absolute inset-0"
+                style={{
+                  ...liner(c),
+                  clipPath: "polygon(0 0, 100% 0, 50% 100%)",
+                  transform: "rotateX(180deg)",
+                  backfaceVisibility: "hidden",
+                }}
+              />
+            </motion.div>
+
+            {/* The wax seal */}
+            <div
+              ref={sealRef}
+              className="absolute left-1/2 z-[7] grid -translate-x-1/2 -translate-y-1/2 place-items-center"
+              style={{ top: "57%", width: "min(25cqi, 104px)", aspectRatio: "1" }}
+            >
+              {!cracked ? (
+                <motion.button
+                  type="button"
+                  aria-label="Press and hold the wax seal to open"
+                  disabled={!p.interactive || p.paused}
+                  className="relative grid size-full touch-none place-items-center rounded-full outline-none focus-visible:ring-4 focus-visible:ring-white/70"
+                  {...hold.handlers}
+                  animate={{
+                    scale: 1 - hold.progress * 0.08,
+                    rotate: hold.progress > 0 ? [0, -2, 2, 0] : 0,
+                  }}
+                  transition={{
+                    scale: SPRING.snappy,
+                    rotate: { duration: 0.18, repeat: hold.progress > 0 ? Infinity : 0 },
+                  }}
+                  whileHover={{ scale: 1.04 }}
                 >
                   <WaxSeal color={c.rose!} dark={c.oxblood!} />
-                </motion.div>
-              ))}
-            </>
-          )}
-        </div>
-        </div>
+                  <svg
+                    viewBox="0 0 100 100"
+                    className="pointer-events-none absolute -inset-[14%] size-[128%] -rotate-90"
+                    aria-hidden="true"
+                  >
+                    <circle
+                      cx="50"
+                      cy="50"
+                      r="46"
+                      fill="none"
+                      stroke={c.gold}
+                      strokeWidth="2.5"
+                      strokeLinecap="round"
+                      strokeDasharray={ring}
+                      strokeDashoffset={ring * (1 - hold.progress)}
+                      opacity={hold.progress > 0 ? 1 : 0}
+                    />
+                  </svg>
+                </motion.button>
+              ) : (
+                <>
+                  {[-1, 1].map((side) => (
+                    <motion.div
+                      key={side}
+                      className="absolute inset-0"
+                      style={{
+                        clipPath:
+                          side < 0
+                            ? "polygon(0 0, 54% 0, 44% 38%, 58% 62%, 46% 100%, 0 100%)"
+                            : "polygon(54% 0, 100% 0, 100% 100%, 46% 100%, 58% 62%, 44% 38%)",
+                      }}
+                      initial={{ x: 0, y: 0, rotate: 0, opacity: 1 }}
+                      animate={{ x: side * 46, y: 120, rotate: side * 38, opacity: 0 }}
+                      transition={{
+                        x: SPRING.snappy,
+                        rotate: SPRING.snappy,
+                        y: { type: "spring", stiffness: 60, damping: 12, mass: 1.4 },
+                        opacity: { delay: 0.5, duration: 0.3 },
+                      }}
+                    >
+                      <WaxSeal color={c.rose!} dark={c.oxblood!} />
+                    </motion.div>
+                  ))}
+                </>
+              )}
+            </div>
+          </div>
         </Object3D>
       </Layer>
 
       <div className="mt-[min(9cqi,40.5px)] h-11">
-        <FallbackButton onClick={crack} color={c.oxblood!} ink={c.oxblood!} hidden={cracked || !p.interactive || p.paused}>
+        <FallbackButton
+          onClick={crack}
+          color={c.oxblood!}
+          ink={c.oxblood!}
+          hidden={cracked || !p.interactive || p.paused}
+        >
           {p.buttonText}
         </FallbackButton>
       </div>
@@ -227,7 +432,15 @@ export function ValentineOpening(p: OpeningProps) {
 /** Wax with an irregular rim, a pressed heart and a little gloss. */
 export function WaxSeal({ color, dark }: { color: string; dark: string }) {
   return (
-    <svg viewBox="0 0 100 100" className="size-full overflow-visible" aria-hidden="true" style={{ filter: "drop-shadow(2px 4px 3px rgba(60,10,20,.4)) drop-shadow(4px 10px 10px rgba(60,10,20,.25))" }}>
+    <svg
+      viewBox="0 0 100 100"
+      className="size-full overflow-visible"
+      aria-hidden="true"
+      style={{
+        filter:
+          "drop-shadow(2px 4px 3px rgba(60,10,20,.4)) drop-shadow(4px 10px 10px rgba(60,10,20,.25))",
+      }}
+    >
       <defs>
         <radialGradient id="wax" cx="38%" cy="30%" r="80%">
           <stop offset="0" stopColor="#fff" stopOpacity=".35" />
@@ -236,14 +449,50 @@ export function WaxSeal({ color, dark }: { color: string; dark: string }) {
         </radialGradient>
       </defs>
       <g filter="url(#jb-gloss)">
-        <path d="M50 3c9 0 12 6 20 8s14 1 17 10-2 13 1 21 9 12 5 20-11 7-15 14-3 15-12 18-12-3-19-1-13 8-21 3-4-13-9-19-15-6-15-15 9-11 9-19-7-14-1-21 13-2 20-7S41 3 50 3z" fill="url(#wax)" />
+        <path
+          d="M50 3c9 0 12 6 20 8s14 1 17 10-2 13 1 21 9 12 5 20-11 7-15 14-3 15-12 18-12-3-19-1-13 8-21 3-4-13-9-19-15-6-15-15 9-11 9-19-7-14-1-21 13-2 20-7S41 3 50 3z"
+          fill="url(#wax)"
+        />
       </g>
       {/* The pressed die: a recessed ring and heart, lit from the top left */}
-      <circle cx="50" cy="51" r="30" fill="none" stroke={dark} strokeOpacity=".55" strokeWidth="2.5" />
-      <circle cx="50" cy="51" r="30" fill="none" stroke="#fff" strokeOpacity=".28" strokeWidth="1" transform="translate(1.2 1.2)" />
-      <path d="M50 66s-15-9-15-20a8 8 0 0 1 15-4 8 8 0 0 1 15 4c0 11-15 20-15 20z" fill={dark} fillOpacity=".6" />
-      <path d="M51.2 67.4s-15-9-15-20" fill="none" stroke="#fff" strokeOpacity=".3" strokeWidth="1.2" />
-      <path d="M49 64s-14-9-14-19a7.5 7.5 0 0 1 14-4" fill="none" stroke="#000" strokeOpacity=".2" strokeWidth="1.5" />
+      <circle
+        cx="50"
+        cy="51"
+        r="30"
+        fill="none"
+        stroke={dark}
+        strokeOpacity=".55"
+        strokeWidth="2.5"
+      />
+      <circle
+        cx="50"
+        cy="51"
+        r="30"
+        fill="none"
+        stroke="#fff"
+        strokeOpacity=".28"
+        strokeWidth="1"
+        transform="translate(1.2 1.2)"
+      />
+      <path
+        d="M50 66s-15-9-15-20a8 8 0 0 1 15-4 8 8 0 0 1 15 4c0 11-15 20-15 20z"
+        fill={dark}
+        fillOpacity=".6"
+      />
+      <path
+        d="M51.2 67.4s-15-9-15-20"
+        fill="none"
+        stroke="#fff"
+        strokeOpacity=".3"
+        strokeWidth="1.2"
+      />
+      <path
+        d="M49 64s-14-9-14-19a7.5 7.5 0 0 1 14-4"
+        fill="none"
+        stroke="#000"
+        strokeOpacity=".2"
+        strokeWidth="1.5"
+      />
     </svg>
   );
 }

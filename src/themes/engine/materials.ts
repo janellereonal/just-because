@@ -8,11 +8,27 @@
  */
 import { elevation, rim } from "@/themes/_shared/light";
 
-export const MATERIALS = ["paper", "cardboard", "wax", "foil", "fabric", "glass", "capiz", "frost", "wood", "metal"] as const;
+export const MATERIALS = [
+  "paper",
+  "cardboard",
+  "wax",
+  "foil",
+  "fabric",
+  "glass",
+  "capiz",
+  "frost",
+  "wood",
+  "metal",
+] as const;
 export type MaterialName = (typeof MATERIALS)[number];
 
 /** Static noise as an inline SVG image. `freq` sets the grain size, `alpha` its strength. */
-export function noise(freq = 0.9, alpha = 0.18, octaves = 2, stretch: [number, number] = [1, 1]): string {
+export function noise(
+  freq = 0.9,
+  alpha = 0.18,
+  octaves = 2,
+  stretch: [number, number] = [1, 1],
+): string {
   const svg = `<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='${(freq * stretch[0]).toFixed(3)} ${(freq * stretch[1]).toFixed(3)}' numOctaves='${octaves}' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 ${alpha} 0'/></filter><rect width='100%' height='100%' filter='url(#n)'/></svg>`;
   return `url("data:image/svg+xml,${encodeURIComponent(svg)}")`;
 }
@@ -58,13 +74,31 @@ export function material(name: MaterialName, o: MaterialOptions = {}): React.CSS
   const lift = o.lift ?? 0.5;
   const shadow = lift > 0 ? elevation(lift, o.shadowTint ?? "45,30,25") : "";
   const join = (...parts: string[]) => parts.filter(Boolean).join(", ");
-  const radius = o.radius ?? ({ paper: 3, cardboard: 6, wax: 999, foil: 6, fabric: 4, glass: 14, capiz: 6, frost: 14, wood: 8, metal: 10 } as const)[name];
+  const radius =
+    o.radius ??
+    (
+      {
+        paper: 3,
+        cardboard: 6,
+        wax: 999,
+        foil: 6,
+        fabric: 4,
+        glass: 14,
+        capiz: 6,
+        frost: 14,
+        wood: 8,
+        metal: 10,
+      } as const
+    )[name];
 
   switch (name) {
     case "paper":
       return {
         backgroundColor: c,
-        backgroundImage: join(noise(0.95, 0.07), `linear-gradient(160deg, ${shade(c, 0.35)} 0%, ${c} 45%, ${shade(c, -0.04)} 100%)`),
+        backgroundImage: join(
+          noise(0.95, 0.07),
+          `linear-gradient(160deg, ${shade(c, 0.35)} 0%, ${c} 45%, ${shade(c, -0.04)} 100%)`,
+        ),
         boxShadow: join(rim(0.9), shadow),
         borderRadius: radius,
       };
@@ -88,7 +122,11 @@ export function material(name: MaterialName, o: MaterialOptions = {}): React.CSS
           `radial-gradient(circle at 50% 55%, ${c} 0 58%, ${shade(c, -0.28)} 100%)`,
           noise(1.4, 0.12),
         ),
-        boxShadow: join(`inset -3px -5px 9px ${shade(c, -0.4)}66`, `inset 3px 4px 6px ${shade(c, 0.5)}55`, shadow),
+        boxShadow: join(
+          `inset -3px -5px 9px ${shade(c, -0.4)}66`,
+          `inset 3px 4px 6px ${shade(c, 0.5)}55`,
+          shadow,
+        ),
         borderRadius: radius,
       };
     case "foil":
@@ -120,7 +158,11 @@ export function material(name: MaterialName, o: MaterialOptions = {}): React.CSS
         backgroundImage: join(
           `linear-gradient(125deg, rgba(255,255,255,.55) 0%, rgba(255,255,255,.08) 32%, transparent 33%, transparent 64%, rgba(255,255,255,.18) 65%, transparent 80%)`,
         ),
-        boxShadow: join(`inset 0 0 0 1px rgba(255,255,255,.55)`, `inset 1px 2px 0 rgba(255,255,255,.7)`, shadow),
+        boxShadow: join(
+          `inset 0 0 0 1px rgba(255,255,255,.55)`,
+          `inset 1px 2px 0 rgba(255,255,255,.7)`,
+          shadow,
+        ),
         borderRadius: radius,
       };
     case "capiz":
@@ -139,8 +181,15 @@ export function material(name: MaterialName, o: MaterialOptions = {}): React.CSS
     case "frost":
       return {
         backgroundColor: `${c}D9`,
-        backgroundImage: join(noise(1.6, 0.22, 3), `radial-gradient(140% 100% at 50% 0%, rgba(255,255,255,.6), transparent 70%)`),
-        boxShadow: join(`inset 0 0 30px rgba(255,255,255,.6)`, `inset 0 0 0 1px rgba(255,255,255,.7)`, shadow),
+        backgroundImage: join(
+          noise(1.6, 0.22, 3),
+          `radial-gradient(140% 100% at 50% 0%, rgba(255,255,255,.6), transparent 70%)`,
+        ),
+        boxShadow: join(
+          `inset 0 0 30px rgba(255,255,255,.6)`,
+          `inset 0 0 0 1px rgba(255,255,255,.7)`,
+          shadow,
+        ),
         borderRadius: radius,
       };
     case "wood":

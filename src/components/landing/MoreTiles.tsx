@@ -54,9 +54,16 @@ export function OpenWhenDemo() {
               className="absolute inset-x-0 top-0 z-[2] h-[38px] origin-top"
               animate={{ rotateX: on ? 180 : 0 }}
               transition={SPRING.soft}
-              style={{ clipPath: "polygon(0 0,100% 0,50% 100%)", background: "#E8CDB1", transformStyle: "preserve-3d" }}
+              style={{
+                clipPath: "polygon(0 0,100% 0,50% 100%)",
+                background: "#E8CDB1",
+                transformStyle: "preserve-3d",
+              }}
             />
-            <span className="absolute top-[28px] left-1/2 z-[3] size-4 -ml-2 rounded-full bg-[#B5623E] shadow-sm" style={{ opacity: on ? 0 : 1 }} />
+            <span
+              className="absolute top-[28px] left-1/2 z-[3] size-4 -ml-2 rounded-full bg-[#B5623E] shadow-sm"
+              style={{ opacity: on ? 0 : 1 }}
+            />
             <span className="absolute inset-x-1 bottom-1.5 z-[3] truncate text-center font-mono text-[8.5px] tracking-wide text-ink/65 uppercase">
               {n.when}
             </span>
@@ -101,7 +108,10 @@ export function CapsuleDemo() {
           From Sofia
         </span>
       </motion.button>
-      <p className="mt-3 font-mono text-[11px] tracking-[.1em] text-ink/70 tabular-nums uppercase" suppressHydrationWarning>
+      <p
+        className="mt-3 font-mono text-[11px] tracking-[.1em] text-ink/70 tabular-nums uppercase"
+        suppressHydrationWarning
+      >
         Opens {wait}
       </p>
       <p className="mt-1 text-[11px] text-ink/55" suppressHydrationWarning>
@@ -122,7 +132,9 @@ export function AwardsDemo() {
   ];
   return (
     <div ref={ref} className={`w-full max-w-[260px] rounded-2xl p-3.5 ${card}`}>
-      <p className="font-mono text-[9.5px] tracking-[.14em] text-ink/55 uppercase">Most likely to cry at the toast</p>
+      <p className="font-mono text-[9.5px] tracking-[.14em] text-ink/55 uppercase">
+        Most likely to cry at the toast
+      </p>
       <div className="mt-2.5 space-y-2">
         {rows.map((r, i) => (
           <div key={r.name} className="flex items-center gap-2 text-[12px]">
@@ -168,17 +180,26 @@ export function QuizDemo() {
   const [picked, setPicked] = useState<number | null>(null);
   return (
     <div className={`w-full max-w-[260px] rounded-2xl p-3.5 ${card}`}>
-      <p className="text-[13px] leading-snug font-semibold">Where did Ana get lost for six hours with no phone?</p>
+      <p className="text-[13px] leading-snug font-semibold">
+        Where did Ana get lost for six hours with no phone?
+      </p>
       <div className="mt-2.5 grid gap-1.5">
         {options.map((o, i) => {
-          const state = picked === null ? "idle" : i === right ? "right" : picked === i ? "wrong" : "idle";
+          const state =
+            picked === null ? "idle" : i === right ? "right" : picked === i ? "wrong" : "idle";
           return (
             <motion.button
               key={o}
               type="button"
               disabled={picked !== null}
               onClick={() => setPicked(i)}
-              animate={state === "wrong" ? { x: [0, -6, 6, -3, 0] } : state === "right" ? { scale: [1, 1.04, 1] } : {}}
+              animate={
+                state === "wrong"
+                  ? { x: [0, -6, 6, -3, 0] }
+                  : state === "right"
+                    ? { scale: [1, 1.04, 1] }
+                    : {}
+              }
               transition={{ duration: 0.4 }}
               className={`rounded-lg px-3 py-1.5 text-left text-[12px] ring-1 transition-colors ${
                 state === "right"
@@ -189,13 +210,19 @@ export function QuizDemo() {
               }`}
             >
               {o}
-              {state === "right" ? <span className="float-right text-[#2F8F6B]">Mateo knew</span> : null}
+              {state === "right" ? (
+                <span className="float-right text-[#2F8F6B]">Mateo knew</span>
+              ) : null}
             </motion.button>
           );
         })}
       </div>
       {picked !== null ? (
-        <button type="button" onClick={() => setPicked(null)} className="mt-2 text-[11px] text-ink/55 underline underline-offset-2">
+        <button
+          type="button"
+          onClick={() => setPicked(null)}
+          className="mt-2 text-[11px] text-ink/55 underline underline-offset-2"
+        >
           Try again
         </button>
       ) : null}
@@ -214,12 +241,25 @@ export function MapDemo() {
   ];
   const d = "M30 92 C 60 30, 90 30, 118 40 S 190 120, 214 82";
   return (
-    <div ref={ref} className="relative w-full max-w-[260px] overflow-hidden rounded-2xl bg-[#DCEBF2] ring-1 ring-ink/5">
+    <div
+      ref={ref}
+      className="relative w-full max-w-[260px] overflow-hidden rounded-2xl bg-[#DCEBF2] ring-1 ring-ink/5"
+    >
       <svg viewBox="0 0 250 130" className="block w-full" aria-hidden="true">
-        <path d="M-10 70 Q 30 40 70 60 T 140 64 Q 170 30 210 46 T 260 40 V140 H-10Z" fill="#F4EEE3" />
+        <path
+          d="M-10 70 Q 30 40 70 60 T 140 64 Q 170 30 210 46 T 260 40 V140 H-10Z"
+          fill="#F4EEE3"
+        />
         <path d="M150 140 Q 170 100 200 104 T 260 96 V140Z" fill="#E7DCC8" />
         {Array.from({ length: 30 }, (_, i) => (
-          <circle key={i} cx={(i * 47) % 250} cy={6 + ((i * 29) % 40)} r=".9" fill="#2B2522" opacity=".12" />
+          <circle
+            key={i}
+            cx={(i * 47) % 250}
+            cy={6 + ((i * 29) % 40)}
+            r=".9"
+            fill="#2B2522"
+            opacity=".12"
+          />
         ))}
         <motion.path
           d={d}
@@ -240,10 +280,30 @@ export function MapDemo() {
             transition={{ ...SPRING.wobbly, delay: 0.2 + i * 0.6 }}
             style={{ originX: `${p.x}px`, originY: `${p.y}px` }}
           >
-            <path d={`M${p.x} ${p.y}c-6-7-9-11-9-15a9 9 0 0 1 18 0c0 4-3 8-9 15z`} fill="#E8577E" stroke="#fff" strokeWidth="1.5" />
+            <path
+              d={`M${p.x} ${p.y}c-6-7-9-11-9-15a9 9 0 0 1 18 0c0 4-3 8-9 15z`}
+              fill="#E8577E"
+              stroke="#fff"
+              strokeWidth="1.5"
+            />
             <circle cx={p.x} cy={p.y - 15} r="3" fill="#fff" />
-            <rect x={p.x - 26} y={p.y + 3} width="52" height="13" rx="6.5" fill="#fff" opacity=".92" />
-            <text x={p.x} y={p.y + 12.5} textAnchor="middle" fontSize="7.5" fontFamily="DM Sans, sans-serif" fill="#2B2522">
+            <rect
+              x={p.x - 26}
+              y={p.y + 3}
+              width="52"
+              height="13"
+              rx="6.5"
+              fill="#fff"
+              opacity=".92"
+            />
+            <text
+              x={p.x}
+              y={p.y + 12.5}
+              textAnchor="middle"
+              fontSize="7.5"
+              fontFamily="DM Sans, sans-serif"
+              fill="#2B2522"
+            >
               {p.name}
             </text>
           </motion.g>
@@ -265,8 +325,12 @@ export function CouponDemo() {
       className="relative flex h-[92px] w-full max-w-[268px] text-left"
     >
       <span className="relative flex flex-1 flex-col justify-center rounded-l-xl bg-[#FFF4DE] px-4 ring-1 ring-[#E8577E]/30">
-        <span className="font-mono text-[9px] tracking-[.16em] text-[#E8577E] uppercase">Good for one</span>
-        <span className="font-display text-[19px] leading-tight font-semibold">Dinner, my treat</span>
+        <span className="font-mono text-[9px] tracking-[.16em] text-[#E8577E] uppercase">
+          Good for one
+        </span>
+        <span className="font-display text-[19px] leading-tight font-semibold">
+          Dinner, my treat
+        </span>
         <span className="text-[10.5px] text-ink/55">From Mateo. No expiry.</span>
         {torn ? (
           <motion.span
@@ -281,7 +345,9 @@ export function CouponDemo() {
       </span>
       <motion.span
         className="relative grid w-[64px] place-items-center rounded-r-xl border-l-2 border-dashed border-[#E8577E]/50 bg-[#FBE3D3] ring-1 ring-[#E8577E]/30"
-        animate={torn ? { rotate: 24, x: 22, y: 26, opacity: 0.85 } : { rotate: 0, x: 0, y: 0, opacity: 1 }}
+        animate={
+          torn ? { rotate: 24, x: 22, y: 26, opacity: 0.85 } : { rotate: 0, x: 0, y: 0, opacity: 1 }
+        }
         transition={SPRING.wobbly}
         style={{ transformOrigin: "0% 100%" }}
       >
@@ -329,9 +395,15 @@ export function VideoDemo() {
         aria-label={playing ? "Pause clip" : "Play clip"}
         className="absolute bottom-1.5 left-2 grid size-5 place-items-center rounded-full bg-ink text-cream"
       >
-        {playing ? <Pause className="size-2.5" aria-hidden="true" /> : <Play className="ml-px size-2.5" aria-hidden="true" />}
+        {playing ? (
+          <Pause className="size-2.5" aria-hidden="true" />
+        ) : (
+          <Play className="ml-px size-2.5" aria-hidden="true" />
+        )}
       </button>
-      <span className="absolute right-2 bottom-1.5 text-[10.5px] text-ink/60">From Jordan, 0:12</span>
+      <span className="absolute right-2 bottom-1.5 text-[10.5px] text-ink/60">
+        From Jordan, 0:12
+      </span>
     </div>
   );
 }
@@ -353,7 +425,10 @@ export function DoodleDemo() {
         ref={svgRef}
         viewBox="0 0 240 140"
         className="block w-full touch-none cursor-crosshair"
-        style={{ backgroundImage: "radial-gradient(#2B25221a 1px, transparent 1px)", backgroundSize: "12px 12px" }}
+        style={{
+          backgroundImage: "radial-gradient(#2B25221a 1px, transparent 1px)",
+          backgroundSize: "12px 12px",
+        }}
         onPointerDown={(e) => {
           drawing.current = true;
           (e.target as Element).setPointerCapture?.(e.pointerId);
@@ -397,15 +472,29 @@ export function DoodleDemo() {
           Aisha
         </motion.text>
         {lines.map((d, i) => (
-          <path key={i} d={d} fill="none" stroke="#243087" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
+          <path
+            key={i}
+            d={d}
+            fill="none"
+            stroke="#243087"
+            strokeWidth="3"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
         ))}
       </svg>
       {lines.length ? (
-        <button type="button" onClick={() => setLines([])} className="absolute top-2 right-2 rounded-full bg-cream px-2 py-0.5 text-[10.5px] text-ink/65 ring-1 ring-ink/10">
+        <button
+          type="button"
+          onClick={() => setLines([])}
+          className="absolute top-2 right-2 rounded-full bg-cream px-2 py-0.5 text-[10.5px] text-ink/65 ring-1 ring-ink/10"
+        >
           Clear
         </button>
       ) : (
-        <span className="pointer-events-none absolute top-2 right-2 rounded-full bg-cream/90 px-2 py-0.5 text-[10.5px] text-ink/60">Your turn, draw</span>
+        <span className="pointer-events-none absolute top-2 right-2 rounded-full bg-cream/90 px-2 py-0.5 text-[10.5px] text-ink/60">
+          Your turn, draw
+        </span>
       )}
     </div>
   );

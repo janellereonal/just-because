@@ -77,7 +77,8 @@ export function sampleFor(theme: Theme) {
   if (key.includes("baby")) return { heading: "Welcome, little June", name: "June" };
   if (key.includes("bridal") || key.includes("shower"))
     return { heading: "Showered with love, Bea", name: "Bea" };
-  if (key.includes("wedding")) return { heading: "Congratulations, Nora & James", name: "Nora & James" };
+  if (key.includes("wedding"))
+    return { heading: "Congratulations, Nora & James", name: "Nora & James" };
   if (key.includes("handwritten")) return { heading: "A few words for you, Noor", name: "Noor" };
   if (key.includes("game")) return { heading: "Game on, Kai", name: "Kai" };
   if (key.includes("pixel")) return { heading: "Level up, Theo", name: "Theo" };
@@ -144,7 +145,11 @@ export function buildPreviewSite(theme: Theme, palette: Palette | undefined): Gi
 export function previewModules(theme: Theme, siteId: string): SiteModule[] {
   const preset = PRESETS[themeKindOf(theme)];
   const types = (
-    preset?.length ? preset : theme.default_modules.length > 0 ? theme.default_modules : ["letters", "photobooth", "songs"]
+    preset?.length
+      ? preset
+      : theme.default_modules.length > 0
+        ? theme.default_modules
+        : ["letters", "photobooth", "songs"]
   ) as ModuleType[];
   return types.map((type, i) => ({
     id: `${theme.id}-${i}`,
@@ -278,7 +283,11 @@ export function ThemeLivePreview({ theme }: { theme: Theme }) {
       <Live3DContext.Provider value={false}>
         <div
           className="pointer-events-none absolute top-0 left-0 origin-top-left"
-          style={{ ...themeFontVars(themeKindOf(theme)), width: PHONE_WIDTH, transform: `scale(${scale}) translateY(${-offset}px)` }}
+          style={{
+            ...themeFontVars(themeKindOf(theme)),
+            width: PHONE_WIDTH,
+            transform: `scale(${scale}) translateY(${-offset}px)`,
+          }}
         >
           <div ref={innerRef}>
             {mounted && visible && phase === "gift" ? (

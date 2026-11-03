@@ -42,20 +42,39 @@ function DevLoveLetter() {
   const [hint, setHint] = useState("");
   const ana = DEMO_GIFTS.ana;
   const site = useMemo(
-    () => ({ ...ana.site, format: "storybook" as const, style: "love-letter" as const, occasion: "anniversary" as const, custom_text: { ...ana.site.custom_text, heading: "", recipient_name: name } }),
+    () => ({
+      ...ana.site,
+      format: "storybook" as const,
+      style: "love-letter" as const,
+      occasion: "anniversary" as const,
+      custom_text: { ...ana.site.custom_text, heading: "", recipient_name: name },
+    }),
     [ana.site, name],
   );
   const design = designFor("valentine");
   const cast = castFor("valentine", null, null);
-  const icons = useMemo(() => resolveIconSet(cast.iconSet, { recipient: name, palette: WAX }), [cast.iconSet, name]);
+  const icons = useMemo(
+    () => resolveIconSet(cast.iconSet, { recipient: name, palette: WAX }),
+    [cast.iconSet, name],
+  );
   const dir = LOVE_LETTER_DIRECTIONS[d];
   const Component = dir.Component;
   useEffect(() => setOpened(false), [d, round]);
   if (!import.meta.env.DEV) return null;
   return (
-    <div className="fixed inset-0 overflow-y-auto [container:gift/inline-size]" style={{ background: WAX.background }}>
+    <div
+      className="fixed inset-0 overflow-y-auto [container:gift/inline-size]"
+      style={{ background: WAX.background }}
+    >
       <div data-gift-underlay="">
-        <FormatView site={site} theme={THEME} palette={WAX} modules={ana.modules} contributions={ana.notes} calendarEntries={ana.calendar} />
+        <FormatView
+          site={site}
+          theme={THEME}
+          palette={WAX}
+          modules={ana.modules}
+          contributions={ana.notes}
+          calendarEntries={ana.calendar}
+        />
       </div>
       {!opened ? (
         <OpeningShell
@@ -96,7 +115,11 @@ function DevLoveLetter() {
           )}
         </OpeningShell>
       ) : (
-        <button type="button" onClick={() => setRound((n) => n + 1)} className="fixed right-3 bottom-3 z-[90] rounded-full bg-ink px-4 py-2 text-xs font-semibold text-cream">
+        <button
+          type="button"
+          onClick={() => setRound((n) => n + 1)}
+          className="fixed right-3 bottom-3 z-[90] rounded-full bg-ink px-4 py-2 text-xs font-semibold text-cream"
+        >
           {dir.label} · play again
         </button>
       )}

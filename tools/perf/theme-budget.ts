@@ -19,7 +19,17 @@ const BUDGET_KB = 400;
 const ROOT = path.resolve(import.meta.dir, "../..");
 const TMP = path.join(ROOT, "tools/perf/.tmp");
 // Already on every gift page, so not part of a theme's cost.
-const SHARED = ["react", "react-dom", "react/jsx-runtime", "react/jsx-dev-runtime", "motion", "motion/react", "lucide-react", "@tanstack/react-router", "@tanstack/react-query"];
+const SHARED = [
+  "react",
+  "react-dom",
+  "react/jsx-runtime",
+  "react/jsx-dev-runtime",
+  "motion",
+  "motion/react",
+  "lucide-react",
+  "@tanstack/react-router",
+  "@tanstack/react-query",
+];
 
 const only = process.argv[2];
 const themes = ENGINE_THEMES.filter((t) => !only || t.id === only);
@@ -40,7 +50,10 @@ for (const theme of themes) {
     continue;
   }
   const entry = path.join(TMP, `${theme.id}.entry.tsx`);
-  writeFileSync(entry, `export { EngineStage } from "${path.join(ROOT, "src/themes/engine/EngineStage")}";\nexport { default } from "${objectFile}";\n`);
+  writeFileSync(
+    entry,
+    `export { EngineStage } from "${path.join(ROOT, "src/themes/engine/EngineStage")}";\nexport { default } from "${objectFile}";\n`,
+  );
   const out = await Bun.build({
     entrypoints: [entry],
     outdir: path.join(TMP, theme.id),
@@ -68,12 +81,16 @@ for (const theme of themes) {
     }
     const buf = readFileSync(f);
     // Images are already compressed; text assets get gzipped by the CDN.
-    assets += /\.(webp|png|jpe?g|avif|gif|mp3|m4a|ogg|woff2?)$/i.test(f) ? statSync(f).size : gzipSync(buf).byteLength;
+    assets += /\.(webp|png|jpe?g|avif|gif|mp3|m4a|ogg|woff2?)$/i.test(f)
+      ? statSync(f).size
+      : gzipSync(buf).byteLength;
   }
   const total = (js + assets) / 1024;
   const ok = total <= BUDGET_KB;
   if (!ok) failed = true;
-  rows.push(`${ok ? "ok  " : "OVER"} ${theme.id.padEnd(22)} js ${(js / 1024).toFixed(1).padStart(6)} KB  assets ${(assets / 1024).toFixed(1).padStart(6)} KB  total ${total.toFixed(1).padStart(6)} / ${BUDGET_KB} KB`);
+  rows.push(
+    `${ok ? "ok  " : "OVER"} ${theme.id.padEnd(22)} js ${(js / 1024).toFixed(1).padStart(6)} KB  assets ${(assets / 1024).toFixed(1).padStart(6)} KB  total ${total.toFixed(1).padStart(6)} / ${BUDGET_KB} KB`,
+  );
 }
 rmSync(TMP, { recursive: true, force: true });
 console.log(rows.join("\n"));

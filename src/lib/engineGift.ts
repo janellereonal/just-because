@@ -14,9 +14,22 @@ import { sampleNotes } from "@/lib/sampleSections";
 /** Notes an opening may show: approved, public, with words or a photo; sealed and recipient-only ones never. */
 export function engineNotes(contributions: (Contribution & { sealed?: boolean })[]): EngineNote[] {
   return contributions
-    .filter((c) => c.status === "approved" && c.visibility !== "recipient" && !c.sealed && c.module_type !== "tree" && c.module_type !== "capsule")
+    .filter(
+      (c) =>
+        c.status === "approved" &&
+        c.visibility !== "recipient" &&
+        !c.sealed &&
+        c.module_type !== "tree" &&
+        c.module_type !== "capsule",
+    )
     .filter((c) => (c.text_content ?? "").trim() || c.media_url)
-    .map((c) => ({ id: c.id, author: c.author_name, text: c.text_content, media: c.media_url, kind: c.module_type }));
+    .map((c) => ({
+      id: c.id,
+      author: c.author_name,
+      text: c.text_content,
+      media: c.media_url,
+      kind: c.module_type,
+    }));
 }
 
 /** The age, as the organiser typed it in "Turning". */
@@ -25,9 +38,15 @@ export function turningOf(text: CustomText): number | null {
   return Number.isFinite(n) && n > 0 && n < 130 ? n : null;
 }
 
-export function engineSlots(site: Pick<GiftSite, "custom_text" | "countdown_at" | "countdown_date">, contributions: Contribution[] = []): SlotInput {
+export function engineSlots(
+  site: Pick<GiftSite, "custom_text" | "countdown_at" | "countdown_date">,
+  contributions: Contribution[] = [],
+): SlotInput {
   const ct = site.custom_text as Record<string, string | undefined>;
-  const photo = contributions.find((c) => c.module_type === "photobooth" && c.status === "approved" && c.media_url)?.media_url ?? null;
+  const photo =
+    contributions.find(
+      (c) => c.module_type === "photobooth" && c.status === "approved" && c.media_url,
+    )?.media_url ?? null;
   return {
     recipient: site.custom_text.recipient_name ?? "",
     age: turningOf(site.custom_text),
@@ -54,7 +73,8 @@ export function simbangVisible<T extends { created_at: string }>(
   now = new Date(),
 ): { notes: T[]; night: number | null } {
   const def = engineThemeForName(themeName);
-  if (!def?.offers?.includes("simbang") || site.intro_settings.simbang !== true) return { notes, night: null };
+  if (!def?.offers?.includes("simbang") || site.intro_settings.simbang !== true)
+    return { notes, night: null };
   const night = simbangNight(now, simbangYear(site.created_at));
   const ordered = [...notes].sort((a, b) => a.created_at.localeCompare(b.created_at));
   const open = new Set(openedNotes(ordered, night));
@@ -71,13 +91,22 @@ export { isFlagOn };
 /** Everything GiftIntro needs for an engine theme, ready to spread onto it. */
 export function engineIntroProps(
   themeName: string | null | undefined,
-  site: Pick<GiftSite, "custom_text" | "countdown_at" | "countdown_date" | "intro_settings" | "created_at">,
+  site: Pick<
+    GiftSite,
+    "custom_text" | "countdown_at" | "countdown_date" | "intro_settings" | "created_at"
+  >,
   contributions: Contribution[],
 ) {
   const age = isFlagOn("birthdayAge") ? turningOf(site.custom_text) : null;
   if (!usesEngine(themeName)) return { themeName, age };
   const approved = contributions.filter((c) => c.status === "approved");
-  return { themeName, age, notes: engineNotes(approved), slots: engineSlots(site, approved), themeOptions: engineOptions(site) };
+  return {
+    themeName,
+    age,
+    notes: engineNotes(approved),
+    slots: engineSlots(site, approved),
+    themeOptions: engineOptions(site),
+  };
 }
 
 /** For gallery cards and previews: sample notes and places, so engine themes show what's inside. */
@@ -85,7 +114,13 @@ export function previewEngineProps(themeName: string | null | undefined, recipie
   if (!usesEngine(themeName)) return { themeName };
   const notes: EngineNote[] = sampleNotes(recipient, "preview")
     .filter((n) => n.module_type !== "tree")
-    .map((n) => ({ id: n.id, author: n.author_name, text: n.text_content, media: n.media_url, kind: n.module_type }));
+    .map((n) => ({
+      id: n.id,
+      author: n.author_name,
+      text: n.text_content,
+      media: n.media_url,
+      kind: n.module_type,
+    }));
   const slots: SlotInput = {
     recipient,
     place: { city: "Lisbon", country: "PT" },

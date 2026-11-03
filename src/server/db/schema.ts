@@ -103,7 +103,9 @@ export const themes = pgTable("themes", {
   category: text("category").notNull(),
   previewImageUrl: text("preview_image_url"),
   /** Deprecated: replaced by suggested_palette_ids. Kept for old gifts. */
-  palettes: jsonb("palettes").notNull().default(sql`'[]'::jsonb`),
+  palettes: jsonb("palettes")
+    .notNull()
+    .default(sql`'[]'::jsonb`),
   suggestedPaletteIds: uuid("suggested_palette_ids")
     .array()
     .notNull()
@@ -133,9 +135,15 @@ export const giftSites = pgTable(
     style: text("style"),
     /** What the gift is for (src/lib/occasions.ts). Null = use the theme's own words, as before. */
     occasion: text("occasion"),
-    formatSettings: jsonb("format_settings").notNull().default(sql`'{}'::jsonb`),
-    customText: jsonb("custom_text").notNull().default(sql`'{}'::jsonb`),
-    customColors: jsonb("custom_colors").notNull().default(sql`'{}'::jsonb`),
+    formatSettings: jsonb("format_settings")
+      .notNull()
+      .default(sql`'{}'::jsonb`),
+    customText: jsonb("custom_text")
+      .notNull()
+      .default(sql`'{}'::jsonb`),
+    customColors: jsonb("custom_colors")
+      .notNull()
+      .default(sql`'{}'::jsonb`),
     paletteId: uuid("palette_id").references(() => palettes.id),
     shareNotes: boolean("share_notes").notNull().default(false),
     fontChoice: text("font_choice").notNull().default("theme"),
@@ -151,7 +159,9 @@ export const giftSites = pgTable(
     /** Just from the creator (no friends link). They add every note themselves. */
     solo: boolean("solo").notNull().default(false),
     /** The creator's custom opening: object, stickers, colors, background, button words. */
-    introSettings: jsonb("intro_settings").notNull().default(sql`'{}'::jsonb`),
+    introSettings: jsonb("intro_settings")
+      .notNull()
+      .default(sql`'{}'::jsonb`),
     backgroundStyle: text("background_style").notNull().default("paper"),
     treeRevealDate: date("tree_reveal_date"),
     /** When the creator was last emailed about new notes (throttles alerts). */
@@ -222,7 +232,10 @@ export const discountCodes = pgTable(
     /** Percent off, or centavos off for fixed. 0 for free. */
     value: integer("value").notNull().default(0),
     /** Plan ids it works on. Empty means every plan. */
-    plans: text("plans").array().notNull().default(sql`'{}'::text[]`),
+    plans: text("plans")
+      .array()
+      .notNull()
+      .default(sql`'{}'::text[]`),
     /** Null means no overall limit. */
     maxUses: integer("max_uses"),
     /** Null means no per-person limit. */
@@ -256,7 +269,9 @@ export const orders = pgTable(
     currency: text("currency").notNull().default("PHP"),
     promoApplied: boolean("promo_applied").notNull().default(false),
     /** The discount code used, if any. The code text is kept too, in case the code is deleted later. */
-    discountCodeId: uuid("discount_code_id").references(() => discountCodes.id, { onDelete: "set null" }),
+    discountCodeId: uuid("discount_code_id").references(() => discountCodes.id, {
+      onDelete: "set null",
+    }),
     discountCode: text("discount_code"),
     /** Centavos taken off by the code (full price = amount + discountAmount). */
     discountAmount: integer("discount_amount").notNull().default(0),
@@ -341,7 +356,10 @@ export const contributions = pgTable(
     data: jsonb("data"),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   },
-  (t) => [index("contributions_site_idx").on(t.siteId), index("contributions_site_device_idx").on(t.siteId, t.deviceId)],
+  (t) => [
+    index("contributions_site_idx").on(t.siteId),
+    index("contributions_site_device_idx").on(t.siteId, t.deviceId),
+  ],
 );
 
 export const calendarEntries = pgTable(
@@ -442,5 +460,8 @@ export const events = pgTable(
     props: jsonb("props").$type<Record<string, string | number | boolean>>(),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   },
-  (t) => [index("events_name_at_idx").on(t.name, t.createdAt), index("events_site_idx").on(t.siteId)],
+  (t) => [
+    index("events_name_at_idx").on(t.name, t.createdAt),
+    index("events_site_idx").on(t.siteId),
+  ],
 );

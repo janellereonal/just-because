@@ -9,7 +9,9 @@ import { GuestSignInCard } from "@/components/GuestPrompt";
 import { GUEST_COPY } from "@/copy/strings";
 
 export const Route = createFileRoute("/_authenticated/account")({
-  head: () => ({ meta: [{ title: "Your account | Just Because" }, { name: "robots", content: "noindex" }] }),
+  head: () => ({
+    meta: [{ title: "Your account | Just Because" }, { name: "robots", content: "noindex" }],
+  }),
   component: AccountPage,
 });
 
@@ -29,7 +31,11 @@ function AccountPage() {
       void navigate({ to: "/" });
     } catch (error) {
       setBusy(false);
-      toast.error(error instanceof Error && error.message.length < 160 ? error.message : "That didn't work. Please try again.");
+      toast.error(
+        error instanceof Error && error.message.length < 160
+          ? error.message
+          : "That didn't work. Please try again.",
+      );
     }
   }
 

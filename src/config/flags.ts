@@ -37,7 +37,10 @@ export type FlagName = keyof typeof FLAGS;
 
 function enabledList(): string[] {
   const raw = (import.meta.env["VITE_FLAGS"] as string | undefined) ?? "";
-  return raw.split(",").map((s) => s.trim()).filter(Boolean);
+  return raw
+    .split(",")
+    .map((s) => s.trim())
+    .filter(Boolean);
 }
 
 /** Vercel preview deployments (every PR) have every flag on, so new work can be tried there. Never production. */

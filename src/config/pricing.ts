@@ -67,7 +67,18 @@ export const TIERS: Tier[] = [
     mostPopular: true,
     contributors: { cap: 30, unlimited: false },
     photos: { cap: 150, unlimited: false },
-    formats: ["scrapbook", "comic", "bento", "hunt", "zine", "storybook", "mixtape", "scratch", "stars", "handwritten"],
+    formats: [
+      "scrapbook",
+      "comic",
+      "bento",
+      "hunt",
+      "zine",
+      "storybook",
+      "mixtape",
+      "scratch",
+      "stars",
+      "handwritten",
+    ],
     liveFor: { months: 12, label: "1 year" },
     extendAmount: 29900,
     features: { customLinkName: false, passwordProtection: true },
@@ -80,7 +91,18 @@ export const TIERS: Tier[] = [
     // "Unlimited" on the card, with a fair-use cap so one gift can't run away with storage.
     contributors: { cap: 500, unlimited: true },
     photos: { cap: 500, unlimited: true },
-    formats: ["scrapbook", "comic", "bento", "hunt", "zine", "storybook", "mixtape", "scratch", "stars", "handwritten"],
+    formats: [
+      "scrapbook",
+      "comic",
+      "bento",
+      "hunt",
+      "zine",
+      "storybook",
+      "mixtape",
+      "scratch",
+      "stars",
+      "handwritten",
+    ],
     liveFor: { months: 36, label: "3 years" },
     extendAmount: 49900,
     features: { customLinkName: true, passwordProtection: true },
@@ -178,17 +200,48 @@ export const discountCodes = {
   minCharge: 2000,
   /** Made by `bun run db:seed` the first time it runs (never changed after that). */
   starter: [
-    { code: "LAUNCH20", type: "percent", value: 20, plans: [], maxUses: 100, maxPerUser: 1, expiresInDays: 14, note: "Launch: 20% off any plan" },
-    { code: "FRIENDSFREE", type: "free", value: 0, plans: ["sweet"], maxUses: 10, maxPerUser: 1, expiresInDays: null, note: "Free Sweet plan for friends" },
-  ] as Array<{ code: string; type: DiscountType; value: number; plans: TierId[]; maxUses: number | null; maxPerUser: number | null; expiresInDays: number | null; note: string }>,
+    {
+      code: "LAUNCH20",
+      type: "percent",
+      value: 20,
+      plans: [],
+      maxUses: 100,
+      maxPerUser: 1,
+      expiresInDays: 14,
+      note: "Launch: 20% off any plan",
+    },
+    {
+      code: "FRIENDSFREE",
+      type: "free",
+      value: 0,
+      plans: ["sweet"],
+      maxUses: 10,
+      maxPerUser: 1,
+      expiresInDays: null,
+      note: "Free Sweet plan for friends",
+    },
+  ] as Array<{
+    code: string;
+    type: DiscountType;
+    value: number;
+    plans: TierId[];
+    maxUses: number | null;
+    maxPerUser: number | null;
+    expiresInDays: number | null;
+    note: string;
+  }>,
 };
 
 /** What a plan costs with a code. Never more than the full price, never below `minCharge` unless free. */
-export function discountedAmount(amount: number, code: { type: DiscountType | string; value: number }): number {
+export function discountedAmount(
+  amount: number,
+  code: { type: DiscountType | string; value: number },
+): number {
   let next = amount;
   if (code.type === "free") next = 0;
   // Percent codes land on a whole peso (20% off ₱299 is ₱239, not ₱239.20).
-  else if (code.type === "percent") next = Math.round((amount * (100 - Math.min(100, Math.max(0, code.value)))) / 100 / 100) * 100;
+  else if (code.type === "percent")
+    next = Math.round((amount * (100 - Math.min(100, Math.max(0, code.value)))) / 100 / 100) * 100;
   else if (code.type === "fixed") next = amount - Math.max(0, code.value);
   if (next <= 0) return 0;
   return Math.min(amount, Math.max(next, discountCodes.minCharge));
@@ -214,7 +267,12 @@ export const concierge = {
 
 /** "₱1,499 / $49" */
 export function conciergePrice(): string {
-  const usd = new Intl.NumberFormat(undefined, { style: "currency", currency: "USD", currencyDisplay: "narrowSymbol", maximumFractionDigits: 0 }).format(concierge.usd);
+  const usd = new Intl.NumberFormat(undefined, {
+    style: "currency",
+    currency: "USD",
+    currencyDisplay: "narrowSymbol",
+    maximumFractionDigits: 0,
+  }).format(concierge.usd);
   return `${formatPeso(concierge.amount)} / ${usd}`;
 }
 
@@ -225,7 +283,10 @@ export type SiteTier = TierId | typeof LEGACY_TIER;
 /* ---------------- helpers ---------------- */
 
 /** Does a gift on this tier get this feature? Legacy gifts get every feature. */
-export function hasFeature(tierId: string | null | undefined, feature: keyof TierFeatures): boolean {
+export function hasFeature(
+  tierId: string | null | undefined,
+  feature: keyof TierFeatures,
+): boolean {
   if (tierId === LEGACY_TIER) return true;
   return !!TIERS.find((t) => t.id === tierId)?.features[feature];
 }
@@ -248,7 +309,12 @@ export function tierRank(id: string | null | undefined): number {
 export function formatPeso(centavos: number): string {
   const pesos = centavos / 100;
   // Charged in pesos; written the way the viewer's locale writes money.
-  return new Intl.NumberFormat(undefined, { style: "currency", currency: "PHP", currencyDisplay: "narrowSymbol", maximumFractionDigits: pesos % 1 === 0 ? 0 : 2 }).format(pesos);
+  return new Intl.NumberFormat(undefined, {
+    style: "currency",
+    currency: "PHP",
+    currencyDisplay: "narrowSymbol",
+    maximumFractionDigits: pesos % 1 === 0 ? 0 : 2,
+  }).format(pesos);
 }
 
 export function formatUsdApprox(centavos: number): string {
@@ -278,10 +344,14 @@ function offeredCount(tier: Tier): number {
 /** The feature lines on a tier card, generated from the tier's settings. */
 export function featureList(tier: Tier): string[] {
   const lines = [
-    tier.contributors.unlimited ? "Unlimited contributors" : `Up to ${tier.contributors.cap} contributors`,
+    tier.contributors.unlimited
+      ? "Unlimited contributors"
+      : `Up to ${tier.contributors.cap} contributors`,
     tier.photos.unlimited ? "Unlimited photos for normal use" : `Up to ${tier.photos.cap} photos`,
     // Count only the formats on offer: one behind a flag that's off (Handwritten) isn't counted.
-    offeredCount(tier) >= 5 ? `All ${offeredCount(tier)} formats, including Storybook and Mixtape` : "Scrapbook and Bento formats",
+    offeredCount(tier) >= 5
+      ? `All ${offeredCount(tier)} formats, including Storybook and Mixtape`
+      : "Scrapbook and Bento formats",
   ];
   if (tier.features.passwordProtection) lines.push("Password protection");
   if (tier.features.customLinkName) lines.push("Custom link name");
@@ -318,7 +388,11 @@ export function extendedExpiry(expiresAt: Date | null, tier: Tier, now = new Dat
  * Styles (src/lib/styles.ts). Styles made from themes come with every plan, like themes always did.
  * Layout styles, and gifts from before styles, need a plan that includes their layout.
  */
-export function tierAllowsLook(tier: { formats: readonly string[] }, format: string, style?: string | null): boolean {
+export function tierAllowsLook(
+  tier: { formats: readonly string[] },
+  format: string,
+  style?: string | null,
+): boolean {
   if (isStyleId(style) && styleInfo(style).origin === "theme") return true;
   return tier.formats.includes(format);
 }

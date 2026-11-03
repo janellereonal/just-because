@@ -2,7 +2,7 @@ name: Build app image
 
 on:
   push:
-    branches: [main]
+    branches: [main, codex/just-because-work]
   pull_request:
     branches: [main]
   workflow_dispatch:
@@ -25,6 +25,14 @@ jobs:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Extract Docker metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ghcr.io/${{ github.repository }}
+          tags: |
+            type=sha,format=long,prefix=sha-
+            type=raw,value=latest,enable=${{ github.ref == 'refs/heads/main' }}
       - name: Build and publish
         uses: docker/build-push-action@v6
         with:
@@ -32,9 +40,8 @@ jobs:
           file: deployment/app/Dockerfile
           platforms: linux/amd64,linux/arm64
           push: ${{ github.event_name != 'pull_request' }}
-          tags: |
-            ghcr.io/${{ github.repository }}:sha-${{ github.sha }}
-            ghcr.io/${{ github.repository }}:latest
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
           build-args: |
             VITE_POSTHOG_KEY=${{ vars.VITE_POSTHOG_KEY }}
             VITE_POSTHOG_REGION=${{ vars.VITE_POSTHOG_REGION || 'us' }}

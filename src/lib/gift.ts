@@ -124,16 +124,66 @@ export const FONT_PAIRINGS = {
   modern: { label: "Modern", heading: "'Poppins', sans-serif", body: "'Inter', sans-serif" },
   // Key kept for saved gifts; the old script face is gone.
   handwritten: { label: "Fairytale", heading: "'Fraunces', serif", body: "'Karla', sans-serif" },
-  storybook: { label: "Fable", heading: "'Young Serif', serif", body: "'Nunito', sans-serif", google: "Young+Serif&family=Nunito:wght@400;600;700" },
-  elegant: { label: "Elegant", heading: "'Cormorant Garamond', serif", body: "'Lato', sans-serif", google: "Cormorant+Garamond:wght@500;600;700&family=Lato:wght@400;700" },
-  bold: { label: "Bold", heading: "'Bricolage Grotesque', sans-serif", body: "'DM Sans', sans-serif", google: "Bricolage+Grotesque:opsz,wght@12..96,600..800&family=DM+Sans:wght@400;500;700" },
-  bubbly: { label: "Bubbly", heading: "'Baloo 2', sans-serif", body: "'Nunito', sans-serif", google: "Baloo+2:wght@600;700;800&family=Nunito:wght@400;600;700" },
-  penpal: { label: "Pen pal", heading: "'Kalam', cursive", body: "'Patrick Hand', sans-serif", google: "Kalam:wght@400;700&family=Patrick+Hand" },
-  typewriter: { label: "Typewriter", heading: "'Courier Prime', monospace", body: "'Karla', sans-serif", google: "Courier+Prime:wght@400;700&family=Karla:wght@400;600" },
-  groovy: { label: "Groovy", heading: "'Shrikhand', serif", body: "'DM Sans', sans-serif", google: "Shrikhand&family=DM+Sans:wght@400;500;700" },
-  retro: { label: "Retro", heading: "'Bungee', sans-serif", body: "'Outfit', sans-serif", google: "Bungee&family=Outfit:wght@400;500;700" },
-  comic: { label: "Inked", heading: "'Bangers', sans-serif", body: "'Comic Neue', sans-serif", google: "Bangers&family=Comic+Neue:wght@400;700" },
-  pixel: { label: "8-bit", heading: "'Pixelify Sans', sans-serif", body: "'Outfit', sans-serif", google: "Pixelify+Sans:wght@500;700&family=Outfit:wght@400;500;700" },
+  storybook: {
+    label: "Fable",
+    heading: "'Young Serif', serif",
+    body: "'Nunito', sans-serif",
+    google: "Young+Serif&family=Nunito:wght@400;600;700",
+  },
+  elegant: {
+    label: "Elegant",
+    heading: "'Cormorant Garamond', serif",
+    body: "'Lato', sans-serif",
+    google: "Cormorant+Garamond:wght@500;600;700&family=Lato:wght@400;700",
+  },
+  bold: {
+    label: "Bold",
+    heading: "'Bricolage Grotesque', sans-serif",
+    body: "'DM Sans', sans-serif",
+    google: "Bricolage+Grotesque:opsz,wght@12..96,600..800&family=DM+Sans:wght@400;500;700",
+  },
+  bubbly: {
+    label: "Bubbly",
+    heading: "'Baloo 2', sans-serif",
+    body: "'Nunito', sans-serif",
+    google: "Baloo+2:wght@600;700;800&family=Nunito:wght@400;600;700",
+  },
+  penpal: {
+    label: "Pen pal",
+    heading: "'Kalam', cursive",
+    body: "'Patrick Hand', sans-serif",
+    google: "Kalam:wght@400;700&family=Patrick+Hand",
+  },
+  typewriter: {
+    label: "Typewriter",
+    heading: "'Courier Prime', monospace",
+    body: "'Karla', sans-serif",
+    google: "Courier+Prime:wght@400;700&family=Karla:wght@400;600",
+  },
+  groovy: {
+    label: "Groovy",
+    heading: "'Shrikhand', serif",
+    body: "'DM Sans', sans-serif",
+    google: "Shrikhand&family=DM+Sans:wght@400;500;700",
+  },
+  retro: {
+    label: "Retro",
+    heading: "'Bungee', sans-serif",
+    body: "'Outfit', sans-serif",
+    google: "Bungee&family=Outfit:wght@400;500;700",
+  },
+  comic: {
+    label: "Inked",
+    heading: "'Bangers', sans-serif",
+    body: "'Comic Neue', sans-serif",
+    google: "Bangers&family=Comic+Neue:wght@400;700",
+  },
+  pixel: {
+    label: "8-bit",
+    heading: "'Pixelify Sans', sans-serif",
+    body: "'Outfit', sans-serif",
+    google: "Pixelify+Sans:wght@500;700&family=Outfit:wght@400;500;700",
+  },
 } as const;
 
 export const FONT_CHOICES: readonly FontChoiceId[] = FONT_CHOICE_IDS;
@@ -188,7 +238,11 @@ export type CustomText = {
 };
 
 /** Sensible pre-filled titles, based on the occasion and who the gift is for. */
-export function defaultTitles(text: CustomText, kind: ThemeKind = "default", occasion?: OccasionId | null) {
+export function defaultTitles(
+  text: CustomText,
+  kind: ThemeKind = "default",
+  occasion?: OccasionId | null,
+) {
   const name = text.recipient_name?.trim() || "you";
   return {
     heading: occasion ? occasionWords(occasion).occasion : KIND_WORDS[kind].occasion,
@@ -233,10 +287,7 @@ export const BACKGROUND_STYLES = {
 export type BackgroundStyle = keyof typeof BACKGROUND_STYLES;
 
 /** CSS for a chosen background style, tinted with the site's palette. */
-export function backgroundCss(
-  style: BackgroundStyle,
-  palette: Palette,
-): React.CSSProperties {
+export function backgroundCss(style: BackgroundStyle, palette: Palette): React.CSSProperties {
   const tint = `${palette.accent}1f`;
   if (style === "clean") {
     return { backgroundColor: palette.background };
@@ -396,9 +447,13 @@ export function normalizeSite(row: Record<string, unknown>): GiftSite {
     custom_colors: (row["custom_colors"] as Partial<Palette>) ?? {},
     palette_id: (row["palette_id"] as string | null) ?? null,
     share_notes: Boolean(row["share_notes"]),
-    font_choice: (FONT_CHOICES as string[]).includes(String(row["font_choice"])) ? (row["font_choice"] as FontChoice) : "theme",
+    font_choice: (FONT_CHOICES as string[]).includes(String(row["font_choice"]))
+      ? (row["font_choice"] as FontChoice)
+      : "theme",
     countdown_date: (row["countdown_date"] as string | null) ?? null,
-    countdown_at: row["countdown_at"] ? new Date(row["countdown_at"] as string).toISOString() : null,
+    countdown_at: row["countdown_at"]
+      ? new Date(row["countdown_at"] as string).toISOString()
+      : null,
     calendar_locked: Boolean(row["calendar_locked"]),
     intro_text: (row["intro_text"] as string | null) ?? null,
     intro_settings: normalizeIntroSettings(row["intro_settings"]),
@@ -460,18 +515,31 @@ export function normalizeContribution(row: Record<string, unknown>): Contributio
     ornament_key: (row["ornament_key"] as OrnamentKey | null) ?? null,
     visibility: row["visibility"] === "recipient" ? "recipient" : "public",
     by_owner: row["by_owner"] === true,
-    data: row["data"] && typeof row["data"] === "object" ? (row["data"] as Record<string, unknown>) : null,
+    data:
+      row["data"] && typeof row["data"] === "object"
+        ? (row["data"] as Record<string, unknown>)
+        : null,
     created_at: String(row["created_at"]),
   };
 }
 
 export const ORNAMENTS = [
-  ["bauble", "Bauble", "●"], ["star", "Star", "★"], ["stocking", "Stocking", "♩"],
-  ["candy-cane", "Candy cane", "⌁"], ["snowman", "Snowman", "☃"],
-  ["gingerbread", "Gingerbread", "♟"], ["bell", "Bell", "♢"], ["wreath", "Wreath", "◉"],
-  ["mitten", "Mitten", "♧"], ["snow-globe", "Snow globe", "◍"], ["gift", "Gift", "▣"],
-  ["heart", "Heart", "♥"], ["candy", "Candy", "◆"], ["cookie", "Cookie", "✿"],
-  ["pinecone", "Pinecone", "♦"], ["angel", "Angel", "♛"],
+  ["bauble", "Bauble", "●"],
+  ["star", "Star", "★"],
+  ["stocking", "Stocking", "♩"],
+  ["candy-cane", "Candy cane", "⌁"],
+  ["snowman", "Snowman", "☃"],
+  ["gingerbread", "Gingerbread", "♟"],
+  ["bell", "Bell", "♢"],
+  ["wreath", "Wreath", "◉"],
+  ["mitten", "Mitten", "♧"],
+  ["snow-globe", "Snow globe", "◍"],
+  ["gift", "Gift", "▣"],
+  ["heart", "Heart", "♥"],
+  ["candy", "Candy", "◆"],
+  ["cookie", "Cookie", "✿"],
+  ["pinecone", "Pinecone", "♦"],
+  ["angel", "Angel", "♛"],
 ] as const;
 
 export type OrnamentKey = (typeof ORNAMENTS)[number][0];
@@ -510,10 +578,7 @@ export async function fetchTheme(id: string | null): Promise<Theme | null> {
   return data ? normalizeTheme(data as Record<string, unknown>) : null;
 }
 
-export function resolvePalette(
-  theme: Theme | null,
-  custom: Partial<Palette> | undefined,
-): Palette {
+export function resolvePalette(theme: Theme | null, custom: Partial<Palette> | undefined): Palette {
   const fallback: Palette = { background: "#faf7f2", primary: "#2b2724", accent: "#b4552f" };
   const base = theme?.palettes[0] ?? fallback;
   return {

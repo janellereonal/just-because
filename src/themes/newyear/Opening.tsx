@@ -111,9 +111,15 @@ export function NewYearOpening(p: OpeningProps) {
       const hgt = el.clientHeight || 1;
       if (f) {
         f.style.background = `radial-gradient(${big ? 70 : 38}% ${big ? 55 : 30}% at ${(x / w) * 100}% ${(y / hgt) * 100}%, ${color}, transparent 70%)`;
-        f.animate([{ opacity: 0 }, { opacity: big ? 0.55 : 0.3, offset: 0.12 }, { opacity: 0 }], { duration: big ? 1600 : 900, easing: "cubic-bezier(.2,.7,.3,1)" });
+        f.animate([{ opacity: 0 }, { opacity: big ? 0.55 : 0.3, offset: 0.12 }, { opacity: 0 }], {
+          duration: big ? 1600 : 900,
+          easing: "cubic-bezier(.2,.7,.3,1)",
+        });
       }
-      roofsLitRef.current?.animate([{ opacity: 0 }, { opacity: big ? 0.9 : 0.5, offset: 0.12 }, { opacity: 0 }], { duration: big ? 1600 : 900, easing: "cubic-bezier(.2,.7,.3,1)" });
+      roofsLitRef.current?.animate(
+        [{ opacity: 0 }, { opacity: big ? 0.9 : 0.5, offset: 0.12 }, { opacity: 0 }],
+        { duration: big ? 1600 : 900, easing: "cubic-bezier(.2,.7,.3,1)" },
+      );
     });
     sky.current = s;
     return () => s.stop();
@@ -148,10 +154,23 @@ export function NewYearOpening(p: OpeningProps) {
       <Stars depth={-8} count={14} lo={1.2} hi={2} seed={8} />
       <Stars depth={-14} count={6} lo={2} hi={2.8} seed={13} />
       {/* Light from the fireworks, washing over the sky */}
-      <div ref={flashRef} aria-hidden="true" className="pointer-events-none absolute inset-0 z-[2] opacity-0" />
+      <div
+        ref={flashRef}
+        aria-hidden="true"
+        className="pointer-events-none absolute inset-0 z-[2] opacity-0"
+      />
       {/* The city below, windows on, rooftops catching each burst */}
-      <Layer depth={-5} className="pointer-events-none absolute inset-x-[-8%] bottom-[-1%] z-[2] h-[19%]">
-        <Skyline night={c.night!} navy={c.navy!} gold={c.gold!} violet={c.violet!} litRef={roofsLitRef} />
+      <Layer
+        depth={-5}
+        className="pointer-events-none absolute inset-x-[-8%] bottom-[-1%] z-[2] h-[19%]"
+      >
+        <Skyline
+          night={c.night!}
+          navy={c.navy!}
+          gold={c.gold!}
+          violet={c.violet!}
+          litRef={roofsLitRef}
+        />
       </Layer>
       <canvas
         ref={canvasRef}
@@ -185,10 +204,42 @@ export function NewYearOpening(p: OpeningProps) {
                 aria-hidden="true"
               >
                 {/* An engraved ring: a dark groove with a light lip on its lower edge */}
-                <circle cx="50" cy="50" r="46" fill="none" stroke="rgba(0,0,0,.5)" strokeWidth="2.6" />
-                <circle cx="50" cy="50" r="46" fill="none" stroke={`${c.silver}30`} strokeWidth="0.8" />
-                <circle cx="50.35" cy="50.5" r="47.3" fill="none" stroke="rgba(255,255,255,.1)" strokeWidth="0.5" />
-                <circle cx="50" cy="50" r="46" fill="none" stroke={c.gold} strokeOpacity=".16" strokeWidth="6" strokeLinecap="round" strokeDasharray={ring} strokeDashoffset={ring * (1 - progress)} />
+                <circle
+                  cx="50"
+                  cy="50"
+                  r="46"
+                  fill="none"
+                  stroke="rgba(0,0,0,.5)"
+                  strokeWidth="2.6"
+                />
+                <circle
+                  cx="50"
+                  cy="50"
+                  r="46"
+                  fill="none"
+                  stroke={`${c.silver}30`}
+                  strokeWidth="0.8"
+                />
+                <circle
+                  cx="50.35"
+                  cy="50.5"
+                  r="47.3"
+                  fill="none"
+                  stroke="rgba(255,255,255,.1)"
+                  strokeWidth="0.5"
+                />
+                <circle
+                  cx="50"
+                  cy="50"
+                  r="46"
+                  fill="none"
+                  stroke={c.gold}
+                  strokeOpacity=".16"
+                  strokeWidth="6"
+                  strokeLinecap="round"
+                  strokeDasharray={ring}
+                  strokeDashoffset={ring * (1 - progress)}
+                />
                 <circle
                   cx="50"
                   cy="50"
@@ -338,10 +389,28 @@ function seeded(seed: number) {
 
 /** One layer of stars, twinkling at their own pace, drifting with the tilt at their depth. */
 // Memoized: the countdown re-renders every frame while it's held.
-const Stars = memo(function Stars({ depth, count, lo, hi, seed }: { depth: number; count: number; lo: number; hi: number; seed: number }) {
+const Stars = memo(function Stars({
+  depth,
+  count,
+  lo,
+  hi,
+  seed,
+}: {
+  depth: number;
+  count: number;
+  lo: number;
+  hi: number;
+  seed: number;
+}) {
   const stars = useMemo(() => {
     const r = seeded(seed * 977);
-    return Array.from({ length: count }, () => ({ x: r() * 100, y: r() * 72, s: lo + r() * (hi - lo), d: -r() * 4, t: 2.4 + r() * 3 }));
+    return Array.from({ length: count }, () => ({
+      x: r() * 100,
+      y: r() * 72,
+      s: lo + r() * (hi - lo),
+      d: -r() * 4,
+      t: 2.4 + r() * 3,
+    }));
   }, [count, seed, lo, hi]);
   return (
     <Layer depth={depth} className="pointer-events-none absolute inset-[-4%] z-[1]">
@@ -371,7 +440,19 @@ const Stars = memo(function Stars({ depth, count, lo, hi, seed }: { depth: numbe
  * a few blinking on and off, and a copy of the rooftops lit in gold that the
  * fireworks flash on.
  */
-const Skyline = memo(function Skyline({ night, navy, gold, violet, litRef }: { night: string; navy: string; gold: string; violet: string; litRef: React.RefObject<SVGGElement | null> }) {
+const Skyline = memo(function Skyline({
+  night,
+  navy,
+  gold,
+  violet,
+  litRef,
+}: {
+  night: string;
+  navy: string;
+  gold: string;
+  violet: string;
+  litRef: React.RefObject<SVGGElement | null>;
+}) {
   const city = useMemo(() => {
     const r = seeded(2026);
     const row = (y0: number, hMin: number, hMax: number, wMin: number, wMax: number) => {
@@ -397,10 +478,17 @@ const Skyline = memo(function Skyline({ night, navy, gold, violet, litRef }: { n
     return { back, front, windows };
   }, []);
   const roof = (b: { x: number; y: number; w: number; h: number; spire: boolean }) =>
-    `M${b.x.toFixed(1)} 121V${b.y.toFixed(1)}h${b.w.toFixed(1)}V121z` + (b.spire ? `M${(b.x + b.w / 2 - 1).toFixed(1)} ${b.y.toFixed(1)}v-12h2v12z` : "");
-  const top = (b: { x: number; y: number; w: number }) => `M${b.x.toFixed(1)} ${b.y.toFixed(1)}h${b.w.toFixed(1)}`;
+    `M${b.x.toFixed(1)} 121V${b.y.toFixed(1)}h${b.w.toFixed(1)}V121z` +
+    (b.spire ? `M${(b.x + b.w / 2 - 1).toFixed(1)} ${b.y.toFixed(1)}v-12h2v12z` : "");
+  const top = (b: { x: number; y: number; w: number }) =>
+    `M${b.x.toFixed(1)} ${b.y.toFixed(1)}h${b.w.toFixed(1)}`;
   return (
-    <svg viewBox="0 0 400 120" preserveAspectRatio="xMidYMax slice" className="size-full" aria-hidden="true">
+    <svg
+      viewBox="0 0 400 120"
+      preserveAspectRatio="xMidYMax slice"
+      className="size-full"
+      aria-hidden="true"
+    >
       <defs>
         <linearGradient id="jb-ny-back" x1="0" y1="0" x2="0" y2="1">
           <stop offset="0" stopColor={navy} />
@@ -415,12 +503,35 @@ const Skyline = memo(function Skyline({ night, navy, gold, violet, litRef }: { n
       <rect x="-20" y="40" width="440" height="80" fill="url(#jb-ny-haze)" />
       <path d={city.front.map(roof).join("")} fill={night} />
       {city.windows.map((w, i) => (
-        <rect key={i} x={w.x} y={w.y} width="2.2" height="3" rx=".4" fill="#FFD98A" opacity=".8" className={w.blink ? "jb-window" : undefined} style={w.blink ? { animationDelay: `${w.d}s` } : undefined} />
+        <rect
+          key={i}
+          x={w.x}
+          y={w.y}
+          width="2.2"
+          height="3"
+          rx=".4"
+          fill="#FFD98A"
+          opacity=".8"
+          className={w.blink ? "jb-window" : undefined}
+          style={w.blink ? { animationDelay: `${w.d}s` } : undefined}
+        />
       ))}
       {/* Rooftops lit by the fireworks */}
       <g ref={litRef} opacity="0">
-        <path d={city.back.map(top).join("")} fill="none" stroke={gold} strokeOpacity=".55" strokeWidth="1" />
-        <path d={city.front.map(top).join("")} fill="none" stroke={gold} strokeWidth="1.3" strokeLinecap="round" />
+        <path
+          d={city.back.map(top).join("")}
+          fill="none"
+          stroke={gold}
+          strokeOpacity=".55"
+          strokeWidth="1"
+        />
+        <path
+          d={city.front.map(top).join("")}
+          fill="none"
+          stroke={gold}
+          strokeWidth="1.3"
+          strokeLinecap="round"
+        />
       </g>
     </svg>
   );

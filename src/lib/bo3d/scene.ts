@@ -21,7 +21,8 @@ import type { BoAccessory } from "./accessories";
 export type BoMood = "idle" | "wave" | "celebrate";
 
 /** Cute faces. "smile" is the resting face; the others play for a moment. */
-export type BoFace = "smile" | "wink" | "happy" | "surprised" | "blep" | "love" | "dizzy" | "sleepy" | "yawn";
+export type BoFace =
+  "smile" | "wink" | "happy" | "surprised" | "blep" | "love" | "dizzy" | "sleepy" | "yawn";
 
 /** "stage" shows Bo standing on a soft shadow; "buddy" is a tight, groundless frame for the hopping mascot. */
 export type BoFraming = "stage" | "buddy";
@@ -100,7 +101,9 @@ const ACCESSORY_HEIGHT = 0.8;
 const MODEL_TIMEOUT_MS = 4000;
 /** Filled in at build time from public/models (see vite.config.ts). */
 declare const __BO_MODEL_FILES__: string[];
-const MODEL_FILES = new Set<string>(typeof __BO_MODEL_FILES__ === "undefined" ? [] : __BO_MODEL_FILES__);
+const MODEL_FILES = new Set<string>(
+  typeof __BO_MODEL_FILES__ === "undefined" ? [] : __BO_MODEL_FILES__,
+);
 /** Skip the request entirely when the file isn't in the build. */
 function loadIfShipped(url: string) {
   return MODEL_FILES.has(url) ? loadGltf(url) : Promise.resolve(null);
@@ -195,9 +198,13 @@ function clayify(root: THREE.Object3D) {
   root.traverse((o) => {
     const mesh = o as THREE.Mesh;
     if (!mesh.isMesh) return;
-    const src = (Array.isArray(mesh.material) ? mesh.material[0] : mesh.material) as THREE.MeshStandardMaterial | undefined;
+    const src = (Array.isArray(mesh.material) ? mesh.material[0] : mesh.material) as
+      THREE.MeshStandardMaterial | undefined;
     const shiny = /shine/i.test(mesh.name);
-    const mat = clay(src?.color ?? 0xffffff, shiny ? 0.25 : /eye|mouth/i.test(mesh.name) ? 0.38 : 0.62);
+    const mat = clay(
+      src?.color ?? 0xffffff,
+      shiny ? 0.25 : /eye|mouth/i.test(mesh.name) ? 0.38 : 0.62,
+    );
     if (src?.emissive && src.emissive.getHex() !== 0) {
       mat.emissive.copy(src.emissive);
       mat.emissiveIntensity = src.emissiveIntensity ?? 1;
@@ -220,7 +227,11 @@ function fitToHeight(obj: THREE.Object3D, height: number) {
   const size = box.getSize(new THREE.Vector3());
   const s = height / Math.max(1e-6, size.y);
   obj.scale.setScalar(s);
-  obj.position.set(-((box.min.x + box.max.x) / 2) * s, -box.min.y * s, -((box.min.z + box.max.z) / 2) * s);
+  obj.position.set(
+    -((box.min.x + box.max.x) / 2) * s,
+    -box.min.y * s,
+    -((box.min.z + box.max.z) / 2) * s,
+  );
   return holder;
 }
 
@@ -281,7 +292,13 @@ function heartGeometry(w: number) {
   h.bezierCurveTo(-s * 0.15, s * 0.85, 0, s * 0.55, 0, s * 0.4);
   h.bezierCurveTo(0, s * 0.55, s * 0.15, s * 0.85, s * 0.5, s * 0.85);
   h.bezierCurveTo(s * 1.05, s * 0.85, s * 1.1, -s * 0.15, 0, -s * 0.9);
-  const geo = new THREE.ExtrudeGeometry(h, { depth: s * 0.4, bevelEnabled: true, bevelSize: s * 0.12, bevelThickness: s * 0.12, bevelSegments: 3 });
+  const geo = new THREE.ExtrudeGeometry(h, {
+    depth: s * 0.4,
+    bevelEnabled: true,
+    bevelSize: s * 0.12,
+    bevelThickness: s * 0.12,
+    bevelSegments: 3,
+  });
   geo.center();
   return geo;
 }
@@ -290,7 +307,12 @@ function heartGeometry(w: number) {
  * Extra face parts (closed eyes, heart eyes, an "o" mouth, a tongue), sized and
  * placed from Bo's own eyes and mouth so they fit the Spline model and the built-in one.
  */
-function buildFace(eyes: (THREE.Mesh | null)[], shines: (THREE.Object3D | null)[], mouth: THREE.Mesh | null, cheeks: THREE.Object3D[]): FaceRig | null {
+function buildFace(
+  eyes: (THREE.Mesh | null)[],
+  shines: (THREE.Object3D | null)[],
+  mouth: THREE.Mesh | null,
+  cheeks: THREE.Object3D[],
+): FaceRig | null {
   const heartMat = clay(0xf25c84, 0.45);
   const tongueMat = clay(0xf27a9b, 0.5);
   const out: FaceRig["eyes"] = [];
@@ -298,7 +320,10 @@ function buildFace(eyes: (THREE.Mesh | null)[], shines: (THREE.Object3D | null)[
     if (!eye?.parent) return;
     const size = meshSize(eye);
     const w = size.x;
-    const arc = new THREE.Mesh(new THREE.TorusGeometry(w * 0.42, w * 0.12, 8, 24, Math.PI), eye.material);
+    const arc = new THREE.Mesh(
+      new THREE.TorusGeometry(w * 0.42, w * 0.12, 8, 24, Math.PI),
+      eye.material,
+    );
     arc.position.copy(eye.position);
     arc.position.y -= size.y * 0.1;
     arc.position.z += size.z * 0.25;
@@ -315,7 +340,10 @@ function buildFace(eyes: (THREE.Mesh | null)[], shines: (THREE.Object3D | null)[
       const rr = (k / 60) * w * 0.5;
       spiralPts.push(new THREE.Vector3(Math.cos(a) * rr, Math.sin(a) * rr, 0));
     }
-    const spiral = new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(spiralPts), 60, w * 0.065, 6), eye.material);
+    const spiral = new THREE.Mesh(
+      new THREE.TubeGeometry(new THREE.CatmullRomCurve3(spiralPts), 60, w * 0.065, 6),
+      eye.material,
+    );
     spiral.position.copy(eye.position);
     spiral.position.z += size.z * 0.3;
     spiral.visible = false;
@@ -338,7 +366,9 @@ function buildFace(eyes: (THREE.Mesh | null)[], shines: (THREE.Object3D | null)[
   const ref = mouth ?? (eyes[0] as THREE.Mesh);
   const parent = ref.parent!;
   const r = mouth ? meshSize(mouth).x / 2 : meshSize(ref).x * 0.5;
-  const base = mouth ? mouth.position.clone() : new THREE.Vector3(0, ref.position.y - r * 1.4, ref.position.z);
+  const base = mouth
+    ? mouth.position.clone()
+    : new THREE.Vector3(0, ref.position.y - r * 1.4, ref.position.z);
   const inkMat = (mouth?.material ?? (eyes[0] as THREE.Mesh).material) as THREE.Material;
   const o = new THREE.Mesh(new THREE.TorusGeometry(r * 0.5, r * 0.2, 10, 24), inkMat);
   o.position.set(base.x, base.y - r * 0.55, base.z);
@@ -367,7 +397,15 @@ function buildHeldNote(unit: number) {
   const lineMat = clay(0xb9a9a1);
   addMesh(g, line, lineMat, 0, 0.07, 0.03, false);
   addMesh(g, line, lineMat, -0.05, -0.04, 0.03, false).scale.x = 0.7;
-  addMesh(g, new THREE.SphereGeometry(0.05, 12, 8), clay(0xc2366b), 0.2, 0.13, 0.03, false).scale.z = 0.4;
+  addMesh(
+    g,
+    new THREE.SphereGeometry(0.05, 12, 8),
+    clay(0xc2366b),
+    0.2,
+    0.13,
+    0.03,
+    false,
+  ).scale.z = 0.4;
   g.position.set(0, 0.86 * unit, 0.95 * unit);
   g.rotation.x = -0.15;
   g.scale.setScalar(unit);
@@ -413,7 +451,15 @@ function buildCodeRig(lidColor: THREE.Color): Rig {
     cheek.scale.set(1, 0.62, 0.3);
     cheeks.push(cheek);
   }
-  const smile = addMesh(face, new THREE.TorusGeometry(0.11, 0.028, 10, 28, Math.PI), ink, 0, 0.98, 0.03, false);
+  const smile = addMesh(
+    face,
+    new THREE.TorusGeometry(0.11, 0.028, 10, 28, Math.PI),
+    ink,
+    0,
+    0.98,
+    0.03,
+    false,
+  );
   smile.rotation.z = Math.PI;
   const faceRig = buildFace(eyeMeshes, shineMeshes, smile, cheeks);
 
@@ -430,7 +476,8 @@ function buildCodeRig(lidColor: THREE.Color): Rig {
   for (const x of [-0.85, 0.85]) addMesh(lid, roundedBox(0.1, 0.38, 1.6, 0.05, 3), lidMat, x, 0, 0);
   addMesh(lid, roundedBox(1.62, 0.02, 1.42, 0.01, 1), clay(0xe58aa2, 0.8), 0, 0.064, 0, false);
   addMesh(lid, roundedBox(0.32, 0.14, 1.62, 0.06, 3), ribbonMat, 0, 0.13, 0);
-  for (const z of [-0.76, 0.76]) addMesh(lid, roundedBox(0.32, 0.4, 0.12, 0.05, 3), ribbonMat, 0, 0, z);
+  for (const z of [-0.76, 0.76])
+    addMesh(lid, roundedBox(0.32, 0.4, 0.12, 0.05, 3), ribbonMat, 0, 0, z);
   const bow = new THREE.Group();
   bow.position.set(0, 0.32, 0);
   lid.add(bow);
@@ -449,7 +496,14 @@ function buildCodeRig(lidColor: THREE.Color): Rig {
     const shoulder = new THREE.Group();
     shoulder.position.set(s * 0.82, 1.2, 0);
     root.add(shoulder);
-    const arm = addMesh(shoulder, new THREE.CapsuleGeometry(0.075, 0.32, 8, 16), bodyMat, 0, -0.24, 0);
+    const arm = addMesh(
+      shoulder,
+      new THREE.CapsuleGeometry(0.075, 0.32, 8, 16),
+      bodyMat,
+      0,
+      -0.24,
+      0,
+    );
     addMesh(arm, new THREE.SphereGeometry(0.11, 18, 12), bodyMat, 0, -0.24, 0);
     arms.push({ pivot: shoulder, side: s });
     const hip = new THREE.Group();
@@ -468,7 +522,22 @@ function buildCodeRig(lidColor: THREE.Color): Rig {
   const held = buildHeldNote(1);
   root.add(held);
 
-  return { root, body, lid: lidPivot, lidRestY: lidPivot.position.y, bow, arms, legs, eyes, face: faceRig, held, lidMat, mount, unit: 1, file: null };
+  return {
+    root,
+    body,
+    lid: lidPivot,
+    lidRestY: lidPivot.position.y,
+    bow,
+    arms,
+    legs,
+    eyes,
+    face: faceRig,
+    held,
+    lidMat,
+    mount,
+    unit: 1,
+    file: null,
+  };
 }
 
 /** Build the rig from the Spline export, or null if the parts we drive aren't there. */
@@ -491,7 +560,11 @@ function rigFromModel(file: THREE.Group, lidColor: THREE.Color): Rig | null {
   const s = BO_HEIGHT / height;
   const root = new THREE.Group();
   bo.scale.setScalar(s);
-  bo.position.set(-((box.min.x + box.max.x) / 2) * s, -box.min.y * s, -((box.min.z + box.max.z) / 2) * s);
+  bo.position.set(
+    -((box.min.x + box.max.x) / 2) * s,
+    -box.min.y * s,
+    -((box.min.z + box.max.z) / 2) * s,
+  );
   root.add(bo);
   const unit = 1 / s;
 
@@ -534,7 +607,22 @@ function rigFromModel(file: THREE.Group, lidColor: THREE.Color): Rig | null {
   const held = buildHeldNote(unit);
   bo.add(held);
 
-  return { root, body, lid, lidRestY: lid.position.y, bow, arms, legs, eyes, face: faceRig, held, lidMat, mount, unit, file };
+  return {
+    root,
+    body,
+    lid,
+    lidRestY: lid.position.y,
+    bow,
+    arms,
+    legs,
+    eyes,
+    face: faceRig,
+    held,
+    lidMat,
+    mount,
+    unit,
+    file,
+  };
 }
 
 /* ---------- Built-in accessories (used until the Spline ones are exported) ---------- */
@@ -545,27 +633,44 @@ function buildAccessory(name: BoAccessory): THREE.Group {
   switch (name) {
     case "party_hat": {
       addMesh(g, new THREE.ConeGeometry(0.22, 0.56, 32), m(0xc9b6f2), 0, 0.3, 0);
-      addMesh(g, new THREE.TorusGeometry(0.21, 0.035, 10, 32), m(0xffd27a), 0, 0.04, 0).rotation.x = Math.PI / 2;
+      addMesh(g, new THREE.TorusGeometry(0.21, 0.035, 10, 32), m(0xffd27a), 0, 0.04, 0).rotation.x =
+        Math.PI / 2;
       addMesh(g, new THREE.SphereGeometry(0.08, 16, 12), m(0xfbd3dc, 0.7), 0, 0.6, 0);
       break;
     }
     case "heart": {
       const red = m(0xf27a9b, 0.55);
-      for (const s of [-1, 1]) addMesh(g, new THREE.SphereGeometry(0.15, 24, 16), red, s * 0.1, 0.34, 0).scale.z = 0.66;
+      for (const s of [-1, 1])
+        addMesh(g, new THREE.SphereGeometry(0.15, 24, 16), red, s * 0.1, 0.34, 0).scale.z = 0.66;
       const tip = addMesh(g, roundedBox(0.3, 0.3, 0.19, 0.08, 4), red, 0, 0.22, 0);
       tip.rotation.z = Math.PI / 4;
       break;
     }
     case "suitcase": {
       addMesh(g, roundedBox(0.54, 0.38, 0.22, 0.07, 4), m(0xf4a98a), 0, 0.19, 0);
-      addMesh(g, new THREE.TorusGeometry(0.1, 0.022, 8, 20, Math.PI), m(0x2b2522, 0.45), 0, 0.38, 0);
-      for (const s of [-1, 1]) addMesh(g, roundedBox(0.06, 0.39, 0.23, 0.02, 2), m(0xffe8b0), s * 0.13, 0.19, 0);
+      addMesh(
+        g,
+        new THREE.TorusGeometry(0.1, 0.022, 8, 20, Math.PI),
+        m(0x2b2522, 0.45),
+        0,
+        0.38,
+        0,
+      );
+      for (const s of [-1, 1])
+        addMesh(g, roundedBox(0.06, 0.39, 0.23, 0.02, 2), m(0xffe8b0), s * 0.13, 0.19, 0);
       break;
     }
     case "santa_hat": {
       const cone = addMesh(g, new THREE.ConeGeometry(0.24, 0.56, 32), m(0xe04e5e, 0.7), 0, 0.32, 0);
       cone.rotation.z = -0.18;
-      addMesh(g, new THREE.TorusGeometry(0.24, 0.06, 12, 36), m(0xfffaf4, 0.85), 0, 0.05, 0).rotation.x = Math.PI / 2;
+      addMesh(
+        g,
+        new THREE.TorusGeometry(0.24, 0.06, 12, 36),
+        m(0xfffaf4, 0.85),
+        0,
+        0.05,
+        0,
+      ).rotation.x = Math.PI / 2;
       addMesh(g, new THREE.SphereGeometry(0.085, 16, 12), m(0xfffaf4, 0.85), 0.1, 0.6, 0);
       break;
     }
@@ -578,13 +683,22 @@ function buildAccessory(name: BoAccessory): THREE.Group {
         [0.06, 0.42],
         [0.17, 0.34],
       ] as const) {
-        addMesh(g, new THREE.SphereGeometry(0.065, 16, 12), tan, x, y, 0).scale.set(0.92, 1.08, 0.75);
+        addMesh(g, new THREE.SphereGeometry(0.065, 16, 12), tan, x, y, 0).scale.set(
+          0.92,
+          1.08,
+          0.75,
+        );
       }
       break;
     }
     case "sparkler": {
       addMesh(g, new THREE.CylinderGeometry(0.02, 0.02, 0.52, 10), m(0x9a8f88, 0.45), 0, 0.26, 0);
-      const glow = new THREE.MeshStandardMaterial({ color: 0xffd27a, emissive: 0xffc94d, emissiveIntensity: 0.6, roughness: 0.5 });
+      const glow = new THREE.MeshStandardMaterial({
+        color: 0xffd27a,
+        emissive: 0xffc94d,
+        emissiveIntensity: 0.6,
+        roughness: 0.5,
+      });
       const star = new THREE.Shape();
       for (let i = 0; i < 10; i++) {
         const a = (i / 10) * Math.PI * 2 + Math.PI / 2;
@@ -592,7 +706,13 @@ function buildAccessory(name: BoAccessory): THREE.Group {
         if (i === 0) star.moveTo(Math.cos(a) * r, Math.sin(a) * r);
         else star.lineTo(Math.cos(a) * r, Math.sin(a) * r);
       }
-      const geo = new THREE.ExtrudeGeometry(star, { depth: 0.06, bevelEnabled: true, bevelSize: 0.02, bevelThickness: 0.02, bevelSegments: 2 });
+      const geo = new THREE.ExtrudeGeometry(star, {
+        depth: 0.06,
+        bevelEnabled: true,
+        bevelSize: 0.02,
+        bevelThickness: 0.02,
+        bevelSegments: 2,
+      });
       geo.center();
       addMesh(g, geo, glow, 0, 0.58, 0);
       break;
@@ -606,12 +726,32 @@ function buildAccessory(name: BoAccessory): THREE.Group {
         if (i === 0) pleats.moveTo(Math.cos(a) * r, Math.sin(a) * r);
         else pleats.lineTo(Math.cos(a) * r, Math.sin(a) * r);
       }
-      const geo = new THREE.ExtrudeGeometry(pleats, { depth: 0.05, bevelEnabled: true, bevelSize: 0.015, bevelThickness: 0.015, bevelSegments: 2 });
+      const geo = new THREE.ExtrudeGeometry(pleats, {
+        depth: 0.05,
+        bevelEnabled: true,
+        bevelSize: 0.015,
+        bevelThickness: 0.015,
+        bevelSegments: 2,
+      });
       geo.center();
       addMesh(g, geo, berry, 0, 0.4, 0);
-      addMesh(g, new THREE.CylinderGeometry(0.15, 0.15, 0.06, 32), m(0xfbd3dc), 0, 0.4, 0.04).rotation.x = Math.PI / 2;
+      addMesh(
+        g,
+        new THREE.CylinderGeometry(0.15, 0.15, 0.06, 32),
+        m(0xfbd3dc),
+        0,
+        0.4,
+        0.04,
+      ).rotation.x = Math.PI / 2;
       for (const s of [-1, 1]) {
-        const tail = addMesh(g, roundedBox(0.11, 0.3, 0.03, 0.012, 2), berry, s * 0.07, 0.12, -0.02);
+        const tail = addMesh(
+          g,
+          roundedBox(0.11, 0.3, 0.03, 0.012, 2),
+          berry,
+          s * 0.07,
+          0.12,
+          -0.02,
+        );
         tail.rotation.z = s * 0.25;
       }
       break;
@@ -622,7 +762,8 @@ function buildAccessory(name: BoAccessory): THREE.Group {
       const petalMat = m(0xfffaf4, 0.65);
       for (let i = 0; i < 5; i++) {
         const a = (i / 5) * Math.PI * 2 + Math.PI / 2;
-        addMesh(g, petal, petalMat, Math.cos(a) * 0.12, 0.38 + Math.sin(a) * 0.12, 0).scale.z = 0.45;
+        addMesh(g, petal, petalMat, Math.cos(a) * 0.12, 0.38 + Math.sin(a) * 0.12, 0).scale.z =
+          0.45;
       }
       addMesh(g, new THREE.SphereGeometry(0.065, 16, 12), m(0xffd27a), 0, 0.38, 0.03).scale.z = 0.7;
       const leaf = addMesh(g, new THREE.SphereGeometry(0.07, 12, 8), m(0x9fd8c2), 0.08, 0.17, 0);
@@ -659,7 +800,12 @@ async function loadAccessory(name: BoAccessory, rig: Rig): Promise<THREE.Object3
 
 export function createBoScene(canvas: HTMLCanvasElement, options: BoSceneOptions = {}): BoScene {
   const framing: BoFraming = options.framing ?? "stage";
-  const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true, powerPreference: "low-power" });
+  const renderer = new THREE.WebGLRenderer({
+    canvas,
+    antialias: true,
+    alpha: true,
+    powerPreference: "low-power",
+  });
   renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
   renderer.outputColorSpace = THREE.SRGBColorSpace;
   renderer.toneMapping = THREE.NeutralToneMapping;
@@ -683,7 +829,10 @@ export function createBoScene(canvas: HTMLCanvasElement, options: BoSceneOptions
   scene.add(rim);
 
   if (framing === "stage") {
-    const ground = new THREE.Mesh(new THREE.PlaneGeometry(30, 30), new THREE.ShadowMaterial({ opacity: 0.13 }));
+    const ground = new THREE.Mesh(
+      new THREE.PlaneGeometry(30, 30),
+      new THREE.ShadowMaterial({ opacity: 0.13 }),
+    );
     ground.rotation.x = -Math.PI / 2;
     ground.receiveShadow = true;
     scene.add(ground);
@@ -720,13 +869,18 @@ export function createBoScene(canvas: HTMLCanvasElement, options: BoSceneOptions
       notes.push({
         g,
         a,
-        rest: new THREE.Vector3(Math.cos(a) * 2.35, 1.05 + (i % 3) * 0.55, Math.sin(a) * 1.35 - 0.25),
+        rest: new THREE.Vector3(
+          Math.cos(a) * 2.35,
+          1.05 + (i % 3) * 0.55,
+          Math.sin(a) * 1.35 - 0.25,
+        ),
         high: new THREE.Vector3(Math.cos(a) * 1.9, 2.9 + (i % 2) * 0.55, Math.sin(a) * 1.0),
         spin: 0.4 + (i % 3) * 0.2,
       });
     });
   }
-  const confetti: { m: THREE.Mesh; x: number; z: number; off: number; sp: number; rot: number }[] = [];
+  const confetti: { m: THREE.Mesh; x: number; z: number; off: number; sp: number; rot: number }[] =
+    [];
   if (framing === "stage") {
     const bitGeo = new THREE.BoxGeometry(0.07, 0.07, 0.015);
     for (let i = 0; i < 46; i++) {
@@ -778,7 +932,8 @@ export function createBoScene(canvas: HTMLCanvasElement, options: BoSceneOptions
     mx = (e.clientX / Math.max(1, window.innerWidth)) * 2 - 1;
     my = (e.clientY / Math.max(1, window.innerHeight)) * 2 - 1;
   };
-  if (options.followPointer !== false) window.addEventListener("pointermove", onMove, { passive: true });
+  if (options.followPointer !== false)
+    window.addEventListener("pointermove", onMove, { passive: true });
 
   const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
   const clamp = (x: number) => Math.max(0, Math.min(1, x));
@@ -794,7 +949,21 @@ export function createBoScene(canvas: HTMLCanvasElement, options: BoSceneOptions
   // Where notes go in and come out: the opening on top of the box.
   const mouth = new THREE.Vector3(0, 1.62, 0.05);
 
-  const pose: BoPose = { squash: 1, tuck: 0, flail: 0, run: 0, flip: 0, lean: 0, turn: null, hold: 0, lid: 0, cheer: 0, point: 0, bowSpin: 0, look: null };
+  const pose: BoPose = {
+    squash: 1,
+    tuck: 0,
+    flail: 0,
+    run: 0,
+    flip: 0,
+    lean: 0,
+    turn: null,
+    hold: 0,
+    lid: 0,
+    cheer: 0,
+    point: 0,
+    bowSpin: 0,
+    look: null,
+  };
   let bowKick = -10;
 
   /* Cute faces: one at a time, for a moment, then back to the smile. */
@@ -898,7 +1067,11 @@ export function createBoScene(canvas: HTMLCanvasElement, options: BoSceneOptions
     if (dress <= 0 || dress >= 1) tmp.copy(baseLid);
     else if (dress < 0.33) tmp.copy(baseLid).lerp(lilac, ease(dress / 0.33));
     else if (dress < 0.66) tmp.copy(lilac).lerp(mint, ease((dress - 0.33) / 0.33));
-    else tmp.copy(mint).lerp(butter, ease((dress - 0.66) / 0.17)).lerp(baseLid, ease((dress - 0.83) / 0.17));
+    else
+      tmp
+        .copy(mint)
+        .lerp(butter, ease((dress - 0.66) / 0.17))
+        .lerp(baseLid, ease((dress - 0.83) / 0.17));
     r.lidMat?.color.copy(tmp);
 
     /* 2: notes fly in. 3: lid closes and Bo spins. 4: lid pops and notes float out. */
@@ -949,12 +1122,17 @@ export function createBoScene(canvas: HTMLCanvasElement, options: BoSceneOptions
       const surprised = face === "surprised";
       const sleepy = face === "sleepy" || face === "yawn";
       fr.eyes.forEach((e, i) => {
-        const closed = face === "happy" || sleepy || ((face === "wink" || face === "blep") && i === 1);
+        const closed =
+          face === "happy" || sleepy || ((face === "wink" || face === "blep") && i === 1);
         const heart = face === "love";
         const dizzy = face === "dizzy";
         e.open.forEach((o, k) => {
           o.visible = !closed && !heart && !dizzy;
-          o.position.set(e.openRest[k]!.x + lookX * e.reach, e.openRest[k]!.y - lookY * e.reach * 0.7, e.openRest[k]!.z);
+          o.position.set(
+            e.openRest[k]!.x + lookX * e.reach,
+            e.openRest[k]!.y - lookY * e.reach * 0.7,
+            e.openRest[k]!.z,
+          );
         });
         e.closed.visible = closed;
         // Sleepy eyes droop (a little cup) instead of the happy arch.
@@ -964,7 +1142,8 @@ export function createBoScene(canvas: HTMLCanvasElement, options: BoSceneOptions
         e.spiral.visible = dizzy;
         if (dizzy) e.spiral.rotation.z = -t * 9 * (i === 0 ? 1 : -1);
         e.open[0]!.scale.y = e.restY * (surprised ? 1.18 : blink);
-        if (heart) e.heart.scale.setScalar((0.6 + 0.4 * faceIn) * (1 + Math.sin(t * 9) * 0.07 * idle));
+        if (heart)
+          e.heart.scale.setScalar((0.6 + 0.4 * faceIn) * (1 + Math.sin(t * 9) * 0.07 * idle));
       });
       if (fr.smile) {
         fr.smile.visible = !surprised && face !== "yawn" && face !== "dizzy";
@@ -972,7 +1151,9 @@ export function createBoScene(canvas: HTMLCanvasElement, options: BoSceneOptions
         fr.smile.scale.copy(fr.smileRest).multiplyScalar(grin);
       }
       fr.o.visible = surprised || face === "yawn" || face === "dizzy";
-      fr.o.scale.setScalar(face === "yawn" ? 1.5 + Math.sin(t * 3) * 0.15 : face === "dizzy" ? 0.7 : 1);
+      fr.o.scale.setScalar(
+        face === "yawn" ? 1.5 + Math.sin(t * 3) * 0.15 : face === "dizzy" ? 0.7 : 1,
+      );
       fr.tongue.visible = face === "blep";
       const blush = face === "love" || face === "happy" ? 1.25 : 1;
       for (const c of fr.cheeks) c.obj.scale.copy(c.rest).multiplyScalar(blush);
@@ -980,11 +1161,15 @@ export function createBoScene(canvas: HTMLCanvasElement, options: BoSceneOptions
       for (const e of r.eyes) e.obj.scale.y = e.restY * blink;
     }
     // A little head tilt with a wink or a blep.
-    if (face === "wink" || face === "blep") flipper.rotation.z += 0.09 * clamp((now - faceSince) / 160);
+    if (face === "wink" || face === "blep")
+      flipper.rotation.z += 0.09 * clamp((now - faceSince) / 160);
 
     r.held.visible = pose.hold > 0.5;
 
-    const waveFor = mood === "wave" ? Math.max(0, 1 - (now - moodSince) / 4000) * (story === null ? 1 : 1 - clamp(P * 2)) : 0;
+    const waveFor =
+      mood === "wave"
+        ? Math.max(0, 1 - (now - moodSince) / 4000) * (story === null ? 1 : 1 - clamp(P * 2))
+        : 0;
     for (const { pivot, side: s } of r.arms) {
       const wave = s > 0 ? Math.max(waveFor, story === null && mood === "wave" ? 0.15 : 0) : 0;
       const up = Math.max(wave, openOut, pose.tuck * 0.8, pose.cheer);
@@ -992,7 +1177,14 @@ export function createBoScene(canvas: HTMLCanvasElement, options: BoSceneOptions
       const windmill = pose.flail * Math.sin(t * 15 + (s > 0 ? 0 : Math.PI)) * 0.9;
       const pointing = Math.sign(pose.point) === s ? Math.abs(pose.point) : 0;
       const holdUp = pose.hold * (1 - up);
-      pivot.rotation.z = s * (0.18 + up * 2.3 + pose.flail * 1.4 + windmill + (up > 0.1 ? flap * up : Math.sin(t * 2) * 0.05 * idle)) - s * holdUp * 0.1;
+      pivot.rotation.z =
+        s *
+          (0.18 +
+            up * 2.3 +
+            pose.flail * 1.4 +
+            windmill +
+            (up > 0.1 ? flap * up : Math.sin(t * 2) * 0.05 * idle)) -
+        s * holdUp * 0.1;
       pivot.rotation.x = -holdUp * 1.15 - pointing * 0.5;
       if (pointing) pivot.rotation.z += s * pointing * 1.3;
     }
@@ -1019,7 +1211,11 @@ export function createBoScene(canvas: HTMLCanvasElement, options: BoSceneOptions
         n.g.scale.setScalar(Math.max(0.01, 1 - notesIn * 0.95));
         n.g.visible = notesIn < 0.995;
       }
-      n.g.rotation.set(Math.sin(t * n.spin + i) * 0.25, -n.a + Math.PI / 2 + t * 0.2 * idle, Math.sin(t * 0.9 + i) * 0.2);
+      n.g.rotation.set(
+        Math.sin(t * n.spin + i) * 0.25,
+        -n.a + Math.PI / 2 + t * 0.2 * idle,
+        Math.sin(t * 0.9 + i) * 0.2,
+      );
     });
 
     for (const c of confetti) {

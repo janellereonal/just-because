@@ -5,8 +5,23 @@ import { FORMAT_IDS, type GiftFormat } from "./formats";
 import { KIND_WORDS, giftHeading, giftWords, occasionTitle, themeKindOf } from "./themeKind";
 import { MODULES } from "./gift";
 import { NEW_SECTION_TYPES } from "./sections";
-import { OCCASIONS, OCCASION_IDS, OCCASION_FOR_KIND, occasionGreeting, occasionInfo } from "./occasions";
-import { STYLES, STYLE_IDS, lookFor, resolveStyle, splitForOccasion, styleForLegacy, styleInfo, stylesForOccasion } from "./styles";
+import {
+  OCCASIONS,
+  OCCASION_IDS,
+  OCCASION_FOR_KIND,
+  occasionGreeting,
+  occasionInfo,
+} from "./occasions";
+import {
+  STYLES,
+  STYLE_IDS,
+  lookFor,
+  resolveStyle,
+  splitForOccasion,
+  styleForLegacy,
+  styleInfo,
+  stylesForOccasion,
+} from "./styles";
 import { OPENINGS } from "@/themes/TactileOpening";
 import { engineThemeForName } from "@/themes/engine/registry";
 
@@ -15,7 +30,7 @@ const MODULE_TYPES = [...MODULES.map((m) => m.type as string), ...NEW_SECTION_TY
 // Theme names from the seed (the seed is a script that talks to a database, so read it as text).
 const seed = readFileSync(new URL("../../scripts/seed.ts", import.meta.url), "utf8");
 const themeBlock = seed.slice(seed.indexOf("const themes:"), seed.indexOf("await sql.begin"));
-const SEEDED = [...themeBlock.matchAll(/^\s*\["([^"]+)",\s*"/gm)].map((m) => m[1]!);
+const SEEDED = [...themeBlock.matchAll(/^ {2}\[\s*\n {4}"([^"]+)",/gm)].map((m) => m[1]!);
 const theme = (name: string) => ({ name, category: "" });
 
 describe("styles", () => {
@@ -23,7 +38,8 @@ describe("styles", () => {
     for (const s of STYLES) {
       expect(FORMAT_IDS).toContain(s.body);
       if (s.fallbackBody) expect(FORMAT_IDS).toContain(s.fallbackBody);
-      for (const f of ["title", "copy", "about"]) expect(Object.keys(en)).toContain(`style.${s.id}.${f}`);
+      for (const f of ["title", "copy", "about"])
+        expect(Object.keys(en)).toContain(`style.${s.id}.${f}`);
     }
     expect(STYLES.map((s) => s.id).sort()).toEqual([...STYLE_IDS].sort());
   });
@@ -76,7 +92,15 @@ describe("styles", () => {
 describe("occasions", () => {
   test("every occasion has all its words, a name placeholder and no em dashes", () => {
     for (const id of OCCASION_IDS) {
-      for (const f of ["name", "greeting", "greetingFor", "badge", "countdown", "letters", "from"]) {
+      for (const f of [
+        "name",
+        "greeting",
+        "greetingFor",
+        "badge",
+        "countdown",
+        "letters",
+        "from",
+      ]) {
         const v = (en as Record<string, string>)[`occasion.${id}.${f}`];
         expect(v).toBeTruthy();
         expect(v).not.toContain("—");
@@ -124,7 +148,8 @@ describe("occasions", () => {
   });
 
   test("an occasion's chip only shows styles made for it, plus plain layouts", () => {
-    const ids = (o: Parameters<typeof splitForOccasion>[0]) => splitForOccasion(o).fits.map((s) => s.id);
+    const ids = (o: Parameters<typeof splitForOccasion>[0]) =>
+      splitForOccasion(o).fits.map((s) => s.id);
     const birthday = ids("birthday");
     expect(birthday).toContain("cake");
     expect(birthday).not.toContain("invitation");
@@ -144,7 +169,8 @@ describe("occasions", () => {
       expect(list.map((s) => s.id)).not.toContain("gift-box");
     }
     // Plain layouts are under every lively occasion.
-    for (const o of ["birthday", "graduation", "pets"] as const) expect(ids(o)).toContain("scrapbook");
+    for (const o of ["birthday", "graduation", "pets"] as const)
+      expect(ids(o)).toContain("scrapbook");
     // Nothing is lost: fits + others is every style.
     const all = splitForOccasion("pets");
     expect(all.fits.length + all.others.length).toBe(STYLES.length);
@@ -189,8 +215,15 @@ describe("gifts made before styles look exactly the same", () => {
   });
 
   test("a styled gift plays its style's opening", () => {
-    expect(resolveStyle({ format: "scrapbook", style: "cake", occasion: "birthday" }, theme("Happy Birthday")).introKind).toBe("birthday");
-    expect(resolveStyle({ format: "stars", style: "stars", occasion: null }, null).introKind).toBe("default");
+    expect(
+      resolveStyle(
+        { format: "scrapbook", style: "cake", occasion: "birthday" },
+        theme("Happy Birthday"),
+      ).introKind,
+    ).toBe("birthday");
+    expect(resolveStyle({ format: "stars", style: "stars", occasion: null }, null).introKind).toBe(
+      "default",
+    );
     expect(giftWords(null, "graduation").occasion).toBe("Congrats, graduate");
   });
 
@@ -209,7 +242,9 @@ describe("plans", () => {
     const sweet = TIERS[0]!;
     expect(tierAllowsLook(sweet, "storybook", "love-letter")).toBe(true);
     expect(tierAllowsLook(sweet, "stars", "countdown")).toBe(true);
-    expect(tierAllowsLook(sweet, "storybook", "storybook")).toBe(sweet.formats.includes("storybook"));
+    expect(tierAllowsLook(sweet, "storybook", "storybook")).toBe(
+      sweet.formats.includes("storybook"),
+    );
     expect(tierAllowsLook(sweet, "storybook", null)).toBe(sweet.formats.includes("storybook"));
     expect(tierAllowsLook(sweet, "scrapbook", "scrapbook")).toBe(true);
     expect(stylePlanTag("love-letter")).toBeNull();

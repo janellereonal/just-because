@@ -5,7 +5,8 @@ import { toast } from "sonner";
 import { createDiscountCode, listDiscountCodes, updateDiscountCode } from "@/lib/api";
 import { TIERS, formatPeso, getTier, type DiscountType, type TierId } from "@/config/pricing";
 
-const field = "w-full rounded-xl border border-line bg-paper px-3 py-2 text-sm outline-none focus:border-accent";
+const field =
+  "w-full rounded-xl border border-line bg-paper px-3 py-2 text-sm outline-none focus:border-accent";
 
 function errorText(error: unknown) {
   const msg = error instanceof Error ? error.message : "";
@@ -20,7 +21,11 @@ function endOfDay(value: string): string | null {
 }
 
 function shortDate(iso: string) {
-  return new Date(iso).toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" });
+  return new Date(iso).toLocaleDateString(undefined, {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  });
 }
 
 export function DiscountCodes() {
@@ -61,7 +66,8 @@ export function DiscountCodes() {
   });
 
   const update = useMutation({
-    mutationFn: (v: { id: string; active?: boolean; expiresAt?: string | null }) => updateDiscountCode({ data: v }),
+    mutationFn: (v: { id: string; active?: boolean; expiresAt?: string | null }) =>
+      updateDiscountCode({ data: v }),
     onSuccess: refresh,
     onError: (e) => toast.error(errorText(e)),
   });
@@ -71,7 +77,8 @@ export function DiscountCodes() {
     <section className="mx-auto max-w-6xl px-5 pt-10">
       <h2 className="font-display text-2xl font-medium tracking-tight">Discount codes</h2>
       <p className="mt-1 max-w-[62ch] text-sm text-muted">
-        Codes work on a gift's first plan. A use counts only once the payment is confirmed (or a free code opens the gift). Codes aren't case sensitive.
+        Codes work on a gift's first plan. A use counts only once the payment is confirmed (or a
+        free code opens the gift). Codes aren't case sensitive.
       </p>
 
       <div className="mt-4 overflow-x-auto rounded-2xl border border-line bg-white">
@@ -99,13 +106,18 @@ export function DiscountCodes() {
               const ended = !!c.expiresAt && new Date(c.expiresAt).getTime() < Date.now();
               const usedUp = c.maxUses !== null && c.usedCount >= c.maxUses;
               return (
-                <tr key={c.id} className={`border-t border-line ${!c.active || ended || usedUp ? "text-muted" : ""}`}>
+                <tr
+                  key={c.id}
+                  className={`border-t border-line ${!c.active || ended || usedUp ? "text-muted" : ""}`}
+                >
                   <td className="px-4 py-3">
                     <span className="font-mono font-medium">{c.code}</span>
                     {c.note ? <span className="block text-xs text-muted">{c.note}</span> : null}
                   </td>
                   <td className="px-4 py-3">{c.label}</td>
-                  <td className="px-4 py-3">{c.plans.length ? c.plans.map((p) => getTier(p)?.name ?? p).join(", ") : "All"}</td>
+                  <td className="px-4 py-3">
+                    {c.plans.length ? c.plans.map((p) => getTier(p)?.name ?? p).join(", ") : "All"}
+                  </td>
                   <td className="px-4 py-3">
                     {c.usedCount}
                     {c.maxUses !== null ? ` / ${c.maxUses}` : ""}
@@ -117,10 +129,16 @@ export function DiscountCodes() {
                       type="date"
                       aria-label={`When ${c.code} ends`}
                       defaultValue={c.expiresAt ? c.expiresAt.slice(0, 10) : ""}
-                      onChange={(e) => update.mutate({ id: c.id, expiresAt: endOfDay(e.target.value) })}
+                      onChange={(e) =>
+                        update.mutate({ id: c.id, expiresAt: endOfDay(e.target.value) })
+                      }
                       className="rounded-lg border border-line bg-paper px-2 py-1 text-xs"
                     />
-                    {ended ? <span className="block text-xs">Ended</span> : !c.expiresAt ? <span className="block text-xs text-muted">Never</span> : null}
+                    {ended ? (
+                      <span className="block text-xs">Ended</span>
+                    ) : !c.expiresAt ? (
+                      <span className="block text-xs text-muted">Never</span>
+                    ) : null}
                   </td>
                   <td className="px-4 py-3 text-right">
                     <button
@@ -148,11 +166,24 @@ export function DiscountCodes() {
         <p className="font-medium sm:col-span-2 lg:col-span-4">New code</p>
         <label className="text-xs text-muted">
           Code
-          <input value={code} onChange={(e) => setCode(e.target.value.replace(/\s+/g, "").toUpperCase())} placeholder="LAUNCH20" required minLength={3} maxLength={40} pattern="[A-Za-z0-9_\-]+" className={`${field} mt-1 font-mono`} />
+          <input
+            value={code}
+            onChange={(e) => setCode(e.target.value.replace(/\s+/g, "").toUpperCase())}
+            placeholder="LAUNCH20"
+            required
+            minLength={3}
+            maxLength={40}
+            pattern="[A-Za-z0-9_\-]+"
+            className={`${field} mt-1 font-mono`}
+          />
         </label>
         <label className="text-xs text-muted">
           Type
-          <select value={type} onChange={(e) => setType(e.target.value as DiscountType)} className={`${field} mt-1`}>
+          <select
+            value={type}
+            onChange={(e) => setType(e.target.value as DiscountType)}
+            className={`${field} mt-1`}
+          >
             <option value="percent">Percent off</option>
             <option value="fixed">Pesos off</option>
             <option value="free">Free plan</option>
@@ -177,7 +208,13 @@ export function DiscountCodes() {
           <div className="mt-2 flex flex-wrap gap-3 text-sm text-ink">
             {TIERS.map((t) => (
               <label key={t.id} className="flex items-center gap-1.5">
-                <input type="checkbox" checked={plans.includes(t.id)} onChange={(e) => setPlans((p) => (e.target.checked ? [...p, t.id] : p.filter((x) => x !== t.id)))} />
+                <input
+                  type="checkbox"
+                  checked={plans.includes(t.id)}
+                  onChange={(e) =>
+                    setPlans((p) => (e.target.checked ? [...p, t.id] : p.filter((x) => x !== t.id)))
+                  }
+                />
                 {t.name} <span className="text-muted">{formatPeso(t.amount)}</span>
               </label>
             ))}
@@ -185,22 +222,48 @@ export function DiscountCodes() {
         </fieldset>
         <label className="text-xs text-muted">
           Max uses in total (empty = no limit)
-          <input type="number" min={1} value={maxUses} onChange={(e) => setMaxUses(e.target.value)} className={`${field} mt-1`} />
+          <input
+            type="number"
+            min={1}
+            value={maxUses}
+            onChange={(e) => setMaxUses(e.target.value)}
+            className={`${field} mt-1`}
+          />
         </label>
         <label className="text-xs text-muted">
           Max per person (empty = no limit)
-          <input type="number" min={1} value={maxPerUser} onChange={(e) => setMaxPerUser(e.target.value)} className={`${field} mt-1`} />
+          <input
+            type="number"
+            min={1}
+            value={maxPerUser}
+            onChange={(e) => setMaxPerUser(e.target.value)}
+            className={`${field} mt-1`}
+          />
         </label>
         <label className="text-xs text-muted">
           Ends on (empty = never)
-          <input type="date" value={expires} onChange={(e) => setExpires(e.target.value)} className={`${field} mt-1`} />
+          <input
+            type="date"
+            value={expires}
+            onChange={(e) => setExpires(e.target.value)}
+            className={`${field} mt-1`}
+          />
         </label>
         <label className="text-xs text-muted">
           Note (only you see it)
-          <input value={note} onChange={(e) => setNote(e.target.value)} maxLength={200} className={`${field} mt-1`} />
+          <input
+            value={note}
+            onChange={(e) => setNote(e.target.value)}
+            maxLength={200}
+            className={`${field} mt-1`}
+          />
         </label>
         <div className="sm:col-span-2 lg:col-span-4">
-          <button type="submit" disabled={create.isPending} className="rounded-full bg-ink px-5 py-2.5 text-sm font-medium text-cream disabled:opacity-60">
+          <button
+            type="submit"
+            disabled={create.isPending}
+            className="rounded-full bg-ink px-5 py-2.5 text-sm font-medium text-cream disabled:opacity-60"
+          >
             {create.isPending ? "Saving…" : "Make code"}
           </button>
         </div>
@@ -218,7 +281,12 @@ export function DiscountCodes() {
                   paid {formatPeso(r.amount)} (−{formatPeso(r.off)})
                 </span>
                 {r.slug ? (
-                  <a href={`/g/${r.slug}`} target="_blank" rel="noreferrer" className="underline underline-offset-2">
+                  <a
+                    href={`/g/${r.slug}`}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="underline underline-offset-2"
+                  >
                     /g/{r.slug}
                   </a>
                 ) : (

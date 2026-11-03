@@ -66,14 +66,125 @@ Neon is the existing database; this deployment does not move database contents. 
 
 Build in GitHub Actions, not on the 4 GB VM. Trigger the existing **Build app image** workflow for the approved commit and wait for it to succeed. Use its immutable tag `ghcr.io/janellereonal/just-because:sha-<full-commit-sha>`, not `latest`. Ensure the GHCR package is public or log in on the VM using a read-only package token without exposing it in terminal history.
 
-The source repository is private, which is separate from the GHCR image's visibility. An admin workstation needs GitHub access to fetch or clone the branch; if Git reports an authentication error, sign in there with `gh auth login` (or use an already authorized SSH key). Because the workflow only publishes automatically for `main`, use GitHub's **Actions → Build app image → Run workflow** and select the approved `codex/just-because-work` branch to publish this branch's commit. The VM does not need a GitHub source checkout when you copy the Compose files from that workstation and deploy only the built image. If the GHCR package is private, the VM must separately authenticate to `ghcr.io` with a GitHub personal access token (classic) that has `read:packages` access to that package. Use Docker's credential storage and enter the token only at the interactive prompt; never put it in a command argument, Compose file, or `.env`. If the image package is public, `docker pull` requires no login. GitHub Actions publishes with its workflow token; it does not use your personal credentials.
+The source repository is private, which is separate from the GHCR image's visibility. Follow these steps on an admin workstation and the VM. The VM does not need a GitHub source checkout: it receives the Compose files from your workstation and pulls only the built image.
+
+#### A. Sign in to GitHub on the admin workstation
+
+Install GitHub CLI if needed (`brew install gh` on macOS), then sign in to the GitHub account that has access to `janellereonal/just-because`:
 
 ```sh
-docker pull ghcr.io/janellereonal/just-because:sha-<full-commit-sha>
-docker image inspect ghcr.io/janellereonal/just-because:sha-<full-commit-sha> --format '{{.Os}}/{{.Architecture}}'
+gh auth login
+gh auth status
 ```
 
-The published multi-platform image supports the common `x86_64` (`amd64`) and `aarch64` (`arm64`) VM architectures.
+At the prompts, choose **GitHub.com**, **HTTPS**, and browser authentication. To push this branch and see its Actions runs, the account must have **write access** to the repository; read access is enough only to clone or fetch. If you already have a local clone, run these commands inside it. Otherwise, clone first:
+
+```sh
+gh repo clone janellereonal/just-because
+cd just-because
+```
+
+Fetch and switch to the branch being deployed, then record its full commit SHA. The SHA identifies the exact image to deploy:
+
+```sh
+git fetch origin
+git switch codex/just-because-work
+git pull --ff-only origin codex/just-because-work
+git rev-parse HEAD
+```
+
+#### B. Push the approved commit and wait for its image
+
+The workflow builds automatically when a commit is pushed to `main` or `codex/just-because-work`. This avoids GitHub's manual-dispatch requirement that the workflow file first exist on the repository's default branch. It also means this branch can publish an image without merging the app into `main`. Pull request checks do not publish an image.
+
+After committing and pushing the approved changes from the authenticated workstation, record the pushed commit's full SHA and find its run:
+
+```sh
+git push origin codex/just-because-work
+git rev-parse HEAD
+gh run list --workflow build-app-image.yml --branch codex/just-because-work --limit 5
+```
+
+Copy the run ID matching that commit and wait for a successful result:
+
+```sh
+export RUN_ID=1234567890 # replace with the matching run ID
+gh run watch "$RUN_ID"
+```
+
+The workflow builds `linux/amd64` and `linux/arm64` and publishes the image as `ghcr.io/janellereonal/just-because:sha-<FULL_COMMIT_SHA>`. Use the 40-character SHA printed by `git rev-parse HEAD` in the `.env` setting below. Deploy only after the matching workflow run succeeds. The `latest` tag is reserved for pushes to `main`; do not deploy it because it can change between releases.
+
+Before the build, set the GitHub repository **Actions variables** under **Settings → Secrets and variables → Actions → Variables**. Add `R2_PUBLIC_URL` with the public HTTPS media hostname (for example, `https://media.justbecause.site`). `VITE_POSTHOG_KEY` is optional; set it only if production analytics should be enabled. `VITE_POSTHOG_REGION` is optional and defaults to `us`. These are public build-time values; do not put credentials or keys that grant write access in Actions Variables. R2 secret access keys stay only in the VM's `.env`.
+
+#### C. Copy deployment files to THEPC
+
+Connect over the VM's private administration path (such as Tailscale). Set `VM_USER` to the Linux login name (often `ubuntu`) and `VM_TAILSCALE_IP` to the VM's Tailscale IP on the admin workstation, then copy only these non-secret files:
+
+```sh
+export VM_USER=ubuntu
+export VM_TAILSCALE_IP=100.x.y.z # replace with the VM's Tailscale IP
+ssh "$VM_USER@$VM_TAILSCALE_IP" 'mkdir -p /tmp/just-because-app'
+scp deployment/app/compose.yaml deployment/app/compose.private.yaml deployment/app/.env.example \
+  "$VM_USER@$VM_TAILSCALE_IP:/tmp/just-because-app/"
+```
+
+On the VM, install the files and create `.env` only if it does not already exist, so a later update will not overwrite existing secrets:
+
+```sh
+sudo install -d -o "$USER" -g "$USER" /opt/just-because/deployment/app
+cp /tmp/just-because-app/compose.yaml /tmp/just-because-app/compose.private.yaml \
+  /tmp/just-because-app/.env.example /opt/just-because/deployment/app/
+cd /opt/just-because/deployment/app
+cp -n .env.example .env
+chmod 600 .env
+nano .env
+```
+
+Fill `.env` with the production values from section 2. Add this line, using the exact SHA from step A:
+
+```dotenv
+APP_IMAGE=ghcr.io/janellereonal/just-because:sha-REPLACE_WITH_40_CHARACTER_SHA
+```
+
+Save the file and leave it on the VM. Never copy `.env` back to the workstation or commit it.
+
+#### D. Pull the image from GHCR
+
+Open **GitHub → Your profile → Packages → just-because** to check the package visibility. If it is public, skip login and pull the image:
+
+```sh
+cd /opt/just-because/deployment/app
+docker compose pull app
+```
+
+If it is private, create a GitHub **personal access token (classic)** with only `read:packages` access (and grant SSO access if GitHub prompts). On the VM, log in with your GitHub username and enter the token at Docker's password prompt. The commands below use a temporary Docker credential directory and remove it after the pull, instead of leaving the login in the VM's normal Docker config:
+
+```sh
+set -e
+cd /opt/just-because/deployment/app
+export GH_USERNAME=YOUR_GITHUB_USERNAME
+export DOCKER_CONFIG="$(mktemp -d)"
+chmod 700 "$DOCKER_CONFIG"
+cleanup_ghcr_credentials() {
+  docker logout ghcr.io >/dev/null 2>&1 || true
+  rm -rf -- "$DOCKER_CONFIG"
+}
+trap cleanup_ghcr_credentials EXIT
+docker login ghcr.io --username "$GH_USERNAME"
+docker compose pull app
+cleanup_ghcr_credentials
+trap - EXIT
+unset DOCKER_CONFIG
+unset GH_USERNAME
+```
+
+Replace `YOUR_GITHUB_USERNAME` before running the command. At the password prompt, paste the token; it will not be echoed. Do not append the token to the command, put it in `.env`, or send it in chat. If login or pull fails, check the token's `read:packages` scope and that the GHCR package grants access to the private repository. GitHub Actions itself uses the workflow's `GITHUB_TOKEN` to publish; no personal token belongs in repository secrets for this workflow.
+
+The published multi-platform image supports the common `x86_64` (`amd64`) and `aarch64` (`arm64`) VM architectures. Confirm the pulled tag and architecture before migrating:
+
+```sh
+docker image inspect "$(sed -n 's/^APP_IMAGE=//p' .env)" --format '{{.Os}}/{{.Architecture}}'
+```
 
 ### 4. Back up, migrate, and start privately
 
@@ -81,7 +192,6 @@ Before the first production migration, verify `.env` points to the intended Neon
 
 ```sh
 cd /opt/just-because/deployment/app
-export APP_IMAGE=ghcr.io/janellereonal/just-because:sha-<full-commit-sha>
 docker compose --profile maintenance run --rm migrate
 docker compose -f compose.yaml -f compose.private.yaml up -d --no-build app
 docker compose -f compose.yaml -f compose.private.yaml ps
@@ -97,7 +207,9 @@ docker compose -f compose.yaml -f compose.private.yaml exec app node -e "fetch('
 To view the private app from an admin Mac, open an SSH local forward over Tailscale, then browse to `http://localhost:18080`:
 
 ```sh
-ssh -N -L 18080:127.0.0.1:18080 <vm-user>@<vm-tailscale-ip>
+export VM_USER=ubuntu
+export VM_TAILSCALE_IP=100.x.y.z # replace with the VM's Tailscale IP
+ssh -N -L 18080:127.0.0.1:18080 "$VM_USER@$VM_TAILSCALE_IP"
 ```
 
 The canonical auth origin remains `https://justbecause.site`; OAuth callbacks, payment webhooks, email links, public R2 media, and full browser sign-in cannot be considered verified until public HTTPS/DNS and provider callbacks are configured. The private run confirms the image boots and can reach the configured backend; it is not a public launch.

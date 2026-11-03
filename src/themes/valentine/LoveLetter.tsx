@@ -20,9 +20,24 @@ import { createPortal } from "react-dom";
 import { animate, motion, useMotionValue, useTransform, type MotionValue } from "motion/react";
 import { Greeting, type OpeningProps } from "@/themes/_shared/opening";
 import type { ThemePalette } from "@/themes/_shared/design";
-import { FallbackButton, Layer, SPRING, useBeats, useHaptics, useHold } from "@/themes/_shared/stage";
+import {
+  FallbackButton,
+  Layer,
+  SPRING,
+  useBeats,
+  useHaptics,
+  useHold,
+} from "@/themes/_shared/stage";
 import { burstSet } from "@/themes/_shared/Sprinkles";
-import { Extrude, FloorShadow, LightShaft, Object3D, Sheen, Texture, rim } from "@/themes/_shared/light";
+import {
+  Extrude,
+  FloorShadow,
+  LightShaft,
+  Object3D,
+  Sheen,
+  Texture,
+  rim,
+} from "@/themes/_shared/light";
 import { chime, foley, melody } from "@/lib/play";
 import { WaxSeal, liner } from "@/themes/valentine/Opening";
 
@@ -50,9 +65,18 @@ const PAPER_LINES = "repeating-linear-gradient(transparent 0 23px, rgba(180,51,9
 /** Back of the envelope, with the liner showing at the top. */
 function EnvelopeBack({ c }: { c: ThemePalette }) {
   return (
-    <div className="absolute inset-0 z-[1] overflow-hidden rounded-[6px]" style={{ background: c.cream, boxShadow: rim(0.9) }}>
-      <div className="absolute inset-x-[3%] top-[2%] h-[56%]" style={{ ...liner(c), clipPath: "polygon(0 0, 100% 0, 50% 100%)", opacity: 0.9 }} />
-      <div className="absolute inset-0 rounded-[6px]" style={{ background: `linear-gradient(180deg, ${c.oxblood}38, transparent 60%)` }} />
+    <div
+      className="absolute inset-0 z-[1] overflow-hidden rounded-[6px]"
+      style={{ background: c.cream, boxShadow: rim(0.9) }}
+    >
+      <div
+        className="absolute inset-x-[3%] top-[2%] h-[56%]"
+        style={{ ...liner(c), clipPath: "polygon(0 0, 100% 0, 50% 100%)", opacity: 0.9 }}
+      />
+      <div
+        className="absolute inset-0 rounded-[6px]"
+        style={{ background: `linear-gradient(180deg, ${c.oxblood}38, transparent 60%)` }}
+      />
       <Texture material="paper" opacity={0.55} />
     </div>
   );
@@ -62,29 +86,84 @@ function EnvelopeBack({ c }: { c: ThemePalette }) {
 function Pocket({ c }: { c: ThemePalette }) {
   return (
     <div className="pointer-events-none absolute inset-0 z-[4]">
-      <div className="absolute inset-0 overflow-hidden rounded-[6px]" style={{ background: `linear-gradient(100deg, #FBF5EC, ${c.cream} 60%)`, clipPath: "polygon(0 0, 52% 56%, 0 100%)" }}>
+      <div
+        className="absolute inset-0 overflow-hidden rounded-[6px]"
+        style={{
+          background: `linear-gradient(100deg, #FBF5EC, ${c.cream} 60%)`,
+          clipPath: "polygon(0 0, 52% 56%, 0 100%)",
+        }}
+      >
         <Texture material="paper" opacity={0.5} />
       </div>
-      <div className="absolute inset-0 overflow-hidden rounded-[6px]" style={{ background: `linear-gradient(260deg, #E3D4BE, ${c.cream} 70%)`, clipPath: "polygon(100% 0, 48% 56%, 100% 100%)" }}>
+      <div
+        className="absolute inset-0 overflow-hidden rounded-[6px]"
+        style={{
+          background: `linear-gradient(260deg, #E3D4BE, ${c.cream} 70%)`,
+          clipPath: "polygon(100% 0, 48% 56%, 100% 100%)",
+        }}
+      >
         <Texture material="paper" opacity={0.5} />
       </div>
-      <div className="absolute inset-0" style={{ background: "rgba(80,40,30,.16)", clipPath: "polygon(0 100%, 50% 43%, 100% 100%)", filter: "blur(3px)" }} />
-      <div className="absolute inset-0 overflow-hidden rounded-[6px]" style={{ background: `linear-gradient(0deg, ${c.cream}, #F4EADC)`, clipPath: "polygon(0 100%, 50% 46%, 100% 100%)" }}>
+      <div
+        className="absolute inset-0"
+        style={{
+          background: "rgba(80,40,30,.16)",
+          clipPath: "polygon(0 100%, 50% 43%, 100% 100%)",
+          filter: "blur(3px)",
+        }}
+      />
+      <div
+        className="absolute inset-0 overflow-hidden rounded-[6px]"
+        style={{
+          background: `linear-gradient(0deg, ${c.cream}, #F4EADC)`,
+          clipPath: "polygon(0 100%, 50% 46%, 100% 100%)",
+        }}
+      >
         <Texture material="paper" opacity={0.5} />
         <Sheen strength={0.55} angle={120} width={30} />
       </div>
-      <div className="absolute inset-0" style={{ background: "linear-gradient(115deg, rgba(255,255,255,.4), transparent 40%)", clipPath: "polygon(0 100%, 50% 46%, 100% 100%)" }} />
+      <div
+        className="absolute inset-0"
+        style={{
+          background: "linear-gradient(115deg, rgba(255,255,255,.4), transparent 40%)",
+          clipPath: "polygon(0 100%, 50% 46%, 100% 100%)",
+        }}
+      />
     </div>
   );
 }
 
 /** The paper of the letter, with ruled lines, grain and raking light. */
-function LetterPaper({ c, children, shade = 1 }: { c: ThemePalette; children?: React.ReactNode; shade?: number }) {
+function LetterPaper({
+  c,
+  children,
+  shade = 1,
+}: {
+  c: ThemePalette;
+  children?: React.ReactNode;
+  shade?: number;
+}) {
   return (
-    <div className="absolute inset-0 rounded-[3px] bg-[#FFFDF8]" style={{ boxShadow: `${rim(0.6)}, 3px 10px 22px -12px rgba(60,20,30,${0.45 * shade})`, backgroundImage: PAPER_LINES }}>
+    <div
+      className="absolute inset-0 rounded-[3px] bg-[#FFFDF8]"
+      style={{
+        boxShadow: `${rim(0.6)}, 3px 10px 22px -12px rgba(60,20,30,${0.45 * shade})`,
+        backgroundImage: PAPER_LINES,
+      }}
+    >
       <Texture material="paper" opacity={0.45} />
-      <span aria-hidden="true" className="pointer-events-none absolute inset-0 block" style={{ background: "linear-gradient(125deg, rgba(255,255,255,.55), transparent 38%, transparent 70%, rgba(80,40,30,.06))" }} />
-      <div className="relative flex h-full flex-col items-center justify-center px-[8%] text-center" style={{ color: c.oxblood }}>
+      <span
+        aria-hidden="true"
+        className="pointer-events-none absolute inset-0 block"
+        style={{
+          background:
+            "linear-gradient(125deg, rgba(255,255,255,.55), transparent 38%, transparent 70%, rgba(80,40,30,.06))",
+        }}
+      />
+      <div
+        className="relative flex h-full flex-col items-center justify-center px-[8%] text-center"
+        style={{ color: c.oxblood }}
+      >
         {children}
       </div>
     </div>
@@ -92,9 +171,26 @@ function LetterPaper({ c, children, shade = 1 }: { c: ThemePalette; children?: R
 }
 
 /** Wax with an irregular rim and their initial pressed into it, lit from the top left. */
-function MonogramSeal({ color, dark, letter, warmth = 0 }: { color: string; dark: string; letter: string; warmth?: number }) {
+function MonogramSeal({
+  color,
+  dark,
+  letter,
+  warmth = 0,
+}: {
+  color: string;
+  dark: string;
+  letter: string;
+  warmth?: number;
+}) {
   return (
-    <svg viewBox="0 0 100 100" className="size-full overflow-visible" aria-hidden="true" style={{ filter: `drop-shadow(2px 4px 3px rgba(60,10,20,.4)) drop-shadow(4px 10px 10px rgba(60,10,20,.25)) brightness(${1 + warmth * 0.22}) saturate(${1 + warmth * 0.3})` }}>
+    <svg
+      viewBox="0 0 100 100"
+      className="size-full overflow-visible"
+      aria-hidden="true"
+      style={{
+        filter: `drop-shadow(2px 4px 3px rgba(60,10,20,.4)) drop-shadow(4px 10px 10px rgba(60,10,20,.25)) brightness(${1 + warmth * 0.22}) saturate(${1 + warmth * 0.3})`,
+      }}
+    >
       <defs>
         <radialGradient id="wax-mono" cx="38%" cy="30%" r="80%">
           <stop offset="0" stopColor="#fff" stopOpacity=".38" />
@@ -103,15 +199,55 @@ function MonogramSeal({ color, dark, letter, warmth = 0 }: { color: string; dark
         </radialGradient>
       </defs>
       <g filter="url(#jb-gloss)">
-        <path d="M50 3c9 0 12 6 20 8s14 1 17 10-2 13 1 21 9 12 5 20-11 7-15 14-3 15-12 18-12-3-19-1-13 8-21 3-4-13-9-19-15-6-15-15 9-11 9-19-7-14-1-21 13-2 20-7S41 3 50 3z" fill="url(#wax-mono)" />
+        <path
+          d="M50 3c9 0 12 6 20 8s14 1 17 10-2 13 1 21 9 12 5 20-11 7-15 14-3 15-12 18-12-3-19-1-13 8-21 3-4-13-9-19-15-6-15-15 9-11 9-19-7-14-1-21 13-2 20-7S41 3 50 3z"
+          fill="url(#wax-mono)"
+        />
       </g>
-      <circle cx="50" cy="51" r="30" fill="none" stroke={dark} strokeOpacity=".55" strokeWidth="2.5" />
-      <circle cx="50" cy="51" r="30" fill="none" stroke="#fff" strokeOpacity=".28" strokeWidth="1" transform="translate(1.2 1.2)" />
+      <circle
+        cx="50"
+        cy="51"
+        r="30"
+        fill="none"
+        stroke={dark}
+        strokeOpacity=".55"
+        strokeWidth="2.5"
+      />
+      <circle
+        cx="50"
+        cy="51"
+        r="30"
+        fill="none"
+        stroke="#fff"
+        strokeOpacity=".28"
+        strokeWidth="1"
+        transform="translate(1.2 1.2)"
+      />
       {/* The pressed initial: a dark recess with a lit lower edge, like a real die. */}
-      <text x="51.2" y="63.4" textAnchor="middle" fontFamily="'Cormorant Garamond', 'Playfair Display', Georgia, serif" fontStyle="italic" fontWeight="600" fontSize="38" fill="#fff" fillOpacity=".3">
+      <text
+        x="51.2"
+        y="63.4"
+        textAnchor="middle"
+        fontFamily="'Cormorant Garamond', 'Playfair Display', Georgia, serif"
+        fontStyle="italic"
+        fontWeight="600"
+        fontSize="38"
+        fill="#fff"
+        fillOpacity=".3"
+      >
         {letter}
       </text>
-      <text x="50" y="62" textAnchor="middle" fontFamily="'Cormorant Garamond', 'Playfair Display', Georgia, serif" fontStyle="italic" fontWeight="600" fontSize="38" fill={dark} fillOpacity=".72">
+      <text
+        x="50"
+        y="62"
+        textAnchor="middle"
+        fontFamily="'Cormorant Garamond', 'Playfair Display', Georgia, serif"
+        fontStyle="italic"
+        fontWeight="600"
+        fontSize="38"
+        fill={dark}
+        fillOpacity=".72"
+      >
         {letter}
       </text>
     </svg>
@@ -122,7 +258,10 @@ function MonogramSeal({ color, dark, letter, warmth = 0 }: { color: string; dark
 function Room({ c }: { c: ThemePalette }) {
   return (
     <Layer depth={-14} className="pointer-events-none absolute -inset-[30%]">
-      <div className="size-full" style={{ background: `radial-gradient(60% 50% at 50% 45%, ${c.rose}22, transparent 70%)` }} />
+      <div
+        className="size-full"
+        style={{ background: `radial-gradient(60% 50% at 50% 45%, ${c.rose}22, transparent 70%)` }}
+      />
       <LightShaft strength={0.55} motes={9} />
     </Layer>
   );
@@ -137,7 +276,13 @@ function usePayoff(p: OpeningProps, c: ThemePalette) {
     h,
     hearts(at = 0.42) {
       const r = p.hostRef.current?.getBoundingClientRect();
-      if (r) burstSet(p.hostRef.current, r.left + r.width / 2, r.top + r.height * at, p.iconSet, { colors: [c.rose!, c.gold!, "#F7B2C4"], count: 26, spread: 1.7, up: true });
+      if (r)
+        burstSet(p.hostRef.current, r.left + r.width / 2, r.top + r.height * at, p.iconSet, {
+          colors: [c.rose!, c.gold!, "#F7B2C4"],
+          count: 26,
+          spread: 1.7,
+          up: true,
+        });
       h.success();
     },
   };
@@ -160,22 +305,52 @@ function useHandoff(p: OpeningProps, c: ThemePalette) {
     const host = p.hostRef.current?.getBoundingClientRect();
     const r = from?.getBoundingClientRect();
     if (!host || !r) return;
-    const target = document.querySelector("[data-gift-underlay] [data-gift-page]")?.getBoundingClientRect();
-    const rel = (x: DOMRect): Rect => ({ top: x.top - host.top, left: x.left - host.left, width: x.width, height: x.height });
-    setPage({ from: rel(r), to: target && target.width > 0 ? rel(target) : { top: 0, left: 0, width: host.width, height: host.height }, radius: target ? 4 : 0 });
+    const target = document
+      .querySelector("[data-gift-underlay] [data-gift-page]")
+      ?.getBoundingClientRect();
+    const rel = (x: DOMRect): Rect => ({
+      top: x.top - host.top,
+      left: x.left - host.left,
+      width: x.width,
+      height: x.height,
+    });
+    setPage({
+      from: rel(r),
+      to:
+        target && target.width > 0
+          ? rel(target)
+          : { top: 0, left: 0, width: host.width, height: host.height },
+      radius: target ? 4 : 0,
+    });
   }
   const node =
     page && p.hostRef.current
       ? createPortal(
           <motion.div
             className="pointer-events-none absolute z-[40] overflow-hidden"
-            initial={{ ...page.from, borderRadius: 3, boxShadow: "0 18px 40px -20px rgba(60,20,30,.5)" }}
-            animate={{ ...page.to, borderRadius: page.radius, boxShadow: "0 30px 60px -30px rgba(60,20,30,.35)" }}
+            initial={{
+              ...page.from,
+              borderRadius: 3,
+              boxShadow: "0 18px 40px -20px rgba(60,20,30,.5)",
+            }}
+            animate={{
+              ...page.to,
+              borderRadius: page.radius,
+              boxShadow: "0 30px 60px -30px rgba(60,20,30,.35)",
+            }}
             transition={{ duration: 1, ease: [0.65, 0, 0.35, 1] }}
           >
             <LetterPaper c={c} shade={0}>
-              <motion.div initial={{ opacity: 1 }} animate={{ opacity: [1, 1, 0] }} transition={{ duration: 0.9, times: [0, 0.6, 1] }}>
-                <Greeting text={p.greeting} className="text-[clamp(1.9rem,10.5cqi,3.2rem)]" style={{ fontStyle: "italic", fontWeight: 500 }} />
+              <motion.div
+                initial={{ opacity: 1 }}
+                animate={{ opacity: [1, 1, 0] }}
+                transition={{ duration: 0.9, times: [0, 0.6, 1] }}
+              >
+                <Greeting
+                  text={p.greeting}
+                  className="text-[clamp(1.9rem,10.5cqi,3.2rem)]"
+                  style={{ fontStyle: "italic", fontWeight: 500 }}
+                />
               </motion.div>
             </LetterPaper>
           </motion.div>,
@@ -200,13 +375,21 @@ export function LoveLetterMonogram(p: OpeningProps) {
       x = Math.min(64, Math.max(36, x + (rand() - 0.5) * 18));
     }
     const line = pts.map(([px, py]) => `${px}% ${py}%`).join(", ");
-    const back = [...pts].reverse().map(([px, py]) => `${px}% ${py}%`).join(", ");
+    const back = [...pts]
+      .reverse()
+      .map(([px, py]) => `${px}% ${py}%`)
+      .join(", ");
     return {
       left: `polygon(0 0, ${line}, 0 100%)`,
       right: `polygon(${pts[0]![0]}% 0, 100% 0, 100% 100%, ${back})`,
       spin: [-(18 + rand() * 30), 18 + rand() * 30],
       drift: [-(28 + rand() * 30), 28 + rand() * 30],
-      crumbs: Array.from({ length: 6 }, () => ({ x: (rand() - 0.5) * 150, y: 40 + rand() * 110, s: 3 + rand() * 5, r: rand() * 360 })),
+      crumbs: Array.from({ length: 6 }, () => ({
+        x: (rand() - 0.5) * 150,
+        y: 40 + rand() * 110,
+        s: 3 + rand() * 5,
+        r: rand() * 360,
+      })),
     };
   }, [rand]);
   const sealRef = useRef<HTMLDivElement | null>(null);
@@ -267,9 +450,23 @@ export function LoveLetterMonogram(p: OpeningProps) {
         transition={{ duration: 0.7, ease: [0.4, 0, 0.2, 1] }}
       >
         <Layer depth={10} className="absolute inset-0">
-          <Object3D pose={{ x: 13, y: -3, z: -1.5 }} strength={9} settle={rise} className="absolute inset-0">
-            <div className="absolute inset-0" style={{ transform: "translateZ(-22px)", transformStyle: "preserve-3d" }}>
-              <FloorShadow lift={rise ? 0.25 : 0} tint="70,32,30" depth={4} radius={8} className="inset-[2%_3%_1%_3%]" />
+          <Object3D
+            pose={{ x: 13, y: -3, z: -1.5 }}
+            strength={9}
+            settle={rise}
+            className="absolute inset-0"
+          >
+            <div
+              className="absolute inset-0"
+              style={{ transform: "translateZ(-22px)", transformStyle: "preserve-3d" }}
+            >
+              <FloorShadow
+                lift={rise ? 0.25 : 0}
+                tint="70,32,30"
+                depth={4}
+                radius={8}
+                className="inset-[2%_3%_1%_3%]"
+              />
             </div>
             <Extrude depth={5} color="#D9C8AF" edge="#C9B596" radius={6} />
             <div className="absolute inset-0" style={{ perspective: 900 }}>
@@ -279,21 +476,48 @@ export function LoveLetterMonogram(p: OpeningProps) {
                 ref={letterRef}
                 className="absolute inset-x-[7%] z-[2]"
                 style={{ top: "8%", height: "84%", transformStyle: "preserve-3d" }}
-                animate={{ y: rise ? "-58%" : "0%", scale: unfold ? 1.06 : 1, zIndex: rise ? 6 : 2 }}
+                animate={{
+                  y: rise ? "-58%" : "0%",
+                  scale: unfold ? 1.06 : 1,
+                  zIndex: rise ? 6 : 2,
+                }}
                 transition={{ ...SPRING.heavy, zIndex: { delay: rise ? 0.35 : 0 } }}
               >
                 <LetterPaper c={c}>
-                  <motion.div animate={{ opacity: unfold ? 1 : 0, y: unfold ? 0 : 10 }} transition={{ ...SPRING.soft, delay: unfold ? 0.25 : 0 }}>
-                    <Greeting text={p.greeting} className="text-[clamp(1.9rem,10.5cqi,3.2rem)]" style={{ fontStyle: "italic", fontWeight: 500 }} />
-                    <span className="mt-3 block text-[12px] tracking-[0.2em] uppercase opacity-70">{p.badge}</span>
+                  <motion.div
+                    animate={{ opacity: unfold ? 1 : 0, y: unfold ? 0 : 10 }}
+                    transition={{ ...SPRING.soft, delay: unfold ? 0.25 : 0 }}
+                  >
+                    <Greeting
+                      text={p.greeting}
+                      className="text-[clamp(1.9rem,10.5cqi,3.2rem)]"
+                      style={{ fontStyle: "italic", fontWeight: 500 }}
+                    />
+                    <span className="mt-3 block text-[12px] tracking-[0.2em] uppercase opacity-70">
+                      {p.badge}
+                    </span>
                   </motion.div>
                 </LetterPaper>
-                <motion.span aria-hidden="true" className="pointer-events-none absolute inset-x-0 bottom-0 block h-1/2" style={{ background: "linear-gradient(0deg, rgba(70,30,30,.22), transparent)" }} animate={{ opacity: rise ? 0 : 1 }} transition={{ duration: 0.5 }} />
+                <motion.span
+                  aria-hidden="true"
+                  className="pointer-events-none absolute inset-x-0 bottom-0 block h-1/2"
+                  style={{ background: "linear-gradient(0deg, rgba(70,30,30,.22), transparent)" }}
+                  animate={{ opacity: rise ? 0 : 1 }}
+                  transition={{ duration: 0.5 }}
+                />
                 <motion.div
                   className="absolute inset-x-0 top-0 h-1/2 origin-bottom rounded-t-[3px]"
-                  style={{ background: "linear-gradient(180deg,#FBF4EA,#EFE2CF)", backfaceVisibility: "hidden", boxShadow: "inset 0 -12px 18px -12px rgba(60,20,30,.4), inset 0 1px 0 rgba(255,255,255,.8)" }}
+                  style={{
+                    background: "linear-gradient(180deg,#FBF4EA,#EFE2CF)",
+                    backfaceVisibility: "hidden",
+                    boxShadow:
+                      "inset 0 -12px 18px -12px rgba(60,20,30,.4), inset 0 1px 0 rgba(255,255,255,.8)",
+                  }}
                   animate={{ rotateX: unfold ? -178 : 0, opacity: unfold ? 0 : 1 }}
-                  transition={{ rotateX: SPRING.heavy, opacity: { delay: unfold ? 0.45 : 0, duration: 0.2 } }}
+                  transition={{
+                    rotateX: SPRING.heavy,
+                    opacity: { delay: unfold ? 0.45 : 0, duration: 0.2 },
+                  }}
                 />
               </motion.div>
               <Pocket c={c} />
@@ -304,28 +528,84 @@ export function LoveLetterMonogram(p: OpeningProps) {
                 animate={{ rotateX: flapOpen ? 178 : 0, zIndex: flapOpen ? 1 : 5 }}
                 transition={{ rotateX: SPRING.heavy, zIndex: { delay: flapOpen ? 0.18 : 0 } }}
               >
-                <motion.div className="absolute inset-0" style={{ background: "rgba(70,30,25,.22)", clipPath: "polygon(1% 2%, 99% 2%, 51% 100%)", filter: "blur(4px)", x: 2, y: 5 }} animate={{ opacity: flapOpen ? 0 : 1 }} transition={{ duration: 0.2 }} />
-                <div className="absolute inset-0 overflow-hidden" style={{ background: "linear-gradient(170deg,#FBF4EA,#E8D9C3)", clipPath: "polygon(0 0, 100% 0, 75% 50%, 25% 50%)", backfaceVisibility: "hidden" }}>
+                <motion.div
+                  className="absolute inset-0"
+                  style={{
+                    background: "rgba(70,30,25,.22)",
+                    clipPath: "polygon(1% 2%, 99% 2%, 51% 100%)",
+                    filter: "blur(4px)",
+                    x: 2,
+                    y: 5,
+                  }}
+                  animate={{ opacity: flapOpen ? 0 : 1 }}
+                  transition={{ duration: 0.2 }}
+                />
+                <div
+                  className="absolute inset-0 overflow-hidden"
+                  style={{
+                    background: "linear-gradient(170deg,#FBF4EA,#E8D9C3)",
+                    clipPath: "polygon(0 0, 100% 0, 75% 50%, 25% 50%)",
+                    backfaceVisibility: "hidden",
+                  }}
+                >
                   <Texture material="paper" opacity={0.55} />
                   <Sheen strength={0.6} angle={105} width={24} />
                 </div>
-                <div className="absolute inset-0" style={{ ...liner(c), clipPath: "polygon(0 0, 100% 0, 75% 50%, 25% 50%)", transform: "rotateX(180deg)", backfaceVisibility: "hidden" }} />
+                <div
+                  className="absolute inset-0"
+                  style={{
+                    ...liner(c),
+                    clipPath: "polygon(0 0, 100% 0, 75% 50%, 25% 50%)",
+                    transform: "rotateX(180deg)",
+                    backfaceVisibility: "hidden",
+                  }}
+                />
                 <motion.div
                   className="absolute inset-x-0 bottom-0 h-1/2 origin-top"
                   style={{ transformStyle: "preserve-3d" }}
                   animate={{ rotateX: flapOpen ? [0, -42, 6, 0] : 0 }}
                   transition={{ duration: 0.9, times: [0, 0.35, 0.75, 1], ease: "easeOut" }}
                 >
-                  <div className="absolute inset-0 overflow-hidden" style={{ background: "linear-gradient(170deg,#F6ECDD,#E3D2BA)", clipPath: "polygon(25% 0, 75% 0, 50% 100%)", backfaceVisibility: "hidden" }}>
+                  <div
+                    className="absolute inset-0 overflow-hidden"
+                    style={{
+                      background: "linear-gradient(170deg,#F6ECDD,#E3D2BA)",
+                      clipPath: "polygon(25% 0, 75% 0, 50% 100%)",
+                      backfaceVisibility: "hidden",
+                    }}
+                  >
                     <Texture material="paper" opacity={0.55} />
                   </div>
-                  <div className="absolute inset-0" style={{ ...liner(c), clipPath: "polygon(25% 0, 75% 0, 50% 100%)", transform: "rotateX(180deg)", backfaceVisibility: "hidden" }} />
+                  <div
+                    className="absolute inset-0"
+                    style={{
+                      ...liner(c),
+                      clipPath: "polygon(25% 0, 75% 0, 50% 100%)",
+                      transform: "rotateX(180deg)",
+                      backfaceVisibility: "hidden",
+                    }}
+                  />
                 </motion.div>
               </motion.div>
               {/* Warm glow under the seal while it's held */}
-              <div aria-hidden="true" className="pointer-events-none absolute left-1/2 z-[6] -translate-x-1/2 -translate-y-1/2 rounded-full" style={{ top: "57%", width: "min(40cqi, 160px)", aspectRatio: "1", background: `radial-gradient(circle, ${c.gold}66, transparent 65%)`, opacity: warmth * 0.9, transition: "opacity .15s" }} />
+              <div
+                aria-hidden="true"
+                className="pointer-events-none absolute left-1/2 z-[6] -translate-x-1/2 -translate-y-1/2 rounded-full"
+                style={{
+                  top: "57%",
+                  width: "min(40cqi, 160px)",
+                  aspectRatio: "1",
+                  background: `radial-gradient(circle, ${c.gold}66, transparent 65%)`,
+                  opacity: warmth * 0.9,
+                  transition: "opacity .15s",
+                }}
+              />
               {/* The seal */}
-              <div ref={sealRef} className="absolute left-1/2 z-[7] grid -translate-x-1/2 -translate-y-1/2 place-items-center" style={{ top: "57%", width: "min(25cqi, 104px)", aspectRatio: "1" }}>
+              <div
+                ref={sealRef}
+                className="absolute left-1/2 z-[7] grid -translate-x-1/2 -translate-y-1/2 place-items-center"
+                style={{ top: "57%", width: "min(25cqi, 104px)", aspectRatio: "1" }}
+              >
                 {!cracked ? (
                   <motion.button
                     type="button"
@@ -333,13 +613,39 @@ export function LoveLetterMonogram(p: OpeningProps) {
                     disabled={!p.interactive || p.paused}
                     className="relative grid size-full touch-none place-items-center rounded-full outline-none focus-visible:ring-4 focus-visible:ring-white/70"
                     {...hold.handlers}
-                    animate={{ scale: 1 - hold.progress * 0.07, rotate: hold.progress > 0 ? [0, -1.5, 1.5, 0] : 0 }}
-                    transition={{ scale: SPRING.snappy, rotate: { duration: 0.16, repeat: hold.progress > 0 ? Infinity : 0 } }}
+                    animate={{
+                      scale: 1 - hold.progress * 0.07,
+                      rotate: hold.progress > 0 ? [0, -1.5, 1.5, 0] : 0,
+                    }}
+                    transition={{
+                      scale: SPRING.snappy,
+                      rotate: { duration: 0.16, repeat: hold.progress > 0 ? Infinity : 0 },
+                    }}
                     whileHover={{ scale: 1.04 }}
                   >
-                    <MonogramSeal color={c.rose!} dark={c.oxblood!} letter={letter} warmth={warmth} />
-                    <svg viewBox="0 0 100 100" className="pointer-events-none absolute -inset-[14%] size-[128%] -rotate-90" aria-hidden="true">
-                      <circle cx="50" cy="50" r="46" fill="none" stroke={c.gold} strokeWidth="2.5" strokeLinecap="round" strokeDasharray={ring} strokeDashoffset={ring * (1 - hold.progress)} opacity={hold.progress > 0 ? 1 : 0} />
+                    <MonogramSeal
+                      color={c.rose!}
+                      dark={c.oxblood!}
+                      letter={letter}
+                      warmth={warmth}
+                    />
+                    <svg
+                      viewBox="0 0 100 100"
+                      className="pointer-events-none absolute -inset-[14%] size-[128%] -rotate-90"
+                      aria-hidden="true"
+                    >
+                      <circle
+                        cx="50"
+                        cy="50"
+                        r="46"
+                        fill="none"
+                        stroke={c.gold}
+                        strokeWidth="2.5"
+                        strokeLinecap="round"
+                        strokeDasharray={ring}
+                        strokeDashoffset={ring * (1 - hold.progress)}
+                        opacity={hold.progress > 0 ? 1 : 0}
+                      />
                     </svg>
                   </motion.button>
                 ) : (
@@ -351,7 +657,12 @@ export function LoveLetterMonogram(p: OpeningProps) {
                         style={{ clipPath: i === 0 ? crack.left : crack.right }}
                         initial={{ x: 0, y: 0, rotate: 0, opacity: 1 }}
                         animate={{ x: crack.drift[i]!, y: 150, rotate: crack.spin[i]!, opacity: 0 }}
-                        transition={{ x: SPRING.snappy, rotate: { type: "spring", stiffness: 120, damping: 14 }, y: { type: "spring", stiffness: 55, damping: 11, mass: 1.5 }, opacity: { delay: 0.55, duration: 0.3 } }}
+                        transition={{
+                          x: SPRING.snappy,
+                          rotate: { type: "spring", stiffness: 120, damping: 14 },
+                          y: { type: "spring", stiffness: 55, damping: 11, mass: 1.5 },
+                          opacity: { delay: 0.55, duration: 0.3 },
+                        }}
                       >
                         <MonogramSeal color={c.rose!} dark={c.oxblood!} letter={letter} />
                       </motion.div>
@@ -361,10 +672,19 @@ export function LoveLetterMonogram(p: OpeningProps) {
                         key={`c${i}`}
                         aria-hidden="true"
                         className="absolute top-1/2 left-1/2 block rounded-[30%]"
-                        style={{ width: cr.s, height: cr.s, background: i % 2 ? c.rose : c.oxblood }}
+                        style={{
+                          width: cr.s,
+                          height: cr.s,
+                          background: i % 2 ? c.rose : c.oxblood,
+                        }}
                         initial={{ x: 0, y: 0, opacity: 1, rotate: 0 }}
                         animate={{ x: cr.x, y: cr.y, opacity: 0, rotate: cr.r }}
-                        transition={{ type: "spring", stiffness: 70, damping: 12, opacity: { delay: 0.4, duration: 0.4 } }}
+                        transition={{
+                          type: "spring",
+                          stiffness: 70,
+                          damping: 12,
+                          opacity: { delay: 0.4, duration: 0.4 },
+                        }}
                       />
                     ))}
                   </>
@@ -376,7 +696,12 @@ export function LoveLetterMonogram(p: OpeningProps) {
       </motion.div>
 
       <div className="mt-[min(9cqi,40.5px)] h-11">
-        <FallbackButton onClick={doCrack} color={c.oxblood!} ink={c.oxblood!} hidden={cracked || !p.interactive || p.paused}>
+        <FallbackButton
+          onClick={doCrack}
+          color={c.oxblood!}
+          ink={c.oxblood!}
+          hidden={cracked || !p.interactive || p.paused}
+        >
           {p.buttonText}
         </FallbackButton>
       </div>
@@ -483,70 +808,137 @@ export function LoveLetterPeel(p: OpeningProps) {
   return (
     <div className="relative flex w-full flex-col items-center">
       <Room c={c} />
-      <motion.div className="relative" style={ENVELOPE_SIZE} animate={{ opacity: growing ? 0 : 1, y: growing ? 40 : 0, scale: growing ? 0.94 : 1 }} transition={{ duration: 0.7, ease: [0.4, 0, 0.2, 1] }}>
-      <Layer depth={10} className="absolute inset-0">
-        <Object3D pose={{ x: 13, y: -3, z: -1.5 }} strength={9} settle={rise} className="absolute inset-0">
-          <div className="absolute inset-0" style={{ transform: "translateZ(-22px)", transformStyle: "preserve-3d" }}>
-            <FloorShadow lift={rise ? 0.25 : 0} tint="70,32,30" depth={4} radius={8} className="inset-[2%_3%_1%_3%]" />
-          </div>
-          <Extrude depth={5} color="#D9C8AF" edge="#C9B596" radius={6} />
-          <div className="absolute inset-0" style={{ perspective: 900 }}>
-            <EnvelopeBack c={c} />
-            <motion.div
-              ref={letterRef}
-              className="absolute inset-x-[7%] z-[2]"
-              style={{ top: "8%", height: "84%", transformStyle: "preserve-3d" }}
-              animate={{ y: rise ? "-62%" : "0%", scale: unfold ? 1.06 : 1, zIndex: rise ? 6 : 2, rotate: rise ? [0, -2.5, 1, 0] : 0 }}
-              transition={{ y: { type: "spring", stiffness: 140, damping: 11, mass: 1.1 }, scale: SPRING.heavy, rotate: { duration: 0.8 }, zIndex: { delay: rise ? 0.3 : 0 } }}
+      <motion.div
+        className="relative"
+        style={ENVELOPE_SIZE}
+        animate={{ opacity: growing ? 0 : 1, y: growing ? 40 : 0, scale: growing ? 0.94 : 1 }}
+        transition={{ duration: 0.7, ease: [0.4, 0, 0.2, 1] }}
+      >
+        <Layer depth={10} className="absolute inset-0">
+          <Object3D
+            pose={{ x: 13, y: -3, z: -1.5 }}
+            strength={9}
+            settle={rise}
+            className="absolute inset-0"
+          >
+            <div
+              className="absolute inset-0"
+              style={{ transform: "translateZ(-22px)", transformStyle: "preserve-3d" }}
             >
-              <LetterPaper c={c}>
-                <motion.div animate={{ opacity: unfold ? 1 : 0, y: unfold ? 0 : 10 }} transition={{ ...SPRING.soft, delay: unfold ? 0.25 : 0 }}>
-                  <Greeting text={p.greeting} className="text-[clamp(1.9rem,10.5cqi,3.2rem)]" style={{ fontStyle: "italic", fontWeight: 500 }} />
-                  <span className="mt-3 block text-[12px] tracking-[0.2em] uppercase opacity-70">{p.badge}</span>
-                </motion.div>
-              </LetterPaper>
-              <motion.div
-                className="absolute inset-x-0 top-0 h-1/2 origin-bottom rounded-t-[3px]"
-                style={{ background: "linear-gradient(180deg,#FBF4EA,#EFE2CF)", backfaceVisibility: "hidden", boxShadow: "inset 0 -12px 18px -12px rgba(60,20,30,.4), inset 0 1px 0 rgba(255,255,255,.8)" }}
-                animate={{ rotateX: unfold ? -178 : 0, opacity: unfold ? 0 : 1 }}
-                transition={{ rotateX: SPRING.heavy, opacity: { delay: unfold ? 0.45 : 0, duration: 0.2 } }}
+              <FloorShadow
+                lift={rise ? 0.25 : 0}
+                tint="70,32,30"
+                depth={4}
+                radius={8}
+                className="inset-[2%_3%_1%_3%]"
               />
-            </motion.div>
-            <Pocket c={c} />
-            {/* The flap: follows the finger, then flips open once the seal lets go. */}
-            <FlapFollow c={c} turn={flapTurn} open={open} />
-            {/* The seal sits on the flap's tip and stretches as it's peeled. */}
-            {!free ? (
+            </div>
+            <Extrude depth={5} color="#D9C8AF" edge="#C9B596" radius={6} />
+            <div className="absolute inset-0" style={{ perspective: 900 }}>
+              <EnvelopeBack c={c} />
               <motion.div
-                ref={sealBox}
-                className="absolute left-1/2 z-[7] grid -translate-x-1/2 -translate-y-1/2 place-items-center"
-                style={{ top: "57%", width: "min(25cqi, 104px)", aspectRatio: "1", y: sealY, scaleY: sealStretch, scaleX: sealSquash, transformOrigin: "50% 100%" }}
+                ref={letterRef}
+                className="absolute inset-x-[7%] z-[2]"
+                style={{ top: "8%", height: "84%", transformStyle: "preserve-3d" }}
+                animate={{
+                  y: rise ? "-62%" : "0%",
+                  scale: unfold ? 1.06 : 1,
+                  zIndex: rise ? 6 : 2,
+                  rotate: rise ? [0, -2.5, 1, 0] : 0,
+                }}
+                transition={{
+                  y: { type: "spring", stiffness: 140, damping: 11, mass: 1.1 },
+                  scale: SPRING.heavy,
+                  rotate: { duration: 0.8 },
+                  zIndex: { delay: rise ? 0.3 : 0 },
+                }}
               >
-                {/* A strand of soft wax still holding on underneath */}
-                <motion.span aria-hidden="true" className="absolute top-[78%] left-1/2 block w-[14%] -translate-x-1/2 rounded-full" style={{ height: strand, background: `linear-gradient(${c.rose}, ${c.oxblood})`, opacity: 0.85 }} />
-                <button
-                  type="button"
-                  aria-label={t("letter.peel.aria")}
-                  disabled={!p.interactive || p.paused}
-                  className="relative grid size-full cursor-grab touch-none place-items-center rounded-full outline-none focus-visible:ring-4 focus-visible:ring-white/70 active:cursor-grabbing"
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter" || e.key === " ") {
-                      e.preventDefault();
-                      release();
-                    }
+                <LetterPaper c={c}>
+                  <motion.div
+                    animate={{ opacity: unfold ? 1 : 0, y: unfold ? 0 : 10 }}
+                    transition={{ ...SPRING.soft, delay: unfold ? 0.25 : 0 }}
+                  >
+                    <Greeting
+                      text={p.greeting}
+                      className="text-[clamp(1.9rem,10.5cqi,3.2rem)]"
+                      style={{ fontStyle: "italic", fontWeight: 500 }}
+                    />
+                    <span className="mt-3 block text-[12px] tracking-[0.2em] uppercase opacity-70">
+                      {p.badge}
+                    </span>
+                  </motion.div>
+                </LetterPaper>
+                <motion.div
+                  className="absolute inset-x-0 top-0 h-1/2 origin-bottom rounded-t-[3px]"
+                  style={{
+                    background: "linear-gradient(180deg,#FBF4EA,#EFE2CF)",
+                    backfaceVisibility: "hidden",
+                    boxShadow:
+                      "inset 0 -12px 18px -12px rgba(60,20,30,.4), inset 0 1px 0 rgba(255,255,255,.8)",
                   }}
-                  {...handlers}
-                >
-                  <MonogramSeal color={c.rose!} dark={c.oxblood!} letter={letter} />
-                </button>
+                  animate={{ rotateX: unfold ? -178 : 0, opacity: unfold ? 0 : 1 }}
+                  transition={{
+                    rotateX: SPRING.heavy,
+                    opacity: { delay: unfold ? 0.45 : 0, duration: 0.2 },
+                  }}
+                />
               </motion.div>
-            ) : null}
-          </div>
-        </Object3D>
-      </Layer>
+              <Pocket c={c} />
+              {/* The flap: follows the finger, then flips open once the seal lets go. */}
+              <FlapFollow c={c} turn={flapTurn} open={open} />
+              {/* The seal sits on the flap's tip and stretches as it's peeled. */}
+              {!free ? (
+                <motion.div
+                  ref={sealBox}
+                  className="absolute left-1/2 z-[7] grid -translate-x-1/2 -translate-y-1/2 place-items-center"
+                  style={{
+                    top: "57%",
+                    width: "min(25cqi, 104px)",
+                    aspectRatio: "1",
+                    y: sealY,
+                    scaleY: sealStretch,
+                    scaleX: sealSquash,
+                    transformOrigin: "50% 100%",
+                  }}
+                >
+                  {/* A strand of soft wax still holding on underneath */}
+                  <motion.span
+                    aria-hidden="true"
+                    className="absolute top-[78%] left-1/2 block w-[14%] -translate-x-1/2 rounded-full"
+                    style={{
+                      height: strand,
+                      background: `linear-gradient(${c.rose}, ${c.oxblood})`,
+                      opacity: 0.85,
+                    }}
+                  />
+                  <button
+                    type="button"
+                    aria-label={t("letter.peel.aria")}
+                    disabled={!p.interactive || p.paused}
+                    className="relative grid size-full cursor-grab touch-none place-items-center rounded-full outline-none focus-visible:ring-4 focus-visible:ring-white/70 active:cursor-grabbing"
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" || e.key === " ") {
+                        e.preventDefault();
+                        release();
+                      }
+                    }}
+                    {...handlers}
+                  >
+                    <MonogramSeal color={c.rose!} dark={c.oxblood!} letter={letter} />
+                  </button>
+                </motion.div>
+              ) : null}
+            </div>
+          </Object3D>
+        </Layer>
       </motion.div>
       <div className="mt-[min(9cqi,40.5px)] h-11">
-        <FallbackButton onClick={release} color={c.oxblood!} ink={c.oxblood!} hidden={free || !p.interactive || p.paused}>
+        <FallbackButton
+          onClick={release}
+          color={c.oxblood!}
+          ink={c.oxblood!}
+          hidden={free || !p.interactive || p.paused}
+        >
           {p.buttonText}
         </FallbackButton>
       </div>
@@ -557,7 +949,13 @@ export function LoveLetterPeel(p: OpeningProps) {
               className="pointer-events-none absolute z-[41]"
               style={{ left: flying.x, top: flying.y, width: flying.s, height: flying.s }}
               initial={{ y: 0, x: 0, rotate: 0, scale: 1, opacity: 1 }}
-              animate={{ y: [0, -150, -620], x: [0, 46, 170], rotate: [0, 210, 560], scale: [1, 1.12, 0.8], opacity: [1, 1, 0] }}
+              animate={{
+                y: [0, -150, -620],
+                x: [0, 46, 170],
+                rotate: [0, 210, 560],
+                scale: [1, 1.12, 0.8],
+                opacity: [1, 1, 0],
+              }}
               transition={{ duration: 1.15, times: [0, 0.3, 1], ease: ["easeOut", "easeIn"] }}
             >
               <MonogramSeal color={c.rose!} dark={c.oxblood!} letter={letter} />
@@ -570,7 +968,15 @@ export function LoveLetterPeel(p: OpeningProps) {
   );
 }
 
-function FlapFollow({ c, turn, open }: { c: ThemePalette; turn: MotionValue<number>; open: boolean }) {
+function FlapFollow({
+  c,
+  turn,
+  open,
+}: {
+  c: ThemePalette;
+  turn: MotionValue<number>;
+  open: boolean;
+}) {
   const flip = useMotionValue(0);
   useEffect(() => {
     if (open) animate(flip, 178, { type: "spring", stiffness: 110, damping: 13, mass: 1.2 });
@@ -578,12 +984,30 @@ function FlapFollow({ c, turn, open }: { c: ThemePalette; turn: MotionValue<numb
   const rotateX = useTransform(() => Math.max(turn.get(), flip.get()));
   const z = useTransform(rotateX, (v) => (v > 95 ? 1 : 5));
   return (
-    <motion.div className="absolute inset-x-0 top-0 origin-top" style={{ height: "58%", transformStyle: "preserve-3d", rotateX, zIndex: z }}>
-      <div className="absolute inset-0 overflow-hidden" style={{ background: "linear-gradient(170deg,#FBF4EA,#E8D9C3)", clipPath: "polygon(0 0, 100% 0, 50% 100%)", backfaceVisibility: "hidden" }}>
+    <motion.div
+      className="absolute inset-x-0 top-0 origin-top"
+      style={{ height: "58%", transformStyle: "preserve-3d", rotateX, zIndex: z }}
+    >
+      <div
+        className="absolute inset-0 overflow-hidden"
+        style={{
+          background: "linear-gradient(170deg,#FBF4EA,#E8D9C3)",
+          clipPath: "polygon(0 0, 100% 0, 50% 100%)",
+          backfaceVisibility: "hidden",
+        }}
+      >
         <Texture material="paper" opacity={0.55} />
         <Sheen strength={0.6} angle={105} width={24} />
       </div>
-      <div className="absolute inset-0" style={{ ...liner(c), clipPath: "polygon(0 0, 100% 0, 50% 100%)", transform: "rotateX(180deg)", backfaceVisibility: "hidden" }} />
+      <div
+        className="absolute inset-0"
+        style={{
+          ...liner(c),
+          clipPath: "polygon(0 0, 100% 0, 50% 100%)",
+          transform: "rotateX(180deg)",
+          backfaceVisibility: "hidden",
+        }}
+      />
     </motion.div>
   );
 }
@@ -593,11 +1017,22 @@ function FlapFollow({ c, turn, open }: { c: ThemePalette; turn: MotionValue<numb
 /** The outside of the folded letter: their name, as on the envelope it came in. */
 function PacketFace({ c, name }: { c: ThemePalette; name: string }) {
   return (
-    <div className="absolute inset-0 overflow-hidden rounded-[3px]" style={{ background: "linear-gradient(180deg,#FFFDF8,#F4EADB)", boxShadow: rim(0.6) }}>
+    <div
+      className="absolute inset-0 overflow-hidden rounded-[3px]"
+      style={{ background: "linear-gradient(180deg,#FFFDF8,#F4EADB)", boxShadow: rim(0.6) }}
+    >
       <Texture material="paper" opacity={0.45} />
-      <div className="flex h-full flex-col items-center justify-center text-center" style={{ color: c.oxblood }}>
-        <span className="block text-[10px] tracking-[0.3em] uppercase opacity-60">{t("letter.for")}</span>
-        <span className="block text-[clamp(1.5rem,8cqi,2.4rem)] leading-tight italic" style={{ fontFamily: "var(--jb-display)" }}>
+      <div
+        className="flex h-full flex-col items-center justify-center text-center"
+        style={{ color: c.oxblood }}
+      >
+        <span className="block text-[10px] tracking-[0.3em] uppercase opacity-60">
+          {t("letter.for")}
+        </span>
+        <span
+          className="block text-[clamp(1.5rem,8cqi,2.4rem)] leading-tight italic"
+          style={{ fontFamily: "var(--jb-display)" }}
+        >
           {name}
         </span>
       </div>
@@ -675,7 +1110,11 @@ export function LoveLetterSlide(p: OpeningProps) {
   useEffect(() => {
     if (!p.autoplay || p.paused) return;
     const t = window.setTimeout(() => {
-      animate(slide, [0, 0.38, 0.3, 0.95], { duration: 1.5, times: [0, 0.45, 0.6, 1], ease: "easeInOut" }).then(letGo);
+      animate(slide, [0, 0.38, 0.3, 0.95], {
+        duration: 1.5,
+        times: [0, 0.45, 0.6, 1],
+        ease: "easeInOut",
+      }).then(letGo);
     }, 1000);
     return () => window.clearTimeout(t);
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -685,24 +1124,46 @@ export function LoveLetterSlide(p: OpeningProps) {
   const topOpen = beat >= 2;
   const bottomOpen = beat >= 3;
   const growing = beat >= 5;
-  const panel: React.CSSProperties = { background: "#FFFDF8", backgroundImage: PAPER_LINES, backfaceVisibility: "hidden" };
+  const panel: React.CSSProperties = {
+    background: "#FFFDF8",
+    backgroundImage: PAPER_LINES,
+    backfaceVisibility: "hidden",
+  };
 
   return (
     <div className="relative flex w-full flex-col items-center">
       <Room c={c} />
       <div className="relative" style={ENVELOPE_SIZE}>
         {/* The envelope, flap open, the folded letter peeking out. Once the letter is free it drops away. */}
-        <motion.div className="absolute inset-0" animate={{ y: free ? "150%" : "0%", opacity: free ? 0 : 1, rotate: free ? 5 : 0 }} transition={{ y: { type: "spring", stiffness: 55, damping: 14, mass: 1.4 }, opacity: { delay: 0.3, duration: 0.45 }, rotate: SPRING.heavy }}>
+        <motion.div
+          className="absolute inset-0"
+          animate={{ y: free ? "150%" : "0%", opacity: free ? 0 : 1, rotate: free ? 5 : 0 }}
+          transition={{
+            y: { type: "spring", stiffness: 55, damping: 14, mass: 1.4 },
+            opacity: { delay: 0.3, duration: 0.45 },
+            rotate: SPRING.heavy,
+          }}
+        >
           <Layer depth={10} className="absolute inset-0">
             <Object3D pose={{ x: 13, y: -3, z: -1.5 }} strength={9} className="absolute inset-0">
-              <div className="absolute inset-0" style={{ transform: "translateZ(-22px)", transformStyle: "preserve-3d" }}>
+              <div
+                className="absolute inset-0"
+                style={{ transform: "translateZ(-22px)", transformStyle: "preserve-3d" }}
+              >
                 <FloorShadow tint="70,32,30" depth={4} radius={8} className="inset-[2%_3%_1%_3%]" />
               </div>
               <Extrude depth={5} color="#D9C8AF" edge="#C9B596" radius={6} />
               <div className="absolute inset-0" style={{ perspective: 900 }}>
                 <EnvelopeBack c={c} />
                 {/* The opened flap, lying back against the envelope with its liner showing */}
-                <div className="absolute inset-x-0 top-0 h-[22%] overflow-hidden rounded-t-[6px]" style={{ ...liner(c), clipPath: "polygon(0 100%, 100% 100%, 92% 0, 8% 0)", transform: "translateY(-96%)" }} />
+                <div
+                  className="absolute inset-x-0 top-0 h-[22%] overflow-hidden rounded-t-[6px]"
+                  style={{
+                    ...liner(c),
+                    clipPath: "polygon(0 100%, 100% 100%, 92% 0, 8% 0)",
+                    transform: "translateY(-96%)",
+                  }}
+                />
                 {!free ? (
                   <motion.div
                     className="absolute inset-x-[9%] z-[2] cursor-grab touch-none active:cursor-grabbing"
@@ -733,37 +1194,91 @@ export function LoveLetterSlide(p: OpeningProps) {
           <motion.div
             ref={letterRef}
             className="absolute inset-x-[9%] z-[8]"
-            style={{ top: "-50%", height: "192%", transformStyle: "preserve-3d", perspective: 1100 }}
+            style={{
+              top: "-50%",
+              height: "192%",
+              transformStyle: "preserve-3d",
+              perspective: 1100,
+            }}
             initial={{ y: "-24%", rotateX: 13, scale: 1 }}
-            animate={{ y: out ? "-4%" : "-24%", rotateX: out ? 0 : 13, scale: out ? 1.06 : 1, opacity: growing ? 0 : 1 }}
-            transition={{ type: "spring", stiffness: 80, damping: 15, mass: 1.3, opacity: { duration: 0.25 } }}
+            animate={{
+              y: out ? "-4%" : "-24%",
+              rotateX: out ? 0 : 13,
+              scale: out ? 1.06 : 1,
+              opacity: growing ? 0 : 1,
+            }}
+            transition={{
+              type: "spring",
+              stiffness: 80,
+              damping: 15,
+              mass: 1.3,
+              opacity: { duration: 0.25 },
+            }}
           >
             {/* Middle third: the greeting */}
-            <div className="absolute inset-x-0 top-1/3 h-1/3 overflow-hidden" style={{ ...panel, boxShadow: "0 14px 30px -18px rgba(60,20,30,.5)" }}>
+            <div
+              className="absolute inset-x-0 top-1/3 h-1/3 overflow-hidden"
+              style={{ ...panel, boxShadow: "0 14px 30px -18px rgba(60,20,30,.5)" }}
+            >
               <Texture material="paper" opacity={0.45} />
-              <div className="flex h-full flex-col items-center justify-center px-[6%] text-center" style={{ color: c.oxblood }}>
-                <Greeting text={p.greeting} className="text-[clamp(1.6rem,9cqi,2.8rem)]" style={{ fontStyle: "italic", fontWeight: 500 }} />
+              <div
+                className="flex h-full flex-col items-center justify-center px-[6%] text-center"
+                style={{ color: c.oxblood }}
+              >
+                <Greeting
+                  text={p.greeting}
+                  className="text-[clamp(1.6rem,9cqi,2.8rem)]"
+                  style={{ fontStyle: "italic", fontWeight: 500 }}
+                />
               </div>
             </div>
             {/* Bottom third: hinged on its top edge; folded up under the top third */}
-            <motion.div className="absolute inset-x-0 bottom-0 h-1/3 origin-top" style={{ transformStyle: "preserve-3d", z: 0.8 }} initial={{ rotateX: 178 }} animate={{ rotateX: bottomOpen ? 0 : 178 }} transition={SPRING.heavy}>
+            <motion.div
+              className="absolute inset-x-0 bottom-0 h-1/3 origin-top"
+              style={{ transformStyle: "preserve-3d", z: 0.8 }}
+              initial={{ rotateX: 178 }}
+              animate={{ rotateX: bottomOpen ? 0 : 178 }}
+              transition={SPRING.heavy}
+            >
               <div className="absolute inset-0 overflow-hidden rounded-b-[3px]" style={panel}>
                 <Texture material="paper" opacity={0.45} />
-                <div className="flex h-full items-start justify-center pt-[10%] text-[14px] italic opacity-75" style={{ color: c.oxblood, fontFamily: "var(--jb-display)" }}>
+                <div
+                  className="flex h-full items-start justify-center pt-[10%] text-[14px] italic opacity-75"
+                  style={{ color: c.oxblood, fontFamily: "var(--jb-display)" }}
+                >
                   {t("letter.signoff")}
                 </div>
               </div>
-              <div className="absolute inset-0 rounded-b-[3px]" style={{ background: "linear-gradient(0deg,#FBF4EA,#EFE2CF)", transform: "rotateX(180deg)", backfaceVisibility: "hidden" }} />
+              <div
+                className="absolute inset-0 rounded-b-[3px]"
+                style={{
+                  background: "linear-gradient(0deg,#FBF4EA,#EFE2CF)",
+                  transform: "rotateX(180deg)",
+                  backfaceVisibility: "hidden",
+                }}
+              />
             </motion.div>
             {/* Top third: hinged on its bottom edge; folded down over everything, their name on the back */}
-            <motion.div className="absolute inset-x-0 top-0 h-1/3 origin-bottom" style={{ transformStyle: "preserve-3d", z: 1.6 }} initial={{ rotateX: -178 }} animate={{ rotateX: topOpen ? 0 : -178 }} transition={SPRING.heavy}>
+            <motion.div
+              className="absolute inset-x-0 top-0 h-1/3 origin-bottom"
+              style={{ transformStyle: "preserve-3d", z: 1.6 }}
+              initial={{ rotateX: -178 }}
+              animate={{ rotateX: topOpen ? 0 : -178 }}
+              transition={SPRING.heavy}
+            >
               <div className="absolute inset-0 overflow-hidden rounded-t-[3px]" style={panel}>
                 <Texture material="paper" opacity={0.45} />
-                <div className="flex h-full items-end justify-center pb-[10%] text-[12px] tracking-[0.2em] uppercase opacity-70" style={{ color: c.oxblood }}>
+                <div
+                  className="flex h-full items-end justify-center pb-[10%] text-[12px] tracking-[0.2em] uppercase opacity-70"
+                  style={{ color: c.oxblood }}
+                >
                   {p.badge}
                 </div>
               </div>
-              <div className="absolute inset-0" style={{ transform: "rotateX(180deg)", backfaceVisibility: "hidden" }}>
+              <div
+                className="absolute inset-0"
+                style={{ transform: "rotateX(180deg)", backfaceVisibility: "hidden" }}
+              >
                 <PacketFace c={c} name={p.recipient} />
               </div>
             </motion.div>
@@ -771,7 +1286,12 @@ export function LoveLetterSlide(p: OpeningProps) {
         ) : null}
       </div>
       <div className="mt-[min(9cqi,40.5px)] h-11">
-        <FallbackButton onClick={letGo} color={c.oxblood!} ink={c.oxblood!} hidden={free || !p.interactive || p.paused}>
+        <FallbackButton
+          onClick={letGo}
+          color={c.oxblood!}
+          ink={c.oxblood!}
+          hidden={free || !p.interactive || p.paused}
+        >
           {p.buttonText}
         </FallbackButton>
       </div>

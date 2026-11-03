@@ -37,16 +37,32 @@ const TRIS = Array.from({ length: PANELS }, (_, i) => {
   const b = i % 2 === 0 ? TIPS[k]! : INNER[k]!;
   return `M${C.x} ${C.y} L${a.x.toFixed(1)} ${a.y.toFixed(1)} L${b.x.toFixed(1)} ${b.y.toFixed(1)} Z`;
 });
-const OUTLINE = TIPS.flatMap((tip, k) => [tip, INNER[k]!]).map((p, i) => `${i ? "L" : "M"}${p.x.toFixed(1)} ${p.y.toFixed(1)}`).join(" ") + " Z";
+const OUTLINE =
+  TIPS.flatMap((tip, k) => [tip, INNER[k]!])
+    .map((p, i) => `${i ? "L" : "M"}${p.x.toFixed(1)} ${p.y.toFixed(1)}`)
+    .join(" ") + " Z";
 
-export default function Parol({ slots, palette, gesture, reduced, paused, hostRef, notes, setHint, greeting, interactive, options }: EngineObjectProps) {
+export default function Parol({
+  slots,
+  palette,
+  gesture,
+  reduced,
+  paused,
+  hostRef,
+  notes,
+  setHint,
+  greeting,
+  interactive,
+  options,
+}: EngineObjectProps) {
   const simbang = !!options.simbang;
   const now = useMemo(() => (options.now ? new Date(options.now) : new Date()), [options.now]);
   const night = simbang ? simbangNight(now, options.year ?? now.getFullYear()) : SIMBANG_NIGHTS;
   const byNight = useMemo(() => notesByNight(notes.filter((n) => n.text || n.media)), [notes]);
   const plain = useMemo(() => notes.filter((n) => n.text || n.media).slice(0, PANELS), [notes]);
   /** Which panels can be lit right now. */
-  const open = (i: number) => (simbang ? (i < SIMBANG_NIGHTS ? i < night : night >= SIMBANG_NIGHTS) : true);
+  const open = (i: number) =>
+    simbang ? (i < SIMBANG_NIGHTS ? i < night : night >= SIMBANG_NIGHTS) : true;
   const lightable = Array.from({ length: PANELS }, (_, i) => i).filter(open);
   const [lit, setLit] = useState<Set<number>>(() => new Set());
   const [reading, setReading] = useState<{ note: EngineNote; title: string } | null>(null);
@@ -55,9 +71,14 @@ export default function Parol({ slots, palette, gesture, reduced, paused, hostRe
 
   const noteFor = (i: number): { note: EngineNote; title: string } | null => {
     if (simbang) {
-      const group = i < SIMBANG_NIGHTS ? byNight[i] ?? [] : [];
+      const group = i < SIMBANG_NIGHTS ? (byNight[i] ?? []) : [];
       const n = group[0];
-      return n ? { note: n, title: `${t("theme.parol.night", { n: i + 1 })}${group.length > 1 ? ` · 1 / ${group.length}` : ""}` } : null;
+      return n
+        ? {
+            note: n,
+            title: `${t("theme.parol.night", { n: i + 1 })}${group.length > 1 ? ` · 1 / ${group.length}` : ""}`,
+          }
+        : null;
     }
     const n = plain[i];
     return n ? { note: n, title: `${i + 1} / ${PANELS}` } : null;
@@ -84,7 +105,9 @@ export default function Parol({ slots, palette, gesture, reduced, paused, hostRe
     setLit(new Set(lightable));
     if (lightable.length === PANELS) {
       playSound("bell");
-      particles("sparks", hostRef.current, center(hostRef.current), { colors: ["#FFF4D6", "#E8B04B", "#FFD9A0"] });
+      particles("sparks", hostRef.current, center(hostRef.current), {
+        colors: ["#FFF4D6", "#E8B04B", "#FFD9A0"],
+      });
     }
     if (interactive) setHint(simbang ? simbangLine(night) : t("theme.parcel.inside"));
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -99,8 +122,16 @@ export default function Parol({ slots, palette, gesture, reduced, paused, hostRe
 
   const glow = full ? 1 : lit.size / PANELS;
   return (
-    <div className="relative" style={{ width: "min(80cqi, 380px, calc((100cqh - 64px) * 0.71))", aspectRatio: "200 / 280" }}>
-      <svg viewBox="0 0 200 280" className="absolute inset-0 size-full overflow-visible" role="group" aria-label={t("gesture.pop.label")}>
+    <div
+      className="relative"
+      style={{ width: "min(80cqi, 380px, calc((100cqh - 64px) * 0.71))", aspectRatio: "200 / 280" }}
+    >
+      <svg
+        viewBox="0 0 200 280"
+        className="absolute inset-0 size-full overflow-visible"
+        role="group"
+        aria-label={t("gesture.pop.label")}
+      >
         <defs>
           <radialGradient id="parol-glow" cx="50%" cy="50%" r="50%">
             <stop offset="0" stopColor="#FFE4A8" stopOpacity="0.9" />
@@ -108,22 +139,57 @@ export default function Parol({ slots, palette, gesture, reduced, paused, hostRe
             <stop offset="1" stopColor="#E8B04B" stopOpacity="0" />
           </radialGradient>
           {LIT.map((c, i) => (
-            <radialGradient key={c} id={`parol-lit-${i}`} cx="50%" cy="50%" r="75%" fx="40%" fy="40%">
+            <radialGradient
+              key={c}
+              id={`parol-lit-${i}`}
+              cx="50%"
+              cy="50%"
+              r="75%"
+              fx="40%"
+              fy="40%"
+            >
               <stop offset="0" stopColor="#FFFFFF" />
               <stop offset="0.5" stopColor={c} />
               <stop offset="1" stopColor={c} stopOpacity="0.85" />
             </radialGradient>
           ))}
           {/* Capiz: overlapping shell squares, the texture of the panels */}
-          <pattern id="parol-capiz" width="9" height="9" patternUnits="userSpaceOnUse" patternTransform="rotate(18)">
-            <rect x="0.6" y="0.6" width="7.8" height="7.8" rx="2.4" fill="none" stroke="rgba(255,255,255,.22)" strokeWidth="0.6" />
-            <path d="M1.5 6 Q4.5 3 7.5 5.5" fill="none" stroke="rgba(255,255,255,.12)" strokeWidth="0.5" />
+          <pattern
+            id="parol-capiz"
+            width="9"
+            height="9"
+            patternUnits="userSpaceOnUse"
+            patternTransform="rotate(18)"
+          >
+            <rect
+              x="0.6"
+              y="0.6"
+              width="7.8"
+              height="7.8"
+              rx="2.4"
+              fill="none"
+              stroke="rgba(255,255,255,.22)"
+              strokeWidth="0.6"
+            />
+            <path
+              d="M1.5 6 Q4.5 3 7.5 5.5"
+              fill="none"
+              stroke="rgba(255,255,255,.12)"
+              strokeWidth="0.5"
+            />
           </pattern>
         </defs>
         {/* Hanging string */}
         <path d={`M100 -40 L100 ${TIPS[0]!.y}`} stroke="#8A7A5A" strokeWidth="1" />
         {/* Glow behind */}
-        <motion.circle cx={C.x} cy={C.y} r="150" fill="url(#parol-glow)" animate={{ opacity: glow }} transition={{ duration: reduced ? 0 : 0.9 }} />
+        <motion.circle
+          cx={C.x}
+          cy={C.y}
+          r="150"
+          fill="url(#parol-glow)"
+          animate={{ opacity: glow }}
+          transition={{ duration: reduced ? 0 : 0.9 }}
+        />
         {/* Streamers: flat capiz tails with a fringe, swaying */}
         {[TIPS[2]!, TIPS[3]!].map((tip, si) => {
           const dir = si ? 1 : -1;
@@ -140,7 +206,13 @@ export default function Parol({ slots, palette, gesture, reduced, paused, hostRe
               <path d={path} fill="none" stroke={tail} strokeWidth="5" strokeLinecap="butt" />
               <path d={path} fill="none" stroke="url(#parol-capiz)" strokeWidth="5" />
               {[-3, -1.5, 0, 1.5, 3].map((dx) => (
-                <path key={dx} d={`M${end.x + dx} ${end.y} l${dx * 0.5} 9`} stroke={si ? palette.accent2 : palette.accent} strokeWidth="1.1" strokeLinecap="round" />
+                <path
+                  key={dx}
+                  d={`M${end.x + dx} ${end.y} l${dx * 0.5} 9`}
+                  stroke={si ? palette.accent2 : palette.accent}
+                  strokeWidth="1.1"
+                  strokeLinecap="round"
+                />
               ))}
             </motion.g>
           );
@@ -165,26 +237,73 @@ export default function Parol({ slots, palette, gesture, reduced, paused, hostRe
                 }}
                 fill={on ? `url(#parol-lit-${i % LIT.length})` : open(i) ? "#2E3864" : "#1C2342"}
                 className="cursor-pointer outline-none transition-[fill] duration-500 focus-visible:[stroke:#fff] focus-visible:[stroke-width:2]"
-                style={{ cursor: can ? "pointer" : "default", filter: on ? "drop-shadow(0 0 6px rgba(255,220,150,.7))" : undefined }}
+                style={{
+                  cursor: can ? "pointer" : "default",
+                  filter: on ? "drop-shadow(0 0 6px rgba(255,220,150,.7))" : undefined,
+                }}
               />
               <path d={d} fill="url(#parol-capiz)" pointerEvents="none" />
               {/* Locked nights show a small moon */}
-              {!open(i) && simbang && i < SIMBANG_NIGHTS ? <text {...centroid(i)} fontSize="7" textAnchor="middle" fill="#6E79A8" pointerEvents="none">☾</text> : null}
+              {!open(i) && simbang && i < SIMBANG_NIGHTS ? (
+                <text
+                  {...centroid(i)}
+                  fontSize="7"
+                  textAnchor="middle"
+                  fill="#6E79A8"
+                  pointerEvents="none"
+                >
+                  ☾
+                </text>
+              ) : null}
             </g>
           );
         })}
         {/* Bamboo frame */}
         <path d={OUTLINE} fill="none" stroke="#C9A55C" strokeWidth="3" strokeLinejoin="round" />
         {TIPS.map((p, k) => (
-          <path key={k} d={`M${C.x} ${C.y} L${p.x} ${p.y} M${C.x} ${C.y} L${INNER[k]!.x} ${INNER[k]!.y}`} stroke="#B8944C" strokeWidth="1.1" opacity="0.8" pointerEvents="none" />
+          <path
+            key={k}
+            d={`M${C.x} ${C.y} L${p.x} ${p.y} M${C.x} ${C.y} L${INNER[k]!.x} ${INNER[k]!.y}`}
+            stroke="#B8944C"
+            strokeWidth="1.1"
+            opacity="0.8"
+            pointerEvents="none"
+          />
         ))}
         {/* Rosette with their initials */}
-        <circle cx={C.x} cy={C.y} r="22" fill={full ? "url(#parol-lit-0)" : "#26305A"} stroke="#C9A55C" strokeWidth="2.4" pointerEvents="none" />
+        <circle
+          cx={C.x}
+          cy={C.y}
+          r="22"
+          fill={full ? "url(#parol-lit-0)" : "#26305A"}
+          stroke="#C9A55C"
+          strokeWidth="2.4"
+          pointerEvents="none"
+        />
         {Array.from({ length: 8 }, (_, k) => {
           const p = pt(k * 45, 15);
-          return <circle key={k} cx={p.x} cy={p.y} r="5.5" fill="none" stroke={full ? "#E8B04B" : "#46518A"} strokeWidth="1" pointerEvents="none" />;
+          return (
+            <circle
+              key={k}
+              cx={p.x}
+              cy={p.y}
+              r="5.5"
+              fill="none"
+              stroke={full ? "#E8B04B" : "#46518A"}
+              strokeWidth="1"
+              pointerEvents="none"
+            />
+          );
         })}
-        <text x={C.x} y={C.y + 5} textAnchor="middle" fontSize={slots.monogram.length > 2 ? 11 : 15} fill={full ? "#8A5A1A" : "#C9D2F2"} style={{ fontFamily: "var(--jb-display)" }} pointerEvents="none">
+        <text
+          x={C.x}
+          y={C.y + 5}
+          textAnchor="middle"
+          fontSize={slots.monogram.length > 2 ? 11 : 15}
+          fill={full ? "#8A5A1A" : "#C9D2F2"}
+          style={{ fontFamily: "var(--jb-display)" }}
+          pointerEvents="none"
+        >
           {slots.monogram || "★"}
         </text>
       </svg>
@@ -192,15 +311,30 @@ export default function Parol({ slots, palette, gesture, reduced, paused, hostRe
       {/* Under the star: the greeting, and Simbang Gabi's night count */}
       <div className="absolute inset-x-[-8%] bottom-0 text-center" style={{ color: palette.ink }}>
         {simbang ? (
-          <p className="mb-1.5 text-[11px] font-semibold tracking-[0.2em] uppercase opacity-75">{night >= SIMBANG_NIGHTS ? t("theme.parol.allLit") : night === 0 ? t("theme.parol.before") : t("theme.parol.night", { n: night })}</p>
+          <p className="mb-1.5 text-[11px] font-semibold tracking-[0.2em] uppercase opacity-75">
+            {night >= SIMBANG_NIGHTS
+              ? t("theme.parol.allLit")
+              : night === 0
+                ? t("theme.parol.before")
+                : t("theme.parol.night", { n: night })}
+          </p>
         ) : null}
         {all || gesture.done ? (
-          <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: reduced ? 0 : 0.5 }}>
+          <motion.div
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: reduced ? 0 : 0.5 }}
+          >
             <Greeting text={greeting} className="text-[clamp(1.25rem,6.2cqi,2rem)]" />
           </motion.div>
         ) : null}
       </div>
-      <NoteBubble note={reading?.note ?? null} onClose={() => setReading(null)} accent={palette.accent2} title={reading?.title} />
+      <NoteBubble
+        note={reading?.note ?? null}
+        onClose={() => setReading(null)}
+        accent={palette.accent2}
+        title={reading?.title}
+      />
     </div>
   );
 }

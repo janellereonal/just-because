@@ -27,7 +27,9 @@ describe("notes per night", () => {
     expect(nightOfNote(0, 1)).toBe(9);
   });
   test("nine: one a night", () => {
-    expect(Array.from({ length: 9 }, (_, i) => nightOfNote(i, 9))).toEqual([1, 2, 3, 4, 5, 6, 7, 8, 9]);
+    expect(Array.from({ length: 9 }, (_, i) => nightOfNote(i, 9))).toEqual([
+      1, 2, 3, 4, 5, 6, 7, 8, 9,
+    ]);
   });
   test("more than nine: grouped, every night has some", () => {
     const groups = notesByNight(Array.from({ length: 20 }, (_, i) => i));

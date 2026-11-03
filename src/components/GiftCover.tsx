@@ -27,7 +27,15 @@ const SPOTS: [number, number, number, number][] = [
  * the occasion's 3D object, its character and sprinkles, and the heading in its own font.
  * Cheap to draw (no 3D, no animation), so a page of cards stays quick on phones.
  */
-export function GiftCover({ site, theme, className = "" }: { site: GiftSite; theme: Theme | null; className?: string }) {
+export function GiftCover({
+  site,
+  theme,
+  className = "",
+}: {
+  site: GiftSite;
+  theme: Theme | null;
+  className?: string;
+}) {
   const kind = themeKindOf(theme);
   useEffect(() => loadThemeFonts(kind), [kind]);
   const palette = resolvePalette(theme, site.custom_colors);
@@ -37,20 +45,34 @@ export function GiftCover({ site, theme, className = "" }: { site: GiftSite; the
   const recipient = site.custom_text.recipient_name?.trim() ?? "";
   const heading = giftHeading(site.custom_text, theme, site.occasion);
   const cast = castFor(kind, site.character ?? null, site.icon_set ?? null);
-  const icons = useMemo(() => resolveIconSet(cast.iconSet, { recipient, palette }), [cast.iconSet, recipient, palette]);
+  const icons = useMemo(
+    () => resolveIconSet(cast.iconSet, { recipient, palette }),
+    [cast.iconSet, recipient, palette],
+  );
   const tint = icons.colors.length ? icons.colors : [palette.accent, palette.primary];
   const showChar = cast.character.type !== "none";
   // Layout styles (Mixtape, Constellation...) wear no theme: show their own little card instead of the plain box.
-  const layout = isStyleId(site.style) && styleInfo(site.style).origin === "layout" ? styleInfo(site.style) : null;
+  const layout =
+    isStyleId(site.style) && styleInfo(site.style).origin === "layout"
+      ? styleInfo(site.style)
+      : null;
 
   return (
     <span
       className={`block overflow-hidden ${className || "relative"}`}
-      style={{ ...backgroundCss(site.background_style ?? "paper", palette), ...themeFontVars(kind), color: ink }}
+      style={{
+        ...backgroundCss(site.background_style ?? "paper", palette),
+        ...themeFontVars(kind),
+        color: ink,
+      }}
       aria-hidden="true"
     >
       {SPOTS.map(([x, y, size, turn], i) => (
-        <span key={i} className="absolute" style={{ left: `${x}%`, top: `${y}%`, transform: `rotate(${turn}deg)` }}>
+        <span
+          key={i}
+          className="absolute"
+          style={{ left: `${x}%`, top: `${y}%`, transform: `rotate(${turn}deg)` }}
+        >
           <IconGlyph item={pick(icons.items, i)} color={pick(tint, i)} size={size} />
         </span>
       ))}
@@ -61,20 +83,31 @@ export function GiftCover({ site, theme, className = "" }: { site: GiftSite; the
         >
           <FormatMini id={layout.body} />
         </span>
-      ) : <img
-        src={themeStillUrl(kind)}
-        alt=""
-        loading="lazy"
-        draggable={false}
-        className="absolute -right-2 bottom-1 h-[82%] w-auto max-w-[52%] object-contain drop-shadow-[0_10px_14px_rgba(43,37,34,.18)] transition-transform duration-500 group-hover:-rotate-2 group-hover:scale-[1.04]"
-      />}
+      ) : (
+        <img
+          src={themeStillUrl(kind)}
+          alt=""
+          loading="lazy"
+          draggable={false}
+          className="absolute -right-2 bottom-1 h-[82%] w-auto max-w-[52%] object-contain drop-shadow-[0_10px_14px_rgba(43,37,34,.18)] transition-transform duration-500 group-hover:-rotate-2 group-hover:scale-[1.04]"
+        />
+      )}
       {showChar ? (
         <span className="absolute right-[17%] bottom-0">
-          <Character setting={cast.character} size={58} live={false} follow={false} showName={false} />
+          <Character
+            setting={cast.character}
+            size={58}
+            live={false}
+            follow={false}
+            showName={false}
+          />
         </span>
       ) : null}
       <span className="absolute bottom-4 left-5 max-w-[54%]">
-        <span className="block font-mono text-[9px] tracking-[0.18em] uppercase opacity-70" style={{ color: accent }}>
+        <span
+          className="block font-mono text-[9px] tracking-[0.18em] uppercase opacity-70"
+          style={{ color: accent }}
+        >
           {giftWords(theme, site.occasion).badge}
         </span>
         <span

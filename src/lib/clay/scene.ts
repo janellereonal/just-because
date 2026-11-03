@@ -13,7 +13,21 @@
  */
 import * as THREE from "three";
 import { RoomEnvironment } from "three/examples/jsm/environments/RoomEnvironment.js";
-import { blob, clay, cone, curl, egg, feet, fluff, mesh, pillow, shade, torus, W, type ClayRecipe } from "@/lib/clay/shapes";
+import {
+  blob,
+  clay,
+  cone,
+  curl,
+  egg,
+  feet,
+  fluff,
+  mesh,
+  pillow,
+  shade,
+  torus,
+  W,
+  type ClayRecipe,
+} from "@/lib/clay/shapes";
 import { ANIMALS } from "@/lib/clay/animals";
 import { OBJECTS } from "@/lib/clay/objects";
 import { TREE } from "@/lib/clay/tree";
@@ -185,7 +199,10 @@ export const CLAY: Record<string, ClayRecipe> = {
     const O = { x: 58, y: 68, r: 40 };
     const I = { x: 80, y: 58, r: 33 };
     const N = 720;
-    const at = (k: typeof O, a: number): [number, number] => [k.x + Math.cos(a) * k.r, k.y + Math.sin(a) * k.r];
+    const at = (k: typeof O, a: number): [number, number] => [
+      k.x + Math.cos(a) * k.r,
+      k.y + Math.sin(a) * k.r,
+    ];
     const dist = (p: [number, number], k: typeof O) => Math.hypot(p[0] - k.x, p[1] - k.y);
     // The longest run of angles where `keep` holds, walking round the circle.
     const run = (k: typeof O, keep: (p: [number, number]) => boolean) => {
@@ -202,20 +219,49 @@ export const CLAY: Record<string, ClayRecipe> = {
     const outer = run(O, (p) => dist(p, I) > I.r);
     const inner = run(I, (p) => dist(p, O) < O.r);
     const last = outer[outer.length - 1]!;
-    const back = Math.hypot(inner[0]![0] - last[0], inner[0]![1] - last[1]) < Math.hypot(inner[inner.length - 1]![0] - last[0], inner[inner.length - 1]![1] - last[1]) ? inner : [...inner].reverse();
+    const back =
+      Math.hypot(inner[0]![0] - last[0], inner[0]![1] - last[1]) <
+      Math.hypot(inner[inner.length - 1]![0] - last[0], inner[inner.length - 1]![1] - last[1])
+        ? inner
+        : [...inner].reverse();
     return [pillow([...outer, ...back], 16, c.primary, 0, 9)];
   },
   /** Shih Tzu x Maltese: white silky fluff, long fluffy ears, a topknot with a bow. */
   "tzu-mal": (c) => [
     // Ears: long, made of curls
-    fluff([28, 84, -2], [10, 24, 7], { count: 11, size: [12, 16], color: "#F0DFC8", seed: 3, rows: 2 }),
-    fluff([92, 84, -2], [10, 24, 7], { count: 11, size: [12, 16], color: "#F0DFC8", seed: 4, rows: 2 }),
+    fluff([28, 84, -2], [10, 24, 7], {
+      count: 11,
+      size: [12, 16],
+      color: "#F0DFC8",
+      seed: 3,
+      rows: 2,
+    }),
+    fluff([92, 84, -2], [10, 24, 7], {
+      count: 11,
+      size: [12, 16],
+      color: "#F0DFC8",
+      seed: 4,
+      rows: 2,
+    }),
     egg([60, 76, 0], 70, 70, 58, c.primary),
     // A halo of fluff around the face
-    fluff([60, 66, 0], [33, 30, 26], { count: 22, size: [12, 17], color: c.primary, seed: 7, front: 0.05 }),
+    fluff([60, 66, 0], [33, 30, 26], {
+      count: 22,
+      size: [12, 17],
+      color: c.primary,
+      seed: 7,
+      front: 0.05,
+    }),
     // Mustache and beard
     blob([60, 84, 24], [26, 18, 14], c.primary),
-    fluff([60, 88, 26], [12, 6, 4], { count: 8, size: [9, 12], color: c.primary, seed: 11, from: 0.1, to: Math.PI - 0.1 }),
+    fluff([60, 88, 26], [12, 6, 4], {
+      count: 8,
+      size: [9, 12],
+      color: c.primary,
+      seed: 11,
+      from: 0.1,
+      to: Math.PI - 0.1,
+    }),
     blob([60, 80, 31], [9, 7, 6], "#2E2220", [0, 0, 0], { rough: 0.35, gloss: 0.6 }),
     // Topknot and its bow
     blob([60, 32, 2], [16, 16, 14], c.primary),
@@ -227,17 +273,37 @@ export const CLAY: Record<string, ClayRecipe> = {
   /** Shih Tzu x Pomeranian: orange-cream fluff, little fox ears, a ruff and a plume tail over the back. */
   "tzu-pom": (c) => [
     // Plume tail behind, curling up
-    fluff([92, 62, -14], [12, 18, 6], { count: 9, size: [13, 17], color: c.primary, seed: 5, from: -1.2, to: 2.2 }),
+    fluff([92, 62, -14], [12, 18, 6], {
+      count: 9,
+      size: [13, 17],
+      color: c.primary,
+      seed: 5,
+      from: -1.2,
+      to: 2.2,
+    }),
     cone([40, 36, -2], 18, 20, 12, c.primary, -0.32),
     cone([80, 36, -2], 18, 20, 12, c.primary, 0.32),
     cone([41, 39, 4], 9, 11, 5, c.skin, -0.32),
     cone([79, 39, 4], 9, 11, 5, c.skin, 0.32),
     egg([60, 74, 0], 74, 72, 60, c.primary),
     // Ruff around the face
-    fluff([60, 70, 0], [36, 30, 26], { count: 24, size: [11, 16], color: c.primary, seed: 9, front: 0.0 }),
+    fluff([60, 70, 0], [36, 30, 26], {
+      count: 24,
+      size: [11, 16],
+      color: c.primary,
+      seed: 9,
+      front: 0.0,
+    }),
     // Cream face and chest
     blob([60, 72, 18], [44, 40, 24], c.skin),
-    fluff([60, 98, 18], [16, 6, 4], { count: 6, size: [11, 14], color: c.skin, seed: 13, from: 0, to: Math.PI }),
+    fluff([60, 98, 18], [16, 6, 4], {
+      count: 6,
+      size: [11, 14],
+      color: c.skin,
+      seed: 13,
+      from: 0,
+      to: Math.PI,
+    }),
     blob([60, 82, 28], [16, 11, 10], c.skin),
     blob([60, 78, 33], [8, 6, 5], "#2E2220", [0, 0, 0], { rough: 0.35, gloss: 0.6 }),
     ...feet(108, c.skin, [46, 74], [17, 10, 17]),
@@ -251,7 +317,12 @@ let shared: { renderer: THREE.WebGLRenderer; env: THREE.Texture } | null = null;
 function setup(px: number) {
   if (!shared) {
     const canvas = document.createElement("canvas");
-    const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true, preserveDrawingBuffer: true });
+    const renderer = new THREE.WebGLRenderer({
+      canvas,
+      antialias: true,
+      alpha: true,
+      preserveDrawingBuffer: true,
+    });
     renderer.outputColorSpace = THREE.SRGBColorSpace;
     renderer.toneMapping = THREE.NeutralToneMapping;
     renderer.toneMappingExposure = 1.02;
@@ -270,7 +341,11 @@ function setup(px: number) {
  * Renders one figure to a PNG data URL, `px` pixels square, transparent
  * background, with a soft shadow on the floor (y = 112).
  */
-export function renderClay(id: string, colors: { primary: string; secondary: string; skin: string }, px = 560): string {
+export function renderClay(
+  id: string,
+  colors: { primary: string; secondary: string; skin: string },
+  px = 560,
+): string {
   const recipe = CLAY[id];
   if (!recipe) throw new Error(`No clay recipe for ${id}`);
   draw(recipe(colors), px);
@@ -289,7 +364,13 @@ export function personFile(p: PersonConfig, px = 512): Promise<Blob> {
   const canvas = shared!.renderer.domElement;
   return new Promise((resolve, reject) =>
     canvas.toBlob(
-      (b) => (b ? resolve(b) : canvas.toBlob((png) => (png ? resolve(png) : reject(new Error("No image"))), "image/png")),
+      (b) =>
+        b
+          ? resolve(b)
+          : canvas.toBlob(
+              (png) => (png ? resolve(png) : reject(new Error("No image"))),
+              "image/png",
+            ),
       "image/webp",
       0.9,
     ),
@@ -314,7 +395,14 @@ function draw(objects: THREE.Object3D[], px: number) {
   key.position.set(-70, 110, 140);
   key.castShadow = true;
   key.shadow.mapSize.set(2048, 2048);
-  Object.assign(key.shadow.camera, { left: -90, right: 90, top: 90, bottom: -90, near: 1, far: 500 });
+  Object.assign(key.shadow.camera, {
+    left: -90,
+    right: 90,
+    top: 90,
+    bottom: -90,
+    near: 1,
+    far: 500,
+  });
   key.shadow.radius = 9;
   key.shadow.blurSamples = 24;
   key.shadow.bias = -0.0004;
@@ -328,7 +416,10 @@ function draw(objects: THREE.Object3D[], px: number) {
   scene.add(rim);
 
   // The floor only catches the shadow; it isn't drawn.
-  const floor = new THREE.Mesh(new THREE.PlaneGeometry(400, 400), new THREE.ShadowMaterial({ opacity: 0.22 }));
+  const floor = new THREE.Mesh(
+    new THREE.PlaneGeometry(400, 400),
+    new THREE.ShadowMaterial({ opacity: 0.22 }),
+  );
   floor.rotation.x = -Math.PI / 2;
   floor.position.y = 60 - 112;
   floor.receiveShadow = true;
@@ -346,7 +437,10 @@ function draw(objects: THREE.Object3D[], px: number) {
     g.fillRect(0, 0, 128, 128);
     const t = new THREE.CanvasTexture(c);
     t.colorSpace = THREE.SRGBColorSpace;
-    const m = new THREE.Mesh(new THREE.PlaneGeometry(76, 22), new THREE.MeshBasicMaterial({ map: t, transparent: true, depthWrite: false }));
+    const m = new THREE.Mesh(
+      new THREE.PlaneGeometry(76, 22),
+      new THREE.MeshBasicMaterial({ map: t, transparent: true, depthWrite: false }),
+    );
     m.rotation.x = -Math.PI / 2;
     m.position.set(2, 60 - 111.6, 6);
     return m;

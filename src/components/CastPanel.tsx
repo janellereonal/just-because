@@ -13,7 +13,13 @@ import { Character } from "@/themes/_shared/cast/Character";
 import { ACCESSORIES, CHARACTERS, characterById } from "@/themes/_shared/cast/library";
 import type { CharacterSetting } from "@/themes/_shared/cast/types";
 import { castFor, designFor } from "@/themes/_shared/design";
-import { ICON_SETS, MAX_CUSTOM_ICONS, resolveIconSet, type IconSetSetting, type Physics } from "@/themes/_shared/iconSets";
+import {
+  ICON_SETS,
+  MAX_CUSTOM_ICONS,
+  resolveIconSet,
+  type IconSetSetting,
+  type Physics,
+} from "@/themes/_shared/iconSets";
 import { IconGlyph } from "@/themes/_shared/Sprinkles";
 import { SPRING } from "@/themes/_shared/stage";
 import { CAST_COPY } from "@/copy/strings";
@@ -27,7 +33,20 @@ const TABS: { key: Tab; label: string }[] = [
   { key: "sprinkles", label: "Sprinkles" },
 ];
 
-const SWATCHES = ["#FBF3EA", "#F07C9B", "#E8577E", "#F2652E", "#FFD166", "#7ED7C1", "#8EC0E8", "#7A5CFF", "#3A2A22", "#C9A57A", "#FFFFFF", "#2B2522"];
+const SWATCHES = [
+  "#FBF3EA",
+  "#F07C9B",
+  "#E8577E",
+  "#F2652E",
+  "#FFD166",
+  "#7ED7C1",
+  "#8EC0E8",
+  "#7A5CFF",
+  "#3A2A22",
+  "#C9A57A",
+  "#FFFFFF",
+  "#2B2522",
+];
 const PHYSICS: { key: Physics; label: string }[] = [
   { key: "float", label: "Float" },
   { key: "fall", label: "Fall" },
@@ -76,23 +95,42 @@ export function CastPanel({
   }
 
   function surprise() {
-    const pool = CHARACTERS.filter((c) => c.id !== "person" && c.id !== (char.type === "library" ? char.id : ""));
+    const pool = CHARACTERS.filter(
+      (c) => c.id !== "person" && c.id !== (char.type === "library" ? char.id : ""),
+    );
     const next = pool[Math.floor(Math.random() * pool.length)]!;
-    const set = ICON_SETS.filter((s) => s.id !== "emoji")[Math.floor(Math.random() * (ICON_SETS.length - 1))]!;
+    const set = ICON_SETS.filter((s) => s.id !== "emoji")[
+      Math.floor(Math.random() * (ICON_SETS.length - 1))
+    ]!;
     const pickColor = () => SWATCHES[Math.floor(Math.random() * SWATCHES.length)]!;
-    const character: CharacterSetting = { type: "library", id: next.id, accessory: true, colors: { primary: next.colors.primary, secondary: pickColor() } };
+    const character: CharacterSetting = {
+      type: "library",
+      id: next.id,
+      accessory: true,
+      colors: { primary: next.colors.primary, secondary: pickColor() },
+    };
     remember(character);
     onChange({ character, icon_set: { id: set.id } });
   }
 
   if (simple) {
-    return <CharacterPicker siteId={siteId} kind={kind} char={char} accessory={accessory} onSet={setChar} />;
+    return (
+      <CharacterPicker
+        siteId={siteId}
+        kind={kind}
+        char={char}
+        accessory={accessory}
+        onSet={setChar}
+      />
+    );
   }
 
   return (
     <div>
       <div className="flex items-center justify-between gap-2">
-        <p className="text-xs text-muted">Who opens the gift with them, and what falls from the sky.</p>
+        <p className="text-xs text-muted">
+          Who opens the gift with them, and what falls from the sky.
+        </p>
         <button
           type="button"
           onClick={surprise}
@@ -102,7 +140,11 @@ export function CastPanel({
         </button>
       </div>
 
-      <div role="tablist" aria-label="Cast" className="relative mt-3 grid grid-cols-4 rounded-full bg-cream p-1 text-[12px] font-medium">
+      <div
+        role="tablist"
+        aria-label="Cast"
+        className="relative mt-3 grid grid-cols-4 rounded-full bg-cream p-1 text-[12px] font-medium"
+      >
         {TABS.map((t) => (
           <button
             key={t.key}
@@ -113,23 +155,48 @@ export function CastPanel({
             className="relative z-[1] rounded-full px-1 py-1.5 transition-colors"
             style={{ color: tab === t.key ? "#FBF8F2" : undefined }}
           >
-            {tab === t.key ? <motion.span layoutId="cast-tab" className="absolute inset-0 -z-[1] rounded-full bg-ink" transition={SPRING.snappy} /> : null}
+            {tab === t.key ? (
+              <motion.span
+                layoutId="cast-tab"
+                className="absolute inset-0 -z-[1] rounded-full bg-ink"
+                transition={SPRING.snappy}
+              />
+            ) : null}
             {t.label}
           </button>
         ))}
       </div>
 
       <AnimatePresence mode="wait" initial={false}>
-        <motion.div key={tab} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -6 }} transition={SPRING.soft} className="mt-4">
+        <motion.div
+          key={tab}
+          initial={{ opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: -6 }}
+          transition={SPRING.soft}
+          className="mt-4"
+        >
           {tab === "characters" ? (
             <div>
               <div className="mb-4">
-                <CharacterPicker siteId={siteId} kind={kind} char={char} accessory={accessory} onSet={setChar} start="all" />
+                <CharacterPicker
+                  siteId={siteId}
+                  kind={kind}
+                  char={char}
+                  accessory={accessory}
+                  onSet={setChar}
+                  start="all"
+                />
               </div>
               {accessory ? (
                 <label className="flex items-center justify-between rounded-2xl border border-line bg-cream px-3 py-2.5 text-sm">
                   <span>Wear the {ACCESSORIES[accessory].name.toLowerCase()}</span>
-                  <input type="checkbox" checked={wearing} onChange={(e) => setChar({ ...char, accessory: e.target.checked })} className="size-4 accent-[var(--color-accent,#B5623E)]" />
+                  <input
+                    type="checkbox"
+                    checked={wearing}
+                    onChange={(e) => setChar({ ...char, accessory: e.target.checked })}
+                    className="size-4 accent-[var(--color-accent,#B5623E)]"
+                  />
                 </label>
               ) : null}
             </div>
@@ -143,28 +210,59 @@ export function CastPanel({
                   const now = char.colors?.[slot] ?? base;
                   return (
                     <div key={slot}>
-                      <p className="text-xs text-muted">{slot === "primary" ? "Main color" : slot === "secondary" ? "Second color" : "Face"}</p>
+                      <p className="text-xs text-muted">
+                        {slot === "primary"
+                          ? "Main color"
+                          : slot === "secondary"
+                            ? "Second color"
+                            : "Face"}
+                      </p>
                       <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
                         {[base, ...SWATCHES.filter((s) => s !== base)].slice(0, 10).map((sw) => (
                           <button
                             key={sw}
                             type="button"
                             aria-label={`Use ${sw}`}
-                            onClick={() => setChar({ ...char, colors: { ...char.colors, [slot]: sw } })}
+                            onClick={() =>
+                              setChar({ ...char, colors: { ...char.colors, [slot]: sw } })
+                            }
                             className="size-7 rounded-full"
-                            style={{ background: sw, boxShadow: now.toLowerCase() === sw.toLowerCase() ? "0 0 0 2px #FBF8F2, 0 0 0 4px #2B2522" : "inset 0 0 0 1px rgba(0,0,0,.12)" }}
+                            style={{
+                              background: sw,
+                              boxShadow:
+                                now.toLowerCase() === sw.toLowerCase()
+                                  ? "0 0 0 2px #FBF8F2, 0 0 0 4px #2B2522"
+                                  : "inset 0 0 0 1px rgba(0,0,0,.12)",
+                            }}
                           />
                         ))}
-                        <label className="relative grid size-7 cursor-pointer place-items-center rounded-full border border-dashed border-line text-[10px]" title="Any color">
+                        <label
+                          className="relative grid size-7 cursor-pointer place-items-center rounded-full border border-dashed border-line text-[10px]"
+                          title="Any color"
+                        >
                           +
-                          <input type="color" value={now} onChange={(e) => setChar({ ...char, colors: { ...char.colors, [slot]: e.target.value } })} className="absolute inset-0 cursor-pointer opacity-0" />
+                          <input
+                            type="color"
+                            value={now}
+                            onChange={(e) =>
+                              setChar({
+                                ...char,
+                                colors: { ...char.colors, [slot]: e.target.value },
+                              })
+                            }
+                            className="absolute inset-0 cursor-pointer opacity-0"
+                          />
                         </label>
                       </div>
                     </div>
                   );
                 })
               ) : (
-                <p className="text-sm text-muted">{char.type === "upload" ? "Your own picture keeps its colors. You can still give it a name tag." : CAST_COPY.keepsColors}</p>
+                <p className="text-sm text-muted">
+                  {char.type === "upload"
+                    ? "Your own picture keeps its colors. You can still give it a name tag."
+                    : CAST_COPY.keepsColors}
+                </p>
               )}
               <label className="block">
                 <span className="text-xs text-muted">Name tag (optional)</span>
@@ -181,16 +279,30 @@ export function CastPanel({
                 />
               </label>
               {value.character ? (
-                <button type="button" onClick={() => setChar(null)} className="text-xs text-muted underline underline-offset-4">
+                <button
+                  type="button"
+                  onClick={() => setChar(null)}
+                  className="text-xs text-muted underline underline-offset-4"
+                >
                   Back to the theme's own
                 </button>
               ) : null}
             </div>
           ) : null}
 
-          {tab === "upload" ? <UploadTab siteId={siteId} char={char} accessory={accessory} onSet={setChar} /> : null}
+          {tab === "upload" ? (
+            <UploadTab siteId={siteId} char={char} accessory={accessory} onSet={setChar} />
+          ) : null}
 
-          {tab === "sprinkles" ? <SprinklesTab siteId={siteId} kind={kind} recipient={recipient} value={value.icon_set} onSet={setIcons} /> : null}
+          {tab === "sprinkles" ? (
+            <SprinklesTab
+              siteId={siteId}
+              kind={kind}
+              recipient={recipient}
+              value={value.icon_set}
+              onSet={setIcons}
+            />
+          ) : null}
         </motion.div>
       </AnimatePresence>
     </div>
@@ -223,7 +335,12 @@ function UploadTab({
     setBusy(true);
     try {
       const url = await uploadFile(f, "intro", siteId);
-      onSet({ type: "upload", upload_url: url, accessory: true, ...(char.name_tag ? { name_tag: char.name_tag } : {}) });
+      onSet({
+        type: "upload",
+        upload_url: url,
+        accessory: true,
+        ...(char.name_tag ? { name_tag: char.name_tag } : {}),
+      });
     } catch {
       toast.error("Couldn't upload that. Try again in a moment.");
     } finally {
@@ -232,12 +349,24 @@ function UploadTab({
   }
   return (
     <div>
-      <p className="text-sm">Put your pet, your face or a drawing in the opening. It becomes a sticker with a white outline.</p>
-      <p className="mt-1 text-xs text-muted">Works best with a cut-out PNG, or a photo on a plain background.</p>
+      <p className="text-sm">
+        Put your pet, your face or a drawing in the opening. It becomes a sticker with a white
+        outline.
+      </p>
+      <p className="mt-1 text-xs text-muted">
+        Works best with a cut-out PNG, or a photo on a plain background.
+      </p>
       <div className="mt-4 flex items-center gap-4">
         <div className="grid size-28 place-items-center rounded-2xl border border-line bg-cream">
           {char.type === "upload" ? (
-            <Character setting={char} accessory={accessory} size={92} live={false} follow={false} showName={false} />
+            <Character
+              setting={char}
+              accessory={accessory}
+              size={92}
+              live={false}
+              follow={false}
+              showName={false}
+            />
           ) : (
             <Upload className="size-6 text-muted" aria-hidden="true" />
           )}
@@ -252,13 +381,23 @@ function UploadTab({
             {busy ? "Uploading…" : char.type === "upload" ? "Choose another" : "Choose a picture"}
           </button>
           {char.type === "upload" ? (
-            <button type="button" onClick={() => onSet(null)} className="inline-flex items-center gap-1 text-xs text-muted underline underline-offset-4">
+            <button
+              type="button"
+              onClick={() => onSet(null)}
+              className="inline-flex items-center gap-1 text-xs text-muted underline underline-offset-4"
+            >
               <X className="size-3" aria-hidden="true" /> Remove it
             </button>
           ) : null}
         </div>
       </div>
-      <input ref={input} type="file" accept="image/*" className="hidden" onChange={(e) => void onFile(e.target.files?.[0])} />
+      <input
+        ref={input}
+        type="file"
+        accept="image/*"
+        className="hidden"
+        onChange={(e) => void onFile(e.target.files?.[0])}
+      />
     </div>
   );
 }
@@ -333,7 +472,12 @@ function SprinklesTab({
               <span>{s.name}</span>
               <span className="flex gap-1">
                 {set.items.slice(0, 3).map((it, i) => (
-                  <IconGlyph key={i} item={it} color={set.colors[i % Math.max(1, set.colors.length)] ?? "#B5623E"} size={14} />
+                  <IconGlyph
+                    key={i}
+                    item={it}
+                    color={set.colors[i % Math.max(1, set.colors.length)] ?? "#B5623E"}
+                    size={14}
+                  />
                 ))}
               </span>
             </motion.button>
@@ -343,17 +487,30 @@ function SprinklesTab({
 
       <div className="mt-5 rounded-2xl border border-line bg-cream p-3">
         <p className="text-sm font-medium">Your own</p>
-        <p className="mt-0.5 text-xs text-muted">Up to {MAX_CUSTOM_ICONS} emoji or small pictures.</p>
+        <p className="mt-0.5 text-xs text-muted">
+          Up to {MAX_CUSTOM_ICONS} emoji or small pictures.
+        </p>
         <div className="mt-2 flex flex-wrap items-center gap-2">
           {items.map((x, i) => (
-            <span key={i} className="relative grid size-10 place-items-center rounded-xl border border-line bg-paper text-xl">
-              {x.startsWith("http") || x.startsWith("/") ? <img src={x} alt="" className="size-7 object-contain" /> : x}
+            <span
+              key={i}
+              className="relative grid size-10 place-items-center rounded-xl border border-line bg-paper text-xl"
+            >
+              {x.startsWith("http") || x.startsWith("/") ? (
+                <img src={x} alt="" className="size-7 object-contain" />
+              ) : (
+                x
+              )}
               <button
                 type="button"
                 aria-label="Remove"
                 onClick={() => {
                   const next = items.filter((_, j) => j !== i);
-                  onSet(next.length ? { custom: next, ...(custom?.physics ? { physics: custom.physics } : {}) } : null);
+                  onSet(
+                    next.length
+                      ? { custom: next, ...(custom?.physics ? { physics: custom.physics } : {}) }
+                      : null,
+                  );
                 }}
                 className="absolute -top-1.5 -right-1.5 grid size-4 place-items-center rounded-full bg-ink text-paper"
               >
@@ -377,13 +534,32 @@ function SprinklesTab({
                 aria-label="Add an emoji"
                 className="h-10 w-16 rounded-xl border border-line bg-paper px-2 text-center text-xl outline-none focus:border-accent"
               />
-              <button type="button" disabled={!draft.trim()} onClick={() => { addCustom(draft.trim()); setDraft(""); }} className="h-10 rounded-xl border border-line px-3 text-xs font-medium disabled:opacity-50">
+              <button
+                type="button"
+                disabled={!draft.trim()}
+                onClick={() => {
+                  addCustom(draft.trim());
+                  setDraft("");
+                }}
+                className="h-10 rounded-xl border border-line px-3 text-xs font-medium disabled:opacity-50"
+              >
                 Add
               </button>
-              <button type="button" disabled={busy} onClick={() => fileRef.current?.click()} className="h-10 rounded-xl border border-line px-3 text-xs font-medium disabled:opacity-50">
+              <button
+                type="button"
+                disabled={busy}
+                onClick={() => fileRef.current?.click()}
+                className="h-10 rounded-xl border border-line px-3 text-xs font-medium disabled:opacity-50"
+              >
                 {busy ? "Uploading…" : "Picture"}
               </button>
-              <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={(e) => void onFile(e.target.files?.[0])} />
+              <input
+                ref={fileRef}
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={(e) => void onFile(e.target.files?.[0])}
+              />
             </>
           ) : null}
         </div>
@@ -424,13 +600,21 @@ function SprinklesTab({
               aria-label={`${CAST_COPY.wanderer} ${i + 1}`}
               className={`grid size-10 place-items-center rounded-xl border ${roam === i ? "border-accent bg-accent/8" : "border-line bg-paper"}`}
             >
-              <IconGlyph item={it} color={shown.colors[i % Math.max(1, shown.colors.length)] ?? "#B5623E"} size={20} />
+              <IconGlyph
+                item={it}
+                color={shown.colors[i % Math.max(1, shown.colors.length)] ?? "#B5623E"}
+                size={20}
+              />
             </motion.button>
           ))}
         </div>
       </div>
       {value ? (
-        <button type="button" onClick={() => setRaw(null)} className="mt-3 text-xs text-muted underline underline-offset-4">
+        <button
+          type="button"
+          onClick={() => setRaw(null)}
+          className="mt-3 text-xs text-muted underline underline-offset-4"
+        >
           Back to the theme's own
         </button>
       ) : null}

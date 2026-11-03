@@ -35,9 +35,11 @@ export function setBoListening(on: boolean) {
   listening += on ? 1 : -1;
 }
 
-export const boSay = (text: string, face?: BoBusFace) => emit({ type: "say", text, ...(face ? { face } : {}) });
+export const boSay = (text: string, face?: BoBusFace) =>
+  emit({ type: "say", text, ...(face ? { face } : {}) });
 export const boAccessory = (name: BoAccessory | null) => emit({ type: "accessory", name });
-export const boReact = (kind: "bam" | "hug" | "wave" | "cheer" | "celebrate") => emit({ type: "react", kind });
+export const boReact = (kind: "bam" | "hug" | "wave" | "cheer" | "celebrate") =>
+  emit({ type: "react", kind });
 
 /** Bo wraps himself up and takes a bow. Never takes longer than `maxMs`. */
 export function boWrap(maxMs = 950): Promise<void> {

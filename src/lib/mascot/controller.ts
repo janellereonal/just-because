@@ -55,7 +55,17 @@ export const TUNING = {
 /** What Bo says the first time he hops out. */
 const INTRO = ["Hi, I'm Bo.", "I'll hop along with you."];
 
-export type MascotState = "hidden" | "idle" | "hopping" | "scrambling" | "reacting" | "sleeping" | "dizzy" | "dragged" | "wrapping" | "celebrating";
+export type MascotState =
+  | "hidden"
+  | "idle"
+  | "hopping"
+  | "scrambling"
+  | "reacting"
+  | "sleeping"
+  | "dizzy"
+  | "dragged"
+  | "wrapping"
+  | "celebrating";
 
 export type MascotOptions = {
   /** Hop to fields inside [data-bo-zone] while they're focused. */
@@ -97,11 +107,19 @@ type Hop = {
 };
 
 type ActionKind = "lidpop" | "dizzy" | "wrap" | "bam" | "hug" | "cheer" | "point" | "yawn" | "wake";
-type Action = { kind: ActionKind; start: number; dur: number; done?: (() => void) | undefined; dir?: number };
+type Action = {
+  kind: ActionKind;
+  start: number;
+  dur: number;
+  done?: (() => void) | undefined;
+  dir?: number;
+};
 
 const CONFETTI = ["#FBD3DC", "#E6DCF7", "#D5F0E3", "#FFE8B0", "#D9E8FB", "#FFDCCB", "#C2366B"];
-const FIELD = "input:not([type=checkbox]):not([type=radio]):not([type=hidden]):not([type=range]), textarea, select";
-const INTERACTIVE = "input, textarea, select, button, a, label, [role=button], [contenteditable=true]";
+const FIELD =
+  "input:not([type=checkbox]):not([type=radio]):not([type=hidden]):not([type=range]), textarea, select";
+const INTERACTIVE =
+  "input, textarea, select, button, a, label, [role=button], [contenteditable=true]";
 const HIDDEN_TITLE = "Your gift misses you 🎁";
 
 const clamp01 = (x: number) => Math.max(0, Math.min(1, x));
@@ -153,7 +171,13 @@ export class MascotController {
 
   /* pointer, drag and flick */
   private pointer: Point | null = null;
-  private press: { id: number; start: Point; off: Point; moved: boolean; samples: { t: number; x: number; y: number }[] } | null = null;
+  private press: {
+    id: number;
+    start: Point;
+    off: Point;
+    moved: boolean;
+    samples: { t: number; x: number; y: number }[];
+  } | null = null;
   private fling: { vx: number; vy: number; start: number; restAt: number } | null = null;
   private taps: number[] = [];
 
@@ -263,7 +287,8 @@ export class MascotController {
     for (const off of this.offs) off();
     this.bubble.remove();
     this.raft?.remove();
-    if (this.savedTitle !== null && document.title === HIDDEN_TITLE) document.title = this.savedTitle;
+    if (this.savedTitle !== null && document.title === HIDDEN_TITLE)
+      document.title = this.savedTitle;
     this.endAction();
   }
 
@@ -374,7 +399,8 @@ export class MascotController {
   private placeBubble() {
     if (this.bubble.dataset["show"] === undefined) return;
     const r = this.bubbleRect(this.bubbleSpot);
-    this.bubble.dataset["side"] = this.bubbleSpot === "above-left" || this.bubbleSpot === "left" ? "left" : "right";
+    this.bubble.dataset["side"] =
+      this.bubbleSpot === "above-left" || this.bubbleSpot === "left" ? "left" : "right";
     this.bubble.dataset["tail"] = this.bubbleSpot.startsWith("above") ? "down" : "none";
     // left/top (not transform) so the bubble's own pop-in transition still plays.
     this.bubble.style.left = `${Math.max(window.scrollX + 8, r.x).toFixed(1)}px`;
@@ -438,7 +464,13 @@ export class MascotController {
     if (!this.opts.followFocus) return;
     const t = e.target instanceof HTMLElement ? e.target : null;
     const box = t?.getBoundingClientRect();
-    if (t?.matches(FIELD) && t.closest("[data-bo-zone]") && box && box.width > 8 && box.height > 8) {
+    if (
+      t?.matches(FIELD) &&
+      t.closest("[data-bo-zone]") &&
+      box &&
+      box.width > 8 &&
+      box.height > 8
+    ) {
       this.focusEl = t;
       this.dirty = true;
     }
@@ -467,7 +499,13 @@ export class MascotController {
       // Synthetic or already-released pointer: window listeners still get the moves.
     }
     const doc = { x: e.clientX + window.scrollX, y: e.clientY + window.scrollY };
-    this.press = { id: e.pointerId, start: doc, off: { x: doc.x - this.pos.x, y: doc.y - this.pos.y }, moved: false, samples: [{ t: performance.now(), ...doc }] };
+    this.press = {
+      id: e.pointerId,
+      start: doc,
+      off: { x: doc.x - this.pos.x, y: doc.y - this.pos.y },
+      moved: false,
+      samples: [{ t: performance.now(), ...doc }],
+    };
     this.poke();
   }
 
@@ -489,7 +527,12 @@ export class MascotController {
     const first = p.samples.find((s) => now - s.t < 90) ?? p.samples[0]!;
     const last = p.samples[p.samples.length - 1]!;
     const dt = Math.max(16, last.t - first.t) / 1000;
-    this.fling = { vx: (last.x - first.x) / dt, vy: (last.y - first.y) / dt, start: now, restAt: 0 };
+    this.fling = {
+      vx: (last.x - first.x) / dt,
+      vy: (last.y - first.y) / dt,
+      start: now,
+      restAt: 0,
+    };
     this.state = "dragged";
   };
 
@@ -501,7 +544,8 @@ export class MascotController {
         document.title = HIDDEN_TITLE;
       }
     } else {
-      if (this.savedTitle !== null && document.title === HIDDEN_TITLE) document.title = this.savedTitle;
+      if (this.savedTitle !== null && document.title === HIDDEN_TITLE)
+        document.title = this.savedTitle;
       this.savedTitle = null;
       this.lastFrame = 0;
       this.raf = requestAnimationFrame(this.frame);
@@ -609,7 +653,9 @@ export class MascotController {
     const now = performance.now();
     if (!force && now - this.perchesAt < 600) return;
     this.perchesAt = now;
-    this.perches = Array.from(document.querySelectorAll<HTMLElement>("[data-bo-perch]")).filter((p) => p.offsetParent !== null);
+    this.perches = Array.from(document.querySelectorAll<HTMLElement>("[data-bo-perch]")).filter(
+      (p) => p.offsetParent !== null,
+    );
   }
 
   private pointFor(el: HTMLElement): Point {
@@ -638,7 +684,12 @@ export class MascotController {
     const left = p.x - window.scrollX - w * feet.x;
     const top = p.y - window.scrollY - h * feet.y;
     // His art fills the middle of the canvas; the feet stop a few px above the perch's top edge.
-    return { x: left + w * 0.16, y: top + h * 0.1, w: w * 0.68, h: Math.max(10, h * feet.y - h * 0.1 - 6) };
+    return {
+      x: left + w * 0.16,
+      y: top + h * 0.1,
+      w: w * 0.68,
+      h: Math.max(10, h * feet.y - h * 0.1 - 6),
+    };
   }
 
   /** Does this element hold something he shouldn't cover? */
@@ -648,8 +699,18 @@ export class MascotController {
     if (this.layer.contains(el)) return false;
     if (el.closest("[data-bo-avoid]") || el.closest(INTERACTIVE)) return true;
     const tag = el.tagName;
-    if (tag === "IMG" || tag === "SVG" || tag === "svg" || tag === "VIDEO" || tag === "CANVAS" || tag === "PICTURE" || tag === "IFRAME") return true;
-    for (const n of el.childNodes) if (n.nodeType === 3 && n.textContent && n.textContent.trim()) return true;
+    if (
+      tag === "IMG" ||
+      tag === "SVG" ||
+      tag === "svg" ||
+      tag === "VIDEO" ||
+      tag === "CANVAS" ||
+      tag === "PICTURE" ||
+      tag === "IFRAME"
+    )
+      return true;
+    for (const n of el.childNodes)
+      if (n.nodeType === 3 && n.textContent && n.textContent.trim()) return true;
     return false;
   }
 
@@ -697,7 +758,9 @@ export class MascotController {
    */
   private focusSide(el: HTMLElement): Point | null {
     const r = el.getBoundingClientRect();
-    const zone = (el.closest("[data-bo-side]") as HTMLElement | null) ?? (el.closest("[data-bo-zone]") as HTMLElement | null);
+    const zone =
+      (el.closest("[data-bo-side]") as HTMLElement | null) ??
+      (el.closest("[data-bo-zone]") as HTMLElement | null);
     const zr = zone?.getBoundingClientRect() ?? r;
     const w = this.el.offsetWidth || 112;
     const gap = 14;
@@ -740,7 +803,12 @@ export class MascotController {
   }
 
   private busy() {
-    return !!(this.hop || this.press?.moved || this.fling || (this.action && this.action.kind !== "point" && this.action.kind !== "yawn"));
+    return !!(
+      this.hop ||
+      this.press?.moved ||
+      this.fling ||
+      (this.action && this.action.kind !== "point" && this.action.kind !== "yawn")
+    );
   }
 
   private pickPerch(now: number) {
@@ -776,12 +844,15 @@ export class MascotController {
       this.setPerch(target);
       if (this.visible) this.hide();
       this.pos = to;
-      window.setTimeout(() => {
-        if (this.perchEl !== target) return;
-        this.show();
-        this.place();
-        this.land(performance.now(), null);
-      }, this.reduce ? 120 : 260);
+      window.setTimeout(
+        () => {
+          if (this.perchEl !== target) return;
+          this.show();
+          this.place();
+          this.land(performance.now(), null);
+        },
+        this.reduce ? 120 : 260,
+      );
       return;
     }
 
@@ -817,7 +888,10 @@ export class MascotController {
     }
 
     this.setPerch(target);
-    this.startHop(now, to, { backward: to.y < this.pos.y - 4, ...(isFocus ? { height: this.mobile ? 26 : 40 } : {}) });
+    this.startHop(now, to, {
+      backward: to.y < this.pos.y - 4,
+      ...(isFocus ? { height: this.mobile ? 26 : 40 } : {}),
+    });
   }
 
   private setPerch(el: HTMLElement) {
@@ -845,7 +919,13 @@ export class MascotController {
 
   /* ---------- Hops ---------- */
 
-  private startHop(now: number, to: Point, opts: Partial<Pick<Hop, "height" | "duration" | "backward" | "scramble" | "chain" | "flip" | "float">> = {}) {
+  private startHop(
+    now: number,
+    to: Point,
+    opts: Partial<
+      Pick<Hop, "height" | "duration" | "backward" | "scramble" | "chain" | "flip" | "float">
+    > = {},
+  ) {
     if (this.reduce) {
       // No hops: fade out, move, fade back in.
       this.el.style.transition = "opacity 220ms ease";
@@ -867,7 +947,12 @@ export class MascotController {
     const scramble = !!opts.scramble;
     const float = !!opts.float;
     this.hopCount++;
-    const quirk = !scramble && !float && !this.lastQuirk && this.hopCount > 2 && Math.random() < 1 / TUNING.quirkEvery;
+    const quirk =
+      !scramble &&
+      !float &&
+      !this.lastQuirk &&
+      this.hopCount > 2 &&
+      Math.random() < 1 / TUNING.quirkEvery;
     this.lastQuirk = quirk;
     this.hop = {
       from: { ...this.pos },
@@ -899,7 +984,10 @@ export class MascotController {
   private scrambleStep(now: number, el: HTMLElement, left: number) {
     const target = this.pointFor(el);
     const k = 1 / left;
-    const to = { x: this.pos.x + (target.x - this.pos.x) * k, y: this.pos.y + (target.y - this.pos.y) * k };
+    const to = {
+      x: this.pos.x + (target.x - this.pos.x) * k,
+      y: this.pos.y + (target.y - this.pos.y) * k,
+    };
     this.startHop(now, left === 1 ? target : to, {
       height: (this.mobile ? 22 : 34) + Math.random() * 10,
       duration: 260,
@@ -952,7 +1040,8 @@ export class MascotController {
         this.say(line);
       }
       const point = Number(perch.dataset["boPoint"] ?? 0);
-      if (point && !this.action) this.action = { kind: "point", start: now, dur: 1800, dir: Math.sign(point) };
+      if (point && !this.action)
+        this.action = { kind: "point", start: now, dur: 1800, dir: Math.sign(point) };
     }
   }
 
@@ -991,7 +1080,8 @@ export class MascotController {
       height: "40px",
       borderRadius: "8px",
       backgroundColor: "#FFE8B0",
-      backgroundImage: "repeating-linear-gradient(transparent 0 11px, rgba(185,169,161,.55) 11px 13px)",
+      backgroundImage:
+        "repeating-linear-gradient(transparent 0 11px, rgba(185,169,161,.55) 11px 13px)",
       backgroundPosition: "0 6px",
       boxShadow: "0 8px 18px -10px rgba(43,37,34,.45)",
       willChange: "transform, opacity",
@@ -1061,7 +1151,9 @@ export class MascotController {
       });
       this.layer.appendChild(bit);
       const small = power < 1;
-      const a = small ? (i % 2 === 0 ? -1 : 1) * (0.3 + Math.random() * 0.9) : (Math.random() - 0.5) * Math.PI * 1.6;
+      const a = small
+        ? (i % 2 === 0 ? -1 : 1) * (0.3 + Math.random() * 0.9)
+        : (Math.random() - 0.5) * Math.PI * 1.6;
       const spd = (small ? 26 + Math.random() * 14 : 50 + Math.random() * 60) * power;
       const dx = Math.sin(a) * spd * (small ? 1 : 1.4);
       const dy = -Math.cos(a) * spd - (small ? 8 : 20);
@@ -1069,8 +1161,15 @@ export class MascotController {
       const anim = bit.animate(
         [
           { transform: "translate(-50%, 0) rotate(0deg)", opacity: 1 },
-          { transform: `translate(calc(-50% + ${dx}px), ${dy}px) rotate(${rot / 2}deg)`, opacity: 1, offset: 0.45 },
-          { transform: `translate(calc(-50% + ${dx * 1.3}px), ${dy + 30 * power + 10}px) rotate(${rot}deg)`, opacity: 0 },
+          {
+            transform: `translate(calc(-50% + ${dx}px), ${dy}px) rotate(${rot / 2}deg)`,
+            opacity: 1,
+            offset: 0.45,
+          },
+          {
+            transform: `translate(calc(-50% + ${dx * 1.3}px), ${dy + 30 * power + 10}px) rotate(${rot}deg)`,
+            opacity: 0,
+          },
         ],
         { duration: (small ? 620 : 900) + Math.random() * 200, easing: "cubic-bezier(.2,.7,.4,1)" },
       );
@@ -1105,7 +1204,20 @@ export class MascotController {
     this.velocity *= 0.92;
     this.pickPerch(now);
 
-    const pose: Partial<BoPose> = { squash: 1, tuck: 0, flail: 0, run: 0, flip: 0, lean: 0, turn: null, lid: 0, cheer: 0, point: 0, bowSpin: 0, hold: 0 };
+    const pose: Partial<BoPose> = {
+      squash: 1,
+      tuck: 0,
+      flail: 0,
+      run: 0,
+      flip: 0,
+      lean: 0,
+      turn: null,
+      lid: 0,
+      cheer: 0,
+      point: 0,
+      bowSpin: 0,
+      hold: 0,
+    };
     let lift = 0;
     const hop = this.hop;
 
@@ -1129,7 +1241,10 @@ export class MascotController {
           // Gently down on the paper note, swaying.
           const e = easeOut(s);
           const sway = Math.sin(s * Math.PI * 3) * (1 - s);
-          this.pos = { x: hop.from.x + (hop.to.x - hop.from.x) * e + sway * 26, y: hop.from.y + (hop.to.y - hop.from.y) * e };
+          this.pos = {
+            x: hop.from.x + (hop.to.x - hop.from.x) * e + sway * 26,
+            y: hop.from.y + (hop.to.y - hop.from.y) * e,
+          };
           pose.lean = sway * 0.18;
           pose.cheer = 0.5 * (1 - s);
           this.placeRaft(sway);
@@ -1137,13 +1252,21 @@ export class MascotController {
           // The perch may move while he's in the air (fonts, images, reveal animations): aim at where it is now.
           if (!hop.chain && this.perchEl?.isConnected && !this.press) {
             const live = this.pointFor(this.perchEl);
-            hop.to = { x: hop.to.x + (live.x - hop.to.x) * 0.25, y: hop.to.y + (live.y - hop.to.y) * 0.25 };
+            hop.to = {
+              x: hop.to.x + (live.x - hop.to.x) * 0.25,
+              y: hop.to.y + (live.y - hop.to.y) * 0.25,
+            };
           }
           const e = hop.scramble ? s : easeInOut(s) * 0.35 + s * 0.65;
-          this.pos = { x: hop.from.x + (hop.to.x - hop.from.x) * e, y: hop.from.y + (hop.to.y - hop.from.y) * e };
+          this.pos = {
+            x: hop.from.x + (hop.to.x - hop.from.x) * e,
+            y: hop.from.y + (hop.to.y - hop.from.y) * e,
+          };
           lift = 4 * hop.height * s * (1 - s);
           // Stretched on the way up and down, round at the top.
-          pose.squash = hop.scramble ? 1 : 1 + 0.16 * Math.abs(2 * s - 1) * Math.sin(Math.PI * Math.min(1, s * 1.4));
+          pose.squash = hop.scramble
+            ? 1
+            : 1 + 0.16 * Math.abs(2 * s - 1) * Math.sin(Math.PI * Math.min(1, s * 1.4));
           pose.tuck = hop.scramble ? 0.2 : Math.sin(Math.PI * s);
           pose.run = hop.scramble ? 1 : 0;
           pose.flail = hop.scramble ? 0.5 : 0;
@@ -1157,7 +1280,8 @@ export class MascotController {
     } else if (this.state !== "hidden") {
       // Landing squash, then a small bounce to settle.
       const since = (now - this.landedAt) / 1000;
-      if (since < 0.6 && !this.reduce) pose.squash = 1 - 0.26 * Math.exp(-since * 9) * Math.cos(since * 24);
+      if (since < 0.6 && !this.reduce)
+        pose.squash = 1 - 0.26 * Math.exp(-since * 9) * Math.cos(since * 24);
       // Misjudged the landing: wobble on the edge, flail, steady.
       if (now < this.wobbleUntil) {
         const left = (this.wobbleUntil - now) / 950;
@@ -1166,7 +1290,8 @@ export class MascotController {
       }
       // A little bob with each keystroke.
       const bob = (now - this.bobAt) / 160;
-      if (bob < 1 && !this.reduce) pose.squash = (pose.squash ?? 1) * (1 - 0.09 * Math.sin(Math.PI * bob));
+      if (bob < 1 && !this.reduce)
+        pose.squash = (pose.squash ?? 1) * (1 - 0.09 * Math.sin(Math.PI * bob));
       // Stay glued to the perch (inner scroll areas, layout shifts).
       if (this.perchEl?.isConnected && !this.press) this.pos = this.pointFor(this.perchEl);
       // Something moved under him (a marquee, a reflow): find another spot, or step out of the way.
@@ -1175,7 +1300,13 @@ export class MascotController {
         this.checkRoom();
       }
       // Doze off after a while with nothing happening.
-      if (!this.sleeping && !this.action && this.visible && now - this.lastInput > TUNING.sleepAfterMs) this.sleep(now);
+      if (
+        !this.sleeping &&
+        !this.action &&
+        this.visible &&
+        now - this.lastInput > TUNING.sleepAfterMs
+      )
+        this.sleep(now);
       if (this.sleeping && !this.action) {
         pose.squash = 1 - 0.03 * (1 + Math.sin(now / 700));
         pose.lean = 0.08;

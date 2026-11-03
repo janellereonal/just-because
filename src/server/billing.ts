@@ -34,7 +34,9 @@ export function isExpired(site: Pick<Site, "expiresAt">, now = new Date()) {
 }
 
 /** The recipient link works: published, paid (or legacy) and not ended. */
-export function isOpen(site: Pick<Site, "status" | "tier" | "expiresAt"> & { disabledAt?: Date | null }) {
+export function isOpen(
+  site: Pick<Site, "status" | "tier" | "expiresAt"> & { disabledAt?: Date | null },
+) {
   return site.status === "published" && !!site.tier && !isExpired(site) && !site.disabledAt;
 }
 
@@ -74,7 +76,12 @@ export async function siteUsage(siteId: string, db: Db = getDb()) {
 export type Usage = Awaited<ReturnType<typeof siteUsage>>;
 
 /** Why a tier doesn't fit this gift right now, or null if it does. */
-export function tierBlocker(tier: Tier, usage: Usage, format: string, style?: string | null): string | null {
+export function tierBlocker(
+  tier: Tier,
+  usage: Usage,
+  format: string,
+  style?: string | null,
+): string | null {
   if (usage.contributors > tier.contributors.cap)
     return `This gift has ${usage.contributors} contributors. ${tier.name} fits ${tier.contributors.cap}.`;
   if (usage.photos > tier.photos.cap)
@@ -119,7 +126,9 @@ export async function checkRoom(
           eq(c.siteId, site.id),
           inArray(c.status, ["pending", "approved"]),
           eq(c.byOwner, false),
-          deviceId ? sql`(${c.deviceId} = ${deviceId} or (${c.deviceId} is null and ${sameName}))` : sameName,
+          deviceId
+            ? sql`(${c.deviceId} = ${deviceId} or (${c.deviceId} is null and ${sameName}))`
+            : sameName,
         ),
       );
     const isNewPerson = (known?.n ?? 0) === 0;
@@ -140,16 +149,29 @@ export async function checkRoom(
  * `run` gets the transaction and the gift as it is now, and calls `room()` for each item it is
  * about to add or show; it must save through the same transaction.
  */
-export async function withRoom<T>(siteId: string, run: (tx: Tx, site: Site, room: (who: RoomCheck) => Promise<RoomResult>) => Promise<T>): Promise<T> {
+export async function withRoom<T>(
+  siteId: string,
+  run: (tx: Tx, site: Site, room: (who: RoomCheck) => Promise<RoomResult>) => Promise<T>,
+): Promise<T> {
   return getDb().transaction(async (tx) => {
     await tx.execute(sql`select pg_advisory_xact_lock(hashtext(${`room:${siteId}`}))`);
     const [site] = await tx.select().from(schema.giftSites).where(eq(schema.giftSites.id, siteId));
     if (!site) throw new HttpError(404, "We couldn't find that gift.");
-    return run(tx, site, (who) => checkRoom(site, who.authorName, who.moduleType, who.deviceId ?? null, { byOwner: who.byOwner ?? false, db: tx }));
+    return run(tx, site, (who) =>
+      checkRoom(site, who.authorName, who.moduleType, who.deviceId ?? null, {
+        byOwner: who.byOwner ?? false,
+        db: tx,
+      }),
+    );
   });
 }
 
-type RoomCheck = { authorName: string; moduleType: string; deviceId?: string | null; byOwner?: boolean };
+type RoomCheck = {
+  authorName: string;
+  moduleType: string;
+  deviceId?: string | null;
+  byOwner?: boolean;
+};
 type RoomResult = Awaited<ReturnType<typeof checkRoom>>;
 
 /* ---------------- pricing quotes ---------------- */
@@ -179,16 +201,22 @@ export type Quote = {
  * it replaces the early-bird promo rather than stacking). Throws a friendly error if it can't
  * be bought or the code can't be used.
  */
-export async function quote(site: Site, tierId: string, opts: { code?: string | null | undefined; userId?: string; db?: Db } = {}): Promise<Quote> {
+export async function quote(
+  site: Site,
+  tierId: string,
+  opts: { code?: string | null | undefined; userId?: string; db?: Db } = {},
+): Promise<Quote> {
   // Inside openCheckout this is its transaction: reading through it (not the pool) means a
   // request holding the checkout lock never waits for a free connection held by those queued behind it.
   const db = opts.db ?? getDb();
   const tier = getTier(tierId);
   if (!tier) throw new HttpError(400, "That plan doesn't exist.");
   if (site.disabledAt) throw new HttpError(403, PAY_SAFETY_COPY.paused);
-  if (site.tier === LEGACY_TIER) throw new HttpError(400, "This gift is already open for good. No payment needed.");
+  if (site.tier === LEGACY_TIER)
+    throw new HttpError(400, "This gift is already open for good. No payment needed.");
   const onPlan = getTier(site.tier);
-  if (onPlan && tierRank(tier.id) <= tierRank(onPlan.id)) throw new HttpError(400, `This gift is already on ${onPlan.name}.`);
+  if (onPlan && tierRank(tier.id) <= tierRank(onPlan.id))
+    throw new HttpError(400, `This gift is already on ${onPlan.name}.`);
 
   const usage = await siteUsage(site.id, db);
   const blocker = tierBlocker(tier, usage, site.format, site.style);
@@ -201,7 +229,14 @@ export async function quote(site: Site, tierId: string, opts: { code?: string | 
     const problem = await codeProblem(code, tier, opts.userId ?? "", db, { siteId: site.id });
     if (problem || !code) throw new HttpError(400, problem ?? "We don't know that code.");
     const { amount, off } = priceWith(code, tier.amount);
-    return { kind: "publish", tier, fromTier: null, amount, promoApplied: false, discount: { id: code.id, code: code.code, off } };
+    return {
+      kind: "publish",
+      tier,
+      fromTier: null,
+      amount,
+      promoApplied: false,
+      discount: { id: code.id, code: code.code, off },
+    };
   }
   if (!current) {
     let amount = tier.amount;
@@ -212,19 +247,35 @@ export async function quote(site: Site, tierId: string, opts: { code?: string | 
     }
     return { kind: "publish", tier, fromTier: null, amount, promoApplied, discount: null };
   }
-  if (isExpired(site)) throw new HttpError(400, "This gift has ended. Extend it first, then you can upgrade.");
+  if (isExpired(site))
+    throw new HttpError(400, "This gift has ended. Extend it first, then you can upgrade.");
   if (tierRank(tier.id) <= tierRank(current.id))
     throw new HttpError(400, `This gift is already on ${current.name}.`);
-  return { kind: "upgrade", tier, fromTier: current.id, amount: tier.amount - current.amount, promoApplied: false, discount: null };
+  return {
+    kind: "upgrade",
+    tier,
+    fromTier: current.id,
+    amount: tier.amount - current.amount,
+    promoApplied: false,
+    discount: null,
+  };
 }
 
 /** Keeps a paid gift open for another stretch of its current plan. */
 export function quoteExtend(site: Site): Quote {
   if (site.disabledAt) throw new HttpError(403, PAY_SAFETY_COPY.paused);
-  if (site.tier === LEGACY_TIER) throw new HttpError(400, "This gift is already open for good. No payment needed.");
+  if (site.tier === LEGACY_TIER)
+    throw new HttpError(400, "This gift is already open for good. No payment needed.");
   const tier = getTier(site.tier);
   if (!tier) throw new HttpError(400, "Pick a plan to publish this gift first.");
-  return { kind: "extend", tier, fromTier: tier.id, amount: tier.extendAmount, promoApplied: false, discount: null };
+  return {
+    kind: "extend",
+    tier,
+    fromTier: tier.id,
+    amount: tier.extendAmount,
+    promoApplied: false,
+    discount: null,
+  };
 }
 
 export function upgradeOptions(currentTier: string | null) {
@@ -238,12 +289,25 @@ export function upgradeOptions(currentTier: string | null) {
 export type PaymentSource = "webhook" | "confirm" | "billing" | "cron";
 
 /** Writes one line to payment_log. Never throws: logging must not break a payment. */
-export async function logPayment(source: PaymentSource, event: string, outcome: string, ids: { checkoutId?: string | null; orderId?: string | null } = {}) {
-  console.info(`[payments] ${source} ${event}${ids.checkoutId ? ` ${ids.checkoutId}` : ""}: ${outcome}`);
+export async function logPayment(
+  source: PaymentSource,
+  event: string,
+  outcome: string,
+  ids: { checkoutId?: string | null; orderId?: string | null } = {},
+) {
+  console.info(
+    `[payments] ${source} ${event}${ids.checkoutId ? ` ${ids.checkoutId}` : ""}: ${outcome}`,
+  );
   try {
     await getDb()
       .insert(schema.paymentLog)
-      .values({ source, event: event.slice(0, 120), outcome: outcome.slice(0, 500), checkoutId: ids.checkoutId ?? null, orderId: ids.orderId ?? null });
+      .values({
+        source,
+        event: event.slice(0, 120),
+        outcome: outcome.slice(0, 500),
+        checkoutId: ids.checkoutId ?? null,
+        orderId: ids.orderId ?? null,
+      });
   } catch (error) {
     console.error("[payments] couldn't write payment_log", error);
   }
@@ -255,7 +319,8 @@ export async function logPayment(source: PaymentSource, event: string, outcome: 
  * and has to be refunded by hand in the PayMongo dashboard for now (HANDOFF.md, Refunds).
  */
 export const SETTLED_STATUSES = ["paid", "refund_pending"] as const;
-export const isSettled = (status: string) => (SETTLED_STATUSES as readonly string[]).includes(status);
+export const isSettled = (status: string) =>
+  (SETTLED_STATUSES as readonly string[]).includes(status);
 
 /**
  * Money we owe back is written to payment_log as its own line, `event = "refund due"`, with the
@@ -273,7 +338,13 @@ export function refundAmountOf(outcome: string): number {
   return m ? Number(m[1]) : 0;
 }
 
-async function recordRefund(tx: Tx, source: PaymentSource, order: { id: string; providerCheckoutId: string | null }, amount: number, why: string) {
+async function recordRefund(
+  tx: Tx,
+  source: PaymentSource,
+  order: { id: string; providerCheckoutId: string | null },
+  amount: number,
+  why: string,
+) {
   if (amount <= 0) return;
   await tx.insert(schema.paymentLog).values({
     source,
@@ -291,12 +362,16 @@ export async function refundsDue(orderIds: string[]): Promise<Map<string, number
   const rows = await getDb()
     .select({ orderId: schema.paymentLog.orderId, outcome: schema.paymentLog.outcome })
     .from(schema.paymentLog)
-    .where(and(eq(schema.paymentLog.event, REFUND_EVENT), inArray(schema.paymentLog.orderId, orderIds)));
-  for (const r of rows) if (r.orderId) out.set(r.orderId, (out.get(r.orderId) ?? 0) + refundAmountOf(r.outcome));
+    .where(
+      and(eq(schema.paymentLog.event, REFUND_EVENT), inArray(schema.paymentLog.orderId, orderIds)),
+    );
+  for (const r of rows)
+    if (r.orderId) out.set(r.orderId, (out.get(r.orderId) ?? 0) + refundAmountOf(r.outcome));
   return out;
 }
 
-const peso = (centavos: number) => `₱${(centavos / 100).toLocaleString("en-PH", { maximumFractionDigits: 2 })}`;
+const peso = (centavos: number) =>
+  `₱${(centavos / 100).toLocaleString("en-PH", { maximumFractionDigits: 2 })}`;
 
 /**
  * Marks the order paid and opens (or upgrades, or extends) the gift, exactly
@@ -318,9 +393,20 @@ const peso = (centavos: number) => `₱${(centavos / 100).toLocaleString("en-PH"
  *    flagged for a refund. Extends always stack, so paying twice just adds more time.
  * A paused gift still gets what was paid for (it stays paused); the log says so.
  */
-type Purchased = { siteId: string; ownerId: string | null; plan: string; kind: string; method: string | null; cardOrigin: string | null };
+type Purchased = {
+  siteId: string;
+  ownerId: string | null;
+  plan: string;
+  kind: string;
+  method: string | null;
+  cardOrigin: string | null;
+};
 
-export async function applyPaidEvent(event: PaidEvent, provider: string, source: PaymentSource = "webhook"): Promise<string> {
+export async function applyPaidEvent(
+  event: PaidEvent,
+  provider: string,
+  source: PaymentSource = "webhook",
+): Promise<string> {
   const db = getDb();
   /** Set once the payment is applied, for the metrics event after the transaction. */
   let purchased: Purchased | null = null;
@@ -332,25 +418,48 @@ export async function applyPaidEvent(event: PaidEvent, provider: string, source:
       .for("update");
     if (!order) return { msg: `no order for checkout ${event.checkoutId}` };
     if (event.orderId && event.orderId !== order.id)
-      return { msg: `order mismatch: session says ${event.orderId}, we have ${order.id}`, orderId: order.id };
-    if (isSettled(order.status)) return { msg: `order ${order.id} already paid`, orderId: order.id };
+      return {
+        msg: `order mismatch: session says ${event.orderId}, we have ${order.id}`,
+        orderId: order.id,
+      };
+    if (isSettled(order.status))
+      return { msg: `order ${order.id} already paid`, orderId: order.id };
     // Amounts are only comparable in the same currency (₱599 is not $599).
     if (event.currency && event.currency.toUpperCase() !== order.currency.toUpperCase())
-      return { msg: `order ${order.id}: paid in ${event.currency}, expected ${order.currency}, not publishing`, orderId: order.id };
+      return {
+        msg: `order ${order.id}: paid in ${event.currency}, expected ${order.currency}, not publishing`,
+        orderId: order.id,
+      };
     if (event.amountPaid < order.amount)
-      return { msg: `order ${order.id}: paid ${event.amountPaid} < expected ${order.amount}, not publishing`, orderId: order.id };
+      return {
+        msg: `order ${order.id}: paid ${event.amountPaid} < expected ${order.amount}, not publishing`,
+        orderId: order.id,
+      };
 
     // Every code is checked again here, with the code row locked, counting confirmed uses only, so
     // its last use (or a "one per person" use) can't be taken twice. A free code over its limit is
     // refused: no money moved. A paid one is honoured (the buyer has paid) and flagged for a look.
     let codeOver: string | null = null;
     if (order.discountCodeId) {
-      const [code] = await tx.select().from(schema.discountCodes).where(eq(schema.discountCodes.id, order.discountCodeId)).for("update");
+      const [code] = await tx
+        .select()
+        .from(schema.discountCodes)
+        .where(eq(schema.discountCodes.id, order.discountCodeId))
+        .for("update");
       if (order.amount === 0) {
-        const problem = await codeProblem(code ?? null, null, order.ownerId ?? "", tx, { paidOnly: true });
+        const problem = await codeProblem(code ?? null, null, order.ownerId ?? "", tx, {
+          paidOnly: true,
+        });
         if (problem) {
-          await tx.update(schema.orders).set({ status: "failed", updatedAt: new Date() }).where(eq(schema.orders.id, order.id));
-          return { msg: `order ${order.id}: free code ${order.discountCode} refused: ${problem}`, orderId: order.id, refused: problem };
+          await tx
+            .update(schema.orders)
+            .set({ status: "failed", updatedAt: new Date() })
+            .where(eq(schema.orders.id, order.id));
+          return {
+            msg: `order ${order.id}: free code ${order.discountCode} refused: ${problem}`,
+            orderId: order.id,
+            refused: problem,
+          };
         }
       } else if (code) {
         codeOver = await limitProblem(code, order.ownerId ?? "", tx, { paidOnly: true });
@@ -369,17 +478,35 @@ export async function applyPaidEvent(event: PaidEvent, provider: string, source:
     const now = new Date();
     const late = order.status !== "pending" ? ` (late: order was ${order.status})` : "";
     const markOrder = (status: string) =>
-      tx.update(schema.orders).set({ status, providerPaymentId: event.paymentId, updatedAt: now }).where(eq(schema.orders.id, order.id));
+      tx
+        .update(schema.orders)
+        .set({ status, providerPaymentId: event.paymentId, updatedAt: now })
+        .where(eq(schema.orders.id, order.id));
 
     const site = order.siteId
-      ? (await tx.select().from(schema.giftSites).where(eq(schema.giftSites.id, order.siteId)).for("update"))[0]
+      ? (
+          await tx
+            .select()
+            .from(schema.giftSites)
+            .where(eq(schema.giftSites.id, order.siteId))
+            .for("update")
+        )[0]
       : undefined;
     if (!site) {
       // Kept as before: the order counts as paid (it was), and the money goes back.
       await markOrder("paid");
       if (order.discountCodeId) await countUse(order.discountCodeId, tx);
-      await recordRefund(tx, source, order, order.amount, `order ${order.id} paid after its gift was deleted`);
-      return { msg: `order ${order.id}: paid${late}, but its gift was deleted. Needs a refund.`, orderId: order.id };
+      await recordRefund(
+        tx,
+        source,
+        order,
+        order.amount,
+        `order ${order.id} paid after its gift was deleted`,
+      );
+      return {
+        msg: `order ${order.id}: paid${late}, but its gift was deleted. Needs a refund.`,
+        orderId: order.id,
+      };
     }
 
     // What this payment can still do for the gift as it is now (not as it was at checkout).
@@ -401,7 +528,13 @@ export async function applyPaidEvent(event: PaidEvent, provider: string, source:
     if (action === "nothing") {
       // Nothing to give for it. A free code that lost the race: no money moved, so it just fails.
       await markOrder(order.amount > 0 ? "refund_pending" : "failed");
-      await recordRefund(tx, source, order, order.amount, `charged twice: gift ${site.id} was already on ${site.tier ?? "no plan"} when this ${order.kind} to ${tier.id} was paid`);
+      await recordRefund(
+        tx,
+        source,
+        order,
+        order.amount,
+        `charged twice: gift ${site.id} was already on ${site.tier ?? "no plan"} when this ${order.kind} to ${tier.id} was paid`,
+      );
       return {
         msg:
           order.amount > 0
@@ -419,19 +552,37 @@ export async function applyPaidEvent(event: PaidEvent, provider: string, source:
       await tx.insert(schema.paymentLog).values({
         source,
         event: CODE_REVIEW_EVENT,
-        outcome: `order ${order.id} used ${order.discountCode} (${peso(order.discountAmount)} off) past its limit: ${codeOver} The gift opened anyway. Check it, and ask for the difference or let it go.`.slice(0, 500),
+        outcome:
+          `order ${order.id} used ${order.discountCode} (${peso(order.discountAmount)} off) past its limit: ${codeOver} The gift opened anyway. Check it, and ask for the difference or let it go.`.slice(
+            0,
+            500,
+          ),
         checkoutId: order.providerCheckoutId,
         orderId: order.id,
       });
     }
-    purchased = { siteId: site.id, ownerId: order.ownerId, plan: tier.id, kind: order.kind, method: event.method ?? null, cardOrigin: event.cardOrigin ?? null };
+    purchased = {
+      siteId: site.id,
+      ownerId: order.ownerId,
+      plan: tier.id,
+      kind: order.kind,
+      method: event.method ?? null,
+      cardOrigin: event.cardOrigin ?? null,
+    };
     const paused = site.disabledAt ? " (gift is paused: it stays paused)" : "";
 
     if (action === "extend") {
       const expiresAt = extendedExpiry(site.expiresAt, tier, now);
       // A new end date gets its own reminder.
-      await tx.update(schema.giftSites).set({ expiresAt, expiryRemindedAt: null }).where(eq(schema.giftSites.id, site.id));
-      return { msg: `order ${order.id}${late}: extended gift ${site.id} to ${expiresAt.toISOString()}${paused}`, orderId: order.id, paid: order.id };
+      await tx
+        .update(schema.giftSites)
+        .set({ expiresAt, expiryRemindedAt: null })
+        .where(eq(schema.giftSites.id, site.id));
+      return {
+        msg: `order ${order.id}${late}: extended gift ${site.id} to ${expiresAt.toISOString()}${paused}`,
+        orderId: order.id,
+        paid: order.id,
+      };
     }
 
     if (action === "upgrade") {
@@ -450,19 +601,42 @@ export async function applyPaidEvent(event: PaidEvent, provider: string, source:
       const over = stale ? order.amount - (tier.amount - from.amount) : 0;
       let note = "";
       if (over > 0) {
-        await recordRefund(tx, source, order, over, `paid ${peso(order.amount)} for ${tier.id}, but the gift was already on ${from.id}, so it only cost ${peso(tier.amount - from.amount)}`);
+        await recordRefund(
+          tx,
+          source,
+          order,
+          over,
+          `paid ${peso(order.amount)} for ${tier.id}, but the gift was already on ${from.id}, so it only cost ${peso(tier.amount - from.amount)}`,
+        );
         note = `. Paid ${peso(over)} too much: needs a refund of ${peso(over)}`;
       }
-      return { msg: `order ${order.id}${late}: upgraded gift ${site.id} to ${tier.id} from ${from.id}${paused}${note}`, orderId: order.id, paid: order.id };
+      return {
+        msg: `order ${order.id}${late}: upgraded gift ${site.id} to ${tier.id} from ${from.id}${paused}${note}`,
+        orderId: order.id,
+        paid: order.id,
+      };
     }
 
     await tx
       .update(schema.giftSites)
-      .set({ status: "published", tier: tier.id, publishedAt: now, expiresAt: expiryFrom(now, tier), expiryRemindedAt: null })
+      .set({
+        status: "published",
+        tier: tier.id,
+        publishedAt: now,
+        expiresAt: expiryFrom(now, tier),
+        expiryRemindedAt: null,
+      })
       .where(eq(schema.giftSites.id, site.id));
-    return { msg: `order ${order.id}${late}: published gift ${site.id} on ${tier.id}${paused}`, orderId: order.id, paid: order.id };
+    return {
+      msg: `order ${order.id}${late}: published gift ${site.id} on ${tier.id}${paused}`,
+      orderId: order.id,
+      paid: order.id,
+    };
   });
-  await logPayment(source, event.eventType, result.msg, { checkoutId: event.checkoutId, orderId: result.orderId ?? null });
+  await logPayment(source, event.eventType, result.msg, {
+    checkoutId: event.checkoutId,
+    orderId: result.orderId ?? null,
+  });
   if ("paid" in result && result.paid) {
     // One email per order: the receipt (with "it's live" for a first payment).
     await notifyPaid(result.paid).catch((e) => console.error("[notify]", e));
@@ -487,7 +661,10 @@ const lastProviderCheck = new Map<string, number>();
  * order and instance. Returns true if the order is now paid.
  */
 export async function reconcileOrder(
-  order: Pick<typeof schema.orders.$inferSelect, "id" | "status" | "provider" | "providerCheckoutId" | "createdAt">,
+  order: Pick<
+    typeof schema.orders.$inferSelect,
+    "id" | "status" | "provider" | "providerCheckoutId" | "createdAt"
+  >,
   source: PaymentSource,
   everyMs = 5000,
 ): Promise<boolean> {
@@ -507,7 +684,12 @@ export async function reconcileOrder(
     const msg = await applyPaidEvent(paid, provider.name, source);
     return /published|upgraded|extended|already paid|duplicate payment|Needs a refund/.test(msg);
   } catch (error) {
-    await logPayment(source, "check failed", error instanceof Error ? error.message : String(error), { checkoutId: order.providerCheckoutId, orderId: order.id });
+    await logPayment(
+      source,
+      "check failed",
+      error instanceof Error ? error.message : String(error),
+      { checkoutId: order.providerCheckoutId, orderId: order.id },
+    );
     return false;
   }
 }
@@ -517,7 +699,14 @@ export async function reconcileSiteOrders(siteId: string, source: PaymentSource 
   const recent = await getDb()
     .select()
     .from(schema.orders)
-    .where(and(eq(schema.orders.siteId, siteId), inArray(schema.orders.status, ["pending", "failed", "expired"]), sql`${schema.orders.createdAt} > now() - interval '7 days'`, sql`${schema.orders.providerCheckoutId} is not null`))
+    .where(
+      and(
+        eq(schema.orders.siteId, siteId),
+        inArray(schema.orders.status, ["pending", "failed", "expired"]),
+        sql`${schema.orders.createdAt} > now() - interval '7 days'`,
+        sql`${schema.orders.providerCheckoutId} is not null`,
+      ),
+    )
     .limit(5);
   for (const o of recent) await reconcileOrder(o, source, 60_000);
 }

@@ -26,9 +26,16 @@ const SECTION: Record<string, string> = {
   doodle: "Doodle",
 };
 
-const esc = (t: string) => t.replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]!);
+const esc = (t: string) =>
+  t.replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]!);
 const csv = (t: string) => `"${t.replace(/"/g, '""')}"`;
-const safe = (t: string) => t.normalize("NFKD").replace(/[^\w.-]+/g, "-").replace(/-+/g, "-").replace(/^-|-$/g, "").slice(0, 40) || "note";
+const safe = (t: string) =>
+  t
+    .normalize("NFKD")
+    .replace(/[^\w.-]+/g, "-")
+    .replace(/-+/g, "-")
+    .replace(/^-|-$/g, "")
+    .slice(0, 40) || "note";
 
 function extFor(url: string, type: string | null) {
   const fromUrl = /\.([a-z0-9]{2,5})(?:\?|$)/i.exec(url)?.[1]?.toLowerCase();
@@ -44,11 +51,26 @@ function extFor(url: string, type: string | null) {
 
 function mediaOf(c: Contribution): string[] {
   const out = c.media_url ? [c.media_url] : [];
-  if (c.data) for (const v of Object.values(c.data)) if (typeof v === "string" && /^(https:\/\/|\/api\/dev-uploads\/)/.test(v) && /blob\.vercel-storage|dev-uploads/.test(v)) out.push(v);
+  if (c.data)
+    for (const v of Object.values(c.data))
+      if (
+        typeof v === "string" &&
+        /^(https:\/\/|\/api\/dev-uploads\/)/.test(v) &&
+        /blob\.vercel-storage|dev-uploads/.test(v)
+      )
+        out.push(v);
   return out;
 }
 
-export function ExportGift({ siteId, title, className = "" }: { siteId: string; title: string; className?: string }) {
+export function ExportGift({
+  siteId,
+  title,
+  className = "",
+}: {
+  siteId: string;
+  title: string;
+  className?: string;
+}) {
   const [busy, setBusy] = useState<string | null>(null);
 
   async function run() {
@@ -56,9 +78,14 @@ export function ExportGift({ siteId, title, className = "" }: { siteId: string; 
     setBusy("Gathering notes…");
     try {
       const { zipSync, strToU8 } = await import("fflate");
-      const [notes, calendar] = await Promise.all([fetchContributions(siteId, false), fetchCalendarEntries(siteId).catch(() => [])]);
+      const [notes, calendar] = await Promise.all([
+        fetchContributions(siteId, false),
+        fetchCalendarEntries(siteId).catch(() => []),
+      ]);
       const files: Record<string, Uint8Array> = {};
-      const rows: string[] = [["Section", "From", "Status", "Added", "Text", "Link", "Files"].map(csv).join(",")];
+      const rows: string[] = [
+        ["Section", "From", "Status", "Added", "Text", "Link", "Files"].map(csv).join(","),
+      ];
       const html: string[] = [];
       let i = 0;
       for (const n of notes) {
@@ -80,7 +107,19 @@ export function ExportGift({ siteId, title, className = "" }: { siteId: string; 
         }
         const section = SECTION[n.module_type] ?? n.module_type;
         const added = n.created_at ? new Date(n.created_at).toLocaleString() : "";
-        rows.push([section, n.author_name, n.status, added, n.text_content ?? "", n.external_link ?? "", saved.join(" ")].map(csv).join(","));
+        rows.push(
+          [
+            section,
+            n.author_name,
+            n.status,
+            added,
+            n.text_content ?? "",
+            n.external_link ?? "",
+            saved.join(" "),
+          ]
+            .map(csv)
+            .join(","),
+        );
         html.push(`<article><p class="meta">${esc(section)} · ${esc(added)}${n.status !== "approved" ? ` · ${esc(n.status)}` : ""}</p>
 ${n.text_content ? `<p class="text">${esc(n.text_content).replace(/\n/g, "<br>")}</p>` : ""}
 ${n.external_link ? `<p><a href="${esc(n.external_link)}">${esc(n.external_link)}</a></p>` : ""}
@@ -92,13 +131,17 @@ ${missing.map((u) => `<p><a href="${esc(u)}">File (couldn't be downloaded, open 
         if (!e.media_url) continue;
         try {
           const res = await fetch(e.media_url);
-          if (res.ok) files[`media/calendar-${e.entry_date}-${k + 1}.${extFor(e.media_url, res.headers.get("content-type"))}`] = new Uint8Array(await res.arrayBuffer());
+          if (res.ok)
+            files[
+              `media/calendar-${e.entry_date}-${k + 1}.${extFor(e.media_url, res.headers.get("content-type"))}`
+            ] = new Uint8Array(await res.arrayBuffer());
         } catch {
           /* skip */
         }
       }
       files["notes.csv"] = strToU8(`\ufeff${rows.join("\r\n")}`);
-      files["notes.html"] = strToU8(`<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${esc(title)}</title>
+      files["notes.html"] =
+        strToU8(`<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${esc(title)}</title>
 <style>body{font-family:Georgia,serif;background:#FBF8F2;color:#2B2522;max-width:680px;margin:40px auto;padding:0 20px}h1{font-weight:500}article{background:#fff;border:1px solid #E6DCCD;border-radius:14px;padding:18px 20px;margin:16px 0}.meta{font:12px system-ui,sans-serif;color:#7A6E62;margin:0 0 8px}.text{font-size:17px;line-height:1.6}.from{font-style:italic;color:#B5623E}img{max-width:100%;border-radius:8px;margin:8px 0}</style></head>
 <body><h1>${esc(title)}</h1><p>${notes.length} notes, saved from Just Because on ${esc(new Date().toLocaleDateString())}.</p>${html.join("\n")}</body></html>`);
       setBusy("Zipping…");

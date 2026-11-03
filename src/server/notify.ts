@@ -14,7 +14,11 @@ function recipientOf(customText: unknown, title: string) {
  * Emails the creator that a friend added something (or changed a note that's already
  * in the gift), at most once per 30 minutes per gift.
  */
-export async function notifyNewNote(siteId: string, authorName: string, opts: { edited?: boolean } = {}) {
+export async function notifyNewNote(
+  siteId: string,
+  authorName: string,
+  opts: { edited?: boolean } = {},
+) {
   const db = getDb();
   const g = schema.giftSites;
   // Claim the slot atomically so two quick submissions don't both send.
@@ -24,7 +28,10 @@ export async function notifyNewNote(siteId: string, authorName: string, opts: { 
     .where(
       and(
         eq(g.id, siteId),
-        or(isNull(g.lastNotifiedAt), lt(g.lastNotifiedAt, sql`now() - make_interval(mins => ${THROTTLE_MINUTES})`)),
+        or(
+          isNull(g.lastNotifiedAt),
+          lt(g.lastNotifiedAt, sql`now() - make_interval(mins => ${THROTTLE_MINUTES})`),
+        ),
       ),
     )
     .returning({ id: g.id, title: g.title, customText: g.customText, creatorId: g.creatorId });
@@ -37,7 +44,9 @@ export async function notifyNewNote(siteId: string, authorName: string, opts: { 
   const [{ pending } = { pending: 1 }] = await db
     .select({ pending: sql<number>`count(*)::int` })
     .from(schema.contributions)
-    .where(and(eq(schema.contributions.siteId, siteId), eq(schema.contributions.status, "pending")));
+    .where(
+      and(eq(schema.contributions.siteId, siteId), eq(schema.contributions.status, "pending")),
+    );
   await newNoteEmail({
     to: creator.email,
     creatorName: creator.name,
@@ -53,7 +62,13 @@ export async function notifyNewNote(siteId: string, authorName: string, opts: { 
 export async function notifyGiftLive(siteId: string) {
   const db = getDb();
   const [site] = await db
-    .select({ id: schema.giftSites.id, slug: schema.giftSites.slug, title: schema.giftSites.title, customText: schema.giftSites.customText, creatorId: schema.giftSites.creatorId })
+    .select({
+      id: schema.giftSites.id,
+      slug: schema.giftSites.slug,
+      title: schema.giftSites.title,
+      customText: schema.giftSites.customText,
+      creatorId: schema.giftSites.creatorId,
+    })
     .from(schema.giftSites)
     .where(eq(schema.giftSites.id, siteId));
   if (!site) return;
@@ -70,7 +85,13 @@ export async function notifyGiftLive(siteId: string) {
   });
 }
 
-const day = (d: Date) => new Intl.DateTimeFormat("en", { day: "numeric", month: "long", year: "numeric", timeZone: "Asia/Manila" }).format(d);
+const day = (d: Date) =>
+  new Intl.DateTimeFormat("en", {
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+    timeZone: "Asia/Manila",
+  }).format(d);
 
 /** The receipt for a paid order (once: called only when the order is first applied). */
 export async function notifyPaid(orderId: string) {
@@ -78,17 +99,28 @@ export async function notifyPaid(orderId: string) {
   const [order] = await db.select().from(schema.orders).where(eq(schema.orders.id, orderId));
   if (!order?.siteId || !order.ownerId) return;
   const [site] = await db
-    .select({ id: schema.giftSites.id, slug: schema.giftSites.slug, title: schema.giftSites.title, customText: schema.giftSites.customText, expiresAt: schema.giftSites.expiresAt })
+    .select({
+      id: schema.giftSites.id,
+      slug: schema.giftSites.slug,
+      title: schema.giftSites.title,
+      customText: schema.giftSites.customText,
+      expiresAt: schema.giftSites.expiresAt,
+    })
     .from(schema.giftSites)
     .where(eq(schema.giftSites.id, order.siteId));
-  const [owner] = await db.select({ email: schema.user.email }).from(schema.user).where(eq(schema.user.id, order.ownerId));
+  const [owner] = await db
+    .select({ email: schema.user.email })
+    .from(schema.user)
+    .where(eq(schema.user.id, order.ownerId));
   if (!site || !owner) return;
   await receiptEmail({
     to: owner.email,
     kind: order.kind as "publish" | "upgrade" | "extend",
     recipient: recipientOf(site.customText, site.title),
     planName: getTier(order.tier)?.name ?? order.tier,
-    amount: order.discountCode ? `${formatPeso(order.amount)} (code ${order.discountCode})` : formatPeso(order.amount),
+    amount: order.discountCode
+      ? `${formatPeso(order.amount)} (code ${order.discountCode})`
+      : formatPeso(order.amount),
     orderId: order.id,
     paidOn: day(order.updatedAt),
     openUntil: site.expiresAt ? day(site.expiresAt) : null,
@@ -118,10 +150,20 @@ export async function sendExpiryReminders(limit = 200): Promise<number> {
         sql`${g.id} in (select ${g.id} from ${g} where ${g.expiryRemindedAt} is null and ${g.expiresAt} > now() and ${g.expiresAt} <= now() + interval '14 days' limit ${limit})`,
       ),
     )
-    .returning({ id: g.id, slug: g.slug, title: g.title, customText: g.customText, creatorId: g.creatorId, expiresAt: g.expiresAt });
+    .returning({
+      id: g.id,
+      slug: g.slug,
+      title: g.title,
+      customText: g.customText,
+      creatorId: g.creatorId,
+      expiresAt: g.expiresAt,
+    });
   let sent = 0;
   for (const site of due) {
-    const [owner] = await db.select({ email: schema.user.email }).from(schema.user).where(eq(schema.user.id, site.creatorId));
+    const [owner] = await db
+      .select({ email: schema.user.email })
+      .from(schema.user)
+      .where(eq(schema.user.id, site.creatorId));
     if (!owner || !site.expiresAt) continue;
     await expiryReminderEmail({
       to: owner.email,

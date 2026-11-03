@@ -44,12 +44,23 @@ export const Route = createFileRoute("/api/cron/daily")({
         const expired = await db
           .update(schema.orders)
           .set({ status: "expired", updatedAt: new Date() })
-          .where(and(inArray(schema.orders.status, ["pending"]), sql`${schema.orders.createdAt} < now() - interval '24 hours'`))
+          .where(
+            and(
+              inArray(schema.orders.status, ["pending"]),
+              sql`${schema.orders.createdAt} < now() - interval '24 hours'`,
+            ),
+          )
           .returning({ id: schema.orders.id });
         const summary = `reminders ${reminders}, checked ${unpaid.length} unpaid orders, recovered ${recovered}, expired ${expired.length}`;
         if (unpaid.length || expired.length) await logPayment("cron", "daily", summary);
         console.info(`[cron] daily: ${summary}`);
-        return Response.json({ ok: true, reminders, checked: unpaid.length, recovered, expired: expired.length });
+        return Response.json({
+          ok: true,
+          reminders,
+          checked: unpaid.length,
+          recovered,
+          expired: expired.length,
+        });
       },
     },
   },

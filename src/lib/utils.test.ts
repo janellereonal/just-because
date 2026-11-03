@@ -5,7 +5,8 @@ const httpError = (status: number) => Object.assign(new Error("nope"), { status 
 
 describe("retryQuery", () => {
   test("never retries a 4xx answer from a server function", () => {
-    for (const s of [400, 401, 403, 404, 409, 422, 429]) expect(retryQuery(0, httpError(s))).toBe(false);
+    for (const s of [400, 401, 403, 404, 409, 422, 429])
+      expect(retryQuery(0, httpError(s))).toBe(false);
   });
   test("retries other failures up to three times", () => {
     expect(retryQuery(0, new Error("Failed to fetch"))).toBe(true);

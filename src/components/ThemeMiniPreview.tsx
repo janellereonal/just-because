@@ -30,7 +30,12 @@ export function ThemeMiniPreview({
   return (
     <div
       className={`size-full overflow-hidden p-3 ${className ?? ""}`}
-      style={{ ...themeFontVars(kind), backgroundColor: p.background, color: p.primary, fontFamily: fonts.body }}
+      style={{
+        ...themeFontVars(kind),
+        backgroundColor: p.background,
+        color: p.primary,
+        fontFamily: fonts.body,
+      }}
     >
       <div className="text-center">
         <p className="text-[6px] tracking-[0.2em] uppercase" style={{ color: p.accent }}>
@@ -115,7 +120,10 @@ export function ThemeMiniPreview({
           style={{ backgroundColor: "rgba(255,255,255,0.6)" }}
         >
           <span className="size-3 rounded-[2px]" style={{ backgroundColor: `${p.primary}26` }} />
-          <span className="h-[2px] flex-1 rounded-full" style={{ backgroundColor: `${p.primary}26` }} />
+          <span
+            className="h-[2px] flex-1 rounded-full"
+            style={{ backgroundColor: `${p.primary}26` }}
+          />
           <span className="size-2.5 rounded-full" style={{ backgroundColor: p.accent }} />
         </div>
       ) : null}

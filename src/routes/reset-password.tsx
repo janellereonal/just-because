@@ -41,7 +41,9 @@ function ResetPasswordPage() {
       <SiteHeader />
       <div className="mx-auto max-w-md px-5 py-16">
         <div className="rise card-paper p-6">
-          <h1 className="font-display text-3xl font-medium tracking-tight">Choose a new password</h1>
+          <h1 className="font-display text-3xl font-medium tracking-tight">
+            Choose a new password
+          </h1>
           {usable ? (
             <form onSubmit={submit} className="mt-6 space-y-3">
               <input

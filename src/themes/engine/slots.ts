@@ -9,7 +9,17 @@
 import { t, formatShortDate, ordinal } from "@/i18n";
 import { initialsOf } from "@/themes/_shared/iconSets";
 
-export const SLOT_NAMES = ["recipient", "age", "date", "place", "senderPlace", "photo", "monogram", "accent", "accent2"] as const;
+export const SLOT_NAMES = [
+  "recipient",
+  "age",
+  "date",
+  "place",
+  "senderPlace",
+  "photo",
+  "monogram",
+  "accent",
+  "accent2",
+] as const;
 export type SlotName = (typeof SLOT_NAMES)[number];
 
 /** A place: a city, a country (ISO 3166 code like "PH"), or both. */
@@ -55,7 +65,10 @@ const HEX = /^#[0-9a-f]{6}$/i;
 export function countryName(code: string | null | undefined): string {
   if (!code) return "";
   try {
-    return new Intl.DisplayNames(undefined, { type: "region" }).of(code.toUpperCase()) ?? code.toUpperCase();
+    return (
+      new Intl.DisplayNames(undefined, { type: "region" }).of(code.toUpperCase()) ??
+      code.toUpperCase()
+    );
   } catch {
     return code.toUpperCase();
   }
@@ -72,21 +85,32 @@ function resolvePlace(p: Place | null | undefined, fallback: string) {
 
 /** Letters only, at most three, upper case in the visitor's language. */
 export function monogramOf(explicit: string | null | undefined, name: string): string {
-  const letters = [...(explicit ?? "")].filter((ch) => /\p{L}/u.test(ch)).slice(0, 3).join("");
+  const letters = [...(explicit ?? "")]
+    .filter((ch) => /\p{L}/u.test(ch))
+    .slice(0, 3)
+    .join("");
   if (letters) return letters.toLocaleUpperCase();
   const fromName = initialsOf(name);
   return fromName === "♥" ? "" : fromName;
 }
 
-export function resolveSlots(input: SlotInput, defaults: { accent: string; accent2: string }): ResolvedSlots {
+export function resolveSlots(
+  input: SlotInput,
+  defaults: { accent: string; accent2: string },
+): ResolvedSlots {
   const rawName = (input.recipient ?? "").trim().replace(/\s+/g, " ");
   const recipient = rawName || t("slot.recipient.fallback");
-  const recipientShort = rawName ? (rawName.split(/\s+(?:&|and|\+)\s+|\s+/i)[0] ?? rawName).slice(0, 16) : recipient;
-  const ageNum = typeof input.age === "number" ? input.age : Number.parseInt(String(input.age ?? ""), 10);
+  const recipientShort = rawName
+    ? (rawName.split(/\s+(?:&|and|\+)\s+|\s+/i)[0] ?? rawName).slice(0, 16)
+    : recipient;
+  const ageNum =
+    typeof input.age === "number" ? input.age : Number.parseInt(String(input.age ?? ""), 10);
   const age = Number.isFinite(ageNum) && ageNum > 0 && ageNum < 130 ? Math.round(ageNum) : null;
   let date: Date | null = null;
   if (input.date) {
-    const d = /^\d{4}-\d{2}-\d{2}$/.test(input.date) ? new Date(`${input.date}T12:00:00`) : new Date(input.date);
+    const d = /^\d{4}-\d{2}-\d{2}$/.test(input.date)
+      ? new Date(`${input.date}T12:00:00`)
+      : new Date(input.date);
     if (!Number.isNaN(d.getTime())) date = d;
   }
   const photo = input.photo && /^(https?:\/\/|\/)/.test(input.photo) ? input.photo : null;

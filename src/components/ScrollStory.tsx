@@ -6,7 +6,14 @@
  * inside previews (any scrolling parent). Reduced motion: nothing moves.
  */
 import { useEffect, useMemo, useRef, useState } from "react";
-import { motion, useMotionValue, useSpring, useTransform, useReducedMotion, type MotionValue } from "motion/react";
+import {
+  motion,
+  useMotionValue,
+  useSpring,
+  useTransform,
+  useReducedMotion,
+  type MotionValue,
+} from "motion/react";
 import type { ThemeKind } from "@/lib/themeKind";
 import type { IconSet } from "@/themes/_shared/iconSets";
 import { pick } from "@/themes/_shared/iconSets";
@@ -51,11 +58,14 @@ export function ScrollStory({ kind, rootRef, icons, accent, ink }: Props) {
       raf = 0;
       parent = scrollParent(root);
       const vh = parent ? parent.clientHeight : window.innerHeight;
-      const top = root.getBoundingClientRect().top - (parent ? parent.getBoundingClientRect().top : 0);
+      const top =
+        root.getBoundingClientRect().top - (parent ? parent.getBoundingClientRect().top : 0);
       const span = Math.max(1, root.offsetHeight - vh);
       const p = Math.min(1, Math.max(0, -top / span));
       const now = performance.now();
-      velocity.set(Math.max(-3, Math.min(3, ((p - last) * 1000) / Math.max(16, now - lastT) * 4)));
+      velocity.set(
+        Math.max(-3, Math.min(3, (((p - last) * 1000) / Math.max(16, now - lastT)) * 4)),
+      );
       last = p;
       lastT = now;
       progress.set(p);
@@ -82,7 +92,11 @@ export function ScrollStory({ kind, rootRef, icons, accent, ink }: Props) {
   if (reduce) return null;
 
   return (
-    <div className="pointer-events-none absolute inset-0 overflow-hidden" style={{ zIndex: -1 }} aria-hidden="true">
+    <div
+      className="pointer-events-none absolute inset-0 overflow-hidden"
+      style={{ zIndex: -1 }}
+      aria-hidden="true"
+    >
       <motion.div className="absolute inset-x-0 top-0" style={{ y: offset, height }}>
         <Motif kind={kind} p={smooth} vel={vel} icons={icons} accent={accent} ink={ink} />
       </motion.div>
@@ -90,7 +104,14 @@ export function ScrollStory({ kind, rootRef, icons, accent, ink }: Props) {
   );
 }
 
-type MotifProps = { kind: ThemeKind; p: MotionValue<number>; vel: MotionValue<number>; icons: IconSet; accent: string; ink: string };
+type MotifProps = {
+  kind: ThemeKind;
+  p: MotionValue<number>;
+  vel: MotionValue<number>;
+  icons: IconSet;
+  accent: string;
+  ink: string;
+};
 
 function Motif(props: MotifProps) {
   switch (props.kind) {
@@ -134,20 +155,42 @@ function PlaneRoute({ p, accent }: MotifProps) {
       {[12, 46, 78].map((y, i) => (
         <Cloud key={i} p={p} y={y} speed={0.6 + i * 0.4} from={i % 2 ? 110 : -20} />
       ))}
-      <motion.div className="absolute -translate-x-1/2 -translate-y-1/2" style={{ left, top, rotate: rot }}>
+      <motion.div
+        className="absolute -translate-x-1/2 -translate-y-1/2"
+        style={{ left, top, rotate: rot }}
+      >
         <svg width="34" height="34" viewBox="0 0 24 24">
-          <path fill={accent} d="M21 15.5v-2l-8-5V3.5a1.5 1.5 0 0 0-3 0v5l-8 5v2l8-2.5v5.5l-2 1.5V22l3.5-1 3.5 1v-1.5l-2-1.5V13z" transform="rotate(90 12 12)" />
+          <path
+            fill={accent}
+            d="M21 15.5v-2l-8-5V3.5a1.5 1.5 0 0 0-3 0v5l-8 5v2l8-2.5v5.5l-2 1.5V22l3.5-1 3.5 1v-1.5l-2-1.5V13z"
+            transform="rotate(90 12 12)"
+          />
         </svg>
       </motion.div>
     </>
   );
 }
 
-function Cloud({ p, y, speed, from }: { p: MotionValue<number>; y: number; speed: number; from: number }) {
+function Cloud({
+  p,
+  y,
+  speed,
+  from,
+}: {
+  p: MotionValue<number>;
+  y: number;
+  speed: number;
+  from: number;
+}) {
   const left = useTransform(p, (t) => `${from + (from < 50 ? 1 : -1) * t * 120 * speed}%`);
   return (
     <motion.div className="absolute" style={{ left, top: `${y}%` }}>
-      <div className="h-6 w-20 rounded-full bg-white/70 blur-[1px]" style={{ boxShadow: "18px -8px 0 4px rgba(255,255,255,.7), -14px -4px 0 0 rgba(255,255,255,.6)" }} />
+      <div
+        className="h-6 w-20 rounded-full bg-white/70 blur-[1px]"
+        style={{
+          boxShadow: "18px -8px 0 4px rgba(255,255,255,.7), -14px -4px 0 0 rgba(255,255,255,.6)",
+        }}
+      />
     </motion.div>
   );
 }
@@ -161,7 +204,10 @@ function Cloud({ p, y, speed, from }: { p: MotionValue<number>; y: number; speed
 function Balloons({ p, vel, accent }: MotifProps) {
   // Phones have almost no margin, so fewer, smaller, softer balloons that don't sit on the text.
   const narrow = useNarrow();
-  const colors = ["#FF7EB6", "#FFD166", "#6C8EF2", "#7ED7C1", accent, "#B48AF2"].slice(0, narrow ? 3 : 6);
+  const colors = ["#FF7EB6", "#FFD166", "#6C8EF2", "#7ED7C1", accent, "#B48AF2"].slice(
+    0,
+    narrow ? 3 : 6,
+  );
   return (
     <>
       {colors.map((c, i) => (
@@ -230,7 +276,10 @@ function Balloon({
   const sway = useTransform(vel, (v) => v * 8);
   return (
     <motion.div className="absolute" style={{ left: `${x}%`, top, rotate: sway, opacity }}>
-      <motion.div animate={{ y: [0, -7, 0] }} transition={{ duration: bob, repeat: Infinity, ease: "easeInOut" }}>
+      <motion.div
+        animate={{ y: [0, -7, 0] }}
+        transition={{ duration: bob, repeat: Infinity, ease: "easeInOut" }}
+      >
         <svg width={size} height={size * 2} viewBox="0 0 40 80">
           <path d="M20 46q4 12-2 22t2 12" stroke="#2B2522" strokeOpacity=".25" fill="none" />
           <ellipse cx="20" cy="22" rx="17" ry="21" fill={color} />
@@ -255,17 +304,40 @@ function PawTrail({ p, icons, accent }: MotifProps) {
   );
 }
 
-function Print({ p, i, steps, item, color }: { p: MotionValue<number>; i: number; steps: number; item: IconSet["items"][number]; color: string }) {
+function Print({
+  p,
+  i,
+  steps,
+  item,
+  color,
+}: {
+  p: MotionValue<number>;
+  i: number;
+  steps: number;
+  item: IconSet["items"][number];
+  color: string;
+}) {
   // A wandering path down one side, then the other.
   const side = Math.floor((i / steps) * 2);
   const k = (i % (steps / 2)) / (steps / 2);
-  const x = side ? 90 + Math.sin(k * 7) * 3 + (i % 2 ? 2.5 : -2.5) : 4 + Math.sin(k * 7) * 3 + (i % 2 ? 2.5 : -2.5);
+  const x = side
+    ? 90 + Math.sin(k * 7) * 3 + (i % 2 ? 2.5 : -2.5)
+    : 4 + Math.sin(k * 7) * 3 + (i % 2 ? 2.5 : -2.5);
   const y = 6 + k * 88;
   const show = (i + 1) / steps;
   const opacity = useTransform(p, (t) => (t + 0.08 >= show ? 0.5 : 0));
   const scale = useTransform(p, (t) => (t + 0.08 >= show ? 1 : 0.4));
   return (
-    <motion.div className="absolute" style={{ left: `${x}%`, top: `${y}%`, opacity, scale, rotate: side ? 170 : 170 + (i % 2 ? 10 : -10) }}>
+    <motion.div
+      className="absolute"
+      style={{
+        left: `${x}%`,
+        top: `${y}%`,
+        opacity,
+        scale,
+        rotate: side ? 170 : 170 + (i % 2 ? 10 : -10),
+      }}
+    >
       <IconGlyph item={item} color={color} size={18} />
     </motion.div>
   );
@@ -285,7 +357,13 @@ function Record({ p, vel, icons, accent }: MotifProps) {
           ))}
           <circle cx="50" cy="50" r="15" fill={accent} />
           <circle cx="50" cy="50" r="2" fill="#1C1210" />
-          <path d="M50 5a45 45 0 0 1 32 13" stroke="#fff" strokeOpacity=".18" strokeWidth="3" fill="none" />
+          <path
+            d="M50 5a45 45 0 0 1 32 13"
+            stroke="#fff"
+            strokeOpacity=".18"
+            strokeWidth="3"
+            fill="none"
+          />
         </svg>
       </motion.div>
     </>
@@ -309,17 +387,49 @@ function Drift({ p, vel, icons }: MotifProps) {
   return (
     <>
       {items.map((it) => (
-        <DriftBit key={it.i} p={p} vel={vel} {...it} item={pick(icons.items, it.i)} color={pick(colors, it.i)} />
+        <DriftBit
+          key={it.i}
+          p={p}
+          vel={vel}
+          {...it}
+          item={pick(icons.items, it.i)}
+          color={pick(colors, it.i)}
+        />
       ))}
     </>
   );
 }
 
-function DriftBit({ p, vel, x, y, depth, size, item, color }: { p: MotionValue<number>; vel: MotionValue<number>; x: number; y: number; depth: number; size: number; item: IconSet["items"][number]; color: string; i: number }) {
-  const top = useTransform(p, (t) => `${((y - t * 160 * depth) % 100 + 100) % 100}%`);
-  const rotate = useTransform([p, vel], ([t, v]) => (t as number) * 360 * depth + (v as number) * 20);
+function DriftBit({
+  p,
+  vel,
+  x,
+  y,
+  depth,
+  size,
+  item,
+  color,
+}: {
+  p: MotionValue<number>;
+  vel: MotionValue<number>;
+  x: number;
+  y: number;
+  depth: number;
+  size: number;
+  item: IconSet["items"][number];
+  color: string;
+  i: number;
+}) {
+  const top = useTransform(p, (t) => `${(((y - t * 160 * depth) % 100) + 100) % 100}%`);
+  const rotate = useTransform(
+    [p, vel],
+    ([t, v]) => (t as number) * 360 * depth + (v as number) * 20,
+  );
   return (
-    <motion.div className="absolute" style={{ left: `${x}%`, top, rotate, opacity: 0.25 + depth * 0.35 }}>
+    <motion.div
+      className="absolute"
+      style={{ left: `${x}%`, top, rotate, opacity: 0.25 + depth * 0.35 }}
+    >
       <IconGlyph item={item} color={color} size={size} />
     </motion.div>
   );

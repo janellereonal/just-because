@@ -27,7 +27,11 @@ export function SiteHeader({ showMascot = true }: { showMascot?: boolean }) {
   return (
     <header data-bo-avoid className="sticky top-0 z-40 px-3 pt-3 sm:px-5">
       <div className="mx-auto flex h-16 max-w-6xl items-center justify-between gap-3 rounded-full bg-glass/85 pr-2 pl-3 sm:pl-4 shadow-[0_8px_30px_-12px_rgba(194,54,107,0.25)] ring-1 ring-ink/5 backdrop-blur-xl">
-        <Link to="/" className="flex min-w-0 shrink-0 items-center gap-1.5 sm:gap-2" aria-label="Just Because, home">
+        <Link
+          to="/"
+          className="flex min-w-0 shrink-0 items-center gap-1.5 sm:gap-2"
+          aria-label="Just Because, home"
+        >
           {showMascot ? <Bo pose="hello" size={38} title="Bo, the Just Because mascot" /> : null}
           <span className="font-display text-lg font-semibold tracking-tight whitespace-nowrap min-[400px]:text-xl">
             Just <span className="text-accent">Because</span>
@@ -44,7 +48,11 @@ export function SiteHeader({ showMascot = true }: { showMascot?: boolean }) {
             Plans
           </Link>
           {user && (
-            <Link to="/dashboard" className={link} activeProps={{ className: "bg-pink/70 text-ink" }}>
+            <Link
+              to="/dashboard"
+              className={link}
+              activeProps={{ className: "bg-pink/70 text-ink" }}
+            >
               My gifts
             </Link>
           )}
@@ -67,7 +75,12 @@ export function SiteHeader({ showMascot = true }: { showMascot?: boolean }) {
               </Link>
               <Link
                 to="/create"
-                search={{ theme: undefined, format: undefined, from: undefined, sections: undefined }}
+                search={{
+                  theme: undefined,
+                  format: undefined,
+                  from: undefined,
+                  sections: undefined,
+                }}
                 className="squish inline-flex min-h-11 items-center gap-1.5 rounded-full bg-accent px-3 text-sm font-medium whitespace-nowrap text-cream hover:bg-accent/90 min-[400px]:px-4 sm:px-5"
               >
                 <Plus className="size-4" /> <span className="max-[400px]:sr-only">New gift</span>
@@ -76,21 +89,23 @@ export function SiteHeader({ showMascot = true }: { showMascot?: boolean }) {
                 // A guest signing out would lose their gift, so they get "Sign in" instead.
                 <Link
                   to="/auth"
-                  search={{ next: typeof window === "undefined" ? "/dashboard" : window.location.pathname }}
+                  search={{
+                    next: typeof window === "undefined" ? "/dashboard" : window.location.pathname,
+                  }}
                   className={link}
                 >
                   {GUEST_COPY.signIn}
                 </Link>
               ) : (
-              <button
-                type="button"
-                onClick={() => void handleSignOut()}
-                aria-label="Sign out"
-                title="Sign out"
-                className="grid size-11 place-items-center rounded-full text-ink/60 transition-colors hover:bg-pink/60 hover:text-ink"
-              >
-                <LogOut className="size-[18px]" />
-              </button>
+                <button
+                  type="button"
+                  onClick={() => void handleSignOut()}
+                  aria-label="Sign out"
+                  title="Sign out"
+                  className="grid size-11 place-items-center rounded-full text-ink/60 transition-colors hover:bg-pink/60 hover:text-ink"
+                >
+                  <LogOut className="size-[18px]" />
+                </button>
               )}
             </>
           ) : (

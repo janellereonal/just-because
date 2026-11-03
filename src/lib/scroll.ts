@@ -3,7 +3,11 @@
  * Plain scrollIntoView also scrolls every overflow:hidden ancestor, which shifts phone previews
  * and whole pages sideways.
  */
-export function centerInScroller(el: Element, box?: HTMLElement | null, behavior: ScrollBehavior = "smooth") {
+export function centerInScroller(
+  el: Element,
+  box?: HTMLElement | null,
+  behavior: ScrollBehavior = "smooth",
+) {
   let host: HTMLElement | null = box ?? null;
   if (!host) {
     let node = el.parentElement;
@@ -18,9 +22,15 @@ export function centerInScroller(el: Element, box?: HTMLElement | null, behavior
   }
   const a = el.getBoundingClientRect();
   if (!host) {
-    window.scrollTo({ top: window.scrollY + a.top - window.innerHeight / 2 + a.height / 2, behavior });
+    window.scrollTo({
+      top: window.scrollY + a.top - window.innerHeight / 2 + a.height / 2,
+      behavior,
+    });
     return;
   }
   const b = host.getBoundingClientRect();
-  host.scrollTo({ top: host.scrollTop + a.top - b.top - host.clientHeight / 2 + a.height / 2, behavior });
+  host.scrollTo({
+    top: host.scrollTop + a.top - b.top - host.clientHeight / 2 + a.height / 2,
+    behavior,
+  });
 }

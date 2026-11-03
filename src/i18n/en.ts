@@ -180,7 +180,8 @@ export const en = {
   "story.soundOff": "Turn sound off",
   "story.skip": "Skip",
   "story.option": "Start with your friends popping out of a box",
-  "story.optionHint": "Each friend who wrote a note comes out as a little character with their name. Then the opening plays.",
+  "story.optionHint":
+    "Each friend who wrote a note comes out as a little character with their name. Then the opening plays.",
   "letter.choice.label": "How the letter opens",
   "letter.choice.seal": "Break the seal",
   "letter.choice.sealHint": "Press and hold. The wax cracks through their initial.",
@@ -390,7 +391,8 @@ export const en = {
   "board.what": "squares on the board",
   "board.count": "{n} notes on the board",
   "board.rulesTitle": "How to play",
-  "board.rules": "Roll the dice and your token hops to the next note. Or tap any square to jump straight there.",
+  "board.rules":
+    "Roll the dice and your token hops to the next note. Or tap any square to jump straight there.",
   "board.start": "Start",
   "board.finish": "Finish",
   "board.roll": "Roll",
@@ -737,67 +739,96 @@ export const en = {
   // Styles (src/lib/styles.ts): the name, one line for pickers, and a longer line.
   "style.cake.title": "Cake",
   "style.cake.copy": "Blow out the candles",
-  "style.cake.about": "A cake with real candles. They blow into the mic, or tap, and the notes come out to play.",
-  "style.cake.aboutOwn": "A cake with real candles. They blow them out, then sit down at a party table with a place card from every friend and photos on the bunting.",
+  "style.cake.about":
+    "A cake with real candles. They blow into the mic, or tap, and the notes come out to play.",
+  "style.cake.aboutOwn":
+    "A cake with real candles. They blow them out, then sit down at a party table with a place card from every friend and photos on the bunting.",
   "style.love-letter.title": "Love Letter",
   "style.love-letter.copy": "Press the wax seal",
-  "style.love-letter.about": "A letter sealed in wax. They press the seal, the letter slides out and opens into a little book of notes.",
-  "style.love-letter.aboutOwn": "A letter sealed in wax. They break the seal, and inside is a bundle of envelopes tied with ribbon, one from every friend.",
+  "style.love-letter.about":
+    "A letter sealed in wax. They press the seal, the letter slides out and opens into a little book of notes.",
+  "style.love-letter.aboutOwn":
+    "A letter sealed in wax. They break the seal, and inside is a bundle of envelopes tied with ribbon, one from every friend.",
   "style.boarding-pass.title": "Boarding Pass",
   "style.boarding-pass.copy": "Tear along the dotted line",
-  "style.boarding-pass.about": "A boarding pass with their name on it. They tear the stub and every friend turns up as a stamp.",
-  "style.boarding-pass.aboutOwn": "A boarding pass with their name on it. They tear the stub, then flip through a passport where every note is a stamp and a map shows every friend's route to them.",
+  "style.boarding-pass.about":
+    "A boarding pass with their name on it. They tear the stub and every friend turns up as a stamp.",
+  "style.boarding-pass.aboutOwn":
+    "A boarding pass with their name on it. They tear the stub, then flip through a passport where every note is a stamp and a map shows every friend's route to them.",
   "style.gift-box.title": "Gift Box",
   "style.gift-box.copy": "Pull the ribbon",
-  "style.gift-box.about": "A wrapped box. They pull the ribbon, the lid lifts and the notes spill out.",
-  "style.gift-box.aboutOwn": "A wrapped box. They pull the ribbon, then find a pile of presents under a tree, one for every friend, and tap a name tag to unwrap each note.",
+  "style.gift-box.about":
+    "A wrapped box. They pull the ribbon, the lid lifts and the notes spill out.",
+  "style.gift-box.aboutOwn":
+    "A wrapped box. They pull the ribbon, then find a pile of presents under a tree, one for every friend, and tap a name tag to unwrap each note.",
   "style.countdown.title": "Countdown",
   "style.countdown.copy": "Hold for 3, 2, 1",
-  "style.countdown.about": "A dial that counts down. At zero their name lights up the sky and the notes are the stars.",
-  "style.countdown.aboutOwn": "A dial that counts down. At zero they head up to a rooftop where every note is a firework waiting to go up.",
+  "style.countdown.about":
+    "A dial that counts down. At zero their name lights up the sky and the notes are the stars.",
+  "style.countdown.aboutOwn":
+    "A dial that counts down. At zero they head up to a rooftop where every note is a firework waiting to go up.",
   "style.record-player.title": "Record Player",
   "style.record-player.copy": "Drop the needle",
-  "style.record-player.about": "A turntable with their name on the label. They drop the needle and the notes play like a record.",
-  "style.record-player.aboutOwn": "A turntable with their name on the label. They drop the needle, then dig through a crate of records, one from every friend.",
+  "style.record-player.about":
+    "A turntable with their name on the label. They drop the needle and the notes play like a record.",
+  "style.record-player.aboutOwn":
+    "A turntable with their name on the label. They drop the needle, then dig through a crate of records, one from every friend.",
   "style.invitation.title": "Invitation",
   "style.invitation.copy": "Slide it out of the sleeve",
-  "style.invitation.about": "A card in a soft vellum sleeve with their monogram in foil. They slide it out to read every wish.",
-  "style.invitation.aboutOwn": "A card in a soft vellum sleeve with their monogram in foil. They slide it out and find a reception table with a place card from every friend.",
+  "style.invitation.about":
+    "A card in a soft vellum sleeve with their monogram in foil. They slide it out to read every wish.",
+  "style.invitation.aboutOwn":
+    "A card in a soft vellum sleeve with their monogram in foil. They slide it out and find a reception table with a place card from every friend.",
   "style.crib-mobile.title": "Crib Mobile",
   "style.crib-mobile.copy": "Tug the string",
-  "style.crib-mobile.about": "A mobile over a crib. They tug the string, a little tune plays and the notes float down.",
-  "style.crib-mobile.aboutOwn": "A mobile over a crib. They tug the string, then find a nursery shelf of wooden blocks that tumble over to show each note, and photos clipped to a growth chart.",
+  "style.crib-mobile.about":
+    "A mobile over a crib. They tug the string, a little tune plays and the notes float down.",
+  "style.crib-mobile.aboutOwn":
+    "A mobile over a crib. They tug the string, then find a nursery shelf of wooden blocks that tumble over to show each note, and photos clipped to a growth chart.",
   "style.fetch.title": "Fetch",
   "style.fetch.copy": "The pet brings the gift",
-  "style.fetch.about": "A pet runs in with the gift. They give it a stroke and the notes come out in tiles.",
-  "style.fetch.aboutOwn": "A pet runs in with the gift. They give it a stroke, then pull toys out of a basket, each with a note, and find the photos on a best friends wall.",
+  "style.fetch.about":
+    "A pet runs in with the gift. They give it a stroke and the notes come out in tiles.",
+  "style.fetch.aboutOwn":
+    "A pet runs in with the gift. They give it a stroke, then pull toys out of a basket, each with a note, and find the photos on a best friends wall.",
   "style.board-game.title": "Board Game",
   "style.board-game.copy": "Roll the dice",
-  "style.board-game.about": "A board game on the table. They roll the dice and unwrap every note, one square at a time.",
-  "style.board-game.aboutOwn": "A board game on the table. They roll the dice and a token hops along a winding track, landing on one friend's note at a time.",
+  "style.board-game.about":
+    "A board game on the table. They roll the dice and unwrap every note, one square at a time.",
+  "style.board-game.aboutOwn":
+    "A board game on the table. They roll the dice and a token hops along a winding track, landing on one friend's note at a time.",
   "style.arcade.title": "Arcade",
   "style.arcade.copy": "Press START",
   "style.arcade.about": "A little handheld console. They press START and every note is a level.",
-  "style.arcade.aboutOwn": "A little handheld console, then a full arcade cabinet. Every note is a level on a pixel map, with a high score table of friends.",
+  "style.arcade.aboutOwn":
+    "A little handheld console, then a full arcade cabinet. Every note is a level on a pixel map, with a high score table of friends.",
   "style.handwritten.title": "Handwritten",
   "style.handwritten.copy": "Unfold the note",
-  "style.handwritten.about": "A note folded in four. Inside, every friend writes in their own hand.",
+  "style.handwritten.about":
+    "A note folded in four. Inside, every friend writes in their own hand.",
   "style.winter-window.title": "Winter Window",
   "style.winter-window.copy": "Wipe the frost away",
-  "style.winter-window.about": "A frosted cabin window. They wipe it clear to find a warm room and a tree hung with notes.",
-  "style.winter-window.aboutOwn": "A frosted cabin window. They wipe it clear, then wipe each small pane to find a warm note glowing behind the frost.",
+  "style.winter-window.about":
+    "A frosted cabin window. They wipe it clear to find a warm room and a tree hung with notes.",
+  "style.winter-window.aboutOwn":
+    "A frosted cabin window. They wipe it clear, then wipe each small pane to find a warm note glowing behind the frost.",
   "style.care-package.title": "Care Package",
   "style.care-package.copy": "Peel the tape",
-  "style.care-package.about": "A parcel from far away. They peel the tape and the notes come out as things packed inside.",
-  "style.care-package.aboutOwn": "A parcel from far away. They peel the tape, and every note inside is wrapped in paper for them to unwrap, one by one.",
+  "style.care-package.about":
+    "A parcel from far away. They peel the tape and the notes come out as things packed inside.",
+  "style.care-package.aboutOwn":
+    "A parcel from far away. They peel the tape, and every note inside is wrapped in paper for them to unwrap, one by one.",
   "style.parol.title": "Parol",
   "style.parol.copy": "Light up the star",
   "style.parol.about": "A capiz star where every note lights one more point.",
-  "style.parol.aboutOwn": "A capiz star that lights up point by point, then a street of parols, one for every note, that they light one at a time.",
+  "style.parol.aboutOwn":
+    "A capiz star that lights up point by point, then a street of parols, one for every note, that they light one at a time.",
   "style.debut.title": "Debut",
   "style.debut.copy": "Open the curtain",
-  "style.debut.about": "A curtain, candles and roses. Each candle holds a wish for their big birthday.",
-  "style.debut.aboutOwn": "A curtain opens on candles and roses, then a dance card where every friend signed one dance. Each dance opens a note, and a rose blooms for every one they read.",
+  "style.debut.about":
+    "A curtain, candles and roses. Each candle holds a wish for their big birthday.",
+  "style.debut.aboutOwn":
+    "A curtain opens on candles and roses, then a dance card where every friend signed one dance. Each dance opens a note, and a rose blooms for every one they read.",
   "style.scrapbook.title": "Scrapbook",
   "style.scrapbook.copy": "A warm, scrolling collection",
   "style.scrapbook.about": "Every note, photo and song in one long, cozy page.",
@@ -842,9 +873,11 @@ export const en = {
   "picker.style.hideOthers": "Hide the other styles",
   "picker.style.recommended": "Top pick",
   "picker.style.current": "Current style",
-  "picker.style.currentHint": "This gift was made before styles. It keeps its look until you pick a style.",
+  "picker.style.currentHint":
+    "This gift was made before styles. It keeps its look until you pick a style.",
   "picker.style.switchTitle": "Switch to {style}?",
-  "picker.style.switchBody": "Your notes, photos and words stay. The opening, colors and the way they read it change.",
+  "picker.style.switchBody":
+    "Your notes, photos and words stay. The opening, colors and the way they read it change.",
   "picker.style.switch": "Switch",
   "picker.style.keep": "Keep this one",
   "picker.style.planNote": "Your plan includes every style without a plan tag.",
@@ -854,7 +887,8 @@ export const en = {
   "picker.style.ownObject": "The style's own object, opened with a gesture.",
   "picker.style.fromStyle": "From the style",
   "guide.style.title": "Pick a style",
-  "guide.style.body": "It's how the gift opens, how it looks and how they read it. Say what it's for and the best ones come first.",
+  "guide.style.body":
+    "It's how the gift opens, how it looks and how they read it. Say what it's for and the best ones come first.",
   "guide.style.dashboard": "Birthday, send-off, wedding, or just because. Then pick a style.",
   // Styles gallery (/styles) and the links to it (flag `styles`).
   "nav.styles": "Styles",
@@ -864,7 +898,8 @@ export const en = {
   "gallery.description": "Browse gift styles and see each one play, before you pick.",
   "gallery.kicker": "Style library",
   "gallery.heading": "Find the one that feels like them",
-  "gallery.body": "Every style opens like something real: a letter, a record, a cake. Hover one to watch it, tap it to open it yourself.",
+  "gallery.body":
+    "Every style opens like something real: a letter, a record, a cake. Hover one to watch it, tap it to open it yourself.",
   "gallery.filter": "What's it for?",
   "gallery.all": "All styles",
   "gallery.use": "Use this style",

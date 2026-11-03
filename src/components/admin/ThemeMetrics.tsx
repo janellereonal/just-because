@@ -16,12 +16,18 @@ export function ThemeMetrics() {
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
           <h2 className="font-display text-2xl font-medium tracking-tight">Themes</h2>
-          <p className="mt-1 text-sm text-muted">Sorted by paid conversion. This is how we pick which themes to build more of.</p>
+          <p className="mt-1 text-sm text-muted">
+            Sorted by paid conversion. This is how we pick which themes to build more of.
+          </p>
         </div>
         <div className="flex flex-wrap items-center gap-2 text-sm">
           <label className="flex items-center gap-2">
             <span className="text-xs text-muted">Days</span>
-            <select value={days} onChange={(e) => setDays(Number(e.target.value))} className="rounded-full border border-line bg-cream px-3 py-1.5">
+            <select
+              value={days}
+              onChange={(e) => setDays(Number(e.target.value))}
+              className="rounded-full border border-line bg-cream px-3 py-1.5"
+            >
               {[7, 30, 90, 365].map((d) => (
                 <option key={d} value={d}>
                   {d}
@@ -52,11 +58,24 @@ export function ThemeMetrics() {
             <tr>
               <th className="px-4 py-2 font-medium">Theme</th>
               <th className="px-3 py-2 font-medium">Gifts made</th>
-              <th className="px-3 py-2 font-medium" title="Openings finished out of openings started">Opened all the way</th>
-              <th className="px-3 py-2 font-medium" title="Replays out of finished openings">Replayed</th>
-              <th className="px-3 py-2 font-medium" title="Shares out of gift opens">Shared</th>
-              <th className="px-3 py-2 font-medium" title="Gifts paid for out of gifts made">Paid</th>
-              <th className="px-3 py-2 font-medium" title="Make-your-own clicks out of gift opens">Made their own</th>
+              <th
+                className="px-3 py-2 font-medium"
+                title="Openings finished out of openings started"
+              >
+                Opened all the way
+              </th>
+              <th className="px-3 py-2 font-medium" title="Replays out of finished openings">
+                Replayed
+              </th>
+              <th className="px-3 py-2 font-medium" title="Shares out of gift opens">
+                Shared
+              </th>
+              <th className="px-3 py-2 font-medium" title="Gifts paid for out of gifts made">
+                Paid
+              </th>
+              <th className="px-3 py-2 font-medium" title="Make-your-own clicks out of gift opens">
+                Made their own
+              </th>
             </tr>
           </thead>
           <tbody>

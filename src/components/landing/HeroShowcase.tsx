@@ -47,7 +47,9 @@ export function HeroShowcase() {
   useEffect(() => {
     const el = wrapRef.current;
     if (!el) return;
-    const io = new IntersectionObserver(([e]) => setInView(!!e?.isIntersecting), { threshold: 0.35 });
+    const io = new IntersectionObserver(([e]) => setInView(!!e?.isIntersecting), {
+      threshold: 0.35,
+    });
     io.observe(el);
     return () => io.disconnect();
   }, []);
@@ -146,7 +148,6 @@ export function HeroShowcase() {
       el.removeEventListener("touchstart", stop);
       el.removeEventListener("pointerdown", stop);
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [opened, playing, device, idx, round]);
 
   const closed = !opened ? (
@@ -182,11 +183,19 @@ export function HeroShowcase() {
   return (
     <div ref={wrapRef} className="relative flex flex-col items-center">
       {/* Little live notes around the phone, about whichever gift is playing */}
-      <div aria-hidden="true" className="float-note top-36 -left-14 hidden rotate-[-4deg] xl:block" style={{ "--r": "-4deg" } as React.CSSProperties}>
+      <div
+        aria-hidden="true"
+        className="float-note top-36 -left-14 hidden rotate-[-4deg] xl:block"
+        style={{ "--r": "-4deg" } as React.CSSProperties}
+      >
         <span className="block font-semibold">{H.noteAdded(g.friends[0] ?? "A friend")}</span>
         <span className="text-ink/60">{H.noteWhen}</span>
       </div>
-      <div aria-hidden="true" className="float-note -right-8 bottom-44 hidden rotate-[5deg] xl:block" style={{ "--r": "5deg", animationDelay: "1.4s" } as React.CSSProperties}>
+      <div
+        aria-hidden="true"
+        className="float-note -right-8 bottom-44 hidden rotate-[5deg] xl:block"
+        style={{ "--r": "5deg", animationDelay: "1.4s" } as React.CSSProperties}
+      >
         <span className="inline-flex items-center gap-1.5 font-semibold">
           <Heart className="size-3.5 fill-accent text-accent" /> {H.noteJoined(g.friends.length)}
         </span>
@@ -231,7 +240,11 @@ export function HeroShowcase() {
             onClick={() => setAuto((a) => !a)}
             className="inline-flex min-h-9 items-center gap-1.5 rounded-full bg-white/80 px-3 text-[13px] font-medium ring-1 ring-ink/8 hover:bg-white"
           >
-            {auto ? <Pause className="size-3.5" aria-hidden="true" /> : <Play className="size-3.5" aria-hidden="true" />}
+            {auto ? (
+              <Pause className="size-3.5" aria-hidden="true" />
+            ) : (
+              <Play className="size-3.5" aria-hidden="true" />
+            )}
             {auto ? H.pauseTour : H.playTour}
           </button>
         ) : null}
@@ -246,7 +259,10 @@ export function HeroShowcase() {
       ) : (
         <div className="demo-phone relative mt-5 h-[600px] w-[300px] sm:h-[640px] sm:w-[320px]">
           <span className="demo-phone-notch" aria-hidden />
-          <div className="absolute inset-[10px] overflow-hidden rounded-[34px]" style={{ contain: "layout paint" }}>
+          <div
+            className="absolute inset-[10px] overflow-hidden rounded-[34px]"
+            style={{ contain: "layout paint" }}
+          >
             <div
               ref={screenRef}
               key={id}

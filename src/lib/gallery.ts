@@ -5,8 +5,18 @@
 import { isFlagOn } from "@/config/flags";
 import { t } from "@/i18n";
 
-export function galleryLink(): { to: "/styles" | "/themes"; label: string; browse: string; see: string } {
+export function galleryLink(): {
+  to: "/styles" | "/themes";
+  label: string;
+  browse: string;
+  see: string;
+} {
   return isFlagOn("styles")
-    ? { to: "/styles", label: t("nav.styles"), browse: t("nav.browseStyles"), see: t("nav.seeStyles") }
+    ? {
+        to: "/styles",
+        label: t("nav.styles"),
+        browse: t("nav.browseStyles"),
+        see: t("nav.seeStyles"),
+      }
     : { to: "/themes", label: "Themes", browse: "Browse themes", see: "See themes" };
 }

@@ -1,6 +1,12 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { z } from "zod";
-import { UPLOAD_CACHE_SECONDS, authorizeUpload, saveDevUpload, saveR2Upload, uploadPathname } from "@/server/uploads";
+import {
+  UPLOAD_CACHE_SECONDS,
+  authorizeUpload,
+  saveDevUpload,
+  saveR2Upload,
+  uploadPathname,
+} from "@/server/uploads";
 
 const payloadSchema = z.object({
   kind: z.enum(["contribution", "calendar", "theme", "intro"]),
@@ -33,7 +39,11 @@ export const Route = createFileRoute("/api/upload")({
             request,
             onBeforeGenerateToken: async (pathname, clientPayload) => {
               const payload = payloadSchema.parse(JSON.parse(clientPayload ?? "{}"));
-              const rules = await authorizeUpload(payload.kind, payload.targetId, payload.media ?? null);
+              const rules = await authorizeUpload(
+                payload.kind,
+                payload.targetId,
+                payload.media ?? null,
+              );
               if (!pathname.startsWith(uploadPathname(payload.kind, payload.targetId, "")))
                 throw new Error("Bad upload path");
               return {

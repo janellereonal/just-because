@@ -6,7 +6,22 @@
  * Ornaments are drawn hanging from a loop at the top center (60, 16) so they
  * can swing from that point in the browser.
  */
-import { blob, egg, GLOSS, heartOutline, lathe, limb, pillow, rbox, shade, starOutline, torus, tube, type ClayRecipe, type V3 } from "@/lib/clay/shapes";
+import {
+  blob,
+  egg,
+  GLOSS,
+  heartOutline,
+  lathe,
+  limb,
+  pillow,
+  rbox,
+  shade,
+  starOutline,
+  torus,
+  tube,
+  type ClayRecipe,
+  type V3,
+} from "@/lib/clay/shapes";
 
 const GOLD = "#E8C266";
 const RED = "#E0475A";
@@ -25,11 +40,16 @@ const CYL: [number, number][] = [
 ];
 
 /** Gold cap and hanging loop shared by most ornaments. */
-const cap = (y = 27, w = 16) => [lathe(CYL, [60, y, 0], [w, 9, w * 0.92], GOLD, 0, SHINY), torus([60, y - 9, 0], 4.6, 1.5, GOLD, [0, 0, 0])];
+const cap = (y = 27, w = 16) => [
+  lathe(CYL, [60, y, 0], [w, 9, w * 0.92], GOLD, 0, SHINY),
+  torus([60, y - 9, 0], 4.6, 1.5, GOLD, [0, 0, 0]),
+];
 
 /** A tiny face: two glossy eyes and a smile. */
 function face(x: number, y: number, z: number, s = 1): ReturnType<typeof blob>[] {
-  const eyes = [-1, 1].map((k) => blob([x + k * 5 * s, y, z], [3.4 * s, 4 * s, 2.4 * s], INK, [0, 0, 0], GLOSS));
+  const eyes = [-1, 1].map((k) =>
+    blob([x + k * 5 * s, y, z], [3.4 * s, 4 * s, 2.4 * s], INK, [0, 0, 0], GLOSS),
+  );
   const smile = tube(
     [
       [x - 3.4 * s, y + 4.4 * s, z],
@@ -40,7 +60,9 @@ function face(x: number, y: number, z: number, s = 1): ReturnType<typeof blob>[]
     0.8 * s,
     INK,
   );
-  const cheeks = [-1, 1].map((k) => blob([x + k * 9 * s, y + 4 * s, z - 1.2], [4.6 * s, 3 * s, 1.6 * s], "#F59AAE"));
+  const cheeks = [-1, 1].map((k) =>
+    blob([x + k * 9 * s, y + 4 * s, z - 1.2], [4.6 * s, 3 * s, 1.6 * s], "#F59AAE"),
+  );
   return [...eyes, ...smile, ...cheeks] as ReturnType<typeof blob>[];
 }
 
@@ -102,19 +124,38 @@ export const TREE: Record<string, ClayRecipe> = {
       tier(60, 80, 38, GREEN),
       tier(37, 58, 34, shade(GREEN, 12)),
       // Snowy tips on each tier
-      ...[84, 60, 37].map((y, i) => blob([60, y - [16, 15, 13][i]!, [8, 6, 4][i]!], [[16, 13, 10][i]!, 6, [14, 11, 9][i]!], WHITE)),
+      ...[84, 60, 37].map((y, i) =>
+        blob(
+          [60, y - [16, 15, 13][i]!, [8, 6, 4][i]!],
+          [[16, 13, 10][i]!, 6, [14, 11, 9][i]!],
+          WHITE,
+        ),
+      ),
       // Garlands
       ...tube(swag(76, 90, 74, 28), 1.8, 1.8, "#FBE6C8"),
       ...tube(swag(54, 66, 56, 22), 1.6, 1.6, "#FBE6C8"),
       // Little lights
-      ...lights.map(([x, y, z, c]) => blob([x, y, z], [7, 7, 7], c, [0, 0, 0], { rough: 0.2, gloss: 0.9, sheen: 1 })),
+      ...lights.map(([x, y, z, c]) =>
+        blob([x, y, z], [7, 7, 7], c, [0, 0, 0], { rough: 0.2, gloss: 0.9, sheen: 1 }),
+      ),
       // Star
       pillow(starOutline(60, 13, 12, 0.48), 5, GOLD, 0, 3),
     ];
   },
 
-  "orn-bauble": () => [...cap(), blob([60, 66, 0], [68, 68, 64], RED, [0, 0, 0], SHINY), lathe(CYL, [60, 66, 0], [69, 9, 65], WHITE), ...[-20, -8, 4, 16].map((x) => blob([60 + x, 66, 33 - Math.abs(x) * 0.5], [4, 4, 3], GOLD, [0, 0, 0], SHINY))],
-  "orn-star": () => [torus([60, 18, 0], 4.6, 1.5, GOLD), pillow(starOutline(60, 62, 40, 0.5), 14, GOLD, 0, 6), ...face(60, 62, 15, 1.35)],
+  "orn-bauble": () => [
+    ...cap(),
+    blob([60, 66, 0], [68, 68, 64], RED, [0, 0, 0], SHINY),
+    lathe(CYL, [60, 66, 0], [69, 9, 65], WHITE),
+    ...[-20, -8, 4, 16].map((x) =>
+      blob([60 + x, 66, 33 - Math.abs(x) * 0.5], [4, 4, 3], GOLD, [0, 0, 0], SHINY),
+    ),
+  ],
+  "orn-star": () => [
+    torus([60, 18, 0], 4.6, 1.5, GOLD),
+    pillow(starOutline(60, 62, 40, 0.5), 14, GOLD, 0, 6),
+    ...face(60, 62, 15, 1.35),
+  ],
   "orn-stocking": () => [
     torus([48, 22, 0], 4.6, 1.5, GOLD),
     pillow(
@@ -199,7 +240,30 @@ export const TREE: Record<string, ClayRecipe> = {
       0,
       5,
     );
-    return [torus([60, 14, 0], 4.6, 1.5, GOLD), body, ...face(60, 36, 12.5, 1.05), ...[62, 74, 86].map((y) => blob([60, y, 12], [5, 5, 3], RED, [0, 0, 0], SHINY)), ...tube([[30, 57, 12], [40, 58, 12]], 1.2, 1.2, WHITE), ...tube([[80, 58, 12], [90, 57, 12]], 1.2, 1.2, WHITE)];
+    return [
+      torus([60, 14, 0], 4.6, 1.5, GOLD),
+      body,
+      ...face(60, 36, 12.5, 1.05),
+      ...[62, 74, 86].map((y) => blob([60, y, 12], [5, 5, 3], RED, [0, 0, 0], SHINY)),
+      ...tube(
+        [
+          [30, 57, 12],
+          [40, 58, 12],
+        ],
+        1.2,
+        1.2,
+        WHITE,
+      ),
+      ...tube(
+        [
+          [80, 58, 12],
+          [90, 57, 12],
+        ],
+        1.2,
+        1.2,
+        WHITE,
+      ),
+    ];
   },
   "orn-bell": () => [
     torus([60, 16, 0], 4.6, 1.5, GOLD),
@@ -229,9 +293,15 @@ export const TREE: Record<string, ClayRecipe> = {
     torus([60, 64, 0], 30, 11, GREEN),
     ...Array.from({ length: 10 }, (_, i) => {
       const a = (i / 10) * Math.PI * 2;
-      return blob([60 + Math.cos(a) * 30, 64 + Math.sin(a) * 30, 9], [9, 6, 5], shade(GREEN, 16), [0, 0, a]);
+      return blob([60 + Math.cos(a) * 30, 64 + Math.sin(a) * 30, 9], [9, 6, 5], shade(GREEN, 16), [
+        0,
+        0,
+        a,
+      ]);
     }),
-    ...[0.6, 2.3, 4.1].map((a) => blob([60 + Math.cos(a) * 32, 64 + Math.sin(a) * 32, 12], [6, 6, 6], RED, [0, 0, 0], SHINY)),
+    ...[0.6, 2.3, 4.1].map((a) =>
+      blob([60 + Math.cos(a) * 32, 64 + Math.sin(a) * 32, 12], [6, 6, 6], RED, [0, 0, 0], SHINY),
+    ),
     blob([50, 94, 12], [18, 12, 8], RED, [0, 0, 0.4]),
     blob([70, 94, 12], [18, 12, 8], RED, [0, 0, -0.4]),
     blob([60, 94, 15], [8, 8, 8], shade(RED, -20)),
@@ -258,7 +328,12 @@ export const TREE: Record<string, ClayRecipe> = {
       7,
     ),
     rbox([56, 36, 6], [42, 16, 24], 7, WHITE),
-    ...[[52, 72], [64, 84], [52, 92], [68, 66]].map(([x, y]) => blob([x!, y!, 14], [6, 6, 3], WHITE)),
+    ...[
+      [52, 72],
+      [64, 84],
+      [52, 92],
+      [68, 66],
+    ].map(([x, y]) => blob([x!, y!, 14], [6, 6, 3], WHITE)),
   ],
   "orn-snow-globe": () => [
     torus([60, 14, 0], 4.6, 1.5, GOLD),
@@ -277,7 +352,12 @@ export const TREE: Record<string, ClayRecipe> = {
     ),
     lathe(CYL, [60, 94, 0], [56, 16, 50], "#8A5A3C"),
     lathe(CYL, [60, 101, 0], [60, 4, 54], GOLD, 0, SHINY),
-    ...[[44, 46], [72, 40], [56, 34], [80, 60]].map(([x, y]) => blob([x!, y!, 24], [4, 4, 4], WHITE)),
+    ...[
+      [44, 46],
+      [72, 40],
+      [56, 34],
+      [80, 60],
+    ].map(([x, y]) => blob([x!, y!, 24], [4, 4, 4], WHITE)),
   ],
   "orn-gift": () => [
     torus([60, 14, 0], 4.6, 1.5, GOLD),
@@ -288,31 +368,57 @@ export const TREE: Record<string, ClayRecipe> = {
     blob([71, 40, 16], [24, 15, 12], RED, [0, 0, -0.5]),
     blob([60, 42, 20], [11, 11, 11], shade(RED, -20)),
   ],
-  "orn-heart": () => [torus([60, 18, 0], 4.6, 1.5, GOLD), pillow(heartOutline(60, 62, 42), 16, "#F27A93", 0, 8), ...face(60, 56, 17, 1.4)],
+  "orn-heart": () => [
+    torus([60, 18, 0], 4.6, 1.5, GOLD),
+    pillow(heartOutline(60, 62, 42), 16, "#F27A93", 0, 8),
+    ...face(60, 56, 17, 1.4),
+  ],
   "orn-candy": () => [
     torus([60, 26, 0], 4.6, 1.5, GOLD),
     limb([60, 30, 0], [60, 40, 0], 1.2, GOLD),
     blob([60, 66, 0], [44, 40, 38], "#B9A3E0", [0, 0, 0], SHINY),
-    ...[-1, 1].map((s) => lathe(
-      [
-        [0, -0.5],
-        [0.5, -0.5],
-        [0.14, 0.5],
-        [0, 0.5],
-      ],
-      [60 + s * 32, 66, 0],
-      [26, 22, 22],
-      "#FFD166",
-    )).map((o, i) => {
-      o.rotation.z = i === 0 ? -Math.PI / 2 : Math.PI / 2;
-      return o;
-    }),
-    ...[-12, 0, 12].map((x) => tube([[60 + x - 4, 50, 16], [60 + x + 4, 82, 16]], 1.6, 1.6, WHITE)).flat(),
+    ...[-1, 1]
+      .map((s) =>
+        lathe(
+          [
+            [0, -0.5],
+            [0.5, -0.5],
+            [0.14, 0.5],
+            [0, 0.5],
+          ],
+          [60 + s * 32, 66, 0],
+          [26, 22, 22],
+          "#FFD166",
+        ),
+      )
+      .map((o, i) => {
+        o.rotation.z = i === 0 ? -Math.PI / 2 : Math.PI / 2;
+        return o;
+      }),
+    ...[-12, 0, 12]
+      .map((x) =>
+        tube(
+          [
+            [60 + x - 4, 50, 16],
+            [60 + x + 4, 82, 16],
+          ],
+          1.6,
+          1.6,
+          WHITE,
+        ),
+      )
+      .flat(),
   ],
   "orn-cookie": () => [
     torus([60, 18, 0], 4.6, 1.5, GOLD),
     lathe(CYL, [60, 64, 0], [76, 18, 74], "#D9A066", Math.PI / 2),
-    ...[[44, 52], [74, 50], [50, 82], [76, 78], [62, 90]].map(([x, y]) => blob([x!, y!, 9], [8, 7, 4], "#5E3B26")),
+    ...[
+      [44, 52],
+      [74, 50],
+      [50, 82],
+      [76, 78],
+      [62, 90],
+    ].map(([x, y]) => blob([x!, y!, 9], [8, 7, 4], "#5E3B26")),
     ...face(60, 64, 10.5, 1.45),
   ],
   "orn-pinecone": () => [
@@ -323,7 +429,12 @@ export const TREE: Record<string, ClayRecipe> = {
         const n = 4 - (r % 2);
         const x = 60 + (k - (n - 1) / 2) * 11;
         const y = 44 + r * 12;
-        return blob([x, y, 18 - Math.abs(x - 60) * 0.3], [12, 9, 8], shade("#8A5A3C", 14), [0.3, 0, 0]);
+        return blob(
+          [x, y, 18 - Math.abs(x - 60) * 0.3],
+          [12, 9, 8],
+          shade("#8A5A3C", 14),
+          [0.3, 0, 0],
+        );
       }),
     ).flat(),
     blob([52, 28, 6], [16, 8, 6], GREEN, [0, 0, 0.5]),

@@ -7,10 +7,15 @@ import { t } from "@/i18n";
 import { CharCount } from "@/components/ui/CharCount";
 import { LIMITS, noteTextLimit, tooLong } from "@/lib/limits";
 import { lazy, Suspense, useEffect, useMemo, useRef, useState } from "react";
-import {useParams} from "@tanstack/react-router";
+import { useParams } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { deleteOwnContribution, getGiftRoom, submitContribution, updateOwnContribution } from "@/lib/api";
+import {
+  deleteOwnContribution,
+  getGiftRoom,
+  submitContribution,
+  updateOwnContribution,
+} from "@/lib/api";
 import { UploadError, uploadMedia, type UploadStage } from "@/lib/upload";
 import { NOTE_RULES_COPY, UPLOAD_COPY } from "@/copy/strings";
 import { fileFits, hasWord, isSongLink, mediaKindFor } from "@/lib/noteRules";
@@ -38,7 +43,27 @@ import { ModuleExample } from "@/components/ModuleExample";
 import { centerInScroller } from "@/lib/scroll";
 import { themeKindOf } from "@/lib/themeKind";
 import Bo from "@/components/Bo";
-import { Brush, CalendarDays, Camera, CircleHelp, Hourglass, Image as ImageIcon, Lock, Mail, MailOpen, MapPin, Mic, MoreHorizontal, Music2, Sparkles, Ticket, Trophy, Type, Users, Video } from "lucide-react";
+import {
+  Brush,
+  CalendarDays,
+  Camera,
+  CircleHelp,
+  Hourglass,
+  Image as ImageIcon,
+  Lock,
+  Mail,
+  MailOpen,
+  MapPin,
+  Mic,
+  MoreHorizontal,
+  Music2,
+  Sparkles,
+  Ticket,
+  Trophy,
+  Type,
+  Users,
+  Video,
+} from "lucide-react";
 import { SectionFields } from "@/components/sections/SectionFields";
 import { SECTION_NEEDS, isNewSection, normalizeSectionData } from "@/lib/sections";
 import { meshGradient } from "@/lib/giftPieces";
@@ -47,19 +72,42 @@ import { PHOTOBOOTH_COPY } from "@/copy/strings";
 import { AnimatePresence } from "motion/react";
 
 const MODULE_ICON: Partial<Record<ModuleType, typeof Mail>> = {
-  letters: Mail, photobooth: ImageIcon, songs: Music2, wordcloud: Type, voice: Mic, tree: Sparkles, calendar: CalendarDays,
-  openwhen: MailOpen, capsule: Hourglass, superlatives: Trophy, quiz: CircleHelp, map: MapPin, coupons: Ticket, video: Video, doodle: Brush,
+  letters: Mail,
+  photobooth: ImageIcon,
+  songs: Music2,
+  wordcloud: Type,
+  voice: Mic,
+  tree: Sparkles,
+  calendar: CalendarDays,
+  openwhen: MailOpen,
+  capsule: Hourglass,
+  superlatives: Trophy,
+  quiz: CircleHelp,
+  map: MapPin,
+  coupons: Ticket,
+  video: Video,
+  doodle: Brush,
 };
 /** Short tab names for the newer sections. */
 const TAB_LIMIT = 4;
-const SHORT: Partial<Record<ModuleType, string>> = { openwhen: "Open-when", capsule: "Time capsule", superlatives: "Award", quiz: "Quiz", map: "Memory pin", coupons: "Coupon", video: "Video", doodle: "Doodle" };
+const SHORT: Partial<Record<ModuleType, string>> = {
+  openwhen: "Open-when",
+  capsule: "Time capsule",
+  superlatives: "Award",
+  quiz: "Quiz",
+  map: "Memory pin",
+  coupons: "Coupon",
+  video: "Video",
+  doodle: "Doodle",
+};
 import { PageError, PageLoading, PageNotFound } from "@/components/PageStates";
 import { REPORT_COPY } from "@/copy/strings";
 import { ReportGift } from "@/components/ReportGift";
 
 // The photobooth only loads when someone opens it.
-const PhotoBooth = lazy(() => import("@/components/photobooth/PhotoBooth").then((m) => ({ default: m.PhotoBooth })));
-
+const PhotoBooth = lazy(() =>
+  import("@/components/photobooth/PhotoBooth").then((m) => ({ default: m.PhotoBooth })),
+);
 
 /* ---- remembering this device's own contributions ---- */
 
@@ -118,7 +166,12 @@ function toView(record: MineRecord, siteId: string): ViewContribution {
 function ContributePage() {
   const { slug } = useParams({ from: "/contribute/$slug" });
   const queryClient = useQueryClient();
-  const { data: site, isLoading, error: siteError, refetch: refetchSite } = useQuery({
+  const {
+    data: site,
+    isLoading,
+    error: siteError,
+    refetch: refetchSite,
+  } = useQuery({
     queryKey: ["site-slug", slug],
     queryFn: () => fetchSiteBySlug(slug),
   });
@@ -195,15 +248,20 @@ function ContributePage() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [sectionData, setSectionData] = useState<Record<string, unknown>>({});
   /** What they started writing in each section, so switching sections never carries words (or a file) across. */
-  const drafts = useRef<Partial<Record<ModuleType, { text: string; link: string; data: Record<string, unknown> }>>>({});
+  const drafts = useRef<
+    Partial<Record<ModuleType, { text: string; link: string; data: Record<string, unknown> }>>
+  >({});
   const giftRef = useRef<HTMLDivElement | null>(null);
   const doneRef = useRef<HTMLDivElement | null>(null);
   const [device, setDevice] = useState<PreviewDevice>("phone");
 
   const filePreview = useMemo(() => (file ? URL.createObjectURL(file) : null), [file]);
-  useEffect(() => () => {
-    if (filePreview) URL.revokeObjectURL(filePreview);
-  }, [filePreview]);
+  useEffect(
+    () => () => {
+      if (filePreview) URL.revokeObjectURL(filePreview);
+    },
+    [filePreview],
+  );
 
   /* Scroll the friend's own item into view right after they send it. */
   useEffect(() => {
@@ -243,7 +301,15 @@ function ContributePage() {
   }
 
   if (site.disabled_at) {
-    return <PageNotFound title={REPORT_COPY.pausedTitle} message={REPORT_COPY.pausedBody} actionLabel={REPORT_COPY.makeYourOwn} actionTo="/" showHeader={false} />;
+    return (
+      <PageNotFound
+        title={REPORT_COPY.pausedTitle}
+        message={REPORT_COPY.pausedBody}
+        actionLabel={REPORT_COPY.makeYourOwn}
+        actionTo="/"
+        showHeader={false}
+      />
+    );
   }
   const palette = resolvePalette(theme, site.custom_colors);
   const ink = readableInk(palette.background);
@@ -266,7 +332,10 @@ function ContributePage() {
   const shownTabs =
     !extraTabs || moreTabs
       ? openModules
-      : [...openModules.slice(0, TAB_LIMIT), ...openModules.slice(TAB_LIMIT).filter((m) => m.type === active)];
+      : [
+          ...openModules.slice(0, TAB_LIMIT),
+          ...openModules.slice(TAB_LIMIT).filter((m) => m.type === active),
+        ];
   const fieldStyle = {
     backgroundColor: palette.background,
     color: ink,
@@ -275,14 +344,21 @@ function ContributePage() {
   const canEdit = site.status !== "published";
   const giftEnded = room?.ended || fullReason === "ended";
   /* Someone who already added something can still add more; new names can't. */
-  const noRoomForNewPeople = (room?.contributorsFull && mine.length === 0) || fullReason === "contributors";
+  const noRoomForNewPeople =
+    (room?.contributorsFull && mine.length === 0) || fullReason === "contributors";
   const photosFull = room?.photosFull || fullReason === "photos";
   if (site.solo) {
     return (
-      <div className="grid min-h-screen place-items-center px-6 text-center" style={{ backgroundColor: palette.background, color: ink }}>
+      <div
+        className="grid min-h-screen place-items-center px-6 text-center"
+        style={{ backgroundColor: palette.background, color: ink }}
+      >
         <div className="max-w-md">
           <Bo pose="idle" size={140} title="Bo" />
-          <h1 className="mt-4 text-3xl font-medium tracking-tight" style={{ fontFamily: fonts.heading }}>
+          <h1
+            className="mt-4 text-3xl font-medium tracking-tight"
+            style={{ fontFamily: fonts.heading }}
+          >
             This one is a solo gift
           </h1>
           <p className="mt-2 opacity-80 text-pretty">
@@ -294,10 +370,16 @@ function ContributePage() {
   }
   if (giftEnded || noRoomForNewPeople) {
     return (
-      <div className="grid min-h-screen place-items-center px-6 text-center" style={{ backgroundColor: palette.background, color: ink }}>
+      <div
+        className="grid min-h-screen place-items-center px-6 text-center"
+        style={{ backgroundColor: palette.background, color: ink }}
+      >
         <div className="max-w-md">
           <Bo pose="idle" size={140} title="Bo" />
-          <h1 className="mt-4 text-3xl font-medium tracking-tight" style={{ fontFamily: fonts.heading }}>
+          <h1
+            className="mt-4 text-3xl font-medium tracking-tight"
+            style={{ fontFamily: fonts.heading }}
+          >
             {giftEnded ? "This gift has ended" : "This gift is full"}
           </h1>
           <p className="mt-2 opacity-80 text-pretty">
@@ -428,7 +510,13 @@ function ContributePage() {
       const needs = SECTION_NEEDS[active];
       const clean = normalizeSectionData(active, sectionData);
       if (!clean) {
-        toast.error(active === "capsule" ? "Pick a date at least a day away." : active === "quiz" ? "Add the question, the right answer and at least one wrong one." : "Fill in the first field, please.");
+        toast.error(
+          active === "capsule"
+            ? "Pick a date at least a day away."
+            : active === "quiz"
+              ? "Add the question, the right answer and at least one wrong one."
+              : "Fill in the first field, please.",
+        );
         return;
       }
       if (needs.text === "required" && !text.trim()) {
@@ -436,19 +524,24 @@ function ContributePage() {
         return;
       }
       if (needs.media === "required" && !file && !editingId) {
-        toast.error(active === "doodle" ? "Draw a little something first." : "Choose the file first.");
+        toast.error(
+          active === "doodle" ? "Draw a little something first." : "Choose the file first.",
+        );
         return;
       }
       cleanData = clean as Record<string, unknown>;
     }
     // A new photo says whether it came out of the photobooth; no new photo keeps what's saved.
-    if (active === "photobooth" && file) cleanData = file === boothFile.current ? { framed: true } : {};
+    if (active === "photobooth" && file)
+      cleanData = file === boothFile.current ? { framed: true } : {};
     if (name.trim().length > LIMITS.friendName) {
       toast.error(tooLong("your name", LIMITS.friendName));
       return;
     }
     if (text.trim() && [...text.trim()].length > noteTextLimit(active)) {
-      toast.error(tooLong(active === "wordcloud" ? "your words" : "your note", noteTextLimit(active)));
+      toast.error(
+        tooLong(active === "wordcloud" ? "your words" : "your note", noteTextLimit(active)),
+      );
       return;
     }
     sendingRef.current = true;
@@ -468,13 +561,22 @@ function ContributePage() {
     if (file) {
       try {
         // Photos get a small copy too, so grids and previews don't load the full photo.
-        const up = await uploadMedia(file, "contribution", site.id, { thumb: active === "photobooth", onStage: setStage, expect: mediaKindFor(active) });
+        const up = await uploadMedia(file, "contribution", site.id, {
+          thumb: active === "photobooth",
+          onStage: setStage,
+          expect: mediaKindFor(active),
+        });
         mediaPath = up.url;
-        if (active === "photobooth" && up.thumbUrl) cleanData = { ...(cleanData ?? {}), thumb: up.thumbUrl };
+        if (active === "photobooth" && up.thumbUrl)
+          cleanData = { ...(cleanData ?? {}), thumb: up.thumbUrl };
       } catch (error) {
         setStage(null);
         setBusy(false);
-        toast.error(error instanceof UploadError ? error.message : "That file couldn't be uploaded. Please try again.");
+        toast.error(
+          error instanceof UploadError
+            ? error.message
+            : "That file couldn't be uploaded. Please try again.",
+        );
         return;
       }
     }
@@ -554,7 +656,8 @@ function ContributePage() {
       full = result.full;
     } catch (err) {
       failed = true;
-      if (err instanceof Error && err.message && !/fetch|network/i.test(err.message)) errorText = err.message;
+      if (err instanceof Error && err.message && !/fetch|network/i.test(err.message))
+        errorText = err.message;
       else errorText = "We couldn't reach the gift. Check your connection and try again.";
     }
     if (full) {
@@ -625,14 +728,21 @@ function ContributePage() {
   return (
     <div
       className="min-h-screen px-4 py-10 sm:px-6 sm:py-14"
-      style={{ background: meshGradient(palette.primary, palette.accent, palette.background), color: ink, fontFamily: fonts.body }}
+      style={{
+        background: meshGradient(palette.primary, palette.accent, palette.background),
+        color: ink,
+        fontFamily: fonts.body,
+      }}
     >
       <div className="mx-auto grid max-w-6xl grid-cols-[minmax(0,1fr)] gap-10 lg:grid-cols-[minmax(0,460px)_minmax(0,1fr)]">
         <div>
           {done ? (
             <div className="flex items-center justify-center gap-3 text-left">
               <Bo pose="delivery" size={120} animateKey={submitCount} />
-              <p className="max-w-[14ch] text-2xl leading-tight" style={{ fontFamily: fonts.heading }}>
+              <p
+                className="max-w-[14ch] text-2xl leading-tight"
+                style={{ fontFamily: fonts.heading }}
+              >
                 Your note is on its way to {recipient}
               </p>
             </div>
@@ -654,19 +764,31 @@ function ContributePage() {
                 {named ? `Add something for ${named}` : "Add something to the gift"}
               </h1>
               <p className="mx-auto mt-3 max-w-sm text-center text-[15px] leading-relaxed opacity-80 text-pretty">
-                {named ? `Friends are putting together a gift for ${named}.` : "Friends are putting a gift together."} {openModules.length > 0 ? `${friendAddLine(openModules.map((m) => m.type))} It stays a surprise until they open it.` : FRIEND_PAGE.notReady}
+                {named
+                  ? `Friends are putting together a gift for ${named}.`
+                  : "Friends are putting a gift together."}{" "}
+                {openModules.length > 0
+                  ? `${friendAddLine(openModules.map((m) => m.type))} It stays a surprise until they open it.`
+                  : FRIEND_PAGE.notReady}
               </p>
               <p className="mt-4 flex items-center justify-center gap-1.5 text-xs opacity-70">
                 <Users className="size-3.5" />
-                {friendCount === 0 ? "Be the first one in" : `${friendCount} ${friendCount === 1 ? "friend has" : "friends have"} added something`}
+                {friendCount === 0
+                  ? "Be the first one in"
+                  : `${friendCount} ${friendCount === 1 ? "friend has" : "friends have"} added something`}
               </p>
             </>
           )}
 
           {done ? (
-            <div ref={doneRef} className="rise mt-8 rounded-[28px] p-8 text-center shadow-[0_24px_60px_-34px_rgba(43,37,34,.55)]" style={{ backgroundColor: surface }}>
+            <div
+              ref={doneRef}
+              className="rise mt-8 rounded-[28px] p-8 text-center shadow-[0_24px_60px_-34px_rgba(43,37,34,.55)]"
+              style={{ backgroundColor: surface }}
+            >
               <p className="text-[15px] opacity-85">
-                It's in. The organiser checks every note before the gift goes out, so {named || "they"} won't see it until then.
+                It's in. The organiser checks every note before the gift goes out, so{" "}
+                {named || "they"} won't see it until then.
               </p>
               <button
                 onClick={() => {
@@ -680,7 +802,9 @@ function ContributePage() {
               </button>
               <a
                 href="/"
-                onClick={() => siteId && trackEvent("make_your_own_clicked", siteId, { source: "friend_page" })}
+                onClick={() =>
+                  siteId && trackEvent("make_your_own_clicked", siteId, { source: "friend_page" })
+                }
                 className="mt-4 block text-xs underline underline-offset-2 opacity-75"
               >
                 Make a gift like this for someone
@@ -689,7 +813,11 @@ function ContributePage() {
           ) : openModules.length === 0 ? (
             <p className="mt-10 text-center text-sm opacity-80">{FRIEND_PAGE.notReady}</p>
           ) : (
-            <form onSubmit={submit} className="mt-8 rounded-[28px] p-5 shadow-[0_24px_60px_-34px_rgba(43,37,34,.55)] sm:p-7" style={{ backgroundColor: surface }}>
+            <form
+              onSubmit={submit}
+              className="mt-8 rounded-[28px] p-5 shadow-[0_24px_60px_-34px_rgba(43,37,34,.55)] sm:p-7"
+              style={{ backgroundColor: surface }}
+            >
               <p className="text-sm font-medium">What would you like to add?</p>
               <div
                 className={`mt-3 grid gap-2 ${shownTabs.length + (extraTabs ? 1 : 0) === 1 ? "grid-cols-1" : shownTabs.length + (extraTabs ? 1 : 0) === 2 ? "grid-cols-2" : shownTabs.length + (extraTabs ? 1 : 0) === 4 ? "grid-cols-2 min-[420px]:grid-cols-4" : "grid-cols-3"}`}
@@ -707,10 +835,29 @@ function ContributePage() {
                       aria-selected={on}
                       onClick={() => switchSection(mod.type)}
                       className="flex flex-col items-center gap-1.5 rounded-2xl px-2 py-3 text-center text-[13px] leading-tight font-medium transition-transform hover:-translate-y-0.5"
-                      style={on ? { backgroundColor: palette.accent, color: onAccent } : { backgroundColor: palette.background, color: ink, boxShadow: `inset 0 0 0 1px ${ink}1a` }}
+                      style={
+                        on
+                          ? { backgroundColor: palette.accent, color: onAccent }
+                          : {
+                              backgroundColor: palette.background,
+                              color: ink,
+                              boxShadow: `inset 0 0 0 1px ${ink}1a`,
+                            }
+                      }
                     >
                       <Icon className="size-5" />
-                      {SHORT[mod.type] ?? (mod.label === "Voice messages" ? "Voice note" : mod.label === "Word cloud" ? "A word" : mod.label === "Photobooth" ? "Photo" : mod.label === "Letters" ? "Letter" : mod.label === "Songs" ? "Song" : mod.label)}
+                      {SHORT[mod.type] ??
+                        (mod.label === "Voice messages"
+                          ? "Voice note"
+                          : mod.label === "Word cloud"
+                            ? "A word"
+                            : mod.label === "Photobooth"
+                              ? "Photo"
+                              : mod.label === "Letters"
+                                ? "Letter"
+                                : mod.label === "Songs"
+                                  ? "Song"
+                                  : mod.label)}
                     </button>
                   );
                 })}
@@ -720,10 +867,16 @@ function ContributePage() {
                     aria-expanded={moreTabs}
                     onClick={() => setMoreTabs((v) => !v)}
                     className="flex flex-col items-center justify-center gap-1.5 rounded-2xl px-2 py-3 text-center text-[13px] leading-tight font-medium"
-                    style={{ backgroundColor: palette.background, color: ink, boxShadow: `inset 0 0 0 1px ${ink}1a` }}
+                    style={{
+                      backgroundColor: palette.background,
+                      color: ink,
+                      boxShadow: `inset 0 0 0 1px ${ink}1a`,
+                    }}
                   >
                     <MoreHorizontal className="size-5" />
-                    {moreTabs ? FRIEND_PAGE.fewer : `${FRIEND_PAGE.more} (${openModules.length - TAB_LIMIT})`}
+                    {moreTabs
+                      ? FRIEND_PAGE.fewer
+                      : `${FRIEND_PAGE.more} (${openModules.length - TAB_LIMIT})`}
                   </button>
                 ) : null}
               </div>
@@ -753,7 +906,8 @@ function ContributePage() {
                         className="squish grid aspect-square place-items-center rounded-2xl border p-1.5 transition-colors"
                         style={{
                           borderColor: ornament === key ? palette.accent : `${ink}22`,
-                          backgroundColor: ornament === key ? `${palette.accent}22` : palette.background,
+                          backgroundColor:
+                            ornament === key ? `${palette.accent}22` : palette.background,
                         }}
                       >
                         <OrnamentIcon ornamentKey={key} className="size-full" />
@@ -803,8 +957,12 @@ function ContributePage() {
               ) : null}
 
               {active === "photobooth" && photosFull && !editingId ? (
-                <p className="mt-5 rounded-2xl px-4 py-3 text-sm" style={{ border: `1px solid ${ink}22` }}>
-                  This gift has all the photos it can hold. You can still leave a note in another section.
+                <p
+                  className="mt-5 rounded-2xl px-4 py-3 text-sm"
+                  style={{ border: `1px solid ${ink}22` }}
+                >
+                  This gift has all the photos it can hold. You can still leave a note in another
+                  section.
                 </p>
               ) : active === "photobooth" ? (
                 <>
@@ -847,7 +1005,11 @@ function ContributePage() {
                           type="button"
                           onClick={() => setIdea(idea)}
                           className="rounded-full px-3 py-1.5 text-xs"
-                          style={idea === pickedIdea ? { background: accent, color: onAccent } : { ...fieldStyle }}
+                          style={
+                            idea === pickedIdea
+                              ? { background: accent, color: onAccent }
+                              : { ...fieldStyle }
+                          }
                         >
                           {idea}
                         </button>
@@ -869,7 +1031,9 @@ function ContributePage() {
 
               {active === "songs" ? (
                 <>
-                  <label className="mt-4 block text-sm font-medium">Spotify, YouTube or Apple Music link</label>
+                  <label className="mt-4 block text-sm font-medium">
+                    Spotify, YouTube or Apple Music link
+                  </label>
                   <input
                     value={link}
                     onChange={(e) => setLink(e.target.value)}
@@ -877,7 +1041,9 @@ function ContributePage() {
                     className="mt-2 w-full rounded-xl px-4 py-3 text-sm outline-none"
                     style={fieldStyle}
                   />
-                  <label className="mt-4 block text-sm font-medium">Why this song? (optional)</label>
+                  <label className="mt-4 block text-sm font-medium">
+                    Why this song? (optional)
+                  </label>
                   <input
                     value={text}
                     maxLength={LIMITS.caption}
@@ -933,7 +1099,9 @@ function ContributePage() {
                     className="mt-2 w-full rounded-xl px-4 py-3 text-sm outline-none"
                     style={fieldStyle}
                   />
-                  <p className="mt-1 text-right text-xs opacity-70">{text.length}/{LIMITS.ornament}</p>
+                  <p className="mt-1 text-right text-xs opacity-70">
+                    {text.length}/{LIMITS.ornament}
+                  </p>
                 </>
               ) : null}
 
@@ -988,7 +1156,15 @@ function ContributePage() {
                   className="mt-6 w-full rounded-full px-5 py-3.5 font-medium disabled:opacity-60"
                   style={{ backgroundColor: palette.accent, color: onAccent }}
                 >
-                  {busy ? (stage === "preparing" ? UPLOAD_COPY.preparing : stage === "uploading" ? UPLOAD_COPY.uploading : "Sending…") : editingId ? "Save changes" : "Send it"}
+                  {busy
+                    ? stage === "preparing"
+                      ? UPLOAD_COPY.preparing
+                      : stage === "uploading"
+                        ? UPLOAD_COPY.uploading
+                        : "Sending…"
+                    : editingId
+                      ? "Save changes"
+                      : "Send it"}
                 </button>
               ) : null}
               <p className="mt-3 text-center text-xs opacity-70">
@@ -1004,14 +1180,27 @@ function ContributePage() {
                 {mine.map((record) => (
                   <li key={record.id} className="flex items-center justify-between gap-3">
                     <span className="min-w-0 flex-1 truncate opacity-85">
-                      {record.text_content || String(Object.values(record.data ?? {}).find((v) => typeof v === "string") ?? "") || record.external_link || (record.media_url ? "A file" : "Your item")}
+                      {record.text_content ||
+                        String(
+                          Object.values(record.data ?? {}).find((v) => typeof v === "string") ?? "",
+                        ) ||
+                        record.external_link ||
+                        (record.media_url ? "A file" : "Your item")}
                     </span>
                     {canEdit ? (
                       <span className="flex shrink-0 gap-3 text-xs">
-                        <button type="button" className="underline" onClick={() => startEdit(record)}>
+                        <button
+                          type="button"
+                          className="underline"
+                          onClick={() => startEdit(record)}
+                        >
                           Edit
                         </button>
-                        <button type="button" className="underline" onClick={() => void removeMine(record)}>
+                        <button
+                          type="button"
+                          className="underline"
+                          onClick={() => void removeMine(record)}
+                        >
                           Delete
                         </button>
                       </span>
@@ -1046,7 +1235,15 @@ function ContributePage() {
               scrollLabel="The gift so far, scrollable"
             >
               <div style={{ backgroundColor: palette.background }}>
-                <FormatView site={site} theme={theme} palette={palette} modules={modules} contributions={giftContributions} calendarEntries={calendarEntries} sample />
+                <FormatView
+                  site={site}
+                  theme={theme}
+                  palette={palette}
+                  modules={modules}
+                  contributions={giftContributions}
+                  calendarEntries={calendarEntries}
+                  sample
+                />
               </div>
             </DevicePreview>
           </div>

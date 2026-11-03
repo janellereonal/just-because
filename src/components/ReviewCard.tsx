@@ -76,7 +76,13 @@ export function ReviewCard({
       {url && item.module_type === "voice" ? (
         <audio controls src={url} className="mt-3 w-full" />
       ) : url && item.module_type === "video" ? (
-        <video controls playsInline preload="metadata" src={url} className="mt-3 aspect-video w-full rounded-xl bg-black" />
+        <video
+          controls
+          playsInline
+          preload="metadata"
+          src={url}
+          className="mt-3 aspect-video w-full rounded-xl bg-black"
+        />
       ) : url ? (
         <img
           src={url}
@@ -91,7 +97,11 @@ export function ReviewCard({
             {long && !expanded ? `${[...text].slice(0, LONG_NOTE).join("").trimEnd()}…` : text}
           </p>
           {long ? (
-            <button type="button" onClick={() => setExpanded((v) => !v)} className="mt-1 text-xs font-medium text-accent underline">
+            <button
+              type="button"
+              onClick={() => setExpanded((v) => !v)}
+              className="mt-1 text-xs font-medium text-accent underline"
+            >
               {expanded ? "Show less" : "Show more"}
             </button>
           ) : null}
@@ -99,7 +109,8 @@ export function ReviewCard({
       ) : null}
       {item.module_type === "tree" ? (
         <p className="mt-2 text-xs text-muted">
-          Ornament: {item.ornament_key?.replace("-", " ") ?? "bauble"} · {item.visibility === "recipient" ? "Only the recipient" : "Anyone can read"}
+          Ornament: {item.ornament_key?.replace("-", " ") ?? "bauble"} ·{" "}
+          {item.visibility === "recipient" ? "Only the recipient" : "Anyone can read"}
         </p>
       ) : null}
       {item.external_link ? (
@@ -139,7 +150,10 @@ export function ReviewCard({
       {confirmDelete ? (
         <div role="alert" className="mt-3 rounded-xl border border-line bg-paper p-3">
           <p className="text-sm font-medium">Delete this note from {item.author_name}?</p>
-          <p className="mt-1 text-xs text-muted">It's gone for good, with any photo or voice note. Hide it instead if you might want it back.</p>
+          <p className="mt-1 text-xs text-muted">
+            It's gone for good, with any photo or voice note. Hide it instead if you might want it
+            back.
+          </p>
           <div className="mt-2 flex gap-2">
             <button
               type="button"

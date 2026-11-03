@@ -11,7 +11,15 @@ export type MediaKind = "photo" | "voice" | "video";
 
 const IMAGE = ["image/jpeg", "image/png", "image/webp", "image/gif", "image/heic", "image/heif"];
 const VIDEO = ["video/mp4", "video/quicktime", "video/webm"];
-const AUDIO = ["audio/mpeg", "audio/mp4", "audio/x-m4a", "audio/aac", "audio/wav", "audio/webm", "audio/ogg"];
+const AUDIO = [
+  "audio/mpeg",
+  "audio/mp4",
+  "audio/x-m4a",
+  "audio/aac",
+  "audio/wav",
+  "audio/webm",
+  "audio/ogg",
+];
 
 export function uploadPathname(kind: UploadKind, targetId: string, filename: string) {
   const folder = kind === "theme" ? "themes" : "gifts";
@@ -20,17 +28,36 @@ export function uploadPathname(kind: UploadKind, targetId: string, filename: str
 }
 
 function r2Config() {
-  const { R2_ACCOUNT_ID, R2_BUCKET, R2_ACCESS_KEY_ID, R2_SECRET_ACCESS_KEY, R2_PUBLIC_URL } = process.env;
-  if (!R2_ACCOUNT_ID || !R2_BUCKET || !R2_ACCESS_KEY_ID || !R2_SECRET_ACCESS_KEY || !R2_PUBLIC_URL) return null;
+  const { R2_ACCOUNT_ID, R2_BUCKET, R2_ACCESS_KEY_ID, R2_SECRET_ACCESS_KEY, R2_PUBLIC_URL } =
+    process.env;
+  if (!R2_ACCOUNT_ID || !R2_BUCKET || !R2_ACCESS_KEY_ID || !R2_SECRET_ACCESS_KEY || !R2_PUBLIC_URL)
+    return null;
   const publicUrl = new URL(R2_PUBLIC_URL);
-  if (publicUrl.protocol !== "https:" || publicUrl.username || publicUrl.password || publicUrl.search || publicUrl.hash) throw new Error("R2_PUBLIC_URL must be a clean HTTPS URL");
-  return { accountId: R2_ACCOUNT_ID, bucket: R2_BUCKET, accessKeyId: R2_ACCESS_KEY_ID, secretAccessKey: R2_SECRET_ACCESS_KEY, publicUrl: publicUrl.toString().replace(/\/$/, "") };
+  if (
+    publicUrl.protocol !== "https:" ||
+    publicUrl.username ||
+    publicUrl.password ||
+    publicUrl.search ||
+    publicUrl.hash
+  )
+    throw new Error("R2_PUBLIC_URL must be a clean HTTPS URL");
+  return {
+    accountId: R2_ACCOUNT_ID,
+    bucket: R2_BUCKET,
+    accessKeyId: R2_ACCESS_KEY_ID,
+    secretAccessKey: R2_SECRET_ACCESS_KEY,
+    publicUrl: publicUrl.toString().replace(/\/$/, ""),
+  };
 }
 
 const sha256 = (value: string | Buffer) => createHash("sha256").update(value).digest("hex");
-const hmac = (key: string | Buffer, value: string) => createHmac("sha256", key).update(value).digest();
+const hmac = (key: string | Buffer, value: string) =>
+  createHmac("sha256", key).update(value).digest();
 function awsEncode(value: string) {
-  return encodeURIComponent(value).replace(/[!'()*]/g, (c) => `%${c.charCodeAt(0).toString(16).toUpperCase()}`);
+  return encodeURIComponent(value).replace(
+    /[!'()*]/g,
+    (c) => `%${c.charCodeAt(0).toString(16).toUpperCase()}`,
+  );
 }
 function r2Path(bucket: string, key = "") {
   return `/${awsEncode(bucket)}${key ? `/${key.split("/").map(awsEncode).join("/")}` : ""}`;
@@ -53,15 +80,35 @@ async function r2Request(method: string, key = "", body?: Buffer, contentType?: 
   const date = amzDate.slice(0, 8);
   const scope = `${date}/auto/s3/aws4_request`;
   const payloadHash = body ? sha256(body) : sha256("");
-  const headers: Record<string, string> = { host, "x-amz-content-sha256": payloadHash, "x-amz-date": amzDate };
+  const headers: Record<string, string> = {
+    host,
+    "x-amz-content-sha256": payloadHash,
+    "x-amz-date": amzDate,
+  };
   if (contentType) headers["content-type"] = contentType;
   const signedHeaders = Object.keys(headers).sort().join(";");
-  const canonicalHeaders = Object.keys(headers).sort().map((name) => `${name}:${headers[name]}\n`).join("");
-  const canonicalRequest = [method, pathName, "", canonicalHeaders, signedHeaders, payloadHash].join("\n");
+  const canonicalHeaders = Object.keys(headers)
+    .sort()
+    .map((name) => `${name}:${headers[name]}\n`)
+    .join("");
+  const canonicalRequest = [
+    method,
+    pathName,
+    "",
+    canonicalHeaders,
+    signedHeaders,
+    payloadHash,
+  ].join("\n");
   const stringToSign = ["AWS4-HMAC-SHA256", amzDate, scope, sha256(canonicalRequest)].join("\n");
-  const signature = createHmac("sha256", signingKey(config.secretAccessKey, date, "auto", "s3")).update(stringToSign).digest("hex");
+  const signature = createHmac("sha256", signingKey(config.secretAccessKey, date, "auto", "s3"))
+    .update(stringToSign)
+    .digest("hex");
   headers.authorization = `AWS4-HMAC-SHA256 Credential=${config.accessKeyId}/${scope}, SignedHeaders=${signedHeaders}, Signature=${signature}`;
-  const response = await fetch(`https://${host}${pathName}`, { method, headers, ...(body ? { body: new Uint8Array(body) } : {}) });
+  const response = await fetch(`https://${host}${pathName}`, {
+    method,
+    headers,
+    ...(body ? { body: new Uint8Array(body) } : {}),
+  });
   if (!response.ok) throw new Error(`R2 ${method} failed (${response.status})`);
   return response;
 }
@@ -99,16 +146,22 @@ export async function saveR2Upload(request: Request) {
   if (!r2Config()) return Response.json({ error: "R2 storage isn't configured." }, { status: 500 });
   const maxRequestBytes = 50 * 1024 * 1024 + 1024 * 1024;
   const declaredLength = Number(request.headers.get("content-length") ?? 0);
-  if (declaredLength > maxRequestBytes) return Response.json({ error: "File too large" }, { status: 413 });
+  if (declaredLength > maxRequestBytes)
+    return Response.json({ error: "File too large" }, { status: 413 });
   const form = await request.formData();
   const file = form.get("file");
   const kind = String(form.get("kind")) as UploadKind;
   const targetId = String(form.get("targetId"));
   const rawMedia = String(form.get("media") ?? "");
-  const media = rawMedia === "photo" || rawMedia === "voice" || rawMedia === "video" ? rawMedia : null;
+  const media =
+    rawMedia === "photo" || rawMedia === "voice" || rawMedia === "video" ? rawMedia : null;
   if (!(file instanceof File)) return Response.json({ error: "No file" }, { status: 400 });
   try {
-    if (!["contribution", "calendar", "theme", "intro"].includes(kind) || !/^[0-9a-f-]{36}$/i.test(targetId)) throw new Error("Invalid upload target");
+    if (
+      !["contribution", "calendar", "theme", "intro"].includes(kind) ||
+      !/^[0-9a-f-]{36}$/i.test(targetId)
+    )
+      throw new Error("Invalid upload target");
     const rules = await authorizeUpload(kind, targetId, media);
     if (!file.size || file.size > rules.maxBytes) throw new Error("File too large");
     if (!rules.contentTypes.includes(file.type)) throw new Error("File type not allowed");
@@ -116,7 +169,10 @@ export async function saveR2Upload(request: Request) {
     await r2Request("PUT", key, Buffer.from(await file.arrayBuffer()), file.type);
     return Response.json({ url: r2MediaUrl(key) });
   } catch (error) {
-    return Response.json({ error: error instanceof Error ? error.message : "Upload refused" }, { status: 400 });
+    return Response.json(
+      { error: error instanceof Error ? error.message : "Upload refused" },
+      { status: 400 },
+    );
   }
 }
 
@@ -130,7 +186,11 @@ export const UPLOAD_CACHE_SECONDS = 60 * 60 * 24 * 365;
  * Friends' files get the limit of what they say they are (photo, voice note or video), and only
  * those file types are accepted, so a "photo" can't be a 50 MB video.
  */
-export async function authorizeUpload(kind: UploadKind, targetId: string, media: MediaKind | null = null) {
+export async function authorizeUpload(
+  kind: UploadKind,
+  targetId: string,
+  media: MediaKind | null = null,
+) {
   if (kind === "theme") {
     await requireAdmin();
     return { contentTypes: IMAGE, maxBytes: 10 * 1024 * 1024 };
@@ -138,7 +198,10 @@ export async function authorizeUpload(kind: UploadKind, targetId: string, media:
   if (kind === "intro") {
     // Stickers, the opening's object and its background: images only, no SVG.
     await requireSiteOwner(targetId);
-    return { contentTypes: ["image/jpeg", "image/png", "image/webp", "image/gif"], maxBytes: 8 * 1024 * 1024 };
+    return {
+      contentTypes: ["image/jpeg", "image/png", "image/webp", "image/gif"],
+      maxBytes: 8 * 1024 * 1024,
+    };
   }
   if (kind === "calendar") {
     await requireSiteOwner(targetId);
@@ -242,7 +305,11 @@ export async function deleteGiftMedia(siteId: string) {
       const { del, list } = await import("@vercel/blob");
       let cursor: string | undefined;
       do {
-        const page = await list({ prefix: `gifts/${siteId}/`, limit: 1000, ...(cursor ? { cursor } : {}) });
+        const page = await list({
+          prefix: `gifts/${siteId}/`,
+          limit: 1000,
+          ...(cursor ? { cursor } : {}),
+        });
         if (page.blobs.length) await del(page.blobs.map((b) => b.url));
         cursor = page.hasMore ? page.cursor : undefined;
       } while (cursor);
@@ -266,19 +333,51 @@ export async function deleteGiftMedia(siteId: string) {
           const date = amzDate.slice(0, 8);
           const scope = `${date}/auto/s3/aws4_request`;
           const payloadHash = sha256("");
-          const headers: Record<string, string> = { host, "x-amz-content-sha256": payloadHash, "x-amz-date": amzDate };
+          const headers: Record<string, string> = {
+            host,
+            "x-amz-content-sha256": payloadHash,
+            "x-amz-date": amzDate,
+          };
           const signedHeaders = Object.keys(headers).sort().join(";");
-          const canonicalHeaders = Object.keys(headers).sort().map((name) => `${name}:${headers[name]}\n`).join("");
-          const canonicalQuery = [...query.entries()].sort(([a], [b]) => a.localeCompare(b)).map(([k, v]) => `${awsEncode(k)}=${awsEncode(v)}`).join("&");
-          const canonicalRequest = ["GET", pathName, canonicalQuery, canonicalHeaders, signedHeaders, payloadHash].join("\n");
-          const stringToSign = ["AWS4-HMAC-SHA256", amzDate, scope, sha256(canonicalRequest)].join("\n");
-          const signature = createHmac("sha256", signingKey(config.secretAccessKey, date, "auto", "s3")).update(stringToSign).digest("hex");
+          const canonicalHeaders = Object.keys(headers)
+            .sort()
+            .map((name) => `${name}:${headers[name]}\n`)
+            .join("");
+          const canonicalQuery = [...query.entries()]
+            .sort(([a], [b]) => a.localeCompare(b))
+            .map(([k, v]) => `${awsEncode(k)}=${awsEncode(v)}`)
+            .join("&");
+          const canonicalRequest = [
+            "GET",
+            pathName,
+            canonicalQuery,
+            canonicalHeaders,
+            signedHeaders,
+            payloadHash,
+          ].join("\n");
+          const stringToSign = ["AWS4-HMAC-SHA256", amzDate, scope, sha256(canonicalRequest)].join(
+            "\n",
+          );
+          const signature = createHmac(
+            "sha256",
+            signingKey(config.secretAccessKey, date, "auto", "s3"),
+          )
+            .update(stringToSign)
+            .digest("hex");
           headers.authorization = `AWS4-HMAC-SHA256 Credential=${config.accessKeyId}/${scope}, SignedHeaders=${signedHeaders}, Signature=${signature}`;
           const response = await fetch(`https://${host}${pathName}?${canonicalQuery}`, { headers });
           if (!response.ok) throw new Error(`R2 listing failed (${response.status})`);
           const xml = await response.text();
-          const decodeXml = (value: string) => value.replace(/&amp;/g, "&").replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&quot;/g, '"').replace(/&apos;/g, "'");
-          const keys = [...xml.matchAll(/<Key>([^<]+)<\/Key>/g)].map((m) => decodeXml(m[1]!)).filter(Boolean);
+          const decodeXml = (value: string) =>
+            value
+              .replace(/&amp;/g, "&")
+              .replace(/&lt;/g, "<")
+              .replace(/&gt;/g, ">")
+              .replace(/&quot;/g, '"')
+              .replace(/&apos;/g, "'");
+          const keys = [...xml.matchAll(/<Key>([^<]+)<\/Key>/g)]
+            .map((m) => decodeXml(m[1]!))
+            .filter(Boolean);
           for (const key of keys) await r2Request("DELETE", key);
           const next = /<NextContinuationToken>([^<]+)<\/NextContinuationToken>/.exec(xml)?.[1];
           continuationToken = next ? decodeXml(next) : undefined;
@@ -291,7 +390,8 @@ export async function deleteGiftMedia(siteId: string) {
   // Local dev: files are named after their path, gifts_<siteId>_...
   try {
     const { readdir, rm } = await import("node:fs/promises");
-    for (const f of await readdir(DEV_DIR)) if (f.includes(`gifts_${siteId}_`)) await rm(path.join(DEV_DIR, f), { force: true });
+    for (const f of await readdir(DEV_DIR))
+      if (f.includes(`gifts_${siteId}_`)) await rm(path.join(DEV_DIR, f), { force: true });
   } catch {
     /* no dev uploads folder */
   }

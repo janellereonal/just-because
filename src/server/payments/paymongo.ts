@@ -13,7 +13,16 @@
  */
 import { createHmac, timingSafeEqual } from "node:crypto";
 import { enabledPaymentMethods, statementDescriptor } from "@/config/pricing";
-import type { CardOrigin, CheckoutOrder, CheckoutResult, ExpireResult, PaidEvent, PayMethod, PaymentProvider, WebhookOutcome } from "./types";
+import type {
+  CardOrigin,
+  CheckoutOrder,
+  CheckoutResult,
+  ExpireResult,
+  PaidEvent,
+  PayMethod,
+  PaymentProvider,
+  WebhookOutcome,
+} from "./types";
 
 const PAID_EVENT = "checkout_session.payment.paid";
 /** How old a webhook signature may be, in seconds. */
@@ -29,7 +38,9 @@ function secretKey() {
   if (!key) throw new Error("PAYMONGO_SECRET_KEY isn't set.");
   if (key.startsWith("sk_live_") && process.env["PAYMONGO_ALLOW_LIVE"] !== "true") {
     // Guard rail: we're in test mode until going live is a deliberate decision.
-    throw new Error("Live PayMongo keys are blocked. Set PAYMONGO_ALLOW_LIVE=true when it's time to go live.");
+    throw new Error(
+      "Live PayMongo keys are blocked. Set PAYMONGO_ALLOW_LIVE=true when it's time to go live.",
+    );
   }
   return key;
 }
@@ -48,7 +59,9 @@ async function call<T>(path: string, init: RequestInit = {}): Promise<T> {
   });
   const text = await res.text();
   if (!res.ok) {
-    throw new Error(`PayMongo ${init.method ?? "GET"} ${path} failed (${res.status}): ${text.slice(0, 500)}`);
+    throw new Error(
+      `PayMongo ${init.method ?? "GET"} ${path} failed (${res.status}): ${text.slice(0, 500)}`,
+    );
   }
   return JSON.parse(text) as T;
 }
@@ -80,7 +93,12 @@ type PaymentRow = {
     status: string;
     currency?: string | null;
     foreign_fee?: number | null;
-    source?: { id?: string | null; type?: string | null; brand?: string | null; country?: string | null } | null;
+    source?: {
+      id?: string | null;
+      type?: string | null;
+      brand?: string | null;
+      country?: string | null;
+    } | null;
     billing?: { address?: { country?: string | null } | null } | null;
   };
 };
@@ -88,14 +106,18 @@ type PaymentRow = {
 const WALLETS: Record<string, PayMethod> = { gcash: "gcash", paymaya: "paymaya", qrph: "qrph" };
 
 /** What paid, and for cards whether the card came from outside the Philippines. Metrics only. */
-export function describePayment(p: PaymentRow["attributes"]): { method: PayMethod; cardOrigin: CardOrigin | null } {
+export function describePayment(p: PaymentRow["attributes"]): {
+  method: PayMethod;
+  cardOrigin: CardOrigin | null;
+} {
   const type = (p.source?.type ?? "").toLowerCase();
   if (WALLETS[type]) return { method: WALLETS[type]!, cardOrigin: null };
   const isCard = type === "card" || !!p.source?.brand || (p.source?.id ?? "").startsWith("card_");
   if (!isCard) return { method: "other", cardOrigin: null };
   // The card's own country is the real answer; a foreign-card fee or the billing country are fallbacks.
   const cardCountry = (p.source?.country ?? "").toUpperCase();
-  if (cardCountry) return { method: "card", cardOrigin: cardCountry === "PH" ? "local" : "foreign" };
+  if (cardCountry)
+    return { method: "card", cardOrigin: cardCountry === "PH" ? "local" : "foreign" };
   if ((p.foreign_fee ?? 0) > 0) return { method: "card", cardOrigin: "foreign" };
   const billing = (p.billing?.address?.country ?? "").toUpperCase();
   if (billing) return { method: "card", cardOrigin: billing === "PH" ? "local" : "foreign" };
@@ -104,7 +126,8 @@ export function describePayment(p: PaymentRow["attributes"]): { method: PayMetho
 
 async function createCheckout(order: CheckoutOrder): Promise<CheckoutResult> {
   // Hosted checkout is pesos only. Dollars need the Payment Intents flow (docs/payments-international.md).
-  if (order.currency !== "PHP") throw new Error(`PayMongo hosted checkout only takes PHP, not ${order.currency}.`);
+  if (order.currency !== "PHP")
+    throw new Error(`PayMongo hosted checkout only takes PHP, not ${order.currency}.`);
   const body = {
     data: {
       attributes: {
@@ -128,7 +151,12 @@ async function createCheckout(order: CheckoutOrder): Promise<CheckoutResult> {
         metadata: { order_id: order.orderId, site_id: order.siteId },
         ...(statementDescriptor ? { statement_descriptor: statementDescriptor } : {}),
         ...(order.customerEmail
-          ? { billing: { email: order.customerEmail, ...(order.customerName ? { name: order.customerName } : {}) } }
+          ? {
+              billing: {
+                email: order.customerEmail,
+                ...(order.customerName ? { name: order.customerName } : {}),
+              },
+            }
           : {}),
       },
     },
@@ -164,7 +192,10 @@ type EventPayload = {
     attributes?: {
       type?: string;
       livemode?: boolean;
-      data?: { id?: string; attributes?: { reference_number?: string; metadata?: Record<string, string> } };
+      data?: {
+        id?: string;
+        attributes?: { reference_number?: string; metadata?: Record<string, string> };
+      };
     };
   };
 };
@@ -196,7 +227,10 @@ async function handleWebhook(rawBody: string, headers: Headers): Promise<Webhook
   const signed =
     !!secret &&
     !!sig &&
-    safeEqualHex(createHmac("sha256", secret).update(`${sig.t}.${rawBody}`).digest("hex"), live ? sig.li : sig.te);
+    safeEqualHex(
+      createHmac("sha256", secret).update(`${sig.t}.${rawBody}`).digest("hex"),
+      live ? sig.li : sig.te,
+    );
   // A signature older than this could be a replay; treat it as a hint instead (we re-fetch either way).
   const fresh = !!sig && Math.abs(Date.now() / 1000 - Number(sig.t)) <= SIGNATURE_TOLERANCE_S;
   if (!signed || !eventId || !fresh) {
@@ -217,16 +251,33 @@ async function handleWebhook(rawBody: string, headers: Headers): Promise<Webhook
 
   const event = await checkPaid(checkoutId, { eventId, eventType });
   // A paid event whose session shows nothing paid: let applyPaidEvent log it as underpaid.
-  return { kind: "paid", event: event ?? { eventId, eventType, checkoutId, orderId: null, paymentId: null, amountPaid: 0 } };
+  return {
+    kind: "paid",
+    event: event ?? {
+      eventId,
+      eventType,
+      checkoutId,
+      orderId: null,
+      paymentId: null,
+      amountPaid: 0,
+    },
+  };
 }
 
 /** Asks PayMongo what was paid on this checkout session. Null if nothing yet. */
 async function checkPaid(
   checkoutId: string,
-  source: { eventId: string; eventType: string } = { eventId: `check:${checkoutId}`, eventType: "checkout_session.check" },
+  source: { eventId: string; eventType: string } = {
+    eventId: `check:${checkoutId}`,
+    eventType: "checkout_session.check",
+  },
 ): Promise<PaidEvent | null> {
-  const session = await call<CheckoutSession>(`/v1/checkout_sessions/${encodeURIComponent(checkoutId)}`);
-  const paid = (session.data.attributes.payments ?? []).filter((p) => p.attributes.status === "paid");
+  const session = await call<CheckoutSession>(
+    `/v1/checkout_sessions/${encodeURIComponent(checkoutId)}`,
+  );
+  const paid = (session.data.attributes.payments ?? []).filter(
+    (p) => p.attributes.status === "paid",
+  );
   if (paid.length === 0) return null;
   const attrs = session.data.attributes;
   const first = paid[0]!.attributes;
@@ -250,7 +301,9 @@ function hasPaid(session: CheckoutSession) {
 
 async function reopenCheckout(checkoutId: string): Promise<string | null> {
   try {
-    const session = await call<CheckoutSession>(`/v1/checkout_sessions/${encodeURIComponent(checkoutId)}`);
+    const session = await call<CheckoutSession>(
+      `/v1/checkout_sessions/${encodeURIComponent(checkoutId)}`,
+    );
     const a = session.data.attributes;
     if (hasPaid(session) || a.status === "expired" || !a.checkout_url) return null;
     return a.checkout_url;
@@ -262,12 +315,16 @@ async function reopenCheckout(checkoutId: string): Promise<string | null> {
 
 async function expireCheckout(checkoutId: string): Promise<ExpireResult> {
   try {
-    await call<CheckoutSession>(`/v1/checkout_sessions/${encodeURIComponent(checkoutId)}/expire`, { method: "POST" });
+    await call<CheckoutSession>(`/v1/checkout_sessions/${encodeURIComponent(checkoutId)}/expire`, {
+      method: "POST",
+    });
     return "closed";
   } catch (error) {
     // 400 means paid, already expired, or a payment under way. Ask which.
     try {
-      const session = await call<CheckoutSession>(`/v1/checkout_sessions/${encodeURIComponent(checkoutId)}`);
+      const session = await call<CheckoutSession>(
+        `/v1/checkout_sessions/${encodeURIComponent(checkoutId)}`,
+      );
       if (hasPaid(session)) return "paid";
       if (session.data.attributes.status === "expired") return "closed";
     } catch {
@@ -280,16 +337,34 @@ async function expireCheckout(checkoutId: string): Promise<ExpireResult> {
 
 /* ---------------- webhook setup (admin) ---------------- */
 
-export type WebhookInfo = { id: string; url: string; events: string[]; status: string; livemode: boolean };
+export type WebhookInfo = {
+  id: string;
+  url: string;
+  events: string[];
+  status: string;
+  livemode: boolean;
+};
 
 type WebhookResource = {
   id: string;
-  attributes: { url: string; events: string[]; status: string; livemode: boolean; secret_key?: string };
+  attributes: {
+    url: string;
+    events: string[];
+    status: string;
+    livemode: boolean;
+    secret_key?: string;
+  };
 };
 
 /** Never return or log `secret_key`. */
 function toInfo(w: WebhookResource): WebhookInfo {
-  return { id: w.id, url: w.attributes.url, events: w.attributes.events, status: w.attributes.status, livemode: w.attributes.livemode };
+  return {
+    id: w.id,
+    url: w.attributes.url,
+    events: w.attributes.events,
+    status: w.attributes.status,
+    livemode: w.attributes.livemode,
+  };
 }
 
 /** Webhooks registered for whichever mode our secret key is in (test key → test webhooks). */
@@ -304,7 +379,9 @@ export async function listWebhooks(): Promise<WebhookInfo[]> {
  * returns on create is thrown away: unsigned or unmatched calls are handled as
  * "check this checkout" hints (see handleWebhook), so no secret has to be copied.
  */
-export async function ensureWebhook(url: string): Promise<{ action: string; webhook: WebhookInfo }> {
+export async function ensureWebhook(
+  url: string,
+): Promise<{ action: string; webhook: WebhookInfo }> {
   const existing = (await listWebhooks()).find((w) => w.url === url);
   if (!existing) {
     const created = await call<{ data: WebhookResource }>("/v1/webhooks", {
@@ -318,17 +395,28 @@ export async function ensureWebhook(url: string): Promise<{ action: string; webh
   if (!webhook.events.includes(PAID_EVENT)) {
     const updated = await call<{ data: WebhookResource }>(`/v1/webhooks/${webhook.id}`, {
       method: "PUT",
-      body: JSON.stringify({ data: { attributes: { url, events: [...webhook.events, PAID_EVENT] } } }),
+      body: JSON.stringify({
+        data: { attributes: { url, events: [...webhook.events, PAID_EVENT] } },
+      }),
     });
     webhook = toInfo(updated.data);
     action = "added the paid event";
   }
   if (webhook.status !== "enabled") {
-    const enabled = await call<{ data: WebhookResource }>(`/v1/webhooks/${webhook.id}/enable`, { method: "POST" });
+    const enabled = await call<{ data: WebhookResource }>(`/v1/webhooks/${webhook.id}/enable`, {
+      method: "POST",
+    });
     webhook = toInfo(enabled.data);
     action = action === "already set up" ? "turned it on" : `${action} and turned it on`;
   }
   return { action, webhook };
 }
 
-export const paymongo: PaymentProvider = { name: "paymongo", createCheckout, handleWebhook, checkPaid, reopenCheckout, expireCheckout };
+export const paymongo: PaymentProvider = {
+  name: "paymongo",
+  createCheckout,
+  handleWebhook,
+  checkPaid,
+  reopenCheckout,
+  expireCheckout,
+};

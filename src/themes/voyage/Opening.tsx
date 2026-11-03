@@ -16,7 +16,15 @@ import type { ThemePalette } from "@/themes/_shared/design";
 import { FallbackButton, Layer, SPRING, useBeats, useHaptics } from "@/themes/_shared/stage";
 import { burstSet } from "@/themes/_shared/Sprinkles";
 import { initialsOf } from "@/themes/_shared/iconSets";
-import { FloorShadow, LightPool, Object3D, Sheen, TEXTURE, Texture, rim } from "@/themes/_shared/light";
+import {
+  FloorShadow,
+  LightPool,
+  Object3D,
+  Sheen,
+  TEXTURE,
+  Texture,
+  rim,
+} from "@/themes/_shared/light";
 import { foley, melody } from "@/lib/play";
 
 const STAMP_GAP = 240;
@@ -136,203 +144,231 @@ export function VoyageOpening(p: OpeningProps) {
       style={{ color: c.ink }}
     >
       {/* Sun up and to the left, and clouds at three distances */}
-      <LightPool color="rgba(255,236,190,.85)" shape="closest-side at 50% 50%" className="-top-[22%] -left-[30%] aspect-square w-[90%]" />
+      <LightPool
+        color="rgba(255,236,190,.85)"
+        shape="closest-side at 50% 50%"
+        className="-top-[22%] -left-[30%] aspect-square w-[90%]"
+      />
       <Layer depth={-4} className="pointer-events-none absolute inset-0 z-[1]">
         <Cloud className="top-[12%] left-[6%] w-[34%]" opacity={0.7} drift={60} />
         <Cloud className="top-[24%] right-[-6%] w-[30%]" opacity={0.55} drift={48} delay={-20} />
       </Layer>
       <Layer depth={-9} className="pointer-events-none absolute inset-0 z-[2]">
         <Cloud className="bottom-[16%] left-[-10%] w-[52%]" opacity={0.85} drift={36} delay={-8} />
-        <Cloud className="bottom-[30%] right-[-14%] w-[46%]" opacity={0.75} drift={42} delay={-30} />
+        <Cloud
+          className="bottom-[30%] right-[-14%] w-[46%]"
+          opacity={0.75}
+          drift={42}
+          delay={-30}
+        />
       </Layer>
 
       <Layer depth={8} className="relative z-[3]" style={{ width: "min(80cqi, 340px)" }}>
-        <Object3D pose={{ x: 10, y: 9, z: -2.5 }} strength={10} settle={beat >= 2} innerClassName="!size-auto">
-        {/* Its shadow, far below on the cloud tops */}
-        <div className="pointer-events-none absolute inset-0" style={{ transform: "translateZ(-70px)", transformStyle: "preserve-3d" }}>
-          <motion.div className="absolute inset-0" animate={{ opacity: torn ? 0.6 : 1 }}>
-            <FloorShadow lift={0.7} tint="40,80,130" strength={0.55} depth={10} radius={18} className="inset-[4%]" />
-          </motion.div>
-        </div>
-        <div ref={passRef} className="relative" style={{ fontFamily: "var(--jb-text)" }}>
-          {/* The main pass */}
-          <motion.div
-            className="relative overflow-hidden rounded-t-[18px]"
-            animate={torn ? { y: -14, rotate: -1.5 } : { y: 0, rotate: 0 }}
-            transition={SPRING.heavy}
-            style={{
-              background: c.cream,
-              boxShadow: rim(0.8),
-              ...(paperMask("bottom") as object),
-            }}
+        <Object3D
+          pose={{ x: 10, y: 9, z: -2.5 }}
+          strength={10}
+          settle={beat >= 2}
+          innerClassName="!size-auto"
+        >
+          {/* Its shadow, far below on the cloud tops */}
+          <div
+            className="pointer-events-none absolute inset-0"
+            style={{ transform: "translateZ(-70px)", transformStyle: "preserve-3d" }}
           >
-            <Texture material="card" />
-            <Sheen strength={0.75} angle={112} width={20} travel={60} />
-            <div
-              className="relative flex items-center justify-between px-5 py-3"
-              style={{ background: `linear-gradient(180deg, color-mix(in srgb, ${c.orange} 88%, #fff), ${c.orange})`, color: c.cream }}
-            >
-              <span className="text-[11px] font-bold tracking-[0.24em] uppercase">
-                {p.badge || "Boarding pass"}
-              </span>
-              <Plane color={c.cream!} />
-            </div>
-            <div className="relative px-5 pt-4 pb-6">
-              <div className="flex items-end justify-between">
-                <div>
-                  <div className="text-[9px] tracking-[0.2em] uppercase opacity-60">From</div>
-                  <div
-                    className="text-[clamp(2rem,11cqi,2.8rem)] leading-none font-bold"
-                    style={{ fontFamily: "var(--jb-display)" }}
-                  >
-                    YOU
-                  </div>
-                </div>
-                <div className="mb-2 flex-1 px-3">
-                  <div
-                    className="relative h-px w-full"
-                    style={{
-                      backgroundImage: `linear-gradient(90deg, ${c.ink}66 50%, transparent 0)`,
-                      backgroundSize: "8px 1px",
-                    }}
-                  >
-                    <span className="absolute -top-[7px] left-1/2 -translate-x-1/2">
-                      <Plane color={c.orange!} small />
-                    </span>
-                  </div>
-                </div>
-                <div className="text-right">
-                  <div className="text-[9px] tracking-[0.2em] uppercase opacity-60">To</div>
-                  <div
-                    className="text-[clamp(2rem,11cqi,2.8rem)] leading-none font-bold"
-                    style={{ fontFamily: "var(--jb-display)" }}
-                  >
-                    {code}
-                  </div>
-                </div>
-              </div>
-              <div className="mt-4 grid grid-cols-3 gap-2 text-[10px] leading-tight">
-                <Field label="Passenger" value={p.recipient} wide />
-                <Field label="Date" value={today} />
-                <Field label="Gate" value="B4" />
-                <Field label="Seat" value="1A" />
-                <Field label="Class" value="First" />
-              </div>
-              {/* Passport stamps land here */}
-              <div className="pointer-events-none absolute inset-0" aria-hidden="true">
-                {names.map((n, i) => (
-                  <Stamp
-                    key={i}
-                    i={i}
-                    name={n}
-                    on={i < stamped}
-                    reduced={p.reduced}
-                    colors={[c.orange!, c.ink!, "#2F6FA8"]}
-                  />
-                ))}
-              </div>
-            </div>
-          </motion.div>
-
-          {/* The perforation, with the tab you drag */}
-          <motion.div
-            ref={lineRef}
-            className="relative h-0"
-            animate={{ opacity: torn ? 0 : 1 }}
-            transition={{ duration: 0.25 }}
-          >
-            <span
-              className="absolute top-[-1px] right-[14px] left-[14px] h-[2px]"
-              style={{
-                backgroundImage: `radial-gradient(circle, ${c.ink}55 1px, transparent 1.5px)`,
-                backgroundSize: "8px 2px",
-              }}
-            />
-            <motion.span
-              className="absolute top-0 left-0 h-[2px] origin-left"
-              style={{ width: x, background: `${c.ink}22` }}
-            />
-            <motion.button
-              type="button"
-              aria-label="Tear off the stub"
-              disabled={!canDrag}
-              className="absolute top-[-20px] left-[-12px] z-[6] grid size-10 touch-none place-items-center rounded-full outline-none focus-visible:ring-4 focus-visible:ring-white/70"
-              style={{ x }}
-              drag={canDrag ? "x" : false}
-              dragConstraints={{ left: 0, right: lineW }}
-              dragElastic={0.04}
-              dragMomentum={false}
-              onDrag={() => {
-                const t = Math.floor(progress.get() * 7);
-                if (t > lastTick.current) {
-                  lastTick.current = t;
-                  h.tick();
-                  foley("rip");
-                }
-              }}
-              onDragEnd={() => {
-                if (progress.get() > 0.6) tear();
-                else {
-                  lastTick.current = 0;
-                  void animate(x, 0, SPRING.wobbly);
-                }
-              }}
-              onKeyDown={(e) => {
-                if (e.key === "Enter" || e.key === " " || e.key === "ArrowRight") {
-                  e.preventDefault();
-                  tear();
-                }
-              }}
-            >
-              <span
-                className="grid size-7 place-items-center rounded-full text-[13px] font-bold"
-                style={{
-                  background: c.orange,
-                  color: c.cream,
-                  boxShadow: "0 4px 10px -4px rgba(0,0,0,.45)",
-                }}
-              >
-                ›
-              </span>
-              {canDrag ? (
-                <span
-                  className="jb-pulse absolute top-1/2 left-1/2 size-9 -translate-y-1/2 rounded-full"
-                  style={{ boxShadow: `0 0 0 2px ${c.orange}88` }}
-                />
-              ) : null}
-            </motion.button>
-          </motion.div>
-
-          {/* The stub: hinges down as you tear, then falls away */}
-          <motion.div style={{ rotate: stubAngle, y: gap, originX: 1, originY: 0 }}>
+            <motion.div className="absolute inset-0" animate={{ opacity: torn ? 0.6 : 1 }}>
+              <FloorShadow
+                lift={0.7}
+                tint="40,80,130"
+                strength={0.55}
+                depth={10}
+                radius={18}
+                className="inset-[4%]"
+              />
+            </motion.div>
+          </div>
+          <div ref={passRef} className="relative" style={{ fontFamily: "var(--jb-text)" }}>
+            {/* The main pass */}
             <motion.div
-              className="relative rounded-b-[18px] px-5 pt-4 pb-4"
-              initial={false}
-              animate={
-                torn
-                  ? { y: 420, rotate: 24, x: 40, opacity: 0 }
-                  : { y: 0, rotate: 0, x: 0, opacity: 1 }
-              }
-              transition={
-                torn ? { ...SPRING.heavy, opacity: { delay: 0.5, duration: 0.3 } } : { duration: 0 }
-              }
+              className="relative overflow-hidden rounded-t-[18px]"
+              animate={torn ? { y: -14, rotate: -1.5 } : { y: 0, rotate: 0 }}
+              transition={SPRING.heavy}
               style={{
                 background: c.cream,
                 boxShadow: rim(0.8),
-                ...(paperMask("top") as object),
+                ...(paperMask("bottom") as object),
               }}
             >
               <Texture material="card" />
               <Sheen strength={0.75} angle={112} width={20} travel={60} />
-              <div className="flex items-center justify-between text-[10px] leading-tight">
-                <Field label="Passenger" value={p.recipient} />
-                <Field label="Seat" value="1A" />
+              <div
+                className="relative flex items-center justify-between px-5 py-3"
+                style={{
+                  background: `linear-gradient(180deg, color-mix(in srgb, ${c.orange} 88%, #fff), ${c.orange})`,
+                  color: c.cream,
+                }}
+              >
+                <span className="text-[11px] font-bold tracking-[0.24em] uppercase">
+                  {p.badge || "Boarding pass"}
+                </span>
+                <Plane color={c.cream!} />
               </div>
-              <Barcode ink={c.ink!} seed={p.recipient} />
+              <div className="relative px-5 pt-4 pb-6">
+                <div className="flex items-end justify-between">
+                  <div>
+                    <div className="text-[9px] tracking-[0.2em] uppercase opacity-60">From</div>
+                    <div
+                      className="text-[clamp(2rem,11cqi,2.8rem)] leading-none font-bold"
+                      style={{ fontFamily: "var(--jb-display)" }}
+                    >
+                      YOU
+                    </div>
+                  </div>
+                  <div className="mb-2 flex-1 px-3">
+                    <div
+                      className="relative h-px w-full"
+                      style={{
+                        backgroundImage: `linear-gradient(90deg, ${c.ink}66 50%, transparent 0)`,
+                        backgroundSize: "8px 1px",
+                      }}
+                    >
+                      <span className="absolute -top-[7px] left-1/2 -translate-x-1/2">
+                        <Plane color={c.orange!} small />
+                      </span>
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <div className="text-[9px] tracking-[0.2em] uppercase opacity-60">To</div>
+                    <div
+                      className="text-[clamp(2rem,11cqi,2.8rem)] leading-none font-bold"
+                      style={{ fontFamily: "var(--jb-display)" }}
+                    >
+                      {code}
+                    </div>
+                  </div>
+                </div>
+                <div className="mt-4 grid grid-cols-3 gap-2 text-[10px] leading-tight">
+                  <Field label="Passenger" value={p.recipient} wide />
+                  <Field label="Date" value={today} />
+                  <Field label="Gate" value="B4" />
+                  <Field label="Seat" value="1A" />
+                  <Field label="Class" value="First" />
+                </div>
+                {/* Passport stamps land here */}
+                <div className="pointer-events-none absolute inset-0" aria-hidden="true">
+                  {names.map((n, i) => (
+                    <Stamp
+                      key={i}
+                      i={i}
+                      name={n}
+                      on={i < stamped}
+                      reduced={p.reduced}
+                      colors={[c.orange!, c.ink!, "#2F6FA8"]}
+                    />
+                  ))}
+                </div>
+              </div>
             </motion.div>
-          </motion.div>
-        </div>
 
+            {/* The perforation, with the tab you drag */}
+            <motion.div
+              ref={lineRef}
+              className="relative h-0"
+              animate={{ opacity: torn ? 0 : 1 }}
+              transition={{ duration: 0.25 }}
+            >
+              <span
+                className="absolute top-[-1px] right-[14px] left-[14px] h-[2px]"
+                style={{
+                  backgroundImage: `radial-gradient(circle, ${c.ink}55 1px, transparent 1.5px)`,
+                  backgroundSize: "8px 2px",
+                }}
+              />
+              <motion.span
+                className="absolute top-0 left-0 h-[2px] origin-left"
+                style={{ width: x, background: `${c.ink}22` }}
+              />
+              <motion.button
+                type="button"
+                aria-label="Tear off the stub"
+                disabled={!canDrag}
+                className="absolute top-[-20px] left-[-12px] z-[6] grid size-10 touch-none place-items-center rounded-full outline-none focus-visible:ring-4 focus-visible:ring-white/70"
+                style={{ x }}
+                drag={canDrag ? "x" : false}
+                dragConstraints={{ left: 0, right: lineW }}
+                dragElastic={0.04}
+                dragMomentum={false}
+                onDrag={() => {
+                  const t = Math.floor(progress.get() * 7);
+                  if (t > lastTick.current) {
+                    lastTick.current = t;
+                    h.tick();
+                    foley("rip");
+                  }
+                }}
+                onDragEnd={() => {
+                  if (progress.get() > 0.6) tear();
+                  else {
+                    lastTick.current = 0;
+                    void animate(x, 0, SPRING.wobbly);
+                  }
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" || e.key === " " || e.key === "ArrowRight") {
+                    e.preventDefault();
+                    tear();
+                  }
+                }}
+              >
+                <span
+                  className="grid size-7 place-items-center rounded-full text-[13px] font-bold"
+                  style={{
+                    background: c.orange,
+                    color: c.cream,
+                    boxShadow: "0 4px 10px -4px rgba(0,0,0,.45)",
+                  }}
+                >
+                  ›
+                </span>
+                {canDrag ? (
+                  <span
+                    className="jb-pulse absolute top-1/2 left-1/2 size-9 -translate-y-1/2 rounded-full"
+                    style={{ boxShadow: `0 0 0 2px ${c.orange}88` }}
+                  />
+                ) : null}
+              </motion.button>
+            </motion.div>
+
+            {/* The stub: hinges down as you tear, then falls away */}
+            <motion.div style={{ rotate: stubAngle, y: gap, originX: 1, originY: 0 }}>
+              <motion.div
+                className="relative rounded-b-[18px] px-5 pt-4 pb-4"
+                initial={false}
+                animate={
+                  torn
+                    ? { y: 420, rotate: 24, x: 40, opacity: 0 }
+                    : { y: 0, rotate: 0, x: 0, opacity: 1 }
+                }
+                transition={
+                  torn
+                    ? { ...SPRING.heavy, opacity: { delay: 0.5, duration: 0.3 } }
+                    : { duration: 0 }
+                }
+                style={{
+                  background: c.cream,
+                  boxShadow: rim(0.8),
+                  ...(paperMask("top") as object),
+                }}
+              >
+                <Texture material="card" />
+                <Sheen strength={0.75} angle={112} width={20} travel={60} />
+                <div className="flex items-center justify-between text-[10px] leading-tight">
+                  <Field label="Passenger" value={p.recipient} />
+                  <Field label="Seat" value="1A" />
+                </div>
+                <Barcode ink={c.ink!} seed={p.recipient} />
+              </motion.div>
+            </motion.div>
+          </div>
         </Object3D>
 
         {/* The character, ready to go */}
@@ -367,7 +403,13 @@ export function VoyageOpening(p: OpeningProps) {
 
       {/* One cloud drifts past in front, out of focus */}
       <Layer depth={22} className="pointer-events-none absolute inset-0 z-[5]">
-        <Cloud className="bottom-[4%] left-[-24%] w-[70%]" opacity={0.7} drift={30} delay={-12} blur={6} />
+        <Cloud
+          className="bottom-[4%] left-[-24%] w-[70%]"
+          opacity={0.7}
+          drift={30}
+          delay={-12}
+          blur={6}
+        />
       </Layer>
 
       <div className="relative z-[45] h-11">
@@ -526,9 +568,30 @@ function Suitcase({ color, band }: { color: string; band: string }) {
  * A cumulus cloud: lit from the top left, shaded underneath, drifting slowly.
  * Width sets its size; it keeps its own shape.
  */
-function Cloud({ className = "", opacity = 0.8, drift = 40, delay = 0, blur = 0 }: { className?: string; opacity?: number; drift?: number; delay?: number; blur?: number }) {
+function Cloud({
+  className = "",
+  opacity = 0.8,
+  drift = 40,
+  delay = 0,
+  blur = 0,
+}: {
+  className?: string;
+  opacity?: number;
+  drift?: number;
+  delay?: number;
+  blur?: number;
+}) {
   return (
-    <span aria-hidden="true" className={`jb-cloud absolute block aspect-[2.4] ${className}`} style={{ opacity, animationDuration: `${drift}s`, animationDelay: `${delay}s`, filter: blur ? `blur(${blur}px)` : undefined }}>
+    <span
+      aria-hidden="true"
+      className={`jb-cloud absolute block aspect-[2.4] ${className}`}
+      style={{
+        opacity,
+        animationDuration: `${drift}s`,
+        animationDelay: `${delay}s`,
+        filter: blur ? `blur(${blur}px)` : undefined,
+      }}
+    >
       <span
         className="absolute inset-0 block"
         style={{
@@ -543,7 +606,14 @@ function Cloud({ className = "", opacity = 0.8, drift = 40, delay = 0, blur = 0 
         }}
       />
       {/* Underside in shade */}
-      <span className="absolute inset-0 block" style={{ background: "linear-gradient(180deg, transparent 45%, rgba(110,150,190,.35) 80%)", WebkitMaskImage: "radial-gradient(40% 46% at 50% 55%, #000 60%, transparent 75%)", maskImage: "radial-gradient(40% 46% at 50% 55%, #000 60%, transparent 75%)" }} />
+      <span
+        className="absolute inset-0 block"
+        style={{
+          background: "linear-gradient(180deg, transparent 45%, rgba(110,150,190,.35) 80%)",
+          WebkitMaskImage: "radial-gradient(40% 46% at 50% 55%, #000 60%, transparent 75%)",
+          maskImage: "radial-gradient(40% 46% at 50% 55%, #000 60%, transparent 75%)",
+        }}
+      />
     </span>
   );
 }

@@ -4,7 +4,7 @@ import { ExportGift } from "@/components/ExportGift";
 import { themeKindOf } from "@/lib/themeKind";
 import { resolveStyle } from "@/lib/styles";
 import { isQuietOccasion, occasionName } from "@/lib/occasions";
-import {useParams} from "@tanstack/react-router";
+import { useParams } from "@tanstack/react-router";
 import { keepPreviousData, useQuery, useQueryClient } from "@tanstack/react-query";
 import { localToday, msToLocalMidnight } from "@/lib/time";
 import { FormatView } from "@/components/formats/FormatView";
@@ -43,7 +43,6 @@ import { engineIntroProps, simbangVisible } from "@/lib/engineGift";
 import { t } from "@/i18n";
 import { isFlagOn } from "@/config/flags";
 
-
 /** Today's date here. Updates at local midnight, and when the tab comes back (a laptop waking up). */
 function useLocalDay() {
   const [day, setDay] = useState(() => localToday());
@@ -78,7 +77,12 @@ function PublishedPage() {
   const [storyDone, setStoryDone] = useState(false);
   // Don't show the reveal until we know this device didn't already skip it.
   const [skipChecked, setSkipChecked] = useState(false);
-  const { data: site, isLoading, error, refetch } = useQuery({
+  const {
+    data: site,
+    isLoading,
+    error,
+    refetch,
+  } = useQuery({
     queryKey: ["site-slug", slug],
     queryFn: () => fetchSiteBySlug(slug),
   });
@@ -133,7 +137,8 @@ function PublishedPage() {
   useEffect(() => {
     if (!site || locked || !meReady || opened || !skipChecked) return;
     if (me && (me.id === site.creator_id || me.isAdmin)) return;
-    if (isGiftOpen(site) && formatInfo(site.format).usesIntro) trackEvent("theme_opening_started", site.id);
+    if (isGiftOpen(site) && formatInfo(site.format).usesIntro)
+      trackEvent("theme_opening_started", site.id);
   }, [site?.id, locked, meReady, opened, skipChecked, me?.id]);
 
   if (isLoading || !meReady || (!!site && (!themeReady || !skipChecked))) {
@@ -158,7 +163,15 @@ function PublishedPage() {
   }
   const isOwner = !!me && (me.id === site.creator_id || me.isAdmin);
   if (site.disabled_at && !me?.isAdmin) {
-    return <PageNotFound title={REPORT_COPY.pausedTitle} message={REPORT_COPY.pausedBody} actionLabel={REPORT_COPY.makeYourOwn} actionTo="/" showHeader={false} />;
+    return (
+      <PageNotFound
+        title={REPORT_COPY.pausedTitle}
+        message={REPORT_COPY.pausedBody}
+        actionLabel={REPORT_COPY.makeYourOwn}
+        actionTo="/"
+        showHeader={false}
+      />
+    );
   }
   if (isGiftEnded(site) && site.status === "published") {
     return <GiftEndedPage isOwner={isOwner} siteId={site.id} title={site.title} />;
@@ -210,62 +223,77 @@ function PublishedPage() {
       {opened && simbang.night !== null && simbang.night < 9 ? (
         <div className="pointer-events-none fixed inset-x-0 bottom-4 z-[55] flex justify-center px-4">
           <p className="rounded-full bg-ink/85 px-4 py-2 text-center text-xs text-cream shadow-lg backdrop-blur">
-            {simbang.night === 0 ? t("theme.parol.before") : `${t("theme.parol.night", { n: simbang.night })}. ${t("theme.parol.next")}`}
+            {simbang.night === 0
+              ? t("theme.parol.before")
+              : `${t("theme.parol.night", { n: simbang.night })}. ${t("theme.parol.next")}`}
           </p>
         </div>
       ) : null}
       {!opened && formatInfo(site.format).usesIntro ? (
         <Suspense fallback={<PageLoading label="Opening your gift…" />}>
-        {/* The gift waits underneath, so the opening can reveal it through the object. */}
-        <div aria-hidden="true" inert data-gift-underlay="" className="pointer-events-none fixed inset-0 overflow-hidden">
-          <FormatView
-            site={site}
-            theme={theme}
-            palette={palette}
-            modules={modules}
-            contributions={[...shown.filter((item) => item.module_type !== "tree"), ...treeOrnaments]}
-            calendarEntries={calendarEntries}
-          />
-        </div>
-        {/* Long names wrap in the opening too (see .jb-gift). */}
-        <div className="jb-gift contents">
-          {showStory ? (
-            <FriendsArrive
-              names={contributions.map((c) => c.author_name)}
-              recipient={site.custom_text.recipient_name}
+          {/* The gift waits underneath, so the opening can reveal it through the object. */}
+          <div
+            aria-hidden="true"
+            inert
+            data-gift-underlay=""
+            className="pointer-events-none fixed inset-0 overflow-hidden"
+          >
+            <FormatView
+              site={site}
+              theme={theme}
               palette={palette}
-              kind={resolveStyle(site, theme).introKind}
-              birthday={site.occasion === "birthday" || (!site.occasion && themeKindOf(theme) === "birthday")}
-              onDone={() => setStoryDone(true)}
+              modules={modules}
+              contributions={[
+                ...shown.filter((item) => item.module_type !== "tree"),
+                ...treeOrnaments,
+              ]}
+              calendarEntries={calendarEntries}
             />
-          ) : (
-            <GiftIntro
-              style={introStyleForTheme(theme?.name)}
-              kind={resolveStyle(site, theme).introKind}
-              giftStyle={site.style}
-              occasionBadge={site.occasion ? occasionName(site.occasion) : undefined}
-              calm={isQuietOccasion(site.occasion)}
-              palette={palette}
-              fonts={fonts}
-              backgroundStyle={site.background_style ?? "paper"}
-              recipientName={site.custom_text.recipient_name}
-              introText={site.intro_text ?? undefined}
-              settings={site.intro_settings}
-              character={site.character}
-              iconSet={site.icon_set}
-              contributors={[...new Set(contributions.map((c) => c.author_name.trim()).filter(Boolean))]}
-              {...engineIntroProps(theme?.name, site, contributions)}
-              onOpen={() => {
-                trackEvent("theme_opening_completed", site.id);
-                setOpened(true);
-              }}
-              onSkip={() => {
-                rememberIntroSkip(site.id);
-                setOpened(true);
-              }}
-            />
-          )}
-        </div>
+          </div>
+          {/* Long names wrap in the opening too (see .jb-gift). */}
+          <div className="jb-gift contents">
+            {showStory ? (
+              <FriendsArrive
+                names={contributions.map((c) => c.author_name)}
+                recipient={site.custom_text.recipient_name}
+                palette={palette}
+                kind={resolveStyle(site, theme).introKind}
+                birthday={
+                  site.occasion === "birthday" ||
+                  (!site.occasion && themeKindOf(theme) === "birthday")
+                }
+                onDone={() => setStoryDone(true)}
+              />
+            ) : (
+              <GiftIntro
+                style={introStyleForTheme(theme?.name)}
+                kind={resolveStyle(site, theme).introKind}
+                giftStyle={site.style}
+                occasionBadge={site.occasion ? occasionName(site.occasion) : undefined}
+                calm={isQuietOccasion(site.occasion)}
+                palette={palette}
+                fonts={fonts}
+                backgroundStyle={site.background_style ?? "paper"}
+                recipientName={site.custom_text.recipient_name}
+                introText={site.intro_text ?? undefined}
+                settings={site.intro_settings}
+                character={site.character}
+                iconSet={site.icon_set}
+                contributors={[
+                  ...new Set(contributions.map((c) => c.author_name.trim()).filter(Boolean)),
+                ]}
+                {...engineIntroProps(theme?.name, site, contributions)}
+                onOpen={() => {
+                  trackEvent("theme_opening_completed", site.id);
+                  setOpened(true);
+                }}
+                onSkip={() => {
+                  rememberIntroSkip(site.id);
+                  setOpened(true);
+                }}
+              />
+            )}
+          </div>
         </Suspense>
       ) : (
         <FormatView
@@ -282,7 +310,10 @@ function PublishedPage() {
         />
       )}
       {opened || !formatInfo(site.format).usesIntro ? (
-        <div className="flex flex-wrap items-center justify-center gap-x-3" style={{ background: palette.background }}>
+        <div
+          className="flex flex-wrap items-center justify-center gap-x-3"
+          style={{ background: palette.background }}
+        >
           {/* Scrapbook has this in its own footer; every other layout gets it here. */}
           {formatInfo(site.format).usesIntro && site.format !== "scrapbook" ? (
             <button
@@ -366,13 +397,23 @@ function PasswordGate({ slug, recipient }: { slug: string; recipient?: string | 
 }
 
 /** A gift whose plan ran out. The link still lands somewhere kind. */
-function GiftEndedPage({ isOwner, siteId, title }: { isOwner: boolean; siteId: string; title: string }) {
+function GiftEndedPage({
+  isOwner,
+  siteId,
+  title,
+}: {
+  isOwner: boolean;
+  siteId: string;
+  title: string;
+}) {
   const [extendOpen, setExtendOpen] = useState(false);
   return (
     <div className="grid min-h-screen place-items-center bg-paper px-6 text-center text-ink">
       <div className="max-w-md">
         <Bo pose="idle" size={150} title="Bo" />
-        <h1 className="mt-4 font-display text-3xl font-medium tracking-tight">This gift has been wrapped up</h1>
+        <h1 className="mt-4 font-display text-3xl font-medium tracking-tight">
+          This gift has been wrapped up
+        </h1>
         <p className="mt-2 text-muted text-pretty">
           {isOwner
             ? "Your plan's time is up, so the link now shows this page. Everything friends added is still saved: extend it to open it again, or download a copy."
@@ -388,7 +429,10 @@ function GiftEndedPage({ isOwner, siteId, title }: { isOwner: boolean; siteId: s
               Extend this gift
             </button>
             <ExportGift siteId={siteId} title={title} />
-            <a href={`/sites/${siteId}`} className="rounded-full border border-line px-6 py-3 text-sm font-medium">
+            <a
+              href={`/sites/${siteId}`}
+              className="rounded-full border border-line px-6 py-3 text-sm font-medium"
+            >
               Back to the editor
             </a>
           </div>
@@ -401,7 +445,9 @@ function GiftEndedPage({ isOwner, siteId, title }: { isOwner: boolean; siteId: s
             Make a gift of your own
           </a>
         )}
-        {isOwner ? <ExtendDialog siteId={siteId} open={extendOpen} onOpenChange={setExtendOpen} /> : null}
+        {isOwner ? (
+          <ExtendDialog siteId={siteId} open={extendOpen} onOpenChange={setExtendOpen} />
+        ) : null}
       </div>
     </div>
   );

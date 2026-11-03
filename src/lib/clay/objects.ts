@@ -2,7 +2,22 @@
  * Clay objects with faces (the "little friends"). Same box and rules as
  * scene.ts. Each sits on the floor at y = 112 and leaves room for its face.
  */
-import { blob, cone, feet, GLOSS, heartOutline, lathe, limb, pillow, rbox, shade, starOutline, torus, tube, type ClayRecipe } from "@/lib/clay/shapes";
+import {
+  blob,
+  cone,
+  feet,
+  GLOSS,
+  heartOutline,
+  lathe,
+  limb,
+  pillow,
+  rbox,
+  shade,
+  starOutline,
+  torus,
+  tube,
+  type ClayRecipe,
+} from "@/lib/clay/shapes";
 
 const INK = "#2E2A33";
 const GOLD = "#E5C26B";
@@ -29,8 +44,15 @@ const CYL = (soft = 0.08): [number, number][] => [
 
 /** A flame (candles, cake). */
 function flame(x: number, y: number, s = 1) {
-  const outer = lathe(DROP, [x, y, 2], [10 * s, 18 * s, 10 * s], "#FFB547", 0, { rough: 0.3, gloss: 0.4, sheen: 0.8 });
-  const inner = lathe(DROP, [x, y + 3 * s, 4], [5 * s, 9 * s, 5 * s], "#FFF0B8", 0, { rough: 0.3, sheen: 1 });
+  const outer = lathe(DROP, [x, y, 2], [10 * s, 18 * s, 10 * s], "#FFB547", 0, {
+    rough: 0.3,
+    gloss: 0.4,
+    sheen: 0.8,
+  });
+  const inner = lathe(DROP, [x, y + 3 * s, 4], [5 * s, 9 * s, 5 * s], "#FFF0B8", 0, {
+    rough: 0.3,
+    sheen: 1,
+  });
   return [outer, inner];
 }
 
@@ -122,7 +144,10 @@ export const OBJECTS: Record<string, ClayRecipe> = {
     blob([60, 90, 23], [5, 4, 3], GOLD, [0, 0, 0], { rough: 0.3, gloss: 0.6 }),
     ...feet(110, shade(c.primary, -18), [46, 74], [14, 6, 12]),
   ],
-  drop: (c) => [lathe(DROP, [60, 70, 0], [64, 80, 58], c.primary, 0, { rough: 0.45, gloss: 0.25 }), ...feet(110, shade(c.primary, -14), [48, 72], [14, 6, 12])],
+  drop: (c) => [
+    lathe(DROP, [60, 70, 0], [64, 80, 58], c.primary, 0, { rough: 0.45, gloss: 0.25 }),
+    ...feet(110, shade(c.primary, -14), [48, 72], [14, 6, 12]),
+  ],
   planet: (c) => [
     blob([60, 62, 0], [66, 66, 62], c.primary),
     blob([60, 44, 0], [56, 6, 53], shade(c.primary, 16)),
@@ -145,7 +170,9 @@ export const OBJECTS: Record<string, ClayRecipe> = {
       0,
       { rough: 0.4, gloss: 0.35 },
     ),
-    ...[90, 96, 102].map((y) => lathe(CYL(0.3), [60, y, 0], [30, 6, 29], "#9EA3AC", 0, { rough: 0.35, gloss: 0.5 })),
+    ...[90, 96, 102].map((y) =>
+      lathe(CYL(0.3), [60, y, 0], [30, 6, 29], "#9EA3AC", 0, { rough: 0.35, gloss: 0.5 }),
+    ),
     lathe(CYL(0.4), [60, 108, 0], [16, 6, 15], INK),
   ],
   bubble: (c) => {
@@ -168,7 +195,13 @@ export const OBJECTS: Record<string, ClayRecipe> = {
     lathe(CYL(0.12), [60, 88, 0], [80, 36, 66], c.skin),
     lathe(CYL(0.25), [60, 70, 0], [84, 14, 70], c.primary),
     // Icing drips, mirrored around the middle.
-    ...[28, 44, 60, 76, 92].map((x, i) => blob([x, 79 + (i % 2) * 3, 26 - Math.abs(x - 60) * 0.25], [10, 12 + (i % 2) * 4, 8], c.primary)),
+    ...[28, 44, 60, 76, 92].map((x, i) =>
+      blob(
+        [x, 79 + (i % 2) * 3, 26 - Math.abs(x - 60) * 0.25],
+        [10, 12 + (i % 2) * 4, 8],
+        c.primary,
+      ),
+    ),
     blob([60, 62, 6], [10, 10, 10], c.secondary, [0, 0, 0], { rough: 0.3, gloss: 0.6 }),
   ],
   balloon: (c) => [
@@ -251,4 +284,3 @@ export const OBJECTS: Record<string, ClayRecipe> = {
     blob([60, 64, 0], [72, 72, 60], c.primary),
   ],
 };
-

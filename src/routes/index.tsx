@@ -35,7 +35,9 @@ export const Route = createFileRoute("/")({
 });
 
 // With styles on, the first step is "Pick a style".
-const STEPS = isFlagOn("styles") ? LANDING.how.steps.map((s, i) => (i === 0 ? { ...s, title: t("gallery.step") } : s)) : LANDING.how.steps;
+const STEPS = isFlagOn("styles")
+  ? LANDING.how.steps.map((s, i) => (i === 0 ? { ...s, title: t("gallery.step") } : s))
+  : LANDING.how.steps;
 
 const FAQ = [
   ...LANDING_MORE.faq.slice(0, 4),
@@ -189,7 +191,9 @@ function Index() {
             to={galleryLink().to}
             className="squish inline-flex min-h-12 items-center rounded-full bg-glass px-5 text-sm font-medium ring-1 ring-ink/12 hover:bg-pink/40"
           >
-            {isFlagOn("styles") ? t("gallery.seeAllPlain") : LANDING_MORE.themes.link(themes.length)}
+            {isFlagOn("styles")
+              ? t("gallery.seeAllPlain")
+              : LANDING_MORE.themes.link(themes.length)}
           </Link>
         </div>
         <ExampleGifts />
@@ -220,7 +224,9 @@ function Index() {
           </Link>
         </div>
         <SectionsBento />
-        <p className="mt-5 max-w-2xl text-[15px] text-ink/70">{LANDING.inside.more(MODULES.length - BENTO_COUNT)}</p>
+        <p className="mt-5 max-w-2xl text-[15px] text-ink/70">
+          {LANDING.inside.more(MODULES.length - BENTO_COUNT)}
+        </p>
       </section>
 
       {/* Pricing */}

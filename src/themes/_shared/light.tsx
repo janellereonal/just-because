@@ -66,17 +66,23 @@ const svg = (w: number, body: string) =>
 const noise = (id: string, freq: string, octaves: number, matrix: string, seed = 2) =>
   `<filter id='${id}' x='0' y='0' width='100%' height='100%'><feTurbulence type='fractalNoise' baseFrequency='${freq}' numOctaves='${octaves}' seed='${seed}' stitchTiles='stitch'/><feColorMatrix values='${matrix}'/></filter><rect width='100%' height='100%' filter='url(#${id})'/>`;
 // Alpha from the noise, color fixed: "0 0 0 0 r  0 0 0 0 g  0 0 0 0 b  0 0 0 a k".
-const ink = (r: number, g: number, b: number, a: number, k: number) => `0 0 0 0 ${r} 0 0 0 0 ${g} 0 0 0 0 ${b} 0 0 0 ${a} ${k}`;
+const ink = (r: number, g: number, b: number, a: number, k: number) =>
+  `0 0 0 0 ${r} 0 0 0 0 ${g} 0 0 0 0 ${b} 0 0 0 ${a} ${k}`;
 
 export const TEXTURE = {
   /** Cotton paper: soft formation clouds and a fine tooth. */
-  paper: svg(260, noise("d", ".018", 3, ink(0.45, 0.38, 0.3, 0.5, -0.18), 7) + noise("c", ".85", 2, ink(0.35, 0.3, 0.25, 0.22, 0), 5)),
+  paper: svg(
+    260,
+    noise("d", ".018", 3, ink(0.45, 0.38, 0.3, 0.5, -0.18), 7) +
+      noise("c", ".85", 2, ink(0.35, 0.3, 0.25, 0.22, 0), 5),
+  ),
   /** Smooth card stock: just the tooth. */
   card: svg(180, noise("c", "1.1", 2, ink(0.3, 0.27, 0.22, 0.22, 0), 4)),
   /** Frosted vellum: soft clouds, a few long fibers. */
   vellum: svg(
     320,
-    noise("v", ".035", 3, ink(1, 1, 1, 0.9, -0.25), 6) + noise("f", ".006 .3", 1, ink(0.6, 0.6, 0.6, 0.6, -0.35), 11),
+    noise("v", ".035", 3, ink(1, 1, 1, 0.9, -0.25), 6) +
+      noise("f", ".006 .3", 1, ink(0.6, 0.6, 0.6, 0.6, -0.35), 11),
   ),
   /** Linen weave with slubs. */
   linen: svg(
@@ -86,7 +92,11 @@ export const TEXTURE = {
       noise("s", ".01 .5", 1, ink(0.3, 0.22, 0.15, 1.2, -0.72), 13),
   ),
   /** Felt: dense short fuzz. */
-  felt: svg(160, noise("u", ".7", 3, ink(0.2, 0.2, 0.25, 0.55, -0.05), 7) + noise("l", ".08", 2, ink(1, 1, 1, 0.5, -0.2), 3)),
+  felt: svg(
+    160,
+    noise("u", ".7", 3, ink(0.2, 0.2, 0.25, 0.55, -0.05), 7) +
+      noise("l", ".08", 2, ink(1, 1, 1, 0.5, -0.2), 3),
+  ),
   /** Wood grain along x (walnut veneer). */
   wood: svg(
     400,
@@ -95,9 +105,17 @@ export const TEXTURE = {
       noise("p", ".01 .7", 2, ink(1, 0.9, 0.8, 0.6, -0.3), 12),
   ),
   /** Kraft board: coarse flecks. */
-  kraft: svg(200, noise("k", ".55", 3, ink(0.3, 0.2, 0.1, 0.7, -0.15), 5) + noise("d", ".03", 2, ink(0.25, 0.15, 0.05, 0.5, -0.2), 9)),
+  kraft: svg(
+    200,
+    noise("k", ".55", 3, ink(0.3, 0.2, 0.1, 0.7, -0.15), 5) +
+      noise("d", ".03", 2, ink(0.25, 0.15, 0.05, 0.5, -0.2), 9),
+  ),
   /** Brushed metal: long fine streaks. */
-  brushed: svg(220, noise("m", ".002 .9", 2, ink(1, 1, 1, 0.5, -0.18), 3) + noise("n", ".002 .7", 2, ink(0, 0, 0, 0.35, -0.15), 7)),
+  brushed: svg(
+    220,
+    noise("m", ".002 .9", 2, ink(1, 1, 1, 0.5, -0.18), 3) +
+      noise("n", ".002 .7", 2, ink(0, 0, 0, 0.35, -0.15), 7),
+  ),
   /** Plain fine noise for anything else. */
   grain: svg(160, noise("r", ".85", 3, ink(0, 0, 0, 0.16, 0), 1)),
 } as const;
@@ -105,7 +123,11 @@ export type Material = keyof typeof TEXTURE;
 
 /** Background layers that need a quieter texture (backgrounds can't take opacity). */
 export const TEXTURE_SOFT = {
-  paper: svg(260, noise("d", ".018", 3, ink(0.45, 0.38, 0.3, 0.12, -0.045), 7) + noise("c", ".85", 2, ink(0.35, 0.3, 0.25, 0.1, 0), 5)),
+  paper: svg(
+    260,
+    noise("d", ".018", 3, ink(0.45, 0.38, 0.3, 0.12, -0.045), 7) +
+      noise("c", ".85", 2, ink(0.35, 0.3, 0.25, 0.1, 0), 5),
+  ),
   linen: svg(
     200,
     noise("h", ".006 .9", 2, ink(0.38, 0.28, 0.2, 0.3, -0.1), 2) +
@@ -114,7 +136,17 @@ export const TEXTURE_SOFT = {
   ),
 } as const;
 
-const TEXTURE_SIZE: Record<Material, number> = { paper: 260, card: 180, vellum: 320, linen: 200, felt: 160, wood: 400, kraft: 200, brushed: 220, grain: 160 };
+const TEXTURE_SIZE: Record<Material, number> = {
+  paper: 260,
+  card: 180,
+  vellum: 320,
+  linen: 200,
+  felt: 160,
+  wood: 400,
+  kraft: 200,
+  brushed: 220,
+  grain: 160,
+};
 
 /** A material laid over a surface. Put it inside the surface (it fills it and keeps its corners). */
 export function Texture({
@@ -137,7 +169,14 @@ export function Texture({
     <span
       aria-hidden="true"
       className={`pointer-events-none absolute inset-0 block ${className}`}
-      style={{ borderRadius: "inherit", backgroundImage: TEXTURE[material], backgroundSize: `${s}px ${s}px`, mixBlendMode: blend, opacity, ...style }}
+      style={{
+        borderRadius: "inherit",
+        backgroundImage: TEXTURE[material],
+        backgroundSize: `${s}px ${s}px`,
+        mixBlendMode: blend,
+        opacity,
+        ...style,
+      }}
     />
   );
 }
@@ -172,7 +211,11 @@ export function Sheen({
   const tx = useTransform(() => `${-x.get() * travel - y.get() * travel * 0.3}%`);
   const half = width / 2;
   return (
-    <span aria-hidden="true" className={`pointer-events-none absolute inset-0 block overflow-hidden ${className}`} style={{ borderRadius: "inherit", mixBlendMode: blend }}>
+    <span
+      aria-hidden="true"
+      className={`pointer-events-none absolute inset-0 block overflow-hidden ${className}`}
+      style={{ borderRadius: "inherit", mixBlendMode: blend }}
+    >
       <motion.span
         className="absolute inset-y-[-20%] left-[-60%] block w-[220%]"
         style={{
@@ -222,22 +265,52 @@ export function FloorShadow({
   const op = useTransform(() => (1 - l() * 0.45) * strength);
   const round = shape === "ellipse" ? "50%" : radius;
   return (
-    <motion.span aria-hidden="true" className={`pointer-events-none absolute block ${className}`} style={{ ...(style as object), x: tx, y: ty, scale: sc, opacity: op, willChange: live ? "transform, opacity" : undefined }}>
+    <motion.span
+      aria-hidden="true"
+      className={`pointer-events-none absolute block ${className}`}
+      style={{
+        ...(style as object),
+        x: tx,
+        y: ty,
+        scale: sc,
+        opacity: op,
+        willChange: live ? "transform, opacity" : undefined,
+      }}
+    >
       {/* Wide, soft penumbra */}
-      <span className="absolute inset-[-6%] block" style={{ borderRadius: round, background: `rgba(${tint},.28)`, filter: "blur(18px)" }} />
+      <span
+        className="absolute inset-[-6%] block"
+        style={{ borderRadius: round, background: `rgba(${tint},.28)`, filter: "blur(18px)" }}
+      />
       {/* Tighter core */}
-      <span className="absolute inset-[3%] block" style={{ borderRadius: round, background: `rgba(${tint},.22)`, filter: "blur(7px)" }} />
+      <span
+        className="absolute inset-[3%] block"
+        style={{ borderRadius: round, background: `rgba(${tint},.22)`, filter: "blur(7px)" }}
+      />
     </motion.span>
   );
 }
 
 /** Contact shadow: the thin dark line where an object touches the surface. */
-export function ContactShadow({ tint = "45,30,25", strength = 1, className = "", style }: { tint?: string; strength?: number; className?: string; style?: React.CSSProperties }) {
+export function ContactShadow({
+  tint = "45,30,25",
+  strength = 1,
+  className = "",
+  style,
+}: {
+  tint?: string;
+  strength?: number;
+  className?: string;
+  style?: React.CSSProperties;
+}) {
   return (
     <span
       aria-hidden="true"
       className={`pointer-events-none absolute block rounded-[50%] ${className}`}
-      style={{ background: `radial-gradient(closest-side, rgba(${tint},${0.55 * strength}), rgba(${tint},${0.18 * strength}) 60%, transparent)`, ...style }}
+      style={{
+        background: `radial-gradient(closest-side, rgba(${tint},${0.55 * strength}), rgba(${tint},${0.18 * strength}) 60%, transparent)`,
+        ...style,
+      }}
     />
   );
 }
@@ -263,7 +336,12 @@ export function LightPool({
     <motion.span
       aria-hidden="true"
       className={`pointer-events-none absolute block ${className}`}
-      style={{ ...(style as object), opacity: intensity, mixBlendMode: blend, background: `radial-gradient(${shape}, ${color}, transparent 70%)` }}
+      style={{
+        ...(style as object),
+        opacity: intensity,
+        mixBlendMode: blend,
+        background: `radial-gradient(${shape}, ${color}, transparent 70%)`,
+      }}
     />
   );
 }
@@ -286,7 +364,14 @@ export function LightShaft({
     () =>
       Array.from({ length: motes }, (_, i) => {
         const r = (k: number) => ((Math.sin(i * 91.7 + k * 13.1) + 1) / 2) % 1;
-        return { left: 8 + r(1) * 70, top: 6 + r(2) * 80, size: 1.5 + r(3) * 2.5, dur: 9 + r(4) * 9, delay: -r(5) * 12, dx: (r(6) - 0.5) * 40 };
+        return {
+          left: 8 + r(1) * 70,
+          top: 6 + r(2) * 80,
+          size: 1.5 + r(3) * 2.5,
+          dur: 9 + r(4) * 9,
+          delay: -r(5) * 12,
+          dx: (r(6) - 0.5) * 40,
+        };
       }),
     [motes],
   );
@@ -326,7 +411,9 @@ export function LightShaft({
 /* ---------- real 3D ---------- */
 
 type Pose = { x: number; y: number; z?: number };
-const PoseContext = createContext<{ ax: MotionValue<number>; ay: MotionValue<number> } | null>(null);
+const PoseContext = createContext<{ ax: MotionValue<number>; ay: MotionValue<number> } | null>(
+  null,
+);
 
 /**
  * A real 3D stage for one object: perspective, a resting pose, and the tilt
@@ -364,12 +451,22 @@ export function Object3D({
   const ay = useTransform(() => (pose.y + x.get() * strength) * k.get());
   // Exactly flat once settled, so the browser draws text sharp again.
   const transform = useTransform(() =>
-    k.get() < 0.002 ? "none" : `rotateX(${ax.get().toFixed(2)}deg) rotateY(${ay.get().toFixed(2)}deg) rotateZ(${((pose.z ?? 0) * k.get()).toFixed(2)}deg)`,
+    k.get() < 0.002
+      ? "none"
+      : `rotateX(${ax.get().toFixed(2)}deg) rotateY(${ay.get().toFixed(2)}deg) rotateZ(${((pose.z ?? 0) * k.get()).toFixed(2)}deg)`,
   );
   return (
     <PoseContext.Provider value={{ ax, ay }}>
       <div className={className} style={{ perspective, ...style }}>
-        <motion.div className={`relative size-full ${innerClassName}`} style={{ ...(innerStyle as object), transformStyle: "preserve-3d", transform, willChange: live ? "transform" : undefined }}>
+        <motion.div
+          className={`relative size-full ${innerClassName}`}
+          style={{
+            ...(innerStyle as object),
+            transformStyle: "preserve-3d",
+            transform,
+            willChange: live ? "transform" : undefined,
+          }}
+        >
           {children}
         </motion.div>
       </div>
@@ -378,7 +475,11 @@ export function Object3D({
 }
 
 /** World normal of a face normal under rotateX(ax) rotateY(ay) (CSS applies Ry first). */
-function rotate(n: [number, number, number], axDeg: number, ayDeg: number): [number, number, number] {
+function rotate(
+  n: [number, number, number],
+  axDeg: number,
+  ayDeg: number,
+): [number, number, number] {
   const ax = (axDeg * Math.PI) / 180;
   const ay = (ayDeg * Math.PI) / 180;
   const [x0, y0, z0] = n;
@@ -426,8 +527,21 @@ export function FaceLight({
   const lit = useTransform(lam, (v) => Math.max(0, (v - 0.72) / 0.28) * bloom);
   return (
     <>
-      <motion.span aria-hidden="true" className="pointer-events-none absolute inset-0 block" style={{ borderRadius: "inherit", background: `rgb(${shade})`, opacity: dark, willChange: live ? "opacity" : undefined }} />
-      <motion.span aria-hidden="true" className="pointer-events-none absolute inset-0 block" style={{ borderRadius: "inherit", background: "#fff", opacity: lit }} />
+      <motion.span
+        aria-hidden="true"
+        className="pointer-events-none absolute inset-0 block"
+        style={{
+          borderRadius: "inherit",
+          background: `rgb(${shade})`,
+          opacity: dark,
+          willChange: live ? "opacity" : undefined,
+        }}
+      />
+      <motion.span
+        aria-hidden="true"
+        className="pointer-events-none absolute inset-0 block"
+        style={{ borderRadius: "inherit", background: "#fff", opacity: lit }}
+      />
     </>
   );
 }

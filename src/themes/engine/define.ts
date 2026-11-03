@@ -19,7 +19,19 @@ import { PARTICLES, type ParticlePreset } from "./particles";
 import { SOUND_PACKS, type SoundPackName } from "./sound";
 import { SLOT_NAMES, type ResolvedSlots, type SlotName } from "./slots";
 
-export const CATEGORIES = ["Birthdays", "Holidays", "Love", "Weddings", "Family", "Friends", "Babies", "Milestones", "Just because", "Pets", "Travel"] as const;
+export const CATEGORIES = [
+  "Birthdays",
+  "Holidays",
+  "Love",
+  "Weddings",
+  "Family",
+  "Friends",
+  "Babies",
+  "Milestones",
+  "Just because",
+  "Pets",
+  "Travel",
+] as const;
 export type ThemeCategory = (typeof CATEGORIES)[number];
 
 /** "global", or an ISO 3166 country code like "PH". */
@@ -171,7 +183,10 @@ export function themeNameFor(def: ThemeDefinition, country: string | null | unde
 
 /** Is this theme offered to visitors from `country`? */
 export function availableIn(def: ThemeDefinition, country: string | null | undefined): boolean {
-  return def.regions.available.includes("global") || (!!country && def.regions.available.includes(country.toUpperCase()));
+  return (
+    def.regions.available.includes("global") ||
+    (!!country && def.regions.available.includes(country.toUpperCase()))
+  );
 }
 
 const HEX = /^#[0-9a-f]{6}$/i;
@@ -179,31 +194,45 @@ const HEX = /^#[0-9a-f]{6}$/i;
 /** Every problem with a definition, in plain words. Empty means it's fine. */
 export function validateTheme(def: ThemeDefinition): string[] {
   const out: string[] = [];
-  if (!/^[a-z][a-z0-9-]*$/.test(def.id)) out.push(`id "${def.id}" should be lower-case letters, numbers and dashes`);
+  if (!/^[a-z][a-z0-9-]*$/.test(def.id))
+    out.push(`id "${def.id}" should be lower-case letters, numbers and dashes`);
   if (!def.name.trim()) out.push("name is empty");
   if (!def.object.trim()) out.push("say what the object is (Theme Bible check 1)");
-  if (!(GESTURES as readonly string[]).includes(def.gesture)) out.push(`unknown gesture "${def.gesture}"`);
-  for (const m of def.materials) if (!(MATERIALS as readonly string[]).includes(m)) out.push(`unknown material "${m}"`);
-  for (const e of def.effects) if (!(PARTICLES as readonly string[]).includes(e)) out.push(`unknown effect "${e}"`);
+  if (!(GESTURES as readonly string[]).includes(def.gesture))
+    out.push(`unknown gesture "${def.gesture}"`);
+  for (const m of def.materials)
+    if (!(MATERIALS as readonly string[]).includes(m)) out.push(`unknown material "${m}"`);
+  for (const e of def.effects)
+    if (!(PARTICLES as readonly string[]).includes(e)) out.push(`unknown effect "${e}"`);
   if (!(def.sound in SOUND_PACKS)) out.push(`unknown sound pack "${def.sound}"`);
-  for (const s of def.slots) if (!(SLOT_NAMES as readonly string[]).includes(s)) out.push(`unknown slot "${s}"`);
-  if (!def.slots.includes("recipient")) out.push("use the recipient slot: every object should be personal (check 3)");
-  for (const [k, v] of Object.entries(def.palette)) if (!HEX.test(v)) out.push(`palette.${k} should be #rrggbb`);
+  for (const s of def.slots)
+    if (!(SLOT_NAMES as readonly string[]).includes(s)) out.push(`unknown slot "${s}"`);
+  if (!def.slots.includes("recipient"))
+    out.push("use the recipient slot: every object should be personal (check 3)");
+  for (const [k, v] of Object.entries(def.palette))
+    if (!HEX.test(v)) out.push(`palette.${k} should be #rrggbb`);
   if (!def.categories.length) out.push("pick at least one category");
   if (!def.regions.available.length) out.push("regions.available is empty");
   for (const r of [...def.regions.available, ...(def.regions.featured ?? [])]) {
-    if (r !== "global" && !/^[A-Z]{2}$/.test(r)) out.push(`region "${r}" should be "global" or a two-letter country code`);
+    if (r !== "global" && !/^[A-Z]{2}$/.test(r))
+      out.push(`region "${r}" should be "global" or a two-letter country code`);
   }
-  for (const f of Object.keys(def.handoff)) if (f !== "default" && !(FORMAT_IDS as readonly string[]).includes(f)) out.push(`handoff for unknown format "${f}"`);
-  if (def.button && !hasMessage(def.button)) out.push(`button "${def.button}" isn't in src/i18n/en.ts`);
+  for (const f of Object.keys(def.handoff))
+    if (f !== "default" && !(FORMAT_IDS as readonly string[]).includes(f))
+      out.push(`handoff for unknown format "${f}"`);
+  if (def.button && !hasMessage(def.button))
+    out.push(`button "${def.button}" isn't in src/i18n/en.ts`);
   if (def.hint && !hasMessage(def.hint)) out.push(`hint "${def.hint}" isn't in src/i18n/en.ts`);
-  for (const k of def.strings ?? []) if (!hasMessage(k)) out.push(`string "${k}" isn't in src/i18n/en.ts`);
+  for (const k of def.strings ?? [])
+    if (!hasMessage(k)) out.push(`string "${k}" isn't in src/i18n/en.ts`);
   if (def.status === "draft" && !def.flag) out.push("a draft theme needs a flag");
   if (!def.dbName.trim()) out.push("dbName is empty (gifts find the theme by it)");
   const o = def.occasion;
-  if (!(FORMAT_IDS as readonly string[]).includes(o.defaultFormat)) out.push(`occasion.defaultFormat "${o.defaultFormat}" isn't a format`);
+  if (!(FORMAT_IDS as readonly string[]).includes(o.defaultFormat))
+    out.push(`occasion.defaultFormat "${o.defaultFormat}" isn't a format`);
   if (!o.sections.length) out.push("occasion.sections is empty");
   if (o.prompts.length < 3 || o.prompts.length > 5) out.push("give friends 3 to 5 prompts");
-  for (const k of [...o.prompts, o.heading, o.greeting]) if (!hasMessage(k)) out.push(`string "${k}" isn't in src/i18n/en.ts`);
+  for (const k of [...o.prompts, o.heading, o.greeting])
+    if (!hasMessage(k)) out.push(`string "${k}" isn't in src/i18n/en.ts`);
   return out;
 }

@@ -15,14 +15,19 @@ export function rateLimit(key: string, max: number, windowMs: number, message: s
   if (list.length >= max) throw new HttpError(429, message);
   list.push(now);
   hits.set(key, list);
-  if (++sweep % 500 === 0) for (const [k, v] of hits) if (!v.some((t) => now - t < 3600_000)) hits.delete(k);
+  if (++sweep % 500 === 0)
+    for (const [k, v] of hits) if (!v.some((t) => now - t < 3600_000)) hits.delete(k);
 }
 
 /** The visitor's IP from the platform headers ("local" in dev). */
 export function clientIp(): string {
   try {
     const req = getRequest();
-    return req?.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || req?.headers.get("x-real-ip") || "local";
+    return (
+      req?.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
+      req?.headers.get("x-real-ip") ||
+      "local"
+    );
   } catch {
     return "local";
   }

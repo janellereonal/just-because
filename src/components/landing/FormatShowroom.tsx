@@ -35,7 +35,9 @@ export function FormatShowroom() {
   useEffect(() => {
     const el = ref.current;
     if (!el) return;
-    const io = new IntersectionObserver(([e]) => setInView(!!e?.isIntersecting), { threshold: 0.3 });
+    const io = new IntersectionObserver(([e]) => setInView(!!e?.isIntersecting), {
+      threshold: 0.3,
+    });
     io.observe(el);
     return () => io.disconnect();
   }, []);
@@ -51,14 +53,34 @@ export function FormatShowroom() {
   }, [auto, inView, format]);
 
   return (
-    <div ref={ref} className="relative mt-10 grid items-center gap-8 lg:grid-cols-[minmax(0,360px)_1fr] lg:gap-12">
+    <div
+      ref={ref}
+      className="relative mt-10 grid items-center gap-8 lg:grid-cols-[minmax(0,360px)_1fr] lg:gap-12"
+    >
       <div className="mx-auto w-full max-w-[340px]">
         <div onPointerDown={() => setAuto(false)}>
-          <DevicePreview device="phone" phoneHeight="min(600px, 70svh)" scrollLabel={C.screenLabel(info.title)}>
+          <DevicePreview
+            device="phone"
+            phoneHeight="min(600px, 70svh)"
+            scrollLabel={C.screenLabel(info.title)}
+          >
             <AnimatePresence mode="wait" initial={false}>
-              <motion.div key={format} initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }} transition={{ duration: 0.28 }}>
+              <motion.div
+                key={format}
+                initial={{ opacity: 0, y: 12 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -8 }}
+                transition={{ duration: 0.28 }}
+              >
                 <Live3DContext.Provider value={false}>
-                  <FormatView site={site} theme={ANA.theme} palette={ANA.palette} modules={ANA.modules} contributions={ANA.notes} calendarEntries={ANA.calendar} />
+                  <FormatView
+                    site={site}
+                    theme={ANA.theme}
+                    palette={ANA.palette}
+                    modules={ANA.modules}
+                    contributions={ANA.notes}
+                    calendarEntries={ANA.calendar}
+                  />
                 </Live3DContext.Provider>
               </motion.div>
             </AnimatePresence>
@@ -67,7 +89,11 @@ export function FormatShowroom() {
         <p className="mt-4 text-center text-sm text-cream/70">{info.about}</p>
       </div>
 
-      <div role="radiogroup" aria-label={isFlagOn("styles") ? t("picker.style.label") : C.pickLabel} className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+      <div
+        role="radiogroup"
+        aria-label={isFlagOn("styles") ? t("picker.style.label") : C.pickLabel}
+        className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3"
+      >
         {FORMATS.map((f) => {
           const on = f.id === format;
           return (
@@ -92,12 +118,19 @@ export function FormatShowroom() {
                   style={{ animationDuration: `${STEP_MS}ms` }}
                 />
               ) : null}
-              <span data-format={f.id} className="fmt-swatch grid h-[92px] place-items-center overflow-hidden rounded-[14px] bg-cream/95 px-3 [&_.fmt-mini]:!h-[70px] [&_.fmt-mini]:!w-full">
+              <span
+                data-format={f.id}
+                className="fmt-swatch grid h-[92px] place-items-center overflow-hidden rounded-[14px] bg-cream/95 px-3 [&_.fmt-mini]:!h-[70px] [&_.fmt-mini]:!w-full"
+              >
                 <FormatMini id={f.id} />
               </span>
               <span className="mt-3 flex items-center justify-between gap-2">
                 <span className="font-display text-[17px] font-semibold">{f.title}</span>
-                {f.isNew ? <span className="rounded-full bg-pink px-2 py-0.5 text-[10px] font-semibold text-ink">{C.isNew}</span> : null}
+                {f.isNew ? (
+                  <span className="rounded-full bg-pink px-2 py-0.5 text-[10px] font-semibold text-ink">
+                    {C.isNew}
+                  </span>
+                ) : null}
               </span>
               <span className="mt-0.5 block text-[13px] leading-snug text-cream/65">{f.copy}</span>
             </button>

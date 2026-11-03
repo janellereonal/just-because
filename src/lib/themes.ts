@@ -52,7 +52,8 @@ export function normalizeTheme(row: Record<string, unknown>): Theme {
 /** Preview images are stored as full public URLs. */
 export async function resolvePreviewUrl(value: string | null): Promise<string | null> {
   if (!value) return null;
-  if (value.startsWith("http://") || value.startsWith("https://") || value.startsWith("/")) return value;
+  if (value.startsWith("http://") || value.startsWith("https://") || value.startsWith("/"))
+    return value;
   return null;
 }
 

@@ -70,9 +70,9 @@ function RolePicker({
 
   async function pickWithEyeDropper() {
     try {
-      const Ctor = (window as unknown as Record<string, new () => { open: () => Promise<{ sRGBHex: string }> }>)[
-        "EyeDropper"
-      ]!;
+      const Ctor = (
+        window as unknown as Record<string, new () => { open: () => Promise<{ sRGBHex: string }> }>
+      )["EyeDropper"]!;
       const result = await new Ctor().open();
       onChange(role, result.sRGBHex);
     } catch {
@@ -142,7 +142,19 @@ function RolePicker({
  * theme's suggestions, not in everyone's "more palettes" list, so a draft
  * theme's colours don't appear before the theme does.
  */
-const THEME_ONLY_PALETTES = new Set(["Fireside", "Winter Cabin", "Snowy Pine", "Kraft Mail", "Air Mail", "Homeward", "Balikbayan", "Parol Night", "Capiz", "Debut Rose", "Debut Night"]);
+const THEME_ONLY_PALETTES = new Set([
+  "Fireside",
+  "Winter Cabin",
+  "Snowy Pine",
+  "Kraft Mail",
+  "Air Mail",
+  "Homeward",
+  "Balikbayan",
+  "Parol Night",
+  "Capiz",
+  "Debut Rose",
+  "Debut Night",
+]);
 
 export function PalettePicker({
   theme,
@@ -190,7 +202,10 @@ export function PalettePicker({
 
   const suggestedIds = new Set(suggested.map((p) => p.id));
   const rest = useMemo(
-    () => all.filter((p) => !suggestedIds.has(p.id) && !THEME_ONLY_PALETTES.has(p.name) && matches(query, p)),
+    () =>
+      all.filter(
+        (p) => !suggestedIds.has(p.id) && !THEME_ONLY_PALETTES.has(p.name) && matches(query, p),
+      ),
     [all, query, suggested],
   );
   const shownRest = seeAll || query ? rest : rest.slice(0, 6);
@@ -230,7 +245,9 @@ export function PalettePicker({
         <button
           type="button"
           className="underline"
-          onClick={() => setColor(role, nudgeContrast(value.colors[role], value.colors.background, 3))}
+          onClick={() =>
+            setColor(role, nudgeContrast(value.colors[role], value.colors.background, 3))
+          }
         >
           Fix it
         </button>
@@ -250,8 +267,14 @@ export function PalettePicker({
         className={`squish overflow-hidden rounded-2xl border text-left transition-colors ${on ? "border-accent ring-2 ring-accent/25" : "border-line hover:border-ink/25"}`}
       >
         <span className="relative block h-14" style={{ background: colors.background }}>
-          <span className="absolute bottom-2 left-2 size-5 rounded-full ring-1 ring-black/5" style={{ background: colors.primary }} />
-          <span className="absolute bottom-2 left-6 size-5 rounded-full ring-2 ring-white/70" style={{ background: colors.accent }} />
+          <span
+            className="absolute bottom-2 left-2 size-5 rounded-full ring-1 ring-black/5"
+            style={{ background: colors.primary }}
+          />
+          <span
+            className="absolute bottom-2 left-6 size-5 rounded-full ring-2 ring-white/70"
+            style={{ background: colors.accent }}
+          />
         </span>
         <span className="block truncate bg-cream px-2 py-1.5 text-[11px] font-medium">{name}</span>
       </button>
@@ -306,7 +329,9 @@ export function PalettePicker({
 
       {shownRest.length > 0 ? (
         <div>
-          <p className="text-[11px] tracking-wide text-muted uppercase">{part === "more" ? "Palettes" : "More palettes"}</p>
+          <p className="text-[11px] tracking-wide text-muted uppercase">
+            {part === "more" ? "Palettes" : "More palettes"}
+          </p>
           <div className="mt-2 space-y-1.5">{shownRest.map(row)}</div>
           {!query && rest.length > 6 ? (
             <button

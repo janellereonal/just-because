@@ -558,7 +558,6 @@ function envelope(paper: THREE.ColorRepresentation, seal: THREE.ColorRepresentat
   return g;
 }
 
-
 /* ---------- style themes: handwritten, game night, pixel ---------- */
 
 /** A letter folded once, open like a little tent, with lines of ink on it. */
@@ -607,23 +606,48 @@ function die(face: THREE.ColorRepresentation, pip: THREE.ColorRepresentation, si
   };
   const o = 0.5;
   // front: 3, top: 1, right: 5
-  [[-0.25, 0.25], [0, 0], [0.25, -0.25]].forEach(([x, y]) => g.add(dot(x!, y!, o)));
+  [
+    [-0.25, 0.25],
+    [0, 0],
+    [0.25, -0.25],
+  ].forEach(([x, y]) => g.add(dot(x!, y!, o)));
   const top = dot(0, o, 0);
   top.rotation.x = Math.PI / 2;
   g.add(top);
-  [[-0.25, 0.25], [0.25, 0.25], [0, 0], [-0.25, -0.25], [0.25, -0.25]].forEach(([z, y]) => {
+  [
+    [-0.25, 0.25],
+    [0.25, 0.25],
+    [0, 0],
+    [-0.25, -0.25],
+    [0.25, -0.25],
+  ].forEach(([z, y]) => {
     const m = dot(o, y!, z!);
     m.rotation.y = Math.PI / 2;
     g.add(m);
   });
   // back: 4, bottom: 6, left: 2, so it reads as a die from every side.
-  [[-0.25, 0.25], [0.25, 0.25], [-0.25, -0.25], [0.25, -0.25]].forEach(([x, y]) => g.add(dot(x!, y!, -o)));
-  [[-0.25, -0.25], [-0.25, 0], [-0.25, 0.25], [0.25, -0.25], [0.25, 0], [0.25, 0.25]].forEach(([x, z]) => {
+  [
+    [-0.25, 0.25],
+    [0.25, 0.25],
+    [-0.25, -0.25],
+    [0.25, -0.25],
+  ].forEach(([x, y]) => g.add(dot(x!, y!, -o)));
+  [
+    [-0.25, -0.25],
+    [-0.25, 0],
+    [-0.25, 0.25],
+    [0.25, -0.25],
+    [0.25, 0],
+    [0.25, 0.25],
+  ].forEach(([x, z]) => {
     const m = dot(x!, -o, z!);
     m.rotation.x = Math.PI / 2;
     g.add(m);
   });
-  [[0.25, 0.25], [-0.25, -0.25]].forEach(([z, y]) => {
+  [
+    [0.25, 0.25],
+    [-0.25, -0.25],
+  ].forEach(([z, y]) => {
     const m = dot(-o, y!, z!);
     m.rotation.y = Math.PI / 2;
     g.add(m);
@@ -655,7 +679,10 @@ function meeple(color: THREE.ColorRepresentation, size = 1) {
 function token(color: THREE.ColorRepresentation, size = 1) {
   const g = new THREE.Group();
   const disc = new THREE.Mesh(new THREE.CylinderGeometry(0.42, 0.42, 0.14, 40), gloss(color));
-  const rim = new THREE.Mesh(new THREE.TorusGeometry(0.3, 0.035, 12, 40), gloss(new THREE.Color(color).lerp(new THREE.Color(0xffffff), 0.35)));
+  const rim = new THREE.Mesh(
+    new THREE.TorusGeometry(0.3, 0.035, 12, 40),
+    gloss(new THREE.Color(color).lerp(new THREE.Color(0xffffff), 0.35)),
+  );
   rim.rotation.x = Math.PI / 2;
   rim.position.y = 0.075;
   g.add(disc, rim);
@@ -664,17 +691,47 @@ function token(color: THREE.ColorRepresentation, size = 1) {
 }
 
 /** A little handheld console with a lit screen, a d-pad and two buttons. */
-function consoleToy(body: THREE.ColorRepresentation, screen: THREE.ColorRepresentation, button: THREE.ColorRepresentation) {
+function consoleToy(
+  body: THREE.ColorRepresentation,
+  screen: THREE.ColorRepresentation,
+  button: THREE.ColorRepresentation,
+) {
   const g = new THREE.Group();
   g.add(new THREE.Mesh(roundedBox(1.55, 2.3, 0.36, 0.2, 6), clay(body, 0.5)));
   const bezel = new THREE.Mesh(roundedBox(1.25, 1.0, 0.06, 0.06, 3), clay(0x2b2540, 0.6));
   bezel.position.set(0, 0.45, 0.19);
   const glass = new THREE.Mesh(
     roundedBox(1.02, 0.78, 0.04, 0.03, 2),
-    new THREE.MeshStandardMaterial({ color: screen, emissive: screen, emissiveIntensity: 0.55, roughness: 0.3 }),
+    new THREE.MeshStandardMaterial({
+      color: screen,
+      emissive: screen,
+      emissiveIntensity: 0.55,
+      roughness: 0.3,
+    }),
   );
   glass.position.set(0, 0.45, 0.22);
-  const heartPx = [[1, 0], [2, 0], [4, 0], [5, 0], [0, 1], [1, 1], [2, 1], [3, 1], [4, 1], [5, 1], [6, 1], [1, 2], [2, 2], [3, 2], [4, 2], [5, 2], [2, 3], [3, 3], [4, 3], [3, 4]];
+  const heartPx = [
+    [1, 0],
+    [2, 0],
+    [4, 0],
+    [5, 0],
+    [0, 1],
+    [1, 1],
+    [2, 1],
+    [3, 1],
+    [4, 1],
+    [5, 1],
+    [6, 1],
+    [1, 2],
+    [2, 2],
+    [3, 2],
+    [4, 2],
+    [5, 2],
+    [2, 3],
+    [3, 3],
+    [4, 3],
+    [3, 4],
+  ];
   for (const [x, y] of heartPx) {
     const px = new THREE.Mesh(new THREE.BoxGeometry(0.075, 0.075, 0.02), clay(0xff5da2, 0.4));
     px.position.set(-0.225 + x! * 0.075, 0.6 - y! * 0.075, 0.245);
@@ -916,7 +973,11 @@ function compose(kind: ThemeKind, colors: ThemeSceneColors): { pieces: Piece[]; 
     case "game": {
       const d1 = at(die(WHITE, 0xe2463f, 1), -0.55, -0.2, 0.2, { spin: 0.4, bob: 0.12 });
       d1.rotation.set(-0.35, 0.6, 0.12);
-      const d2 = at(die(0xffd34e, 0x22305e, 0.82), 0.75, 0.25, -0.2, { spin: -0.35, bob: 0.14, phase: 1.4 });
+      const d2 = at(die(0xffd34e, 0x22305e, 0.82), 0.75, 0.25, -0.2, {
+        spin: -0.35,
+        bob: 0.14,
+        phase: 1.4,
+      });
       d2.rotation.set(0.25, -0.5, -0.2);
       at(meeple(primary, 0.55), -2.15, -0.75, 0.3, { spin: 0.3 });
       at(meeple(0x3bb98a, 0.42), 2.2, -1.0, 0.4, { spin: -0.3 });
@@ -931,7 +992,13 @@ function compose(kind: ThemeKind, colors: ThemeSceneColors): { pieces: Piece[]; 
       at(pixelHeart(0xff5da2, 0.75), -2.05, 0.85, -0.3, { spin: 0.5 });
       at(coin(0.8), 2.05, 1.0, -0.4, { spin: 1.1 });
       at(coin(0.6), 1.85, -1.1, 0.5, { spin: -1.0 });
-      const block = at(new THREE.Mesh(roundedBox(0.5, 0.5, 0.5, 0.06, 3), clay(0x7a5cff, 0.45)), -1.9, -1.1, 0.5, { spin: 0.4 });
+      const block = at(
+        new THREE.Mesh(roundedBox(0.5, 0.5, 0.5, 0.06, 3), clay(0x7a5cff, 0.45)),
+        -1.9,
+        -1.1,
+        0.5,
+        { spin: 0.4 },
+      );
       block.rotation.set(0.4, 0.6, 0);
       return { pieces, radius: 3 };
     }
@@ -1069,14 +1136,24 @@ export function createThemeScene(
       let extraSpin = 0;
       if (jk >= 0 && jk < 1) {
         lift = Math.sin(Math.PI * jk) * j.amp;
-        sy = jk < 0.12 ? 1 - jk * 1.6 : jk > 0.9 ? 1 - (1 - jk) * 2 : 1 + Math.sin(Math.PI * jk) * 0.12;
+        sy =
+          jk < 0.12
+            ? 1 - jk * 1.6
+            : jk > 0.9
+              ? 1 - (1 - jk) * 2
+              : 1 + Math.sin(Math.PI * jk) * 0.12;
         extraSpin = j.spins * Math.PI * 2 * (1 - Math.pow(1 - jk, 3));
       }
       // Heartbeat: two quick pulses.
       const bk = (t - beats[i]!) / 0.75;
       let pulse = 1;
-      if (bk >= 0 && bk < 1) pulse = 1 + 0.22 * Math.max(0, Math.sin(bk * Math.PI * 4)) * (1 - bk * 0.5);
-      p.obj.scale.set(s0.x * pulse * (2 - sy) ** 0.5, s0.y * pulse * sy, s0.z * pulse * (2 - sy) ** 0.5);
+      if (bk >= 0 && bk < 1)
+        pulse = 1 + 0.22 * Math.max(0, Math.sin(bk * Math.PI * 4)) * (1 - bk * 0.5);
+      p.obj.scale.set(
+        s0.x * pulse * (2 - sy) ** 0.5,
+        s0.y * pulse * sy,
+        s0.z * pulse * (2 - sy) ** 0.5,
+      );
       if (p.orbit) {
         const a = t * p.orbit.speed * (1 + boost * 2.5) + ph;
         p.obj.position.set(
@@ -1097,7 +1174,9 @@ export function createThemeScene(
       if (o.userData["twinkle"] !== undefined) {
         const m = (o as THREE.Mesh).material as THREE.MeshStandardMaterial;
         m.emissiveIntensity =
-          0.5 + 0.6 * (0.5 + 0.5 * Math.sin(t * (3 + boost * 9) + Number(o.userData["twinkle"]))) + boost * 0.8;
+          0.5 +
+          0.6 * (0.5 + 0.5 * Math.sin(t * (3 + boost * 9) + Number(o.userData["twinkle"]))) +
+          boost * 0.8;
       }
       if (o.userData["bubble"] !== undefined) {
         const k = Number(o.userData["bubble"]);
@@ -1231,7 +1310,12 @@ export function createThemeScene(
         for (let k = 0; k < 3; k++) {
           const mesh = new THREE.Mesh(
             new THREE.SphereGeometry(0.06, 12, 10),
-            new THREE.MeshStandardMaterial({ color: 0xdedede, transparent: true, opacity: 0.5, roughness: 1 }),
+            new THREE.MeshStandardMaterial({
+              color: 0xdedede,
+              transparent: true,
+              opacity: 0.5,
+              roughness: 1,
+            }),
           );
           scene.add(mesh);
           mesh.position.copy(wp).add(new THREE.Vector3(0, 0.05 + k * 0.08, 0));

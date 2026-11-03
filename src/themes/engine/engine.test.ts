@@ -25,7 +25,10 @@ describe("slots", () => {
     expect(s.place.label).toContain("Llanfairpwllgwyngyll");
   });
   test("bad values fall back", () => {
-    const s = resolveSlots({ age: "abc", accent: "red", photo: "javascript:alert(1)", date: "not a date" }, D);
+    const s = resolveSlots(
+      { age: "abc", accent: "red", photo: "javascript:alert(1)", date: "not a date" },
+      D,
+    );
     expect(s.age).toBeNull();
     expect(s.accent).toBe(D.accent);
     expect(s.photo).toBeNull();
@@ -48,7 +51,13 @@ describe("theme definitions", () => {
     for (const th of ENGINE_THEMES) expect(validateTheme(th)).toEqual([]);
   });
   test("validation catches mistakes", () => {
-    const bad = { ...ENGINE_THEMES[0]!, id: "Bad Id", slots: ["age"], palette: { ...ENGINE_THEMES[0]!.palette, ink: "black" }, status: "draft" } as ThemeDefinition;
+    const bad = {
+      ...ENGINE_THEMES[0]!,
+      id: "Bad Id",
+      slots: ["age"],
+      palette: { ...ENGINE_THEMES[0]!.palette, ink: "black" },
+      status: "draft",
+    } as ThemeDefinition;
     const problems = validateTheme(bad);
     expect(problems.some((p) => p.includes("id"))).toBe(true);
     expect(problems.some((p) => p.includes("recipient"))).toBe(true);
@@ -56,7 +65,12 @@ describe("theme definitions", () => {
     expect(problems.some((p) => p.includes("flag"))).toBe(true);
   });
   test("regional names and availability", () => {
-    const th = { ...ENGINE_THEMES[0]!, name: "Care Package", regionalNames: { PH: "Balikbayan Box" }, regions: { available: ["PH"] } } as ThemeDefinition;
+    const th = {
+      ...ENGINE_THEMES[0]!,
+      name: "Care Package",
+      regionalNames: { PH: "Balikbayan Box" },
+      regions: { available: ["PH"] },
+    } as ThemeDefinition;
     expect(themeNameFor(th, "ph")).toBe("Balikbayan Box");
     expect(themeNameFor(th, "US")).toBe("Care Package");
     expect(availableIn(th, "PH")).toBe(true);

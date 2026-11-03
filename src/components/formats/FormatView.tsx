@@ -127,7 +127,9 @@ export function FormatView(props: Props) {
       <GiftKindContext.Provider value={kind}>
         <div className="jb-gift contents" style={themeFontVars(kind)}>
           {/* Every format says when it's showing samples. The scrapbook labels each section itself. */}
-          {props.sample && (own || props.site.format !== "scrapbook") && props.contributions.length === 0 ? (
+          {props.sample &&
+          (own || props.site.format !== "scrapbook") &&
+          props.contributions.length === 0 ? (
             <div className="pointer-events-none sticky top-0 z-[60] flex h-0 items-start justify-center overflow-visible">
               <span
                 className="mt-3 rounded-full px-3 py-1 text-[11px] font-medium whitespace-nowrap shadow-sm"
