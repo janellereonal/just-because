@@ -1,5 +1,7 @@
 # Study: Lightsail Sydney deployment at the selected $7 size
 
+> **Superseded for the production host:** THEPC's Linux VM is now the selected target. See [`doc/study/1793703225_thepc_vm_hosting.md`](1793703225_thepc_vm_hosting.md) and [`doc/plan/1793703335_thepc_vm_production_rollout.md`](../plan/1793703335_thepc_vm_production_rollout.md). Keep Lightsail as a rollback option until the home deployment is verified.
+
 ## Prompt and scope
 
 Reconcile the approved Lightsail/R2 deployment strategy with the server the owner has now created, and review whether the current branch and app are ready to deploy. This study records the current constraints and next decisions; it does not deploy the app, run a database migration, or expose a public endpoint.

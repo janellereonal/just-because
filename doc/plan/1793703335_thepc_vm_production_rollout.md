@@ -5,16 +5,20 @@ This task board implements [`the THEPC VM hosting study`](../study/1793703225_th
 ## OPEN QUESTIONS / OWNER CHECKS
 
 - [ ] Confirm the VM is Ubuntu 24.04 (or record the installed Linux distribution) and joins the existing Tailscale network.
-- [ ] Confirm the Cloudflare account can add `justbecause.site`; inventory Namecheap DNS records, especially MX/TXT records, before changing nameservers.
+- [ ] Confirm the Cloudflare account can add `justbecause.site`; export/inventory Namecheap DNS records, especially MX, SPF/DKIM/DMARC, and TXT records, before changing nameservers.
 - [ ] Verify an R2 bucket and production credentials are available; keep all secret values in private files/provider dashboards.
 - [ ] Provide an isolated Neon staging database and separate Preview media/auth/payment/email configuration before staging acceptance checks.
 
 ## Status
 
+Implementation progress (2026-11-04): repository configuration and guidance for the Tunnel-based home target are prepared. Local Compose validation could not run because this workstation has no Docker Compose plugin; the wiki build could not run because Node.js is unavailable. No changes have been made to the VM, Cloudflare account, Namecheap DNS, Neon, R2, or production app settings.
+
 - [x] Study the home VM target and record feasibility/tradeoffs.
 - [x] Select remotely managed Cloudflare Tunnel as public ingress; no inbound router ports or public SSH.
 - [x] Retain the existing Lightsail Compose profile/workflow as a rollback path.
-- [ ] Complete the deployment configuration and documentation changes below.
+- [x] Add the Compose Tunnel profile, keep the app unexposed on the host, and preserve Caddy for Lightsail rollback.
+- [x] Update deployment and wiki guidance for the home VM, DNS delegation, secret handling, and Tunnel.
+- [x] Confirm Cloudflare Free DNS/Tunnel cost is $0/month; R2 charges are separate and usage-based.
 - [ ] Configure and validate the VM, tunnel, app settings, and integrations.
 - [ ] Cut over DNS only after the app is healthy; complete parity checks and keep Lightsail until validation is complete.
 
@@ -29,9 +33,11 @@ This task board implements [`the THEPC VM hosting study`](../study/1793703225_th
 
 ### 2. Configure public ingress and storage
 
+- [ ] Add `justbecause.site` to the Cloudflare account and export/recreate every current Namecheap DNS record in the Cloudflare zone. Verify MX, SPF/DKIM/DMARC, and TXT records before delegating DNS; preserve the current Lightsail A record during this DNS-provider migration. Namecheap remains the registrar.
+- [ ] At Namecheap, change the authoritative nameservers to the Cloudflare-assigned pair. This moves DNS hosting only; verify mail and existing website records still resolve before proceeding.
 - [ ] Create a remotely managed Cloudflare Tunnel and add its token only to the VM's private environment.
-- [ ] Configure the public hostname `justbecause.site` to forward to `http://app:8080` on the Compose network; start the `tunnel` profile and confirm tunnel health before DNS cutover.
-- [ ] Add `justbecause.site` to Cloudflare and migrate authoritative DNS from Namecheap only after copying/recreating and checking all existing records. Keep Namecheap as registrar.
+- [ ] Configure the public hostname `justbecause.site` to forward to `http://app:8080` on the Compose network. Verify the app privately and connector health in Cloudflare before changing the app's DNS record.
+- [ ] Replace the Cloudflare root A record with the Tunnel route/CNAME for `justbecause.site` only after the home app passes checks. Retain `15.135.147.111` separately for rollback. Verify public HTTPS and mail after DNS propagation.
 - [ ] Route the public media hostname to the existing R2 bucket; verify the app's R2 write/delete credentials and production media URL.
 - [ ] Do not expose app port 8080, public SSH, or Caddy ports on the home VM. The Caddy `public` profile remains for the Lightsail rollback deployment.
 
@@ -58,4 +64,5 @@ This task board implements [`the THEPC VM hosting study`](../study/1793703225_th
 - Use Tailscale for private VM administration. Cloudflare Tunnel is outbound-only and is the sole public ingress path.
 - Keep Neon and R2 external. Do not place uploaded media or database data on the VM disk as the durable store.
 - Never put credentials in Git, image layers, command history, documentation, or chat. Do not change Namecheap nameservers until all existing DNS records have been captured and verified for recreation in Cloudflare.
+- Cloudflare's Free plan is sufficient for planned DNS and Tunnel ingress at $0/month; R2 is separate and can incur usage-based charges. Avoid enabling paid Cloudflare products without reviewing their pricing.
 - Do not apply migrations or cut over production DNS until backups, image health, app configuration, and tunnel routing are verified.

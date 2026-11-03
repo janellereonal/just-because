@@ -1,5 +1,7 @@
 # Plan: Isolate Staging and Launch Production on Lightsail
 
+> **Superseded for the production host:** The owner selected the THEPC Linux VM with Cloudflare Tunnel. Continue from [`doc/plan/1793703335_thepc_vm_production_rollout.md`](1793703335_thepc_vm_production_rollout.md); keep Lightsail intact for rollback during verification.
+
 This task board follows the approved strategy in [`doc/study/1793679427_staging_production_handoff.md`](../study/1793679427_staging_production_handoff.md): Vercel Preview is staging; Lightsail serves production. Keep this document updated as work progresses.
 
 ## OPEN QUESTIONS

@@ -7,6 +7,7 @@ This portal is a static site built from Markdown. The build produces HTML, CSS, 
 | Where | Best for | How it runs |
 | --- | --- | --- |
 | Home network | Previewing the docs with your devices | PowerShell serves the built files from `THEPC` on port `8088` |
+| THEPC Linux VM | Planned public hosting for the full gifting app | Docker Compose runs the Node app and Cloudflare Tunnel; Neon and R2 stay external; Tunnel/DNS use Cloudflare Free |
 | Linux VPS | A small always-on public site | Docker Compose runs Nginx and Caddy |
 | AWS EC2 | Hosting inside an AWS account | The same Docker Compose stack, with an EC2 security group |
 
@@ -16,7 +17,7 @@ This portal is a static site built from Markdown. The build produces HTML, CSS, 
 2. Copy the production build to `THEPC` and open it on your home network.
 3. When you choose a public host, configure a domain and use the [VPS with Docker](/hosting/vps-docker) or [AWS EC2](/hosting/aws-ec2) guide.
 
-The documentation container serves only the generated site. It does not include the Just Because app, its database, or its environment variables.
+The documentation container serves only the generated site. It does not include the Just Because app, its database, or its environment variables. The gifting app has a separate [THEPC VM deployment guide](/hosting/app-home-vm); do not use the static documentation container to host the app.
 
 ## Requirements
 

@@ -20,4 +20,4 @@ The Docker build stage uses Node and pnpm to generate the site. The final image 
 
 ## What is separate
 
-The Just Because gift application remains a separate service currently deployed on Vercel. This documentation portal does not replace that application or migrate its data. Hosting the full application on a VPS or EC2 would need a separate review of its database, authentication, email, upload storage, payments, migrations, and operational requirements.
+The gifting application is a separate Node service. Its planned production path is the THEPC Linux VM, with Cloudflare Tunnel ingress and external Neon PostgreSQL and R2 media storage. Cloudflare Free supplies DNS and Tunnel for the planned ingress; Namecheap remains the registrar. Vercel Preview is intended for isolated staging. See [gift app on THEPC](/hosting/app-home-vm). This documentation portal does not replace the gifting app or migrate its data.

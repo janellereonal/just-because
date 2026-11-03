@@ -36,6 +36,7 @@ export default defineConfig({
         {
           text: "Deploy later",
           items: [
+            { text: "Gift app on THEPC", link: "/hosting/app-home-vm" },
             { text: "VPS with Docker", link: "/hosting/vps-docker" },
             { text: "AWS EC2", link: "/hosting/aws-ec2" },
           ],

@@ -6,6 +6,8 @@ Replace the planned Lightsail production host with the owner-created Linux VM on
 
 ## Current project and hosting state
 
+Cloudflare's Free website plan currently includes authoritative DNS at $0/month, and Cloudflare Tunnel is available on all plans. The domain registration remains at Namecheap; only DNS hosting moves. R2 is separately priced based on storage and request usage.
+
 - The application is a Node/TanStack Start/Nitro server already packaged for Docker Compose. The stack has an app container, a Caddy profile for public VPS ingress, and a one-shot migration service.
 - Production PostgreSQL is external (Neon); media is designed for Cloudflare R2. Uploads pass through the app and are capped at about 50 MiB per request. Media should not consume the VM's 50 GB disk.
 - GitHub Actions builds immutable GHCR image tags. The existing deployment workflow SSHes directly to Lightsail; that is not suitable for a home VM when public inbound SSH is intentionally avoided.
@@ -27,8 +29,8 @@ Neon and R2 remain external, avoiding local database and media-disk growth. Verc
 1. Verify VM OS, Tailscale access, Docker/Compose, storage, and reboot behavior; keep all inbound router/firewall ports closed.
 2. Add a Cloudflare Tunnel Compose profile using a remotely managed tunnel and a secret token; keep the app internal to Docker. Keep the Caddy profile for Lightsail rollback.
 3. Prepare a private production `.env`, confirm the existing Neon/R2 configuration and immutable GHCR image, and configure the tunnel hostname in Cloudflare.
-4. Back up production data and verify migration compatibility. Run migration deliberately, start the app and tunnel, and validate health before changing authoritative DNS.
-5. Migrate DNS hosting from Namecheap to Cloudflare only after inventorying and recreating existing DNS records; switch the app hostname to the tunnel after it is ready.
+4. Back up production data and verify migration compatibility. Run migration deliberately, start the app, and validate its health through the private administration path.
+5. Add the domain to Cloudflare, recreate and verify all DNS records, then delegate nameservers from Namecheap to Cloudflare while preserving the existing Lightsail A record. After the Tunnel connector is healthy, change the app hostname record to route to the tunnel.
 6. Smoke-test key flows, monitor VM capacity, retain Lightsail through validation, and update the task board and living hosting docs with verified state.
 
 ## Review limits

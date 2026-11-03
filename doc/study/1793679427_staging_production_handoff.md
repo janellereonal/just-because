@@ -1,5 +1,7 @@
 # Handoff Study: Separate Staging and Production for Lightsail
 
+> **Superseded for the production host:** The owner selected the THEPC Linux VM with Cloudflare Tunnel. Use [`doc/study/1793703225_thepc_vm_hosting.md`](1793703225_thepc_vm_hosting.md) and [`doc/plan/1793703335_thepc_vm_production_rollout.md`](../plan/1793703335_thepc_vm_production_rollout.md) for the current target. Lightsail remains a rollback host until home deployment verification.
+
 ## Goal
 
 Move the public Just Because site to AWS Lightsail while keeping a safe place to test changes. Staging must not change production data, send real payments, or use production secrets.
