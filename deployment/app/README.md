@@ -1,53 +1,97 @@
-# Self-host the Just Because app
+# Prepare the app backend on THEPC
 
-The production target is the Linux VM on THEPC (4 GB RAM, 50 GB storage). Docker Compose runs the Node/Nitro app and a Cloudflare Tunnel connector. Neon PostgreSQL and Cloudflare R2 remain external, so the VM disk is for the OS, Docker layers, and logs—not durable user media or database files. The app also remains deployable to Vercel; Vercel Preview is staging only when its database and credentials are isolated.
+This runbook separates **private app/backend preparation** from the later **public ingress and front-end cutover**. The immediate target is the Linux VM on THEPC (owner-reported 4 GB RAM and 50 GB storage; user reports Ubuntu 26 installed). Docker Compose runs the Node/Nitro app. Neon PostgreSQL and Cloudflare R2 remain external; the VM disk is for Ubuntu, Docker image layers, and logs. Namecheap remains the domain registrar. Cloudflare Tunnel or a VPS relay can be chosen later; neither is required to install and start the app privately.
 
-## Public access and administration
+The prior repository work already prepared the multi-stage app Dockerfile, Compose app and migration services, local Compose configuration, R2 storage adapter, Tunnel profile, GHCR image workflow, and hosting/rollout docs. A local ARM64 image was built on the Mac and returned HTTP 200 with dummy database settings; it was removed afterward. This does **not** mean the VM image, production credentials, database migration, or deployment have been verified.
 
-Cloudflare's Free plan provides authoritative DNS and Tunnel at **$0/month** for this setup. Namecheap remains the registrar; Cloudflare becomes the DNS provider. Cloudflare's paid website plans are optional and are not needed just to publish the app through Tunnel. R2 is separately priced, with usage-dependent charges if storage or requests exceed its free allowance. Verify [Cloudflare plan pricing](https://www.cloudflare.com/plans/) and [R2 pricing](https://developers.cloudflare.com/r2/pricing/) before enabling paid features.
+## Phase 1: prepare and verify the backend privately
 
-Cloudflare Tunnel publishes `justbecause.site` without router port forwarding, a public VM address, or inbound SSH. Add the domain to Cloudflare and recreate/verify every existing DNS record—especially MX, SPF/DKIM/DMARC, and TXT records. Then change the authoritative nameservers in Namecheap to the pair Cloudflare assigns, keeping the current Lightsail A record during this DNS-provider migration. Namecheap remains the registrar. After the home app and Tunnel connector pass checks, change the Cloudflare root record from Lightsail to the Tunnel route. In Cloudflare's Tunnel dashboard, route the public hostname to `http://app:8080`, which resolves on the Compose network. Cloudflare terminates visitor HTTPS; Caddy is not used on THEPC. The Lightsail Caddy profile and deployment workflow remain available for rollback.
+### 1. Verify VM prerequisites
 
-Use Tailscale for VM administration and manual deployment. Do not open router ports for SSH or the app, and do not publish port 8080. `cloudflared` makes outbound connections to Cloudflare; no inbound firewall exception is needed. A Cloudflare Tunnel token grants tunnel connectivity, so keep it private and rotate it if exposed. Cloudflare's current [Tunnel docs](https://developers.cloudflare.com/cloudflare-one/networks/connectors/cloudflare-tunnel/get-started/) describe the nameserver and public-hostname requirements.
+Connect over the VM's private administration method (Tailscale SSH if available) and record:
 
-## Configure the VM
+```sh
+lsb_release -ds
+uname -m
+free -h
+df -h /
+docker --version
+docker compose version
+sudo systemctl is-enabled docker
+```
 
-Verify the VM's Linux distribution, Tailscale connectivity, Docker Engine, Compose plugin, available disk, and automatic boot before deployment. Copy `compose.yaml` and `.env.example` to `/opt/just-because/deployment/app`; create a private `.env` there from `.env.example` and set file permissions to `600`. Set `APP_DOMAIN`, `BETTER_AUTH_URL`, and `APP_BASE_URL` to `justbecause.site`; use the production Neon URLs, a unique `BETTER_AUTH_SECRET`, and a generated `CRON_SECRET`. Add the remotely managed tunnel token as `TUNNEL_TOKEN`. Do not commit or paste secrets into chat. Create the tunnel token from Cloudflare's remotely managed tunnel setup and store it only in this private `.env`.
+Ubuntu 26.04 LTS is supported by the current [Docker Engine Ubuntu installation guide](https://docs.docker.com/engine/install/ubuntu/). If Docker or Compose is missing, follow that official guide and install `docker-ce`, `docker-ce-cli`, `containerd.io`, `docker-buildx-plugin`, and `docker-compose-plugin`; verify with `sudo docker run hello-world`. Do not install an unrelated Node runtime on the VM: the app image contains its runtime. Use SSH over Tailscale for administration, and do not add public router or host firewall rules for SSH or app traffic.
 
-Configure production R2 values: `MEDIA_STORAGE_PROVIDER=r2`, `R2_ACCOUNT_ID`, `R2_BUCKET`, `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`, and `R2_PUBLIC_URL=https://media.justbecause.site`. Use a bucket-scoped token for app writes/deletes and attach the media hostname to the R2 bucket. Uploads pass through the app to enforce permission, type, and size checks; the current request cap is about 50 MiB. Avoid overlapping large uploads and watch VM memory. Set `R2_PUBLIC_URL` in GitHub Actions build variables and `VITE_R2_PUBLIC_URL` in Vercel so existing shared media can be validated. Keep Vercel Blob configured only for Vercel uploads; configure R2 deletion credentials there only if that deployment needs to delete R2 media.
+The local Mac image previously built as `linux/arm64`. Do not deploy that local image unless `uname -m` reports `aarch64`. GitHub Actions publishes an immutable image from the repository source; check that image's architecture matches the VM before rollout. If the VM reports ARM64, update CI to publish ARM64 (or a multi-platform manifest) before pulling it.
 
-## Build, migrate, and start
+### 2. Prepare files and production backend configuration
 
-Build and publish images in GitHub Actions, not on the 4 GB VM. The build workflow publishes `ghcr.io/janellereonal/just-because:sha-<commit>`. Confirm the package is public or configure a private GHCR pull credential on the VM with read-only package access. Connect to the VM over Tailscale, then use the approved immutable image tag:
+Check out the approved app commit on an admin machine and copy `compose.yaml`, `compose.private.yaml`, and `.env.example` into `/opt/just-because/deployment/app` on the VM. Do not copy a developer `.env`, local database, or build output. On the VM:
+
+```sh
+sudo mkdir -p /opt/just-because/deployment/app
+sudo chown -R "$USER":"$USER" /opt/just-because
+cd /opt/just-because/deployment/app
+cp .env.example .env
+chmod 600 .env
+```
+
+Edit `.env` on the VM using a trusted editor. Populate the production `DATABASE_URL` (runtime Neon pooled connection) and `DATABASE_URL_UNPOOLED` (migration connection), a unique `BETTER_AUTH_SECRET`, `BETTER_AUTH_URL=https://justbecause.site`, and `APP_BASE_URL=https://justbecause.site`. Set production R2 values (`MEDIA_STORAGE_PROVIDER=r2`, account ID, bucket, bucket-scoped access key/secret, and `R2_PUBLIC_URL=https://media.justbecause.site`). Keep `CRON_SECRET`, Google OAuth, Resend, and PayMongo values empty until those integrations are ready. Never paste values into chat, commit `.env`, or put secrets in command arguments/history.
+
+Neon is the existing database; this deployment does not move database contents. R2 is the durable media store; uploads should not accumulate on the VM disk. The app can start without R2, but upload flows cannot be accepted until the R2 bucket credentials and public media hostname work. Do not point Vercel Preview at production database or media write credentials.
+
+### 3. Publish and pull the app image
+
+Build in GitHub Actions, not on the 4 GB VM. Trigger the existing **Build app image** workflow for the approved commit and wait for it to succeed. Use its immutable tag `ghcr.io/janellereonal/just-because:sha-<full-commit-sha>`, not `latest`. Ensure the GHCR package is public or log in on the VM using a read-only package token without exposing it in terminal history.
+
+```sh
+docker pull ghcr.io/janellereonal/just-because:sha-<full-commit-sha>
+docker image inspect ghcr.io/janellereonal/just-because:sha-<full-commit-sha> --format '{{.Os}}/{{.Architecture}}'
+```
+
+Confirm the architecture matches `uname -m` (`x86_64` maps to `amd64`; `aarch64` maps to `arm64`). Stop if it does not match.
+
+### 4. Back up, migrate, and start privately
+
+Before the first production migration, verify `.env` points to the intended Neon production project and take/verify a Neon backup or restore point. The one-shot `migrate` service applies checked-in Drizzle schema migrations. It does not copy rows, migrate media, or configure external services. Review pending migration files and compatibility with the existing Vercel production app before running it. The migration command prefers `DATABASE_URL_UNPOOLED`, falling back to `DATABASE_URL`.
 
 ```sh
 cd /opt/just-because/deployment/app
-docker pull ghcr.io/janellereonal/just-because:sha-<commit>
-APP_IMAGE=ghcr.io/janellereonal/just-because:sha-<commit> docker compose --profile maintenance run --rm migrate
-APP_IMAGE=ghcr.io/janellereonal/just-because:sha-<commit> docker compose --profile tunnel up -d --no-build --pull always
-docker compose --profile tunnel ps
-docker compose --profile tunnel logs --tail=100 app cloudflared
+export APP_IMAGE=ghcr.io/janellereonal/just-because:sha-<full-commit-sha>
+docker compose --profile maintenance run --rm migrate
+docker compose -f compose.yaml -f compose.private.yaml up -d --no-build app
+docker compose -f compose.yaml -f compose.private.yaml ps
+docker compose -f compose.yaml -f compose.private.yaml logs --tail=100 app
 ```
 
-Before running migrations, verify the production database target and backup/recovery path. The migration service uses `DATABASE_URL_UNPOOLED` when set, otherwise `DATABASE_URL`. Configure the tunnel's origin as `http://app:8080` before starting the tunnel profile. For home production, the app is reachable only inside Docker and through the tunnel. The development-only `compose.local.yaml` publishes a loopback port for local previews; do not copy it to THEPC.
+`compose.private.yaml` binds `127.0.0.1:18080` **on the VM only**. It does not expose the app on the VM's LAN or public interface. Check health from the container:
 
-The `tunnel` Compose profile starts `cloudflared`; it does not expose Caddy ports or an app host port. Compose restart policies bring app and tunnel containers back after VM reboot. Check tunnel status in Cloudflare and container health with `docker compose --profile tunnel ps`. The tunnel token is a credential: limit access to the VM's `.env`, rotate the token if exposed, and do not reuse it in staging.
+```sh
+docker compose -f compose.yaml -f compose.private.yaml exec app node -e "fetch('http://127.0.0.1:8080/').then(r=>{console.log(r.status);process.exit(r.ok?0:1)}).catch(e=>{console.error(e.message);process.exit(1)})"
+```
 
-## Integrations and daily job
+To view the private app from an admin Mac, open an SSH local forward over Tailscale, then browse to `http://localhost:18080`:
 
-Set production OAuth redirect origins, verified email sender, PayMongo webhook at `https://justbecause.site/api/webhooks/paymongo`, and production secrets only after each provider is configured. Keep PayMongo in test mode until release acceptance passes. Optional analytics uses the GitHub Actions variables `VITE_POSTHOG_KEY` and `VITE_POSTHOG_REGION`.
+```sh
+ssh -N -L 18080:127.0.0.1:18080 <vm-user>@<vm-tailscale-ip>
+```
 
-Vercel Cron does not run on THEPC. Schedule the authenticated daily endpoint once per day using cron or a systemd timer. Store the cron secret in a root-readable environment file, not directly in shared crontab text. Validate the endpoint after HTTPS and the production `CRON_SECRET` are configured.
+The canonical auth origin remains `https://justbecause.site`; OAuth callbacks, payment webhooks, email links, public R2 media, and full browser sign-in cannot be considered verified until public HTTPS/DNS and provider callbacks are configured. The private run confirms the image boots and can reach the configured backend; it is not a public launch.
 
-## Staging, rollback, and operations
+### 5. Backend checks before public ingress
 
-Vercel Preview must use a separate Neon database, media write credentials, Better Auth secret and callback origin, PayMongo test credentials, safe email settings, and no production cron. Do not test staging against production data or delete production media.
+- Confirm the app container is healthy and restarts after a VM reboot.
+- Verify Neon connectivity from the running app without printing the connection string; confirm expected schema/migration version and that normal read/write operations work.
+- Confirm R2 credentials and bucket permissions using a controlled test upload only after media hostname is set up; verify object read and deletion.
+- Keep payments in test mode; do not register the final webhook until HTTPS is serving the canonical hostname.
+- Configure email sender, OAuth callback URLs, and daily job only after their final public origin is reachable. Do not enable production cron while staging or callback setup is incomplete.
+- Keep Vercel Preview isolated with a separate database, media credentials, auth secret/callback origin, payment test keys, safe email configuration, and no production cron.
 
-For releases, publish an immutable image, SSH over Tailscale, pull the tag, review/backup before migrations, then restart the tunnel profile. Roll back by deploying the previous image tag if its schema remains compatible. Keep Lightsail and its existing Caddy workflow available until production smoke checks pass; do not delete it during cutover.
+## Phase 2: public ingress and front-end cutover
 
-Monitor VM RAM, CPU, free disk, container health/restarts, tunnel connectivity, and upload reliability. Keep OS security updates enabled and maintain a tested restore path for Neon and R2. A 4 GB guest is a reasonable low-traffic starting point, not a capacity guarantee. After deployment verification, update the [THEPC rollout checklist](../../doc/plan/1793703335_thepc_vm_production_rollout.md) with actual results.
+After private backend verification, choose Cloudflare Tunnel or a small VPS relay as public ingress. The current plan favors Tunnel: Cloudflare would host DNS while Namecheap remains registrar. Before changing Namecheap nameservers, inventory/recreate and verify all DNS records, especially MX and SPF/DKIM/DMARC/TXT. Configure Tunnel's public hostname to `http://app:8080`; do not publish port 8080 or SSH. Cloudflare HTTPS, public auth, email links, PayMongo webhook, R2 media hostname, full browser flows, and DNS cutover are separate acceptance gates. Keep Lightsail available for rollback until those checks pass.
 
-For local development, the optional `compose.local.yaml` maps the app to loopback only:
+Track progress in the [THEPC rollout checklist](../../doc/plan/1793703335_thepc_vm_production_rollout.md). For local development, `compose.local.yaml` binds the app to loopback on the development machine:
 
 ```sh
 docker compose -f compose.yaml -f compose.local.yaml up -d --build

@@ -12,7 +12,7 @@ Cloudflare's Free website plan currently includes authoritative DNS at $0/month,
 - Production PostgreSQL is external (Neon); media is designed for Cloudflare R2. Uploads pass through the app and are capped at about 50 MiB per request. Media should not consume the VM's 50 GB disk.
 - GitHub Actions builds immutable GHCR image tags. The existing deployment workflow SSHes directly to Lightsail; that is not suitable for a home VM when public inbound SSH is intentionally avoided.
 - The previous rollout assigned `justbecause.site` to Lightsail's static IP `15.135.147.111`; Namecheap is the registrar and was used for DNS. The Lightsail deployment is not yet verified and remains the rollback target.
-- The user reports the new THEPC VM has 4 GB RAM and 50 GB storage. Ubuntu 24.04 and Tailscale connectivity are planning assumptions from the approved direction; verify them on the VM before installation.
+- The user reports the new THEPC VM has 4 GB RAM, 50 GB storage, and a successful Ubuntu 26 installation. Verify the exact release (`lsb_release -ds`), CPU architecture (`uname -m`), Docker/Compose, and Tailscale connectivity on the VM before deployment. The Mac-built test image is ARM64 and is not presumed compatible with THEPC.
 
 ## Feasibility and tradeoffs
 
@@ -26,13 +26,12 @@ Neon and R2 remain external, avoiding local database and media-disk growth. Verc
 
 ## Recommended execution sequence
 
-1. Verify VM OS, Tailscale access, Docker/Compose, storage, and reboot behavior; keep all inbound router/firewall ports closed.
-2. Add a Cloudflare Tunnel Compose profile using a remotely managed tunnel and a secret token; keep the app internal to Docker. Keep the Caddy profile for Lightsail rollback.
-3. Prepare a private production `.env`, confirm the existing Neon/R2 configuration and immutable GHCR image, and configure the tunnel hostname in Cloudflare.
-4. Back up production data and verify migration compatibility. Run migration deliberately, start the app, and validate its health through the private administration path.
-5. Add the domain to Cloudflare, recreate and verify all DNS records, then delegate nameservers from Namecheap to Cloudflare while preserving the existing Lightsail A record. After the Tunnel connector is healthy, change the app hostname record to route to the tunnel.
-6. Smoke-test key flows, monitor VM capacity, retain Lightsail through validation, and update the task board and living hosting docs with verified state.
+1. **Prepare backend privately:** verify VM OS/architecture, Tailscale access, Docker/Compose, storage, and reboot behavior; keep all inbound router/firewall ports closed.
+2. Publish a compatible immutable GHCR image, create a private production `.env`, confirm Neon/R2 configuration, and back up production data.
+3. Review and apply database migrations deliberately, start the app without public ingress, and check health/backend connectivity through the private admin path.
+4. **Later, publish the site:** choose Cloudflare Tunnel or a VPS relay, configure canonical auth/media/payment/email URLs and callbacks, then perform DNS changes only after the route passes checks.
+5. Smoke-test key flows, monitor VM capacity, retain Lightsail through validation, and update the task board and living hosting docs with verified state.
 
 ## Review limits
 
-No connection to THEPC, VM OS check, app build, image pull, migration, DNS change, or production smoke test has been performed as part of this study. Cloudflare zone ownership, tunnel token, R2 setup, production service credentials, and isolated Vercel Preview resources remain to be verified. Cloudflare Tunnel documentation confirms the outbound tunnel and public-hostname model; actual DNS cutover and home-ISP reliability have not been tested.
+No connection to THEPC, VM OS check, image pull, migration, DNS change, or production smoke test has been performed as part of this study. A local ARM64 image smoke check returned HTTP 200 using dummy database settings; it was removed and did not contact production. Cloudflare zone ownership, tunnel token, R2 setup, production service credentials, and isolated Vercel Preview resources remain to be verified. Cloudflare Tunnel documentation confirms the outbound tunnel and public-hostname model; actual DNS cutover and home-ISP reliability have not been tested.

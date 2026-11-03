@@ -1,0 +1,6 @@
+# Private backend verification on THEPC. The app binds only to the VM loopback;
+# access it from an admin machine with an SSH local forward over Tailscale.
+services:
+  app:
+    ports:
+      - "127.0.0.1:18080:8080"
