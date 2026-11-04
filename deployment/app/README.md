@@ -8,9 +8,40 @@ The app code is based on the current local `main` commit. Self-hosted image buil
 
 ## Phase 1: prepare and verify the backend privately
 
+### Connect to THEPC over Tailscale SSH
+
+Tailscale SSH is the private administrative path for the VM. It authenticates you through your Tailscale identity and tailnet access policy; it does not require a public SSH port, router port forwarding, or copying SSH keys to the VM. The VM must be Linux and joined to the same tailnet as your admin Mac.
+
+On the Ubuntu VM terminal, install Tailscale if it is not already installed, then join it to your tailnet. If Tailscale is already connected, skip `tailscale up` and continue to enabling SSH. The first-time `tailscale up` command prints a sign-in URL; open it and approve the VM using the Tailscale account already used on your Mac. Give the VM a recognizable MagicDNS name:
+
+```sh
+if ! command -v tailscale >/dev/null 2>&1; then
+  curl -fsSL https://tailscale.com/install.sh | sh
+fi
+sudo tailscale up --hostname=just-because-vm
+```
+
+After the VM appears as connected in the Tailscale admin console, enable Tailscale SSH on the VM:
+
+```sh
+sudo tailscale set --ssh
+sudo tailscale status
+sudo tailscale ip -4
+```
+
+On the admin Mac, sign in to the same tailnet and confirm the VM appears in `tailscale status`. Then connect using its MagicDNS name:
+
+```sh
+tailscale ssh ubuntu@just-because-vm
+```
+
+Replace `ubuntu` if the VM uses a different Linux account name. If the short name does not resolve, use the VM's full MagicDNS name shown in `tailscale status` or its `100.x.y.z` Tailscale address. If `tailscale ssh` is unavailable in the installed Mac app, use `ssh ubuntu@just-because-vm`; the normal OpenSSH client still connects through the tailnet. Exit the session with `exit`.
+
+Tailscale SSH also requires the tailnet policy to allow both network access to the VM on TCP port 22 and SSH access for your Tailscale identity to the Linux user. The default policy may already allow this; if the connection says access is denied, the tailnet owner/admin should review **Tailscale Admin Console → Access controls**. Device approval may also need to be completed in the admin console. Tailscale SSH claims port 22 only on the VM's Tailscale address; keep router forwarding and public SSH closed. See [Tailscale SSH setup](https://tailscale.com/docs/features/tailscale-ssh) and [MagicDNS](https://tailscale.com/docs/features/magicdns).
+
 ### 1. Verify VM prerequisites
 
-Connect over the VM's private administration method (Tailscale SSH if available) and record:
+Connect over Tailscale SSH and record:
 
 ```sh
 lsb_release -ds
@@ -118,14 +149,14 @@ Before the build, set the GitHub repository **Actions variables** under **Settin
 
 #### C. Copy deployment files to THEPC
 
-Connect over the VM's private administration path (such as Tailscale). Set `VM_USER` to the Linux login name (often `ubuntu`) and `VM_TAILSCALE_IP` to the VM's Tailscale IP on the admin workstation, then copy only these non-secret files:
+Connect over Tailscale. Set `VM_USER` to the Linux login name (often `ubuntu`) and `VM_HOST` to the VM's MagicDNS name (or its `100.x.y.z` Tailscale IP) on the admin workstation, then copy only these non-secret files. Recent OpenSSH `scp` uses SFTP, which Tailscale SSH supports:
 
 ```sh
 export VM_USER=ubuntu
-export VM_TAILSCALE_IP=100.x.y.z # replace with the VM's Tailscale IP
-ssh "$VM_USER@$VM_TAILSCALE_IP" 'mkdir -p /tmp/just-because-app'
+export VM_HOST=just-because-vm # replace with the VM's MagicDNS name or Tailscale IP
+tailscale ssh "$VM_USER@$VM_HOST" 'mkdir -p /tmp/just-because-app'
 scp deployment/app/compose.yaml deployment/app/compose.private.yaml deployment/app/.env.example \
-  "$VM_USER@$VM_TAILSCALE_IP:/tmp/just-because-app/"
+  "$VM_USER@$VM_HOST:/tmp/just-because-app/"
 ```
 
 On the VM, install the files and create `.env` only if it does not already exist, so a later update will not overwrite existing secrets:
@@ -204,12 +235,12 @@ docker compose -f compose.yaml -f compose.private.yaml logs --tail=100 app
 docker compose -f compose.yaml -f compose.private.yaml exec app node -e "fetch('http://127.0.0.1:8080/').then(r=>{console.log(r.status);process.exit(r.ok?0:1)}).catch(e=>{console.error(e.message);process.exit(1)})"
 ```
 
-To view the private app from an admin Mac, open an SSH local forward over Tailscale, then browse to `http://localhost:18080`:
+To view the private app from an admin Mac, open an SSH local forward over Tailscale, then browse to `http://localhost:18080`. Use the VM's MagicDNS name or Tailscale IP. This requires the tailnet SSH policy to permit TCP forwarding; `ssh -L` is an ordinary SSH client connection carried over Tailscale:
 
 ```sh
 export VM_USER=ubuntu
-export VM_TAILSCALE_IP=100.x.y.z # replace with the VM's Tailscale IP
-ssh -N -L 18080:127.0.0.1:18080 "$VM_USER@$VM_TAILSCALE_IP"
+export VM_HOST=just-because-vm # replace with the VM's MagicDNS name or Tailscale IP
+ssh -N -L 18080:127.0.0.1:18080 "$VM_USER@$VM_HOST"
 ```
 
 The canonical auth origin remains `https://justbecause.site`; OAuth callbacks, payment webhooks, email links, public R2 media, and full browser sign-in cannot be considered verified until public HTTPS/DNS and provider callbacks are configured. The private run confirms the image boots and can reach the configured backend; it is not a public launch.
