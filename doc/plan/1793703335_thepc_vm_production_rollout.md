@@ -12,7 +12,7 @@ This task board implements [`the THEPC VM hosting study`](../study/1793703225_th
 
 ## Status
 
-Implementation progress (2026-11-05): the old multi-platform build stalled on emulated ARM64 and was cancelled. The AMD64-only image for commit `e63b97a2f58de6aa8b21444cb522405f354c7110` built and published successfully. Over Tailscale SSH, verified the VM is `x86_64`, Docker 29.9.3 and Compose 5.7.0 are available, deployment Compose files are present, the private `.env` exists with mode 600 and required Neon/R2/auth keys non-empty (values were not displayed), `APP_IMAGE` is pinned to the successful immutable image, and Compose configuration validates. The guest reports 3.3 GiB memory, a 60 GB virtual disk, and a 28 GB root filesystem with about 20 GB free. The image pull is blocked because the `justbecause` login cannot access the Docker socket directly; deployment commands need `sudo`. The active app branch has no Drizzle migration changes relative to `main`; production migration state and backup/restore have not been verified. No migration, app startup, public ingress, DNS, or production data operation has occurred.
+Implementation progress (2026-11-05): the old multi-platform build stalled on emulated ARM64 and was cancelled. The AMD64-only image for commit `e63b97a2f58de6aa8b21444cb522405f354c7110` built and published successfully. Over Tailscale SSH, verified the VM is `x86_64`, Docker 29.9.3 and Compose 5.7.0 are available, deployment Compose files are present, the private `.env` exists with mode 600 and required Neon/R2/auth keys non-empty (values were not displayed), and `APP_IMAGE` is pinned to the successful immutable image. The owner confirmed `sudo docker image inspect` on the VM reports `linux/amd64`, so the image is pulled and matches the VM. Compose configuration validates. The guest reports 3.3 GiB memory, a 60 GB virtual disk, and a 28 GB root filesystem with about 20 GB free. The active app branch has no Drizzle migration changes relative to `main`; production migration state and backup/restore have not been verified, so no migration was run. Starting the app through non-interactive SSH is blocked because `sudo` requires an interactive terminal. No app startup, public ingress, DNS, or production data operation has occurred.
 
 - [x] Study the home VM target and record feasibility/tradeoffs.
 - [x] Select remotely managed Cloudflare Tunnel as public ingress; no inbound router ports or public SSH.
@@ -32,7 +32,7 @@ Implementation progress (2026-11-05): the old multi-platform build stalled on em
 - [x] Install Compose files and `compose.private.yaml` under `/opt/just-because/deployment/app`; create a private production `.env` with mode 600 and no repository copy.
 - [x] Confirm required production Neon/R2/auth settings are non-empty in the VM `.env` without printing their values; the file has mode 600. Confirmed a successful immutable AMD64 image exists for the VM architecture.
 - [x] Pin the successful image SHA in `.env`.
-- [ ] Pull the image from GHCR and confirm its local platform. VM Docker socket access requires `sudo`; the current account's direct pull attempt was denied.
+- [x] Pull the image from GHCR and confirm its local platform. Owner verified `linux/amd64` on the VM.
 
 ### 2. Run and verify app/backend privately
 
