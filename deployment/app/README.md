@@ -27,12 +27,21 @@ Complete these in order. Keep the production website on its current host until t
 
 Tailscale SSH is the private administrative path for the VM. It authenticates you through your Tailscale identity and tailnet access policy; it does not require a public SSH port, router port forwarding, or copying SSH keys to the VM. The VM must be Linux and joined to the same tailnet as your admin Mac.
 
-On the Ubuntu VM terminal, install Tailscale if it is not already installed, then join it to your tailnet. If Tailscale is already connected, skip `tailscale up` and continue to enabling SSH. The first-time `tailscale up` command prints a sign-in URL; open it and approve the VM using the Tailscale account already used on your Mac. Give the VM a recognizable MagicDNS name:
+Run the following checks on the Ubuntu VM terminal **one command at a time**. The VM login shown in your screenshot is `justbecause`; use that Linux username later from the Mac.
 
 ```sh
-if ! command -v tailscale >/dev/null 2>&1; then
-  curl -fsSL https://tailscale.com/install.sh | sh
-fi
+command -v tailscale
+```
+
+If it prints no path (the command returns to the prompt without output), install Tailscale with this command by itself and wait for the normal `$` prompt to return:
+
+```sh
+curl -fsSL https://tailscale.com/install.sh | sh
+```
+
+Then join the VM to your tailnet. On first setup this prints a sign-in URL; open it and approve the VM using the Tailscale account already used on your Mac. If the VM is already connected in Tailscale, skip this command:
+
+```sh
 sudo tailscale up --hostname=just-because-vm
 ```
 
@@ -44,13 +53,19 @@ sudo tailscale status
 sudo tailscale ip -4
 ```
 
-On the admin Mac, sign in to the same tailnet and confirm the VM appears in `tailscale status`. Then connect using its MagicDNS name:
+On the admin Mac, install and open the [Tailscale app for macOS](https://tailscale.com/download/mac), then sign in to the same tailnet account and confirm the VM appears as connected. You do **not** need the `tailscale` command-line tool for this. Use macOS's built-in OpenSSH client to connect over Tailscale SSH:
 
 ```sh
-tailscale ssh ubuntu@just-because-vm
+ssh justbecause@just-because-vm
 ```
 
-Replace `ubuntu` if the VM uses a different Linux account name. If the short name does not resolve, use the VM's full MagicDNS name shown in `tailscale status` or its `100.x.y.z` Tailscale address. If `tailscale ssh` is unavailable in the installed Mac app, use `ssh ubuntu@just-because-vm`; the normal OpenSSH client still connects through the tailnet. Exit the session with `exit`.
+If the short name does not resolve, use the VM's full MagicDNS name or its `100.x.y.z` Tailscale IP from the Tailscale admin console:
+
+```sh
+ssh justbecause@100.x.y.z
+```
+
+If the Mac says `command not found: tailscale`, that is okay; use the `ssh` command above. If SSH says the host cannot be found, confirm the Mac Tailscale app is connected and MagicDNS is enabled. If access is denied, check the policy note below. Exit the VM session with `exit`.
 
 Tailscale SSH also requires the tailnet policy to allow both network access to the VM on TCP port 22 and SSH access for your Tailscale identity to the Linux user. The default policy may already allow this; if the connection says access is denied, the tailnet owner/admin should review **Tailscale Admin Console → Access controls**. Device approval may also need to be completed in the admin console. Tailscale SSH claims port 22 only on the VM's Tailscale address; keep router forwarding and public SSH closed. See [Tailscale SSH setup](https://tailscale.com/docs/features/tailscale-ssh) and [MagicDNS](https://tailscale.com/docs/features/magicdns).
 
@@ -165,12 +180,12 @@ Before the build, set the GitHub repository **Actions variables** under **Settin
 
 #### C. Copy deployment files to THEPC
 
-Connect over Tailscale. Set `VM_USER` to the Linux login name (often `ubuntu`) and `VM_HOST` to the VM's MagicDNS name (or its `100.x.y.z` Tailscale IP) on the admin workstation, then copy only these non-secret files. Recent OpenSSH `scp` uses SFTP, which Tailscale SSH supports:
+Connect over Tailscale. Set `VM_USER` to the Linux login name (`justbecause` on the current THEPC VM) and `VM_HOST` to the VM's MagicDNS name (or its `100.x.y.z` Tailscale IP) on the admin workstation, then copy only these non-secret files. Use the Mac's built-in OpenSSH/SCP commands; the Mac Tailscale app must be open and connected. Recent OpenSSH `scp` uses SFTP, which Tailscale SSH supports:
 
 ```sh
-export VM_USER=ubuntu
+export VM_USER=justbecause
 export VM_HOST=just-because-vm # replace with the VM's MagicDNS name or Tailscale IP
-tailscale ssh "$VM_USER@$VM_HOST" 'mkdir -p /tmp/just-because-app'
+ssh "$VM_USER@$VM_HOST" 'mkdir -p /tmp/just-because-app'
 scp deployment/app/compose.yaml deployment/app/compose.private.yaml deployment/app/.env.example \
   "$VM_USER@$VM_HOST:/tmp/just-because-app/"
 ```
@@ -294,7 +309,7 @@ docker compose -f compose.yaml -f compose.private.yaml exec app node -e "fetch('
 To view the private app from an admin Mac, open an SSH local forward over Tailscale, then browse to `http://localhost:18080`. Use the VM's MagicDNS name or Tailscale IP. This requires the tailnet SSH policy to permit TCP forwarding; `ssh -L` is an ordinary SSH client connection carried over Tailscale:
 
 ```sh
-export VM_USER=ubuntu
+export VM_USER=justbecause
 export VM_HOST=just-because-vm # replace with the VM's MagicDNS name or Tailscale IP
 ssh -N -L 18080:127.0.0.1:18080 "$VM_USER@$VM_HOST"
 ```
