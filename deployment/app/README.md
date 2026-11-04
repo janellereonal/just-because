@@ -180,7 +180,14 @@ Before the build, set the GitHub repository **Actions variables** under **Settin
 
 #### C. Copy deployment files to THEPC
 
-Connect over Tailscale. Set `VM_USER` to the Linux login name (`justbecause` on the current THEPC VM) and `VM_HOST` to the VM's MagicDNS name (or its `100.x.y.z` Tailscale IP) on the admin workstation, then copy only these non-secret files. Use the Mac's built-in OpenSSH/SCP commands; the Mac Tailscale app must be open and connected. Recent OpenSSH `scp` uses SFTP, which Tailscale SSH supports:
+This subsection has **two separate terminal locations**. Do not paste both blocks into one terminal:
+
+1. Run block **A on the admin Mac**, from the Just-Because repository root. It transfers only the Compose files and `.env.example`; it does not transfer credentials, source code, or the Docker image.
+2. Run block **B in the Ubuntu VM terminal**. It installs those files under `/opt/just-because/deployment/app`, makes a private `.env` copy, and opens it for editing.
+
+The Mac's Tailscale app and the VM's Tailscale service must both be connected to the same tailnet. The VM login is `justbecause`. Use the VM's Tailscale MagicDNS name or its `100.x.y.z` Tailscale IP as `VM_HOST`.
+
+**A. On the admin Mac, from the repository root:**
 
 ```sh
 export VM_USER=justbecause
@@ -190,7 +197,9 @@ scp deployment/app/compose.yaml deployment/app/compose.private.yaml deployment/a
   "$VM_USER@$VM_HOST:/tmp/just-because-app/"
 ```
 
-On the VM, install the files and create `.env` only if it does not already exist, so a later update will not overwrite existing secrets:
+What to expect: `ssh` may ask you to approve the VM host key the first time. It then creates `/tmp/just-because-app` on the VM. `scp` should finish by returning to your Mac prompt without an error. The `/tmp` folder is only a transfer location and contains no secrets.
+
+**B. On the Ubuntu VM terminal, install the transferred files and prepare `.env`:**
 
 ```sh
 sudo install -d -o "$USER" -g "$USER" /opt/just-because/deployment/app
@@ -202,13 +211,24 @@ chmod 600 .env
 nano .env
 ```
 
-Fill `.env` with the production values from section 2. Add this line, using the exact SHA from step A:
+The first command creates `/opt/just-because/deployment/app` and assigns it to your logged-in VM user. It uses `sudo`, so it requires a working Ubuntu administrator password. If `sudo` says `Authentication failed`, **stop here**; Tailscale access does not bypass Ubuntu administrator permissions. Do not keep retrying guesses or loosen directory permissions. Resolve the VM account's sudo access before continuing. The remaining commands copy the files from `/tmp`, enter the destination directory, create `.env` only if it does not already exist, restrict it to your account, and open it in `nano`.
+
+In nano, fill `.env` with the production values from section 2. Add this line, using the exact SHA from step A:
 
 ```dotenv
 APP_IMAGE=ghcr.io/janellereonal/just-because:sha-REPLACE_WITH_40_CHARACTER_SHA
 ```
 
-Save the file and leave it on the VM. Never copy `.env` back to the workstation or commit it.
+Save in nano with **Ctrl+O**, press **Enter**, then **Ctrl+X**. The file stays on the VM; never copy `.env` back to the workstation or commit it. If `cp -n .env.example .env` leaves an existing `.env` untouched, that is intentional: it preserves existing settings. Open it with `nano .env` and update it without replacing it wholesale.
+
+#### Troubleshooting this transfer and setup
+
+- **`tailscale` or `ssh` cannot find the VM / `Could not resolve hostname`:** confirm Tailscale is connected on both devices. Replace `VM_HOST` with the VM's Tailscale `100.x.y.z` IP if its MagicDNS name does not resolve. Re-run block A after correcting `VM_HOST`.
+- **`scp: ... No such file or directory`:** on the Mac, `cd` to the Just-Because repository root first, then confirm `deployment/app/compose.yaml` exists with `ls deployment/app/compose.yaml` and repeat block A.
+- **`Permission denied` while creating `/opt/...` or copying into it:** the VM user lacks the needed administrator or directory access. Stop and resolve VM sudo access; do not use `chmod 777` and do not put secrets in `/tmp`.
+- **`cp: cannot stat '/tmp/just-because-app/...'`:** block A did not complete successfully or was run against a different VM. Re-run block A on the Mac and confirm the files arrived before continuing with block B.
+- **Nano opens an empty file or `.env` is missing:** confirm the VM prompt is in `/opt/just-because/deployment/app` and `.env.example` is present (`ls -la`). Do not enter secrets until the template has been copied successfully.
+- **A command seems to do nothing:** successful `mkdir`, `cp`, and `chmod` commands are usually silent. Returning to the shell prompt without an error means the command completed; `nano .env` should open the editor.
 
 Before pulling or migrating, run this safe presence check. It prints only setting names and statuses, never secret values; every item marked `missing` or `blank` in the required list must be fixed first:
 
@@ -324,6 +344,32 @@ The canonical auth origin remains `https://justbecause.site`; OAuth callbacks, p
 - Keep payments in test mode; do not register the final webhook until HTTPS is serving the canonical hostname.
 - Configure email sender, OAuth callback URLs, and daily job only after their final public origin is reachable. Do not enable production cron while staging or callback setup is incomplete.
 - Keep Vercel Preview isolated with a separate database, media credentials, auth secret/callback origin, payment test keys, safe email configuration, and no production cron.
+
+### Routine app updates after launch
+
+The Docker image contains the app code and runtime. Updating it replaces/recreates the **app container**; it does not delete or replace the external Neon database, the R2 bucket, or the VM's `.env`. Keep those services and credentials persistent outside the app container. The current Compose setup runs a single app instance, so each update can briefly interrupt requests while Docker replaces it and the new app becomes healthy. This setup does not provide zero-downtime deployment; a request during that interval may need to be retried.
+
+Keep staging and production separate when releasing changes: review the change in Vercel Preview with its staging-only database and credentials, then deploy the approved commit's immutable SHA image to the VM. The production VM continues to use its own `.env`; never copy the production `.env` to Vercel or use its secrets in Preview.
+
+For each production release:
+
+1. Confirm the change works in Vercel Preview and that Preview uses isolated services.
+2. Build and publish the approved commit from GitHub Actions, then record its full SHA tag. Do not deploy `latest`.
+3. On the VM, record the current `APP_IMAGE` tag for rollback, then update only that line in `/opt/just-because/deployment/app/.env` to the new SHA tag. Leave all other environment settings unchanged.
+4. Pull the new image with `docker compose pull app`. Review any new Drizzle migrations. If schema changes are present, verify the Neon production target and a restorable backup, then confirm the migrations are compatible with both the current and new app versions before applying them. Skip migration when the release has no unapplied schema changes. Stop for a migration that is destructive or incompatible; reverting an image does not reverse database changes.
+5. Recreate the app using the same Compose mode already in service. During private Phase 1, use the loopback-only command below. After Cloudflare Tunnel is configured, start the app and tunnel profile instead:
+
+```sh
+# Private Phase 1 only:
+docker compose -f compose.yaml -f compose.private.yaml up -d --no-build app
+
+# Public Cloudflare Tunnel deployment after Phase 2 is configured:
+docker compose --profile tunnel up -d --no-build app cloudflared
+```
+
+6. Check `docker compose ps` and recent app logs, then confirm the app health check passes. If the new image fails and no incompatible database migration was applied, restore the previous `APP_IMAGE` tag in `.env`, pull that tag if needed, and recreate the app with the same Compose mode. Keep the previous image tag available until the release is verified.
+
+Plan updates during a low-traffic window. For seamless updates with no single-container interruption, the hosting design would need an additional deployment strategy, such as running two app instances behind a health-aware proxy; that is outside the current single-VM Compose setup.
 
 ## Phase 2: public ingress and front-end cutover
 
