@@ -1,8 +1,8 @@
 # Prepare the app backend on THEPC
 
-This runbook separates **private app/backend preparation** from the later **public ingress and front-end cutover**. The immediate target is the Linux VM on THEPC (owner-reported 4 GB RAM and 50 GB storage; user reports Ubuntu 26 installed). Docker Compose runs the Node/Nitro app. Neon PostgreSQL and Cloudflare R2 remain external; the VM disk is for Ubuntu, Docker image layers, and logs. Namecheap remains the domain registrar. Cloudflare Tunnel or a VPS relay can be chosen later; neither is required to install and start the app privately.
+This runbook separates **private app/backend preparation** from the later **public ingress and front-end cutover**. The target is the Linux VM on THEPC running Ubuntu 26.04.1. It reports 3.3 GiB memory, a 60 GB virtual disk, and a 28 GB root filesystem with about 20 GB free. Docker Compose runs the Node/Nitro app. Neon PostgreSQL and Cloudflare R2 remain external; the VM disk is for Ubuntu, Docker image layers, and logs. Namecheap remains the domain registrar. Cloudflare Tunnel or a VPS relay can be chosen later; neither is required to install and start the app privately.
 
-The prior repository work already prepared the multi-stage app Dockerfile, Compose app and migration services, local Compose configuration, R2 storage adapter, Tunnel profile, GHCR image workflow, and hosting/rollout docs. A local ARM64 image was built on the Mac and returned HTTP 200 with dummy database settings; it was removed afterward. This does **not** mean the VM image, production credentials, database migration, or deployment have been verified.
+The prior repository work already prepared the multi-stage app Dockerfile, Compose app and migration services, local Compose configuration, R2 storage adapter, Tunnel profile, GHCR image workflow, and hosting/rollout docs. The first multi-platform CI build stalled on emulated ARM64 and was cancelled. The replacement AMD64-only image build succeeded for THEPC's `x86_64` VM. This does **not** mean the production database migration, public ingress, or deployment has been verified.
 
 The app code is based on the current local `main` commit. Self-hosted image builds select R2 uploads; Vercel continues to use its Blob upload path. The API honors `MEDIA_STORAGE_PROVIDER=r2` even if an old Blob token is present, so provider selection stays consistent during migration.
 
@@ -10,14 +10,14 @@ The app code is based on the current local `main` commit. Self-hosted image buil
 
 Complete these in order. Keep the production website on its current host until the private VM checks pass. The current LAN Mac `.env` is not a VM deployment file: the last local review found the Neon URLs and canonical app/media URLs present, but R2 account/bucket credentials and an immutable image tag were missing. The database URLs looked structurally consistent, but were not authenticated against Neon. Do not copy that Mac `.env` to the VM.
 
-- [ ] Join THEPC's Ubuntu VM to the same Tailscale network as your Mac, enable Tailscale SSH, and confirm you can reconnect after closing the current terminal.
-- [ ] Confirm the VM has Docker Compose, at least 4 GB RAM / 50 GB disk, and note `uname -m`.
+- [x] Join THEPC's Ubuntu VM to the same Tailscale network as your Mac, enable Tailscale SSH, and confirm you can reconnect after closing the current terminal.
+- [x] Confirm the VM has Docker Compose and note `uname -m`. Current guest: `x86_64`, 3.3 GiB memory, 60 GB virtual disk, 28 GB root filesystem (20 GB free); confirm storage expansion only if more root space is needed.
 - [ ] In Neon, identify the intended **production** project/branch and obtain its pooled runtime URL plus matching direct/unpooled migration URL. Confirm the project and database match; do not paste either URL into chat.
 - [ ] Before migrations, create or verify a recent Neon backup/restore point and confirm it can be restored. Stop here if you cannot identify the production project or backup.
 - [ ] In Cloudflare R2, prepare the production bucket and a bucket-scoped access key/secret. Record the account ID, bucket name, and the planned public media URL `https://media.justbecause.site`. Do not put the R2 secret in GitHub Actions Variables.
-- [ ] On the admin Mac, authenticate to GitHub, set the public build variable `R2_PUBLIC_URL`, publish the branch image from GitHub Actions, and record its full commit SHA.
-- [ ] Copy only the Compose files and `.env.example` to the VM, create the VM's private `.env`, enter values there, and pin `APP_IMAGE` to that SHA image.
-- [ ] Validate configuration, pull the exact image, inspect its platform, then review migration files and confirm compatibility with the existing production app.
+- [x] On the admin Mac, authenticate to GitHub, set the public build variable `R2_PUBLIC_URL`, publish the branch image from GitHub Actions, and record its full commit SHA (`e63b97a2f58de6aa8b21444cb522405f354c7110`).
+- [x] Copy only the Compose files and `.env.example` to the VM, create the VM's private `.env` with mode 600, and pin `APP_IMAGE` to that SHA image.
+- [ ] Validate the pulled image platform, then review migration files and confirm compatibility with the existing production app. Compose config is valid; image pull still needs `sudo` on this VM.
 - [ ] **Migration gate:** run the production migration only after the production Neon target and restorable backup have both been confirmed. Then start the app privately and check its health.
 - [ ] Smoke-test the private app. Leave public DNS, Cloudflare Tunnel, OAuth callbacks, email links, payments, and cron for Phase 2 after private checks pass.
 
@@ -85,7 +85,9 @@ sudo systemctl is-enabled docker
 
 Ubuntu 26.04 LTS is supported by the current [Docker Engine Ubuntu installation guide](https://docs.docker.com/engine/install/ubuntu/). If Docker or Compose is missing, follow that official guide and install `docker-ce`, `docker-ce-cli`, `containerd.io`, `docker-buildx-plugin`, and `docker-compose-plugin`; verify with `sudo docker run hello-world`. Do not install an unrelated Node runtime on the VM: the app image contains its runtime. Use SSH over Tailscale for administration, and do not add public router or host firewall rules for SSH or app traffic.
 
-The local Mac image previously built as `linux/arm64`. Do not deploy that local image unless `uname -m` reports `aarch64`. GitHub Actions publishes immutable `linux/amd64` and `linux/arm64` variants from the repository source; Docker selects the matching platform when pulling the image.
+On this VM, the `justbecause` account currently cannot access `/var/run/docker.sock` directly. Run Docker commands below with `sudo` (for example, `sudo docker compose ...`) and enter the Ubuntu password when prompted. Do not paste that password into a command or chat. Adding the user to the `docker` group removes the prompt but grants root-equivalent access; use that only if you intentionally want that tradeoff.
+
+The local Mac image previously built as `linux/arm64`; do not deploy it to THEPC's `x86_64` VM. The current GitHub Actions workflow publishes an immutable `linux/amd64` image for THEPC. If a future host uses ARM64, update the workflow deliberately and verify that architecture separately.
 
 ### 2. Gather production backend settings
 
@@ -174,7 +176,7 @@ export RUN_ID=1234567890 # replace with the matching run ID
 gh run watch "$RUN_ID"
 ```
 
-The workflow builds `linux/amd64` and `linux/arm64` and publishes the image as `ghcr.io/janellereonal/just-because:sha-<FULL_COMMIT_SHA>`. Use the 40-character SHA printed by `git rev-parse HEAD` in the `.env` setting below. Deploy only after the matching workflow run succeeds. The `latest` tag is reserved for pushes to `main`; do not deploy it because it can change between releases.
+The current workflow builds `linux/amd64` for THEPC and publishes the image as `ghcr.io/janellereonal/just-because:sha-<FULL_COMMIT_SHA>`. The successful AMD64-only build for commit `e63b97a2f58de6aa8b21444cb522405f354c7110` is available as `ghcr.io/janellereonal/just-because:sha-e63b97a2f58de6aa8b21444cb522405f354c7110`. Use the 40-character SHA from the specific successful run in `.env`. Deploy only after the matching workflow run succeeds. The `latest` tag is reserved for pushes to `main`; do not deploy it because it can change between releases.
 
 Before the build, set the GitHub repository **Actions variables** under **Settings → Secrets and variables → Actions → Variables**. Add `R2_PUBLIC_URL` with the public HTTPS media hostname `https://media.justbecause.site`. `VITE_POSTHOG_KEY` is optional; set it only if production analytics should be enabled. `VITE_POSTHOG_REGION` is optional and defaults to `us`. These are public build-time values; do not put credentials or keys that grant write access in Actions Variables. R2 secret access keys stay only in the VM's `.env`. If you update an Actions Variable after a build, rerun the image workflow; the existing image will not pick up the new value.
 
@@ -272,7 +274,7 @@ Open **GitHub → Your profile → Packages → just-because** to check the pack
 
 ```sh
 cd /opt/just-because/deployment/app
-docker compose pull app
+sudo docker compose pull app
 ```
 
 If it is private, create a GitHub **personal access token (classic)** with only `read:packages` access (and grant SSO access if GitHub prompts). On the VM, log in with your GitHub username and enter the token at Docker's password prompt. The commands below use a temporary Docker credential directory and remove it after the pull, instead of leaving the login in the VM's normal Docker config:
@@ -281,32 +283,31 @@ If it is private, create a GitHub **personal access token (classic)** with only 
 set -e
 cd /opt/just-because/deployment/app
 export GH_USERNAME=YOUR_GITHUB_USERNAME
-export DOCKER_CONFIG="$(mktemp -d)"
-chmod 700 "$DOCKER_CONFIG"
+ROOT_DOCKER_CONFIG=/run/just-because-ghcr-config
+sudo install -d -m 700 "$ROOT_DOCKER_CONFIG"
 cleanup_ghcr_credentials() {
-  docker logout ghcr.io >/dev/null 2>&1 || true
-  rm -rf -- "$DOCKER_CONFIG"
+  sudo env DOCKER_CONFIG="$ROOT_DOCKER_CONFIG" docker logout ghcr.io >/dev/null 2>&1 || true
+  sudo rm -rf -- "$ROOT_DOCKER_CONFIG"
 }
 trap cleanup_ghcr_credentials EXIT
-docker login ghcr.io --username "$GH_USERNAME"
-docker compose pull app
+sudo env DOCKER_CONFIG="$ROOT_DOCKER_CONFIG" docker login ghcr.io --username "$GH_USERNAME"
+sudo env DOCKER_CONFIG="$ROOT_DOCKER_CONFIG" docker compose pull app
 cleanup_ghcr_credentials
 trap - EXIT
-unset DOCKER_CONFIG
-unset GH_USERNAME
+unset GH_USERNAME ROOT_DOCKER_CONFIG
 ```
 
 Replace `YOUR_GITHUB_USERNAME` before running the command. At the password prompt, paste the token; it will not be echoed. Do not append the token to the command, put it in `.env`, or send it in chat. If login or pull fails, check the token's `read:packages` scope and that the GHCR package grants access to the private repository. GitHub Actions itself uses the workflow's `GITHUB_TOKEN` to publish; no personal token belongs in repository secrets for this workflow.
 
-The published multi-platform image supports the common `x86_64` (`amd64`) and `aarch64` (`arm64`) VM architectures. Confirm the pulled tag and architecture before migrating:
+The current published image targets THEPC's `x86_64` (`amd64`) architecture. Confirm the pulled tag and architecture before starting the app:
 
 ```sh
 cd /opt/just-because/deployment/app
-docker compose config --quiet
-docker image inspect "$(sed -n 's/^APP_IMAGE=//p' .env)" --format '{{.Os}}/{{.Architecture}}'
+sudo docker compose config --quiet
+sudo docker image inspect "$(sed -n 's/^APP_IMAGE=//p' .env)" --format '{{.Os}}/{{.Architecture}}'
 ```
 
-The architecture should match the VM (`x86_64` maps to `amd64`; `aarch64` maps to `arm64`). `docker compose config --quiet` validates configuration without printing the expanded environment. Do not continue if it fails, the image tag is not the expected SHA, or the image architecture does not match the VM.
+The image architecture should report `linux/amd64` for THEPC. `sudo docker compose config --quiet` validates configuration without printing the expanded environment. Do not continue if it fails, the image tag is not the expected SHA, or the image architecture does not match the VM.
 
 ### 4. Back up, migrate, and start privately
 
@@ -314,16 +315,16 @@ The architecture should match the VM (`x86_64` maps to `amd64`; `aarch64` maps t
 
 ```sh
 cd /opt/just-because/deployment/app
-docker compose --profile maintenance run --rm migrate
-docker compose -f compose.yaml -f compose.private.yaml up -d --no-build app
-docker compose -f compose.yaml -f compose.private.yaml ps
-docker compose -f compose.yaml -f compose.private.yaml logs --tail=100 app
+sudo docker compose --profile maintenance run --rm migrate
+sudo docker compose -f compose.yaml -f compose.private.yaml up -d --no-build app
+sudo docker compose -f compose.yaml -f compose.private.yaml ps
+sudo docker compose -f compose.yaml -f compose.private.yaml logs --tail=100 app
 ```
 
 `compose.private.yaml` binds `127.0.0.1:18080` **on the VM only**. It does not expose the app on the VM's LAN or public interface. Check health from the container:
 
 ```sh
-docker compose -f compose.yaml -f compose.private.yaml exec app node -e "fetch('http://127.0.0.1:8080/').then(r=>{console.log(r.status);process.exit(r.ok?0:1)}).catch(e=>{console.error(e.message);process.exit(1)})"
+sudo docker compose -f compose.yaml -f compose.private.yaml exec app node -e "fetch('http://127.0.0.1:8080/').then(r=>{console.log(r.status);process.exit(r.ok?0:1)}).catch(e=>{console.error(e.message);process.exit(1)})"
 ```
 
 To view the private app from an admin Mac, open an SSH local forward over Tailscale, then browse to `http://localhost:18080`. Use the VM's MagicDNS name or Tailscale IP. This requires the tailnet SSH policy to permit TCP forwarding; `ssh -L` is an ordinary SSH client connection carried over Tailscale:
@@ -356,18 +357,18 @@ For each production release:
 1. Confirm the change works in Vercel Preview and that Preview uses isolated services.
 2. Build and publish the approved commit from GitHub Actions, then record its full SHA tag. Do not deploy `latest`.
 3. On the VM, record the current `APP_IMAGE` tag for rollback, then update only that line in `/opt/just-because/deployment/app/.env` to the new SHA tag. Leave all other environment settings unchanged.
-4. Pull the new image with `docker compose pull app`. Review any new Drizzle migrations. If schema changes are present, verify the Neon production target and a restorable backup, then confirm the migrations are compatible with both the current and new app versions before applying them. Skip migration when the release has no unapplied schema changes. Stop for a migration that is destructive or incompatible; reverting an image does not reverse database changes.
+4. Pull the new image with `sudo docker compose pull app`. Review any new Drizzle migrations. If schema changes are present, verify the Neon production target and a restorable backup, then confirm the migrations are compatible with both the current and new app versions before applying them. Skip migration when the release has no unapplied schema changes. Stop for a migration that is destructive or incompatible; reverting an image does not reverse database changes.
 5. Recreate the app using the same Compose mode already in service. During private Phase 1, use the loopback-only command below. After Cloudflare Tunnel is configured, start the app and tunnel profile instead:
 
 ```sh
 # Private Phase 1 only:
-docker compose -f compose.yaml -f compose.private.yaml up -d --no-build app
+sudo docker compose -f compose.yaml -f compose.private.yaml up -d --no-build app
 
 # Public Cloudflare Tunnel deployment after Phase 2 is configured:
-docker compose --profile tunnel up -d --no-build app cloudflared
+sudo docker compose --profile tunnel up -d --no-build app cloudflared
 ```
 
-6. Check `docker compose ps` and recent app logs, then confirm the app health check passes. If the new image fails and no incompatible database migration was applied, restore the previous `APP_IMAGE` tag in `.env`, pull that tag if needed, and recreate the app with the same Compose mode. Keep the previous image tag available until the release is verified.
+6. Check `sudo docker compose ps` and recent app logs, then confirm the app health check passes. If the new image fails and no incompatible database migration was applied, restore the previous `APP_IMAGE` tag in `.env`, pull that tag if needed, and recreate the app with the same Compose mode. Keep the previous image tag available until the release is verified.
 
 Plan updates during a low-traffic window. For seamless updates with no single-container interruption, the hosting design would need an additional deployment strategy, such as running two app instances behind a health-aware proxy; that is outside the current single-VM Compose setup.
 

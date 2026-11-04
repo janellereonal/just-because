@@ -12,7 +12,7 @@ This task board implements [`the THEPC VM hosting study`](../study/1793703225_th
 
 ## Status
 
-Implementation progress (2026-11-04): app Dockerfile, Compose app/migration services, optional Tunnel profile, local/private loopback Compose overrides, R2 adapter, and GHCR workflow are prepared. Compose configuration validated on the Mac and a temporary ARM64 image returned HTTP 200 with dummy database settings; the container was removed afterward. User reports Ubuntu 26 is installed on the VM, but exact OS patch, architecture, VM Docker readiness, production secrets, and external backend have not been verified here. No VM, production Neon/R2, Cloudflare, Namecheap DNS, or live app configuration has been changed.
+Implementation progress (2026-11-05): the old multi-platform build stalled on emulated ARM64 and was cancelled. The AMD64-only image for commit `e63b97a2f58de6aa8b21444cb522405f354c7110` built and published successfully. Over Tailscale SSH, verified the VM is `x86_64`, Docker 29.9.3 and Compose 5.7.0 are available, deployment Compose files are present, the private `.env` exists with mode 600 and required Neon/R2/auth keys non-empty (values were not displayed), `APP_IMAGE` is pinned to the successful immutable image, and Compose configuration validates. The guest reports 3.3 GiB memory, a 60 GB virtual disk, and a 28 GB root filesystem with about 20 GB free. The image pull is blocked because the `justbecause` login cannot access the Docker socket directly; deployment commands need `sudo`. The active app branch has no Drizzle migration changes relative to `main`; production migration state and backup/restore have not been verified. No migration, app startup, public ingress, DNS, or production data operation has occurred.
 
 - [x] Study the home VM target and record feasibility/tradeoffs.
 - [x] Select remotely managed Cloudflare Tunnel as public ingress; no inbound router ports or public SSH.
@@ -27,10 +27,12 @@ Implementation progress (2026-11-04): app Dockerfile, Compose app/migration serv
 
 ### 1. Prepare the home VM
 
-- [ ] Verify exact Ubuntu 26 release, CPU architecture, 4 GB RAM, 50 GB disk, persistent boot, internet egress, Docker Engine/Compose, and Tailscale connectivity.
+- [x] Verify Ubuntu 26.04.1, `x86_64`, Docker 29.9.3, Compose 5.7.0, and Tailscale SSH connectivity. The guest reports 3.3 GiB RAM, a 60 GB virtual disk, and a 28 GB root filesystem with about 20 GB free.
 - [ ] Ensure router and host firewall expose no inbound app or SSH ports. Administration and manual deployment use SSH over Tailscale.
-- [ ] Install Compose files and `compose.private.yaml` under `/opt/just-because/deployment/app`; create a private production `.env` with mode 600 and no repository copy.
-- [ ] Confirm production Neon pooled/unpooled URLs, production R2 config, private GHCR pull access (or public package), and an immutable image whose architecture matches the VM.
+- [x] Install Compose files and `compose.private.yaml` under `/opt/just-because/deployment/app`; create a private production `.env` with mode 600 and no repository copy.
+- [x] Confirm required production Neon/R2/auth settings are non-empty in the VM `.env` without printing their values; the file has mode 600. Confirmed a successful immutable AMD64 image exists for the VM architecture.
+- [x] Pin the successful image SHA in `.env`.
+- [ ] Pull the image from GHCR and confirm its local platform. VM Docker socket access requires `sudo`; the current account's direct pull attempt was denied.
 
 ### 2. Run and verify app/backend privately
 
