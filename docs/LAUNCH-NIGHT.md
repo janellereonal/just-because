@@ -1,6 +1,6 @@
 # Launch night report (5 to 6 Nov 2026)
 
-All work is in draft PRs. Nothing is merged and nothing was pushed to `main`. 5 pushes used of 10.
+All work is in draft PRs. Nothing is merged and nothing was pushed to `main`. 8 pushes used of 10.
 Every PR passed `npx tsc --noEmit`, `bun test src` and `NITRO_PRESET=node bun run build` before its
 push, and all five have green Vercel checks.
 
@@ -139,8 +139,9 @@ only.
 1. **#88** (design-polish). It's independent of the rest.
 2. **#89, #90, #91, #92**, in that order. Each one is stacked on the one before, and GitHub moves the
    next PR onto `main` when you merge.
-3. **#88 and #89 both edit `src/copy/strings.ts`.** If GitHub shows a conflict after merging #88,
-   keep both sides.
+3. **#88 and #89 both added copy at the end of `src/copy/strings.ts`.** I merged `design-polish` into
+   the stack and resolved it (kept both), so merging #88 first and then #89 to #92 is conflict-free.
+   Until #88 merges, #89's diff also shows #88's changes.
 4. **Redeploy `main` in Vercel** after the merges, and check the Production deployment's commit
    matches `main`.
 
