@@ -878,3 +878,11 @@ export const LOADING_COPY = {
   /** Read by screen readers while a page loads after a click. */
   page: "Loading",
 };
+
+/** The paid screen (/checkout/:orderId), under the gift link. */
+export const PAID_COPY = {
+  next: (recipient: string) =>
+    recipient.trim()
+      ? `Send this link to ${recipient.trim()} whenever you're ready. It's theirs to keep.`
+      : "Send this link whenever you're ready. It's theirs to keep.",
+};
