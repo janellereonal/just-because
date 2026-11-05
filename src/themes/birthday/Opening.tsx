@@ -261,7 +261,7 @@ export function BirthdayOpening(p: OpeningProps) {
         </div>
       </Layer>
 
-      <div className="mt-[min(6cqi,27px)] flex h-11 items-center gap-2">
+      <div className="mt-[min(6cqi,27px)] flex min-h-11 flex-wrap items-center justify-center gap-2">
         {mic === "off" || mic === "denied" ? (
           <motion.button
             type="button"

@@ -5,6 +5,7 @@ import { toast } from "sonner";
 import Bo from "@/components/Bo";
 import { SiteHeader } from "@/components/SiteHeader";
 import { PageError, PageLoading } from "@/components/PageStates";
+import { LoadingDots } from "@/components/RouteLoading";
 import { ExtendDialog, PlanPickerDialog } from "@/components/PlanControls";
 import { cancelOrder, getOrderStatus } from "@/lib/api";
 import { formatPeso, getTier } from "@/config/pricing";
@@ -212,6 +213,7 @@ function CheckoutStatusPage() {
           <Bo pose="idle" size={150} />
         </div>
         <h1 className="mt-3 font-display text-3xl font-medium tracking-tight">Confirming your payment…</h1>
+        {slow ? null : <LoadingDots className="mt-3 text-accent" />}
         <p className="mx-auto mt-2 max-w-[42ch] text-ink/70">
           {slow
             ? "This is taking longer than usual. If you paid, you'll get an email once it's confirmed, and the gift opens on its own. You can close this page."

@@ -872,3 +872,9 @@ export const SAVE_COPY = {
   /** Server reply when a save would overwrite a newer change (status 409). */
   serverConflict: "This gift was changed somewhere else. Load the latest version and try again.",
 };
+
+/** Design polish (Nov 2026): loading states and small moments. */
+export const LOADING_COPY = {
+  /** Read by screen readers while a page loads after a click. */
+  page: "Loading",
+};

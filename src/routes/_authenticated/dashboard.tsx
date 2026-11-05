@@ -227,10 +227,10 @@ function Dashboard() {
           {empty || isLoading ? (
             <span className="relative isolate inline-flex">
               {empty ? (
-                // Bo peeks out from behind the button.
+                // Bo peeks out from behind the button: sideways on phones (the heading sits right above), over the top on wider screens.
                 <span
                   aria-hidden="true"
-                  className="pointer-events-none absolute -top-11 right-3 -z-10"
+                  className="pointer-events-none absolute top-[-6px] -right-14 -z-10 sm:-top-11 sm:right-3"
                 >
                   <span className="bo-peek block origin-bottom">
                     <Bo pose="hello" size={64} title="" />
