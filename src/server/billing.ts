@@ -24,6 +24,7 @@ import { getDb, schema } from "./db";
 import { HttpError } from "./guards";
 import { codeProblem, countUse, findCode, limitProblem, priceWith } from "./discounts";
 import { PAY_SAFETY_COPY, PLAN_STYLE_COPY } from "@/copy/strings";
+import { forgetGift } from "./readCache";
 import { notifyPaid } from "./notify";
 import type { PaidEvent } from "./payments/types";
 
@@ -478,6 +479,8 @@ export async function applyPaidEvent(event: PaidEvent, provider: string, source:
     await notifyPaid(result.paid).catch((e) => console.error("[notify]", e));
   }
   const bought = purchased as Purchased | null;
+  // The gift just opened, moved up or got longer: drop this instance's cached copy at once.
+  if (bought) forgetGift(bought.siteId);
   if (bought) {
     const props: Record<string, string> = { plan: bought.plan, kind: bought.kind };
     if (bought.method) props["method"] = bought.method;

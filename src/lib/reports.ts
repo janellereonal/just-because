@@ -84,6 +84,9 @@ export const setGiftDisabled = createServerFn({ method: "POST" })
     if (data.disabled) {
       await db.update(schema.giftReports).set({ resolvedAt: new Date() }).where(and(eq(schema.giftReports.siteId, data.siteId), isNull(schema.giftReports.resolvedAt)));
     }
+    // Pausing should take effect now on this instance (others follow within the read cache's TTL).
+    const { forgetGift } = await import("@/server/readCache");
+    forgetGift(data.siteId);
     return { ok: true };
   });
 
