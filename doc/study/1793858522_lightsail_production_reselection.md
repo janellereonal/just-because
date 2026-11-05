@@ -1,4 +1,6 @@
-# Study: Use AWS Lightsail for Just Because production
+# Study: Use AWS Lightsail for Just Because production (Superseded)
+
+> **Superseded:** THEPC remains the primary host and Lightsail is an optional parallel deployment. See [`the parallel Lightsail study`](1793858801_parallel_lightsail_rollout.md).
 
 ## Prompt and decision
 

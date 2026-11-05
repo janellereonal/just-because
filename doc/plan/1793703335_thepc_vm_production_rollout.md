@@ -1,8 +1,6 @@
-# Plan: Move Just Because Production to the THEPC VM (Superseded)
+# Plan: Run Just Because production on the THEPC VM
 
-> **Superseded for production hosting:** AWS Lightsail is again the selected production host. Use [`the Lightsail production rollout`](1793858560_lightsail_production_rollout.md). Keep this board as the record of private THEPC preparation; do not use its public-ingress or production cutover steps.
-
-This task board implements [`the THEPC VM hosting study`](../study/1793703225_thepc_vm_hosting.md). The owner approved the target architecture: THEPC Linux VM (4 GB RAM / 50 GB storage), Tailscale for administration, Neon PostgreSQL and Cloudflare R2 as external services, Vercel Preview as isolated staging, and Lightsail retained temporarily for rollback. Work is phased: first make the app/backend run privately on the VM; then choose and configure public ingress and front-end cutover.
+This task board implements [`the THEPC VM hosting study`](../study/1793703225_thepc_vm_hosting.md). THEPC remains the primary production host, with Cloudflare Tunnel as the planned public route. AWS Lightsail is an optional parallel host using the same production app/data after its preflight checks; use [`the optional Lightsail rollout`](1793858560_lightsail_production_rollout.md) for that track. Both may run at once, but keep the root hostname routed to THEPC and the daily job on THEPC unless a separate traffic-routing/failover design is approved. Neon PostgreSQL and Cloudflare R2 remain external; Vercel Preview stays isolated staging.
 
 ## OPEN QUESTIONS / OWNER CHECKS
 
@@ -18,12 +16,12 @@ Implementation progress (2026-11-05): the old multi-platform build stalled on em
 
 - [x] Study the home VM target and record feasibility/tradeoffs.
 - [x] Select remotely managed Cloudflare Tunnel as public ingress; no inbound router ports or public SSH.
-- [x] Retain the existing Lightsail Compose profile/workflow as a rollback path.
-- [x] Add the Compose Tunnel profile, keep the app unexposed on the host, and preserve Caddy for Lightsail rollback.
+- [x] Preserve the Lightsail Compose Caddy profile for an optional parallel host.
+- [x] Add the Compose Tunnel profile for THEPC; keep the app unexposed on THEPC and keep Caddy available for Lightsail.
 - [x] Update deployment and wiki guidance for the home VM, DNS delegation, secret handling, and Tunnel.
 - [x] Confirm Cloudflare Free DNS/Tunnel cost is $0/month; R2 charges are separate and usage-based.
 - [ ] Complete Phase 1: privately run the app/backend on THEPC and verify Neon, migration, R2 readiness, and restart-after-reboot behavior. App health is confirmed; the external-service and persistence checks remain open.
-- [ ] Complete Phase 2: choose and configure public ingress, DNS, callbacks, and browser flows; keep Lightsail until validation is complete.
+- [ ] Complete Phase 2: configure the THEPC canonical route and public flows, then run the optional Lightsail hostname in parallel. Do not split production traffic automatically.
 
 ## Task Board
 
@@ -48,13 +46,13 @@ Implementation progress (2026-11-05): the old multi-platform build stalled on em
 ### 3. Configure public ingress and storage
 
 - [ ] Select Cloudflare Tunnel or a VPS relay for public ingress; the current preferred route is Tunnel, but no public ingress is required for Phase 1.
-- [ ] Add `justbecause.site` to the Cloudflare account and export/recreate every current Namecheap DNS record in the Cloudflare zone. Verify MX, SPF/DKIM/DMARC, and TXT records before delegating DNS; preserve the current Lightsail A record during this DNS-provider migration. Namecheap remains the registrar.
+- [ ] Add `justbecause.site` to the Cloudflare account and export/recreate every current Namecheap DNS record in the Cloudflare zone. Verify MX, SPF/DKIM/DMARC, and TXT records before delegating DNS; preserve a separate Lightsail validation hostname/A record if configured. Namecheap remains the registrar.
 - [ ] At Namecheap, change the authoritative nameservers to the Cloudflare-assigned pair. This moves DNS hosting only; verify mail and existing website records still resolve before proceeding.
 - [ ] Create a remotely managed Cloudflare Tunnel and add its token only to the VM's private environment.
 - [ ] Configure the public hostname `justbecause.site` to forward to `http://app:8080` on the Compose network. Verify the app privately and connector health in Cloudflare before changing the app's DNS record.
 - [ ] Replace the Cloudflare root A record with the Tunnel route/CNAME for `justbecause.site` only after the home app passes checks. Retain `15.135.147.111` separately for rollback. Verify public HTTPS and mail after DNS propagation.
 - [ ] Route the public media hostname to the existing R2 bucket; verify the app's R2 write/delete credentials and production media URL.
-- [ ] Do not expose app port 8080, public SSH, or Caddy ports on the home VM. The Caddy `public` profile remains for the Lightsail rollback deployment.
+- [ ] Do not expose app port 8080, public SSH, or Caddy ports on THEPC. The Caddy `public` profile is used by the optional Lightsail deployment.
 
 ### 4. Protect data and isolate staging
 
@@ -69,7 +67,7 @@ Implementation progress (2026-11-05): the old multi-platform build stalled on em
 - [ ] Verify `https://justbecause.site` from outside the tailnet. Confirm port 8080 and SSH are not reachable from the public internet and SSH works through Tailscale.
 - [ ] Smoke-test sign-in, gift create/edit, contributions, photo/thumbnail/voice/video upload and deletion, admin theme uploads, PayMongo test/webhook, email links, and daily job.
 - [ ] Monitor guest memory, disk, CPU, container restarts, tunnel health, and upload behavior during expected concurrent use. The app buffers uploads up to about 50 MiB; 4 GB is a reasonable starting allocation, not a measured capacity guarantee.
-- [ ] Keep Lightsail and its known-good configuration until all checks pass. Do not delete it or remove rollback DNS information as part of this plan.
+- [ ] Keep Lightsail available for the optional parallel rollout. Keep the root hostname on THEPC and do not split customer traffic without an explicit traffic-routing plan.
 - [ ] Record release evidence and sync the deployment README and hosting wiki to the verified state.
 
 ## Release Guardrails

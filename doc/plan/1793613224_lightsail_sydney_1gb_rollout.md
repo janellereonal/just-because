@@ -1,6 +1,6 @@
 # Plan: Deploy Just Because to Lightsail Sydney ($7 starter)
 
-> **Superseded task board:** The current Lightsail deployment plan is [`the Lightsail production rollout`](1793858560_lightsail_production_rollout.md). This older board is retained as a historical record of the original setup decisions.
+> **Superseded task board:** The current optional Lightsail deployment plan is [`the Lightsail rollout alongside THEPC`](1793858560_lightsail_production_rollout.md). This older board is retained as a historical record of the original setup decisions.
 
 Supersedes `1792935685_lightsail_r2_feature_parity.md` for the actual rollout. The earlier document remains as the original approved architecture record; this task board reflects the provisioned server and current application implementation. Feasibility and tradeoffs are recorded in [`doc/study/1793613200_lightsail_sydney_1gb_deployment.md`](../study/1793613200_lightsail_sydney_1gb_deployment.md).
 
