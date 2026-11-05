@@ -735,10 +735,20 @@ export const PRICE_COPY = {
   approxSuffix: "(approx.)",
   /** Under the plan cards, for visitors in the Philippines. */
   footerLocal: "Prices are in pesos.",
-  /** Under the plan cards, for everyone else. */
+  /** Under the plan cards, for everyone else, while checkout takes cards. */
   footerAbroad: "You pay in Philippine pesos, and cards from any country work. The amount in your currency is a guide. Your bank sets the exact rate.",
-  /** Next to the pay button, for visitors outside the Philippines. */
+  /** Under the plan cards, for everyone else, while checkout takes no cards. */
+  footerAbroadNoCards: "You pay in Philippine pesos. The amount in your currency is a guide.",
+  /** Next to the pay button, for visitors outside the Philippines, while checkout takes cards. */
   abroadPayNote: "Paying from outside the Philippines? Use a Visa or Mastercard. It's charged in pesos, and some banks add a small fee for that.",
+  /** The same spot while checkout takes no cards: say plainly what works. */
+  abroadPayNoteNoCards: (methods: string) =>
+    `Paying from outside the Philippines? For now checkout takes ${methods}, so you'll need a Philippine bank or wallet app. Cards are on the way.`,
+  /** "Pay with QR Ph, Maya, GrabPay, or ShopeePay." under the plans. */
+  payWith: (methods: string) => `Pay with ${methods}.`,
+  /** On phones, before checkout, when QR Ph is the main way to pay. */
+  qrTipTitle: "Paying with QR Ph on this phone?",
+  qrTipSteps: ["Save the QR code to your photos", "Open GCash, Maya or your bank app", "Choose Pay QR", "Upload the QR code from your photos"],
 } as const;
 
 /** Paying safely: paused gifts, paying in two tabs, refunds we owe. */
@@ -871,6 +881,30 @@ export const SAVE_COPY = {
   leaveUnsaved: "Your last changes aren't saved yet. Leave anyway?",
   /** Server reply when a save would overwrite a newer change (status 409). */
   serverConflict: "This gift was changed somewhere else. Load the latest version and try again.",
+};
+
+/** When a style needs a bigger plan than the one picked. */
+export const PLAN_STYLE_COPY = {
+  /** Checkout and reopen refusal: "Board Game comes with Celebration and up, so Sweet can't open it." */
+  blocker: (style: string, needs: string, tier: string) =>
+    `${style} comes with ${needs} and up, so ${tier} can't open it. Pick ${needs}, or switch to a style that comes with ${tier}.`,
+  /** Under the style picker on /create, once a style that needs a bigger plan is picked. */
+  picked: (style: string, needs: string) => `${style} comes with the ${needs} plan or bigger. You only pay when you send it.`,
+};
+
+/** Deleting a gift, from the editor's Gift settings and the dashboard. */
+export const DELETE_GIFT_COPY = {
+  sectionTitle: "Delete this gift",
+  sectionBody: "Removes the gift, every note, photo and voice note in it, and both links. This can't be undone.",
+  button: "Delete gift",
+  title: (name: string) => `Delete the gift for ${name}?`,
+  bodyDraft: "Every note, photo and song in it goes too, and the invite link stops working. This can't be undone.",
+  bodyPaid: "It's paid for, so this also closes the gift link for good. The payment isn't refunded. Every note, photo and song in it goes too. This can't be undone.",
+  typePrompt: "Type DELETE to confirm",
+  keep: "Keep it",
+  deleting: "Deleting…",
+  done: "Gift deleted.",
+  failed: "Couldn't delete that gift. Try again?",
 };
 
 /** Design polish (Nov 2026): loading states and small moments. */

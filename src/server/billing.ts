@@ -4,6 +4,7 @@
  */
 import { track } from "@/server/events";
 import { formatInfo } from "@/lib/formats";
+import { isStyleId, styleTitle } from "@/lib/styles";
 import { and, eq, inArray, sql } from "drizzle-orm";
 import {
   LEGACY_TIER,
@@ -14,6 +15,7 @@ import {
   getTier,
   promo,
   tierAllowsLook,
+  stylePlanName,
   tierRank,
   type Tier,
   type TierId,
@@ -21,7 +23,7 @@ import {
 import { getDb, schema } from "./db";
 import { HttpError } from "./guards";
 import { codeProblem, countUse, findCode, limitProblem, priceWith } from "./discounts";
-import { PAY_SAFETY_COPY } from "@/copy/strings";
+import { PAY_SAFETY_COPY, PLAN_STYLE_COPY } from "@/copy/strings";
 import { notifyPaid } from "./notify";
 import type { PaidEvent } from "./payments/types";
 
@@ -74,13 +76,21 @@ export async function siteUsage(siteId: string, db: Db = getDb()) {
 export type Usage = Awaited<ReturnType<typeof siteUsage>>;
 
 /** Why a tier doesn't fit this gift right now, or null if it does. */
-export function tierBlocker(tier: Tier, usage: Usage, format: string, style?: string | null): string | null {
+export function tierBlocker(
+  tier: Tier,
+  usage: Usage,
+  format: string,
+  style?: string | null,
+  opts: { ignoreLook?: boolean } = {},
+): string | null {
   if (usage.contributors > tier.contributors.cap)
     return `This gift has ${usage.contributors} contributors. ${tier.name} fits ${tier.contributors.cap}.`;
   if (usage.photos > tier.photos.cap)
     return `This gift has ${usage.photos} photos. ${tier.name} fits ${tier.photos.cap}.`;
-  if (!tierAllowsLook(tier, format, style))
+  if (!opts.ignoreLook && !tierAllowsLook(tier, format, style)) {
+    if (isStyleId(style)) return PLAN_STYLE_COPY.blocker(styleTitle(style), stylePlanName(style), tier.name);
     return `${tier.name} doesn't include this format. Switch to ${tier.formats.map((f) => formatInfo(f).title).join(" or ")} to use it.`;
+  }
   return null;
 }
 

@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import Bo from "@/components/Bo";
+import { whenSettled } from "@/lib/idle3d";
 import type { BoFraming, BoMood, BoScene } from "@/lib/bo3d/scene";
 import type { BoAccessory } from "@/lib/bo3d/accessories";
 
@@ -45,6 +46,7 @@ export function Bo3D({
   const wrapRef = useRef<HTMLDivElement | null>(null);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const sceneRef = useRef<BoScene | null>(null);
+  const visibleRef = useRef(false);
   const [ready, setReady] = useState(false);
   const [failed, setFailed] = useState(false);
   const onSceneRef = useRef(onScene);
@@ -63,15 +65,24 @@ export function Bo3D({
       if (started) return;
       started = true;
       try {
-        const mod = await import("@/lib/bo3d/scene");
-        if (disposed) return;
-        if (!mod.webglAvailable()) {
-          setFailed(true);
+        // Built once the page has settled, one scene at a time; the flat Bo stands in until then.
+        const created = await whenSettled(async () => {
+          const mod = await import("@/lib/bo3d/scene");
+          if (disposed) return null;
+          if (!mod.webglAvailable()) {
+            setFailed(true);
+            return null;
+          }
+          return mod.createBoScene(canvas, { lidColor, notes, mood, framing });
+        });
+        if (!created) return;
+        if (disposed) {
+          created.dispose();
           return;
         }
-        const created = mod.createBoScene(canvas, { lidColor, notes, mood, framing });
         sceneRef.current = created;
         created.setStory(story);
+        created.setPaused(!visibleRef.current);
         await created.ready;
         if (disposed) return;
         setReady(true);
@@ -84,6 +95,7 @@ export function Bo3D({
     const io = new IntersectionObserver(
       (entries) => {
         const visible = entries.some((e) => e.isIntersecting);
+        visibleRef.current = visible;
         if (visible) void start();
         sceneRef.current?.setPaused(!visible);
       },

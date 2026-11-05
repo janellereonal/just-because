@@ -681,7 +681,8 @@ export const updateSite = createServerFn({ method: "POST" })
           // While it was offline it could collect past its plan's limits; it has to fit again to reopen.
           const reopenTier = getTier(site.tier);
           if (reopenTier) {
-            const blocker = tierBlocker(reopenTier, await siteUsage(site.id), format, style);
+            // A look it was paid with stays fine (styles once came with every plan); only a new one is checked.
+            const blocker = tierBlocker(reopenTier, await siteUsage(site.id), format, style, { ignoreLook: !lookChanged });
             if (blocker) throw new HttpError(409, `${blocker} Upgrade, or hide a few, to reopen it.`);
           }
         }
@@ -706,19 +707,20 @@ function mergeKeys(current: unknown, patch: Record<string, unknown>): Record<str
 }
 
 export const deleteSite = createServerFn({ method: "POST" })
-  .inputValidator(z.object({ id }))
+  .inputValidator(z.object({ id, confirm: z.string().max(20).optional() }))
   .handler(async ({ data }) => {
     await requireSiteOwner(data.id);
     const db = getDb();
-    // Orders cascade with the gift, so a paid gift would take its payment record with it.
+    // Orders keep their record (site_id goes to null), like when an account is deleted. A paid gift
+    // closes its link for good and isn't refunded, so it takes a typed DELETE, not one click.
     const [paid] = await db
       .select({ id: schema.orders.id })
       .from(schema.orders)
       .where(and(eq(schema.orders.siteId, data.id), eq(schema.orders.status, "paid")))
       .limit(1);
-    // A friendly 409, not a 500, when it was paid for in another tab after this page loaded.
-    if (paid) throw new HttpError(409, "This gift has a paid plan, so it stays. You can unpublish it from the editor.");
+    if (paid && data.confirm !== "DELETE") throw new HttpError(409, "This gift is paid for. Type DELETE to delete it.");
     await db.delete(schema.giftSites).where(eq(schema.giftSites.id, data.id));
+    if (paid) console.info(`[gift] owner deleted a paid gift (order ${paid.id} kept)`);
     // Every photo, voice note and picture stored for it goes too.
     const { deleteGiftMedia } = await import("@/server/uploads");
     await deleteGiftMedia(data.id);

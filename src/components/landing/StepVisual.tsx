@@ -2,18 +2,27 @@
 import { Check, EyeOff, Link2 } from "lucide-react";
 import Bo from "@/components/Bo";
 import { LANDING_MORE } from "@/copy/strings";
+import { StyleArt } from "@/components/styles/StylePicker";
+import { styleInfo, styleTitle, type StyleId } from "@/lib/styles";
 
 const SV = LANDING_MORE.stepVisuals;
+/** Real styles for the "pick a style" picture, the second one picked. */
+const PICK_STYLES: StyleId[] = ["cake", "boarding-pass", "love-letter", "fetch", "gift-box", "record-player"];
 
 export function StepVisual({ n }: { n: string }) {
   if (n === "01")
     return (
       <div className="grid grid-cols-3 gap-2">
-        {["bg-pink", "bg-butter", "bg-mint", "bg-lilac", "bg-sky", "bg-peach"].map((c, i) => (
+        {PICK_STYLES.map((id, i) => (
           <span
-            key={c}
-            className={`h-12 rounded-xl ${c} ${i === 1 ? "ring-2 ring-accent ring-offset-2 ring-offset-white" : ""}`}
-          />
+            key={id}
+            className={`relative block h-[72px] overflow-hidden rounded-xl ${i === 1 ? "ring-2 ring-accent ring-offset-2 ring-offset-white" : "ring-1 ring-ink/8"}`}
+          >
+            <StyleArt style={styleInfo(id)} />
+            <span className="absolute inset-x-1 bottom-1 truncate rounded-full bg-paper/90 px-1.5 py-0.5 text-center text-[10px] leading-tight font-medium text-ink">
+              {styleTitle(id)}
+            </span>
+          </span>
         ))}
       </div>
     );

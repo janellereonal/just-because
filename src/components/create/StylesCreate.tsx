@@ -9,7 +9,8 @@ import { useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { AnimatePresence } from "motion/react";
 import { t } from "@/i18n";
-import { GUEST_COPY, GUIDE_COPY } from "@/copy/strings";
+import { GUEST_COPY, GUIDE_COPY, PLAN_STYLE_COPY } from "@/copy/strings";
+import { stylePlanName, stylePlanTag } from "@/config/pricing";
 import { GuestSignInDialog } from "@/components/GuestPrompt";
 import { ConciergeOffer } from "@/components/ConciergeOffer";
 import { NewUserGuide, guideSeen } from "@/components/NewUserGuide";
@@ -364,6 +365,11 @@ export function StylesCreate({
             {step(4, t("picker.style.title"), t("picker.style.hint"))}
             <div className="mt-5">
               <StylePicker value={style} onChange={pickStyle} occasion={occasion} available={available} loading={themesLoading} />
+              {style && stylePlanTag(style) ? (
+                <p role="status" className="mt-4 rounded-xl bg-cream px-3 py-2 text-sm text-ink/75" data-testid="style-plan-note">
+                  {PLAN_STYLE_COPY.picked(styleTitle(style), stylePlanName(style))}
+                </p>
+              ) : null}
             </div>
           </div>
 
@@ -448,7 +454,7 @@ export function StylesCreate({
               <span className="min-w-0 leading-tight">
                 {occasion ? <span className="block truncate text-[11px] text-cream/70">{occasionName(occasion)}{solo ? " · Just me" : ""}</span> : null}
                 <span className="block truncate text-sm">
-                  {style ? styleTitle(style) : "No style yet"} · {toSave.length} {toSave.length === 1 ? "section" : "sections"}
+                  {style ? styleTitle(style) : "No style yet"}{style && stylePlanTag(style) ? ` · ${stylePlanTag(style)}` : ""} · {toSave.length} {toSave.length === 1 ? "section" : "sections"}
                   {!occasion && solo ? " · Just me" : ""}
                 </span>
               </span>

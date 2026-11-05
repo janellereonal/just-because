@@ -105,7 +105,7 @@ export function GameOpening(p: OpeningProps) {
 
   return (
     <div className="relative flex w-full flex-col items-center">
-      <Layer depth={10} className="relative" style={{ width: "min(80cqi, 350px)", aspectRatio: "1" }}>
+      <Layer depth={10} className="relative" style={{ width: "min(80cqi, 350px, calc(100cqh - 280px))", aspectRatio: "1" }}>
         <Object3D pose={{ x: 34, y: 0, z: -8 }} strength={8} settle={beat >= 3} className="absolute inset-0">
           <div className="absolute inset-0" style={{ transform: "translateZ(-14px)", transformStyle: "preserve-3d" }}>
             <FloorShadow tint="20,25,45" depth={6} radius={22} className="inset-0" />

@@ -10,7 +10,8 @@ import { ArrowUpRight, Link2, MoreHorizontal, PencilLine, Plus, Trash2 } from "l
 import { SiteHeader } from "@/components/SiteHeader";
 import { GuestBanner, GuestSignInDialog } from "@/components/GuestPrompt";
 import { useAuth } from "@/hooks/useAuth";
-import { GUEST_COPY } from "@/copy/strings";
+import { DELETE_GIFT_COPY, GUEST_COPY } from "@/copy/strings";
+import { DeleteGiftDialog } from "@/components/DeleteGiftDialog";
 import { deleteSite, listMySites } from "@/lib/api";
 import {
   DropdownMenu,
@@ -62,8 +63,7 @@ function GiftCard({ site, index, theme, counts }: { site: GiftSite; index: numbe
   const { isGuest } = useAuth();
   const [askSignIn, setAskSignIn] = useState(false);
   const [confirming, setConfirming] = useState(false);
-  const [deleting, setDeleting] = useState(false);
-  // Paid plans keep their gift (and its receipt). Legacy gifts never had an order.
+  // Paid gifts ask for DELETE to be typed (their link closes for good). Legacy gifts never had an order.
   const paid = !!site.tier && site.tier !== "legacy";
   const s = status(site);
   const friendsLink =
@@ -142,53 +142,14 @@ function GiftCard({ site, index, theme, counts }: { site: GiftSite; index: numbe
               </button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-56">
-              {paid ? (
-                <p className="px-2 py-1.5 text-xs text-muted">
-                  This gift has a paid plan, so it stays. You can unpublish it from the editor.
-                </p>
-              ) : (
-                <DropdownMenuItem className="text-[#B4322E] focus:text-[#B4322E]" onSelect={() => setConfirming(true)}>
-                  <Trash2 /> Delete gift
-                </DropdownMenuItem>
-              )}
+              <DropdownMenuItem className="text-[#B4322E] focus:text-[#B4322E]" onSelect={() => setConfirming(true)}>
+                <Trash2 /> {DELETE_GIFT_COPY.button}
+              </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
       </div>
-      <AlertDialog open={confirming} onOpenChange={(open) => !deleting && setConfirming(open)}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Delete {site.title}?</AlertDialogTitle>
-            <AlertDialogDescription>
-              Every note, photo and song in it goes too
-              {site.solo ? "" : ", and the invite link stops working"}. This can't be undone.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel disabled={deleting}>Keep it</AlertDialogCancel>
-            <AlertDialogAction
-              disabled={deleting}
-              className="bg-[#B4322E] text-white hover:bg-[#9A2A27]"
-              onClick={(e) => {
-                e.preventDefault();
-                setDeleting(true);
-                deleteSite({ data: { id: site.id } })
-                  .then(async () => {
-                    toast.success("Gift deleted.");
-                    setConfirming(false);
-                    await queryClient.invalidateQueries({ queryKey: ["my-sites"] });
-                  })
-                  .catch((err: unknown) => {
-                    toast.error(err instanceof Error && err.message.length < 160 ? err.message : "Couldn't delete that gift.");
-                  })
-                  .finally(() => setDeleting(false));
-              }}
-            >
-              {deleting ? "Deleting…" : "Delete gift"}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+      <DeleteGiftDialog siteId={site.id} recipient={site.title} paid={paid} open={confirming} onOpenChange={setConfirming} />
     </article>
   );
 }
