@@ -1,6 +1,6 @@
 # Launch night report (5 to 6 Nov 2026)
 
-All work is in draft PRs. Nothing is merged and nothing was pushed to `main`. 8 pushes used of 10.
+All work is in draft PRs. Nothing is merged and nothing was pushed to `main`. 9 pushes used of 10.
 Every PR passed `npx tsc --noEmit`, `bun test src` and `NITRO_PRESET=node bun run build` before its
 push, and all five have green Vercel checks.
 
@@ -18,9 +18,9 @@ no `og:site_name`. **Redeploy `main` in Vercel**, and move the team to Pro befor
 |---|---|---|
 | [#88](https://github.com/janellereonal/just-because/pull/88) | `design-polish` | Your three design-polish patches (calm loader, friend send moment, paid-screen next step, DESIGN-INSPO.md). Checks green, nothing to fix. |
 | [#89](https://github.com/janellereonal/just-because/pull/89) | `launch-fixes` | The 8 live-site fixes, plus these docs. |
-| [#90](https://github.com/janellereonal/just-because/pull/90) | `qa-night` | Fixes from the stress test (stacked on #89). |
-| [#91](https://github.com/janellereonal/just-because/pull/91) | `scale-ready` | Read cache, shared rate limits, `docs/SCALE.md` (stacked on #90). |
-| [#92](https://github.com/janellereonal/just-because/pull/92) | `launch-marketing` | Share previews and small fixes from checking every promised feature (stacked on #91). |
+| [#90](https://github.com/janellereonal/just-because/pull/90) | `qa-night` | Fixes from the stress test (builds on #89). |
+| [#91](https://github.com/janellereonal/just-because/pull/91) | `scale-ready` | Read cache, shared rate limits, `docs/SCALE.md` (builds on #90). |
+| [#92](https://github.com/janellereonal/just-because/pull/92) | `launch-marketing` | Share previews and small fixes from checking every promised feature (builds on #91). |
 
 ### #89 launch-fixes
 - **Board Game dice on phones:** the board now also scales by screen height. Before, "Roll the dice"
@@ -137,8 +137,8 @@ only.
 ## Suggested merge order
 
 1. **#88** (design-polish). It's independent of the rest.
-2. **#89, #90, #91, #92**, in that order. Each one is stacked on the one before, and GitHub moves the
-   next PR onto `main` when you merge.
+2. **#89, #90, #91, #92**, in that order. All five PRs are against `main`. Each one builds on the one
+   before, so until the earlier ones merge, its diff also shows their changes; that shrinks as you merge.
 3. **#88 and #89 both added copy at the end of `src/copy/strings.ts`.** I merged `design-polish` into
    the stack and resolved it (kept both), so merging #88 first and then #89 to #92 is conflict-free.
    Until #88 merges, #89's diff also shows #88's changes.
