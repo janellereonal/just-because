@@ -1,0 +1,87 @@
+/*
+ * Small polish, Nov 2026 (design-polish): loading states, a send burst, and fixes for
+ * the phone mockups. One motion rule throughout: fade, then move or grow a little
+ * longer than the fade, on --ease-paper. Everything here is decorative and stops under
+ * prefers-reduced-motion.
+ */
+
+/* ---------- Loading ---------- */
+
+/* Three soft dots. Color follows the text, so it sits on any page, gift pages included. */
+.jb-dots {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.jb-dots i {
+  display: block;
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  background: currentColor;
+  opacity: 0.25;
+  animation: jb-dot 1.1s var(--ease-paper) infinite;
+}
+.jb-dots i:nth-child(2) { animation-delay: 0.14s; }
+.jb-dots i:nth-child(3) { animation-delay: 0.28s; }
+@keyframes jb-dot {
+  0%, 70%, 100% { opacity: 0.25; transform: translateY(0) scale(0.9); }
+  30% { opacity: 0.85; transform: translateY(-5px) scale(1); }
+}
+
+/*
+ * Shown while a page's code loads after a click. It waits a beat before fading in,
+ * so quick loads never flash it, and slow phones never see a blank screen.
+ */
+.jb-route-loading {
+  animation: jb-route-in 0.45s var(--ease-paper) 0.25s both;
+}
+@keyframes jb-route-in {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: none; }
+}
+
+/* ---------- Send burst (friend page) ---------- */
+
+/* A little pop of paper bits from the middle of a card. Pieces get --dx, --dy and --r inline. */
+.jb-pop {
+  position: absolute;
+  left: 50%;
+  top: 38%;
+  width: 0;
+  height: 0;
+  pointer-events: none;
+  z-index: 2;
+}
+.jb-pop i {
+  position: absolute;
+  left: -4px;
+  top: -6px;
+  width: 8px;
+  height: 12px;
+  border-radius: 2px;
+  opacity: 0;
+  animation: jb-pop 0.95s var(--ease-paper) both;
+}
+.jb-pop i:nth-child(3n) { width: 9px; height: 9px; border-radius: 999px; }
+.jb-pop i:nth-child(4n) { height: 6px; }
+@keyframes jb-pop {
+  0% { opacity: 0; transform: translate(0, 0) rotate(0deg) scale(0.4); }
+  15% { opacity: 1; }
+  70% { opacity: 1; }
+  100% { opacity: 0; transform: translate(var(--dx), var(--dy)) rotate(var(--r)) scale(1); }
+}
+
+/* ---------- Phone mockups ---------- */
+
+/* The mock's camera pill sat on top of each opening's small top line ("HAPPY BIRTHDAY"). */
+.demo-phone .jb-opening-kicker,
+.jb-notched .jb-opening-kicker {
+  top: max(40px, 5cqi);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .jb-dots i { animation: none; opacity: 0.5; }
+  .jb-route-loading { animation: none; }
+  .jb-pop { display: none; }
+}
