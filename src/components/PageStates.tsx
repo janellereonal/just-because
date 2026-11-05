@@ -2,16 +2,18 @@ import { galleryLink } from "@/lib/gallery";
 import { Link } from "@tanstack/react-router";
 import Bo from "@/components/Bo";
 import { SiteHeader } from "@/components/SiteHeader";
+import { LoadingDots } from "@/components/RouteLoading";
 
-/** Small bobbing Bo while a page's data loads — never a blank screen. */
+/** Small bobbing Bo while a page's data loads, never a blank screen. */
 export function PageLoading({ label = "Just a moment…" }: { label?: string }) {
   return (
-    <div className="grid min-h-screen place-items-center bg-paper px-6 text-center text-ink">
+    <div className="grid min-h-screen place-items-center bg-paper px-6 text-center text-ink" role="status">
       <div>
         <div className="bo-bob inline-block">
           <Bo pose="idle" size={110} title="Loading" />
         </div>
         <p className="mt-4 text-sm text-muted">{label}</p>
+        <LoadingDots className="mt-3 text-accent" />
       </div>
     </div>
   );

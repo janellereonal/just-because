@@ -5,10 +5,11 @@ import { toast } from "sonner";
 import Bo from "@/components/Bo";
 import { SiteHeader } from "@/components/SiteHeader";
 import { PageError, PageLoading } from "@/components/PageStates";
+import { LoadingDots } from "@/components/RouteLoading";
 import { ExtendDialog, PlanPickerDialog } from "@/components/PlanControls";
 import { cancelOrder, getOrderStatus } from "@/lib/api";
 import { formatPeso, getTier } from "@/config/pricing";
-import { PAY_SAFETY_COPY } from "@/copy/strings";
+import { PAID_COPY, PAY_SAFETY_COPY } from "@/copy/strings";
 
 /** How long we keep checking before saying "this is taking a while". */
 const PATIENCE_MS = 90_000;
@@ -159,11 +160,14 @@ function CheckoutStatusPage() {
                 void navigator.clipboard.writeText(liveUrl);
                 toast.success("Gift link copied.");
               }}
-              className="rounded-full bg-ink px-4 py-2 text-sm font-medium text-cream"
+              className="squish rounded-full bg-ink px-4 py-2 text-sm font-medium text-cream"
             >
               Copy
             </button>
           </div>
+        ) : null}
+        {order.kind === "publish" && liveUrl ? (
+          <p className="mx-auto mt-3 max-w-[40ch] text-sm text-ink/65">{PAID_COPY.next(site?.recipient ?? "")}</p>
         ) : null}
         <div className="mt-5 flex flex-wrap justify-center gap-3">
           {order.kind === "publish" && liveUrl ? (
@@ -212,6 +216,7 @@ function CheckoutStatusPage() {
           <Bo pose="idle" size={150} />
         </div>
         <h1 className="mt-3 font-display text-3xl font-medium tracking-tight">Confirming your payment…</h1>
+        {slow ? null : <LoadingDots className="mt-3 text-accent" />}
         <p className="mx-auto mt-2 max-w-[42ch] text-ink/70">
           {slow
             ? "This is taking longer than usual. If you paid, you'll get an email once it's confirmed, and the gift opens on its own. You can close this page."

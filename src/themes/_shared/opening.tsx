@@ -228,7 +228,7 @@ export function OpeningShell({
           <>
             {badge ? (
               <motion.p
-                className="pointer-events-none absolute inset-x-0 top-[max(18px,5cqi)] z-[45] px-14 text-center text-[11px] font-medium tracking-[0.3em] uppercase opacity-75"
+                className="jb-opening-kicker pointer-events-none absolute inset-x-0 top-[max(18px,5cqi)] z-[45] px-14 text-center text-[11px] font-medium tracking-[0.3em] uppercase opacity-75"
                 initial={{ opacity: 0, y: -6 }}
                 animate={{ opacity: 0.75, y: 0 }}
                 transition={{ ...SPRING.soft, delay: 0.3 }}
