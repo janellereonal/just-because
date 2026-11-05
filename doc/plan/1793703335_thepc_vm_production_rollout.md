@@ -1,4 +1,6 @@
-# Plan: Move Just Because Production to the THEPC VM
+# Plan: Move Just Because Production to the THEPC VM (Superseded)
+
+> **Superseded for production hosting:** AWS Lightsail is again the selected production host. Use [`the Lightsail production rollout`](1793858560_lightsail_production_rollout.md). Keep this board as the record of private THEPC preparation; do not use its public-ingress or production cutover steps.
 
 This task board implements [`the THEPC VM hosting study`](../study/1793703225_thepc_vm_hosting.md). The owner approved the target architecture: THEPC Linux VM (4 GB RAM / 50 GB storage), Tailscale for administration, Neon PostgreSQL and Cloudflare R2 as external services, Vercel Preview as isolated staging, and Lightsail retained temporarily for rollback. Work is phased: first make the app/backend run privately on the VM; then choose and configure public ingress and front-end cutover.
 
@@ -12,7 +14,7 @@ This task board implements [`the THEPC VM hosting study`](../study/1793703225_th
 
 ## Status
 
-Implementation progress (2026-11-05): the old multi-platform build stalled on emulated ARM64 and was cancelled. The AMD64-only image for commit `e63b97a2f58de6aa8b21444cb522405f354c7110` built and published successfully. Over Tailscale SSH, verified the VM is `x86_64`, Docker 29.9.3 and Compose 5.7.0 are available, deployment Compose files are present, the private `.env` exists with mode 600 and required Neon/R2/auth keys non-empty (values were not displayed), and `APP_IMAGE` is pinned to the successful immutable image. The owner confirmed `sudo docker image inspect` on the VM reports `linux/amd64`, so the image is pulled and matches the VM. Compose configuration validates. The guest reports 3.3 GiB memory, a 60 GB virtual disk, and a 28 GB root filesystem with about 20 GB free. The active app branch has no Drizzle migration changes relative to `main`; production migration state and backup/restore have not been verified, so no migration was run. Starting the app through non-interactive SSH is blocked because `sudo` requires an interactive terminal. No app startup, public ingress, DNS, or production data operation has occurred.
+Implementation progress (2026-11-05): the old multi-platform build stalled on emulated ARM64 and was cancelled. The AMD64-only image for commit `e63b97a2f58de6aa8b21444cb522405f354c7110` built and published successfully. Over Tailscale SSH, verified the VM is `x86_64`, Docker 29.9.3 and Compose 5.7.0 are available, deployment Compose files are present, the private `.env` exists with mode 600 and required Neon/R2/auth keys non-empty (values were not displayed), and `APP_IMAGE` is pinned to the successful immutable image. The owner confirmed `sudo docker image inspect` on the VM reports `linux/amd64`, so the image is pulled and matches the VM. Compose configuration validates. The guest reports 3.3 GiB memory, a 60 GB virtual disk, and a 28 GB root filesystem with about 20 GB free. The active app branch has no Drizzle migration changes relative to `main`; production migration state and backup/restore have not been verified, so no migration was run. The user started the app with Compose; `docker compose ps` reports it healthy and bound only to `127.0.0.1:18080`. A request to the app returned HTTP 200 both on the VM loopback and through a Tailscale SSH local forward. Neon production read/write, migration, R2 operations, restart-after-reboot, public ingress, and DNS remain unverified; no production data operation has occurred.
 
 - [x] Study the home VM target and record feasibility/tradeoffs.
 - [x] Select remotely managed Cloudflare Tunnel as public ingress; no inbound router ports or public SSH.
@@ -20,7 +22,7 @@ Implementation progress (2026-11-05): the old multi-platform build stalled on em
 - [x] Add the Compose Tunnel profile, keep the app unexposed on the host, and preserve Caddy for Lightsail rollback.
 - [x] Update deployment and wiki guidance for the home VM, DNS delegation, secret handling, and Tunnel.
 - [x] Confirm Cloudflare Free DNS/Tunnel cost is $0/month; R2 charges are separate and usage-based.
-- [ ] Complete Phase 1: privately run the app/backend on THEPC and verify Neon, migration, R2 readiness, and container health.
+- [ ] Complete Phase 1: privately run the app/backend on THEPC and verify Neon, migration, R2 readiness, and restart-after-reboot behavior. App health is confirmed; the external-service and persistence checks remain open.
 - [ ] Complete Phase 2: choose and configure public ingress, DNS, callbacks, and browser flows; keep Lightsail until validation is complete.
 
 ## Task Board
@@ -38,8 +40,8 @@ Implementation progress (2026-11-05): the old multi-platform build stalled on em
 
 - [ ] Verify Neon production target and backup/restore path; review migration files against the currently running Vercel production app.
 - [ ] Run the one-shot migration using `DATABASE_URL_UNPOOLED` after backup and target verification; this applies schema migrations and does not move database rows or media.
-- [ ] Start only the app with the loopback-only `compose.private.yaml`; verify container health and app boot without exposing a LAN/public port.
-- [ ] Use an SSH local forward over Tailscale to inspect the private site where useful; record that canonical OAuth, webhooks, email links, and public R2 reads still need the public hostname phase.
+- [x] Start only the app with the loopback-only `compose.private.yaml`; `docker compose ps` reports healthy, bound to `127.0.0.1:18080`, and an HTTP request returns 200.
+- [x] Establish an SSH local forward over Tailscale and verify HTTP 200 through it. Canonical OAuth, webhooks, email links, and public R2 reads still need the public hostname phase.
 - [ ] Verify Neon read/write connectivity and intended schema. Verify R2 upload/read/delete once the public media hostname/bucket endpoint is available.
 - [ ] Reboot the VM and confirm Docker/app restart policy restores the private app.
 
