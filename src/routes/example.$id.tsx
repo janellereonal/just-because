@@ -4,18 +4,22 @@ import { FormatView } from "@/components/formats/FormatView";
 import { PageNotFound } from "@/components/PageStates";
 import { TactileOpening } from "@/themes/TactileOpening";
 import { DEMO_GIFTS, demoAge, isDemoId } from "@/lib/demoGifts";
-import { LANDING } from "@/copy/strings";
+import { EXAMPLE_COPY, LANDING } from "@/copy/strings";
+import { exampleShareTags } from "@/lib/share";
 
 export const Route = createFileRoute("/example/$id")({
-  head: () => ({
-    meta: [
-      { title: "An example gift | Just Because" },
-      {
-        name: "description",
-        content: "Open an example gift: the opening, the notes, the photos, the lot.",
-      },
-    ],
-  }),
+  // Posts link here, so the preview in Messenger or iMessage names the example and uses its picture.
+  head: ({ params }) => {
+    const demo = isDemoId(params.id) ? DEMO_GIFTS[params.id] : null;
+    const title = demo ? EXAMPLE_COPY.shareTitle(demo.short) : EXAMPLE_COPY.fallbackTitle;
+    return {
+      meta: [
+        { title },
+        { name: "description", content: EXAMPLE_COPY.shareDescription },
+        ...exampleShareTags(title, EXAMPLE_COPY.shareDescription, demo?.kind ?? "default"),
+      ],
+    };
+  },
   // Unknown examples answer 404, with the same friendly page.
   loader: ({ params }) => {
     if (!isDemoId(params.id)) throw notFound();

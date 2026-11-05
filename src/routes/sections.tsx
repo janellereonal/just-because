@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { marketingShareTags } from "@/lib/share";
 import { AnimatePresence, LayoutGroup, motion, useReducedMotion } from "motion/react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { X } from "lucide-react";
@@ -14,8 +15,7 @@ export const Route = createFileRoute("/sections")({
     meta: [
       { title: "Sections | Just Because" },
       { name: "description", content: SECTIONS_PAGE.meta },
-      { property: "og:title", content: "Sections | Just Because" },
-      { property: "og:description", content: SECTIONS_PAGE.meta },
+      ...marketingShareTags("Sections | Just Because", SECTIONS_PAGE.meta),
     ],
   }),
   component: SectionsPage,

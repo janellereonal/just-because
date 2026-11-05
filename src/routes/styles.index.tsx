@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { marketingShareTags } from "@/lib/share";
 import { AnimatePresence, motion } from "motion/react";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
@@ -25,8 +26,7 @@ export const Route = createFileRoute("/styles/")({
     meta: [
       { title: t("gallery.title") },
       { name: "description", content: t("gallery.description") },
-      { property: "og:title", content: t("gallery.title") },
-      { property: "og:description", content: t("gallery.description") },
+      ...marketingShareTags(t("gallery.title"), t("gallery.description")),
     ],
   }),
   component: StylesPage,

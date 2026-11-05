@@ -913,6 +913,20 @@ export const CREATE_COPY = {
   needName: "Add the name of who it's for.",
 };
 
+/** Example gifts (/example/...), for share previews. */
+export const EXAMPLE_COPY = {
+  shareTitle: (short: string) => `See ${short} | An example gift from Just Because`,
+  fallbackTitle: "An example gift | Just Because",
+  shareDescription: "Open a real example: the opening, the notes, the photos and the songs, all from friends.",
+};
+
+/** The friend page's "What you've added" list, for things without words. */
+export const ADDED_COPY = {
+  media: { photobooth: "A photo", voice: "A voice note", video: "A video", doodle: "A doodle", capsule: "A time capsule", map: "A memory pin" } as Record<string, string>,
+  file: "A file",
+  item: "Your item",
+};
+
 /** Design polish (Nov 2026): loading states and small moments. */
 export const LOADING_COPY = {
   /** Read by screen readers while a page loads after a click. */

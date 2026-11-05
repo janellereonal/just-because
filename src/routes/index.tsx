@@ -1,4 +1,5 @@
 import { t } from "@/i18n";
+import { marketingShareTags } from "@/lib/share";
 import { isFlagOn } from "@/config/flags";
 import { galleryLink } from "@/lib/gallery";
 import { useAuth } from "@/hooks/useAuth";
@@ -27,8 +28,7 @@ export const Route = createFileRoute("/")({
     meta: [
       { title: LANDING.meta.title },
       { name: "description", content: LANDING.meta.description },
-      { property: "og:title", content: LANDING.meta.title },
-      { property: "og:description", content: LANDING.meta.description },
+      ...marketingShareTags(LANDING.meta.title, LANDING.meta.description),
     ],
   }),
   component: Index,
