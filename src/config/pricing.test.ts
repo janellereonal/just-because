@@ -56,3 +56,22 @@ describe("plan cards count only the formats on offer", () => {
     expect(LANDING_MORE.formats.title(14)).toBe("14 ways to open the same gift.");
   });
 });
+
+describe("paying (Nov 2026)", () => {
+  test("checkout methods and the words about them agree", async () => {
+    const p = await import("@/config/pricing");
+    expect(p.enabledPaymentMethods).toEqual(["qrph", "paymaya", "grab_pay", "shopee_pay"]);
+    expect(p.cardsEnabled()).toBe(false);
+    expect(p.qrIsMainMethod()).toBe(true);
+    expect(p.paymentMethodsSentence()).toBe("QR Ph, Maya, GrabPay, or ShopeePay");
+    const { PRICE_COPY } = await import("@/copy/strings");
+    expect(PRICE_COPY.abroadPayNoteNoCards(p.paymentMethodsSentence())).not.toMatch(/Visa|Mastercard/);
+  });
+
+  test("approved changes: ₱49 smallest discounted charge, site name on statements", async () => {
+    const p = await import("@/config/pricing");
+    expect(p.discountCodes.minCharge).toBe(4900);
+    expect(p.discountedAmount(29900, { type: "percent", value: 90 })).toBe(4900);
+    expect(p.statementDescriptor).toBe("JUSTBECAUSE.SITE");
+  });
+});

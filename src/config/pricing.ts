@@ -9,7 +9,7 @@
  */
 
 export type TierId = "sweet" | "celebration" | "keepsake";
-import { isStyleId, styleInfo, type StyleId } from "@/lib/styles";
+import { bodyFor, styleInfo, type StyleId } from "@/lib/styles";
 import { offeredFormats } from "@/lib/formats";
 export type GiftFormatId = import("@/lib/formats").GiftFormat;
 
@@ -94,7 +94,20 @@ export const TIERS: Tier[] = [
  * shopee_pay, billease, dob, dob_ubp, brankas_bdo, brankas_landbank,
  * brankas_metrobank.
  */
-export const enabledPaymentMethods: string[] = ["gcash", "paymaya", "card", "qrph"];
+// Only QR Ph and the wallets below are active on our PayMongo account so far. Add "card" and
+// "gcash" here once PayMongo activates them (Dashboard → Settings → Payment methods); the plan
+// picker's wording ("Pay with ...", the note for buyers abroad, the QR tip) follows this list.
+export const enabledPaymentMethods: string[] = ["qrph", "paymaya", "grab_pay", "shopee_pay"];
+
+/** Does checkout take cards (and so work for buyers abroad)? */
+export function cardsEnabled(): boolean {
+  return enabledPaymentMethods.includes("card");
+}
+
+/** Is QR Ph the main way to pay (first in the list)? Then phones get the save-and-upload tip. */
+export function qrIsMainMethod(): boolean {
+  return enabledPaymentMethods[0] === "qrph";
+}
 
 /** Friendly names for the "Pay with ..." line. */
 export const PAYMENT_METHOD_LABELS: Record<string, string> = {
@@ -142,10 +155,10 @@ export const perUsdDisplayRates: Record<string, number> = {
 
 /**
  * Text on the customer's card statement. Null uses the business name on our
- * PayMongo account. Foreign buyers dispute charges they don't recognise, so
- * once tested in test mode, set this to something like "JUSTBECAUSE.SITE".
+ * PayMongo account. Foreign buyers dispute charges they don't recognise, so it
+ * names the site (approved Nov 2026).
  */
-export const statementDescriptor: string | null = null;
+export const statementDescriptor: string | null = "JUSTBECAUSE.SITE";
 
 /**
  * Early-bird promo, applied automatically on the server to the first
@@ -174,8 +187,8 @@ export const promo = {
 export type DiscountType = "percent" | "fixed" | "free";
 
 export const discountCodes = {
-  /** Smallest amount we'll send to PayMongo after a discount, in centavos (₱20). */
-  minCharge: 2000,
+  /** Smallest amount we'll send to PayMongo after a discount, in centavos (₱49). */
+  minCharge: 4900,
   /** Made by `bun run db:seed` the first time it runs (never changed after that). */
   starter: [
     { code: "LAUNCH20", type: "percent", value: 20, plans: [], maxUses: 100, maxPerUser: 1, expiresInDays: 14, note: "Launch: 20% off any plan" },
@@ -262,7 +275,7 @@ export function formatApprox(centavos: number, currency: string): string {
   return `≈ ${new Intl.NumberFormat(undefined, { style: "currency", currency: code, currencyDisplay: "narrowSymbol", maximumFractionDigits: 0 }).format(value)}`;
 }
 
-/** "GCash, Maya, cards, or QR Ph" */
+/** "QR Ph, Maya, GrabPay, or ShopeePay" */
 export function paymentMethodsSentence(): string {
   const names = enabledPaymentMethods.map((m) => PAYMENT_METHOD_LABELS[m] ?? m);
   if (names.length <= 1) return names.join("");
@@ -315,18 +328,24 @@ export function extendedExpiry(expiresAt: Date | null, tier: Tier, now = new Dat
 }
 
 /**
- * Styles (src/lib/styles.ts). Styles made from themes come with every plan, like themes always did.
- * Layout styles, and gifts from before styles, need a plan that includes their layout.
+ * Styles (src/lib/styles.ts). A style needs a plan that includes the layout it reads in (its body):
+ * Board Game reads as a Gift Hunt, so it needs Celebration, the same as the Hunt layout. Sweet
+ * gets the styles that read as a Scrapbook or Bento. Gifts from before styles go by their layout.
+ * (Until Nov 2026 styles made from themes came with every plan; that let a Sweet gift use
+ * Celebration layouts.)
  */
-export function tierAllowsLook(tier: { formats: readonly string[] }, format: string, style?: string | null): boolean {
-  if (isStyleId(style) && styleInfo(style).origin === "theme") return true;
+export function tierAllowsLook(tier: { formats: readonly string[] }, format: string, _style?: string | null): boolean {
   return tier.formats.includes(format);
 }
 
 /** The plan badge on a style card ("Celebration plan"), or null when every plan has it. */
 export function stylePlanTag(style: StyleId): string | null {
-  const info = styleInfo(style);
-  if (info.origin === "theme") return null;
-  const tag = formatPlanTag(info.body);
+  const tag = formatPlanTag(bodyFor(styleInfo(style)));
   return tag ? `${tag} plan` : null;
+}
+
+/** The smallest plan a style comes with ("Celebration"), for messages. */
+export function stylePlanName(style: StyleId): string {
+  const body = bodyFor(styleInfo(style));
+  return TIERS.find((t) => t.formats.includes(body))?.name ?? TIERS[0]!.name;
 }

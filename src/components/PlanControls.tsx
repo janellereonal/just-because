@@ -23,7 +23,9 @@ import {
   formatPeso,
   getTier,
   hasFeature,
+  cardsEnabled,
   paymentMethodsSentence,
+  qrIsMainMethod,
   type TierId,
 } from "@/config/pricing";
 
@@ -36,11 +38,33 @@ export function useBilling(siteId: string) {
   });
 }
 
-/** Only for visitors outside the Philippines: how to pay from abroad. */
+/** Only for visitors outside the Philippines: how to pay from abroad, true to what checkout takes. */
 function AbroadPayNote() {
   const money = useViewerMoney();
   if (!money || money.local) return null;
-  return <p className="mx-auto max-w-md text-center text-xs text-muted">{PRICE_COPY.abroadPayNote}</p>;
+  return (
+    <p className="mx-auto max-w-md text-center text-xs text-muted">
+      {cardsEnabled() ? PRICE_COPY.abroadPayNote : PRICE_COPY.abroadPayNoteNoCards(paymentMethodsSentence())}
+    </p>
+  );
+}
+
+/**
+ * On phones, when QR Ph leads: PayMongo shows a QR code, and you can't scan your own screen.
+ * Say how to pay with it before they get there.
+ */
+function QrPayTip() {
+  if (!qrIsMainMethod()) return null;
+  return (
+    <div className="mx-auto w-full max-w-md rounded-2xl bg-cream px-4 py-3 text-sm sm:hidden" data-testid="qr-tip">
+      <p className="font-medium">{PRICE_COPY.qrTipTitle}</p>
+      <ol className="mt-1.5 list-decimal space-y-0.5 pl-5 text-[13px] text-ink/75">
+        {PRICE_COPY.qrTipSteps.map((step) => (
+          <li key={step}>{step}</li>
+        ))}
+      </ol>
+    </div>
+  );
 }
 
 function errorMessage(error: unknown, fallback: string) {
@@ -246,8 +270,9 @@ export function PlanPickerDialog({
           <a href="/refunds" target="_blank" rel="noreferrer" className="underline underline-offset-2 hover:text-ink">
             Refund policy
           </a>
-          . Prices are in Philippine pesos.
+          . Prices are in Philippine pesos. {PRICE_COPY.payWith(paymentMethodsSentence())}
         </p>
+        <QrPayTip />
         <AbroadPayNote />
       </DialogContent>
     </Dialog>
@@ -318,6 +343,7 @@ export function ExtendDialog({
           </a>
           .
         </p>
+        <QrPayTip />
         <AbroadPayNote />
       </div>
     );

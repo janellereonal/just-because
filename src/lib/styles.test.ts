@@ -204,16 +204,35 @@ describe("gifts made before styles look exactly the same", () => {
 });
 
 describe("plans", () => {
-  test("styles made from themes come with every plan, layout styles keep their plan", async () => {
-    const { TIERS, tierAllowsLook, stylePlanTag } = await import("@/config/pricing");
+  test("a style needs the plan that includes its layout, theme styles too", async () => {
+    const { TIERS, tierAllowsLook, stylePlanTag, stylePlanName } = await import("@/config/pricing");
     const sweet = TIERS[0]!;
-    expect(tierAllowsLook(sweet, "storybook", "love-letter")).toBe(true);
-    expect(tierAllowsLook(sweet, "stars", "countdown")).toBe(true);
-    expect(tierAllowsLook(sweet, "storybook", "storybook")).toBe(sweet.formats.includes("storybook"));
+    const celebration = TIERS[1]!;
+    // Board Game reads as a Gift Hunt: not on Sweet (Scrapbook and Bento only).
+    expect(tierAllowsLook(sweet, "hunt", "board-game")).toBe(false);
+    expect(tierAllowsLook(celebration, "hunt", "board-game")).toBe(true);
+    expect(tierAllowsLook(sweet, "storybook", "love-letter")).toBe(false);
+    expect(tierAllowsLook(sweet, "stars", "countdown")).toBe(false);
+    expect(tierAllowsLook(sweet, "scrapbook", "cake")).toBe(true);
+    expect(tierAllowsLook(sweet, "bento", "fetch")).toBe(true);
     expect(tierAllowsLook(sweet, "storybook", null)).toBe(sweet.formats.includes("storybook"));
     expect(tierAllowsLook(sweet, "scrapbook", "scrapbook")).toBe(true);
-    expect(stylePlanTag("love-letter")).toBeNull();
+    expect(stylePlanTag("board-game")).toBe(`${celebration.name} plan`);
+    expect(stylePlanTag("love-letter")).toBe(`${celebration.name} plan`);
+    expect(stylePlanName("board-game")).toBe(celebration.name);
+    expect(stylePlanTag("cake")).toBeNull();
     expect(stylePlanTag("scrapbook")).toBeNull();
-    expect(stylePlanTag("mixtape")).toBe(`${TIERS[1]!.name} plan`);
+    expect(stylePlanName("cake")).toBe(sweet.name);
+    expect(stylePlanTag("mixtape")).toBe(`${celebration.name} plan`);
+  });
+
+  test("checkout explains which plan a style needs", async () => {
+    const { tierBlocker } = await import("@/server/billing");
+    const { getTier } = await import("@/config/pricing");
+    const usage = { contributors: 1, photos: 0 };
+    expect(tierBlocker(getTier("sweet")!, usage, "hunt", "board-game")).toContain("Board Game comes with Celebration");
+    expect(tierBlocker(getTier("celebration")!, usage, "hunt", "board-game")).toBeNull();
+    // A gift reopening with the look it was paid with isn't held to the newer rule.
+    expect(tierBlocker(getTier("sweet")!, usage, "hunt", "board-game", { ignoreLook: true })).toBeNull();
   });
 });

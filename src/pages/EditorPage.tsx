@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { GuestBanner, GuestSignInCard } from "@/components/GuestPrompt";
-import { GUEST_COPY, OCCASION_NAMES, PAY_SAFETY_COPY, SAVE_COPY } from "@/copy/strings";
+import { DELETE_GIFT_COPY, GUEST_COPY, OCCASION_NAMES, PAY_SAFETY_COPY, SAVE_COPY } from "@/copy/strings";
 import { useGiftSaver, type SaveState } from "@/hooks/useGiftSaver";
 import { bodyFor, lookFor, resolveStyle, styleForLegacy, styleInfo, styleTitle, type StyleId } from "@/lib/styles";
 import { isQuietOccasion, occasionName, type OccasionId } from "@/lib/occasions";
@@ -12,6 +12,7 @@ import { ConciergeOffer } from "@/components/ConciergeOffer";
 import { trackEvent } from "@/lib/track";
 import { countNotes, inGiftLabel, noteSummary, waitingLabel } from "@/lib/noteCounts";
 import { ExportGift } from "@/components/ExportGift";
+import { DeleteGiftDialog } from "@/components/DeleteGiftDialog";
 import { ReviewCard } from "@/components/ReviewCard";
 import { isFlagOn } from "@/config/flags";
 import { engineThemeForName } from "@/themes/engine/registry";
@@ -275,13 +276,16 @@ function SiteDashboard() {
   const { draft, setDraft, state: saveState } = saver;
   const saving = saveState === "saving";
   // Leaving the editor in the app waits for the last save. If it can't go through, ask first.
+  /** Set once the gift is deleted, so leaving doesn't ask about unsaved changes. */
+  const deletedRef = useRef(false);
   useBlocker({
     shouldBlockFn: async ({ current, next }) => {
+      if (deletedRef.current) return false;
       if (current.pathname === next.pathname) return false;
       if (await saver.flush()) return false;
       return !window.confirm(SAVE_COPY.leaveUnsaved);
     },
-    enableBeforeUnload: saver.atRisk,
+    enableBeforeUnload: () => !deletedRef.current && saver.atRisk(),
   });
   // Bo says something sweet once the recipient's name is filled in (not for the saved name on load).
   const recipientName = draft?.custom_text.recipient_name?.trim() ?? "";
@@ -304,6 +308,7 @@ function SiteDashboard() {
   const [publishSuccess, setPublishSuccess] = useState(false);
   const [planPicker, setPlanPicker] = useState<"publish" | "upgrade" | null>(null);
   const [linkNameOpen, setLinkNameOpen] = useState(false);
+  const [deleteOpen, setDeleteOpen] = useState(false);
   const [extendOpen, setExtendOpen] = useState(false);
   // The rail remembers the section this gift was last edited in.
   const [section, setSection] = useState<SectionKey>("words");
@@ -1649,6 +1654,18 @@ function SiteDashboard() {
             </label>
           </div>
         </StepGroup>
+        <StepGroup title={DELETE_GIFT_COPY.sectionTitle}>
+          <div className="rounded-xl border border-[#B4322E]/25 bg-paper p-3" data-testid="delete-gift">
+            <p className="text-xs text-muted">{DELETE_GIFT_COPY.sectionBody}</p>
+            <button
+              type="button"
+              onClick={() => setDeleteOpen(true)}
+              className="squish mt-3 inline-flex min-h-10 items-center gap-1.5 rounded-full px-4 text-sm font-medium text-[#B4322E] ring-1 ring-[#B4322E]/40 hover:bg-[#B4322E]/8"
+            >
+              <Trash2 className="size-4" /> {DELETE_GIFT_COPY.button}
+            </button>
+          </div>
+        </StepGroup>
       </div>
     ),
   };
@@ -2077,6 +2094,10 @@ function SiteDashboard() {
                   Copy gift link
                 </DropdownMenuItem>
               ) : null}
+              <DropdownMenuItem className="text-[#B4322E] focus:text-[#B4322E]" onSelect={() => setDeleteOpen(true)}>
+                <Trash2 />
+                {DELETE_GIFT_COPY.button}
+              </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
 
@@ -2134,6 +2155,17 @@ function SiteDashboard() {
       <GuestBanner />
       <PlanBanner billing={billing} onUpgrade={() => setPlanPicker("upgrade")} onExtend={() => setExtendOpen(true)} />
       <ExtendDialog siteId={id} open={extendOpen} onOpenChange={setExtendOpen} />
+      <DeleteGiftDialog
+        siteId={id}
+        recipient={recipientName || draft.title}
+        paid={!!billing?.tier && billing.tier !== "legacy"}
+        open={deleteOpen}
+        onOpenChange={setDeleteOpen}
+        onDeleted={() => {
+          deletedRef.current = true;
+          window.location.replace("/dashboard");
+        }}
+      />
       <PlanPickerDialog
         siteId={id}
         recipient={draft.custom_text.recipient_name || "them"}

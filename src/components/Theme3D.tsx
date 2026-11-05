@@ -3,6 +3,7 @@ import type { ThemeKind } from "@/lib/themeKind";
 import type { Palette } from "@/lib/themes";
 import type { ThemeScene } from "@/lib/theme3d/scene";
 import { KIND_BURST, burst, buzz, chime } from "@/lib/play";
+import { whenSettled } from "@/lib/idle3d";
 
 /**
  * Small previews (theme cards, the landing demo) set this to false so a page full
@@ -192,9 +193,18 @@ export function Theme3D({
       if (started) return;
       started = true;
       try {
-        const mod = await import("@/lib/theme3d/scene");
-        if (disposed || !mod.webglAvailable()) return;
-        scene = mod.createThemeScene(canvas, kind, palette);
+        // Built once the page has settled, one scene at a time; the still shows until then.
+        const made = await whenSettled(async () => {
+          const mod = await import("@/lib/theme3d/scene");
+          if (disposed || !mod.webglAvailable()) return null;
+          return mod.createThemeScene(canvas, kind, palette);
+        });
+        if (!made) return;
+        if (disposed) {
+          made.dispose();
+          return;
+        }
+        scene = made;
         sceneRef.current = scene;
         scene.setPaused(heldRef.current || !visibleRef.current);
         await scene.ready;

@@ -5,6 +5,7 @@ import {
   formatPeso,
   type Tier,
   type TierId,
+  cardsEnabled,
 } from "@/config/pricing";
 import { PRICE_COPY } from "@/copy/strings";
 import { useViewerMoney } from "@/lib/viewerCurrency";
@@ -103,7 +104,7 @@ export function PricingCards({ tiers = TIERS, priceFor, wasFor, blockerFor, acti
         })}
       </div>
       <p className="mx-auto mt-5 max-w-xl text-center text-sm text-muted">
-        {money && !money.local ? PRICE_COPY.footerAbroad : PRICE_COPY.footerLocal}
+        {money && !money.local ? (cardsEnabled() ? PRICE_COPY.footerAbroad : PRICE_COPY.footerAbroadNoCards) : PRICE_COPY.footerLocal}
       </p>
       {tiers.some((t) => t.contributors.unlimited || t.photos.unlimited) && (
         <p className="mt-1 text-center text-xs text-muted">"Unlimited" is subject to fair use.</p>
