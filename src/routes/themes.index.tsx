@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { marketingShareTags } from "@/lib/share";
 import { NEW_THEME_NAMES, PH_THEME_NAMES, needsCountry, orderThemes } from "@/lib/themeOrder";
 import { getVisitorCountry } from "@/lib/api";
 import { engineThemeForName } from "@/themes/engine/registry";
@@ -25,8 +26,7 @@ export const Route = createFileRoute("/themes/")({
     meta: [
       { title: "Themes | Just Because" },
       { name: "description", content: "Browse gift themes and see each one play, before you pick." },
-      { property: "og:title", content: "Themes | Just Because" },
-      { property: "og:description", content: "Browse gift themes and see each one play, before you pick." },
+      ...marketingShareTags("Themes | Just Because", "Browse gift themes and see each one play, before you pick."),
     ],
   }),
   component: ThemesPage,

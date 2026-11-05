@@ -1,6 +1,6 @@
 import { OrnamentIcon } from "@/components/GiftTree";
 import { trackEvent } from "@/lib/track";
-import { FRIEND_PAGE, friendAddLine } from "@/copy/strings";
+import { ADDED_COPY, FRIEND_PAGE, friendAddLine } from "@/copy/strings";
 import { friendsIn } from "@/lib/noteCounts";
 import { engineThemeForName } from "@/themes/engine/registry";
 import { t } from "@/i18n";
@@ -1004,7 +1004,7 @@ function ContributePage() {
                 {mine.map((record) => (
                   <li key={record.id} className="flex items-center justify-between gap-3">
                     <span className="min-w-0 flex-1 truncate opacity-85">
-                      {record.text_content || String(Object.values(record.data ?? {}).find((v) => typeof v === "string") ?? "") || record.external_link || (record.media_url ? "A file" : "Your item")}
+                      {record.text_content || String(Object.values(record.data ?? {}).find((v) => typeof v === "string") ?? "") || record.external_link || (record.media_url ? (ADDED_COPY.media[record.module_type] ?? ADDED_COPY.file) : ADDED_COPY.item)}
                     </span>
                     {canEdit ? (
                       <span className="flex shrink-0 gap-3 text-xs">

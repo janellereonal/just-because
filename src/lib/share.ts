@@ -86,3 +86,8 @@ export function contributeShareTags(meta: ShareMeta | null | undefined) {
 export function marketingShareTags(title: string, description: string) {
   return tags(title, description, "/og/default.jpg");
 }
+
+/** An example gift: its own title, with the finished-gift picture for its occasion. */
+export function exampleShareTags(title: string, description: string, kind: ThemeKind) {
+  return tags(title, description, `/og/gift-${known(kind)}.jpg`);
+}

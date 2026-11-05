@@ -55,7 +55,8 @@ export default function Parcel(p: EngineObjectProps) {
   useEffect(() => {
     if (!gesture.done) return;
     particlesFrom("confetti", hostRef.current, insideRef.current, { colors: [palette.accent, palette.accent2, "#FFD166", "#FFFFFF"] });
-    if (interactive && withNotes) setHint(t("theme.parcel.inside"));
+    // Open now: point at the notes inside, or say nothing (never "Peel off the tape" again).
+    if (interactive) setHint(withNotes ? t("theme.parcel.inside") : "");
   }, [gesture.done, hostRef, interactive, palette, setHint, withNotes]);
 
   const tint = palette.surface;
