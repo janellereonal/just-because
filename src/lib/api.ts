@@ -303,11 +303,13 @@ export const deleteAccount = createServerFn({ method: "POST" })
 
 /** Reads are cheap, but a flood of slug guesses isn't: generous per-visitor caps on public lookups. */
 const READ_LIMIT = "Lots of requests from here just now. Wait a minute and try again.";
+/** Per IP per minute. High on purpose: carriers share one IP across many phones, and slugs can't be guessed anyway. */
+const READ_MAX = 1000;
 
 export const getSiteBySlug = createServerFn({ method: "GET" })
   .inputValidator(z.object({ slug: z.string().min(1).max(120) }))
   .handler(async ({ data }) => {
-    rateLimit(`slug:${clientIp()}`, 240, 60_000, READ_LIMIT);
+    rateLimit(`slug:${clientIp()}`, READ_MAX, 60_000, READ_LIMIT);
     const [row] = await getDb().select().from(schema.giftSites).where(eq(schema.giftSites.slug, data.slug));
     if (!row) return null;
     return siteRow(row, { owner: isOwnerOf(await currentUser(), row) });
@@ -914,8 +916,16 @@ export const submitContribution = createServerFn({ method: "POST" })
       if (already.siteId === data.siteId && already.editToken === data.editToken) return { ok: true as const, full: null };
       throw new HttpError(409, "Something got mixed up. Refresh the page and try again.");
     }
-    rateLimit(`note:ip:${clientIp()}`, 30, 10 * 60_000, "You're adding notes very quickly. Wait a few minutes and try again.");
-    rateLimit(`note:gift:${data.siteId}`, 200, 60 * 60_000, "This gift is getting a lot of notes right now. Try again in a little while.");
+    // Per phone first. Many friends can share one IP (mobile carriers in the Philippines put
+    // thousands of phones behind one address, and so does party Wi-Fi), so the IP cap is only a
+    // flood guard. Old clients without a device id get the tighter per-IP limit.
+    const slow = "You're adding notes very quickly. Wait a few minutes and try again.";
+    if (data.deviceId) {
+      rateLimit(`note:dev:${data.deviceId}`, 30, 10 * 60_000, slow);
+      rateLimit(`note:ip:${clientIp()}`, 300, 10 * 60_000, slow);
+    } else rateLimit(`note:ip-nodev:${clientIp()}`, 30, 10 * 60_000, slow);
+    // A big wedding can bring hundreds of friends in an evening (Keepsake fits 500).
+    rateLimit(`note:gift:${data.siteId}`, 600, 60 * 60_000, "This gift is getting a lot of notes right now. Try again in a little while.");
     const deviceId = data.deviceId ?? null;
     const [module] = await db
       .select({ enabled: schema.siteModules.enabled })
@@ -1036,7 +1046,7 @@ export const saveOwnerNote = createServerFn({ method: "POST" })
 export const getGiftRoom = createServerFn({ method: "GET" })
   .inputValidator(z.object({ siteId: id }))
   .handler(async ({ data }) => {
-    rateLimit(`room:${clientIp()}`, 240, 60_000, READ_LIMIT);
+    rateLimit(`room:${clientIp()}`, READ_MAX, 60_000, READ_LIMIT);
     const [site] = await getDb().select().from(schema.giftSites).where(eq(schema.giftSites.id, data.siteId));
     if (!site) return { ended: false, contributorsFull: false, photosFull: false };
     const tier = getTier(site.tier);

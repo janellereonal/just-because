@@ -906,3 +906,9 @@ export const DELETE_GIFT_COPY = {
   done: "Gift deleted.",
   failed: "Couldn't delete that gift. Try again?",
 };
+
+/** /create, small bits. */
+export const CREATE_COPY = {
+  /** When "Create the gift" is pressed with no name yet. */
+  needName: "Add the name of who it's for.",
+};
