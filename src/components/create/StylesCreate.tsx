@@ -9,7 +9,7 @@ import { useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { AnimatePresence } from "motion/react";
 import { t } from "@/i18n";
-import { GUEST_COPY, GUIDE_COPY, PLAN_STYLE_COPY } from "@/copy/strings";
+import { CREATE_COPY, GUEST_COPY, GUIDE_COPY, PLAN_STYLE_COPY } from "@/copy/strings";
 import { stylePlanName, stylePlanTag } from "@/config/pricing";
 import { GuestSignInDialog } from "@/components/GuestPrompt";
 import { ConciergeOffer } from "@/components/ConciergeOffer";
@@ -89,6 +89,7 @@ export function StylesCreate({
   const [occasion, setOccasion] = useState<OccasionId | null>(occasionFromUrl ?? null);
   const [openRow, setOpenRow] = useState<OccasionId | null>(occasionFromUrl ? (occasionInfo(occasionFromUrl).parent ?? null) : null);
   const [style, setStyle] = useState<StyleId | null>(styleFromUrl ?? null);
+  const [nameMissing, setNameMissing] = useState(false);
 
   // Old ?theme= links pick the matching style once the themes have loaded.
   const legacyApplied = useRef(false);
@@ -342,10 +343,28 @@ export function StylesCreate({
               maxLength={LIMITS.recipientName}
               autoComplete="off"
               value={recipient}
-              onChange={(e) => setRecipient(e.target.value)}
+              onChange={(e) => {
+                setNameMissing(false);
+                setRecipient(e.target.value);
+              }}
+              onInvalid={(e) => {
+                // Our own message under the field (the browser's bubble ends up under the sticky
+                // create bar on phones), and a scroll that brings the field into the clear.
+                e.preventDefault();
+                setNameMissing(true);
+                e.currentTarget.focus({ preventScroll: true });
+                e.currentTarget.scrollIntoView({ block: "center", behavior: "smooth" });
+              }}
+              aria-invalid={nameMissing || undefined}
+              aria-describedby={nameMissing ? "gift-for-error" : undefined}
               placeholder={example}
-              className="mt-5 w-full rounded-2xl border border-line bg-paper px-5 py-4 font-display text-lg outline-none transition-colors focus:border-accent focus:bg-white"
+              className="mt-5 w-full scroll-mt-28 scroll-mb-40 rounded-2xl border border-line bg-paper px-5 py-4 font-display text-lg outline-none transition-colors focus:border-accent focus:bg-white"
             />
+            {nameMissing ? (
+              <p id="gift-for-error" role="alert" className="mt-2 px-1 text-sm font-medium text-accent">
+                {CREATE_COPY.needName}
+              </p>
+            ) : null}
             <p className="mt-3 text-sm text-muted [overflow-wrap:anywhere]">
               The gift opens with <span className="font-display text-base text-ink">{occasionTitle(lookTheme, recipient.trim() || example, occasion)}</span>
               {recipient.trim() ? null : <span className="ml-1.5 font-mono text-[10px] tracking-[0.12em] uppercase">(example)</span>}. You can change it later.

@@ -44,7 +44,8 @@ export function Metrics() {
         <>
           <div className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
             <Stat label="Gifts with 5+ notes" value={pct(data.pctWith5)} detail={`${data.giftsWith5} of ${n(data.gifts, "gift", "gifts")} made`} />
-            <Stat label="Friend page to note" value={pct(data.viewToNote)} detail={`${n(data.friendNotes, "note", "notes")} from ${n(data.friendViews, "visit", "visits")}`} />
+            {/* A friend often adds more than one thing per visit, so this is a rate, not a percentage. */}
+            <Stat label="Notes per friend visit" value={data.friendViews ? (data.friendNotes / data.friendViews).toFixed(1) : "0"} detail={`${n(data.friendNotes, "note", "notes")} from ${n(data.friendViews, "visit", "visits")}`} />
             <Stat label="Wrapped, then paid" value={pct(data.wrapToPay)} detail={`${data.paid} of ${n(data.wrapped, "gift", "gifts")}`} />
             <Stat label="Recipient opened it" value={pct(data.openRate)} detail={`${data.opened} of ${n(data.published, "sent gift", "sent gifts")}`} />
             <Stat label="Sign-up to first share" value={hours(data.medianHoursToShare)} detail={`Median, ${n(data.sharers, "person", "people")}`} />

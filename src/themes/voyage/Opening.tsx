@@ -324,9 +324,9 @@ export function VoyageOpening(p: OpeningProps) {
             >
               <Texture material="card" />
               <Sheen strength={0.75} angle={112} width={20} travel={60} />
-              <div className="flex items-center justify-between text-[10px] leading-tight">
+              <div className="flex items-center justify-between gap-3 text-[10px] leading-tight">
                 <Field label="Passenger" value={p.recipient} />
-                <Field label="Seat" value="1A" />
+                <Field label="Seat" value="1A" keep />
               </div>
               <Barcode ink={c.ink!} seed={p.recipient} />
             </motion.div>
@@ -384,9 +384,10 @@ export function VoyageOpening(p: OpeningProps) {
   );
 }
 
-function Field({ label, value, wide = false }: { label: string; value: string; wide?: boolean }) {
+function Field({ label, value, wide = false, keep = false }: { label: string; value: string; wide?: boolean; keep?: boolean }) {
   return (
-    <div className={wide ? "col-span-3" : ""}>
+    // min-w-0 so long names end in "…" inside a flex row too (the stub), not past the edge.
+    <div className={`min-w-0 ${wide ? "col-span-3" : ""} ${keep ? "shrink-0" : ""}`}>
       <div className="text-[8.5px] tracking-[0.2em] uppercase opacity-55">{label}</div>
       {/* The date is the viewer's own today, so it can differ from the server's. */}
       <div className="truncate text-[12px] font-bold uppercase" suppressHydrationWarning>
