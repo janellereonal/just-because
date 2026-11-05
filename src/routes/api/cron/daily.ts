@@ -3,6 +3,7 @@ import { and, inArray, sql } from "drizzle-orm";
 import { getDb, schema } from "@/server/db";
 import { logPayment, reconcileOrder } from "@/server/billing";
 import { sendExpiryReminders } from "@/server/notify";
+import { sweepSharedRateLimits } from "@/server/rateLimit";
 
 /**
  * Runs once a day (vercel.json "crons"). Vercel calls it with
@@ -49,6 +50,8 @@ export const Route = createFileRoute("/api/cron/daily")({
         const summary = `reminders ${reminders}, checked ${unpaid.length} unpaid orders, recovered ${recovered}, expired ${expired.length}`;
         if (unpaid.length || expired.length) await logPayment("cron", "daily", summary);
         console.info(`[cron] daily: ${summary}`);
+        // Old rate-limit windows (src/server/rateLimit.ts). Never fails the job.
+        await sweepSharedRateLimits().catch((e) => console.warn("[cron] rate limit sweep", e));
         return Response.json({ ok: true, reminders, checked: unpaid.length, recovered, expired: expired.length });
       },
     },

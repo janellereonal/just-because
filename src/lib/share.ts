@@ -16,11 +16,17 @@ export type ShareMeta = { recipient: string | null; kind: ThemeKind };
 export const getShareMeta = createServerFn({ method: "GET" })
   .inputValidator(z.object({ slug: z.string().trim().min(1).max(120) }))
   .handler(async ({ data }): Promise<ShareMeta | null> => {
-    const [row] = await getDb()
-      .select({ customText: schema.giftSites.customText, passwordHash: schema.giftSites.passwordHash, disabledAt: schema.giftSites.disabledAt, themeName: schema.themes.name, themeCategory: schema.themes.category })
-      .from(schema.giftSites)
-      .leftJoin(schema.themes, eq(schema.themes.id, schema.giftSites.themeId))
-      .where(eq(schema.giftSites.slug, data.slug));
+    // Every open of a gift or friend link renders this first, so it goes through the short read
+    // cache (src/server/readCache.ts). It only holds the preview's own fields.
+    const { cachedRead } = await import("@/server/readCache");
+    const row = await cachedRead(`share:${data.slug}`, async () => {
+      const [hit] = await getDb()
+        .select({ siteId: schema.giftSites.id, customText: schema.giftSites.customText, passwordHash: schema.giftSites.passwordHash, disabledAt: schema.giftSites.disabledAt, themeName: schema.themes.name, themeCategory: schema.themes.category })
+        .from(schema.giftSites)
+        .leftJoin(schema.themes, eq(schema.themes.id, schema.giftSites.themeId))
+        .where(eq(schema.giftSites.slug, data.slug));
+      return hit ?? null;
+    });
     // No gift with this link: the page answers 404 (the route shows its friendly not-found page).
     if (!row) throw notFound();
     if (row.disabledAt) return null;

@@ -141,6 +141,13 @@
       "when": 1792345719445,
       "tag": "0019_gift_updated_at",
       "breakpoints": true
+    },
+    {
+      "idx": 20,
+      "version": "7",
+      "when": 1793895842559,
+      "tag": "0020_shared_rate_limits",
+      "breakpoints": true
     }
   ]
 }

@@ -96,10 +96,9 @@ async function giftContext(siteId: string | null | undefined, withRegion: boolea
   const region = withRegion ? await visitorRegion() : null;
   if (region) out["region"] = region;
   if (!siteId) return out;
-  const [site] = await getDb()
-    .select({ themeId: schema.giftSites.themeId, format: schema.giftSites.format })
-    .from(schema.giftSites)
-    .where(eq(schema.giftSites.id, siteId));
+  // From the short read cache: views and opens of a busy gift shouldn't each read its row.
+  const { cachedSiteRow } = await import("./readCache");
+  const site = await cachedSiteRow(siteId);
   if (site?.themeId) out["theme"] = site.themeId;
   if (site?.format) out["format"] = site.format.replace(/[^a-z0-9_-]/gi, "").slice(0, 20);
   return out;

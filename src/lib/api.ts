@@ -36,9 +36,10 @@ import { createServerFn } from "@tanstack/react-start";
 import { and, asc, desc, eq, inArray, ne, or, sql } from "drizzle-orm";
 import { z } from "zod";
 import { getDb, schema } from "@/server/db";
+import { cacheKey, cachedRead, cachedSiteRow, forgetGift, forgetKeys } from "@/server/readCache";
 import { CLIENT_EVENTS, track } from "@/server/events";
 import { notifyNewNote } from "@/server/notify";
-import { clientIp, rateLimit } from "@/server/rateLimit";
+import { clientIp, rateLimit, sharedRateLimit } from "@/server/rateLimit";
 import {
   expireStaleOrders,
   isExpired,
@@ -180,37 +181,48 @@ export const getAuthOptions = createServerFn({ method: "GET" }).handler(async ()
 /* Themes & palettes                                                  */
 /* ------------------------------------------------------------------ */
 
+/** Style and palette lists change only from /admin, so they can be cached a little longer. */
+const GLOBAL_TTL_MS = 60_000;
+
 export const listThemes = createServerFn({ method: "GET" })
   .inputValidator(z.object({ includeDrafts: z.boolean().default(false) }))
   .handler(async ({ data }) => {
     if (data.includeDrafts) await requireAdmin();
-    const db = getDb();
-    const rows = await db
-      .select()
-      .from(schema.themes)
-      .where(data.includeDrafts ? undefined : eq(schema.themes.status, "published"))
-      .orderBy(asc(schema.themes.createdAt));
+    const load = () =>
+      getDb()
+        .select()
+        .from(schema.themes)
+        .where(data.includeDrafts ? undefined : eq(schema.themes.status, "published"))
+        .orderBy(asc(schema.themes.createdAt));
+    // Every page asks for the published list; it changes only when an admin publishes one.
+    const rows = data.includeDrafts ? await load() : await cachedRead("themes:published", load, GLOBAL_TTL_MS);
     return rows.map(toRow);
   });
 
 export const getThemeById = createServerFn({ method: "GET" })
   .inputValidator(z.object({ id }))
   .handler(async ({ data }) => {
-    const [row] = await getDb().select().from(schema.themes).where(eq(schema.themes.id, data.id));
+    const row = await cachedRead(
+      `theme:${data.id}`,
+      async () => (await getDb().select().from(schema.themes).where(eq(schema.themes.id, data.id)))[0] ?? null,
+      GLOBAL_TTL_MS,
+    );
     // Hidden themes still load for gifts that already use them.
     return row ? toRow(row) : null;
   });
 
 export const listPalettes = createServerFn({ method: "GET" }).handler(async () => {
-  const rows = await getDb().select().from(schema.palettes).orderBy(asc(schema.palettes.sortOrder));
+  const rows = await cachedRead("palettes", () => getDb().select().from(schema.palettes).orderBy(asc(schema.palettes.sortOrder)), GLOBAL_TTL_MS);
   return rows.map(toRow);
 });
+
 
 export const setThemeStatus = createServerFn({ method: "POST" })
   .inputValidator(z.object({ id, status: z.enum(["published", "draft"]) }))
   .handler(async ({ data }) => {
     await requireAdmin();
     await getDb().update(schema.themes).set({ status: data.status }).where(eq(schema.themes.id, data.id));
+    forgetKeys("themes:published", `theme:${data.id}`);
     return { ok: true };
   });
 
@@ -222,6 +234,7 @@ export const setThemePreview = createServerFn({ method: "POST" })
       .update(schema.themes)
       .set({ previewImageUrl: data.url })
       .where(eq(schema.themes.id, data.id));
+    forgetKeys("themes:published", `theme:${data.id}`);
     return { ok: true };
   });
 
@@ -256,8 +269,11 @@ function siteRow(site: SiteRecord, opts: { owner: boolean }) {
  * password if it has one. Otherwise only the owner (or an admin). Returns the gift
  * and whether the visitor owns it, or null.
  */
+/** A gift's row through the short read cache (src/server/readCache.ts). Checks happen after. */
+const cachedSite = cachedSiteRow;
+
 async function canViewGift(siteId: string, opts: { allowSharedNotes?: boolean } = {}) {
-  const [site] = await getDb().select().from(schema.giftSites).where(eq(schema.giftSites.id, siteId));
+  const site = await cachedSite(siteId);
   if (!site) return null;
   const user = await currentUser();
   if (site.disabledAt && !user?.isAdmin) return null;
@@ -310,8 +326,13 @@ export const getSiteBySlug = createServerFn({ method: "GET" })
   .inputValidator(z.object({ slug: z.string().min(1).max(120) }))
   .handler(async ({ data }) => {
     rateLimit(`slug:${clientIp()}`, READ_MAX, 60_000, READ_LIMIT);
-    const [row] = await getDb().select().from(schema.giftSites).where(eq(schema.giftSites.slug, data.slug));
-    if (!row) return null;
+    const siteId = await cachedRead(cacheKey.slug(data.slug), async () => {
+      const [hit] = await getDb().select({ id: schema.giftSites.id }).from(schema.giftSites).where(eq(schema.giftSites.slug, data.slug));
+      return hit?.id ?? null;
+    });
+    const row = siteId ? await cachedSite(siteId) : null;
+    // The slug may have just changed (custom link name): only answer for the gift's current slug.
+    if (!row || row.slug !== data.slug) return null;
     return siteRow(row, { owner: isOwnerOf(await currentUser(), row) });
   });
 
@@ -324,8 +345,13 @@ export const unlockGift = createServerFn({ method: "POST" })
     const { getRequest } = await import("@tanstack/react-start/server");
     const ip = getRequest()?.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? "local";
     const key = `${site.id}:${ip}`;
-    if (tooManyTries(key)) {
-      return { ok: false as const, error: "Too many tries. Please wait a few minutes and try again." };
+    const tooMany = { ok: false as const, error: "Too many tries. Please wait a few minutes and try again." };
+    if (tooManyTries(key)) return tooMany;
+    // Shared by every server instance, so spreading guesses across instances doesn't help.
+    try {
+      await sharedRateLimit(`unlock:${key}`, 20, 10 * 60_000, tooMany.error);
+    } catch {
+      return tooMany;
     }
     if (!(await verifyPassword(data.password, site.passwordHash))) {
       return { ok: false as const, error: "That's not it. Check with whoever sent you the link." };
@@ -357,6 +383,7 @@ export const setGiftPassword = createServerFn({ method: "POST" })
     }
     const passwordHash = data.password === null ? null : await hashPassword(data.password);
     await getDb().update(schema.giftSites).set({ passwordHash }).where(eq(schema.giftSites.id, site.id));
+    forgetGift(site.id, site.slug);
     return { ok: true, passwordSet: passwordHash !== null };
   });
 
@@ -695,6 +722,7 @@ export const updateSite = createServerFn({ method: "POST" })
       const [row] = await tx.update(schema.giftSites).set(set).where(eq(schema.giftSites.id, site.id)).returning();
       return row!;
     });
+    forgetGift(saved.id, saved.slug);
     return { ok: true, site: siteRow(saved, { owner: true }), skipped };
   });
 
@@ -726,6 +754,7 @@ export const deleteSite = createServerFn({ method: "POST" })
     // Every photo, voice note and picture stored for it goes too.
     const { deleteGiftMedia } = await import("@/server/uploads");
     await deleteGiftMedia(data.id);
+    forgetGift(data.id);
     return { ok: true };
   });
 
@@ -736,10 +765,9 @@ export const deleteSite = createServerFn({ method: "POST" })
 export const listModules = createServerFn({ method: "GET" })
   .inputValidator(z.object({ siteId: id }))
   .handler(async ({ data }) => {
-    const rows = await getDb()
-      .select()
-      .from(schema.siteModules)
-      .where(eq(schema.siteModules.siteId, data.siteId));
+    const rows = await cachedRead(cacheKey.modules(data.siteId), () =>
+      getDb().select().from(schema.siteModules).where(eq(schema.siteModules.siteId, data.siteId)),
+    );
     return rows.map(toRow);
   });
 
@@ -763,6 +791,7 @@ export const setModuleEnabled = createServerFn({ method: "POST" })
         target: [schema.siteModules.siteId, schema.siteModules.moduleType],
         set: { enabled: data.enabled },
       });
+    forgetGift(data.siteId);
     return { ok: true };
   });
 
@@ -806,17 +835,19 @@ export const listContributions = createServerFn({ method: "GET" })
     }
     const view = await canViewGift(data.siteId, { allowSharedNotes: true });
     if (!view) return [];
-    const rows = await db
-      .select(publicColumns)
-      .from(c)
-      .where(
-        and(
-          eq(c.siteId, data.siteId),
-          eq(c.status, "approved"),
-          or(ne(c.moduleType, "tree"), eq(c.visibility, "public")),
-        ),
-      )
-      .orderBy(asc(c.createdAt));
+    const rows = await cachedRead(cacheKey.approved(data.siteId), () =>
+      db
+        .select(publicColumns)
+        .from(c)
+        .where(
+          and(
+            eq(c.siteId, data.siteId),
+            eq(c.status, "approved"),
+            or(ne(c.moduleType, "tree"), eq(c.visibility, "public")),
+          ),
+        )
+        .orderBy(asc(c.createdAt)),
+    );
     // Ornaments wait for the tree's reveal date (the owner always sees them).
     const treeLocked = !view.owner && treeSealed(view.site);
     return rows.map((r) =>
@@ -863,20 +894,22 @@ export const listPublicTreeOrnaments = createServerFn({ method: "GET" })
     const view = await canViewGift(data.siteId);
     if (!view) return [];
     const locked = !view.owner && treeSealed(view.site);
-    const rows = await getDb()
-      .select({
-        id: c.id,
-        siteId: c.siteId,
-        authorName: c.authorName,
-        ornamentKey: c.ornamentKey,
-        visibility: c.visibility,
-        status: c.status,
-        createdAt: c.createdAt,
-        textContent: c.textContent,
-      })
-      .from(c)
-      .where(and(eq(c.siteId, data.siteId), eq(c.moduleType, "tree"), eq(c.status, "approved")))
-      .orderBy(asc(c.createdAt));
+    const rows = await cachedRead(cacheKey.ornaments(data.siteId), () =>
+      getDb()
+        .select({
+          id: c.id,
+          siteId: c.siteId,
+          authorName: c.authorName,
+          ornamentKey: c.ornamentKey,
+          visibility: c.visibility,
+          status: c.status,
+          createdAt: c.createdAt,
+          textContent: c.textContent,
+        })
+        .from(c)
+        .where(and(eq(c.siteId, data.siteId), eq(c.moduleType, "tree"), eq(c.status, "approved")))
+        .orderBy(asc(c.createdAt)),
+    );
     return rows.map((row) => toRow({ ...row, textContent: locked ? null : row.textContent, locked }));
   });
 
@@ -922,10 +955,10 @@ export const submitContribution = createServerFn({ method: "POST" })
     const slow = "You're adding notes very quickly. Wait a few minutes and try again.";
     if (data.deviceId) {
       rateLimit(`note:dev:${data.deviceId}`, 30, 10 * 60_000, slow);
-      rateLimit(`note:ip:${clientIp()}`, 300, 10 * 60_000, slow);
-    } else rateLimit(`note:ip-nodev:${clientIp()}`, 30, 10 * 60_000, slow);
+      await sharedRateLimit(`note:ip:${clientIp()}`, 300, 10 * 60_000, slow);
+    } else await sharedRateLimit(`note:ip-nodev:${clientIp()}`, 30, 10 * 60_000, slow);
     // A big wedding can bring hundreds of friends in an evening (Keepsake fits 500).
-    rateLimit(`note:gift:${data.siteId}`, 600, 60 * 60_000, "This gift is getting a lot of notes right now. Try again in a little while.");
+    await sharedRateLimit(`note:gift:${data.siteId}`, 600, 60 * 60_000, "This gift is getting a lot of notes right now. Try again in a little while.");
     const deviceId = data.deviceId ?? null;
     const [module] = await db
       .select({ enabled: schema.siteModules.enabled })
@@ -1039,6 +1072,7 @@ export const saveOwnerNote = createServerFn({ method: "POST" })
     });
     if (!saved.ok) return { ok: false as const, full: saved.reason };
     await track("note_added", { siteId: data.siteId, userId: user.id, props: { type: data.moduleType, by_owner: true } });
+    forgetGift(data.siteId);
     return { ok: true as const, full: null };
   });
 
@@ -1476,6 +1510,7 @@ export const setCustomSlug = createServerFn({ method: "POST" })
       if (isUniqueViolation(error)) return takenError;
       throw error;
     }
+    forgetGift(site.id, site.slug);
     return { ok: true, slug: data.slug };
   });
 
@@ -1528,6 +1563,7 @@ export const updateOwnContribution = createServerFn({ method: "POST" })
       ...(row.moduleType === "tree" && data.visibility ? { visibility: data.visibility } : {}),
       ...(sectionData !== undefined ? { data: sectionData } : {}),
     });
+    forgetGift(row.siteId);
     return { ok: true };
   });
 
@@ -1539,6 +1575,7 @@ export const deleteOwnContribution = createServerFn({ method: "POST" })
     const gone = await getDb().delete(c).where(eq(c.id, data.id)).returning({ media: c.mediaUrl, data: c.data });
     const { deleteMedia } = await import("@/server/uploads");
     await deleteMedia(gone.flatMap((r) => [r.media, ...mediaInData(r.data)]));
+    forgetGift(row.siteId);
     return { ok: true };
   });
 
@@ -1583,16 +1620,19 @@ export const setContributionStatus = createServerFn({ method: "POST" })
       }
       await tx.update(c).set({ status: data.status }).where(inArray(c.id, data.ids));
     });
+    forgetGift(siteId);
     return { ok: true };
   });
 
 export const deleteContributions = createServerFn({ method: "POST" })
   .inputValidator(z.object({ ids: z.array(id).min(1).max(500) }))
   .handler(async ({ data }) => {
-    await requireSiteOwner(await contributionSite(data.ids));
+    const siteId = await contributionSite(data.ids);
+    await requireSiteOwner(siteId);
     const gone = await getDb().delete(c).where(inArray(c.id, data.ids)).returning({ media: c.mediaUrl, data: c.data });
     const { deleteMedia } = await import("@/server/uploads");
     await deleteMedia(gone.flatMap((r) => [r.media, ...mediaInData(r.data)]));
+    forgetGift(siteId);
     return { ok: true };
   });
 
@@ -1603,16 +1643,18 @@ export const deleteContributions = createServerFn({ method: "POST" })
 export const listCalendarEntries = createServerFn({ method: "GET" })
   .inputValidator(z.object({ siteId: id }))
   .handler(async ({ data }) => {
-    const [site] = await getDb().select().from(schema.giftSites).where(eq(schema.giftSites.id, data.siteId));
+    const site = await cachedSite(data.siteId);
     if (!site) return [];
     const owner = isOwnerOf(await currentUser(), site);
     // Behind a password, the calendar's surprises wait for the password too.
     if (needsPassword(site) && !isUnlocked(site) && !owner) return [];
-    const rows = await getDb()
-      .select()
-      .from(schema.calendarEntries)
-      .where(eq(schema.calendarEntries.siteId, data.siteId))
-      .orderBy(asc(schema.calendarEntries.entryDate));
+    const rows = await cachedRead(cacheKey.calendar(data.siteId), () =>
+      getDb()
+        .select()
+        .from(schema.calendarEntries)
+        .where(eq(schema.calendarEntries.siteId, data.siteId))
+        .orderBy(asc(schema.calendarEntries.entryDate)),
+    );
     if (owner || !site.calendarLocked) return rows.map(toRow);
     const now = Date.now();
     return rows.map((row) => toRow(sealDoor(row, now)));
@@ -1646,6 +1688,7 @@ export const upsertCalendarEntry = createServerFn({ method: "POST" })
         target: [schema.calendarEntries.siteId, schema.calendarEntries.entryDate],
         set: values,
       });
+    forgetGift(data.siteId);
     return { ok: true };
   });
 
@@ -1660,6 +1703,7 @@ export const deleteCalendarEntry = createServerFn({ method: "POST" })
     if (!row) return { ok: true };
     await requireSiteOwner(row.siteId);
     await db.delete(schema.calendarEntries).where(eq(schema.calendarEntries.id, data.id));
+    forgetGift(row.siteId);
     return { ok: true };
   });
 
@@ -1781,10 +1825,8 @@ export const trackClientEvent = createServerFn({ method: "POST" })
     } catch {
       return { ok: false };
     }
-    const [site] = await getDb()
-      .select({ id: schema.giftSites.id, creatorId: schema.giftSites.creatorId, status: schema.giftSites.status })
-      .from(schema.giftSites)
-      .where(eq(schema.giftSites.id, data.siteId));
+    // Every view and open sends one of these, so the gift comes from the read cache.
+    const site = await cachedSite(data.siteId);
     if (!site) return { ok: false };
     const me = await currentUser();
     const isOwner = !!me && me.id === site.creatorId;

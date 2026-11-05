@@ -444,3 +444,13 @@ export const events = pgTable(
   },
   (t) => [index("events_name_at_idx").on(t.name, t.createdAt), index("events_site_idx").on(t.siteId)],
 );
+
+/**
+ * Rate limits shared by every server instance (src/server/rateLimit.ts, `sharedRateLimit`).
+ * One row per key and fixed window. Rows older than a day are deleted by the daily job.
+ */
+export const rateLimits = pgTable("rate_limits", {
+  key: text("key").primaryKey(),
+  windowStart: timestamp("window_start", { withTimezone: true }).notNull().defaultNow(),
+  count: integer("count").notNull().default(0),
+});
