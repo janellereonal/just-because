@@ -38,6 +38,7 @@ import { ModuleExample } from "@/components/ModuleExample";
 import { centerInScroller } from "@/lib/scroll";
 import { themeKindOf } from "@/lib/themeKind";
 import Bo from "@/components/Bo";
+import { SendBurst } from "@/components/ui/SendBurst";
 import { Brush, CalendarDays, Camera, CircleHelp, Hourglass, Image as ImageIcon, Lock, Mail, MailOpen, MapPin, Mic, MoreHorizontal, Music2, Sparkles, Ticket, Trophy, Type, Users, Video } from "lucide-react";
 import { SectionFields } from "@/components/sections/SectionFields";
 import { SECTION_NEEDS, isNewSection, normalizeSectionData } from "@/lib/sections";
@@ -211,9 +212,12 @@ function ContributePage() {
     const t = window.setTimeout(() => {
       // The form collapses into a short message, so bring that message (and "Add something else") into view,
       // then show their note inside the preview without moving the page again.
+      // Aim for the "on its way" line just above the card, so the moment reads top to bottom.
       const card = doneRef.current?.getBoundingClientRect();
-      if (card && (card.top < 0 || card.bottom > window.innerHeight)) {
-        window.scrollTo({ top: window.scrollY + card.top - 96, behavior: "smooth" });
+      const head = doneRef.current?.previousElementSibling?.getBoundingClientRect();
+      if (card && (card.top < 0 || card.bottom > window.innerHeight || (head && head.top < 0))) {
+        const top = head ? Math.min(head.top - 24, card.top - 96) : card.top - 96;
+        window.scrollTo({ top: Math.max(0, window.scrollY + top), behavior: "smooth" });
       }
       const mine = giftRef.current?.querySelector("[data-mine='true']");
       if (mine) centerInScroller(mine, giftRef.current);
@@ -664,7 +668,8 @@ function ContributePage() {
           )}
 
           {done ? (
-            <div ref={doneRef} className="rise mt-8 rounded-[28px] p-8 text-center shadow-[0_24px_60px_-34px_rgba(43,37,34,.55)]" style={{ backgroundColor: surface }}>
+            <div ref={doneRef} className="rise relative mt-8 rounded-[28px] p-8 text-center shadow-[0_24px_60px_-34px_rgba(43,37,34,.55)]" style={{ backgroundColor: surface }}>
+              <SendBurst key={submitCount} delay={650} colors={[palette.accent, palette.primary, `color-mix(in oklab, ${palette.accent} 40%, white)`, "#ffffff"]} />
               <p className="text-[15px] opacity-85">
                 It's in. The organiser checks every note before the gift goes out, so {named || "they"} won't see it until then.
               </p>
@@ -673,7 +678,7 @@ function ContributePage() {
                   setDone(false);
                   resetForm();
                 }}
-                className="mt-6 rounded-full px-5 py-2.5 text-sm font-medium"
+                className="squish relative mt-6 rounded-full px-5 py-2.5 text-sm font-medium"
                 style={{ backgroundColor: palette.accent, color: onAccent }}
               >
                 Add something else
@@ -985,7 +990,7 @@ function ContributePage() {
                 <button
                   type="submit"
                   disabled={busy}
-                  className="mt-6 w-full rounded-full px-5 py-3.5 font-medium disabled:opacity-60"
+                  className="squish mt-6 w-full rounded-full px-5 py-3.5 font-medium disabled:pointer-events-none disabled:opacity-60"
                   style={{ backgroundColor: palette.accent, color: onAccent }}
                 >
                   {busy ? (stage === "preparing" ? UPLOAD_COPY.preparing : stage === "uploading" ? UPLOAD_COPY.uploading : "Sending…") : editingId ? "Save changes" : "Send it"}
@@ -1026,7 +1031,7 @@ function ContributePage() {
         </div>
 
         <div className="lg:sticky lg:top-8 lg:self-start">
-          <div className="flex items-baseline justify-between gap-3">
+          <div className="flex flex-col gap-0.5 sm:flex-row sm:items-baseline sm:justify-between sm:gap-3">
             <h2 className="text-lg font-medium" style={{ fontFamily: fonts.heading }}>
               Here's the gift so far
             </h2>
