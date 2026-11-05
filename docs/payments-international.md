@@ -2,6 +2,9 @@
 
 Written 18 Oct 2026. Read with the Payments section of `CLAUDE.md`.
 
+> **Update, 6 Nov 2026:** the live PayMongo account only offers QR Ph for now, so the card notes below
+> don't apply yet. The current plan for buyers abroad is `docs/INTERNATIONAL-PAYMENTS.md` (Lemon Squeezy).
+
 ## What works today
 
 - **Foreign Visa and Mastercard cards already work.** Our checkout is PayMongo's hosted page, and it accepts
