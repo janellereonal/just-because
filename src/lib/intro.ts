@@ -1,3 +1,4 @@
+import { normalizeSeal, type SealSettings } from "@/lib/waxSeal";
 import type { ThemeKind } from "@/lib/themeKind";
 /** Intro styling helpers, kept apart from the animation so cards stay light. */
 
@@ -87,6 +88,8 @@ export type IntroSettings = {
   simbang?: boolean;
   /** false = skip "Friends arrive" before the opening (flag friendsIntro). Empty = on. */
   friends?: false;
+  /** Wax Seal: the initial, the "for ana" line, the card's line and the event date (src/lib/waxSeal.ts). */
+  seal?: SealSettings;
 };
 
 export const LETTER_OPENINGS = ["seal", "peel", "slide"] as const;
@@ -209,6 +212,8 @@ export function normalizeIntroSettings(value: unknown): IntroSettings {
   if (badge) out.badge_text = badge;
   if (BURSTS.includes(v["burst"] as IntroBurst)) out.burst = v["burst"] as IntroBurst;
   if (v["simbang"] === true) out.simbang = true;
+  const seal = normalizeSeal(v["seal"]);
+  if (seal) out.seal = seal;
   return out;
 }
 

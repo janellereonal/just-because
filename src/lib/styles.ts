@@ -39,6 +39,8 @@ export const STYLE_IDS = [
   "care-package",
   "parol",
   "debut",
+  // Styles with their own opening and body, and a fixed look of their own (no theme row).
+  "wax-seal",
   // From the layouts: the way of reading is the star.
   "scrapbook",
   "storybook",
@@ -66,8 +68,10 @@ export type StyleInfo = {
   /**
    * "theme": made from an occasion theme; free on every plan, like themes were.
    * "layout": made from a layout; keeps that layout's plan.
+   * "own": its own opening and body, in its own fixed colors (Wax Seal). Wears no theme row,
+   *        and only shows under the occasions that list it.
    */
-  origin: "theme" | "layout";
+  origin: "theme" | "layout" | "own";
   /** Theme rows to borrow the look from. Empty for layout styles. */
   looks: StyleLook[];
   /** How the notes are read once it's open. */
@@ -78,6 +82,11 @@ export type StyleInfo = {
   oldBodies?: GiftFormat[];
   /** Party styles sink to the bottom for calm occasions (Sympathy, Get well). */
   mood: "party" | "calm" | "easy";
+  /**
+   * "own" styles: the colors the gift always wears, whatever palette is saved (the body,
+   * its extras and the editor preview all use them).
+   */
+  palette?: { background: string; primary: string; accent: string };
 };
 
 export const STYLES: StyleInfo[] = [
@@ -124,6 +133,15 @@ export const STYLES: StyleInfo[] = [
   },
   { id: "parol", origin: "theme", looks: [{ id: "star", theme: "Parol Christmas" }], body: "scrapbook", mood: "calm" },
   { id: "debut", origin: "theme", looks: [{ id: "curtain", theme: "Debut" }], body: "storybook", mood: "party" },
+  {
+    id: "wax-seal",
+    origin: "own",
+    looks: [],
+    // Reads as a scrapbook underneath, so every plan has it (src/config/pricing.ts).
+    body: "scrapbook",
+    mood: "calm",
+    palette: { background: "#261a17", primary: "#4a382f", accent: "#e7e2dc" },
+  },
   { id: "scrapbook", origin: "layout", looks: [], body: "scrapbook", mood: "easy" },
   { id: "storybook", origin: "layout", looks: [], body: "storybook", mood: "calm" },
   { id: "comic", origin: "layout", looks: [], body: "comic", mood: "easy" },
@@ -241,7 +259,7 @@ export type ResolvedStyle = {
  */
 export function resolveStyle(site: SiteLike, theme: ThemeLike): ResolvedStyle {
   const style = isStyleId(site.style) ? styleInfo(site.style) : null;
-  const introKind = style && style.origin === "layout" ? "default" : themeKindOf(theme);
+  const introKind = style && style.origin !== "theme" ? "default" : themeKindOf(theme);
   return { style, introKind, body: site.format };
 }
 
@@ -258,6 +276,11 @@ export function styleForLegacy(theme: ThemeLike, format: GiftFormat): StyleInfo 
 }
 
 /** What to call a gift's look in lists (My gifts): its style, else its layout for gifts made before styles. */
+/** The colors a gift wears: its style's own (Wax Seal), else null to use the saved palette. */
+export function stylePalette(style: string | null | undefined) {
+  return isStyleId(style) ? (styleInfo(style).palette ?? null) : null;
+}
+
 export function giftLookTitle(site: { style?: string | null; format: GiftFormat }): string {
   return isStyleId(site.style) ? styleTitle(site.style) : formatInfo(site.format).title;
 }

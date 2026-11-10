@@ -68,7 +68,7 @@ export async function siteUsage(siteId: string, db: Db = getDb()) {
         + (select count(distinct name) from friends
            where device_id is null
              and name not in (select name from friends where device_id is not null)))::int as contributors,
-      (select count(*) from live where module_type = 'photobooth')::int as photos
+      (select count(*) from live where module_type in ('photobooth', 'babies'))::int as photos
   `);
   const row = rows[0];
   return { contributors: Number(row?.contributors ?? 0), photos: Number(row?.photos ?? 0) };
@@ -137,7 +137,7 @@ export async function checkRoom(
     if (isNewPerson && usage.contributors >= tier.contributors.cap)
       return { ok: false as const, reason: "contributors" as const };
   }
-  if (moduleType === "photobooth" && usage.photos >= tier.photos.cap)
+  if ((moduleType === "photobooth" || moduleType === "babies") && usage.photos >= tier.photos.cap)
     return { ok: false as const, reason: "photos" as const };
   return { ok: true as const };
 }

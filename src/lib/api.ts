@@ -32,6 +32,7 @@ import { normalizeCharacter } from "@/themes/_shared/cast/types";
 import { normalizeIconSetting } from "@/themes/_shared/iconSets";
 import { NEW_SECTION_TYPES, SECTION_NEEDS, capsuleLocked, isNewSection, normalizeSectionData } from "@/lib/sections";
 import { isGiftMedia, noteProblem } from "@/lib/noteRules";
+import { normalizeEvent } from "@/lib/waxSeal";
 import { createServerFn } from "@tanstack/react-start";
 import { and, asc, desc, eq, inArray, ne, or, sql } from "drizzle-orm";
 import { z } from "zod";
@@ -652,7 +653,12 @@ export const updateSite = createServerFn({ method: "POST" })
         set.customText = text;
       }
       if (p.custom_colors) set.customColors = mergeKeys(site.customColors, p.custom_colors);
-      if (p.format_settings) set.formatSettings = mergeKeys(site.formatSettings, p.format_settings);
+      if (p.format_settings) {
+        const merged = mergeKeys(site.formatSettings, p.format_settings);
+        // Wax Seal's day (time, place, plan, menu): only known fields, trimmed and capped.
+        if (merged["event"] !== undefined) merged["event"] = normalizeEvent(merged["event"]) as Json;
+        set.formatSettings = merged;
+      }
       // The opening: cleaned server side, only known keys, hex colors, safe upload URLs.
       if (p.intro_settings) set.introSettings = normalizeIntroSettings(mergeKeys(normalizeIntroSettings(site.introSettings), p.intro_settings));
       if (p.character !== undefined) set.character = p.character ? normalizeCharacter(p.character) : null;

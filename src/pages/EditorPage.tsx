@@ -1,3 +1,5 @@
+import { WaxSealDayFields } from "@/components/styles/WaxSealFields";
+import type { EventSettings } from "@/lib/waxSeal";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { GuestBanner, GuestSignInCard } from "@/components/GuestPrompt";
 import { DELETE_GIFT_COPY, GUEST_COPY, OCCASION_NAMES, PAY_SAFETY_COPY, SAVE_COPY } from "@/copy/strings";
@@ -171,6 +173,7 @@ const MODULE_TITLE_FIELD: Record<ModuleType, keyof CustomText | null> = {
   coupons: "coupons_title",
   video: "video_title",
   doodle: "doodle_title",
+  babies: "babies_title",
 };
 
 const SECTION_TITLES: Record<SectionKey, string> = {
@@ -644,6 +647,12 @@ function SiteDashboard() {
     setDraft((prev) => (prev ? { ...prev, title: value, custom_text: { ...prev.custom_text, heading: value } } : prev));
   }
 
+  /** Wax Seal's day (time, place, plan, menu), kept in format_settings.event. */
+  function patchEvent(next: EventSettings) {
+    touch(section);
+    setDraft((prev) => (prev ? { ...prev, format_settings: { ...prev.format_settings, event: next } as typeof prev.format_settings } : prev));
+  }
+
   function patchComic(update: Partial<ComicSettings>) {
     setDraft((prev) => prev ? { ...prev, format_settings: { ...normalizeComicSettings(prev.format_settings), ...update } } : prev);
   }
@@ -993,6 +1002,7 @@ function SiteDashboard() {
               offers={engineTheme?.offers}
               badgeHint={draft.occasion ? occasionName(draft.occasion) : undefined}
               styleName={stylesOn && draft.style ? styleTitle(draft.style) : undefined}
+              waxSeal={draft.style === "wax-seal" ? { recipient: draft.custom_text.recipient_name?.trim() ?? "", occasion: draft.occasion } : undefined}
               greeting={
                 <label className="block">
                   <span className="flex items-baseline justify-between gap-2">
@@ -1035,6 +1045,11 @@ function SiteDashboard() {
             })}
           </div>
         </StepGroup>
+        {draft.style === "wax-seal" ? (
+          <StepGroup title="The day" hint="The details, the plan and the menu. Skip what you don't need." onActivate={() => setCanvasView("gift")}>
+            <WaxSealDayFields value={(draft.format_settings as Record<string, unknown>)["event"]} onChange={patchEvent} />
+          </StepGroup>
+        ) : null}
         {titledModules.length > 0 ? (
           <StepGroup title="Section titles" onActivate={() => setCanvasView("gift")}>
             <div className="space-y-3">
@@ -1790,6 +1805,7 @@ function SiteDashboard() {
       style={introStyleForTheme(theme?.name)}
       kind={resolveStyle(draft, theme).introKind}
       giftStyle={draft.style}
+      occasion={draft.occasion}
       occasionBadge={draft.occasion ? occasionName(draft.occasion) : undefined}
       calm={isQuietOccasion(draft.occasion)}
       palette={paletteNow}
@@ -1817,6 +1833,7 @@ function SiteDashboard() {
       style={introStyleForTheme(theme?.name)}
       kind={resolveStyle(draft, theme).introKind}
       giftStyle={draft.style}
+      occasion={draft.occasion}
       occasionBadge={draft.occasion ? occasionName(draft.occasion) : undefined}
       calm={isQuietOccasion(draft.occasion)}
       palette={paletteNow}
@@ -2259,6 +2276,7 @@ function SiteDashboard() {
           style={introStyleForTheme(theme?.name)}
           kind={resolveStyle(draft, theme).introKind}
           giftStyle={draft.style}
+          occasion={draft.occasion}
           occasionBadge={draft.occasion ? occasionName(draft.occasion) : undefined}
           calm={isQuietOccasion(draft.occasion)}
           palette={paletteNow}

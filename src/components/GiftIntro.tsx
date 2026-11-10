@@ -716,6 +716,8 @@ type GiftIntroProps = React.ComponentProps<typeof ClassicIntro> & {
   age?: number | null | undefined;
   /** The gift's style id. Layout styles (scrapbook, mixtape...) play their own opening. */
   giftStyle?: string | null | undefined;
+  /** The gift's occasion (Wax Seal picks its card's words from it). */
+  occasion?: string | null | undefined;
 };
 
 /**
@@ -723,11 +725,12 @@ type GiftIntroProps = React.ComponentProps<typeof ClassicIntro> & {
  * record, a cake…); "classic" in the intro settings keeps the earlier 3D one.
  */
 export function GiftIntro(props: GiftIntroProps) {
-  const { character, iconSet, contributors, themeName, notes, slots, themeOptions, age, calm, giftStyle, ...rest } = props;
+  const { character, iconSet, contributors, themeName, notes, slots, themeOptions, age, calm, giftStyle, occasion, ...rest } = props;
   const kind = props.kind ?? STYLE_KIND[props.style];
   const s = props.settings ?? {};
   const engine = !!engineThemeForName(themeName);
-  if (s.opening === "classic" || (!engine && !hasTactileOpening(kind))) return <ClassicIntro {...rest} />;
+  // Wax Seal always plays its envelope: the style and its opening are one choice.
+  if (giftStyle !== "wax-seal" && (s.opening === "classic" || (!engine && !hasTactileOpening(kind)))) return <ClassicIntro {...rest} />;
   return (
     <TactileOpening
       kind={kind}
@@ -753,6 +756,8 @@ export function GiftIntro(props: GiftIntroProps) {
       age={age}
       letter={s.letter}
       style={giftStyle}
+      seal={s.seal}
+      occasion={occasion}
     />
   );
 }

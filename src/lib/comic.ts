@@ -29,6 +29,7 @@ export const COMIC_CHAPTERS: Record<ModuleType, string> = {
   coupons: "Power-Ups",
   video: "Live Footage",
   doodle: "Fan Art",
+  babies: "Secret Identities",
 };
 
 export function normalizeComicSettings(value: unknown): ComicSettings {

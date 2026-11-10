@@ -29,6 +29,7 @@ const GROUP_OF: Record<ModuleType, Exclude<Group, "all">> = {
   quiz: "play",
   coupons: "play",
   doodle: "play",
+  babies: "play",
   photobooth: "pictures",
   video: "pictures",
   map: "pictures",

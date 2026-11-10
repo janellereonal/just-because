@@ -23,6 +23,7 @@ import { themeKindOf } from "@/lib/themeKind";
 import { isQuietOccasion } from "@/lib/occasions";
 import { loadThemeFonts, themeFontVars } from "@/themes/_shared/design";
 import { ownBodyFor } from "@/components/bodies/registry";
+import { stylePalette } from "@/lib/styles";
 
 const BentoView = lazy(() =>
   import("@/components/formats/BentoView").then((m) => ({ default: m.BentoView })),
@@ -92,7 +93,10 @@ type Props = Omit<FormatViewProps, "palette"> & {
  * One gift, shown in whichever format the creator picked. The theme's own
  * fonts are set here as CSS variables, so "Theme's own" works in every format.
  */
-export function FormatView(props: Props) {
+export function FormatView(outer: Props) {
+  // Styles with colors of their own (Wax Seal) wear them whatever palette is saved.
+  const fixed = stylePalette(outer.site.style);
+  const props: Props = fixed ? { ...outer, palette: fixed } : outer;
   const kind = themeKindOf(props.theme);
   useEffect(() => loadThemeFonts(kind), [kind]);
   useEffect(() => loadPairingFonts(props.site.font_choice), [props.site.font_choice]);
@@ -102,7 +106,8 @@ export function FormatView(props: Props) {
   // Every body with its own look shows video and quiz inside itself (see `extras`). A theme
   // style's own body (src/components/bodies) shows them underneath.
   const tiles =
-    !!own || !["scrapbook", "comic", "handwritten", "bento", ...INSIDE].includes(props.site.format);
+    !OWN_INSIDE.includes(props.site.style ?? "") &&
+    (!!own || !["scrapbook", "comic", "handwritten", "bento", ...INSIDE].includes(props.site.format));
   const cast = castFor(kind, props.site.character ?? null, props.site.icon_set ?? null);
   const palette = props.palette ?? resolvePalette(props.theme, props.site.custom_colors);
   const roamIcons = useMemo(
@@ -150,6 +155,8 @@ export function FormatView(props: Props) {
 
 /** Bodies that show video and quiz inside themselves. */
 const INSIDE = ["hunt", "zine", "storybook", "mixtape", "scratch", "stars"] as const;
+/** Style bodies that do the same (`extraSections`). */
+const OWN_INSIDE: string[] = ["wax-seal"];
 
 /** Which of video and quiz this gift has something to show for. */
 function extraKeys(props: Props): ("quiz" | "video")[] {
@@ -213,7 +220,9 @@ function TileExtras(props: Props & { kind: ReturnType<typeof themeKindOf>; bare?
 function FormatBody(props: Props) {
   const { site, theme } = props;
   const palette = props.palette ?? resolvePalette(theme, site.custom_colors);
-  const inside = (INSIDE as readonly string[]).includes(site.format) && extraKeys(props).length > 0;
+  const inside =
+    ((INSIDE as readonly string[]).includes(site.format) || OWN_INSIDE.includes(site.style ?? "")) &&
+    extraKeys(props).length > 0;
   const common = defined({
     site,
     modules: props.modules,

@@ -35,6 +35,7 @@ import { Route as DevOpeningsRouteImport } from './routes/dev.openings'
 import { Route as DevPeopleRouteImport } from './routes/dev.people'
 import { Route as DevStoryRouteImport } from './routes/dev.story'
 import { Route as DevThemesRouteImport } from './routes/dev.themes'
+import { Route as DevWaxSealRouteImport } from './routes/dev.wax-seal'
 import { Route as DevWorstCaseRouteImport } from './routes/dev.worst-case'
 import { Route as ExampleIdRouteImport } from './routes/example.$id'
 import { Route as GSlugRouteImport } from './routes/g.$slug'
@@ -178,6 +179,11 @@ const DevThemesRoute = DevThemesRouteImport.update({
   path: '/dev/themes',
   getParentRoute: () => rootRouteImport,
 } as any)
+const DevWaxSealRoute = DevWaxSealRouteImport.update({
+  id: '/dev/wax-seal',
+  path: '/dev/wax-seal',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const DevWorstCaseRoute = DevWorstCaseRouteImport.update({
   id: '/dev/worst-case',
   path: '/dev/worst-case',
@@ -271,6 +277,7 @@ export interface FileRoutesByFullPath {
   '/dev/people': typeof DevPeopleRoute
   '/dev/story': typeof DevStoryRoute
   '/dev/themes': typeof DevThemesRoute
+  '/dev/wax-seal': typeof DevWaxSealRoute
   '/dev/worst-case': typeof DevWorstCaseRoute
   '/example/$id': typeof ExampleIdRoute
   '/g/$slug': typeof GSlugRoute
@@ -311,6 +318,7 @@ export interface FileRoutesByTo {
   '/dev/people': typeof DevPeopleRoute
   '/dev/story': typeof DevStoryRoute
   '/dev/themes': typeof DevThemesRoute
+  '/dev/wax-seal': typeof DevWaxSealRoute
   '/dev/worst-case': typeof DevWorstCaseRoute
   '/example/$id': typeof ExampleIdRoute
   '/g/$slug': typeof GSlugRoute
@@ -353,6 +361,7 @@ export interface FileRoutesById {
   '/dev/people': typeof DevPeopleRoute
   '/dev/story': typeof DevStoryRoute
   '/dev/themes': typeof DevThemesRoute
+  '/dev/wax-seal': typeof DevWaxSealRoute
   '/dev/worst-case': typeof DevWorstCaseRoute
   '/example/$id': typeof ExampleIdRoute
   '/g/$slug': typeof GSlugRoute
@@ -395,6 +404,7 @@ export interface FileRouteTypes {
     | '/dev/people'
     | '/dev/story'
     | '/dev/themes'
+    | '/dev/wax-seal'
     | '/dev/worst-case'
     | '/example/$id'
     | '/g/$slug'
@@ -435,6 +445,7 @@ export interface FileRouteTypes {
     | '/dev/people'
     | '/dev/story'
     | '/dev/themes'
+    | '/dev/wax-seal'
     | '/dev/worst-case'
     | '/example/$id'
     | '/g/$slug'
@@ -476,6 +487,7 @@ export interface FileRouteTypes {
     | '/dev/people'
     | '/dev/story'
     | '/dev/themes'
+    | '/dev/wax-seal'
     | '/dev/worst-case'
     | '/example/$id'
     | '/g/$slug'
@@ -515,6 +527,7 @@ export interface RootRouteChildren {
   DevPeopleRoute: typeof DevPeopleRoute
   DevStoryRoute: typeof DevStoryRoute
   DevThemesRoute: typeof DevThemesRoute
+  DevWaxSealRoute: typeof DevWaxSealRoute
   DevWorstCaseRoute: typeof DevWorstCaseRoute
   ExampleIdRoute: typeof ExampleIdRoute
   GSlugRoute: typeof GSlugRoute
@@ -712,6 +725,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DevThemesRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/dev/wax-seal': {
+      id: '/dev/wax-seal'
+      path: '/dev/wax-seal'
+      fullPath: '/dev/wax-seal'
+      preLoaderRoute: typeof DevWaxSealRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/dev/worst-case': {
       id: '/dev/worst-case'
       path: '/dev/worst-case'
@@ -849,6 +869,7 @@ const rootRouteChildren: RootRouteChildren = {
   DevPeopleRoute: DevPeopleRoute,
   DevStoryRoute: DevStoryRoute,
   DevThemesRoute: DevThemesRoute,
+  DevWaxSealRoute: DevWaxSealRoute,
   DevWorstCaseRoute: DevWorstCaseRoute,
   ExampleIdRoute: ExampleIdRoute,
   GSlugRoute: GSlugRoute,

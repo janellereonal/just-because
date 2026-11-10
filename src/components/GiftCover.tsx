@@ -1,3 +1,5 @@
+import { WaxSealArt } from "@/components/styles/StylePicker";
+import { sealInitial } from "@/lib/waxSeal";
 import { useEffect, useMemo } from "react";
 import { Character } from "@/themes/_shared/cast/Character";
 import { castFor } from "@/themes/_shared/design";
@@ -54,7 +56,11 @@ export function GiftCover({ site, theme, className = "" }: { site: GiftSite; the
           <IconGlyph item={pick(icons.items, i)} color={pick(tint, i)} size={size} />
         </span>
       ))}
-      {layout ? (
+      {site.style === "wax-seal" ? (
+        <span className="absolute right-3 bottom-4 block h-[66%] w-[46%] rotate-[4deg] overflow-hidden rounded-2xl shadow-[0_10px_18px_-8px_rgba(43,37,34,.35)] ring-1 ring-white/60 transition-transform duration-500 group-hover:rotate-1 group-hover:scale-[1.04]">
+          <WaxSealArt initial={sealInitial(site.intro_settings?.seal, recipient)} />
+        </span>
+      ) : layout ? (
         <span
           className="absolute right-3 bottom-4 grid h-[66%] w-[42%] rotate-[4deg] place-items-center overflow-hidden rounded-2xl shadow-[0_10px_18px_-8px_rgba(43,37,34,.35)] ring-1 ring-white/60 transition-transform duration-500 group-hover:rotate-1 group-hover:scale-[1.04]"
           style={{ background: LAYOUT_STAGE[layout.body] ?? LAYOUT_STAGE["scrapbook"] }}

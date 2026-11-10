@@ -6,7 +6,7 @@
  */
 import { lazy, type ComponentType } from "react";
 import { isFlagOn } from "@/config/flags";
-import { isStyleId, type StyleId } from "@/lib/styles";
+import { isStyleId, styleInfo, type StyleId } from "@/lib/styles";
 import type { BodyProps } from "@/components/bodies/kit";
 
 type Lazy = ComponentType<BodyProps>;
@@ -62,9 +62,16 @@ body("debut", () =>
   import("@/components/bodies/DanceCardBody").then((m) => ({ default: m.DanceCardBody })),
 );
 
+body("wax-seal", () =>
+  import("@/components/bodies/WaxSealBody").then((m) => ({ default: m.WaxSealBody })),
+);
+
 /** The style's own body for this gift, or null to use its stored layout. */
 export function ownBodyFor(style: string | null | undefined): Lazy | null {
-  if (!isStyleId(style) || !isFlagOn("styleBodies")) return null;
+  if (!isStyleId(style)) return null;
+  // Styles that are their body (Wax Seal) always read in it; the flag is for theme styles.
+  if (styleInfo(style).origin === "own") return BODIES[style] ?? null;
+  if (!isFlagOn("styleBodies")) return null;
   return BODIES[style] ?? null;
 }
 

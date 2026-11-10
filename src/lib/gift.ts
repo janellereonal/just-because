@@ -179,6 +179,7 @@ export type CustomText = {
   coupons_title?: string;
   video_title?: string;
   doodle_title?: string;
+  babies_title?: string;
   footer_note?: string;
   /** Birthday: the age they're turning (digits). */
   turning?: string;
@@ -208,6 +209,7 @@ export function defaultTitles(text: CustomText, kind: ThemeKind = "default", occ
     coupons_title: SECTION_COPY.coupons.title,
     video_title: SECTION_COPY.video.title,
     doodle_title: SECTION_COPY.doodle.title,
+    babies_title: SECTION_COPY.babies.title,
   };
 }
 

@@ -287,6 +287,38 @@ export function SectionFields(p: Props) {
           {count}
         </>
       );
+    case "babies":
+      return (
+        <>
+          <FilePick
+            accept="image/*"
+            label={SECTION_COPY.babies.pick}
+            file={p.file}
+            onFile={p.onFile}
+            style={p.fieldStyle}
+          />
+          <label className={label}>{SECTION_COPY.babies.whoLabel}</label>
+          <input
+            value={s("who")}
+            maxLength={40}
+            onChange={(e) => set("who", e.target.value)}
+            placeholder={SECTION_COPY.babies.whoPlaceholder}
+            className={input}
+            style={p.fieldStyle}
+          />
+          <span className="mt-1 block text-xs opacity-70">{SECTION_COPY.babies.whoHint}</span>
+          <label className={label}>Hint</label>
+          <input
+            value={p.text}
+            maxLength={textMax}
+            onChange={(e) => p.onText(e.target.value)}
+            placeholder={SECTION_COPY.babies.textPlaceholder}
+            className={input}
+            style={p.fieldStyle}
+          />
+          {count}
+        </>
+      );
   }
 }
 
