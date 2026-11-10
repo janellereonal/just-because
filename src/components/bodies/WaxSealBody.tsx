@@ -459,7 +459,7 @@ export function WaxSealBody(props: BodyProps) {
         <section
           key={p.id}
           id={`ws-${p.id}-${site.id}`}
-          className={`ws-part ws-${p.id} is-${p.tone} ${LIGHT_TEXT.includes(p.tone) ? "is-light" : "is-dark"}`}
+          className={`ws-part ws-part--${p.id} is-${p.tone} ${LIGHT_TEXT.includes(p.tone) ? "is-light" : "is-dark"}`}
         >
           {p.node(p.tone)}
         </section>
