@@ -170,6 +170,8 @@ export type EventSettings = {
   sign?: string;
   schedule?: PlanStep[];
   menu?: Course[];
+  /** A link at the very end ("sebi & chai, 11.24.26 ↗"), https only. */
+  link?: string;
 };
 
 export const EVENT_LIMITS = { steps: 12, courses: 8 } as const;
@@ -188,6 +190,8 @@ export function normalizeEvent(value: unknown): EventSettings {
   if (address) out.address = address;
   const sign = str(v["sign"], 120);
   if (sign) out.sign = sign;
+  const link = str(v["link"], 300);
+  if (/^https:\/\/[^\s"<>]+$/.test(link)) out.link = link;
   // Lists keep empty rows while the creator is typing; the gift skips them.
   const rows = (raw: unknown, max: number) =>
     (Array.isArray(raw) ? raw.slice(0, max) : []).filter(

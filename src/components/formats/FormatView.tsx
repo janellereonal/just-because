@@ -158,12 +158,17 @@ const INSIDE = ["hunt", "zine", "storybook", "mixtape", "scratch", "stars"] as c
 /** Style bodies that do the same (`extraSections`). */
 const OWN_INSIDE: string[] = ["wax-seal"];
 
+/** Video and quiz, less any a style body draws itself (Wax Seal's videos drift past in a strip). */
+function extraTypes(site: { style?: string | null }): ("quiz" | "video")[] {
+  return site.style === "wax-seal" ? ["quiz"] : ["quiz", "video"];
+}
+
 /** Which of video and quiz this gift has something to show for. */
 function extraKeys(props: Props): ("quiz" | "video")[] {
   const enabled = new Set(
     props.modules.filter((m) => m.enabled).map((m) => m.module_type as string),
   );
-  return (["quiz", "video"] as const).filter(
+  return extraTypes(props.site).filter(
     (t) => enabled.has(t) && (props.sample || props.contributions.some((c) => c.module_type === t)),
   );
 }
@@ -210,7 +215,7 @@ function TileExtras(props: Props & { kind: ReturnType<typeof themeKindOf>; bare?
           siteId={props.site.id}
           headingFont={(FONT_PAIRINGS[props.site.font_choice] ?? FONT_PAIRINGS.theme).heading}
           accent={palette.accent}
-          only={["video", "quiz"]}
+          only={extraTypes(props.site)}
         />
       </div>
     </div>

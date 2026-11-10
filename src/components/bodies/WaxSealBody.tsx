@@ -107,6 +107,15 @@ export function WaxSealBody(props: BodyProps) {
     }
     return { babies, photos, drawings, songs, notes };
   }, [data.notes]);
+  const enabled = useMemo(
+    () => new Set(props.modules.filter((m) => m.enabled).map((m) => m.module_type as string)),
+    [props.modules],
+  );
+  // Videos aren't notes in the shared list; the "after" strip reads them straight from the gift.
+  const videos = useMemo(
+    () => props.contributions.filter((c) => c.module_type === "video" && !c.sealed && c.media_url),
+    [props.contributions],
+  );
 
   const intro = body.intro || body.voice.intro(name);
   const paragraphs = intro
@@ -240,11 +249,7 @@ export function WaxSealBody(props: BodyProps) {
       node: () => (
         <>
           <h2 className="ws-script">{title("babies_title", "guess the baby")}</h2>
-          <p className="ws-lead">
-            {groups.babies.length > 2
-              ? `${groups.babies.length} babies${name ? `, one of them is ${name}` : ""}. Tap a photo to see who it is.`
-              : "Tap a photo to see who it is."}
-          </p>
+          <p className="ws-lead">{babiesLead(groups.babies.length, name, site.occasion)}</p>
           <Strip
             reduce={reduce}
             items={groups.babies}
@@ -275,62 +280,31 @@ export function WaxSealBody(props: BodyProps) {
 
   const [lightbox, setLightbox] = useState<{ list: Piece[]; at: number } | null>(null);
 
+  // The vision board: a grid of photos with a name under each; tap one to see it bigger.
   if (groups.photos.length)
     parts.push({
       id: "photos",
-      nav: "photos",
-      want: "black",
+      want: "mocha",
       node: () => (
         <>
           <h2 className="ws-script">{title("photobooth_title", "the photos")}</h2>
-          <p className="ws-lead">Tap one to see it bigger.</p>
-          <Strip
-            reduce={reduce}
-            items={groups.photos}
-            render={(p, clone, i) => (
-              <button
-                type="button"
-                className="ws-clip"
-                tabIndex={clone ? -1 : 0}
-                aria-label={
-                  clone
-                    ? undefined
-                    : `${p.text || pieceWhat(p)}, from ${p.author || "a friend"}. See it bigger`
-                }
-                onClick={() => setLightbox({ list: groups.photos, at: i })}
-              >
-                {p.media ? (
-                  <PhotoFace piece={p} tint={WAX.taupe} sizes="(max-width: 640px) 80vw, 420px" />
-                ) : (
-                  <span className="ws-ph">photo</span>
-                )}
-                <span className="ws-clip-cap">{p.author ? `from ${lower(p.author)}` : ""}</span>
-              </button>
-            )}
-          />
-        </>
-      ),
-    });
-
-  if (groups.drawings.length)
-    parts.push({
-      id: "drawings",
-      want: "white",
-      node: () => (
-        <>
-          <h2 className="ws-script">{title("doodle_title", "drawn by hand")}</h2>
+          <p className="ws-col ws-note ws-lead">Tap one to see it bigger.</p>
           <div className="ws-board">
-            {groups.drawings.map((p, i) => (
+            {groups.photos.map((p, i) => (
               <figure key={p.id}>
                 <button
                   type="button"
                   className="ws-slot"
-                  aria-label={`A drawing from ${p.author || "a friend"}. See it bigger`}
-                  onClick={() => setLightbox({ list: groups.drawings, at: i })}
+                  aria-label={`${p.text || pieceWhat(p)}, from ${p.author || "a friend"}. See it bigger`}
+                  onClick={() => setLightbox({ list: groups.photos, at: i })}
                 >
-                  <PhotoFace piece={{ ...p, framed: true }} tint={WAX.greige} sizes="240px" />
+                  {p.media ? (
+                    <PhotoFace piece={p} tint={WAX.greige} sizes="(max-width: 820px) 50vw, 240px" />
+                  ) : (
+                    <span className="ws-ph">photo {i + 1}</span>
+                  )}
                 </button>
-                <figcaption>{lower(p.author || "a friend")}</figcaption>
+                <figcaption>{lower(p.text?.trim() || p.author || "a friend")}</figcaption>
               </figure>
             ))}
           </div>
@@ -338,24 +312,118 @@ export function WaxSealBody(props: BodyProps) {
       ),
     });
 
-  if (groups.songs.length)
+  // Songs: a pill per song, or "playlist coming soon" while the section is on and empty.
+  if (groups.songs.length || enabled.has("songs"))
     parts.push({
       id: "songs",
       want: "greige",
       node: () => (
         <div className="ws-playlist">
-          <h2 className="ws-script">{title("songs_title", "songs for the day")}</h2>
+          <h2 className="ws-script">{title("songs_title", `songs for ${partOfDay(day.time)}`)}</h2>
           <p>
-            {name ? `The songs that remind us of ${name}.` : "The songs that remind us of you."}
+            {name
+              ? `The songs that remind us of ${name}, playing all ${partOfDay(day.time).replace(/^the /, "")}.`
+              : "The songs that remind us of you."}
           </p>
           <div className="ws-pills">
-            {groups.songs.map((p) => (
-              <button key={p.id} type="button" className="ws-pill" onClick={() => body.read(p)}>
-                ↗ {p.author ? `${lower(p.author)}’s song` : "a song"}
-              </button>
-            ))}
+            {groups.songs.length ? (
+              groups.songs.map((p) => (
+                <button key={p.id} type="button" className="ws-pill" onClick={() => body.read(p)}>
+                  ↗{" "}
+                  {groups.songs.length === 1
+                    ? "open the playlist"
+                    : p.author
+                      ? `${lower(p.author)}’s song`
+                      : "a song"}
+                </button>
+              ))
+            ) : (
+              <span className="ws-pill" aria-disabled="true">
+                playlist coming soon
+              </span>
+            )}
           </div>
         </div>
+      ),
+    });
+
+  // After the day: videos drifting past, or empty frames until they come in.
+  if (videos.length || enabled.has("video"))
+    parts.push({
+      id: "after",
+      want: "black",
+      node: () => (
+        <>
+          <h2 className="ws-script">{title("video_title", afterTitle(site.occasion))}</h2>
+          {videos.length ? null : (
+            <p className="ws-lead">
+              {day.date
+                ? `Photos and videos from ${lower(monthDay(day.date))} will show up here.`
+                : "Photos and videos will show up here."}
+            </p>
+          )}
+          {videos.length ? (
+            <Strip
+              reduce={reduce}
+              items={videos.map((v) => ({ id: v.id }) as Piece)}
+              render={(p, clone, i) => <VideoClip video={videos[i]!} clone={clone} />}
+            />
+          ) : (
+            <Strip
+              reduce={reduce}
+              items={[0, 1, 2, 3].map((n) => ({ id: `empty-${n}` }) as Piece)}
+              render={() => (
+                <div className="ws-clip">
+                  <span className="ws-clip-ph">video</span>
+                </div>
+              )}
+            />
+          )}
+        </>
+      ),
+    });
+
+  // Drawings: one drawing large, like a framed print; several in a grid. Tap to see it bigger.
+  if (groups.drawings.length)
+    parts.push({
+      id: "drawings",
+      want: "white",
+      node: () => (
+        <>
+          <h2 className="ws-script">{title("doodle_title", "drawn by hand")}</h2>
+          {groups.drawings.length === 1 ? (
+            <div className="ws-frame">
+              <button
+                type="button"
+                className="ws-frame-btn"
+                aria-label={`A drawing from ${groups.drawings[0]!.author || "a friend"}. See it bigger`}
+                onClick={() => setLightbox({ list: groups.drawings, at: 0 })}
+              >
+                <PhotoFace
+                  piece={{ ...groups.drawings[0]!, framed: true }}
+                  tint={WAX.greige}
+                  sizes="820px"
+                />
+              </button>
+            </div>
+          ) : (
+            <div className="ws-board">
+              {groups.drawings.map((p, i) => (
+                <figure key={p.id}>
+                  <button
+                    type="button"
+                    className="ws-slot"
+                    aria-label={`A drawing from ${p.author || "a friend"}. See it bigger`}
+                    onClick={() => setLightbox({ list: groups.drawings, at: i })}
+                  >
+                    <PhotoFace piece={{ ...p, framed: true }} tint={WAX.greige} sizes="240px" />
+                  </button>
+                  <figcaption>{lower(p.author || "a friend")}</figcaption>
+                </figure>
+              ))}
+            </div>
+          )}
+        </>
       ),
     });
 
@@ -385,7 +453,16 @@ export function WaxSealBody(props: BodyProps) {
   const toned = assignTones(parts);
   const last = toned[toned.length - 1]?.tone;
   const footerTone: Tone = last === "black" ? "espresso" : "black";
-  const nav = toned.filter((p) => p.nav).slice(0, 4);
+  // The reference's four, in its order: details, schedule, letters, photos (the babies, else the photos).
+  const navStops = [
+    ["details", "details"],
+    ["plan", "schedule"],
+    ["letters", "letters"],
+    [toned.some((p) => p.id === "babies") ? "babies" : "photos", "photos"],
+  ] as const;
+  const nav = navStops
+    .filter(([id]) => toned.some((p) => p.id === id))
+    .map(([id, label]) => ({ id, nav: label }));
   const firstStop = toned.find((p) => p.id === "details") ?? toned.find((p) => p.id === "letters");
 
   function go(id: string) {
@@ -473,7 +550,15 @@ export function WaxSealBody(props: BodyProps) {
               ? `made with love for ${name}`
               : "made with love"}
         </p>
-        {site.custom_text.footer_note ? <p>{site.custom_text.footer_note}</p> : null}
+        {day.link ? (
+          <p>
+            <a className="ws-link" href={day.link} target="_blank" rel="noopener noreferrer">
+              {site.custom_text.footer_note || hostOf(day.link)} ↗
+            </a>
+          </p>
+        ) : site.custom_text.footer_note ? (
+          <p>{site.custom_text.footer_note}</p>
+        ) : null}
         {data.isSample ? <p className="ws-note">{body.voice.sample}</p> : null}
         {body.showShare ? (
           <p>
@@ -496,6 +581,98 @@ export function WaxSealBody(props: BodyProps) {
           className="ws-reader"
         />
       ) : null}
+    </div>
+  );
+}
+
+const NUMBER_WORDS = [
+  "",
+  "one",
+  "two",
+  "three",
+  "four",
+  "five",
+  "six",
+  "seven",
+  "eight",
+  "nine",
+  "ten",
+  "eleven",
+  "twelve",
+];
+
+/** "Five babies, one of them is the bride. Tap a photo to see who it is." */
+function babiesLead(n: number, name: string, occasion: string | null | undefined) {
+  if (n < 3) return "Tap a photo to see who it is.";
+  const count = NUMBER_WORDS[n] ?? String(n);
+  const who = occasion === "bridal-shower" ? "the bride" : name;
+  const lead = `${count[0]!.toUpperCase()}${count.slice(1)} babies`;
+  return `${lead}${who ? `, one of them is ${who}` : ""}. Tap a photo to see who it is.`;
+}
+
+/** "after the shower", "after the party"... for the videos. */
+function afterTitle(occasion: string | null | undefined) {
+  switch (occasion) {
+    case "bridal-shower":
+    case "baby-shower":
+      return "after the shower";
+    case "send-off":
+      return "after the send-off";
+    case "birthday":
+      return "after the party";
+    default:
+      return "after the day";
+  }
+}
+
+/** "November 17" in the viewer's language. */
+function monthDay(day: string) {
+  try {
+    return new Intl.DateTimeFormat(undefined, {
+      timeZone: "UTC",
+      month: "long",
+      day: "numeric",
+    }).format(new Date(`${day}T12:00:00Z`));
+  } catch {
+    return day;
+  }
+}
+
+function hostOf(url: string) {
+  try {
+    return new URL(url).hostname.replace(/^www\./, "");
+  } catch {
+    return url;
+  }
+}
+
+/** A friend's video in the "after" strip: plays silently on a loop, like the reference. */
+function VideoClip({
+  video,
+  clone,
+}: {
+  video: BodyProps["contributions"][number];
+  clone: boolean;
+}) {
+  const url = useMediaUrl(video.media_url);
+  return (
+    <div className="ws-clip is-media" aria-hidden={clone || undefined}>
+      {url ? (
+        <video
+          src={url}
+          muted
+          loop
+          autoPlay
+          playsInline
+          preload="metadata"
+          aria-label={clone ? undefined : `A video from ${video.author_name || "a friend"}`}
+        />
+      ) : null}
+      <span className="ws-clip-cap">
+        {lower(
+          video.text_content?.trim() || (video.author_name ? `from ${video.author_name}` : ""),
+        )}
+      </span>
     </div>
   );
 }

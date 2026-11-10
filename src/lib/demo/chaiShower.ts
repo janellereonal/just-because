@@ -62,6 +62,7 @@ const site: GiftSite = {
       place: "One Legazpi Park",
       address: "Legazpi Village, Makati",
       sign: "love,\ndanielle, lia,\ngwyn & aye",
+      link: "https://sebiandchai.maxima.studio/",
       schedule: [
         { time: "2:00 PM", what: "Meet up at One Legazpi Park" },
         { time: "2:30 PM", what: "Grocery run for dinner" },
@@ -85,10 +86,13 @@ const site: GiftSite = {
     letters_title: "a little note for chai",
     photobooth_title: "the vision board",
     footer_note: "sebi & chai, 11.24.26",
+    songs_title: "songs for the afternoon",
+    video_title: "after the shower",
+    doodle_title: "chai & the dogs",
   },
 };
 
-const types: ModuleType[] = ["letters", "photobooth", "babies"];
+const types: ModuleType[] = ["letters", "photobooth", "babies", "songs", "video", "doodle"];
 const modules: SiteModule[] = types.map((t, i) => ({
   id: `chai-m${i}`,
   site_id: ID,
@@ -98,20 +102,53 @@ const modules: SiteModule[] = types.map((t, i) => ({
 }));
 
 const notes: ViewContribution[] = [
-  note("babies", "Danielle", null),
-  note("babies", "Lia", null),
-  note("babies", "Danielle", null, { data: { who: "Chai" } }),
-  note("babies", "Gwyn", null),
-  note("babies", "Aye", null),
-  note("letters", "Danielle", letter),
-  note("letters", "Lia", letter),
-  note("letters", "Gwyn", letter),
-  note("letters", "Aye", letter),
+  // Guess the baby: clay characters stand in for the real baby photos.
+  note("babies", "Danielle", null, { media: "/clay/people/birthday-kid.webp" }),
+  note("babies", "Lia", "I had more hair then", { media: "/clay/people/sunny.webp" }),
+  note("babies", "Danielle", null, {
+    media: "/clay/people/little-one.webp",
+    data: { who: "Chai" },
+  }),
+  note("babies", "Gwyn", null, { media: "/clay/people/dreamer.webp" }),
+  note("babies", "Aye", "Already bossy at two", { media: "/clay/people/sporty.webp" }),
+  // Letters: samples until the real ones are pasted in.
+  note(
+    "letters",
+    "Danielle",
+    "A sample letter, so you can see how it reads.\n\nChai, you were the first person to make me feel at home in the city. I can't wait to watch you say it all again.",
+  ),
+  note(
+    "letters",
+    "Lia",
+    "A sample letter.\n\nYou make every table feel like a feast. Thank you for always saving me a seat.",
+  ),
+  note(
+    "letters",
+    "Gwyn",
+    "A sample letter.\n\nTen dogs, one bride, zero chill. We love you so much.",
+  ),
+  note(
+    "letters",
+    "Aye",
+    "A sample letter.\n\nHere's to the girl who plans everything, finally letting us plan something for her.",
+  ),
+  // The vision board: stand-in photos.
   note("photobooth", "Danielle", "chai", { media: "/demo/bouquet.webp" }),
   note("photobooth", "Danielle", "danielle", { media: "/demo/picnic.webp" }),
   note("photobooth", "Lia", "lia", { media: "/demo/venue.webp" }),
   note("photobooth", "Gwyn", "gwyn", { media: "/demo/window.webp" }),
   note("photobooth", "Aye", "aye", { media: "/demo/cake.webp" }),
+  // Songs for the afternoon: sample clips that play right on the page.
+  note("songs", "Lia", "The one we sang the whole way to Batangas.", {
+    media: "/demo/voice-team.mp3",
+  }),
+  // After the shower: sample videos.
+  note("video", "Danielle", "the grocery run", { media: "/demo/video-wedding.mp4" }),
+  note("video", "Lia", "flowers, attempt one", { media: "/demo/video-generic.mp4" }),
+  note("video", "Gwyn", "dinner is served", { media: "/demo/video-sam.mp4" }),
+  note("video", "Aye", "the group photo", { media: "/demo/video-ana.mp4" }),
+  // The drawing from the reference (a girl with ten dogs), until the real one is uploaded.
+  note("doodle", "Danielle", null, { media: "/demo/chai-dogs.svg" }),
 ];
 
 export const CHAI_SHOWER = { site, modules, notes, palette, theme: null };

@@ -174,6 +174,21 @@ export function WaxSealDayFields({
           onChange={(ev) => set({ sign: ev.target.value })}
         />
       </label>
+      <label className="block">
+        <span className={small}>A link at the very end (optional)</span>
+        <input
+          className={field}
+          type="url"
+          inputMode="url"
+          maxLength={300}
+          placeholder="https://"
+          value={e.link ?? ""}
+          onChange={(ev) => set({ link: ev.target.value })}
+        />
+        <span className="mt-1 block text-xs text-muted">
+          Like the couple's wedding page. The footer note becomes its label.
+        </span>
+      </label>
 
       <ListEditor
         title="The plan"
@@ -220,7 +235,7 @@ function asTyped(value: unknown): EventSettings {
         ),
       );
   const out: Record<string, unknown> = {};
-  for (const k of ["time", "end", "tz", "place", "address", "sign"])
+  for (const k of ["time", "end", "tz", "place", "address", "sign", "link"])
     if (text(k) !== undefined) out[k] = text(k);
   out["schedule"] = list("schedule", ["time", "what"]);
   out["menu"] = list("menu", ["label", "what"]);
