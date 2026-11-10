@@ -21,13 +21,20 @@ export const Route = createFileRoute("/dev/wax-seal")({
   component: DevWaxSeal,
 });
 
+declare const __VERCEL_PREVIEW__: boolean;
+/** Local dev, or a Vercel preview build (never production: there are real names in it). */
 const allowed = () =>
-  import.meta.env.DEV || (import.meta.env["VITE_VERCEL_ENV"] as string | undefined) === "preview";
+  import.meta.env.DEV || (typeof __VERCEL_PREVIEW__ !== "undefined" && __VERCEL_PREVIEW__);
 
 function DevWaxSeal() {
   const { open, empty } = Route.useSearch();
   const [opened, setOpened] = useState(open);
-  if (!allowed()) return null;
+  if (!allowed())
+    return (
+      <p className="p-8 text-center text-sm text-muted">
+        This test gift only opens on preview links and on your own computer.
+      </p>
+    );
   const g = CHAI_SHOWER;
   return (
     <div className="min-h-screen" style={{ background: g.palette.background }}>
