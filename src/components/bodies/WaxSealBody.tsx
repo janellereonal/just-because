@@ -81,6 +81,18 @@ export function WaxSealBody(props: BodyProps) {
   const body = useBody(props);
   const { data, site, reduce } = body;
   useEffect(() => loadWaxFonts(), []);
+  // Past the hero, phones get a solid header bar: the see-through one ran into the words under it.
+  const heroRef = useRef<HTMLElement>(null);
+  const [pastHero, setPastHero] = useState(false);
+  useEffect(() => {
+    const el = heroRef.current;
+    if (!el || typeof IntersectionObserver === "undefined") return;
+    const io = new IntersectionObserver(([e]) => setPastHero(!!e && !e.isIntersecting), {
+      rootMargin: "-64px 0px 0px 0px",
+    });
+    io.observe(el);
+    return () => io.disconnect();
+  }, []);
   const seal = site.intro_settings?.seal;
   const day = eventView(
     seal,
@@ -480,7 +492,7 @@ export function WaxSealBody(props: BodyProps) {
   return (
     <div ref={body.hostRef} data-play-host className="ws-root" style={vars}>
       <div className="ws-grain" aria-hidden="true" />
-      <div className="ws-top-wrap">
+      <div className={`ws-top-wrap${pastHero ? " is-past" : ""}`}>
         <header className="ws-top">
           <button
             type="button"
@@ -506,6 +518,7 @@ export function WaxSealBody(props: BodyProps) {
       </div>
 
       <section
+        ref={heroRef}
         className="ws-hero"
         id={`ws-hero-${site.id}`}
         aria-label="introduction"
