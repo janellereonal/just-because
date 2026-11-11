@@ -62,6 +62,10 @@
 }
 .ws-mark {
   justify-self: start;
+  min-width: 44px;
+  min-height: 44px;
+  margin: -12px 0;
+  text-align: left;
   background: none;
   border: 0;
   padding: 0;
@@ -83,7 +87,9 @@
 .ws-top nav button {
   background: none;
   border: 0;
-  padding: 4px 0;
+  /* a 44px tap target that doesn't make the bar any taller */
+  padding: 15px 0;
+  margin: -11px 0;
   cursor: pointer;
   text-transform: uppercase;
   color: #fff !important;
@@ -97,15 +103,37 @@
 @media (max-width: 640px) {
   .ws-top {
     grid-template-columns: auto 1fr;
-    gap: 12px;
+    gap: 4px;
+    padding-left: 14px;
+    padding-right: 14px;
+  }
+  .ws-top nav button {
+    white-space: nowrap;
   }
   .ws-date {
     display: none;
   }
   .ws-top nav {
-    gap: 12px;
+    gap: clamp(8px, 3vw, 14px);
     font-size: 11px;
-    letter-spacing: 0.08em;
+    letter-spacing: clamp(0.02em, 1.5vw - 4px, 0.08em);
+  }
+  /* Past the hero the see-through header ran into the words under it on a phone:
+     there it becomes a solid espresso bar instead. */
+  .ws-top-wrap.is-past {
+    mix-blend-mode: normal;
+  }
+  .ws-top-wrap.is-past .ws-top {
+    padding-top: calc(env(safe-area-inset-top, 0px) + 12px);
+    padding-bottom: 12px;
+    background: rgba(11, 11, 11, 0.86);
+    -webkit-backdrop-filter: blur(10px);
+    backdrop-filter: blur(10px);
+    color: var(--ws-cream);
+  }
+  .ws-top-wrap.is-past .ws-mark,
+  .ws-top-wrap.is-past nav button {
+    color: var(--ws-cream) !important;
   }
 }
 
@@ -164,8 +192,12 @@
   background: none;
 }
 .ws-link {
-  text-decoration: none;
-  border-bottom: 1px solid rgba(239, 233, 225, 0.55);
+  display: inline-block;
+  padding: 12px 0;
+  text-decoration: underline;
+  text-decoration-color: rgba(239, 233, 225, 0.55);
+  text-decoration-thickness: 1px;
+  text-underline-offset: 5px;
 }
 .is-dark .ws-pill:hover {
   background: rgba(0, 0, 0, 0.05);
@@ -245,7 +277,10 @@
 .ws-shade {
   position: absolute;
   inset: 0;
-  background: linear-gradient(180deg, rgba(20, 14, 10, 0) 40%, rgba(20, 14, 10, 0.45));
+  /* darker under the header (it inverts, and vanishes over mid-grey) and at the foot */
+  background:
+    linear-gradient(180deg, rgba(20, 14, 10, 0.6), rgba(20, 14, 10, 0) 160px),
+    linear-gradient(180deg, rgba(20, 14, 10, 0) 40%, rgba(20, 14, 10, 0.45));
 }
 @keyframes ws-drift {
   to {
@@ -782,7 +817,7 @@ div.ws-clip {
   place-items: center;
 }
 .ws-lightbox::backdrop {
-  background: rgba(8, 7, 6, 0.92);
+  background: rgba(8, 7, 6, 0.96);
 }
 .ws-lb-close {
   position: absolute;
@@ -826,6 +861,30 @@ div.ws-clip {
 }
 .ws-lb-nav .ws-pill {
   color: var(--ws-cream);
+}
+/* A phone on its side: the photo keeps the height, previous and next sit either side of it. */
+@media (max-height: 520px) and (orientation: landscape) {
+  .ws-lb-img img {
+    max-height: calc(100svh - 96px);
+    max-width: 62vw;
+  }
+  .ws-lb-cap {
+    font-size: 20px;
+    margin-top: 8px;
+  }
+  .ws-lb-nav {
+    position: absolute;
+    left: 16px;
+    right: 16px;
+    top: 50%;
+    margin: 0;
+    transform: translateY(-50%);
+    justify-content: space-between;
+    pointer-events: none;
+  }
+  .ws-lb-nav .ws-pill {
+    pointer-events: auto;
+  }
 }
 
 /* reading a song or a long note up close */
