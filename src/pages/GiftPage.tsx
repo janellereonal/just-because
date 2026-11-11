@@ -187,7 +187,9 @@ function PublishedPage() {
     !storyDone &&
     isFlagOn("friendsIntro") &&
     site.intro_settings?.friends !== false &&
-    !isQuietOccasion(site.occasion);
+    !isQuietOccasion(site.occasion) &&
+    // Wax Seal's envelope is the whole opening; no story in front of it.
+    site.style !== "wax-seal";
   const fonts = FONT_PAIRINGS[site.font_choice] ?? FONT_PAIRINGS.romantic;
 
   function replayIntro() {

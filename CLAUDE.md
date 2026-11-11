@@ -247,7 +247,7 @@ verification is only required once `RESEND_API_KEY` and `EMAIL_FROM` are both se
   The creator's seal (initial, "for" line, card line, date) is `intro_settings.seal`; the day (time, place, signature,
   plan, menu) is `format_settings.event`, cleaned by `normalizeSeal` / `normalizeEvent` in `src/lib/waxSeal.ts`. Editor
   fields: `src/components/styles/WaxSealFields.tsx`. Test gift (Chai's shower, local and Vercel previews only):
-  `/dev/wax-seal` (`?open=1`, `?empty=1`).
+  `/dev/wax-seal` (`?open=1`, `?empty=1`). The envelope is the whole opening: "Friends arrive" never plays before it.
 
 ## Themes, cast and sections
 

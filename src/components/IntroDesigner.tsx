@@ -218,7 +218,6 @@ export function IntroDesigner({
     return (
       <div className="space-y-4">
         <WaxSealOpeningFields settings={settings} onChange={onChange} recipient={waxSeal.recipient} occasion={waxSeal.occasion} />
-        {friendsToggle}
       </div>
     );
 
