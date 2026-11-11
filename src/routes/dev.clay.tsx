@@ -23,7 +23,7 @@ function DevClay() {
       w.__peopleIds = PEOPLE.map((p) => p.id);
       w.__clayIds = Object.keys(CLAY);
       if (!alive) return;
-      setShots(Object.keys(CLAY).filter((id) => !/^(orn-|xtree)/.test(id)).map((id) => ({ id, url: w.__clay!(id, 320) })));
+      setShots(Object.keys(CLAY).filter((id) => !/^(orn-|xtree|wtree)/.test(id)).map((id) => ({ id, url: w.__clay!(id, 320) })));
     });
     return () => {
       alive = false;
