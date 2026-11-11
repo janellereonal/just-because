@@ -61,6 +61,8 @@ const KIND: Record<ModuleType, PieceKind | null> = {
   map: "letter",
   coupons: "letter",
   doodle: "photo",
+  // Guess the baby: a photo everywhere; Wax Seal turns it into the guessing strip.
+  babies: "photo",
   video: null,
   quiz: null,
 };
@@ -208,7 +210,7 @@ export function usePieces({
             kind,
             author: c.author_name,
             text: isNewSection(c.module_type) ? sectionAsText(c.module_type, c.data, c.text_content, (iso) => formatDay(iso)) : c.text_content,
-            media: c.sealed || (c.module_type !== "doodle" && isNewSection(c.module_type)) ? null : c.media_url,
+            media: c.sealed || (c.module_type !== "doodle" && c.module_type !== "babies" && isNewSection(c.module_type)) ? null : c.media_url,
             link: c.external_link,
             // Ornaments the server holds back until the tree's reveal date show sealed too.
             sealed: !!c.sealed || !!c.locked,

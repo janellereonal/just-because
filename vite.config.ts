@@ -31,7 +31,11 @@ export default defineConfig(({ command }) => ({
     ...(command === "build" ? [nitro({ preset: process.env["NITRO_PRESET"] || "vercel" })] : []),
     viteReact(),
   ],
-  define: { __BO_MODEL_FILES__: JSON.stringify(modelFiles()) },
+  define: {
+    __BO_MODEL_FILES__: JSON.stringify(modelFiles()),
+    // Vercel sets VERCEL_ENV while building ("preview" for PR deployments), so dev-only test pages can show there.
+    __VERCEL_PREVIEW__: JSON.stringify(process.env["VERCEL_ENV"] === "preview"),
+  },
   css: { transformer: "lightningcss" },
   resolve: {
     alias: { "@": `${process.cwd()}/src` },

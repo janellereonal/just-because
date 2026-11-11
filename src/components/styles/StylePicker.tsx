@@ -32,8 +32,38 @@ export const LAYOUT_STAGE: Record<string, string> = {
   stars: "#141833",
 };
 
+/** Wax Seal's card: its envelope, sealed, on the espresso it opens on. */
+export function WaxSealArt({ initial = "a" }: { initial?: string }) {
+  return (
+    <span className="absolute inset-0 grid place-items-center" style={{ background: "radial-gradient(70% 60% at 50% 45%, #3a2a23, #261a17 60%, #160f0d)" }} aria-hidden>
+      <span className="relative block w-[68%] [aspect-ratio:1.45]" style={{ filter: "drop-shadow(0 12px 18px rgba(0,0,0,.45))" }}>
+        <span className="absolute inset-0" style={{ background: "#d6cfc5" }} />
+        <span className="absolute inset-0" style={{ background: "#e7e2dc", clipPath: "polygon(0 0,50% 52%,100% 0,100% 100%,0 100%)" }} />
+        <span className="absolute inset-0" style={{ background: "#ddd5ca", clipPath: "polygon(0 0,100% 0,50% 58%)" }} />
+        <span
+          className="absolute grid place-items-center rounded-full text-[clamp(12px,3.4cqi,18px)] italic"
+          style={{
+            left: "50%",
+            top: "58%",
+            width: "24%",
+            aspectRatio: "1",
+            transform: "translate(-50%,-50%)",
+            background: "radial-gradient(circle at 35% 30%, #6a4f42, #4a382f 60%, #33261f)",
+            color: "#efe9e1",
+            fontFamily: '"Instrument Serif", Georgia, serif',
+            boxShadow: "0 2px 6px rgba(0,0,0,.35)",
+          }}
+        >
+          {initial}
+        </span>
+      </span>
+    </span>
+  );
+}
+
 /** The picture on a style card: the opening's object for theme styles, a tiny layout for the rest. */
 export function StyleArt({ style, occasion }: { style: StyleInfo; occasion?: OccasionId | null }) {
+  if (style.id === "wax-seal") return <WaxSealArt />;
   const look = lookFor(style, occasion);
   if (look) {
     const theme = { name: look.theme, category: "" };

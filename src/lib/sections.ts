@@ -16,6 +16,7 @@ export const NEW_SECTION_TYPES = [
   "coupons",
   "video",
   "doodle",
+  "babies",
 ] as const;
 export type NewSectionType = (typeof NEW_SECTION_TYPES)[number];
 
@@ -25,6 +26,8 @@ export type SuperlativeData = { award: string };
 export type QuizData = { question: string; answer: string; wrong: string[] };
 export type MapData = { place: string };
 export type CouponData = { title: string; fine_print?: string };
+/** Guess the baby: a friend's baby photo. `who` is whose it is when it isn't the sender's own. */
+export type BabyData = { who?: string };
 export type SectionData =
   | OpenWhenData
   | CapsuleData
@@ -32,6 +35,7 @@ export type SectionData =
   | QuizData
   | MapData
   | CouponData
+  | BabyData
   | Record<string, never>;
 
 const str = (v: unknown, max: number) => (typeof v === "string" ? v.trim().slice(0, max) : "");
@@ -99,9 +103,24 @@ export function normalizeSectionData(type: string, raw: unknown): SectionData | 
     case "video":
     case "doodle":
       return {};
+    case "babies": {
+      const who = str(v["who"], 40);
+      return who ? { who } : {};
+    }
     default:
       return null;
   }
+}
+
+/** A baby photo's own hint, without the "Baby Chai" caption other layouts add (sectionAsText). */
+export function babyHint(text: string | null | undefined): string {
+  return (text ?? "").replace(/^Baby [^\n]*\n*/, "").trim();
+}
+
+/** Whose baby photo it is: the name they typed, else the friend who sent it. */
+export function babyName(data: unknown, author: string): string {
+  const who = data && typeof data === "object" ? (data as Record<string, unknown>)["who"] : null;
+  return (typeof who === "string" && who.trim()) || author;
 }
 
 /** What each section needs besides `data`: text, a file, or either. */
@@ -121,6 +140,7 @@ export const SECTION_NEEDS: Record<
   coupons: { text: "none", media: "none" },
   video: { text: "optional", media: "required", accept: "video/mp4,video/quicktime,video/webm" },
   doodle: { text: "optional", media: "required", accept: "image/png" },
+  babies: { text: "optional", media: "required", accept: "image/*" },
 };
 
 export const isNewSection = (t: string): t is NewSectionType =>
@@ -165,7 +185,7 @@ export function hash01(s: string, salt = 0) {
   return ((h >>> 0) % 10000) / 10000;
 }
 
-export type SectionField = "when" | "award" | "question" | "answer" | "wrong" | "coupon" | "fine_print" | "place" | "unlock_at";
+export type SectionField = "when" | "award" | "question" | "answer" | "wrong" | "coupon" | "fine_print" | "place" | "unlock_at" | "who";
 
 /**
  * Every extra field a newer section's note carries, in reading order, for the
@@ -201,6 +221,9 @@ export function sectionFields(type: string, data: unknown): { field: SectionFiel
       add("coupon", s("title"));
       add("fine_print", s("fine_print"));
       break;
+    case "babies":
+      add("who", s("who"));
+      break;
   }
   return out;
 }
@@ -233,6 +256,9 @@ export function sectionAsText(
       return `Coupon: ${String(d["title"] ?? "")}${d["fine_print"] ? `\n${String(d["fine_print"])}` : ""}`;
     case "doodle":
       return body || null;
+    case "babies":
+      // Other layouts show it as a captioned photo, so the answer is in the caption.
+      return `Baby ${String(d["who"] ?? "").trim() || "photo"}${body ? `\n\n${body}` : ""}`.trim();
     default:
       return null;
   }

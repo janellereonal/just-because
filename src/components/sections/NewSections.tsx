@@ -10,7 +10,7 @@ import { Lock, MapPin, Play } from "lucide-react";
 import type { ThemeKind } from "@/lib/themeKind";
 import type { ModuleType, ViewContribution } from "@/lib/gift";
 import { SECTION_COPY } from "@/copy/strings";
-import { capsuleLocked, hash01, tallySuperlatives, type NewSectionType } from "@/lib/sections";
+import { babyName, capsuleLocked, hash01, tallySuperlatives, type NewSectionType } from "@/lib/sections";
 import { describeWait, formatDay, formatMomentWithYear, momentOf, splitWait } from "@/lib/time";
 import { designFor } from "@/themes/_shared/design";
 import { burstSet } from "@/themes/_shared/Sprinkles";
@@ -212,6 +212,12 @@ function samplesFor(type: NewSectionType, name: string): ViewContribution[] {
       return [
         sampleRow(type, 0, "Noor", "a portrait (sorry)", {}),
         sampleRow(type, 1, "Sam", "us at the beach", {}),
+      ];
+    case "babies":
+      return [
+        sampleRow(type, 0, "Noor", null, {}),
+        sampleRow(type, 1, "Sam", "I had more hair then", {}),
+        sampleRow(type, 2, "Lia", null, { who: name }),
       ];
   }
 }
@@ -980,6 +986,44 @@ function SampleDoodle({ seed, color }: { seed: string; color: string }) {
   );
 }
 
+/* ---------- guess the baby ---------- */
+
+function BabyCard({ item, k }: { item: ViewContribution; k: number }) {
+  const url = useMediaUrl(item.media_url);
+  const [shown, setShown] = useState(false);
+  const who = babyName(item.data, item.author_name);
+  return (
+    <motion.button
+      type="button"
+      aria-pressed={shown}
+      aria-label={shown ? `Baby ${who}` : SECTION_COPY.babies.tap}
+      onClick={() => {
+        setShown((v) => !v);
+        chime(shown ? "pop" : "sparkle");
+        buzz(8);
+      }}
+      initial={{ opacity: 0, y: 20 }}
+      whileInView={{ opacity: 1, rotate: tiltOf(item.id, 5), y: 0 }}
+      viewport={{ once: true }}
+      transition={{ ...SPRING.wobbly, delay: (k % 3) * 0.05 }}
+      className="block w-full rounded-[6px] bg-white p-2 pb-3 text-left"
+      style={{ boxShadow: "0 14px 24px -18px rgba(0,0,0,.45)", color: "#2B2522" }}
+    >
+      <span className="relative block aspect-[3/4] overflow-hidden rounded-[3px] bg-[#EFE9E1]">
+        {url ? (
+          <img src={url} alt="" className="size-full object-cover" onError={onPhotoError} />
+        ) : (
+          <span className="grid size-full place-items-center text-xs opacity-50">baby photo</span>
+        )}
+      </span>
+      <span className="mt-2 block px-1 text-sm font-medium">
+        {shown ? who : <span className="opacity-50">{SECTION_COPY.babies.reveal}</span>}
+      </span>
+      {shown && item.text_content ? <span className="block px-1 text-xs opacity-70">{item.text_content}</span> : null}
+    </motion.button>
+  );
+}
+
 /* ---------- the block ---------- */
 
 const ORDER: NewSectionType[] = [
@@ -990,6 +1034,7 @@ const ORDER: NewSectionType[] = [
   "coupons",
   "video",
   "doodle",
+  "babies",
   "capsule",
 ];
 
@@ -1056,6 +1101,16 @@ export function NewSections({
                   <DoodleCard key={it.id} item={it} m={m} k={k} />
                 ))}
               </div>
+            ) : null}
+            {type === "babies" ? (
+              <>
+                <p className="mt-2 text-sm opacity-70">{SECTION_COPY.babies.tap}</p>
+                <div className="mt-6 grid grid-cols-2 gap-4 @xl:grid-cols-3">
+                  {items.map((it, k) => (
+                    <BabyCard key={it.id} item={it} k={k} />
+                  ))}
+                </div>
+              </>
             ) : null}
             {!real.length && sample ? (
               <p className="mt-3 text-xs italic opacity-50">

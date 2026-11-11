@@ -269,7 +269,9 @@ export function Reader({
   children?: React.ReactNode;
   label?: string;
 }) {
-  const media = useMediaUrl(piece.kind === "photo" || piece.kind === "voice" ? piece.media : null);
+  const media = useMediaUrl(
+    piece.kind === "photo" || piece.kind === "voice" || piece.kind === "song" ? piece.media : null,
+  );
   const embed = piece.link ? toEmbedUrl(piece.link) : null;
   const closeRef = useRef<HTMLButtonElement | null>(null);
   useEffect(() => {
@@ -322,7 +324,7 @@ export function Reader({
                 )}
               </div>
             ) : null}
-            {piece.kind === "voice" && media ? (
+            {(piece.kind === "voice" || piece.kind === "song") && media ? (
               <audio controls autoPlay src={media} className="mb-5 w-full" />
             ) : null}
             {embed ? (

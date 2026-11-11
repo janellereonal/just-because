@@ -35,6 +35,8 @@ import { SCENES } from "@/themes/layouts/scenes";
 import type { StyleId } from "@/lib/styles";
 import type { EngineNote, ThemeOptions } from "@/themes/engine/define";
 import type { SlotInput } from "@/themes/engine/slots";
+import { WaxSealOpening } from "@/themes/waxseal/Opening";
+import type { SealSettings } from "@/lib/waxSeal";
 
 type Entry = {
   Component: OpeningComponent;
@@ -184,7 +186,13 @@ export function TactileOpening({
   calm = false,
   letter,
   style,
+  seal,
+  occasion,
 }: {
+  /** Wax Seal: the creator's initial, lines and date (intro_settings.seal). */
+  seal?: SealSettings | undefined;
+  /** The gift's occasion, for Wax Seal's card words. */
+  occasion?: string | null | undefined;
   /** Love Letter: how the letter opens (intro_settings.letter). */
   letter?: string | undefined;
   /** A layout style's id (scrapbook, mixtape...): plays that style's own opening. */
@@ -225,6 +233,21 @@ export function TactileOpening({
     [JSON.stringify(cast.iconSet), recipient, palette.primary, palette.accent],
   );
   const [hint, setHint] = useState("");
+  if (style === "wax-seal") {
+    return (
+      <WaxSealOpening
+        recipient={recipient}
+        occasion={occasion}
+        seal={seal}
+        contained={contained}
+        interactive={interactive}
+        paused={paused}
+        autoplay={autoplay}
+        onOpen={onOpen}
+        onSkip={onSkip}
+      />
+    );
+  }
   if (engine) {
     return (
       <EngineStage

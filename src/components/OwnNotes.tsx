@@ -18,6 +18,7 @@ import {
   CircleHelp,
   MapPin,
   Video,
+  Baby,
   Brush,
   Trophy,
 } from "lucide-react";
@@ -50,6 +51,7 @@ const TYPES: { type: NoteType; label: string; icon: typeof Mail }[] = [
   { type: "quiz", label: "Quiz", icon: CircleHelp },
   { type: "video", label: "Video", icon: Video },
   { type: "doodle", label: "Doodle", icon: Brush },
+  { type: "babies", label: "Baby photo", icon: Baby },
   { type: "superlatives", label: "Award", icon: Trophy },
 ];
 
@@ -71,6 +73,7 @@ const PROMPTS: Record<NoteType, string[]> = {
   quiz: ["Where did we first meet?"],
   video: ["Say it on camera"],
   doodle: ["Draw us"],
+  babies: ["Me, aged two"],
   superlatives: ["Best at everything"],
 };
 

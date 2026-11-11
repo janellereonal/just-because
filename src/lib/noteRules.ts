@@ -18,6 +18,7 @@ export function mediaKindFor(type: string): MediaKind | null {
     case "capsule":
     case "map":
     case "doodle":
+    case "babies":
       return "photo";
     default:
       return null;

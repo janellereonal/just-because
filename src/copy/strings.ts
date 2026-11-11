@@ -93,6 +93,19 @@ export const SECTION_COPY = {
     empty: "Draw a little something first.",
     textPlaceholder: "Sign it (optional)",
   },
+  babies: {
+    label: "Guess the baby",
+    blurb: "Everyone sends a baby photo. They tap each one to find out who it is.",
+    prompt: "Send a baby photo",
+    title: "Guess the baby",
+    pick: "Choose a baby photo",
+    whoLabel: "Whose baby photo is it?",
+    whoHint: "Leave it empty if it's you.",
+    whoPlaceholder: "Your name",
+    textPlaceholder: "A little hint (optional)",
+    tap: "Tap a photo to see who it is.",
+    reveal: "tap",
+  },
 } as const;
 
 export const CHIP_IN_COPY = {
@@ -190,6 +203,7 @@ export const LANDING = {
       coupons: { title: "Coupons", body: "One free dinner. One no-questions-asked pickup. Tear to redeem." },
       video: { title: "Videos", body: "Short clips from everyone, playing right in the gift." },
       doodle: { title: "Doodle guestbook", body: "Draw something with your finger. It doesn't have to be good." },
+      babies: { title: "Guess the baby", body: "Everyone's baby photos in a row. Tap one to find out who it is." },
     },
     more: (n: number) => `And ${n} more, from quizzes to doodles. Turn on just the ones that fit.`,
   },
@@ -548,6 +562,7 @@ export const FRIEND_PAGE = {
     coupons: "a coupon",
     video: "a video",
     doodle: "a doodle",
+    babies: "a baby photo",
   } as Record<string, string>,
   notReady: "The organiser is still setting this up. Check back soon.",
   more: "More",
@@ -587,6 +602,7 @@ export const REVIEW_COPY = {
     coupons: "Coupon",
     video: "Video",
     doodle: "Doodle",
+    babies: "Baby photo",
   } as Record<string, string>,
   openWhen: "Open when",
   award: "Award",
@@ -597,6 +613,7 @@ export const REVIEW_COPY = {
   finePrint: "Fine print",
   place: "Place",
   opensOn: "Opens on",
+  who: "Whose baby photo",
 };
 
 /** "Add a note, a photo or a song." built from the sections that are on. */
@@ -856,6 +873,7 @@ export const BENTO_COPY = {
     coupons: "Coupons",
     capsule: "Time capsule",
     doodle: "Doodles",
+    babies: "Baby photos",
     calendar: "Calendar",
     tree: "Wishing tree",
     words: "Words",
@@ -922,7 +940,7 @@ export const EXAMPLE_COPY = {
 
 /** The friend page's "What you've added" list, for things without words. */
 export const ADDED_COPY = {
-  media: { photobooth: "A photo", voice: "A voice note", video: "A video", doodle: "A doodle", capsule: "A time capsule", map: "A memory pin" } as Record<string, string>,
+  media: { photobooth: "A photo", voice: "A voice note", video: "A video", doodle: "A doodle", babies: "A baby photo", capsule: "A time capsule", map: "A memory pin" } as Record<string, string>,
   file: "A file",
   item: "Your item",
 };

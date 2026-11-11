@@ -18,6 +18,7 @@ const FIELD_LABEL: Record<SectionField, string> = {
   fine_print: REVIEW_COPY.finePrint,
   place: REVIEW_COPY.place,
   unlock_at: REVIEW_COPY.opensOn,
+  who: REVIEW_COPY.who,
 };
 
 /**

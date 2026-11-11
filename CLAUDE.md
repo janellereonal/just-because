@@ -87,7 +87,7 @@ Locally, without `BLOB_READ_WRITE_TOKEN` uploads save to `.dev-uploads/`, and wi
 - Caps: contributors are counted by distinct **device id** (`contributions.device_id`, a random
   id the contribute page keeps in localStorage, `src/lib/device.ts`). Old rows without one fall
   back to the name, and a name already seen with a device isn't counted twice. Photos are
-  photobooth items. Hidden items don't count. The owner's own notes (`by_owner`) never take a friend slot (their
+  photobooth and baby-photo items. Hidden items don't count. The owner's own notes (`by_owner`) never take a friend slot (their
   photos still count). Over the cap, friends see "this gift is full" and the owner gets an upgrade banner.
   `device_id` is never returned to the browser. Anything that adds or un-hides an item goes through `withRoom`
   (billing.ts): check and save in one transaction under an advisory lock per gift, so friends sending at once
@@ -240,6 +240,15 @@ verification is only required once `RESEND_API_KEY` and `EMAIL_FROM` are both se
   as it was, so flag off or a gift without a style reads exactly as before. Test: `registry.test.ts` (every theme style
   has one, none shared). Try one at `/dev/bodies?style=cake` (`demo=sample`, `pal=night`, `look=balikbayan`).
 
+- **Wax Seal** (Nov 2026) is the first style with `origin: "own"`: its own opening (`src/themes/waxseal/Opening.tsx`, an
+  envelope sealed in wax), its own body (`WaxSealBody`, coffee tones, film grain) and fixed colors (`palette` on the style,
+  applied in `FormatView` whatever palette is saved). No theme row. Reads as a scrapbook underneath, so every plan has it,
+  and its body doesn't wait for the `styleBodies` flag. Only listed occasions show it (bridal shower, birthday, send-off).
+  The creator's seal (initial, "for" line, card line, date) is `intro_settings.seal`; the day (time, place, signature,
+  plan, menu) is `format_settings.event`, cleaned by `normalizeSeal` / `normalizeEvent` in `src/lib/waxSeal.ts`. Editor
+  fields: `src/components/styles/WaxSealFields.tsx`. Test gift (Chai's shower, local and Vercel previews only):
+  `/dev/wax-seal` (`?open=1`, `?empty=1`).
+
 ## Themes, cast and sections
 
 - Each theme's opening lives in `src/themes/<theme>/Opening.tsx`, registered in `src/themes/TactileOpening.tsx`.
@@ -250,6 +259,8 @@ verification is only required once `RESEND_API_KEY` and `EMAIL_FROM` are both se
   (Storybook does). Openings that do this pass `reveal="fade"` to `OpeningShell` instead of the portal reveal.
 - Theme fonts: `src/themes/_shared/design.ts`. Never use Caveat, Pacifico, Dancing Script, Lobster or Great Vibes.
 - Newer sections keep their extra fields in `contributions.data`; shape and cleaning in `src/lib/sections.ts`.
+- Guess the baby (`babies`): a friend's baby photo, `data.who` when it isn't their own. Counts towards the plan's photo cap
+  like booth photos. Wax Seal shows them in a moving strip (tap to reveal); other layouts as captioned photos.
 - New landing and section copy goes in `src/copy/strings.ts`.
 - Constellation is a real 3D night sky: `src/lib/nightsky/scene.ts` (three.js: Milky Way painted once into a texture,
   thousands of twinkling stars, a mountain ridge, the friends' stars fitted between the title and the ridge on any

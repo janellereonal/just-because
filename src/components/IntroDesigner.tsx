@@ -1,3 +1,4 @@
+import { WaxSealOpeningFields } from "@/components/styles/WaxSealFields";
 import { isFlagOn } from "@/config/flags";
 import { useRef, useState } from "react";
 import { t } from "@/i18n";
@@ -130,7 +131,10 @@ export function IntroDesigner({
   badgeHint,
   onUndoStickers,
   styleName,
+  waxSeal,
 }: {
+  /** Wax Seal gifts: only the envelope's own fields (its initial, lines and date). */
+  waxSeal?: { recipient: string; occasion: string | null | undefined } | undefined;
   /** The gift's style ("Cake"), so the Opening style choice says which opening is on. */
   styleName?: string | undefined;
   /** Undo the last sticker change (shown when there is one). */
@@ -200,6 +204,24 @@ export function IntroDesigner({
     });
   }
 
+  const friendsToggle = isFlagOn("friendsIntro") ? (
+    <label className="flex items-start gap-3 rounded-xl border border-line bg-cream p-3">
+      <input type="checkbox" className="mt-0.5" checked={settings.friends !== false} onChange={(e) => set({ friends: e.target.checked ? undefined : false })} />
+      <span className="text-sm">
+        {t("story.option")}
+        <span className="mt-0.5 block text-xs text-muted">{t("story.optionHint")}</span>
+      </span>
+    </label>
+  ) : null;
+
+  if (waxSeal)
+    return (
+      <div className="space-y-4">
+        <WaxSealOpeningFields settings={settings} onChange={onChange} recipient={waxSeal.recipient} occasion={waxSeal.occasion} />
+        {friendsToggle}
+      </div>
+    );
+
   return (
     <div className="space-y-4">
       <div className="space-y-2.5">
@@ -230,15 +252,7 @@ export function IntroDesigner({
             onChange={(e) => set({ button_text: e.target.value || undefined })}
           />
         </label>
-        {isFlagOn("friendsIntro") ? (
-          <label className="flex items-start gap-3 rounded-xl border border-line bg-cream p-3">
-            <input type="checkbox" className="mt-0.5" checked={settings.friends !== false} onChange={(e) => set({ friends: e.target.checked ? undefined : false })} />
-            <span className="text-sm">
-              {t("story.option")}
-              <span className="mt-0.5 block text-xs text-muted">{t("story.optionHint")}</span>
-            </span>
-          </label>
-        ) : null}
+        {friendsToggle}
         {offers.includes("simbang") ? (
           <label className="flex items-start gap-3 rounded-xl border border-line bg-cream p-3">
             <input type="checkbox" className="mt-0.5" checked={settings.simbang === true} onChange={(e) => set({ simbang: e.target.checked || undefined })} />

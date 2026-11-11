@@ -39,7 +39,7 @@ import { centerInScroller } from "@/lib/scroll";
 import { themeKindOf } from "@/lib/themeKind";
 import Bo from "@/components/Bo";
 import { SendBurst } from "@/components/ui/SendBurst";
-import { Brush, CalendarDays, Camera, CircleHelp, Hourglass, Image as ImageIcon, Lock, Mail, MailOpen, MapPin, Mic, MoreHorizontal, Music2, Sparkles, Ticket, Trophy, Type, Users, Video } from "lucide-react";
+import { Baby, Brush, CalendarDays, Camera, CircleHelp, Hourglass, Image as ImageIcon, Lock, Mail, MailOpen, MapPin, Mic, MoreHorizontal, Music2, Sparkles, Ticket, Trophy, Type, Users, Video } from "lucide-react";
 import { SectionFields } from "@/components/sections/SectionFields";
 import { SECTION_NEEDS, isNewSection, normalizeSectionData } from "@/lib/sections";
 import { meshGradient } from "@/lib/giftPieces";
@@ -49,11 +49,11 @@ import { AnimatePresence } from "motion/react";
 
 const MODULE_ICON: Partial<Record<ModuleType, typeof Mail>> = {
   letters: Mail, photobooth: ImageIcon, songs: Music2, wordcloud: Type, voice: Mic, tree: Sparkles, calendar: CalendarDays,
-  openwhen: MailOpen, capsule: Hourglass, superlatives: Trophy, quiz: CircleHelp, map: MapPin, coupons: Ticket, video: Video, doodle: Brush,
+  openwhen: MailOpen, capsule: Hourglass, superlatives: Trophy, quiz: CircleHelp, map: MapPin, coupons: Ticket, video: Video, doodle: Brush, babies: Baby,
 };
 /** Short tab names for the newer sections. */
 const TAB_LIMIT = 4;
-const SHORT: Partial<Record<ModuleType, string>> = { openwhen: "Open-when", capsule: "Time capsule", superlatives: "Award", quiz: "Quiz", map: "Memory pin", coupons: "Coupon", video: "Video", doodle: "Doodle" };
+const SHORT: Partial<Record<ModuleType, string>> = { openwhen: "Open-when", capsule: "Time capsule", superlatives: "Award", quiz: "Quiz", map: "Memory pin", coupons: "Coupon", video: "Video", doodle: "Doodle", babies: "Baby photo" };
 import { PageError, PageLoading, PageNotFound } from "@/components/PageStates";
 import { REPORT_COPY } from "@/copy/strings";
 import { ReportGift } from "@/components/ReportGift";

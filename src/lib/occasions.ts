@@ -70,7 +70,7 @@ export type OccasionInfo = {
 export const OCCASIONS: OccasionInfo[] = [
   {
     id: "birthday",
-    styles: ["cake", "debut", "board-game", "arcade", "scrapbook", "bento", "zine", "scratch", "hunt"],
+    styles: ["cake", "debut", "board-game", "arcade", "wax-seal", "scrapbook", "bento", "zine", "scratch", "hunt"],
     sections: ["letters", "photobooth", "wordcloud", "voice", "countdown", "superlatives"],
     bo: "birthday",
   },
@@ -109,7 +109,7 @@ export const OCCASIONS: OccasionInfo[] = [
   {
     id: "bridal-shower",
     parent: "wedding",
-    styles: ["invitation", "scrapbook", "hunt", "scratch"],
+    styles: ["invitation", "wax-seal", "scrapbook", "hunt", "scratch"],
     sections: ["letters", "photobooth", "quiz", "superlatives", "coupons"],
     bo: "bridal",
   },
@@ -140,7 +140,7 @@ export const OCCASIONS: OccasionInfo[] = [
   },
   {
     id: "send-off",
-    styles: ["boarding-pass", "care-package", "mixtape", "scrapbook", "storybook"],
+    styles: ["boarding-pass", "care-package", "wax-seal", "mixtape", "scrapbook", "storybook"],
     sections: ["letters", "openwhen", "map", "photobooth", "video"],
     bo: "voyage",
   },
